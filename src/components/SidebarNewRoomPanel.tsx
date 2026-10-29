@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@/state/store";
 import { t } from "@/lib/i18n";
+import { imeComposing } from "@/lib/send-key";
 import { BotPickerList } from "./BotPickerList";
 
 /** Sidebar → New channel: name it and pick its bots. */
@@ -38,6 +39,7 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
+            if (imeComposing(e.nativeEvent)) return;
             if (e.key === "Enter") create();
             if (e.key === "Escape") onClose();
           }}
