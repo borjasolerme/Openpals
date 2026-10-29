@@ -101,6 +101,11 @@ describe.skipIf(process.platform === "win32")("cold VPS SSH startup", () => {
     fixture.failInitialization();
     const results = await Promise.allSettled(Array.from({ length: 4 }, () => defaultRunner(target("failed-vps", "run"))));
     expect(results.every(result => result.status === "rejected")).toBe(true);
+    for (const result of results) {
+      const message = String((result as PromiseRejectedResult).reason?.message);
+      expect(message).toContain("synthetic SSH failure");
+      expect(message).not.toContain("Command failed");
+    }
     expect(commands(fixture.calls)).toHaveLength(0);
     expect(fixture.calls.filter(args => args.at(-1) === "true")).toHaveLength(1);
     fixture.release();

@@ -107,7 +107,12 @@ export async function ensureVpsSshMaster(ssh: VpsSshSetup, alias: string, timeou
         timeout: remaining,
         killSignal: "SIGKILL",
         maxBuffer: 64 * 1024,
-      }, error => error ? reject(error) : resolve());
+      }, (error, _stdout, stderr) => {
+        if (!error) { resolve(); return; }
+        const killed = (error as { killed?: boolean }).killed === true;
+        const detail = killed ? "VPS SSH initialization timed out" : String(stderr).trim().slice(-1000) || error.message;
+        reject(Object.assign(new Error(detail), { killed }));
+      });
       child.stdin?.end();
     });
     pending = (async () => {
