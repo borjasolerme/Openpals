@@ -138,4 +138,20 @@ describe.skipIf(process.platform === "win32")("cold VPS SSH startup", () => {
     await expect(defaultRunner(target("stuck-vps", "run"), { timeoutMs: 1_000 })).rejects.toThrow(/SSH|timed out/i);
     expect(commands(fixture.calls)).toHaveLength(0);
   });
+
+  it("does not let a short first caller cancel initialization for a longer caller", async () => {
+    const fixture = await sshFixture();
+    const short = defaultRunner(target("short-owner-vps"), { timeoutMs: 1_000 });
+    const rejected = expect(short).rejects.toThrow();
+    await fixture.authenticating;
+    const long = defaultRunner(target("short-owner-vps"), { timeoutMs: 3_000 });
+    const longResult = Promise.allSettled([long]);
+    try {
+      await rejected;
+      expect(commands(fixture.calls)).toHaveLength(0);
+    } finally { fixture.release(); await longResult; }
+    expect(await longResult).toMatchObject([{ status: "fulfilled" }]);
+    expect(fixture.calls.filter(args => args.at(-1) === "true")).toHaveLength(1);
+    expect(commands(fixture.calls)).toHaveLength(1);
+  });
 });

@@ -90,43 +90,43 @@ export function prepareVpsSsh(dataDir: string, pathValue: string, platform: Node
   return { configPath, path: `${binDir}${delimiter}${pathValue}` };
 }
 
+const MASTER_INITIALIZATION_TIMEOUT_MS = 30_000;
 const pendingMasters = new Map<string, Promise<void>>();
 
-export async function ensureVpsSshMaster(ssh: VpsSshSetup, alias: string, timeoutMs = 30_000): Promise<void> {
+export async function ensureVpsSshMaster(ssh: VpsSshSetup, alias: string, timeoutMs = MASTER_INITIALIZATION_TIMEOUT_MS): Promise<void> {
   if (!ssh.configPath) return;
   const key = `${ssh.configPath}:${alias}`;
-  const pending = pendingMasters.get(key);
-  if (pending) {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      await Promise.race([pending, new Promise<never>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error("VPS SSH initialization timed out")), timeoutMs);
-        timer.unref();
-      })]);
-    } finally { clearTimeout(timer); }
-    return;
+  let pending = pendingMasters.get(key);
+  if (!pending) {
+    const deadline = Date.now() + MASTER_INITIALIZATION_TIMEOUT_MS;
+    const command = (args: string[]) => new Promise<void>((resolve, reject) => {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) { reject(new Error("VPS SSH initialization timed out")); return; }
+      const child = execFile("ssh", args, {
+        env: { ...process.env, PATH: ssh.path },
+        timeout: remaining,
+        killSignal: "SIGKILL",
+        maxBuffer: 64 * 1024,
+      }, error => error ? reject(error) : resolve());
+      child.stdin?.end();
+    });
+    pending = (async () => {
+      try { await command(["-O", "check", "--", alias]); }
+      catch (error) {
+        if ((error as { killed?: boolean }).killed) throw error;
+        // ControlMaster auto only shares after authentication. A harmless first command starts the persistent master without replaying Docker work.
+        await command(["-o", "BatchMode=yes", "-o", "PermitLocalCommand=no", "-T", "--", alias, "true"]);
+      }
+    })().finally(() => {
+      if (pendingMasters.get(key) === pending) pendingMasters.delete(key);
+    });
+    pendingMasters.set(key, pending);
   }
-  const deadline = Date.now() + timeoutMs;
-  const command = (args: string[]) => new Promise<void>((resolve, reject) => {
-    const remaining = deadline - Date.now();
-    if (remaining <= 0) { reject(new Error("VPS SSH initialization timed out")); return; }
-    const child = execFile("ssh", args, {
-      env: { ...process.env, PATH: ssh.path },
-      timeout: remaining,
-      killSignal: "SIGKILL",
-      maxBuffer: 64 * 1024,
-    }, error => error ? reject(error) : resolve());
-    child.stdin?.end();
-  });
-  const initialization = (async () => {
-    try { await command(["-O", "check", "--", alias]); }
-    catch (error) {
-      if ((error as { killed?: boolean }).killed) throw error;
-      // ControlMaster auto only shares after authentication. A harmless first command starts the persistent master without replaying Docker work.
-      await command(["-o", "BatchMode=yes", "-o", "PermitLocalCommand=no", "-T", "--", alias, "true"]);
-    }
-  })();
-  pendingMasters.set(key, initialization);
-  try { await initialization; }
-  finally { if (pendingMasters.get(key) === initialization) pendingMasters.delete(key); }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([pending, new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => reject(new Error("VPS SSH initialization timed out")), timeoutMs);
+      timer.unref();
+    })]);
+  } finally { clearTimeout(timer); }
 }
