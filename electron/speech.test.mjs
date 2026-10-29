@@ -5,7 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fixture = vi.hoisted(() => ({ launches: [], windows: [] }));
 vi.mock("electron", () => ({ app: { isPackaged: true, getPath: () => tmpdir() } }));
-vi.mock("node:child_process", () => ({
+vi.mock("node:child_process", async (importOriginal) => ({
+  ...await importOriginal(),
   spawn: (_file, args) => {
     const proc = new EventEmitter();
     const arg = flag => args[args.indexOf(flag) + 1];

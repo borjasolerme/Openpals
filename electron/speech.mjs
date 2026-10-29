@@ -1,8 +1,11 @@
 // macOS privacy enforcement requires the code calling Speech/AVFoundation to launch with its own Info.plist identity.
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
+  closeSync,
+  constants,
   existsSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   rmSync,
   statSync,
@@ -109,11 +112,21 @@ export function startSpeech(target, options = {}) {
   const errorPath = path.join(sessionDir, "stderr.log");
   const stopPath = path.join(sessionDir, "stop");
   const finishPath = path.join(sessionDir, "finish");
+  const lifelinePath = path.join(sessionDir, "owner.pipe");
   writeFileSync(outputPath, "");
   writeFileSync(errorPath, "");
 
   let proc;
+  let lifeline;
   try {
+    execFileSync("/usr/bin/mkfifo", ["-m", "600", lifelinePath], { timeout: 5_000 });
+    const reader = openSync(lifelinePath, constants.O_RDONLY | constants.O_NONBLOCK);
+    try {
+      // Only Electron holds a writer; LaunchServices cannot inherit a lifeline through `open`.
+      lifeline = openSync(lifelinePath, constants.O_WRONLY | constants.O_NONBLOCK);
+    } finally {
+      closeSync(reader);
+    }
     proc = spawn(
       "/usr/bin/open",
       [
@@ -131,10 +144,13 @@ export function startSpeech(target, options = {}) {
         stopPath,
         "--finish-file",
         finishPath,
+        "--lifeline-file",
+        lifelinePath,
       ],
       { stdio: "ignore" },
     );
   } catch {
+    if (lifeline !== undefined) closeSync(lifeline);
     rmSync(sessionDir, { recursive: true, force: true });
     sink.end({ code: 1, reason: "helper-start-failed" });
     return;
@@ -183,6 +199,7 @@ export function startSpeech(target, options = {}) {
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
+    closeSync(lifeline);
     forgetWindow();
     unwatchFile(outputPath, drain);
     rmSync(sessionDir, { recursive: true, force: true });
