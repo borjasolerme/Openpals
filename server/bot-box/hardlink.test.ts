@@ -23,20 +23,20 @@ describe.skipIf(process.platform === "win32")("read-only file hardlinks", () => 
   it.each([false, true])("refuses multiply-linked read-only files, including optional grants (%s)", (optional) => {
     const f = fixture();
     linkSync(f.file, f.alias);
-    expect(() => bwrapArgs(plan([{ kind: "ro", source: f.file, target: f.file, optional }]))).toThrow(/multiply-linked read-only file/);
+    expect(() => bwrapArgs(plan([{ kind: "ro", source: f.file, target: f.file, optional }]))).toThrow(/multiply-linked read-only file: .*; grant a separate single-link copy instead\./);
   });
 
   it.each(["file", "alias"] as const)("refuses an explicit read-only %s with a writable HOME alias", (source) => {
     const f = fixture();
     linkSync(f.file, f.alias);
-    expect(() => planBox(f, { command: "/bin/sh", args: [], env: {}, ro: [f[source]] })).toThrow(/multiply-linked read-only file/);
+    expect(() => planBox(f, { command: "/bin/sh", args: [], env: {}, ro: [f[source]] })).toThrow(/multiply-linked read-only file: .*; grant a separate single-link copy instead\./);
   });
 
   it("refuses a read-only source hardlinked after planning", () => {
     const f = fixture();
     const given = planBox(f, { command: "/bin/sh", args: ["--mcp-config", f.file], env: {} });
     linkSync(f.file, f.alias);
-    expect(() => bwrapArgs(given)).toThrow(/multiply-linked read-only file/);
+    expect(() => bwrapArgs(given)).toThrow(/multiply-linked read-only file: .*; grant a separate single-link copy instead\./);
   });
 
   it("preserves writable file grants", () => {

@@ -112,7 +112,7 @@ function assertReadOnlySource(source: string): void {
   try {
     const stat = statSync(source);
     if (stat.isFile() && stat.nlink > 1) {
-      throw new Error(`The bot box refuses a multiply-linked read-only file: ${source}`);
+      throw new Error(`The bot box refuses a multiply-linked read-only file: ${source}; grant a separate single-link copy instead.`);
     }
   } catch (error) {
     if (!["ENOENT", "EACCES", "ENOTDIR"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;

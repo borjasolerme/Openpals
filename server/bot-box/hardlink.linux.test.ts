@@ -28,7 +28,7 @@ describe.skipIf(detection.box !== "bwrap")("read-only file hardlinks in real bub
     let args: string[];
     try { args = bwrapArgs(makePlan()); } catch (error) {
       expect(hardlink).toBe(true);
-      expect((error as Error).message).toMatch(/multiply-linked read-only file/);
+      expect((error as Error).message).toMatch(/multiply-linked read-only file: .*; grant a separate single-link copy instead\./);
       expect(readFileSync(file, "utf8")).toBe("original");
       return;
     }
