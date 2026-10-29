@@ -50,6 +50,8 @@ export interface BrowserServiceOptions {
   /** Browsers running at once on this server. */
   maxRunning: number;
   idleMs(): number;
+  /** A running turn holds this session between browser calls too. */
+  held?(session: string): boolean;
   scrub?: (text: string) => string;
   /** What the egress gate of this profile's browser refused since it was last asked, as one line. */
   egressNotice?: (key: string) => string | null;
@@ -340,7 +342,8 @@ export class BrowserService {
 
   #unused(profile: ProfileState, idleMs: number): boolean {
     return profile.run !== null && !profile.starting && !profile.stopping && profile.calls === 0
-      && profile.control.owner === null && profile.control.agents === 0 && !this.#lanes.held(profile.key) && Date.now() - profile.lastUsed >= idleMs;
+      && profile.control.owner === null && profile.control.agents === 0 && !this.#lanes.held(profile.key)
+      && !this.#options.held?.(profile.session) && Date.now() - profile.lastUsed >= idleMs;
   }
 
   /** The least recently used unwatched idle browser makes room; with none, the call waits, then is told why it cannot start. */
