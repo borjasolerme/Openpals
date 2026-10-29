@@ -204,6 +204,7 @@ export class BrowserService {
   async #open(profile: ProfileState, epoch: number): Promise<Running> {
     const fresh = profile.fresh;
     profile.fresh = false;
+    rmSync(profile.downloadDir, { recursive: true, force: true });
     mkdirSync(profile.downloadDir, { recursive: true, mode: 0o700 });
     const opened = await this.#options.backend(profile.key).open({ key: profile.key, mode: "headless", fresh, viewport: profile.hub.viewport(), downloadDir: profile.downloadDir });
     const run: Running = { opened, browser: opened.browser, offs: [], closing: false };
@@ -273,6 +274,11 @@ export class BrowserService {
     profile.run = null;
     profile.tabs.clear();
     if (run.closing) return;
+    try {
+      rmSync(profile.downloadDir, { recursive: true, force: true });
+    } catch (error) {
+      this.#options.log?.(`browser ${profile.key}: could not remove downloads: ${error}`);
+    }
     profile.reopened = { kind: "crash", pages: [] };
     profile.control.settle();
     this.#options.log?.(`browser ${profile.key}: Chrome exited unexpectedly; the next call starts it again`);
@@ -304,6 +310,7 @@ export class BrowserService {
         try {
           if (erase) this.#erase(profile);
           else if (profile.temporary) this.#eraseFiles(profile.key);
+          else rmSync(profile.downloadDir, { recursive: true, force: true });
         } finally {
           profile.control.closing = false;
           profile.control.settle();
