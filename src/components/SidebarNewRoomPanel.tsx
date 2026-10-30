@@ -39,7 +39,7 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
-            if (imeComposing(e.nativeEvent)) return;
+            if (imeComposing(e.nativeEvent)) { e.stopPropagation(); return; }
             if (e.key === "Enter") create();
             if (e.key === "Escape") onClose();
           }}
