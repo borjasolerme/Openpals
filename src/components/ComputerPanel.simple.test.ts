@@ -380,6 +380,13 @@ describe("Where the bot works", () => {
     expect(grid(render(makeBot())).map((node) => text(node.props.children))).toEqual(["Auto", "Cloud desktop", "Private desktop", "Browser", "Off"]);
   });
 
+  it("shows a bot set to This Mac as Auto on another server's page, without changing its setting", () => {
+    fixture.localComputer = { available: false, support: "unsupported", enabled: false, status: "unavailable", reasonCode: "remote-server" };
+    const pressed = grid(render(makeBot({ computer: "local" }))).filter((node) => node.props["aria-pressed"]).map((node) => text(node.props.children));
+    expect(pressed).toEqual(["Auto"]);
+    expect(fixture.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "updateBot" }));
+  });
+
   it("J11: the Advanced cards and the Simple grid name the same problem in the same words", () => {
     fixture.instances = [{ ...engine(), displayName: "Plain", capabilities: { computerMcp: false, browserMcp: true } } as InstanceInfo];
     const simple = render(makeBot());

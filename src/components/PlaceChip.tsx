@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { useMenuMotion } from "./MenuMotion";
 import { MENU_HEADING, MENU_SHEET } from "./menu-recipe";
 import { t } from "@/lib/i18n";
-import { instanceSupportsLocalComputer, localComputerDisabledReason, localComputerSelectable } from "@/lib/local-computer";
+import { instanceSupportsLocalComputer, localComputerDisabledReason, localComputerSelectable, pageOnRemoteServer } from "@/lib/local-computer";
 import { effectivePlace, PLACES, placeLabelKey, type Place } from "@/lib/work-place";
 import { placeBlocked, placeFacts, placeHasIssue, placeViewFor, usePlaceSeat } from "@/lib/place-view";
 import { useStore, type Bot, type Task } from "@/state/store";
@@ -15,7 +15,7 @@ import type { SidebarMenuItem } from "./SidebarPopoverMenu";
 
 export type PlaceAvailability = Record<Place, boolean>;
 
-export function usePlaceViews(bot: Bot): Record<Place, { view: PlaceView; reachable: boolean }> {
+export function usePlaceViews(bot: Bot): Record<Place, { view: PlaceView; reachable: boolean; listed: boolean }> {
   const { state } = useStore();
   const { capabilities } = useDesktopCapabilities();
   const seat = usePlaceSeat(capabilities.host.platform);
@@ -26,7 +26,8 @@ export function usePlaceViews(bot: Bot): Record<Place, { view: PlaceView; reacha
   };
   const entry = (place: Place) => {
     const view = placeViewFor(placeFacts({ bot, place, seat, config: state.config, instances: state.instances, local }));
-    return { view, reachable: !placeBlocked(view) };
+    const listed = !(place === "local" && pageOnRemoteServer(capabilities));
+    return { view, listed, reachable: !placeBlocked(view) };
   };
   return { cloud: entry("cloud"), vm: entry("vm"), local: entry("local"), browser: entry("browser") };
 }
@@ -68,7 +69,7 @@ export function usePlaceMenuItem({ bot, task, disabled = false, onPin }: {
         trailing: !pinned ? check : undefined,
         onSelect: () => choose(null),
       },
-      ...PLACES.map((place): SidebarMenuItem => {
+      ...PLACES.filter((place) => places[place].listed).map((place): SidebarMenuItem => {
         const { view, reachable } = places[place];
         return {
           key: `place:${place}`,
@@ -160,7 +161,7 @@ export function PlaceChip({ bot, task, live, disabled = false, onPin }: {
               </span>
               {!pinned && <Check size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />}
             </button>
-            {PLACES.map((place) => {
+            {PLACES.filter((place) => places[place].listed).map((place) => {
               const selected = task?.surface === place;
               const { view, reachable } = places[place];
               const detail = placeHasIssue(view) ? view.short : t(DESCRIPTION[place]);
