@@ -652,7 +652,7 @@ export function AccessSection({
   } = derived;
   const browserInstallable = state.config?.browserEngine?.installable === true;
   const { capabilities } = useDesktopCapabilities();
-  const placeSeat = usePlaceSeat(capabilities.host?.platform ?? "other");
+  const placeSeat = usePlaceSeat(capabilities);
   const worksOn = placeViewFor(placeFacts({
     bot, place: bot.computer ?? "auto", seat: placeSeat, config: state.config, instances: state.instances,
   }));

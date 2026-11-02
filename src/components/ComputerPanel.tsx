@@ -158,7 +158,7 @@ export function ComputerPanel({
   const localSelectable = localComputerSelectable({ capabilities, providerSupportsLocal });
   const [localAutoWarningTarget, setLocalAutoWarningTarget] = useState<string | null>(null);
   const localDisabledReason = localComputerDisabledReason({ capabilities, providerSupportsLocal });
-  const placeSeat = usePlaceSeat(capabilities.host.platform);
+  const placeSeat = usePlaceSeat(capabilities);
   const [phase, setPhase] = useState<Phase>("checking");
   const [persistedComputerSelection, setPersistedComputerSelection] = useState<{
     botId: string;

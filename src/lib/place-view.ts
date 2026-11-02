@@ -3,6 +3,7 @@ import { engineSignedOut } from "@/lib/failed-turn";
 import { browserAvailable, builtInBrowserEnabled, type FeatureFlagConfig } from "@/lib/feature-flags";
 import { writeComputerPanelView } from "@/lib/computer-panel-view";
 import { useAdvancedMode } from "@/lib/interface-mode";
+import { pageOnRemoteServer } from "@/lib/local-computer";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { openBotSettings } from "@/components/bot-panel/panel-link";
 import { openKeySettings } from "@/components/keys/key-focus";
@@ -21,7 +22,9 @@ export interface PlaceSeat {
   mode: "simple" | "advanced";
 }
 
-export function serverKind(platform: DesktopCapabilities["host"]["platform"]): ServerKind {
+export function serverKind(capabilities: DesktopCapabilities): ServerKind {
+  if (pageOnRemoteServer(capabilities)) return "remote";
+  const { platform } = capabilities.host;
   return platform === "darwin" ? "mac" : platform === "win32" ? "pc" : "linux";
 }
 
@@ -81,10 +84,10 @@ export function placeHasIssue(view: PlaceView): boolean {
     || view.state === "cc-unavailable";
 }
 
-export function usePlaceSeat(platform: DesktopCapabilities["host"]["platform"]): PlaceSeat {
+export function usePlaceSeat(capabilities: DesktopCapabilities): PlaceSeat {
   const ownerOrAdmin = useOwnerOrAdmin();
   const advanced = useAdvancedMode();
-  return { server: serverKind(platform), role: ownerOrAdmin === false ? "user" : "admin", mode: advanced ? "advanced" : "simple" };
+  return { server: serverKind(capabilities), role: ownerOrAdmin === false ? "user" : "admin", mode: advanced ? "advanced" : "simple" };
 }
 
 export function openPlaceAction(

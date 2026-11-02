@@ -66,7 +66,7 @@ export interface PlaceView {
 }
 
 /** Where this server runs, as the Auto line describes it. */
-export type ServerKind = "mac" | "pc" | "linux";
+export type ServerKind = "mac" | "pc" | "linux" | "remote";
 
 /** The facts a place's state is read from. */
 export interface PlaceFacts {
@@ -314,7 +314,7 @@ function sourceAction(source: PlaceSource, state: PlaceState): PlaceActionId | n
 function lineKey(state: PlaceState, server?: ServerKind): PlaceKey {
   const segment = STATE[state].key;
   if (state === "auto") {
-    return server === "linux" ? "place.view.auto.lineLinux" : "place.view.auto.lineDesktop";
+    return server === "linux" || server === "remote" ? "place.view.auto.lineLinux" : "place.view.auto.lineDesktop";
   }
   return `place.view.${segment}.line` as PlaceKey;
 }

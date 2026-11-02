@@ -18,7 +18,7 @@ export type PlaceAvailability = Record<Place, boolean>;
 export function usePlaceViews(bot: Bot): Record<Place, { view: PlaceView; reachable: boolean; listed: boolean }> {
   const { state } = useStore();
   const { capabilities } = useDesktopCapabilities();
-  const seat = usePlaceSeat(capabilities.host.platform);
+  const seat = usePlaceSeat(capabilities);
   const providerSupportsLocal = instanceSupportsLocalComputer(state.instances, bot);
   const local = {
     ready: localComputerSelectable({ capabilities, providerSupportsLocal }),
