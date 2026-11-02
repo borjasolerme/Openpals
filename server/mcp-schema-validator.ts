@@ -1,6 +1,7 @@
 import { Ajv, type ErrorObject, type ValidateFunction } from "ajv";
 import { Ajv2020 } from "ajv/dist/2020.js";
 import formats from "ajv-formats";
+import { isIP } from "node:net";
 
 const DRAFT_07 = "http://json-schema.org/draft-07/schema#";
 const DRAFT_2020_12 = "https://json-schema.org/draft/2020-12/schema";
@@ -49,6 +50,8 @@ export function compileToolSchema(schema: Record<string, unknown>, options: { al
   // Google's remote MCP servers (Maps, Gmail, Drive) annotate enums with per-value descriptions; it adds no constraint to check.
   compiler.addKeyword({ keyword: "x-google-enum-descriptions", schemaType: "array" });
   for (const [format, min, max] of INTEGER_FORMATS) compiler.addFormat(format, { type: "number", validate: value => Number.isInteger(value) && value >= min && value <= max });
+  // schemars writes `ip` for Rust's IpAddr (Ipv4Addr/Ipv6Addr get ajv-formats' ipv4/ipv6): either family.
+  compiler.addFormat("ip", { type: "string", validate: value => isIP(value) !== 0 });
   try { return compiler.compile(schema); }
   catch { throw new Error("MCP tool schema could not be validated; check its constraints, formats, and references"); }
 }
