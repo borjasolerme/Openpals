@@ -2010,6 +2010,7 @@
   "settings.logins.noUsername": "ユーザー名なし",
   "settings.logins.source.card": "チャットから保存",
   "settings.logins.source.settings": "ここで追加",
+  "settings.logins.sharedBrowser": "{bots} には入力されません。このブラウザーは、このログイン情報を使えないボットと共有されていて、そこでサインインするとそのボットにも届いてしまいます。ボットごとに専用のブラウザーを用意するか、このブラウザーを使うすべてのボットにログイン情報を許可してください。",
   "settings.logins.source.1password": "1Passwordから",
   "settings.logins.used": "使用：{when}",
   "settings.logins.neverUsed": "未使用",

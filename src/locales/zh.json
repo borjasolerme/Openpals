@@ -2212,6 +2212,7 @@
   "settings.logins.noUsername": "无用户名",
   "settings.logins.source.card": "从聊天中保存",
   "settings.logins.source.settings": "在此添加",
+  "settings.logins.sharedBrowser": "不会为 {bots} 填入：这个浏览器与不能使用此登录信息的机器人共用，在那里登录也会让它们获得访问权限。请给每个机器人各自的浏览器，或让这个浏览器上的所有机器人都能使用此登录信息。",
   "settings.logins.source.1password": "来自 1Password",
   "settings.logins.used": "上次使用 {when}",
   "settings.logins.neverUsed": "尚未使用",

@@ -1980,6 +1980,7 @@
   "settings.logins.noUsername": "Sem usuário",
   "settings.logins.source.card": "Salvo de um chat",
   "settings.logins.source.settings": "Adicionado aqui",
+  "settings.logins.sharedBrowser": "Não preenchido para {bots}: esse navegador é compartilhado com bots que não têm acesso a este login, e um login ali chegaria a eles também. Dê a cada um um navegador próprio ou libere o login para todos os bots desse navegador.",
   "settings.logins.source.1password": "Do 1Password",
   "settings.logins.used": "Usado {when}",
   "settings.logins.neverUsed": "Ainda não usado",

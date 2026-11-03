@@ -1759,6 +1759,7 @@
   "settings.logins.noUsername": "Không có tên người dùng",
   "settings.logins.source.card": "Lưu từ cuộc trò chuyện",
   "settings.logins.source.settings": "Thêm tại đây",
+  "settings.logins.sharedBrowser": "Không điền cho {bots}: trình duyệt đó dùng chung với các bot không được dùng thông tin đăng nhập này, và đăng nhập ở đó cũng sẽ đến được chúng. Hãy cho mỗi bot một trình duyệt riêng, hoặc cho mọi bot trên trình duyệt đó dùng thông tin đăng nhập này.",
   "settings.logins.source.1password": "Từ 1Password",
   "settings.logins.used": "Đã sử dụng {when}",
   "settings.logins.neverUsed": "Chưa từng sử dụng",

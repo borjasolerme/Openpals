@@ -2162,6 +2162,7 @@
   "settings.logins.noUsername": "사용자 이름 없음",
   "settings.logins.source.card": "채팅에서 저장됨",
   "settings.logins.source.settings": "여기서 추가됨",
+  "settings.logins.sharedBrowser": "{bots}에는 입력하지 않아요: 그 브라우저는 이 로그인을 쓸 수 없는 봇과 함께 쓰고 있어서, 거기서 로그인하면 그 봇들에게도 닿아요. 봇마다 자기 브라우저를 주거나, 그 브라우저를 쓰는 모든 봇에게 이 로그인을 허용하세요.",
   "settings.logins.source.1password": "1Password에서 가져옴",
   "settings.logins.used": "{when} 사용",
   "settings.logins.neverUsed": "아직 사용 안 함",

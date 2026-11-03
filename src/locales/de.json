@@ -898,6 +898,7 @@
   "settings.profiles.busyMany": "{names} laufen noch. Stoppe diese Bots, bevor du dieses Browser-Profil löschst.",
   "settings.profiles.temporaryHint": "Temporäre Sitzungen behalten Logins nur, solange die App läuft. Sie werden nicht auf der Festplatte gespeichert.",
   "settings.profiles.myChromeUnavailable": "Mein Chrome ist für die Desktop-App gedacht, in der Bots auf deinem eigenen Computer laufen. Überall sonst, etwa in der Cloud, gibt es kein Chrome von dir, das sie nutzen könnten, daher nutzt jedes Profil den eingebauten Browser.",
+  "settings.logins.sharedBrowser": "Für {bots} nicht ausgefüllt: Dieser Browser wird mit Bots geteilt, für die dieser Login nicht freigegeben ist, und eine Anmeldung dort würde auch sie erreichen. Gib jedem Bot einen eigenen Browser oder gib den Login für alle Bots darauf frei.",
   "settings.connections.title": "API-Schlüssel",
   "settings.connections.subtitle": "Schlüssel für KI-Anbieter und optionale Dienste. Füge einen Schlüssel ein – er wird automatisch gespeichert und geprüft.",
   "settings.connections.ready": "Der Dienst für verbundene Apps ist bereit",

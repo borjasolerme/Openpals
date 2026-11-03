@@ -1828,6 +1828,7 @@
   "settings.logins.noUsername": "Sin usuario",
   "settings.logins.source.card": "Guardado desde un chat",
   "settings.logins.source.settings": "Añadido aquí",
+  "settings.logins.sharedBrowser": "No se rellena para {bots}: ese navegador se comparte con bots que no tienen este inicio de sesión, y una sesión iniciada ahí también les llegaría. Da a cada uno su propio navegador o deja el inicio de sesión a todos los bots que lo usan.",
   "settings.logins.source.1password": "Desde 1Password",
   "settings.logins.used": "Último uso: {when}",
   "settings.logins.neverUsed": "Aún sin usar",

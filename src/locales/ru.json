@@ -1986,6 +1986,7 @@
   "settings.logins.noUsername": "Без имени пользователя",
   "settings.logins.source.card": "Сохранено из чата",
   "settings.logins.source.settings": "Добавлено здесь",
+  "settings.logins.sharedBrowser": "Не заполняется для {bots}: этот браузер общий с ботами, которым этот вход не доступен, и вход в нём достанется и им. Дайте каждому боту собственный браузер или откройте вход всем ботам этого браузера.",
   "settings.logins.source.1password": "Из 1Password",
   "settings.logins.used": "Использовано {when}",
   "settings.logins.neverUsed": "Пока не использовались",

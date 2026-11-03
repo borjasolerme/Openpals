@@ -1759,6 +1759,7 @@
   "settings.logins.noUsername": "Kullanıcı adı yok",
   "settings.logins.source.card": "Bir sohbetten kaydedildi",
   "settings.logins.source.settings": "Buradan eklendi",
+  "settings.logins.sharedBrowser": "{bots} için doldurulmadı: bu tarayıcı, bu girişin ayrılmadığı botlarla paylaşılıyor ve orada açılan oturum onlara da ulaşır. Her bota kendi tarayıcısını verin ya da girişi o tarayıcıdaki tüm botlara açın.",
   "settings.logins.source.1password": "1Password'den",
   "settings.logins.used": "Son kullanım: {when}",
   "settings.logins.neverUsed": "Henüz kullanılmadı",

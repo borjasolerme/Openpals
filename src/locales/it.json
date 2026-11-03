@@ -1946,6 +1946,7 @@
   "settings.logins.noUsername": "Nessun nome utente",
   "settings.logins.source.card": "Salvato da una chat",
   "settings.logins.source.settings": "Aggiunto qui",
+  "settings.logins.sharedBrowser": "Non compilato per {bots}: quel browser è condiviso con bot a cui questo accesso non è riservato, e un accesso lì raggiungerebbe anche loro. Dai a ciascuno un browser tutto suo, oppure riserva l'accesso a tutti i bot che lo usano.",
   "settings.logins.source.1password": "Da 1Password",
   "settings.logins.used": "Usato {when}",
   "settings.logins.neverUsed": "Non ancora usato",

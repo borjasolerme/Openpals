@@ -2001,6 +2001,7 @@
   "settings.logins.noUsername": "Brak nazwy użytkownika",
   "settings.logins.source.card": "Zapisano z czatu",
   "settings.logins.source.settings": "Dodano tutaj",
+  "settings.logins.sharedBrowser": "Nie wypełniono dla {bots}: ta przeglądarka jest współdzielona z botami, którym to logowanie nie jest przypisane, a zalogowanie się w niej dotarłoby też do nich. Daj każdemu botowi własną przeglądarkę albo przypisz logowanie wszystkim botom, które jej używają.",
   "settings.logins.source.1password": "Z 1Password",
   "settings.logins.used": "Użyto {when}",
   "settings.logins.neverUsed": "Jeszcze nie użyto",

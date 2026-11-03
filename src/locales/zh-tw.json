@@ -1471,6 +1471,7 @@
   "settings.profiles.removed": "此設定檔已移除。請選擇其他瀏覽器設定檔。",
   "settings.profiles.deleteUsers": "這些機器人將改用自己的瀏覽器：{names}。",
   "settings.profiles.myChromeUnavailable": "「我的 Chrome」適用於桌面應用程式，機器人會在你自己的電腦上執行。在其他任何地方（例如 Cloud）都沒有你自己的 Chrome 可用，因此所有設定檔都會使用內建瀏覽器。",
+  "settings.logins.sharedBrowser": "不會為 {bots} 填入：該瀏覽器與不能使用這個登入資訊的機器人共用，在那裡登入也會讓它們取得存取權。請給每個機器人各自的瀏覽器，或讓該瀏覽器上的每個機器人都能使用這個登入資訊。",
   "settings.connections.title": "API 金鑰",
   "settings.connections.subtitle": "AI 供應商與選用服務的金鑰。貼上金鑰後會自動儲存並檢查。",
   "settings.connections.ready": "「已連線的應用程式」服務已就緒",
