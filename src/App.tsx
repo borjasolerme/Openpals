@@ -32,7 +32,7 @@ import { cn } from "@/lib/cn";
 import { NoEngines } from "@/components/NoEngines";
 import { CommandPalette } from "@/components/CommandPalette";
 import { t } from "@/lib/i18n";
-import { isSidebarHideToggle, shouldOpenKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
+import { botCycleStep, isSidebarHideToggle, shouldOpenKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
 import { toggleSidebarHidden, useSidebarHidden } from "@/lib/sidebar-preferences";
 import { effectiveLanguage, useLanguageChoice, usePageLanguage } from "@/lib/language-preference";
 import { botShowsUnread, showBrowserUnread } from "@/lib/bot-unread";
@@ -106,6 +106,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         return;
       }
       const bots = shortcutBots(state.bots.filter((b) => !b.hidden), shownBotIds(document.querySelector("[data-sidebar-root]")));
+      const step = e.shiftKey ? botCycleStep(e) : null;
       if (e.key === "n" && !e.shiftKey) {
         e.preventDefault();
         dispatch({ type: "newBot" });
@@ -115,8 +116,8 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           e.preventDefault();
           openBot(dispatch, target);
         }
-      } else if (e.shiftKey && (e.key === "[" || e.key === "]")) {
-        const next = nextShortcutBot(bots, state.selectedId, e.key === "]" ? 1 : -1);
+      } else if (step !== null) {
+        const next = nextShortcutBot(bots, state.selectedId, step);
         if (next) {
           e.preventDefault();
           openBot(dispatch, next);
