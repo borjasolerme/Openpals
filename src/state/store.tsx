@@ -2820,6 +2820,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         key: "routines",
         request: async () => {
           const since = Date.now() - ROUTINE_RUNS_WINDOW_MS, { routines, runs } = await api(`/api/routines?since=${since}`);
+          if (!Array.isArray(routines) || !Array.isArray(runs)) throw new Error("Invalid routines snapshot");
           return () => rawDispatch({ type: "routinesHydrated", routines, runs, since });
         },
       },
@@ -2896,6 +2897,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .catch(() => {});
       const chat = () =>
         api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then(({ bots, groups, computerControl, botQueuedMessages }) => {
+          if (!Array.isArray(bots) || (groups != null && !Array.isArray(groups))) throw new Error("Invalid bots snapshot");
           if (!alive) return;
           rawDispatch({
             type: "hydrate",
