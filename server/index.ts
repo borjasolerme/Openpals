@@ -2143,6 +2143,15 @@ function retryComputerEngineMove(): Promise<void> {
   return computerEngineMoveRunning;
 }
 
+function routineModelRefusal(body: unknown): { status: number; error: string } | null {
+  const raw = body && typeof body === "object" ? (body as { modelSelection?: unknown }).modelSelection : undefined;
+  if (raw == null) return null;
+  const checked = checkedModelSelection(raw);
+  if (!checked.ok) return checked;
+  (body as { modelSelection: ModelSelection }).modelSelection = checked.selection;
+  return null;
+}
+
 function checkedModelSelection(
   raw: unknown,
   current?: { selection: ModelSelection; busy: boolean },
@@ -8137,7 +8146,8 @@ routines = new RoutineManager({
     return groupIsWorking(group) || coordinator.busy ? "busy" : "ready";
   },
   createTask: (botId, title, run) => {
-    const task = store.createTask(botId, title, false);
+    const model = run && routines?.listRoutines().find((routine) => routine.id === run.routineId)?.modelSelection;
+    const task = store.createTask(botId, title, false, undefined, undefined, undefined, model || undefined);
     if (task && run?.triggerSource === "webhook") outsideLineage.mark(task.threadId);
     return task;
   },
@@ -13652,6 +13662,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
     }
     if (path === "/api/routines" && method === "POST") {
       const body = await readBody(req);
+      const model = routineModelRefusal(body);
+      if (model) return json(res, model.status, { error: model.error });
       const hidden = hiddenRoutineTarget(body, visible);
       if (hidden) return json(res, 404, { error: hidden });
       const routine = routines!.create(body);
@@ -13670,6 +13682,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
     routineMatch = path.match(/^\/api\/routines\/([\w-]+)$/);
     if (routineMatch && method === "PATCH") {
       const body = await readBody(req);
+      const model = routineModelRefusal(body);
+      if (model) return json(res, model.status, { error: model.error });
       const hidden = hiddenRoutineTarget(body, visible);
       if (hidden) return json(res, 404, { error: hidden });
       const before = routines!.listRoutines().find((candidate) => candidate.id === routineMatch![1]);
