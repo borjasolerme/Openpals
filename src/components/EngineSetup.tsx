@@ -426,6 +426,22 @@ export function ApiKeyHint({ instance }: { instance: InstanceInfo }) {
   );
 }
 
+export function InstanceAccountNotes({ instance, listsModels }: { instance: InstanceInfo; listsModels: boolean }) {
+  const account = instance.snapshot.authenticated && instance.snapshot.account
+    ? [instance.snapshot.account.email, instance.snapshot.account.organization].filter(Boolean).join(" · ")
+    : null;
+  return (
+    <>
+      {account !== null && <p className="mt-1 truncate text-sm text-ink-tertiary" title={account}>{account}</p>}
+      {instance.modelsUnconfirmed && listsModels && (
+        <p data-models-unconfirmed className="mt-1 text-sm text-ink-tertiary">
+          {t("model.unconfirmed", { name: instance.displayName })}
+        </p>
+      )}
+    </>
+  );
+}
+
 function GrokKeyInstead({ className, unframed }: { className?: string; unframed: boolean }) {
   return (
     <div data-engine-setup-key-instead className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>

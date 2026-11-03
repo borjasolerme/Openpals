@@ -1466,6 +1466,7 @@
   "model.refreshing": "Odświeżanie modeli: {name}",
   "model.refresh": "Odśwież modele: {name}",
   "model.refreshTitle": "Odśwież modele",
+  "model.unconfirmed": "{name} nie podał jeszcze listy swoich modeli. Te mogą być nieaktualne.",
   "model.localModels": "Modele lokalne",
   "model.localHint": "Uruchom tego agenta z modelem, który już jest na twoim komputerze.",
   "model.chooseHint": "Wybierz model dla tego bota.",

@@ -478,6 +478,7 @@ export class ProviderRegistry {
           displayName: inst.displayName ?? inst.driverKind,
           snapshot,
           models: inst.models,
+          ...(inst.modelsUnconfirmed ? { modelsUnconfirmed: true } : {}),
           capabilities: {
             computerMcp: inst.adapter.capabilities.computerMcp === true,
             agentsMcp: inst.adapter.capabilities.agentsMcp === true,

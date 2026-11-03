@@ -784,6 +784,7 @@
   "model.refreshing": "Оновлюємо моделі {name}",
   "model.refresh": "Оновити моделі {name}",
   "model.refreshTitle": "Оновити моделі",
+  "model.unconfirmed": "{name} ще не перелічив свої моделі. Цей список може бути застарілим.",
   "model.localModels": "Локальні моделі",
   "model.localHint": "Запустіть цього агента з моделлю, яка вже є на вашій машині.",
   "model.chooseHint": "Оберіть модель для цього бота.",

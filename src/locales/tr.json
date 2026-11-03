@@ -1367,6 +1367,7 @@
   "model.refreshing": "{name} modelleri yenileniyor",
   "model.refresh": "{name} modellerini yenile",
   "model.refreshTitle": "Modelleri yenile",
+  "model.unconfirmed": "{name} henüz modellerini listelemedi. Bunlar güncel olmayabilir.",
   "model.localModels": "Yerel modeller",
   "model.localHint": "Bu ajanı zaten makinenizde bulunan bir modelle çalıştırın.",
   "model.chooseHint": "Bu bot için bir model seçin.",

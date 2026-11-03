@@ -1448,6 +1448,7 @@
   "model.refreshing": "Atualizando os modelos de {name}",
   "model.refresh": "Atualizar os modelos de {name}",
   "model.refreshTitle": "Atualizar os modelos",
+  "model.unconfirmed": "{name} ainda não listou seus modelos. Esta lista pode estar desatualizada.",
   "model.localModels": "Modelos locais",
   "model.localHint": "Rode este agente com um modelo que já está na sua máquina.",
   "model.chooseHint": "Escolha um modelo para este bot.",

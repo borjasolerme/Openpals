@@ -625,6 +625,7 @@
   "model.refreshing": "{name} के मॉडल ताज़ा हो रहे हैं",
   "model.refresh": "{name} के मॉडल ताज़ा करें",
   "model.refreshTitle": "मॉडल ताज़ा करें",
+  "model.unconfirmed": "{name} ने अभी तक अपने मॉडल की सूची नहीं दी है। ये पुराने हो सकते हैं।",
   "model.localModels": "लोकल मॉडल",
   "model.localHint": "इस एजेंट को अपनी मशीन पर मौजूद मॉडल से चलाएँ।",
   "model.chooseHint": "इस बॉट के लिए मॉडल चुनें।",

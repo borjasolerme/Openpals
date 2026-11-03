@@ -1367,6 +1367,7 @@
   "model.refreshing": "Đang làm mới các mô hình của {name}",
   "model.refresh": "Làm mới các mô hình của {name}",
   "model.refreshTitle": "Làm mới mô hình",
+  "model.unconfirmed": "{name} chưa liệt kê các mô hình của mình. Danh sách này có thể đã cũ.",
   "model.localModels": "Mô hình cục bộ",
   "model.localHint": "Chạy agent này với một mô hình đã có trên máy của bạn.",
   "model.chooseHint": "Chọn một mô hình cho bot này.",

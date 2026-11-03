@@ -1476,6 +1476,7 @@
   "model.refreshing": "{name} のモデルを更新中",
   "model.refresh": "{name} のモデルを更新",
   "model.refreshTitle": "モデルを更新",
+  "model.unconfirmed": "{name} はまだモデルを一覧にしていません。この一覧は古い可能性があります。",
   "model.localModels": "ローカルモデル",
   "model.localHint": "このエージェントを、すでに手元にあるモデルで動かします。",
   "model.chooseHint": "このボットのモデルを選んでください。",

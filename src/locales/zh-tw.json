@@ -1183,6 +1183,7 @@
   "model.refreshing": "正在重新整理 {name} 模型",
   "model.refresh": "重新整理 {name} 模型",
   "model.refreshTitle": "重新整理模型",
+  "model.unconfirmed": "{name} 尚未列出它的模型。此清單可能已過時。",
   "model.localModels": "本機模型",
   "model.localHint": "使用你電腦上已有的模型執行此機器人。",
   "model.chooseHint": "為此機器人選擇模型。",
