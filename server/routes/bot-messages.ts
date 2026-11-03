@@ -33,6 +33,7 @@ import { extractSteerImages } from "../turn-images.ts";
 import { followupFacts, helperFollowup, helperFollowupBody, mayFollowUp } from "../helper-followup.ts";
 import type { UsageTrigger } from "../usage-ledger.ts";
 import { parseMentionPicks } from "../../shared/room-mentions.ts";
+import { noteTypedSend } from "../typed-sends.ts";
 import { pinnedClientThreadGuard } from "./pinned-client-thread.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 
@@ -297,13 +298,15 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
           }
         : undefined;
       if (phone && sendId) notePhoneSend(sendId);
+      // The bot's own shell reaches this route on a headless server (loopback is the owner), so only a
+      // paired session or the desktop capability proves a person and lifts the webhook block.
+      const personPresent = auth.kind === "session" || DESKTOP_MANAGED;
+      if (personPresent && sendId && !guarded && !press && !appSent) noteTypedSend(threadId, sendId, text);
       if (pressKey) pressesInFlight.set(pressKey, sendId);
       try {
         const receipt = await acceptDirectSend({
           botId: bot.id, threadId, text, sendId, replyTo, sender, trigger, dataContext, ...(app ? { app } : {}),
-          // The bot's own shell reaches this route on a headless server (loopback is the owner), so only a
-          // paired session or the desktop capability proves a person and lifts the webhook block.
-          personPresent: auth.kind === "session" || DESKTOP_MANAGED, ...(followUp ? { followUp } : {}),
+          personPresent, ...(followUp ? { followUp } : {}),
           ...(mentions?.length && !press && !appSent ? { mentions } : {}),
         }, guardedStart);
         press?.settle("queueId" in receipt ? receipt.queueId : undefined);
