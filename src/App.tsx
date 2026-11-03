@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Menu } from "lucide-react";
 import { openBot, StoreProvider, useStore } from "@/state/store";
-import { shortcutBots, shownBotIds } from "@/lib/sidebar-shortcut-order";
+import { nextShortcutBot, shortcutBots, shownBotIds } from "@/lib/sidebar-shortcut-order";
 import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
 import { MausBotWelcome } from "@/components/MausBotWelcome";
 import { spotlightsQuiet, type WelcomeViewer } from "@/lib/onboarding";
@@ -116,8 +116,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           openBot(dispatch, target);
         }
       } else if (e.shiftKey && (e.key === "[" || e.key === "]")) {
-        const idx = bots.findIndex((b) => b.id === state.selectedId);
-        const next = bots[(idx + (e.key === "]" ? 1 : -1) + bots.length) % bots.length];
+        const next = nextShortcutBot(bots, state.selectedId, e.key === "]" ? 1 : -1);
         if (next) {
           e.preventDefault();
           openBot(dispatch, next);

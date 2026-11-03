@@ -860,7 +860,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   return (
     <aside
       ref={sidebarRef}
-      data-sidebar-root=""
+      data-sidebar-root={!phone || open ? "" : undefined}
       tabIndex={-1}
       aria-label={t("sidebar.aria")}
       data-native-view-overlay
