@@ -255,7 +255,7 @@
   "server.teammates.backWithResultsRestart": "После перезапуска продолжено с результатами переданной работы, идёт проверка",
   "server.teammates.handedWork": "переданная работа",
   "server.teammates.answerPassed": "Ответ передан ожидающей работе",
-  "server.teammates.answeredForPerson": "Дан ответ за человека на вопрос: {name}",
+  "server.teammates.answeredForPerson": "Дан ответ за человека на вопрос от {name}",
   "settings.windowFrame.title": "Рамка окна",
   "settings.windowFrame.subtitle": "Тонкая полоса сверху показывает, где вы, а чат — в карточке со скруглёнными углами. Если выключить, окно станет таким, как раньше.",
   "settings.windowFrame.restart": "Изменение вступит в силу после перезапуска {app}.",

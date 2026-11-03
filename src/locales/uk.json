@@ -202,7 +202,7 @@
   "server.teammates.backWithResultsRestart": "Після перезапуску повернувся з переданою роботою, триває перевірка",
   "server.teammates.handedWork": "передана робота",
   "server.teammates.answerPassed": "Відповідь передано роботі, що чекала",
-  "server.teammates.answeredForPerson": "Дано відповідь за людину на запитання: {name}",
+  "server.teammates.answeredForPerson": "Дано відповідь за людину на запитання від {name}",
   "voice.engine": "Постачальник голосу",
   "call.voiceSetup.subtitle": "Оберіть постачальника голосу, додайте його ключ, якщо потрібно, а потім виберіть голос.",
   "toolStep.useComputer": "Користуватися екраном",

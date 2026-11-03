@@ -255,7 +255,7 @@
   "server.teammates.backWithResultsRestart": "Wznowiono po restarcie z wynikami przekazanej pracy, trwa przegląd",
   "server.teammates.handedWork": "przekazana praca",
   "server.teammates.answerPassed": "Odpowiedź przekazana do czekającej pracy",
-  "server.teammates.answeredForPerson": "Odpowiedziano za tę osobę na pytanie: {name}",
+  "server.teammates.answeredForPerson": "Odpowiedziano za tę osobę na pytanie od {name}",
   "settings.windowFrame.title": "Ramka okna",
   "settings.windowFrame.subtitle": "Cienki pasek u góry, który pokazuje, gdzie jesteś, i czat w zaokrąglonej karcie. Po wyłączeniu okno wygląda jak wcześniej.",
   "settings.windowFrame.restart": "Zmiana zadziała po ponownym uruchomieniu {app}.",

@@ -20,7 +20,7 @@ export interface TeammatePromptDeps {
   startedOutside(threadId: string): boolean;
   confined(threadId: string): boolean;
   readableFrom(threadId: string): (other: string) => boolean;
-  waitingForPerson(chief: BotRecord, teammates: readonly BotRecord[], readable: (threadId: string) => boolean): WaitingQuestion[];
+  waitingForPerson(chief: BotRecord, teammates: readonly BotRecord[], readable: (threadId: string, botId: string) => boolean): WaitingQuestion[];
   now?(): number;
 }
 
@@ -56,7 +56,8 @@ export function createTeammatePrompts(deps: TeammatePromptDeps) {
     if (!actsForPerson(bot, threadId)) return "";
     const teammates = store.bots.filter((teammate) => teammate.id !== bot.id && !teammate.hidden && canManage(bot, teammate));
     const now = deps.now?.() ?? waitNow();
-    const waiting = deps.waitingForPerson(bot, teammates, deps.readableFrom(threadId))
+    const readable = deps.readableFrom(threadId);
+    const waiting = deps.waitingForPerson(bot, teammates, (other) => readable(other))
       .map(({ since, ...one }) => ({ ...one, thread: escapeNotes(one.thread).slice(0, 120), question: escapeNotes(one.question).slice(0, 400),
         ...(waitedLong(since, now) ? { waited: waitedWords(since, now) } : {}) }));
     if (!waiting.length) return "";

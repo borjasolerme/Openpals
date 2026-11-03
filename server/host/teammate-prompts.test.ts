@@ -11,7 +11,7 @@ const teammate = { id: "mira", name: "Mira" } as BotRecord;
 
 const NOW = 10 * 24 * 60 * 60_000;
 
-function questions(fullAccess: boolean, since = NOW - 60_000, now = NOW): string {
+function questions(fullAccess: boolean, since = NOW - 60_000, now = NOW, over: Partial<TeammatePromptDeps> = {}): string {
   const deps = {
     now: () => now,
     store: { bots: [chief, teammate], bot: () => teammate },
@@ -20,7 +20,9 @@ function questions(fullAccess: boolean, since = NOW - 60_000, now = NOW): string
     confined: () => false,
     fullAccess: () => fullAccess,
     readableFrom: () => () => true,
-    waitingForPerson: () => [{ bot: "Mira", threadId: "t1", thread: "Pricing", question: "Keep the old page?", since }],
+    waitingForPerson: (_chief: BotRecord, _teammates: readonly BotRecord[], readable: (threadId: string, botId: string) => boolean) =>
+      readable("t1", "mira") ? [{ bot: "Mira", threadId: "t1", thread: "Pricing", question: "Keep the old page?", since }] : [],
+    ...over,
   } as unknown as TeammatePromptDeps;
   return createTeammatePrompts(deps).questions(chief, "job");
 }
