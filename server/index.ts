@@ -7847,6 +7847,7 @@ async function beginTurn(
         ...(integrations.browser && browserIsThePlace(turnSurfacePlan(bot, undefined, threadId, true)) ? { preloadBrowserTools: true } : {}),
         ...settingsTurnFields(cfg, DATA_DIR, false),
         cwd,
+        ...(worksInWorkspace || guestConfined ? {} : { toolResultFolder: (cloudGuestOpened(threadId) ? undefined : liveBot?.cwd ?? bot.cwd) ?? join(TASK_WORKSPACES_DIR, bot.id, threadId) }),
         botSettingsFile: botSettingsFile(bot),
       }, (input) => quickFallback.sendTurn(instance, input, route.quickModel ? { model, own: bot.modelSelection, onFallback: () => store.patchMessage(threadId, userMessage.id, { quickModel: undefined }) } : undefined))), () => companyShutdown || !directTurnClaimExists(bot.id, dispatchClaimId, threadId), async () => {
         await (runningTurnEngines.get(threadId) ?? instance).adapter.interruptTurn(threadId).catch(() => {});
