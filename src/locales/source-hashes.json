@@ -2114,7 +2114,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6376,7 +6379,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8439,7 +8445,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10502,7 +10511,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15482,7 +15494,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20336,7 +20351,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25840,7 +25858,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29348,7 +29369,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31783,7 +31807,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35777,7 +35804,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39771,7 +39801,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44689,7 +44722,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49648,7 +49684,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54454,7 +54493,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59868,7 +59910,10 @@
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
       "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
-      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
+      "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
+      "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
     }
   }
 }

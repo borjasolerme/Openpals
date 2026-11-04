@@ -198,7 +198,7 @@ export interface GroupTask {
   pinned?: boolean;
   updatedAt?: number;
   turnTimeoutMinutes?: number;
-  archivedAt?: number;
+  archivedAt?: number; activity?: "waiting-on-you";
   lastThreadOrderAt?: number;
   working?: boolean;
   busyBotId?: string | null;

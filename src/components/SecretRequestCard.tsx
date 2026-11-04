@@ -187,6 +187,7 @@ export function SecretRequestCard({
       explanation={description}
       onDismiss={dismiss}
       dismissLabel="Not now"
+      stays
     >
       <form onSubmit={(event) => void save(event)}>
         <div className="flex flex-wrap gap-2">
