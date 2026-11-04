@@ -1,4 +1,4 @@
-# Contributing to OpenMausBot
+# Contributing to Openpals
 
 Thanks for wanting to help — community PRs have already shipped in this repo, and more are welcome.
 This file tells you how to get a working dev setup, what the codebase expects from a change, and what
@@ -252,13 +252,8 @@ out of its commits and screenshots.
 
 ## Contribution licensing
 
-- No DCO sign-off is required. Submit only code you wrote or have the right
-  to contribute under the applicable project license.
-- Changes under `enterprise/` (source-available, see [LICENSING.md](LICENSING.md))
-  need the [CLA](CLA.md), signed once by commenting on the pull request
-  when the bot asks. Changes outside `enterprise/` do not require a CLA.
-- `enterprise/`, the cloud seam and the licensing files have code owners; a
-  maintainer review is required there.
+- No DCO sign-off or CLA is required. Submit only code you wrote or have the
+  right to contribute under the Apache License 2.0 (see [LICENSING.md](LICENSING.md)).
 
 ## CI, in one glance
 
