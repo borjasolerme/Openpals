@@ -1,4 +1,5 @@
 import { reserveGmailDrafts } from "./gmail-draft-policy.ts";
+import { createGmailDrafts } from "./host/gmail-drafts.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { existsSync, realpathSync } from "node:fs";
@@ -1238,8 +1239,6 @@ const MAX_CREATED_BOT_INSTRUCTIONS = 4_000;
 // Only an orphan backstop: normal terminal paths revoke a capability synchronously.
 const INTERNAL_CAPABILITY_ORPHAN_MS = 30 * 24 * 60 * 60_000;
 const internalCapabilities = new Map<string, InternalCapability>();
-const gmailDraftsByGeneration = new Map<string, Set<string>>();
-const gmailDraftsByNode = new Map<string, Set<string>>();
 const activeInternalGenerationByThread = new Map<string, string>();
 const internalGenerationByProviderTurn = new ProviderTurnGenerationRegistry();
 const computerSelectionTurns = new Map<string, {
@@ -1317,7 +1316,7 @@ function mintInternalCapability(capability: Omit<InternalCapability, "orphanExpi
   if (internalCapabilities.get(token)?.generation !== capability.generation) {
     internalCapabilities.set(token, {
       ...capability,
-      ...(capability.kind === "connectors" ? { gmailDrafts: gmailDraftsForTurn(capability.threadId, capability.generation, capability.roomHandoffId) } : {}),
+      ...(capability.kind === "connectors" ? { gmailDrafts: gmailDrafts.forTurn(capability.threadId, capability.generation, capability.roomHandoffId) } : {}),
       orphanExpiresAt: Date.now() + INTERNAL_CAPABILITY_ORPHAN_MS,
       turnStartedAt: Date.now(),
     });
@@ -1326,7 +1325,7 @@ function mintInternalCapability(capability: Omit<InternalCapability, "orphanExpi
 }
 
 function revokeInternalCapabilityGeneration(threadId: string, generation: string): void {
-  gmailDraftsByGeneration.delete(generation);
+  gmailDrafts.endTurn(generation);
   if (standInRoots.delete(generation)) coordinator.endTurn(generation, { ok: true, text: "" });
   for (const [token, capability] of internalCapabilities) {
     if (capability.threadId === threadId && capability.generation === generation) {
@@ -1505,31 +1504,7 @@ const directRequestOwners = new Map<string, {
   gmailDrafts?: Set<string>;
 }>();
 
-function gmailDraftsForNode(id: string): Set<string> | undefined {
-  for (const cachedId of gmailDraftsByNode.keys()) {
-    const node = coordinator.node(cachedId);
-    if (!node || ENDED.has(node.status)) gmailDraftsByNode.delete(cachedId);
-  }
-  const node = coordinator.node(id);
-  if (!node) return undefined;
-  const cached = gmailDraftsByNode.get(id);
-  if (cached) return cached;
-  const owner = directRequestOwners.get(node.threadId);
-  const reserved = owner?.generations.has(id) && owner.gmailDrafts ? owner.gmailDrafts :
-    (node.parentId ? gmailDraftsForNode(node.parentId) : undefined) ?? new Set<string>();
-  gmailDraftsByNode.set(id, reserved);
-  return reserved;
-}
-
-function gmailDraftsForTurn(threadId: string, generation: string, handoffId?: string): Set<string> {
-  const cached = gmailDraftsByGeneration.get(generation);
-  if (cached) return cached;
-  const owner = directRequestOwners.get(threadId);
-  const reserved = owner?.generation === generation && owner.gmailDrafts ? owner.gmailDrafts :
-    gmailDraftsForNode(handoffId ?? generation) ?? new Set<string>();
-  gmailDraftsByGeneration.set(generation, reserved);
-  return reserved;
-}
+const gmailDrafts = createGmailDrafts({ node: (id) => coordinator.node(id), ended: (status) => ENDED.has(status as HandoffView["status"]), owner: (threadId) => directRequestOwners.get(threadId) });
 type DirectTurnOutcome = HostTurnResult;
 const directFollowupTurns = new ProviderTurnGenerationRegistry<DirectTurnOutcome>();
 const directFollowupSettlers = new Map<string, { threadId: string; settle?: () => void }>();
@@ -7157,7 +7132,7 @@ async function beginTurn(
   const requestOrigin = requestWorkOrigin({ trigger: opts?.automationSource, handed: opts?.origin, continued,
     line: !continuation && requestMessageId === userMessage.id ? userMessage : undefined });
   directRequestOwners.set(threadId, { generation: dispatchClaimId, messageId: requestMessageId,
-    gmailDrafts: opts?.coordination ? gmailDraftsForNode(opts.coordination.id) :
+    gmailDrafts: opts?.coordination ? gmailDrafts.forNode(opts.coordination.id) :
       continuation && previousRequest && !previousRequest.stopped && (!requestMessageId || previousRequest.messageId === requestMessageId)
         ? previousRequest.gmailDrafts ?? new Set<string>() : new Set<string>(),
     generations: requestGenerations, turnId: null, ...(opts?.automationSource ? { automation: opts.automationSource } : {}), origin: requestOrigin, ...(personLine || (continued && previousRequest?.personLine) ? { personLine: true as const } : {}),
@@ -9063,8 +9038,7 @@ async function runClaimedGroupMemberTurn(
     return true;
   }
   const internalGeneration = beginInternalCapabilityGeneration(threadId);
-  if (orchestration?.roomHandoffId) gmailDraftsByGeneration.set(internalGeneration,
-    gmailDraftsForNode(orchestration.roomHandoffId) ?? new Set<string>());
+  if (orchestration?.roomHandoffId) gmailDrafts.forRoomTurn(internalGeneration, orchestration.roomHandoffId);
   if (operation) roomTurnStarted(internalGeneration, operation);
   const resourceOwner: TurnOwner = { threadId, generation: internalGeneration };
   turnResourceOwners.set(threadId, resourceOwner);
