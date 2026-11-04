@@ -2102,7 +2102,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6352,7 +6360,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8403,7 +8419,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10454,7 +10478,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15423,7 +15455,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20266,7 +20306,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25759,7 +25807,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29255,7 +29311,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31678,7 +31742,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35660,7 +35732,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39642,7 +39722,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44549,7 +44637,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49497,7 +49593,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54292,7 +54396,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59695,7 +59807,15 @@
       "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
       "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
       "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49",
-      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc"
+      "apiInstances.modelsLimit": "872a834885967b40ebcc35d2ff89adbc1ae4e8585bf0673f4a3ed1d718ba23fc",
+      "engineSetup.cursor.description": "64dece5408ef119729c441e9795de4ca7b106a5bdef947f7962ff95718ad2e5d",
+      "engineSetup.cursor.start": "48986f67a366d4cb50f885447b483af90673437c5cb265d5074162dd98e96b36",
+      "engineSetup.cursor.open": "f9f2ec90ec320a8d010a2d225f1c660b938a8db73c59c1d5444095f87b397fca",
+      "engineSetup.cursor.security": "283d3f7751d7132f440db92be6fcf19a45d7642141a5884397625a4d74a2b4d7",
+      "engineSetup.cursor.connected": "7505c2f7bc9c7a6e97cbc0a0761d1b68e0cd3c20ff45fd1276973c06499b5b11",
+      "engineSetup.cursor.connectedAccount": "a5ab1612c780776c5c16a10228b53350f7beef10504b9ed170624eb60196ceee",
+      "engineSetup.cursor.failed": "c1145b217f82dbf752b164e08c6ca14631f8f8c36cf72b6f479ff47a05f748b3",
+      "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930"
     }
   }
 }
