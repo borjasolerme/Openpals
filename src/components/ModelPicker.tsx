@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, KeyRound, Loader2, RefreshCw, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, KeyRound, Loader2, RefreshCw } from "lucide-react";
 import { useStore, currentTaskBot, type Bot, type InstanceInfo, type ModelSelection } from "@/state/store";
 import type { EffortLevel } from "../../shared/wire";
 import type { ModelVariantOption } from "../../shared/runtime-events";
@@ -33,8 +33,6 @@ import { t } from "@/lib/i18n";
 import { COMPACT_SQUARE } from "@/lib/compact-chip";
 import { useAiSwitch } from "@/lib/ai-switch";
 import { usePickerPane } from "@/lib/model-picker-pane";
-import { threadsOnOwnModel } from "../../shared/thread-model";
-import { ThreadModelsLine } from "./ThreadModelsLine";
 import { Select } from "./Select";
 
 const COMPACT_MODEL_COUNT = 5;
@@ -243,7 +241,6 @@ export function ModelPicker({
   const [pendingSwitch, setPendingSwitch] = useState<{ botId: string; threadId: string;
     selection: ModelSelection; updateBotDefault: boolean; name: string } | null>(null);
   const [placement, setPlacement] = useState<PickerPlacement | null>(null);
-  const [changedBotModel, setChangedBotModel] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -422,7 +419,6 @@ export function ModelPicker({
     if (active && signInFamily(active) === "openai") lastOpenaiIdRef.current = active.instanceId;
     const initial = pickerInstances.find((instance) => instance.instanceId === selection.instanceId) ?? pickerInstances[0];
     setRailId(initial?.instanceId ?? null);
-    setChangedBotModel(false);
     setFullView(false);
     setExpanded(new Set());
     setPlacement(null);
@@ -449,7 +445,6 @@ export function ModelPicker({
   const botModelName = botModelInstance
     ? `${botModelInstance.displayName} · ${modelLabel(botModelInstance, profile.modelSelection.model)}`
     : profile.modelSelection.model;
-  const ownModelThreads = threadsOnOwnModel(profile.modelSelection, profile.tasks ?? []).length;
 
   const pickBotModel = () => {
     if (bot.busy) return;
@@ -490,7 +485,6 @@ export function ModelPicker({
       updateBotDefault,
       selection: nextSelection,
     });
-    if (updateBotDefault && threadId) setChangedBotModel(true);
     // A model with reasoning levels keeps the menu open, so its level can be set next without opening it again;
     // picking a variant row already sets that level.
     if (variant !== undefined || contained || !offersReasoning(state, instance, nextSelection, threadId ?? bot.threadId)) close(true);
@@ -1011,16 +1005,6 @@ export function ModelPicker({
         trigger
       )}
       {menu && floating ? createPortal(menu, document.body) : menu}
-      {!contained && changedBotModel && !open && ownModelThreads > 0 && (
-        <div data-thread-models-notice role="status"
-          className="menu-surface absolute right-0 top-full z-30 mt-1 flex w-max max-w-[min(300px,calc(100vw-2rem))] items-center gap-2 py-1.5 pl-3 pr-1.5 text-[13px] leading-[18px]">
-          <ThreadModelsLine bot={profile} />
-          <button type="button" aria-label={t("common.close")} onClick={() => setChangedBotModel(false)}
-            className="flex size-6 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-ink/[0.06] hover:text-ink">
-            <X size={14} aria-hidden="true" />
-          </button>
-        </div>
-      )}
       <ConfirmDialog
         open={pendingSwitch !== null}
         title={t("model.providerSwitch.title")}
@@ -1037,7 +1021,6 @@ export function ModelPicker({
           dispatch({ type: "setModel", botId: pendingSwitch.botId, threadId: pendingSwitch.threadId,
             selection: pendingSwitch.selection, updateBotDefault: pendingSwitch.updateBotDefault,
             resetApprovalToAsk: true });
-          if (pendingSwitch.updateBotDefault && threadId) setChangedBotModel(true);
           setPendingSwitch(null);
         }}
       />

@@ -1,5 +1,4 @@
 import { useRef, useState, type DragEvent, type RefObject } from "react";
-import { FOLDER_DRAG_TYPE } from "@/lib/folder-order";
 import { t } from "@/lib/i18n";
 import {
   mergeSectionOrder,
@@ -116,7 +115,6 @@ export function useSidebarSections({ simple, rail, density, query, label, sideba
             setDropTarget(over);
           },
           onDrop: (event: DragEvent<HTMLElement>) => {
-            if (event.dataTransfer.types.includes(FOLDER_DRAG_TYPE)) return;
             event.preventDefault();
             const from = event.dataTransfer.getData(SECTION_DRAG_TYPE) || event.dataTransfer.getData("text/plain") || drag.current.from;
             const over = drag.current.over;

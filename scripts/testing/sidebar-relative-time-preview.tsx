@@ -21,12 +21,14 @@ function Fixture() {
       {ages.map(([label, age]) => <SidebarThreadRow
         key={label}
         task={{ threadId: label, title: `${label} old`, updatedAt: now - age }}
-        ownerId="preview"
         current={false}
         now={now}
+        locale="en"
         onSelect={() => {}}
         onRename={() => {}}
         onDelete={() => {}}
+        onArchive={() => {}}
+        onPin={() => {}}
       />)}
     </div>
   </div>;

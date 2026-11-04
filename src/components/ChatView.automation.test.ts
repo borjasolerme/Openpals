@@ -75,28 +75,23 @@ afterAll(() => {
 });
 
 describe("an automation's line in the chat", () => {
-  it("is the bot's own message under the automation's name, with its run one click away", async () => {
+  it("is the bot's own message under the automation's name, with no way into the run's own thread", async () => {
     await draw(transcript([{ id: "r1", parentId: "m2", role: "bot", kind: "text", text: "Acme replied about the order.", at: at(3), automation: line("run-1") }]));
     const label = caption("run-1");
     expect(label?.textContent).toContain("Inbox brief");
     expect(label?.querySelector("time")?.getAttribute("datetime")).toBe(new Date(at(0)).toISOString());
     expect(document.querySelector('[data-mid="r1"]')?.textContent).toContain("Acme replied about the order.");
-    const open = label?.querySelector<HTMLButtonElement>("button");
-    expect(open?.textContent).toBe(t("chat.automation.openRun"));
-    dispatch.mockClear();
-    flushSync(() => open!.click());
-    expect(dispatch).toHaveBeenCalledWith({ type: "switchTask", botId: "pepper", threadId: "run-1-thread" });
+    expect(label?.querySelector("button")).toBeNull();
     expect(caption("m2")).toBeNull();
   });
 
-  it("says when the run needs the person or could not finish, and offers no run it cannot open", async () => {
+  it("says when the run needs the person or could not finish", async () => {
     await draw(transcript([
       { id: "r1", parentId: "m2", role: "bot", kind: "text", text: "Should I send it?", at: at(3), automation: line("run-1", { needsYou: true }) },
       { id: "r2", parentId: "r1", role: "bot", kind: "text", text: "This run didn't finish: signed out.", at: at(4), automation: line("run-gone", { failed: true }) },
     ]));
     expect(caption("run-1")?.textContent).toContain(t("chat.automation.needsYou"));
     expect(caption("run-gone")?.textContent).toContain(t("chat.automation.failed"));
-    expect(caption("run-gone")?.querySelector("button")).toBeNull();
   });
 
   it("never offers Regenerate on a report, which would branch the person's chat away from it", async () => {

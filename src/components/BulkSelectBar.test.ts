@@ -16,8 +16,8 @@ const noop = vi.fn();
 
 describe("select mode rows", () => {
   const row = (extra: Record<string, unknown>) => renderToStaticMarkup(createElement(SidebarThreadRow, {
-    task: { threadId: "a", title: "Old chat", ...extra }, ownerId: "bot", current: false, locale: "en",
-    onSelect: noop, onRename: noop, onDelete: noop, selectMode: true, checked: true, onToggleSelect: noop,
+    task: { threadId: "a", title: "Old chat", ...extra }, current: false, locale: "en",
+    onSelect: noop, onRename: noop, onDelete: noop, onArchive: noop, onPin: noop, selectMode: true, checked: true, onToggleSelect: noop,
   }));
   it("renders a checkbox row without the actions menu", () => {
     const markup = row({});
@@ -32,8 +32,8 @@ describe("select mode rows", () => {
   });
   it("keeps the normal row outside select mode", () => {
     const markup = renderToStaticMarkup(createElement(SidebarThreadRow, {
-      task: { threadId: "a", title: "Old chat" }, ownerId: "bot", current: false, locale: "en",
-      onSelect: noop, onRename: noop, onDelete: noop,
+      task: { threadId: "a", title: "Old chat" }, current: false, locale: "en",
+      onSelect: noop, onRename: noop, onDelete: noop, onArchive: noop, onPin: noop,
     }));
     expect(markup).not.toContain('role="checkbox"');
     expect(markup).toContain("Actions for");
@@ -46,15 +46,15 @@ describe("select mode controls", () => {
     for (const label of ["Select all", "Older than 30 days", "Archived", "Clear", "Done"]) expect(markup).toContain(label);
   });
   it("disables Delete with nothing selected and shows the count", () => {
-    const markup = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set<string>(), freshConversation: true, onChange: noop, onDelete: noop }));
+    const markup = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set<string>(), maxDeletable: 1, onChange: noop, onDelete: noop }));
     expect(markup).toContain("0 selected");
     expect(markup).toMatch(/<button[^>]*disabled=""[^>]*>Delete 0</);
   });
   it("enables Delete for a selection and warns when a channel would lose every thread", () => {
-    const ok = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set(["b"]), maxDeletable: 1, freshConversation: false, onChange: noop, onDelete: noop }));
+    const ok = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set(["b"]), maxDeletable: 1, onChange: noop, onDelete: noop }));
     expect(ok).toContain("1 selected");
     expect(ok).not.toMatch(/<button[^>]*disabled=""[^>]*>Delete 1</);
-    const over = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set(["a", "b"]), maxDeletable: 1, freshConversation: false, onChange: noop, onDelete: noop }));
+    const over = renderToStaticMarkup(createElement(BulkSelectBar, { rows, selected: new Set(["a", "b"]), maxDeletable: 1, onChange: noop, onDelete: noop }));
     expect(over).toMatch(/<button[^>]*disabled=""[^>]*>Delete 2</);
     expect(over).toContain("A channel keeps at least one thread");
   });
@@ -63,7 +63,7 @@ describe("select mode controls", () => {
 describe("thread list footer", () => {
   const footer = (active: boolean, extra: Record<string, unknown>) => renderToStaticMarkup(createElement(ThreadListFooter, {
     bulk: { active, start: noop, finish: noop, forRows: () => new Set<string>(), setSelected: noop, toggle: noop } as ReturnType<typeof useBulkSelect>,
-    rows, selected: new Set<string>(), total: 5, canShowAll: false, canSelect: false, onShowAll: noop, freshConversation: true, onDelete: noop, ...extra,
+    rows, selected: new Set<string>(), total: 5, canShowAll: false, canSelect: false, onShowAll: noop, maxDeletable: 4, onDelete: noop, ...extra,
   }));
   it("offers Show all and Select threads outside select mode", () => {
     const markup = footer(false, { canShowAll: true, canSelect: true });
@@ -77,19 +77,19 @@ describe("thread list footer", () => {
 });
 
 describe("deleting in chunks", () => {
-  it("posts each chunk to the owner's route and patches the owner after each", async () => {
+  it("posts each chunk to the room's route and patches the room after each", async () => {
     const post = vi.mocked(api);
     post.mockReset();
-    post.mockResolvedValueOnce({ deleted: ["a"], refused: [], bot: { id: "bot" } });
-    post.mockResolvedValueOnce({ deleted: ["b"], refused: [{ threadId: "c", reason: "busy" }], bot: { id: "bot" } });
+    post.mockResolvedValueOnce({ deleted: ["a"], refused: [], group: { id: "room" } });
+    post.mockResolvedValueOnce({ deleted: ["b"], refused: [{ threadId: "c", reason: "busy" }], group: { id: "room" } });
     const ids = Array.from({ length: 250 }, (_, i) => `t${i}`);
     const dispatch = vi.fn();
-    const result = await deleteThreadsInBulk({ botId: "bot" }, ids, dispatch);
+    const result = await deleteThreadsInBulk("room", ids, dispatch);
     expect(post).toHaveBeenCalledTimes(2);
-    expect(post.mock.calls[0]![0]).toBe("/api/bots/bot/tasks/delete");
+    expect(post.mock.calls[0]![0]).toBe("/api/groups/room/tasks/delete");
     expect(JSON.parse(String(post.mock.calls[1]![1]!.body)).threadIds).toHaveLength(50);
-    expect(dispatch.mock.calls.map(([action]) => action.type)).toEqual(["botPatched", "botPatched"]);
-    expect(result).toEqual({ responses: [{ deleted: ["a"], refused: [], bot: { id: "bot" } }, { deleted: ["b"], refused: [{ threadId: "c", reason: "busy" }], bot: { id: "bot" } }] });
+    expect(dispatch.mock.calls.map(([action]) => action.type)).toEqual(["groupPatched", "groupPatched"]);
+    expect(result).toEqual({ responses: [{ deleted: ["a"], refused: [], group: { id: "room" } }, { deleted: ["b"], refused: [{ threadId: "c", reason: "busy" }], group: { id: "room" } }] });
   });
   it("stops at a failed chunk and reports what already went", async () => {
     const post = vi.mocked(api);
@@ -97,7 +97,7 @@ describe("deleting in chunks", () => {
     post.mockResolvedValueOnce({ deleted: ["a"], refused: [], group: { id: "room" } });
     post.mockRejectedValueOnce(new Error("offline"));
     const dispatch = vi.fn();
-    const result = await deleteThreadsInBulk({ groupId: "room" }, Array.from({ length: 450 }, (_, i) => `t${i}`), dispatch);
+    const result = await deleteThreadsInBulk("room", Array.from({ length: 450 }, (_, i) => `t${i}`), dispatch);
     expect(post).toHaveBeenCalledTimes(2);
     expect(post.mock.calls[0]![0]).toBe("/api/groups/room/tasks/delete");
     expect(result.error).toBe("offline");

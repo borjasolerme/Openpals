@@ -1,6 +1,6 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Check, ChevronDown, FolderInput, Pin, PinOff, Search, SquarePen, Trash2 } from "lucide-react";
-import { useStore, type Bot, type BotProject, type Group, type Task } from "@/state/store";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Pin, PinOff, Search, SquarePen, Trash2 } from "lucide-react";
+import { useStore, type Group, type Task } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { MENU_ITEM_SEPARATOR, MENU_SHEET } from "./menu-recipe";
 import { roomThreadsWorkingElsewhere } from "@/lib/room-threads";
@@ -10,11 +10,7 @@ import { localizedTaskTitle } from "@/lib/task-title";
 import { COMPACT_BUBBLE } from "@/lib/compact-chip";
 import { formatTaskTokens, headlineTokens, usageDetail } from "@/lib/usage";
 import { nextRename } from "@/lib/rename";
-import { FolderIcon, NewThreadButton } from "./BotProjects";
-import { useShowThreads } from "@/lib/thread-preferences";
-import { attentionJumpAction, attentionOwnerName, AttentionThreadRows, crossBotAttentionThreads, threadsWhenTreeHidden, type AttentionThread } from "./SidebarBotActivity";
 import { formatUpdatedAt, orderedThreadList, threadByline, threadRecency, threadUpdatedLabel, useRelativeNow } from "./SidebarThreadRow";
-import { Select } from "./Select";
 
 export const TASK_PICKER_DISMISS_MS = 500;
 
@@ -63,44 +59,28 @@ function TaskUsage({ usage }: { usage: Task["usage"] }) {
   );
 }
 
-type PickerTask = Pick<Task, "threadId" | "title" | "createdAt" | "updatedAt" | "pinned" | "busy" | "activity" | "unread" | "projectId" | "openedBy" | "closedBy" | "archivedAt" | "snoozedUntil" | "waitingForTeammates"> & { usage?: Task["usage"] };
-
-export function groupThreadTasks(tasks: PickerTask[], projects: BotProject[], query: string) {
-  const needle = query.trim().toLowerCase();
-  return [...projects, { id: "", name: t("folder.none") } as BotProject].map((project) => {
-    const members = tasks.filter((task) => project.id ? task.projectId === project.id : !projects.some((item) => item.id === task.projectId));
-    return { project, tasks: project.name.toLowerCase().includes(needle) ? members : filterTasks(members, query) };
-  }).filter((group) => group.tasks.length > 0);
-}
+type PickerTask = Pick<Task, "threadId" | "title" | "createdAt" | "updatedAt" | "pinned" | "busy" | "activity" | "unread" | "openedBy" | "closedBy" | "archivedAt" | "snoozedUntil" | "waitingForTeammates"> & { usage?: Task["usage"] };
 
 function ConversationTaskPicker({
   threadId,
   tasks,
   busy,
-  bot,
   onNew,
   onSwitch,
   onRename,
   onDelete,
-  onMove,
   onPin,
-  attention,
-  onAttentionJump,
   workingElsewhere = 0,
 }: {
   threadId: string;
   tasks: PickerTask[];
   busy: boolean;
   workingElsewhere?: number;
-  bot?: Bot;
   onNew: () => void;
   onSwitch: (threadId: string) => void;
   onRename: (threadId: string, title: string) => void;
   onDelete: (threadId: string) => void;
-  onMove?: (threadId: string, projectId: string | null) => void;
   onPin?: (threadId: string, pinned: boolean) => void;
-  attention?: AttentionThread[];
-  onAttentionJump?: (entry: AttentionThread) => void;
 }) {
   const [open, setOpen] = useState(false);
   const motion = useMenuMotion(open);
@@ -208,13 +188,8 @@ function ConversationTaskPicker({
           detail: usageDetail(u),
         })
       : t("task.switch");
-  const grouped = bot ? groupThreadTasks(tasks, bot.projects ?? [], query) : null;
-  const visible = grouped ? grouped.flatMap((group) => group.tasks) : filterTasks(tasks, query);
-  const attentionNeedle = query.trim().toLowerCase();
-  const attentionRows = (attention ?? []).filter((entry) =>
-    !attentionNeedle || entry.task.title.toLowerCase().includes(attentionNeedle) || attentionOwnerName(entry).toLowerCase().includes(attentionNeedle));
+  const visible = filterTasks(tasks, query);
   const looking = query.trim();
-  const results = [...attentionRows.map((entry) => ({ kind: "attention" as const, entry })), ...visible.map((task) => ({ kind: "task" as const, task }))];
 
   return (
     <div className="relative" ref={ref}>
@@ -266,10 +241,9 @@ function ConversationTaskPicker({
                   }
                   if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                     e.preventDefault();
-                    const first = results[0];
+                    const first = visible[0];
                     if (!first) return;
-                    if (first.kind === "attention") onAttentionJump?.(first.entry);
-                    else if (first.task.threadId !== threadId) onSwitch(first.task.threadId);
+                    if (first.threadId !== threadId) onSwitch(first.threadId);
                     closeMenu();
                   }
                 }}
@@ -279,23 +253,17 @@ function ConversationTaskPicker({
               />
             </div>
           </div>
-          <div className="max-h-[320px] overflow-y-auto" role="group" aria-label={looking ? t("task.matching", { count: results.length }) : t("task.list")}>
-            {attentionRows.length > 0 && <div className="pb-1">
-              <div className="flex items-center gap-1.5 px-2 pb-1 pt-1.5 text-[12px] font-medium text-ink-secondary"><Activity size={14} />{t("attention.title")}</div>
-              <AttentionThreadRows inset entries={attentionRows} onJump={(entry) => { onAttentionJump?.(entry); closeMenu(); }} />
-            </div>}
-            {results.length === 0 ? (
+          <div className="max-h-[320px] overflow-y-auto" role="group" aria-label={looking ? t("task.matching", { count: visible.length }) : t("task.list")}>
+            {visible.length === 0 ? (
               <div className="px-2 py-6 text-center text-[13px] text-ink-secondary">
                 {t("task.noMatch", { query: looking })}
               </div>
-            ) : visible.map((task, index) => {
+            ) : visible.map((task) => {
               const active = task.threadId === threadId;
               const opener = threadByline(task);
-              const heading = grouped?.find((group) => group.tasks[0]?.threadId === task.threadId)?.project;
               return (
-                <Fragment key={task.threadId}>
-                {bot?.projects?.length && heading ? <div className={cn("flex items-center gap-1.5 px-2 pb-1 pt-2 text-[12px] font-medium text-ink-secondary", index > 0 && "border-t border-hairline/30")}>{heading.id && <FolderIcon emoji={heading.emoji} size={12} />}{heading.name}</div> : null}
                 <div
+                  key={task.threadId}
                   className={cn("group flex items-center gap-2 rounded-md px-2 py-1.5", active ? "bg-menu-active" : "hover:bg-menu-hover")}
                 >
                   <Check size={14} className={cn("shrink-0", active ? "text-accent" : "opacity-0")} />
@@ -376,15 +344,6 @@ function ConversationTaskPicker({
                       <SquarePen size={14} />
                     </button>
                   )}
-                  {bot && onMove && (bot.projects?.length ?? 0) > 0 && <label title={t("folder.move")} className="relative rounded-md p-1 text-ink-secondary opacity-0 hover:bg-menu-hover hover:text-ink focus-within:opacity-100 group-hover:opacity-100 touch:opacity-70">
-                    <FolderInput size={14} />
-                    <select aria-label={t("folder.moveNamed", { title: task.title })} value={bot.projects?.some((project) => project.id === task.projectId) ? task.projectId : ""}
-                      onFocus={clearDismiss} onChange={(event) => { clearDismiss(); onMove(task.threadId, event.target.value || null); }}
-                      className="absolute inset-0 w-full cursor-pointer opacity-0">
-                      <option value="">{t("folder.none")}</option>
-                      {bot.projects?.map((project) => <option key={project.id} value={project.id}>{project.emoji ? `${project.emoji} ` : ""}{project.name}</option>)}
-                    </select>
-                  </label>}
                   <button
                     type="button"
                     onClick={() => onDelete(task.threadId)}
@@ -396,12 +355,11 @@ function ConversationTaskPicker({
                     <Trash2 size={14} />
                   </button>
                 </div>
-                </Fragment>
               );
             })}
           </div>
           <div role="separator" className={MENU_ITEM_SEPARATOR} />
-          {bot ? <NewThreadButton bot={bot} onCreated={closeMenu} className="min-h-[30px] w-full rounded-md px-2 text-[14px] text-ink hover:bg-menu-hover" /> : <button
+          <button
             type="button"
             onClick={() => {
               onNew();
@@ -411,55 +369,10 @@ function ConversationTaskPicker({
             className="flex min-h-[30px] w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[14px] text-ink hover:bg-menu-hover disabled:opacity-40"
           >
             <SquarePen size={16} className="text-ink-secondary" /> {t("task.newShort")}
-          </button>}
+          </button>
         </div>
       )}
     </div>
-  );
-}
-
-export function BotActivityPicker({ bot }: { bot: Bot }) {
-  const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
-  if (showThreads) return null;
-  const activity = threadsWhenTreeHidden(bot, state.pendingQueued).filter((task) => task.threadId !== bot.threadId);
-  if (!activity.length) return null;
-  return (
-    <div className="flex shrink-0 items-center gap-2 px-5 py-2" data-background-activity>
-      <Select variant="pill" size="sm" className="max-w-[180px] shrink-0"
-        aria-label={t("task.otherActivity", { count: activity.length })}
-        value=""
-        onChange={(event) => dispatch({ type: "switchTask", botId: bot.id, threadId: event.target.value })}
-      >
-        <option value="" disabled>{t("task.otherActivity", { count: activity.length })}</option>
-        {activity.map((task) => <option key={task.threadId} value={task.threadId}>
-          {task.title} · {task.activity === "waiting-on-you" ? t("task.waiting") : task.waitingForTeammates ? t("task.waitingOnTeammate") : task.busy || task.activity === "working" ? t("chat.activity.working") : task.queued ? t("task.queued") : t("task.unread")}
-        </option>)}
-      </Select>
-      <span dir="auto" className="truncate text-[12px] text-ink-secondary">{bot.tasks?.find((task) => task.threadId === bot.threadId)?.title}</span>
-    </div>
-  );
-}
-
-export function TaskPicker({ bot }: { bot: Bot }) {
-  const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
-  if (!showThreads) return null;
-  return (
-    <ConversationTaskPicker
-      threadId={bot.threadId}
-      tasks={orderedThreadList((bot.tasks ?? []).filter((task) => !task.routineRunId))}
-      busy={false}
-      bot={bot}
-      attention={crossBotAttentionThreads(state.bots, state.pendingQueued, bot.id, state.groups)}
-      onNew={() => dispatch({ type: "newTask", botId: bot.id })}
-      onSwitch={(threadId) => dispatch({ type: "switchTask", botId: bot.id, threadId })}
-      onRename={(threadId, title) => dispatch({ type: "renameTask", botId: bot.id, threadId, title })}
-      onDelete={(threadId) => dispatch({ type: "deleteTask", botId: bot.id, threadId })}
-      onMove={(threadId, projectId) => dispatch({ type: "updateTask", botId: bot.id, threadId, patch: { projectId } })}
-      onPin={(threadId, pinned) => dispatch({ type: "updateTask", botId: bot.id, threadId, patch: { pinned } })}
-      onAttentionJump={(entry) => dispatch(attentionJumpAction(entry))}
-    />
   );
 }
 

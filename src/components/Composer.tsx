@@ -76,7 +76,6 @@ import { useStackedField, useTallPill } from "./composer-wrap";
 import { useDesktopCapabilities } from "./DesktopCapabilities";
 import { ComposerReplyStrip } from "./ReplyQuote";
 import { escapeCancelsReply } from "@/lib/replies";
-import { useThreadRefs } from "./ThreadRefs";
 import {
   QueuedComposerMessages,
   composerCanSteerQueuedMessages,
@@ -85,7 +84,6 @@ import {
 } from "./ComposerQueuedMessages";
 import { skillAuthoringEnabled } from "@/lib/feature-flags";
 import { mentionChoicesForQuery, mentionQueryAt } from "@/lib/mentions";
-import { serializeThreadRefs, threadTokenFromPaste, threadTokenSpacing } from "@/lib/thread-refs";
 import {
   composerSlashTrigger,
   goalTextFromComposer,
@@ -127,7 +125,6 @@ export function Composer({
   const bot = profile ? currentTaskBot(profile) : undefined;
   const locked = setupLocked || Boolean(bot?.awaitingThreadSnapshot);
   const { state, dispatch } = useStore();
-  const { threads, currentBotId } = useThreadRefs();
   const { capabilities } = useDesktopCapabilities();
   const advanced = useAdvancedMode();
   // On a phone the composer is a dock: a round + (attach and every other tool), then one pill with the field, the mic and the voice button.
@@ -571,7 +568,7 @@ export function Composer({
       dispatch({ type: "error", message: t("composer.error.noImages") });
       return;
     }
-    const composed = composeMessage(serializeThreadRefs(effectiveText, threads, currentBotId), attachments);
+    const composed = composeMessage(effectiveText, attachments);
     if (!composed) return;
     stopDictation();
     const body = restoredRequestText(draftId) ?? composed;
@@ -650,22 +647,6 @@ export function Composer({
       return;
     }
     const pasted = e.clipboardData.getData("text/plain");
-    const reference = threadTokenFromPaste(pasted, threads, currentBotId);
-    if (reference) {
-      e.preventDefault();
-      const start = e.currentTarget.selectionStart ?? text.length;
-      const end = e.currentTarget.selectionEnd ?? start;
-      const { lead, trail } = threadTokenSpacing(text, start, end);
-      const token = lead + reference.token + trail;
-      editText(text.slice(0, start) + token + text.slice(end));
-      const at = start + token.length;
-      setCaret(at);
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-        inputRef.current?.setSelectionRange(at, at);
-      });
-      return;
-    }
     if (!isLongPaste(pasted)) return;
     e.preventDefault();
     const start = e.currentTarget.selectionStart;

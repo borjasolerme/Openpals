@@ -32,3 +32,14 @@ export const MENU_ICON = "shrink-0 text-ink-secondary";
 export const MENU_TRAILING = "shrink-0 text-ink-tertiary rtl:-scale-x-100";
 
 export const MENU_STROKE = 1.75;
+
+/** Arrow keys, Home and End move focus through a menu's enabled buttons, wrapping at either end. */
+export function navigateMenu(event: React.KeyboardEvent<HTMLDivElement>) {
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not([disabled])"));
+  const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1
+    : (index + (event.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length;
+  buttons[next]?.focus();
+}

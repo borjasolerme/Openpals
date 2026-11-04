@@ -29,7 +29,6 @@ export function openNotificationTarget(
   dispatch: (action: Action) => void,
   target: NotificationTarget,
   state: NotificationRoutingState,
-  threadsShown: boolean,
 ) {
   // A room notification carries the asker bot with the room's thread id; switching the bot to it would 404.
   const group = state.groups.find(
@@ -54,39 +53,34 @@ export function openNotificationTarget(
   const known =
     bot.threadId === target.threadId ||
     (bot.tasks ?? []).some((task) => task.threadId === target.threadId);
-  if (known) openBotThread(dispatch, bot, target.threadId, threadsShown);
-  else openBot(dispatch, bot, threadsShown);
+  if (known) openBotThread(dispatch, bot, target.threadId);
+  else openBot(dispatch, bot);
 }
 
-export function botOpensTo(bot: Pick<NotificationThreadOwner, "threadId" | "mainThreadId" | "tasks">, threadsShown: boolean): string {
-  return !threadsShown && bot.mainThreadId && bot.tasks?.some((task) => task.threadId === bot.mainThreadId)
+/** A bot has one chat: its main thread. Routine runs and bot-to-bot work keep their own threads out of sight. */
+export function botOpensTo(bot: Pick<NotificationThreadOwner, "threadId" | "mainThreadId" | "tasks">): string {
+  return bot.mainThreadId && bot.tasks?.some((task) => task.threadId === bot.mainThreadId)
     ? bot.mainThreadId : bot.threadId;
-}
-
-export function awayFromMainThread(bot: Pick<NotificationThreadOwner, "threadId" | "mainThreadId" | "tasks">, threadsShown: boolean): boolean {
-  return !threadsShown && botOpensTo(bot, false) !== bot.threadId;
 }
 
 /** On a team's Cloud, the person's own conversation with the bot, never the team's main chat (team-chats.ts). */
 export function openBot(
   dispatch: (action: Action) => void,
   bot: Pick<NotificationThreadOwner, "id" | "threadId" | "mainThreadId" | "tasks"> & { yourAccess?: string },
-  threadsShown: boolean,
 ) {
-  if (openOwnTeamChat(dispatch, bot, (threadId) => openBotThread(dispatch, bot, threadId, threadsShown))) return;
-  const opened = botOpensTo(bot, threadsShown);
+  if (openOwnTeamChat(dispatch, bot, (threadId) => openBotThread(dispatch, bot, threadId))) return;
+  const opened = botOpensTo(bot);
   if (opened === bot.threadId) dispatch({ type: "select", id: bot.id });
-  else openBotThread(dispatch, bot, opened, threadsShown);
+  else openBotThread(dispatch, bot, opened);
 }
 
-/** With threads hidden the switch alone selects the bot, so the thread left behind keeps its unread mark. */
+/** The switch alone selects the bot, so the thread left behind keeps its unread mark. */
 export function openBotThread(
   dispatch: (action: Action) => void,
   bot: Pick<NotificationThreadOwner, "id" | "threadId">,
   threadId: string,
-  threadsShown: boolean,
 ) {
-  if (threadsShown || threadId === bot.threadId) dispatch({ type: "select", id: bot.id });
+  if (threadId === bot.threadId) dispatch({ type: "select", id: bot.id });
   dispatch({ type: "switchTask", botId: bot.id, threadId });
 }
 
@@ -103,17 +97,17 @@ export function openThread(
   dispatch: (action: Action) => void,
   target: ThreadTarget,
   state: ThreadOpeningState,
-  threadsShown: boolean,
 ): boolean {
   const owns = (owner: NotificationThreadOwner) =>
     owner.threadId === target.threadId || (owner.tasks ?? []).some((task) => task.threadId === target.threadId);
-  if (state.groups.some(owns) || state.bots.some(owns)) {
-    openNotificationTarget(dispatch, target, state, threadsShown);
-    dispatch({ type: "revealThread", threadId: target.threadId });
+  const room = state.groups.some(owns);
+  if (room || state.bots.some(owns)) {
+    openNotificationTarget(dispatch, target, state);
+    if (room) dispatch({ type: "revealThread", threadId: target.threadId });
     return true;
   }
   const bot = state.bots.find((candidate) => candidate.id === target.botId);
-  if (bot) openBot(dispatch, bot, threadsShown);
+  if (bot) openBot(dispatch, bot);
   dispatch({ type: "notice", notice: { kind: "thread-gone", botName: bot?.name ?? null } });
   return false;
 }

@@ -5,12 +5,12 @@ import { createRoot } from "react-dom/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RoutineRun } from "@/lib/routines";
-import { useRoutineRunsFrom, useThreadRoutineRun } from "./older-routine-runs";
+import { useRoutineRunsFrom } from "./older-routine-runs";
 
 const fixture = vi.hoisted(() => ({
   api: vi.fn(),
   dispatch: vi.fn(),
-  state: { routineRunsSince: 1_000 as number | null, routineRuns: [] as unknown[], bots: [] as unknown[] },
+  state: { routineRunsSince: 1_000 as number | null },
 }));
 vi.mock("./store", () => ({ api: fixture.api, useStore: () => ({ state: fixture.state, dispatch: fixture.dispatch }) }));
 
@@ -26,7 +26,7 @@ describe("older routine runs on demand", () => {
   beforeEach(() => {
     fixture.api.mockReset().mockResolvedValue({ runs: [run] });
     fixture.dispatch.mockReset();
-    fixture.state = { routineRunsSince: 1_000, routineRuns: [], bots: [] };
+    fixture.state = { routineRunsSince: 1_000 };
   });
 
   it("a view loads the dates before the app's window, once", async () => {
@@ -41,16 +41,5 @@ describe("older routine runs on demand", () => {
     mount(() => useRoutineRunsFrom(start));
     await settle();
     expect(fixture.api).not.toHaveBeenCalled();
-  });
-
-  it("a chat of an old run loads that run; any other chat asks for nothing", async () => {
-    fixture.state.bots = [{ id: "b", tasks: [{ threadId: "t", routineRunId: "old" }, { threadId: "plain" }] }];
-    mount(() => useThreadRoutineRun("b", "plain"));
-    await settle();
-    expect(fixture.api).not.toHaveBeenCalled();
-    mount(() => useThreadRoutineRun("b", "t"));
-    await settle();
-    expect(fixture.api.mock.calls).toEqual([["/api/routines?thread=t"]]);
-    expect(fixture.dispatch).toHaveBeenCalledWith({ type: "routineRunsLoaded", runs: [run] });
   });
 });

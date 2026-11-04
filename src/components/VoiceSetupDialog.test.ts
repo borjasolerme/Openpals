@@ -18,7 +18,6 @@ vi.mock("react", async (original) => ({
   useEffect: (effect: EffectCallback) => { fixture.effects.push(effect); },
 }));
 vi.mock("react-dom", () => ({ createPortal: (children: ReactNode) => children }));
-vi.mock("@/lib/thread-preferences", () => ({ useShowThreads: () => fixture.showThreads }));
 vi.mock("@/state/store", async (importOriginal) => {
   const store = await importOriginal<typeof import("@/state/store")>();
   return {

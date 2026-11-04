@@ -93,11 +93,10 @@ describe("sidebar search disclosure (MOCA-293)", () => {
     expect(row("group:engineering", true)("", false)[0]).toBe(false);
   });
 
-  it("matches thread titles and folders, not routine runs", () => {
-    const tasks = [{ title: "LinkedIn post: launch story" }, { title: "post run", routineRunId: "r1" }];
+  it("matches a room's thread titles", () => {
+    const tasks = [{ title: "LinkedIn post: launch story" }, { title: "Standup" }];
     expect(searchMatchesThreads("POST", tasks)).toBe(true);
-    expect(searchMatchesThreads("post run", tasks)).toBe(false);
-    expect(searchMatchesThreads("launch", [], [{ name: "Launch week" }])).toBe(true);
+    expect(searchMatchesThreads("weekly", tasks)).toBe(false);
     expect(searchMatchesThreads("  ", tasks)).toBe(false);
   });
 });

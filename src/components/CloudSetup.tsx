@@ -14,7 +14,6 @@ import type { MausMotion } from "@/lib/mascot";
 import { hintSeen, type WelcomeViewer } from "@/lib/onboarding";
 import type { LocaleKey } from "@/locales";
 import type { Routine } from "@/lib/routines";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { openBot, useStore } from "@/state/store";
 
 const TITLE: Record<CloudSetupStep, LocaleKey> = {
@@ -103,7 +102,6 @@ function CloudReady({ routine, onDone }: { routine?: Routine; onDone: () => void
 
 export function CloudSetup({ viewer, welcomeShown = false }: { viewer: WelcomeViewer | null; welcomeShown?: boolean }) {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const [hidden, setHidden] = useState(false);
   const [collapsed, setCollapsed] = useState(storedCollapsed);
   const [finale, setFinale] = useState(false);
@@ -149,7 +147,7 @@ export function CloudSetup({ viewer, welcomeShown = false }: { viewer: WelcomeVi
   const openJobChat = () => {
     dispatch({ type: "showChat" });
     const bot = state.bots.find((candidate) => candidate.id === jobBot);
-    if (bot) openBot(dispatch, bot, showThreads);
+    if (bot) openBot(dispatch, bot);
   };
   const hint = (key: LocaleKey) => <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t(key)}</p>;
   const action = (label: LocaleKey, onClick: () => void) => <button type="button" className={PRIMARY} onClick={onClick}>{t(label)}<ArrowRight size={13} aria-hidden="true" /></button>;

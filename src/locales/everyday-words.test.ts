@@ -8,7 +8,7 @@ const EVERYDAY_PREFIXES: Record<string, readonly string[]> = {
   "the chat and the composer": [
     "chat.", "composer.", "attach.", "toolStep.", "approval.", "question.", "signIn.", "limits.", "call.", "task.", "room.",
   ],
-  "notifications and alerts": ["attention.", "notifications.", "error.", "readyBots.", "app.loading."],
+  "notifications and alerts": ["notifications.", "error.", "readyBots.", "app.loading."],
   "the sidebar and the switcher": ["sidebar."],
   "moving from Grok Bot": ["grokMove."],
   "the rail of Clouds and its ＋": ["rail."],

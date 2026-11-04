@@ -1,8 +1,7 @@
 import { useMemo, useState, type JSX } from "react";
-import { Bug, Copy, Cpu, Download, Gauge, ListChecks, MessagesSquare, Monitor, MoreHorizontal, Search, Share, SquarePen, UserRound } from "lucide-react";
-import { currentTaskBot, openBotThread, useStore, visibleMessages, type Bot } from "@/state/store";
+import { Bug, Copy, Cpu, Download, Gauge, ListChecks, Monitor, MoreHorizontal, Search, Share, UserRound } from "lucide-react";
+import { currentTaskBot, useStore, visibleMessages, type Bot } from "@/state/store";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { requestChatFind, useChatFindOpen } from "@/lib/chat-find";
 import { usageSummary } from "@/lib/chat-usage-summary";
 import {
@@ -13,29 +12,25 @@ import {
 } from "@/lib/export-transcript";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { localizedTaskTitle } from "@/lib/task-title";
 import { ELEVATED_CONTROL, ELEVATED_HOVER, ELEVATED_OPEN } from "./elevated";
 import { ShortcutHint } from "./ShortcutHint";
 import { SidebarPopoverMenu, type SidebarMenuItem } from "./SidebarPopoverMenu";
-import { orderedThreadList } from "./SidebarThreadRow";
 import { openBotSettings } from "./bot-panel/panel-link";
 import { ShareBotButton, useTeamName } from "./bot-access/ShareBotButton";
 
-/** One item list for the chat's ⋯ menu wherever it sits; it lists the threads whenever the sidebar hides them. The
- * Simple bot panel draws the same items as rows, and its Share button holds the two that export. */
+/** One item list for the chat's ⋯ menu wherever it sits. The Simple bot panel draws the same items as rows, and its
+ * Share button holds the two that export. */
 export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: SidebarMenuItem[]; on: boolean } {
   const bot = useMemo(() => currentTaskBot(profile), [profile]);
   const messages = useMemo(() => visibleMessages(bot), [bot]);
   const { state, dispatch } = useStore();
   const advanced = useAdvancedMode();
-  const showThreads = useShowThreads();
   const findOpen = useChatFindOpen(bot.threadId);
   const [copyStatus, setCopyStatus] = useState<"copied" | "failed" | null>(null);
   const remoteClient = window.ogb?.remoteClient?.active === true;
   const usage = usageSummary(bot, state.instances);
   const hasMessages = messages.length > 0;
   const transcript = () => formatTranscriptMarkdown({ title: bot.name, messages, botName: bot.name, isGroup: false });
-  const threads = showThreads ? [] : orderedThreadList((profile.tasks ?? []).filter((task) => !task.routineRunId));
   const selection = profile.modelSelection;
   const modelName = phoneHeader && selection
     ? state.instances.find((candidate) => candidate.instanceId === selection.instanceId)?.models.options.find((option) => option.id === selection.model)?.label ?? selection.model
@@ -76,28 +71,6 @@ export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: Si
       onSelect: () => requestChatFind(bot.threadId),
     },
     ...phoneScreen,
-    ...(showThreads ? [] : [{
-      key: "new-thread",
-      heading: t("task.list"),
-      separatorBefore: true,
-      label: t("task.newShort"),
-      icon: <SquarePen size={16} />,
-      onSelect: () => dispatch({ type: "newTask", botId: profile.id }),
-    } satisfies SidebarMenuItem]),
-    // With one thread there is nothing to switch to.
-    ...(threads.length < 2 ? [] : [{
-      key: "threads",
-      label: t("task.switch"),
-      icon: <MessagesSquare size={16} />,
-      value: String(threads.length),
-      submenu: threads.map((task) => ({
-        key: `thread:${task.threadId}`,
-      label: localizedTaskTitle(task.title || t("task.newShort")),
-        active: task.threadId === bot.threadId,
-        onSelect: () => openBotThread(dispatch, profile, task.threadId, showThreads),
-      })),
-      onSelect: () => {},
-    } satisfies SidebarMenuItem]),
     {
       key: "copy",
       heading: t("chat.export.heading"),
@@ -172,7 +145,7 @@ function RoundChatMoreMenu({ bot, phoneHeader }: { bot: Bot; phoneHeader: boolea
 
 /**
  * The chat's ⋯ menu as a round button, for a spot outside the chat such as the bot panel's top bar: find in
- * conversation (opens the chat's find bar), threads the sidebar hides, share, usage, activity and the inspector.
+ * conversation (opens the chat's find bar), share, usage, activity and the inspector.
  */
 export function ChatMoreMenu({ bot, phoneHeader = false }: { bot: Bot; phoneHeader?: boolean }): JSX.Element {
   // Keyed by thread so a "Copied" note never follows the panel into another conversation.

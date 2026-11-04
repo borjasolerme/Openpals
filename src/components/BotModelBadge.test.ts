@@ -5,7 +5,6 @@ import { initialState, type AppState, type Bot, type InstanceInfo } from "@/stat
 import type { SidebarDensity } from "@/lib/sidebar-preferences";
 
 const fixture = vi.hoisted(() => ({ state: {} as Partial<AppState>, advanced: true }));
-vi.mock("@/lib/thread-preferences", () => ({ useShowThreads: () => false }));
 vi.mock("@/lib/interface-mode", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/lib/interface-mode")>(),
   useAdvancedMode: () => fixture.advanced,
@@ -64,7 +63,7 @@ describe("BotModelBadge", () => {
 describe("sidebar bot row", () => {
   const botRow = (BotListItem as MemoExoticComponent<(props: BotRowProps) => ReactNode>).type;
   const render = (candidate: Bot, density: SidebarDensity) => renderToStaticMarkup(createElement(botRow,
-    botRowProps({ ...initialState, ...fixture.state }, vi.fn(), candidate, { density, query: "", onMenu: vi.fn() })));
+    botRowProps({ ...initialState, ...fixture.state }, vi.fn(), candidate, { density, onMenu: vi.fn() })));
   const badges = (markup: string) => markup.match(/<span data-testid="model-badge"[^>]*>/g) ?? [];
 
   beforeEach(() => {

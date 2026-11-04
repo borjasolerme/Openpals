@@ -38,10 +38,10 @@ export function reportsToFor(chosen: string | null, section: string | undefined,
 /** A bot just made joins the sidebar and, unless the caller keeps its own place, its chat opens: on a team's Cloud the
  * creator's own conversation, never the main chat every member reads. */
 export function announceNewBot(dispatch: (action: Action) => void, bot: Bot, warnings: readonly string[],
-  { preserveSelection = false, showThreads, source, role }: { preserveSelection?: boolean; showThreads: boolean; source: BotSource; role?: string }) {
+  { preserveSelection = false, source, role }: { preserveSelection?: boolean; source: BotSource; role?: string }) {
   botCreated(source, role);
   dispatch({ type: "botAdded", bot, preserveSelection });
-  if (!preserveSelection && teamChats()) openBot(dispatch, bot, showThreads);
+  if (!preserveSelection && teamChats()) openBot(dispatch, bot);
   if (warnings.length) dispatch({ type: "error", message: warnings.join("\n") });
 }
 
@@ -68,7 +68,7 @@ async function createNewBot(section: string | undefined, bots: readonly Bot[], t
 
 /** New bot: a bot made at once from the New bot defaults, with its chat open and ready for the first message. */
 export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bots: readonly Bot[], dispatch: (action: Action) => void,
-  showThreads: boolean, request: typeof api = api): Promise<void> {
+  request: typeof api = api): Promise<void> {
   let made: Awaited<ReturnType<typeof createNewBot>>;
   try {
     made = await createNewBot(action.section, bots, currentTeamPeople(), request);
@@ -78,7 +78,7 @@ export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bo
     else dispatch({ type: "error", message });
     return;
   }
-  announceNewBot(dispatch, made.bot, made.warnings, { preserveSelection: action.preserveSelection, showThreads, source: "blank" });
+  announceNewBot(dispatch, made.bot, made.warnings, { preserveSelection: action.preserveSelection, source: "blank" });
   if (made.startsOnAsk) dispatch({ type: "notice", notice: { kind: "note", botName: null, text: t("newBot.startsOnAsk", { name: made.bot.name }) } });
   action.onCreated?.(made.bot);
 }

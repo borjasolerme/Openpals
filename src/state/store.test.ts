@@ -305,24 +305,6 @@ describe("independent bot threads", () => {
     expect(cancelled.pendingQueued.second).toBeUndefined();
   });
 
-  it("waits for acknowledged folder writes and keeps them separate from every thread and bot default", () => {
-    const projectBot = { ...bot, projects: [{ id: "work", name: "Work" }, { id: "personal", name: "Personal" }] };
-    const original = { ...start(), bots: [projectBot] };
-    const pending = reducer(original, { type: "updateProject", botId: bot.id, projectId: "work", patch: { name: "Research", emoji: "🧪" } });
-    expect(pending).toBe(original);
-    expect(reducer(original, { type: "reorderProjects", botId: bot.id, projectIds: ["personal", "work"] })).toBe(original);
-    expect(reducer(original, { type: "createProject", botId: bot.id, name: "New", emoji: "📁" })).toBe(original);
-    expect(reducer(original, { type: "deleteProject", botId: bot.id, projectId: "work" })).toBe(original);
-    const projects = [{ id: "personal", name: "Personal" }, { id: "work", name: "Research", emoji: "🧪" }];
-    const state = reducer(pending, { type: "botPatched", bot: { ...projectBot, projects } });
-    expect(state.bots[0]?.projects).toEqual(projects);
-    expect(state.selectedId).toBe(original.selectedId);
-    expect(state.bots[0]?.threadId).toBe(bot.threadId);
-    expect(state.bots[0]?.tasks).toEqual(bot.tasks);
-    expect(state.bots[0]?.messages).toEqual(bot.messages);
-    expect(state.bots[0]?.modelSelection).toEqual(bot.modelSelection);
-  });
-
   it("moves or ungroups a busy thread without changing its model, state, or selected conversation", () => {
     const grouped = reducer(start(), { type: "updateTask", botId: bot.id, threadId: "second", patch: { projectId: "work" } });
     expect(grouped.bots[0]?.tasks?.[1]).toEqual({ ...bot.tasks?.[1], projectId: "work" });
@@ -831,13 +813,12 @@ describe("notification routing", () => {
     ],
   }];
 
-  it("selects the bot and switches to the notification's exact task", () => {
+  it("switches to the notification's exact task, a hidden thread too", () => {
     const dispatch = vi.fn();
 
-    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "detached-thread" }, { bots, groups }, true);
+    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "detached-thread" }, { bots, groups });
 
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "select", id: "bot-1" },
       { type: "switchTask", botId: "bot-1", threadId: "detached-thread" },
     ]);
   });
@@ -845,7 +826,7 @@ describe("notification routing", () => {
   it("opens the room when the thread is a group's — never a bot task switch that would 404", () => {
     const dispatch = vi.fn();
 
-    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "room-thread" }, { bots, groups }, true);
+    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "room-thread" }, { bots, groups });
 
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "select", id: "room-1" }]);
   });
@@ -854,9 +835,8 @@ describe("notification routing", () => {
     const dispatch = vi.fn();
     openNotificationTarget(dispatch, { botId: "runner", threadId: "detached-thread" }, {
       bots: [...bots, { id: "runner", threadId: "runner-thread", tasks: [] }], groups,
-    }, true);
+    });
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "select", id: "bot-1" },
       { type: "switchTask", botId: "bot-1", threadId: "detached-thread" },
     ]);
   });
@@ -864,7 +844,7 @@ describe("notification routing", () => {
   it("opens the room and restores the exact inactive channel task", () => {
     const dispatch = vi.fn();
 
-    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "older-room-thread" }, { bots, groups }, true);
+    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "older-room-thread" }, { bots, groups });
 
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
       { type: "select", id: "room-1" },
@@ -875,7 +855,7 @@ describe("notification routing", () => {
   it("lands on a plain bot select for a thread it cannot place, not an error", () => {
     const dispatch = vi.fn();
 
-    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "deleted-task-thread" }, { bots, groups }, true);
+    openNotificationTarget(dispatch, { botId: "bot-1", threadId: "deleted-task-thread" }, { bots, groups });
 
     expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "select", id: "bot-1" }]);
   });
@@ -883,19 +863,17 @@ describe("notification routing", () => {
   describe("openThread", () => {
     const named = bots.map((bot) => ({ ...bot, name: "Scout" }));
 
-    it("selects the bot, switches the view to the thread and reveals its row", () => {
+    it("switches the bot to the thread, with no sidebar row to reveal", () => {
       const dispatch = vi.fn();
-      expect(openThread(dispatch, { botId: "bot-1", threadId: "detached-thread" }, { bots: named, groups }, true)).toBe(true);
+      expect(openThread(dispatch, { botId: "bot-1", threadId: "detached-thread" }, { bots: named, groups })).toBe(true);
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
-        { type: "select", id: "bot-1" },
         { type: "switchTask", botId: "bot-1", threadId: "detached-thread" },
-        { type: "revealThread", threadId: "detached-thread" },
       ]);
     });
 
     it("opens a room thread through the room, not a bot switch", () => {
       const dispatch = vi.fn();
-      openThread(dispatch, { botId: "bot-1", threadId: "older-room-thread" }, { bots: named, groups }, true);
+      openThread(dispatch, { botId: "bot-1", threadId: "older-room-thread" }, { bots: named, groups });
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
         { type: "select", id: "room-1" },
         { type: "switchGroupTask", groupId: "room-1", threadId: "older-room-thread" },
@@ -905,7 +883,7 @@ describe("notification routing", () => {
 
     it("falls back to the bot with a quiet notice when the thread is gone, never a switch that would 404", () => {
       const dispatch = vi.fn();
-      expect(openThread(dispatch, { botId: "bot-1", threadId: "deleted-thread" }, { bots: named, groups }, true)).toBe(false);
+      expect(openThread(dispatch, { botId: "bot-1", threadId: "deleted-thread" }, { bots: named, groups })).toBe(false);
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
         { type: "select", id: "bot-1" },
         { type: "notice", notice: { kind: "thread-gone", botName: "Scout" } },
@@ -914,7 +892,7 @@ describe("notification routing", () => {
 
     it("only notices when even the bot is gone", () => {
       const dispatch = vi.fn();
-      expect(openThread(dispatch, { botId: "deleted-bot", threadId: "deleted-thread" }, { bots: named, groups }, true)).toBe(false);
+      expect(openThread(dispatch, { botId: "deleted-bot", threadId: "deleted-thread" }, { bots: named, groups })).toBe(false);
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
         { type: "notice", notice: { kind: "thread-gone", botName: null } },
       ]);
@@ -940,69 +918,56 @@ describe("notification routing", () => {
         { threadId: "later-chat", title: "Later chat", createdAt: 2 },
       ],
     };
-    const opened = (target: Bot, threadsShown: boolean) => {
+    const opened = (target: Bot) => {
       const dispatch = vi.fn();
-      openBot(dispatch, target, threadsShown);
+      openBot(dispatch, target);
       return dispatch.mock.calls.map(([action]) => action);
     };
 
-    it("opens the thread it was on while threads are shown", () => {
-      expect(opened(bot, true)).toEqual([{ type: "select", id: "bot-1" }]);
-    });
-
-    it("opens the bot's main thread while threads are hidden, the way its row would", () => {
-      expect(opened(bot, false)).toEqual([{ type: "switchTask", botId: "bot-1", threadId: "later-chat" }]);
-      expect(opened({ ...bot, threadId: "later-chat" }, false)).toEqual([{ type: "select", id: "bot-1" }]);
-      expect(opened({ ...bot, tasks: undefined }, false)).toEqual([{ type: "select", id: "bot-1" }]);
-      expect(opened({ ...bot, mainThreadId: undefined }, false)).toEqual([{ type: "select", id: "bot-1" }]);
-      const switched = reducer({ ...initialState, bots: [bot], selectedId: "other", activeView: "routines" }, opened(bot, false)[0] as Action);
+    it("opens the bot's main thread, the way its row would", () => {
+      expect(opened(bot)).toEqual([{ type: "switchTask", botId: "bot-1", threadId: "later-chat" }]);
+      expect(opened({ ...bot, threadId: "later-chat" })).toEqual([{ type: "select", id: "bot-1" }]);
+      expect(opened({ ...bot, tasks: undefined })).toEqual([{ type: "select", id: "bot-1" }]);
+      expect(opened({ ...bot, mainThreadId: undefined })).toEqual([{ type: "select", id: "bot-1" }]);
+      const switched = reducer({ ...initialState, bots: [bot], selectedId: "other", activeView: "routines" }, opened(bot)[0] as Action);
       expect(switched).toMatchObject({ selectedId: "bot-1", activeView: "chat" });
       expect(switched.bots[0]!.tasks!.find((task) => task.threadId === "routine-report")!.unread).toBe(true);
     });
 
-    const followed = (threadId: string, threadsShown: boolean) => {
+    const followed = (threadId: string) => {
       const dispatch = vi.fn();
-      openNotificationTarget(dispatch, { botId: "bot-1", threadId }, { bots: [bot], groups: [] }, threadsShown);
+      openNotificationTarget(dispatch, { botId: "bot-1", threadId }, { bots: [bot], groups: [] });
       return dispatch.mock.calls.map(([action]) => action as Action);
     };
 
-    it("opens a thread a notification names without passing the reply the bot was left on as read, with threads hidden", () => {
-      const actions = followed("later-chat", false);
+    it("opens a thread a notification names without passing the reply the bot was left on as read", () => {
+      const actions = followed("later-chat");
       expect(actions).toEqual([{ type: "switchTask", botId: "bot-1", threadId: "later-chat" }]);
       const opened = actions.reduce(reducer, { ...initialState, bots: [bot], selectedId: "other", activeView: "chat" });
       expect(opened).toMatchObject({ selectedId: "bot-1", activeView: "chat" });
       expect(opened.bots[0]!.tasks!.find((task) => task.threadId === "routine-report")!.unread).toBe(true);
-      expect(followed("routine-report", false)).toEqual([
+      expect(followed("routine-report")).toEqual([
         { type: "select", id: "bot-1" },
         { type: "switchTask", botId: "bot-1", threadId: "routine-report" },
       ]);
     });
 
-    it("opens a thread a notification names as before while threads are shown", () => {
-      expect(followed("later-chat", true)).toEqual([
-        { type: "select", id: "bot-1" },
-        { type: "switchTask", botId: "bot-1", threadId: "later-chat" },
-      ]);
-    });
-
-    it("falls back from a thread it cannot place to the bot itself, its main thread with threads hidden", () => {
-      expect(followed("deleted-thread", false)).toEqual([{ type: "switchTask", botId: "bot-1", threadId: "later-chat" }]);
-      expect(followed("deleted-thread", true)).toEqual([{ type: "select", id: "bot-1" }]);
+    it("falls back from a thread it cannot place to the bot's main thread", () => {
+      expect(followed("deleted-thread")).toEqual([{ type: "switchTask", botId: "bot-1", threadId: "later-chat" }]);
       const named = [{ ...bot, name: "Scout" }];
       const dispatch = vi.fn();
-      expect(openThread(dispatch, { botId: "bot-1", threadId: "deleted-thread" }, { bots: named, groups: [] }, false)).toBe(false);
+      expect(openThread(dispatch, { botId: "bot-1", threadId: "deleted-thread" }, { bots: named, groups: [] })).toBe(false);
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
         { type: "switchTask", botId: "bot-1", threadId: "later-chat" },
         { type: "notice", notice: { kind: "thread-gone", botName: "Scout" } },
       ]);
     });
 
-    it("opens a chip's or a link's thread the same way, then reveals it", () => {
+    it("opens a chip's or a link's thread the same way", () => {
       const dispatch = vi.fn();
-      expect(openThread(dispatch, { botId: "bot-1", threadId: "later-chat" }, { bots: [{ ...bot, name: "Scout" }], groups: [] }, false)).toBe(true);
+      expect(openThread(dispatch, { botId: "bot-1", threadId: "later-chat" }, { bots: [{ ...bot, name: "Scout" }], groups: [] })).toBe(true);
       expect(dispatch.mock.calls.map(([action]) => action)).toEqual([
         { type: "switchTask", botId: "bot-1", threadId: "later-chat" },
-        { type: "revealThread", threadId: "later-chat" },
       ]);
     });
   });
@@ -1086,31 +1051,6 @@ describe("config status frames", () => {
 });
 
 describe("task rename", () => {
-  it("updates the task title in local state immediately", () => {
-    const bot = {
-      id: "echo",
-      threadId: "t1",
-      name: "Echo",
-      title: "",
-      description: "",
-      notifications: true,
-      color: "green",
-      unread: false,
-      modelSelection: { instanceId: "x", model: "y" },
-      messages: [],
-      tasks: [
-        { threadId: "t1", title: "New task", createdAt: 1 },
-        { threadId: "t2", title: "Other", createdAt: 2 },
-      ],
-    } satisfies Bot;
-    const next = reducer(
-      { ...initialState, bots: [bot] },
-      { type: "renameTask", botId: bot.id, threadId: "t1", title: "Renamed" },
-    );
-    expect(next.bots[0]?.tasks?.find((task) => task.threadId === "t1")?.title).toBe("Renamed");
-    expect(next.bots[0]?.tasks?.find((task) => task.threadId === "t2")?.title).toBe("Other");
-  });
-
   it("updates a channel task title in local state immediately", () => {
     const group = {
       id: "room",

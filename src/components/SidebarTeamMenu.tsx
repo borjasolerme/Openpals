@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CheckCheck, Loader2, Network, Share2, SlidersHorizontal, SquarePen, Trash2, UserRound, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { departmentUnread, markDepartmentRead } from "@/lib/folder-read";
+import { departmentUnread, markDepartmentRead } from "@/lib/mark-read";
 import { t } from "@/lib/i18n";
 import { api, useStore } from "@/state/store";
 import { MENU_ITEM } from "./menu-recipe";

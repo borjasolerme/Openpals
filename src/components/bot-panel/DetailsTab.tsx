@@ -7,7 +7,6 @@ import { useChatMoreItems } from "../ChatMoreMenu";
 import { ModelPicker } from "../ModelPicker";
 import type { SidebarMenuItem } from "../SidebarPopoverMenu";
 import type { useBotSettingsDerived } from "../bot-settings/useBotSettingsDerived";
-import { BotConversations } from "./Conversations";
 import type { SimplePageId } from "./page-registry";
 import { TryAsking } from "./TryAsking";
 import { Card, NavRow, RowIcon, rowCls, RowText } from "./rows";
@@ -57,8 +56,6 @@ export function DetailsTab({ bot, derived, onOpen }: {
           />
         </div>
       </Card>
-
-      <BotConversations bot={bot} />
 
       {derived.botRoutines.length === 0 ? (
         <div data-panel-empty="routines" className="px-3 py-7 text-center text-[13px] leading-[18px] text-ink-tertiary">

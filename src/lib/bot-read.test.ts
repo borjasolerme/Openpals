@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { initialState, reducer, type AppState, type Bot, type BotAnnouncement, type Message } from "@/state/store";
-import { botUnreadThreadIds, markBotRead } from "./folder-read";
+import { botUnreadThreadIds, markBotRead } from "./mark-read";
 
 const owner: Bot = {
   id: "reviewer", threadId: "selected", name: "Reviewer", title: "", description: "", notifications: true,

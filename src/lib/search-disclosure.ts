@@ -54,13 +54,8 @@ export function useSearchDisclosure(
   return [open, set];
 }
 
-export function searchMatchesThreads(
-  query: string,
-  tasks: ReadonlyArray<{ title: string; routineRunId?: string }> | undefined,
-  folders: ReadonlyArray<{ name: string }> | undefined = [],
-): boolean {
+export function searchMatchesThreads(query: string, tasks: ReadonlyArray<{ title: string }> | undefined): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return false;
-  return Boolean(tasks?.some((task) => !task.routineRunId && task.title.toLowerCase().includes(q)))
-    || folders.some((folder) => folder.name.toLowerCase().includes(q));
+  return Boolean(tasks?.some((task) => task.title.toLowerCase().includes(q)));
 }

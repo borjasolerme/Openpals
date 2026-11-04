@@ -5,28 +5,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { initialState, type Bot } from "@/state/store";
 import type { BotAvatarCrop } from "../../shared/bot-avatar";
 
-// renderToStaticMarkup reads useShowThreads's server snapshot, which ignores
-// the stored choice, so the cases flip the hook itself.
-const threads = vi.hoisted(() => ({ show: true }));
-
-// Threads are an Advanced-mode surface (Simple keeps one conversation per bot), so these render as Advanced.
 vi.mock("@/lib/interface-mode", async (original) => ({
   ...await original<typeof import("@/lib/interface-mode")>(),
   useAdvancedMode: () => true,
-}));
-vi.mock("@/lib/thread-preferences", async (original) => ({
-  ...await original<typeof import("@/lib/thread-preferences")>(),
-  useShowThreads: () => threads.show,
 }));
 vi.mock("./DesktopCapabilities", () => ({
   useDesktopCapabilities: () => ({}),
 }));
 
-import { BotListItem, botRowProps, PinnedBotCircle, PinnedCircleThreadPanel, PinnedCircleThreadSection } from "./Sidebar";
-import { PinnedBotRoster } from "./PinnedCircleThreads";
+import { BotListItem, botRowProps } from "./Sidebar";
+import { PinnedBotCircle, PinnedBotRoster } from "./PinnedCircles";
 import { setPinnedCircleOrder } from "@/lib/sidebar-preferences";
 import { PINNED_CIRCLE_DRAG_TYPE } from "@/lib/pinned-circle-order";
-import { forgetSearchDisclosuresForTests } from "@/lib/search-disclosure";
 
 const bot = (overrides: Partial<Bot> = {}): Bot => ({
   id: "atlas",
@@ -50,19 +40,10 @@ const frame = (markup: string) => {
 };
 
 const row = (candidate: Bot, selectedId = initialState.selectedId) =>
-  botRowProps({ ...initialState, selectedId, activeView: "chat" }, vi.fn(), candidate, { density: "comfortable", query: "", onMenu: vi.fn() });
+  botRowProps({ ...initialState, selectedId, activeView: "chat" }, vi.fn(), candidate, { density: "comfortable", onMenu: vi.fn() });
 
 function renderCircle(candidate: Bot, selected = false) {
   return renderToStaticMarkup(createElement(PinnedBotCircle, row(candidate, selected ? candidate.id : initialState.selectedId)));
-}
-
-function renderThreads(collapsed: boolean, bots: Bot[]) {
-  return renderToStaticMarkup(createElement(PinnedCircleThreadSection, {
-    bots,
-    collapsed,
-    onToggle: () => {},
-    row: (candidate) => row(candidate),
-  }));
 }
 
 describe("pinned circle frame", () => {
@@ -80,7 +61,6 @@ describe("pinned circle frame", () => {
     expect(clipped).toContain(`border-radius:${radius}`);
     expect(clipped).not.toContain("rounded-full");
     expect(markup).not.toContain("rounded-full");
-    expect(markup).not.toContain("Expand Atlas threads");
   });
 
   it("draws the selection ring on the same crop as the frame", () => {
@@ -96,62 +76,18 @@ describe("pinned circle frame", () => {
   });
 });
 
-describe("pinned circle thread list", () => {
-  const atlas = bot({
-    tasks: [
-      { threadId: "thread-atlas", title: "Current", createdAt: 2 },
-      { threadId: "thread-earlier", title: "Earlier", createdAt: 1 },
-    ] as Bot["tasks"],
-  });
-  const beacon = bot({ id: "beacon", threadId: "thread-beacon", name: "Beacon" });
-
-  it("stays closed, without a second circle grid or a reorder handle", () => {
-    const markup = renderThreads(true, [atlas, beacon]);
-    expect(markup).toContain('data-sidebar-pinned-circle-threads=""');
-    expect(markup).toContain('aria-expanded="false"');
-    expect(markup).toContain("Expand Pinned");
-    expect(markup).not.toContain("Atlas");
-    expect(markup).not.toContain("Beacon");
-    expect(markup).not.toContain("data-sidebar-pinned-circles");
-    expect(markup).not.toContain("Drag to reorder");
-  });
-
-  it("opens the same pinned bots as rows, in circle order, with the thread menu", () => {
-    const markup = renderThreads(false, [atlas, beacon]);
-    expect(markup).toContain('aria-expanded="true"');
-    expect(markup).toContain("Collapse Pinned");
-    expect(markup.indexOf("Atlas")).toBeLessThan(markup.indexOf("Beacon"));
-    expect(markup).toContain('aria-label="Actions for Atlas"');
-    expect(markup).toContain("Expand Atlas threads");
-    expect(markup).not.toContain("data-sidebar-pinned-circles");
-    expect(markup).not.toContain("Drag to reorder");
-  });
-
-  it("offers the thread list from the circle, closed until the chevron opens it", () => {
-    const markup = renderCircle(atlas);
-    const toggle = markup.match(/<button[^>]*aria-label="Expand Atlas threads"[^>]*>/)?.[0];
-    expect(toggle).toContain('aria-expanded="false"');
-    expect(toggle).toContain('aria-controls="pinned-circle-threads-atlas"');
-    const botButton = markup.slice(markup.indexOf('data-sidebar-bot-row="atlas"'), markup.indexOf("</button>"));
-    expect(botButton).not.toContain("Expand Atlas threads");
-    expect(markup).not.toContain("data-sidebar-thread-row");
-  });
-
-  it("lists that circle's threads, with a way to start another", () => {
-    const markup = renderToStaticMarkup(createElement(PinnedCircleThreadPanel, row(atlas)));
-    expect(markup).toContain('data-sidebar-pinned-circle-thread-list="atlas"');
-    expect(markup).toContain("Current");
-    expect(markup).toContain("Earlier");
-    expect(markup).toContain("data-sidebar-thread-row");
-    expect(markup).toContain("New thread");
-  });
-
-  it("hides the circle disclosure when threads are off", () => {
-    threads.show = false;
+describe("a pinned circle", () => {
+  it("opens the bot's one chat, with no thread list or way to start another", () => {
+    const atlas = bot({
+      tasks: [
+        { threadId: "thread-atlas", title: "Current", createdAt: 2 },
+        { threadId: "thread-earlier", title: "Earlier", createdAt: 1 },
+      ] as Bot["tasks"],
+    });
     const markup = renderCircle(atlas);
     expect(markup).not.toContain("Expand Atlas threads");
+    expect(markup).not.toContain("data-sidebar-thread-row");
     expect(markup).not.toContain("New thread");
-    expect(renderToStaticMarkup(createElement(PinnedCircleThreadPanel, row(atlas)))).not.toContain("New thread");
   });
 });
 
@@ -175,12 +111,11 @@ describe("pinned circle order", () => {
     vi.unstubAllGlobals();
   });
 
-  it("lists pinned bots in the saved order in the circle grid, the pinned rows and the thread section", () => {
+  it("lists pinned bots in the saved order in the circle grid and the pinned rows", () => {
     expect(names(renderToStaticMarkup(roster(true)))).toEqual(["Atlas", "Beacon", "Comet"]);
     setPinnedCircleOrder(["comet", "atlas"]);
     expect(names(renderToStaticMarkup(roster(true)))).toEqual(["Comet", "Atlas", "Beacon"]);
     expect(names(renderToStaticMarkup(roster(false)))).toEqual(["Comet", "Atlas", "Beacon"]);
-    expect(names(renderThreads(false, [atlas, beacon, comet]))).toEqual(["Comet", "Atlas", "Beacon"]);
   });
 
   it("drags a circle onto another, or moves it with Alt+Up and Alt+Down", () => {
@@ -208,7 +143,7 @@ describe("pinned circle order", () => {
     const dropEvent = { preventDefault: vi.fn(), stopPropagation: vi.fn(), clientX: 70, clientY: 40, currentTarget: { getBoundingClientRect: () => rect }, dataTransfer: { types: [PINNED_CIRCLE_DRAG_TYPE], getData: () => "comet" } };
     (button.props.onDrop as Handler)(dropEvent);
     expect(drag.reorder).toHaveBeenLastCalledWith("comet", "atlas", "after");
-    (button.props.onDrop as Handler)({ ...dropEvent, dataTransfer: { types: ["application/x-openmausbot-folder"], getData: () => "comet" } });
+    (button.props.onDrop as Handler)({ ...dropEvent, dataTransfer: { types: ["text/plain"], getData: () => "comet" } });
     expect(drag.reorder).toHaveBeenCalledTimes(3);
 
     let still: ReactNode;
@@ -234,8 +169,6 @@ describe("pinned circle order", () => {
 });
 
 afterEach(() => {
-  threads.show = true;
-  forgetSearchDisclosuresForTests();
   initialState.selectedId = "";
   initialState.activeView = "chat";
 });

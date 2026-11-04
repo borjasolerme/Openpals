@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Menu } from "lucide-react";
 import { CLOUD_LINK_SETTINGS, openBot, StoreProvider, useStore } from "@/state/store";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
 import { MausBotWelcome } from "@/components/MausBotWelcome";
 import { CloudTimeZoneSync } from "@/components/CloudTimeZone";
@@ -9,7 +8,6 @@ import { cloudSignInDue, spotlightsQuiet, type WelcomeViewer } from "@/lib/onboa
 import { FirstConversationTour } from "@/components/onboarding/FirstConversationTour";
 import { GuidedTour } from "@/components/onboarding/GuidedTour";
 import { LiveCallHost } from "@/components/LiveCallHost";
-import { ThreadRefsProvider } from "@/components/ThreadRefs";
 import { initAnalytics } from "@/lib/analytics";
 import { parseComputerHelp } from "@/lib/computer-control";
 import { Sidebar } from "@/components/Sidebar";
@@ -79,7 +77,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const inboxShown = useInboxPanel().open && inbox !== null;
   // A Switch AI pick lands once its stopped turn's chat is idle, wherever the person is by then.
   useAiSwitchKeeper({ bots: state.bots, dispatch });
-  const showThreads = useShowThreads();
   const { capabilities } = useDesktopCapabilities();
   const captionChrome = useCaptionChrome();
   const unreadCount =
@@ -184,20 +181,20 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         const target = bots[Number(e.key) - 1];
         if (target) {
           e.preventDefault();
-          openBot(dispatch, target, showThreads);
+          openBot(dispatch, target);
         }
       } else if (e.shiftKey && (e.key === "[" || e.key === "]")) {
         const idx = bots.findIndex((b) => b.id === state.selectedId);
         const next = bots[(idx + (e.key === "]" ? 1 : -1) + bots.length) % bots.length];
         if (next) {
           e.preventDefault();
-          openBot(dispatch, next, showThreads);
+          openBot(dispatch, next);
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [state.bots, state.selectedId, state.shortcutsOpen, showThreads, dispatch]);
+  }, [state.bots, state.selectedId, state.shortcutsOpen, dispatch]);
 
   useReadShownChatOnFocus();
   useEffect(() => {
@@ -455,9 +452,7 @@ function Application() {
   return (
     <DesktopCapabilitiesProvider>
       <StoreProvider>
-        <ThreadRefsProvider>
-          <Shell viewer={viewer} />
-        </ThreadRefsProvider>
+        <Shell viewer={viewer} />
         <WelcomeGate viewer={viewer} />
         <MausBotWelcome viewer={viewer} />
         <CloudTimeZoneSync viewer={viewer} />

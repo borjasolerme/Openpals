@@ -1,33 +1,18 @@
 import type { Bot, BotAnnouncement, Group } from "@/state/store";
 
-type FolderBot = Pick<Bot, "id" | "threadId" | "unread" | "tasks">;
-type DepartmentBot = FolderBot & Pick<Bot, "section" | "hidden">;
+type ReadableBot = Pick<Bot, "id" | "threadId" | "unread" | "tasks">;
+type DepartmentBot = ReadableBot & Pick<Bot, "section" | "hidden">;
 type DepartmentGroup = Pick<Group, "id" | "unread" | "section" | "dm">;
 
-export function botUnreadThreadIds(bot: FolderBot): string[] {
+export function botUnreadThreadIds(bot: ReadableBot): string[] {
   if (!bot.tasks?.length) return bot.unread ? [bot.threadId] : [];
   return bot.tasks
     .filter((task) => task.unread ?? (task.threadId === bot.threadId && bot.unread))
     .map((task) => task.threadId);
 }
 
-export function folderUnreadThreadIds(bot: FolderBot, projectId: string): string[] {
-  return (bot.tasks ?? [])
-    .filter((task) => task.projectId === projectId && (task.unread ?? (task.threadId === bot.threadId && bot.unread)))
-    .map((task) => task.threadId);
-}
-
-export async function markFolderRead(
-  bot: FolderBot,
-  projectId: string,
-  request: (path: string, init?: RequestInit) => Promise<{ bot: BotAnnouncement }>,
-  onRead: (bot: BotAnnouncement) => void,
-): Promise<void> {
-  await markThreadsRead(bot.id, folderUnreadThreadIds(bot, projectId), request, onRead);
-}
-
 export async function markBotRead(
-  bot: FolderBot,
+  bot: ReadableBot,
   request: (path: string, init?: RequestInit) => Promise<{ bot: BotAnnouncement }>,
   onRead: (bot: BotAnnouncement) => void,
 ): Promise<void> {

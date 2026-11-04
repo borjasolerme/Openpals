@@ -29,7 +29,7 @@ const onRename = vi.fn();
 const dispatch = (action: Action) => { state = reducer(state, action); draw(); };
 const draw = () => flushSync(() => root.render(createElement(BotEditorStore, {
   value: { state, dispatch, flushBotPatches: async () => null, refreshInstances: async () => {}, refreshModels: async () => {} },
-  children: createElement(BotContextMenu, { menu, onClose, onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(), onNewFolder: vi.fn(), onNewTaskFolder: vi.fn(), onRename }),
+  children: createElement(BotContextMenu, { menu, onClose, onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(), onRename }),
 })));
 const button = (label = "Mark all conversations as read") => [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find((node) => node.textContent === label)!;
 const response = (threadId: string) => {
@@ -130,31 +130,16 @@ describe("Simple mode's bot menu", () => {
   const point = (target: Element, y: number) => target.dispatchEvent(new MouseEvent("pointerover", { bubbles: true, clientX: 60, clientY: y }));
   beforeEach(() => { mode.advanced = false; });
 
-  it("leads with Pin, Move and Mark as read, then the thread items, then Rename, then Copy conversation ID and More, and ends with Archive and Delete", () => {
+  it("leads with Pin, Move and Mark as read, then Rename, then Copy conversation ID and More, and ends with Archive and Delete", () => {
     draw();
     expect([...sheet().querySelectorAll("button")].map((node) => node.textContent)).toEqual([
-      "Pin", "Move to department", "Mark as read", "New thread", "View threads", "Rename", "Copy conversation ID", "More", "Archive", "Delete",
+      "Pin", "Move to department", "Mark as read", "Rename", "Copy conversation ID", "More", "Archive", "Delete",
     ]);
     expect([...sheet().children].map((node) => node.getAttribute("role") === "separator" ? "|" : node.textContent)).toEqual([
-      "Pin", "Move to department", "Mark as read", "|", "New thread", "View threads", "|", "Rename", "|", "Copy conversation ID", "More", "|", "Archive", "Delete",
+      "Pin", "Move to department", "Mark as read", "|", "Rename", "|", "Copy conversation ID", "More", "|", "Archive", "Delete",
     ]);
     flushSync(() => button("Rename").click());
     expect(onRename).toHaveBeenCalledWith(bot.id);
-  });
-
-  it("offers Delete all conversations only with two or more, last and in danger, and asks with its count", () => {
-    draw();
-    flushSync(() => more().click());
-    const deleteAll = [...flyout()!.querySelectorAll("button")].at(-1)!;
-    expect(deleteAll.textContent).toBe("Delete all conversations…");
-    expect(deleteAll.className).toContain("text-danger");
-    flushSync(() => deleteAll.click());
-    expect(document.body.textContent).toContain("Delete all conversations (3)?");
-    state = { ...state, bots: [{ ...structuredClone(bot), tasks: [bot.tasks![0]!] }] };
-    menu = { botId: bot.id, x: 50, y: 50 };
-    draw();
-    flushSync(() => more().click());
-    expect([...flyout()!.querySelectorAll("button")].map((node) => node.textContent)).not.toContain("Delete all conversations…");
   });
 
   it("opens More only after the pointer rests on it, closes it when a sibling row takes the pointer, and opens it at once on a click", async () => {
@@ -169,7 +154,7 @@ describe("Simple mode's bot menu", () => {
     point(more(), 200);
     await wait(320);
     expect(flyout()).not.toBeNull();
-    expect([...flyout()!.querySelectorAll("button")].map((node) => node.textContent)).toEqual(["Edit profile", "Make Chief of Staff", "Duplicate", "Delete all conversations…"]);
+    expect([...flyout()!.querySelectorAll("button")].map((node) => node.textContent)).toEqual(["Edit profile", "Make Chief of Staff", "Duplicate"]);
     point(pin, 80);
     await wait(20);
     expect(flyout()).toBeNull();

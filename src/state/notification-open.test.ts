@@ -47,9 +47,7 @@ let dispatch: (action: Action) => void;
 
 const { StoreProvider, useStore, openBot } = await import("./store");
 const { landOnSearchHit } = await import("@/lib/focus-message");
-const { threadsWhenTreeHidden } = await import("@/components/SidebarBotActivity");
 const { setAdvancedMode } = await import("@/lib/interface-mode");
-const { setShowThreads } = await import("@/lib/thread-preferences");
 
 let root: Root;
 const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((resolve) => setTimeout(resolve, 0)); };
@@ -122,10 +120,6 @@ beforeEach(async () => {
 });
 afterEach(() => flushSync(() => root.unmount()));
 
-const threadsShown = async (shown: boolean) => {
-  flushSync(() => { setAdvancedMode(true); setShowThreads(shown); });
-  await settle();
-};
 const sent = () => requests.map((request) => request.body ? `${request.path} ${request.body}` : request.path);
 const reads = () => requests.filter((request) => request.path === "/api/bots/scout/read").map((request) => JSON.parse(request.body!).threadId);
 const scoutNow = () => state.bots.find((bot) => bot.id === "scout")!;
@@ -141,8 +135,7 @@ async function followNotification() {
 }
 
 describe("following a notification", () => {
-  it("opens its thread by the switch alone while threads are hidden, leaving the reply the bot was left on unread", async () => {
-    await threadsShown(false);
+  it("opens its thread by the switch alone, leaving the reply the bot was left on unread", async () => {
     await followNotification();
     expect(sent().filter((request) => request.startsWith("/api/bots/scout/tasks/finished"))).toHaveLength(1);
     expect(reads()).toEqual(["finished"]);
@@ -152,17 +145,7 @@ describe("following a notification", () => {
     expect(server.tasks!.find((task) => task.threadId === "left-behind")!.unread).toBe(true);
   });
 
-  it("selects the bot first while threads are shown, as it always has", async () => {
-    await threadsShown(true);
-    await followNotification();
-    expect(reads()).toEqual(["left-behind", "finished"]);
-    expect(sent().filter((request) => request.startsWith("/api/bots/scout/tasks/finished"))).toHaveLength(1);
-    expect(scoutNow().threadId).toBe("finished");
-    expect(unread("finished")).toBe(false);
-  });
-
   it("opens the brief in MausBot's chat while MausBot is hidden from the sidebar", async () => {
-    await threadsShown(true);
     server = { ...server, defaultBot: {}, sidebarHidden: true };
     stream().send({ kind: "bot", bot: structuredClone(server) });
     await settle();
@@ -176,7 +159,6 @@ describe("following a notification", () => {
   });
 
   it("leaves the thread a failed switch stayed on as the one on screen", async () => {
-    await threadsShown(false);
     server = { ...server, tasks: server.tasks!.filter((task) => task.threadId !== "finished") };
     await followNotification();
     expect(scoutNow().threadId).toBe("left-behind");
@@ -187,25 +169,21 @@ describe("following a notification", () => {
   });
 });
 
-describe("opening a bot with threads hidden", () => {
-  it("opens its main thread from its row and leaves the thread it was left on unread, with an activity row", async () => {
-    await threadsShown(false);
-    flushSync(() => openBot(dispatch, scoutNow(), false));
+describe("opening a bot", () => {
+  it("opens its main thread from its row and leaves the thread it was left on unread", async () => {
+    flushSync(() => openBot(dispatch, scoutNow()));
     await settle();
     expect(sent().filter((request) => request.startsWith("/api/bots/scout/tasks/main-chat"))).toHaveLength(1);
     expect(reads()).toEqual([]);
     expect(scoutNow().threadId).toBe("main-chat");
     expect(unread("left-behind")).toBe(true);
-    expect(threadsWhenTreeHidden(scoutNow(), {}).map((task) => task.threadId).filter((id) => id !== scoutNow().threadId))
-      .toEqual(expect.arrayContaining(["left-behind", "finished"]));
   });
 
   it("lands on a search hit in another thread by the switch alone, with the whole thread", async () => {
-    await threadsShown(false);
     await landOnSearchHit({
       botId: "scout", name: "Scout", threadId: "finished", messageId: "hit", role: "bot", kind: "text", at: 3,
       snippet: "the side job is done", matchStart: 4, matchLength: 8, onActivePath: true,
-    }, state, dispatch, false);
+    }, state, dispatch);
     await settle();
     expect(sent().filter((request) => request.startsWith("/api/bots/scout/tasks/"))).toEqual(["/api/bots/scout/tasks/finished {}"]);
     expect(reads()).toEqual(["finished"]);
@@ -215,16 +193,16 @@ describe("opening a bot with threads hidden", () => {
 });
 
 describe("launching the app on a bot", () => {
-  async function relaunch(shown: boolean) {
+  async function relaunch() {
     flushSync(() => root.unmount());
-    flushSync(() => { setAdvancedMode(true); setShowThreads(shown); });
+    flushSync(() => setAdvancedMode(true));
     firstBot = "scout";
     requests.length = 0;
     await launch();
   }
 
-  it("opens its main thread while threads are hidden, leaving the reply the bot was left on unread", async () => {
-    await relaunch(false);
+  it("opens its main thread, leaving the reply the bot was left on unread", async () => {
+    await relaunch();
     expect(state.selectedId).toBe("scout");
     const switches = sent().filter((request) => request.startsWith("/api/bots/scout/tasks/"));
     expect(switches).toHaveLength(1);
@@ -232,13 +210,5 @@ describe("launching the app on a bot", () => {
     expect(reads()).toEqual([]);
     expect(scoutNow().threadId).toBe("main-chat");
     expect(unread("left-behind")).toBe(true);
-    expect(threadsWhenTreeHidden(scoutNow(), {}).map((task) => task.threadId)).toContain("left-behind");
-  });
-
-  it("keeps the bot where it was while threads are shown, as it always has", async () => {
-    await relaunch(true);
-    expect(state.selectedId).toBe("scout");
-    expect(sent().some((request) => request.startsWith("/api/bots/scout/tasks/"))).toBe(false);
-    expect(scoutNow().threadId).toBe("left-behind");
   });
 });

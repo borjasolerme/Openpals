@@ -39,8 +39,7 @@ Open only the printed `previewUrl`:
 3. Reload and inspect the same fixture's `/api/bots` response: unread flags
    remain cleared, transcripts and the queued report remain intact, and
    the fake turn is still running. Other bots retain their state.
-4. With no unread conversation, the menu action is disabled. In the real
-   app it also remains available with **Show threads** off; thread-pinned
+4. With no unread conversation, the menu action is disabled. Thread-pinned
    remote clients do not receive an action that targets their siblings.
 
 `src/lib/bot-read.test.ts` covers legacy state, all folders/unfiled/archived
@@ -84,10 +83,9 @@ General's Chief; see [Teams](teams.md) for those lifecycle checks.
 
 ## Activity, quieter rows, and notification preference
 
-Use the full-app [threads fixture](threads.md) for channel activity, search,
-and snooze interactions. Compact/quiet rows must retain live status and
-keyboard-accessible owner-row New thread/New folder controls. The matching
-sole thread must still appear during search even when its normal tree is hidden.
+Use the full-app [threads fixture](threads.md) for channel activity, search
+and the rows for threads that wait on the person. Compact/quiet rows must
+retain live status and a keyboard-accessible bot menu.
 
 In Settings → Appearance, **Notification sounds** controls the operating
 system alert sound on this computer only; it does not disable notification

@@ -27,7 +27,7 @@ import { patchedGroups, roomAnswers, snapshotPatch } from "./room-frames";
 import { savedStateAction, type SavedOwner, type SavedSnapshot } from "./saved-state";
 import { keepBotNavigation, keepGroupNavigation, navigatedSince, visibleMessages } from "./snapshot-navigation";
 export { visibleMessages } from "./snapshot-navigation";
-export { awayFromMainThread, botOpensTo, openBot, openBotThread, openNotificationTarget, openThread, visibleNotificationThread, type ThreadTarget } from "./thread-navigation";
+export { botOpensTo, openBot, openBotThread, openNotificationTarget, openThread, visibleNotificationThread, type ThreadTarget } from "./thread-navigation";
 import type { TurnDigest } from "../../shared/digest";
 import type { ToolScope } from "../../shared/tool-scope";
 import type { ModelVariantOption, RuntimeEvent } from "../../shared/runtime-events";
@@ -62,10 +62,9 @@ import { forgetLiveTurns, noteRuntimeTurn, sendStop } from "@/lib/stop-turn";
 import { readLastConversation, rememberConversation } from "@/lib/last-conversation";
 import { readLastBotSection, rememberBotSection } from "@/lib/last-bot-section";
 import { showNotification } from "@/lib/notify";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { speechOwner, spokenReplyStream } from "@/lib/spoken-reply-stream";
 import { t } from "@/lib/i18n";
-import { createBotPatchQueue, flushWhenLeaving, keepaliveFits, type BotUpdatePatch } from "./bot-patch-queue"; import { createNewTaskOnce } from "./new-task-once";
+import { createBotPatchQueue, flushWhenLeaving, keepaliveFits, type BotUpdatePatch } from "./bot-patch-queue";
 import { liveCallFromFrame, nextLiveCallLookup } from "./live-call";
 import { useChatErrorClear } from "./chat-error";
 import { openLiveEvents, publishLiveFrame, publishMissedFrames, withoutScreenPixels } from "@/lib/live-events";
@@ -345,8 +344,6 @@ export interface BotProject {
   name: string;
   emoji?: string;
 }
-
-export type ProjectUpdatePatch = { name?: string; emoji?: string | null };
 
 export function threadApprovalModes(bot: Pick<Bot, "approvalMode" | "autoApprove" | "tasks">): ApprovalMode[] {
   return (bot.tasks ?? []).map((task) => approvalModeFor({
@@ -746,22 +743,13 @@ export type Action =
       rememberCommand?: boolean;
       onError?: (message: string) => void;
     }
-  | { type: "newTask"; botId: string; projectId?: string; cwd?: string; onCreated?: () => void; onError?: (message: string) => void }
+  | { type: "newTask"; botId: string }
   | { type: "switchTask"; botId: string; threadId: string; whole?: true }
   | { type: "switchTaskFailed"; botId: string; threadId: string }
   | { type: "taskSwitched"; bot: Bot }
-  | { type: "renameTask"; botId: string; threadId: string; title: string }
-  | { type: "regenerateTaskTitle"; botId: string; threadId: string; onSettled?: (ok: boolean) => void }
-  | { type: "deleteTask"; botId: string; threadId: string }
   | { type: "newBot"; section?: string; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void }
   | { type: "botCreationPending"; on: boolean }
   | { type: "updateTask"; botId: string; threadId: string; patch: TaskUpdatePatch }
-  | { type: "refreshTaskPermissions"; botId: string; threadId: string; acknowledgeLocalAuto?: boolean }
-  | { type: "followBotModel"; botId: string; onSettled?: (result: { busy: number }) => void }
-  | { type: "createProject"; botId: string; name: string; emoji?: string | null; onCreated?: (project: BotProject) => void; onError?: (message: string) => void }
-  | { type: "updateProject"; botId: string; projectId: string; patch: ProjectUpdatePatch; onSaved?: () => void; onError?: (message: string) => void }
-  | { type: "deleteProject"; botId: string; projectId: string; onDeleted?: () => void; onError?: (message: string) => void }
-  | { type: "reorderProjects"; botId: string; projectIds: string[]; onSaved?: () => void; onError?: (message: string) => void }
   | { type: "botAdded"; bot: Bot; preserveSelection?: boolean }
   | { type: "deleteBot"; botId: string }
   | { type: "botDeletionPending"; botId: string; on: boolean }
@@ -1725,14 +1713,12 @@ export function reducer(state: AppState, action: Action): AppState {
         activeLeafId: message.id,
       })), threadId, message.at, true);
     }
-    case "deleteTask":
     case "newGroupTask":
     case "switchGroupTask":
     case "deleteGroupTask":
-    case "regenerateTaskTitle":
       return state;
     case "newTask":
-      return action.cwd !== undefined ? state : { ...state, selectedId: action.botId, activeView: "chat" };
+      return { ...state, selectedId: action.botId, activeView: "chat" };
     case "switchTask": {
       const { [action.threadId]: _old, ...backgroundThreadEvents } = state.backgroundThreadEvents;
       return updateBot({ ...state, backgroundThreadEvents, selectedId: action.botId, activeView: "chat" }, action.botId,
@@ -1740,13 +1726,6 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case "switchTaskFailed":
       return updateBot(state, action.botId, (bot) => bot.switchingTo === action.threadId ? { ...bot, switchingTo: undefined } : bot);
-    case "renameTask":
-      return updateBot(state, action.botId, (bot) => ({
-        ...bot,
-        tasks: (bot.tasks ?? []).map((task) =>
-          task.threadId === action.threadId ? { ...task, title: action.title } : task,
-        ),
-      }));
     case "renameGroupTask":
       return patchGroupTask(state, action.groupId, action.threadId, { title: action.title });
     case "pinGroupTask":
@@ -1784,10 +1763,6 @@ export function reducer(state: AppState, action: Action): AppState {
     case "newBot":
       return action.preserveSelection ? state : { ...state, settingsOpen: false, appSettingsOpen: false, pluginsOpen: false, shortcutsOpen: false };
     case "duplicateBot":
-    case "createProject":
-    case "updateProject":
-    case "deleteProject":
-    case "reorderProjects":
     case "interrupt":
     case "createGroup":
     case "deleteGroup":
@@ -1801,8 +1776,6 @@ export function reducer(state: AppState, action: Action): AppState {
     case "cancelRoutineRun":
     case "markRoutineRunSeen":
     case "markAllRoutineRunsSeen":
-    case "refreshTaskPermissions":
-    case "followBotModel":
     case "loadDataSheet":
       return state;
     case "dataSheet":
@@ -2113,9 +2086,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, rawDispatch] = useReducer(reducer, initialState, restoreBotSettingsSection);
   const stateRef = useRef(state), selectionRevision = useRef(0);
   stateRef.current = state;
-  const showThreads = useShowThreads();
-  const showThreadsRef = useRef(showThreads);
-  showThreadsRef.current = showThreads;
   const clearChatError = useCallback(() => {
     rawDispatch({ type: "error", message: null });
   }, []);
@@ -2156,7 +2126,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const navigation = new Map<string, number>();
     const roomAnswer = roomAnswers(() => stateRef.current, rawDispatch);
     const olderPagesInFlight = new Set<string>();
-    const newTaskOnce = createNewTaskOnce();
+    // A second click while a bot's new conversation is being made makes no second one.
+    const newTasksBeingMade = new Set<string>();
     let creatingBot = false;
     const showError = (e: unknown) => {
       rawDispatch({ type: "error", message: e instanceof Error ? e.message : String(e) });
@@ -2611,7 +2582,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           creatingBot = true;
           rawDispatch({ type: "botCreationPending", on: true });
           void import("@/lib/new-bot")
-            .then(({ makeNewBot }) => makeNewBot(action, stateRef.current.bots, wrapped, showThreadsRef.current))
+            .then(({ makeNewBot }) => makeNewBot(action, stateRef.current.bots, wrapped))
             .catch(showError)
             .finally(() => {
               creatingBot = false;
@@ -2767,111 +2738,38 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         case "updateTask":
           persistTaskPatch(action.botId, action.threadId, action.patch);
           break;
-        case "refreshTaskPermissions": {
-          const bot = stateRef.current.bots.find((candidate) => candidate.id === action.botId);
-          const task = bot?.tasks?.find((candidate) => candidate.threadId === action.threadId);
-          if (!bot || !task) {
-            showError(new Error("That thread is no longer available"));
-            break;
-          }
-          const mode = approvalModeFor(bot);
-          const current = approvalModeFor(currentTaskBot(bot, action.threadId));
-          const acknowledgeLocalAuto = action.acknowledgeLocalAuto === true;
-          const bridge = desktopApprovalBridge();
-          const viaBridge = mode === "custom" || current === "custom" || (mode === "full" && bridge !== undefined);
-          const refreshed = viaBridge
-            ? bridge
-              ? bridge.setMode(action.botId, mode, {
-                threadId: action.threadId, threadOnly: true, refreshPermissions: true, acknowledgeLocalAuto,
-              })
-              : Promise.reject(new Error("This approval change requires the packaged desktop app"))
-            : api<{ bot: BotAnnouncement }>(`/api/bots/${action.botId}/tasks/${action.threadId}`, {
-              method: "PATCH",
-              body: JSON.stringify({ refreshPermissions: true, ...(acknowledgeLocalAuto ? { acknowledgeLocalAuto: true } : {}) }),
-            }).then((result) => result.bot);
-          void refreshed.then((updated) => {
-            if (updated) rawDispatch({ type: "botPatched", bot: withTaskWrites(updated) });
-          }).catch(showError);
-          break;
-        }
-        case "followBotModel":
-          void api<{ bot: BotAnnouncement; busy?: number }>(`/api/bots/${action.botId}/threads/follow-model`, { method: "POST", body: "{}" })
-            .then(({ bot, busy }) => { rawDispatch({ type: "botPatched", bot: withTaskWrites(bot) }); action.onSettled?.({ busy: busy ?? 0 }); })
-            .catch(showError);
-          break;
-        case "createProject":
-          api(`/api/bots/${action.botId}/projects`, { method: "POST", body: JSON.stringify({ name: action.name, emoji: action.emoji }) })
-            .then(({ bot, project }) => {
-              dispatch({ type: "botPatched", bot });
-              action.onCreated?.(project);
-            }).catch((error) => { showError(error); action.onError?.(error instanceof Error ? error.message : String(error)); });
-          break;
-        case "updateProject":
-          api(`/api/bots/${action.botId}/projects/${action.projectId}`, { method: "PATCH", body: JSON.stringify(action.patch) })
-            .then(({ bot }) => { dispatch({ type: "botPatched", bot }); action.onSaved?.(); })
-            .catch((error) => { showError(error); action.onError?.(error instanceof Error ? error.message : String(error)); });
-          break;
-        case "deleteProject":
-          api(`/api/bots/${action.botId}/projects/${action.projectId}`, { method: "DELETE" })
-            .then(({ bot }) => { dispatch({ type: "botPatched", bot }); action.onDeleted?.(); })
-            .catch((error) => { showError(error); action.onError?.(error instanceof Error ? error.message : String(error)); });
-          break;
-        case "reorderProjects":
-          api(`/api/bots/${action.botId}/projects/order`, { method: "PATCH", body: JSON.stringify({ projectIds: action.projectIds }) })
-            .then(({ bot }) => { dispatch({ type: "botPatched", bot }); action.onSaved?.(); })
-            .catch((error) => { showError(error); action.onError?.(error instanceof Error ? error.message : String(error)); });
-          break;
         case "interrupt":
           sendStop(api, action, showError);
           break;
         case "newTask":
         case "switchTask": {
-          const settle: ((failure: string | null) => void) | null = action.type === "newTask" ? newTaskOnce(action, () => dispatch(action)) : () => {};
-          if (!settle) break;
+          if (action.type === "newTask") {
+            if (newTasksBeingMade.has(action.botId)) break;
+            newTasksBeingMade.add(action.botId);
+          }
+          const settle = () => { if (action.type === "newTask") newTasksBeingMade.delete(action.botId); };
           const revision = (navigation.get(action.botId) ?? 0) + 1;
           navigation.set(action.botId, revision);
-          const selectedAtStart = selectionRevision.current;
           const ready = action.type === "newTask"
             ? botPatchQueue.flush(action.botId)
             : Promise.resolve();
           void ready.then(() => api<{ bot: Bot }>(action.type === "newTask"
             ? `/api/bots/${action.botId}/tasks`
-            : `/api/bots/${action.botId}/tasks/${action.threadId}${action.whole ? "" : `?messages=${MESSAGE_PAGE_SIZE}`}`, { method: "POST", body: JSON.stringify(action.type === "newTask" ? { projectId: action.projectId, cwd: action.cwd } : {}) }))
+            : `/api/bots/${action.botId}/tasks/${action.threadId}${action.whole ? "" : `?messages=${MESSAGE_PAGE_SIZE}`}`, { method: "POST", body: "{}" }))
             .then((r) => {
-              if (action.type === "newTask") { settle(null); action.onCreated?.(); }
+              settle();
               if (!r?.bot || navigation.get(action.botId) !== revision) return;
-              const selectsAfterCreation = action.type === "newTask" && action.cwd !== undefined;
-              if (selectsAfterCreation && selectionRevision.current !== selectedAtStart) return;
               dispatch({ type: "taskSwitched", bot: r.bot });
-              if (selectsAfterCreation) rawDispatch({ type: "select", id: action.botId });
             })
             .catch((error) => {
               if (action.type === "switchTask" && navigation.get(action.botId) === revision) {
                 rawDispatch({ type: "switchTaskFailed", botId: action.botId, threadId: action.threadId });
               }
-              const message = error instanceof Error ? error.message : String(error);
-              settle(message);
-              if (action.type === "newTask" && action.onError) action.onError(message);
-              else showError(error);
+              settle();
+              showError(error);
             });
           break;
         }
-        case "renameTask":
-          api(`/api/bots/${action.botId}/tasks/${action.threadId}`, {
-            method: "PATCH",
-            body: JSON.stringify({ title: action.title }),
-          }).catch(showSavedState({ botId: action.botId }));
-          break;
-        case "regenerateTaskTitle":
-          api(`/api/bots/${action.botId}/tasks/${action.threadId}/title`, { method: "POST" })
-            .then(() => action.onSettled?.(true))
-            .catch((error) => { showError(error); action.onSettled?.(false); });
-          break;
-        case "deleteTask":
-          api<{ bot?: BotAnnouncement }>(`/api/bots/${action.botId}/tasks/${action.threadId}`, { method: "DELETE" })
-            .then((r) => r?.bot && dispatch({ type: "botPatched", bot: r.bot }))
-            .catch(showError);
-          break;
         case "newGroupTask":
           api<{ group?: Partial<Group> & { id: string } }>(`/api/groups/${action.groupId}/tasks`, { method: "POST", body: "{}" })
             .then(roomAnswer(action.groupId, true))
@@ -2933,8 +2831,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!state.hydrated || launched.current) return;
     launched.current = true;
     const bot = state.bots.find((candidate) => candidate.id === state.selectedId);
-    if (bot && state.activeView === "chat" && botOpensTo(bot, showThreads) !== bot.threadId) openBot(dispatch, bot, showThreads);
-  }, [state.hydrated, state.bots, state.selectedId, state.activeView, showThreads, dispatch]);
+    if (bot && state.activeView === "chat" && botOpensTo(bot) !== bot.threadId) openBot(dispatch, bot);
+  }, [state.hydrated, state.bots, state.selectedId, state.activeView, dispatch]);
 
   useEffect(() => {
     let alive = true;
@@ -3182,7 +3080,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           // The wrapped dispatch: only it PATCHes unread:false back to the server.
           showNotification(
             frame.notification,
-            (target) => openNotificationTarget(dispatch, target, stateRef.current, showThreadsRef.current),
+            (target) => openNotificationTarget(dispatch, target, stateRef.current),
             stateRef.current.bots.find((bot) => bot.id === frame.notification.botId)?.avatarUrl,
             visibleNotificationThread(stateRef.current),
           );

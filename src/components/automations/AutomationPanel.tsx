@@ -124,12 +124,11 @@ export function AutomationPanel({ automation, sentence, onClose, onEdit, onDelet
               const line = runLine(run);
               return (
                 <li key={run.id}>
-                  <button type="button" disabled={!run.threadId} onClick={() => actions.openRun(automation, run)} title={run.threadId ? t("automations.panel.open") : undefined}
-                    className="flex w-full items-baseline gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-raised disabled:hover:bg-transparent">
+                  <div className="flex w-full items-baseline gap-2 px-2 py-1.5 text-[13px]">
                     <span className="shrink-0 text-ink-secondary">{line.when}</span>
                     <span className={cn("shrink-0 font-semibold", line.mark === "✓" ? "text-success" : line.mark === "✗" ? "text-danger" : "text-warning")}>{line.mark}</span>
                     <span className="min-w-0 truncate text-ink">{line.text}</span>
-                  </button>
+                  </div>
                 </li>
               );
             })}</ul>}

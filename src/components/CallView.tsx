@@ -4,7 +4,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { AudioLines, Check, ChevronDown, Loader2, Phone, PhoneOff, X } from "lucide-react";
 
-import { useShowThreads } from "@/lib/thread-preferences";
 import { openBot, useStore, visibleMessages, type Bot } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { useMenuMotion } from "./MenuMotion";
@@ -18,7 +17,6 @@ import { localSystemVoiceActive } from "@/lib/local-voice";
 import { useSpeech } from "@/lib/tts/useSpeech";
 import { usePushToTalk } from "@/lib/push-to-talk";
 import { BotAvatar } from "./Avatar";
-import { navigateThreadMenu } from "./BotProjects";
 import { LiveKeyNeeded } from "./LiveKeyNeeded";
 import { liveLineHeldElsewhere } from "./LiveCallBar";
 import { isRoutineApproval, isSkillApproval, pendingApprovals, spokenApprovalPrompt } from "./PendingApproval";
@@ -28,7 +26,7 @@ import { callCapabilityHelp, type CallCapabilityHelp } from "@/lib/call-capabili
 import { onCallStartRequest } from "@/lib/call-start-request";
 import { VoiceSetupDialog } from "./VoiceSetupDialog";
 import { openBotSettings } from "./bot-panel/panel-link";
-import { MENU_SHEET } from "./menu-recipe";
+import { MENU_SHEET, navigateMenu } from "./menu-recipe";
 
 type Phase = "listening" | "sending" | "working" | "speaking";
 const CALL_ENDPOINT_MS = 850;
@@ -88,7 +86,6 @@ export function CallTargetButton({
   onStart: (mode: CallMode) => void;
 }) {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const { capabilities, ready: capabilitiesReady } = useDesktopCapabilities();
   const media = useLiveMedia();
   const liveThreadId = liveCapable ? threadId : undefined;
@@ -365,7 +362,7 @@ export function CallTargetButton({
               onClick={() => {
                 setHelpOpen(false);
                 if (remoteClient) {
-                  if (setupBot.id !== targetId) openBot(dispatch, setupBot, showThreads);
+                  if (setupBot.id !== targetId) openBot(dispatch, setupBot);
                   openBotSettings(dispatch, "voice");
                   return;
                 }
@@ -417,7 +414,7 @@ export function CallModeMenu({ id, mode, onChoose, onClose, placement = "header"
       aria-label={t("call.mode.menu")}
       onKeyDown={(event) => {
         if (event.key === "Tab") onClose();
-        else navigateThreadMenu(event);
+        else navigateMenu(event);
       }}
       className={cn("animate-pop-in absolute right-0 z-30 w-[280px] text-left", MENU_SHEET, placement === "composer" ? "bottom-full mb-1.5" : "top-full mt-1.5")}
     >

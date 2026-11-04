@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Bot, Message } from "@/state/store";
 
-const fixture = vi.hoisted(() => ({ dispatch: vi.fn(), showThreads: true }));
+const fixture = vi.hoisted(() => ({ dispatch: vi.fn(), bots: [] as Bot[] }));
 const scout: Bot = {
   id: "scout", threadId: "scout-main", name: "Scout", title: "", description: "", notifications: true,
   color: "green", unread: false, messages: [], modelSelection: { instanceId: "fake", model: "test" },
@@ -14,9 +14,8 @@ const scout: Bot = {
 };
 vi.mock("@/state/store", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/state/store")>();
-  return { ...original, useStore: () => ({ state: { ...original.initialState, bots: [scout] }, dispatch: fixture.dispatch }) };
+  return { ...original, useStore: () => ({ state: { ...original.initialState, bots: fixture.bots }, dispatch: fixture.dispatch }) };
 });
-vi.mock("@/lib/thread-preferences", () => ({ useShowThreads: () => fixture.showThreads }));
 import { ThreadChip } from "./ThreadChip";
 
 const receipt = (threadId = "qa-245"): Message => ({
@@ -35,14 +34,14 @@ function findElement(tree: ReactNode, attribute: string): ReactElement<ElementPr
   }
 }
 
-beforeEach(() => { fixture.dispatch.mockClear(); fixture.showThreads = true; });
+beforeEach(() => { fixture.dispatch.mockClear(); fixture.bots = [scout]; });
 
 describe("ThreadChip", () => {
-  it("renders the receipt as a pill named for the thread it opens", () => {
+  it("renders the receipt as a pill that opens the teammate's chat", () => {
     const markup = renderToStaticMarkup(createElement(ThreadChip, { message: receipt() }));
     expect(markup).toContain("<button");
     expect(markup).toContain("Opened thread #QA PR 245 on Scout");
-    expect(markup).toContain('title="Open #QA PR 245"');
+    expect(markup).toContain('title="Open the conversation with Scout"');
     expect(markup).toContain('data-thread-chip="qa-245"');
   });
 
@@ -59,39 +58,26 @@ describe("ThreadChip", () => {
     expect(renderToStaticMarkup(createElement(ThreadChip, { message: { ...receipt(), threadRef: undefined } }))).toBe("");
   });
 
-  it("clicking shows that thread: select the bot, switch the view, reveal the row", () => {
+  it("clicking opens the teammate's one chat, never the thread its work runs in", () => {
     let tree: ReactNode;
     function Capture() { tree = ThreadChip({ message: receipt() }); return tree; }
     renderToStaticMarkup(createElement(Capture));
     findElement(tree, "data-thread-chip")!.props.onClick!();
-    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "select", id: "scout" },
-      { type: "switchTask", botId: "scout", threadId: "qa-245" },
-      { type: "revealThread", threadId: "qa-245" },
-    ]);
+    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "select", id: "scout" }]);
   });
 
-  it("with threads hidden, the switch alone shows it, so the thread the bot was on stays unread", () => {
-    fixture.showThreads = false;
+  it("opens the teammate at its main chat when it was left on another thread", () => {
+    fixture.bots = [{ ...scout, threadId: "qa-245", mainThreadId: "scout-main" }];
     let tree: ReactNode;
     function Capture() { tree = ThreadChip({ message: receipt() }); return tree; }
     renderToStaticMarkup(createElement(Capture));
     findElement(tree, "data-thread-chip")!.props.onClick!();
-    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "switchTask", botId: "scout", threadId: "qa-245" },
-      { type: "revealThread", threadId: "qa-245" },
-    ]);
+    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "switchTask", botId: "scout", threadId: "scout-main" }]);
   });
 
-  it("falls back to the bot with a notice when the thread was deleted", () => {
-    let tree: ReactNode;
-    function Capture() { tree = ThreadChip({ message: receipt("gone") }); return tree; }
-    renderToStaticMarkup(createElement(Capture));
-    findElement(tree, "data-thread-chip")!.props.onClick!();
-    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "select", id: "scout" },
-      { type: "notice", notice: { kind: "thread-gone", botName: "Scout" } },
-    ]);
+  it("is a still pill when the teammate is gone", () => {
+    fixture.bots = [];
+    expect(renderToStaticMarkup(createElement(ThreadChip, { message: receipt() }))).toContain("disabled");
   });
 
   it("marks the receipt when the work in that thread failed", () => {

@@ -12,7 +12,6 @@ import type { LocaleKey } from "@/locales";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { announceNewBot, reportsToFor, startingTemplate, type BotDefaultsAnswer } from "@/lib/new-bot";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { openServerMenu } from "./DesktopWorkspaceSwitcher";
 import { useTeamPeople } from "@/state/team-people";
 import { visibilityFromForm, type VisibilityMode } from "./bot-settings/VisibilitySection";
@@ -65,7 +64,6 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
   const teamName = parent.state.config?.team?.name;
   const [chosenOwner, setChosenOwner] = useState<string | null>(null);
   const ownerOrAdmin = useOwnerOrAdmin();
-  const showThreads = useShowThreads();
   const sections = useAdvancedMode() ? SECTIONS : SECTIONS.filter((section) => section !== "Model");
   const choosesVisibility = !defaultsMode && typeof window !== "undefined" && !window.ogb && ownerOrAdmin === true;
   const dialog = useRef<HTMLDivElement>(null);
@@ -121,7 +119,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
       else {
         const { bot, warnings } = await createConfiguredBot(draft, undefined, undefined, undefined, visibility?.ok ? visibility.visibility : undefined,
           team ? reportsToFor(chosenOwner, draft.bot.section, parent.state.bots, team) ?? undefined : undefined);
-        announceNewBot(parent.dispatch, bot, warnings, { showThreads, source: draft.preset ? "preset" : draft.role ? "template" : "blank", role: draft.role });
+        announceNewBot(parent.dispatch, bot, warnings, { source: draft.preset ? "preset" : draft.role ? "template" : "blank", role: draft.role });
         try { await onCreated?.(bot); }
         catch (cause) { parent.dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }); }
       }

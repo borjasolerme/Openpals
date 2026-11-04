@@ -237,16 +237,11 @@ The [sidebar fixture](sidebar.md) checks archive and delete confirmations, their
 default focus, keyboard wrapping and focus return against two disposable bots;
 its departments recipe drags bots to reorder them and into new departments.
 
-The [sidebar attention geometry fixture](sidebar-attention.md) measures the
-Active Threads popover's width and inset in the open sidebar and its column of
-avatars in a headless Electron window, so the menu never crosses the window's
-left edge and loses its title.
-
 The [avatar provider fixture](avatar-providers.md) checks image-provider settings,
 keyless local generation, saved-key handling, and safe errors with a local fake API.
 
-The [independent threads fixture](threads.md) checks nested sidebar navigation,
-per-thread models, simultaneous direct conversations and thread-scoped Stop.
+The [independent threads fixture](threads.md) checks one chat per bot, the
+needs-you rows for internal threads, room threads and thread-scoped Stop.
 
 The [custom ACP model fixture](custom-acp-models.md) checks native model and
 thinking choices, independent bot defaults and thread overrides, and retained

@@ -231,7 +231,7 @@ describe("the chat header's pill", () => {
     return { header, onToggle, done: () => { flushSync(() => headerRoot.unmount()); header.remove(); } };
   };
 
-  it("names the bot, opens the bot panel, and dots another conversation that needs a look", () => {
+  it("names the bot and opens the bot panel, with no dot for another conversation", () => {
     const { header, onToggle, done } = pill();
     try {
       const button = header.querySelector<HTMLButtonElement>("[data-chathead-pill]")!;
@@ -240,7 +240,7 @@ describe("the chat header's pill", () => {
       expect(button.getAttribute("aria-expanded")).toBe("false");
       expect(button.hasAttribute("aria-controls")).toBe(false);
       expect(header.querySelector("[data-chathead-chevron]")).not.toBeNull();
-      expect(header.querySelector("[data-chathead-elsewhere]")!.getAttribute("aria-label")).toBe("Other activity (1)");
+      expect(header.querySelector("[data-chathead-elsewhere]")).toBeNull();
       click(button);
       expect(onToggle).toHaveBeenCalledOnce();
     } finally {
@@ -262,28 +262,19 @@ describe("the chat header's pill", () => {
     }
   });
 
-  it("names the conversation on screen when it is not the bot's main one", () => {
+  it("names only the bot, also on a thread that is not its main one", () => {
     const { header, done } = pill({ bot: { ...withTasks, mainThreadId: "other" } });
     try {
-      const button = header.querySelector<HTMLButtonElement>("[data-chathead-pill]")!;
-      expect(header.querySelector("[data-chathead-conversation]")!.textContent).toBe("Plan the launch");
-      expect(button.getAttribute("aria-label")).toBe("Open Scout's profile, Plan the launch");
-      expect(header.querySelector("[data-chathead-chevron]")).toBeNull();
+      expect(header.querySelector("[data-chathead-conversation]")).toBeNull();
+      expect(header.querySelector<HTMLButtonElement>("[data-chathead-pill]")!.getAttribute("aria-label")).toBe("Open Scout's profile");
     } finally {
       done();
     }
-    const untitled = pill({ bot: { ...withTasks, mainThreadId: "other", tasks: [{ ...withTasks.tasks![0]!, title: "New thread" }, withTasks.tasks![1]!] } });
-    try {
-      expect(untitled.header.querySelector("[data-chathead-conversation]")!.textContent).toBe("New conversation");
-    } finally {
-      untitled.done();
-    }
   });
 
-  it("has no dot when the other conversations are quiet, and says who can read a team chat", () => {
-    const quiet = pill({ bot: { ...withTasks, tasks: withTasks.tasks!.map((task) => ({ ...task, unread: false })) }, privacy: { kind: "private" } });
+  it("says who can read a team chat", () => {
+    const quiet = pill({ privacy: { kind: "private" } });
     try {
-      expect(quiet.header.querySelector("[data-chathead-elsewhere]")).toBeNull();
       expect(quiet.header.querySelector('[data-chathead-privacy="private"]')!.textContent).toBe("Private · only you");
     } finally {
       quiet.done();

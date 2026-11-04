@@ -26,9 +26,8 @@ import {
 } from "./ChatMarkdown";
 import { getSnippetFileName, parseFenceInfo } from "@/lib/code-block";
 import { markdownImageName, markdownImageOpenUrl } from "@/lib/markdown-image";
-import { BotEditorStore, initialState, StoreProvider } from "@/state/store";
+import { BotEditorStore, initialState } from "@/state/store";
 import { setLocale } from "@/lib/i18n";
-import { ThreadRefsContext } from "./ThreadRefs";
 import * as AttachmentPreview from "./AttachmentPreview";
 
 // Most of this file pins Advanced mode's chrome; the Simple code block has its own tests below.
@@ -532,45 +531,11 @@ it("loads a curated grammar once and leaves an unbundled language plain", async 
   }
 });
 
-describe("#Title thread links in markdown", () => {
-  const threads = [
-    { botId: "scout", botName: "Scout", threadId: "qa-245", title: "QA PR 245", activeAt: 2 },
-    { botId: "scout", botName: "Scout", threadId: "short", title: "QA", activeAt: 1 },
-  ];
-  const render = (text: string) => renderToStaticMarkup(createElement(StoreProvider, null,
-    createElement(ThreadRefsContext.Provider, { value: { threads, currentBotId: "scout" } }, createElement(ChatMarkdown, { text }))));
-
-  it("links a known title in prose as a button that opens the thread", () => {
-    const markup = render("I opened #QA PR 245 for the review.");
-    expect(markup).toContain('<button type="button" data-thread-link="qa-245"');
-    expect(markup).toContain('title="Open #QA PR 245"');
-    expect(markup).toContain(">#QA PR 245</button>");
-    expect(markup).not.toContain('data-thread-link="short"');
-  });
-
-  it("leaves code, links, headings and issue numbers alone", () => {
-    const markup = render("`#QA PR 245` in code, [#QA PR 245](https://example.test) as a link, #123 an issue\n\n# QA PR 245\n\nplain");
-    expect(markup).not.toContain("data-thread-link");
-    expect(markup).toContain("<code");
-    expect(markup).toContain('font-semibold">QA PR 245</div>');
-  });
-
-  it("does nothing without any visible threads", () => {
-    const markup = renderToStaticMarkup(createElement(StoreProvider, null, createElement(ChatMarkdown, { text: "#QA PR 245" })));
-    expect(markup).not.toContain("data-thread-link");
+describe("app thread links in markdown", () => {
+  it("keeps a #Title and an openmausbot thread link as plain text, never an external anchor", () => {
+    const markup = renderToStaticMarkup(createElement(ChatMarkdown, { text: "I opened #QA PR 245, done in [QA PR 245](openmausbot://thread/qa-245?bot=scout)." }));
     expect(markup).toContain("#QA PR 245");
-  });
-
-  it("renders a sent canonical link as a chip that opens the thread", () => {
-    const markup = render("done in [QA PR 245](openmausbot://thread/qa-245?bot=scout) today");
-    expect(markup).toContain('<button type="button" data-thread-link="qa-245"');
-    expect(markup).toContain(">QA PR 245</button>");
-    expect(markup).not.toContain('href="openmausbot://');
-  });
-
-  it("keeps a dead thread link as plain text, never an external anchor", () => {
-    const markup = render("see [Gone](openmausbot://thread/dead?bot=scout)");
-    expect(markup).toContain(">Gone<");
+    expect(markup).toContain(">QA PR 245<");
     expect(markup).not.toContain("data-thread-link");
     expect(markup).not.toContain('href="openmausbot://');
     expect(markup).not.toContain('target="_blank"');

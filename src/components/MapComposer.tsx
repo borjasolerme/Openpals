@@ -6,7 +6,6 @@ import { t } from "@/lib/i18n";
 import { mentionChoicesForQuery, mentionQueryAt } from "@/lib/mentions";
 import { mapMessageTargets, sentToSummary } from "@/lib/map-composer";
 import { imeComposing, sendsMessage, useSendKey } from "@/lib/send-key";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { MentionMenu, type MentionChoice } from "./MentionMenu";
 import { MentionTextarea } from "./MentionTextarea";
 import { useMenuMotion } from "./MenuMotion";
@@ -20,7 +19,6 @@ export function MapComposer({ bots, teams, onTagged, onSent }: {
   onSent: (botIds: string[]) => void;
 }) {
   const { dispatch } = useStore();
-  const showThreads = useShowThreads();
   const sendKey = useSendKey();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -89,7 +87,7 @@ export function MapComposer({ bots, teams, onTagged, onSent }: {
         {sent && names.length > 0 && <p role="status" className="mb-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 rounded-xl bg-panel/95 px-3 py-1.5 text-[12px] text-ink-secondary shadow-sm ring-1 ring-hairline/50">
           <span>{t("mapComposer.sentTo")}</span>
           {shownNames.map((bot, index) => <span key={bot.id}>
-            <button className="font-medium text-ink underline-offset-2 hover:underline" onClick={() => openBot(dispatch, bot, showThreads)}>{bot.name}</button>
+            <button className="font-medium text-ink underline-offset-2 hover:underline" onClick={() => openBot(dispatch, bot)}>{bot.name}</button>
             {index < shownNames.length - 1 ? "," : ""}
           </span>)}
           {!sent.expanded && summary.more > 0 && <button className="text-ink underline-offset-2 hover:underline" onClick={() => setSent({ ...sent, expanded: true })}>{t("mapComposer.andMore", { count: summary.more })}</button>}

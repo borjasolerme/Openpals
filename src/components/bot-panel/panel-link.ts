@@ -11,8 +11,6 @@ import { isSimplePage, PAGES, sectionTarget, type PageId, type PanelTarget } fro
 export interface PanelLink {
   section: BotSettingsSection;
   page?: PageId;
-  /** A card on the section's tab to scroll to, such as "conversations". */
-  anchor?: string;
   nonce: number;
 }
 
@@ -21,15 +19,14 @@ const watchers = new Set<() => void>();
 
 /**
  * Opens the bot's settings at a section, exactly as `toggleSettings` does, and tells the bot panel where to land:
- * `page`, when given, is the panel page that holds what the caller is about (it must belong to the section); `anchor`
- * is a card on the section's tab.
+ * `page`, when given, is the panel page that holds what the caller is about (it must belong to the section).
  */
 export function openBotSettings(
   dispatch: (action: Action) => void,
   section: BotSettingsSection,
-  options: { botId?: string; page?: PageId; anchor?: string } = {},
+  options: { botId?: string; page?: PageId } = {},
 ): void {
-  latest = { section, ...(options.page ? { page: options.page } : {}), ...(options.anchor ? { anchor: options.anchor } : {}), nonce: (latest?.nonce ?? 0) + 1 };
+  latest = { section, ...(options.page ? { page: options.page } : {}), nonce: (latest?.nonce ?? 0) + 1 };
   dispatch({ type: "toggleSettings", open: true, section, ...(options.botId !== undefined ? { botId: options.botId } : {}) });
   for (const watch of Array.from(watchers)) watch();
 }
@@ -49,9 +46,9 @@ export function usePanelLink(): PanelLink | null {
 }
 
 /** Where a named open of `section` lands: the link's page when it came with one for that section and Simple mode draws
- * that page, else the section's place, at the link's card when it named one. */
+ * that page, else the section's place. */
 export function linkTarget(section: BotSettingsSection, link: PanelLink | null): PanelTarget {
   const ours = link?.section === section ? link : null;
   if (ours?.page && isSimplePage(ours.page)) return { tab: PAGES[ours.page].home, page: ours.page };
-  return ours?.anchor ? { ...sectionTarget(section), anchor: ours.anchor } : sectionTarget(section);
+  return sectionTarget(section);
 }

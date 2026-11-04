@@ -1,12 +1,11 @@
-import { ArrowRight, Loader2, Zap } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { routineDateTime } from "@/lib/routine-display";
 import { t } from "@/lib/i18n";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { liveCardKind } from "../../shared/live-approval";
 import type { AutomationLine, RoutineRunCardData } from "../../shared/routine-run";
-import { formatTime, openNotificationTarget, useStore, type Message } from "@/state/store";
+import { formatTime, useStore, type Message } from "@/state/store";
 
 const DETAIL_LIMIT = 280;
 
@@ -41,22 +40,7 @@ function compactDetail(value: string | undefined): string {
   return clean.length > DETAIL_LIMIT ? `${clean.slice(0, DETAIL_LIMIT - 1).trimEnd()}…` : clean;
 }
 
-export function hasRoutineExecutionTask(
-  tasks: ReadonlyArray<{ threadId: string }> | undefined,
-  executionThreadId: string | undefined,
-): executionThreadId is string {
-  return Boolean(
-    executionThreadId && tasks?.some((task) => task.threadId === executionThreadId),
-  );
-}
-
-export function RoutineRunCard({
-  message,
-  onOpen,
-}: {
-  message: Message;
-  onOpen?: () => void;
-}) {
+export function RoutineRunCard({ message }: { message: Message }) {
   const run = message.routineRun;
   if (!run) {
     const fallback = compactDetail(message.text);
@@ -77,7 +61,6 @@ export function RoutineRunCard({
       ? (run.error ?? run.summary)
       : (run.summary ?? run.error),
   );
-  const actionLabel = run.goalStatus === "needs-input" ? "Review" : "Open run";
 
   return (
     <section
@@ -102,49 +85,14 @@ export function RoutineRunCard({
             <p className="mt-2 whitespace-pre-wrap leading-relaxed">{run.summary}</p>
           </details>}
         </div>
-        {onOpen && run.executionThreadId && (
-          <button
-            type="button"
-            onClick={onOpen}
-            aria-label={`${actionLabel} for ${run.routineName}`}
-            className={cn(
-              "flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[12px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent",
-              run.goalStatus === "needs-input"
-                ? "bg-warning/15 text-warning hover:bg-warning/25"
-                : "text-ink-secondary hover:bg-inset hover:text-ink",
-            )}
-          >
-            {actionLabel}
-            <ArrowRight aria-hidden="true" size={13} />
-          </button>
-        )}
       </div>
     </section>
   );
 }
 
-export function RoutineRunRow({ message, botId }: { message: Message; botId: string }) {
-  const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
-  const executionThreadId = message.routineRun?.executionThreadId;
-  const canOpen = executionThreadId && state.bots.some((candidate) =>
-    candidate.threadId === executionThreadId || hasRoutineExecutionTask(candidate.tasks, executionThreadId)
-  );
-  return (
-    <RoutineRunCard
-      message={message}
-      onOpen={canOpen && executionThreadId
-        ? () => openNotificationTarget(dispatch, { botId, threadId: executionThreadId }, state, showThreads)
-        : undefined}
-    />
-  );
-}
-
-/** Above a line an automation run wrote in a chat: which automation, when, and the way to its full run. */
+/** Above a line an automation run wrote in a chat: which automation, when, and whether it needs the person. */
 export function AutomationCaption({ message, line, botId }: { message: Message; line: AutomationLine; botId: string }) {
-  const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
-  const canOpen = state.bots.some((bot) => bot.threadId === line.executionThreadId || hasRoutineExecutionTask(bot.tasks, line.executionThreadId));
+  const { state } = useStore();
   const asking = line.needsYou === true && (message.card ? liveCardKind(message.card) !== null : line.copyOf !== undefined ||
     !state.bots.find((bot) => bot.id === botId)?.messages.some((later) => later.role === "user" && later.at > message.at));
   const tone = line.partial ? "text-warning" : line.failed ? "text-danger" : asking ? "text-warning" : "text-accent";
@@ -154,16 +102,6 @@ export function AutomationCaption({ message, line, botId }: { message: Message; 
       <span className="truncate font-medium text-ink-secondary">{line.name}</span>
       <time className="shrink-0" dateTime={new Date(line.scheduledFor).toISOString()}>· {formatTime(line.scheduledFor)}</time>
       {(line.failed || asking) && <span className={cn("shrink-0", tone)}>· {t(line.partial ? "chat.automation.partial" : line.failed ? "chat.automation.failed" : "chat.automation.needsYou")}</span>}
-      {canOpen && (
-        <button
-          type="button"
-          onClick={() => openNotificationTarget(dispatch, { botId, threadId: line.executionThreadId }, state, showThreads)}
-          aria-label={t("chat.automation.openRunFor", { name: line.name })}
-          className="shrink-0 rounded px-1 hover:bg-inset hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
-        >
-          {t("chat.automation.openRun")}
-        </button>
-      )}
     </div>
   );
 }

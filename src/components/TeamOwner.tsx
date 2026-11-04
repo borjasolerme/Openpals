@@ -6,7 +6,6 @@ import { Bell, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { api, useStore, openThread, type Bot } from "@/state/store";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { askingWhom, departmentOwner, ownerChanged, ownerOf, pictureOf, refreshNeedsYou, useTeamPeople, type TeamPeople, type TeamPerson } from "@/state/team-people";
 import type { NeedsYouItem } from "../../shared/today";
 import { useHeldMenuMotion } from "./MenuMotion";
@@ -138,7 +137,6 @@ export function NeedsYouTitle({ item, title }: { item: NeedsYouItem; title: stri
 export function NeedsYouButton({ compact = false }: { compact?: boolean }) {
   const team = useTeamPeople();
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -169,7 +167,7 @@ export function NeedsYouButton({ compact = false }: { compact?: boolean }) {
               onClick={() => {
                 setOpen(false);
                 if (!item.threadId) return;
-                openThread(dispatch, { botId, threadId: item.threadId }, state, showThreads);
+                openThread(dispatch, { botId, threadId: item.threadId }, state);
                 if (item.kind === "message") readConversation(state.groups, botId, item.threadId);
               }}
               className="flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-menu-hover">

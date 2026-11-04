@@ -39,7 +39,7 @@ function server(answer: Partial<BotDefaultsAnswer> = {}, fail?: { on: "POST" | "
 
 async function newBot(request: never, action: Partial<Extract<Action, { type: "newBot" }>> = {}, bots: Bot[] = []) {
   const dispatch = vi.fn<(action: Action) => void>();
-  await makeNewBot({ type: "newBot", ...action }, bots, dispatch, false, request);
+  await makeNewBot({ type: "newBot", ...action }, bots, dispatch, request);
   return dispatch.mock.calls.map(([sent]) => sent);
 }
 
@@ -81,7 +81,7 @@ describe("New bot", () => {
     const sent = await newBot(inSales.request, { section: "Sales" }, sales);
     expect(inSales.created()).toMatchObject({ section: "Sales", reportsTo: BOB.email });
     expect(sent[0]).toMatchObject({ type: "botAdded", preserveSelection: false });
-    expect(fixture.openBot).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ id: "created" }), false);
+    expect(fixture.openBot).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ id: "created" }));
     const general = server();
     await newBot(general.request, {}, sales);
     expect(general.created()).toMatchObject({ reportsTo: ME.email });

@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import type { InboxRow, InboxView } from "../../../shared/inbox";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { openThread, useStore } from "@/state/store";
 import { doneInboxRow, openInbox, readInboxRow, refreshInbox } from "@/state/inbox";
 import type { CardResponse } from "@/lib/card-answer";
@@ -10,7 +9,6 @@ import { closeResponse, type QuickAction } from "./inbox-view";
  * as its buttons in the chat do; a line of news is done, or opened where it came from. */
 export function useInboxActions(view: InboxView | null) {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
 
   const answer = useCallback((row: InboxRow, response: CardResponse, failed?: () => void) => {
     if (!view?.threadId || !row.card?.requestId) return;
@@ -24,9 +22,9 @@ export function useInboxActions(view: InboxView | null) {
     const target = row.origin ? { botId: row.origin.botId, threadId: row.origin.threadId, messageId: row.origin.messageId }
       : view?.threadId ? { botId: view.botId, threadId: view.threadId, messageId: row.id } : null;
     if (!target) return;
-    openThread(dispatch, { botId: target.botId, threadId: target.threadId }, state, showThreads);
+    openThread(dispatch, { botId: target.botId, threadId: target.threadId }, state);
     if (target.messageId) dispatch({ type: "focusMessage", threadId: target.threadId, messageId: target.messageId });
-  }, [view, state, dispatch, showThreads]);
+  }, [view, state, dispatch]);
 
   const run = useCallback((row: InboxRow, action: QuickAction) => {
     if (action === "allow" || action === "deny") answer(row, { behavior: action });

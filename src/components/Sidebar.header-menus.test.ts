@@ -31,8 +31,6 @@ vi.mock("./DesktopCapabilities", async () => {
   const { initialDesktopCapabilities } = await import("@/lib/desktop");
   return { useDesktopCapabilities: () => ({ capabilities: initialDesktopCapabilities() }), windowFramed: () => false };
 });
-vi.mock("@/lib/thread-preferences", () => ({ useShowThreads: () => true }));
-// The Active Threads menu is an Advanced-mode control; Simple hides it.
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => true, setAdvancedMode: () => {} }));
 vi.mock("@/state/store", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/state/store")>();
@@ -79,7 +77,6 @@ function press(target: unknown) {
 
 const menus = [
   { name: "New or share", label: "New or share", item: "Create department" },
-  { name: "Active Threads", label: "Active Threads", item: "No active threads" },
 ];
 const text = (tree: ReactElement<Props>[]) => tree.map((node) => Children.toArray(node.props.children).filter((child) => typeof child === "string").join(" ")).join(" ");
 

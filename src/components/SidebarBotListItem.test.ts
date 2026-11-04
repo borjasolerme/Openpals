@@ -34,7 +34,7 @@ const bot = (overrides: Partial<Bot> = {}): Bot => ({
 });
 
 function renderRow(candidate: Bot, density: "comfortable" | "icons" = "comfortable") {
-  return renderToStaticMarkup(createElement(BotListItem, botRowProps(initialState, vi.fn(), candidate, { density, query: "", onMenu: vi.fn() })));
+  return renderToStaticMarkup(createElement(BotListItem, botRowProps(initialState, vi.fn(), candidate, { density, onMenu: vi.fn() })));
 }
 
 afterEach(() => {
@@ -93,31 +93,13 @@ describe("BotListItem", () => {
     expect(preview).not.toContain("waiting-dot");
   });
 
-  it("offers direct New thread and New folder icons and a keyboard-accessible bot menu", () => {
-    const markup = renderRow(bot());
-    expect(markup).toContain('aria-label="New thread"');
-    expect(markup).toContain('aria-label="New folder under Atlas"');
-    expect(markup).toContain('aria-label="Actions for Atlas"');
-    expect(markup).toContain('aria-haspopup="menu"');
-  });
-  const twoThreads = (): Partial<Bot> => ({
-    tasks: [{ threadId: "thread-atlas", title: "Current", createdAt: 2 }, { threadId: "thread-earlier", title: "Earlier", createdAt: 1 }],
-  });
-
-  it("shows the thread toggle only once there is a list to open", () => {
-    expect(renderRow(bot())).not.toContain("Expand Atlas threads");
-    expect(renderRow(bot())).not.toContain('data-sidebar-thread-row=');
-    expect(renderRow(bot(twoThreads()))).toContain("Expand Atlas threads");
-    expect(renderRow(bot({ projects: [{ id: "p1", name: "Research" }] }))).toContain("Expand Atlas threads");
-  });
-
-  it("keeps the native thread toggle beside, not inside, the selectable bot row", () => {
-    const markup = renderRow(bot(twoThreads()));
-    expect(markup).toContain('role="button" tabindex="0"');
-    expect(markup).toContain('</div><button type="button" aria-label="Expand Atlas threads" aria-expanded="false"');
-    const toggle = markup.match(/<button[^>]*aria-label="Expand Atlas threads"[^>]*>/)?.[0];
-    expect(toggle).toContain("focus-visible:ring-1");
-    expect(toggle).not.toContain("hover:bg-");
+  it("offers a keyboard-accessible bot menu and no thread list, toggle or creation, however many threads it has", () => {
+    const tasks = [{ threadId: "thread-atlas", title: "Current", createdAt: 2 }, { threadId: "thread-earlier", title: "Earlier", createdAt: 1 }];
+    for (const markup of [renderRow(bot()), renderRow(bot({ tasks })), renderRow(bot({ projects: [{ id: "p1", name: "Research" }] }))]) {
+      expect(markup).toContain('aria-label="Actions for Atlas"');
+      expect(markup).toContain('aria-haspopup="menu"');
+      for (const gone of ['aria-label="New thread"', "New folder under Atlas", "Expand Atlas threads", "data-sidebar-thread-row="]) expect(markup, gone).not.toContain(gone);
+    }
   });
 
   it("previews the last reply, not the digest receipt that follows it", () => {
@@ -139,9 +121,9 @@ describe("BotListItem", () => {
       call: { callId: "c1", botId: "atlas", client: "ios", startedAt: at(0), endedAt: at(2), seconds: 102, endReason: "hung-up" },
     };
     const spoken = { id: "u1", role: "user", kind: "text", text: "what is the weather", at: at(0), via: "call", callId: "c1" };
-    const draw = (candidate: Bot, { selected = false, query = "" } = {}) => renderToStaticMarkup(createElement(BotListItem, botRowProps(
+    const draw = (candidate: Bot, { selected = false } = {}) => renderToStaticMarkup(createElement(BotListItem, botRowProps(
       selected ? { ...initialState, activeView: "chat", selectedId: candidate.id } : initialState,
-      vi.fn(), candidate, { density: "comfortable", query, onMenu: vi.fn() },
+      vi.fn(), candidate, { density: "comfortable", onMenu: vi.fn() },
     )));
 
     it("previews the last reply, not the record that follows it", () => {
@@ -177,7 +159,7 @@ describe("BotListItem", () => {
           { id: "a1", role: "bot", kind: "activity", at: at(1), requestMessageId: "u1", tool: { name: "Bash", spoken: "running the tests" } },
           record,
         ] as Bot["messages"],
-      }), { query: "current" });
+      }));
       expect(markup).toContain("Running the tests");
     });
   });

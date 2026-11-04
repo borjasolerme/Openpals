@@ -1,14 +1,13 @@
 import { ChevronRight, MessagesSquare } from "lucide-react";
-import { openThread, useStore, type Message } from "@/state/store";
-import { useShowThreads } from "@/lib/thread-preferences";
+import { openBot, useStore, type Message } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import { BotAvatar } from "./Avatar";
 import { HandoffReply } from "./HandoffReply";
 
+/** A teammate's work in a thread of its own: the pill opens that teammate's chat, where a question it has waits. */
 export function ThreadChip({ message }: { message: Message }) {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const ref = message.threadRef;
   const tool = message.tool;
   if (!ref || !tool) return null;
@@ -21,8 +20,9 @@ export function ThreadChip({ message }: { message: Message }) {
       <button
         type="button"
         data-thread-chip={ref.threadId}
-        onClick={() => openThread(dispatch, ref, state, showThreads)}
-        title={t("chat.openThread", { title: ref.title })}
+        disabled={!bot}
+        onClick={() => bot && openBot(dispatch, bot)}
+        title={bot ? t("chat.openConversationWith", { name: bot.name }) : undefined}
         className={cn("ui-pill", tool.ok === false && "text-danger")}
       >
         {bot ? <BotAvatar bot={bot} state="happy" size={16} animated={false} /> : <MessagesSquare size={13} aria-hidden="true" />}

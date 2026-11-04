@@ -30,15 +30,6 @@ describe("savedStateAction", () => {
     expect(shown.groups[0]!.hasMore).toBe(true);
   });
 
-  it("keeps an edit the server saved even though its response was lost", () => {
-    const edited = reducer(start, { type: "renameTask", botId: "bot-1", threadId: "first", title: "Renamed" });
-    const savedBot = { ...bot, messages: [], tasks: [{ threadId: "first", title: "Renamed", createdAt: 1 }] };
-    const shown = reread(edited, { botId: "bot-1" }, { bots: [savedBot] });
-
-    expect(shown.bots[0]!.tasks![0]!.title).toBe("Renamed");
-    expect(shown.bots[0]!.messages).toEqual([said]);
-  });
-
   it("restores a direct chat's turn limit from the server", () => {
     const chat = { ...room, id: "chat-1", dm: true, tasks: undefined, turnTimeoutMinutes: 10 } as unknown as Group;
     const edited = reducer({ ...start, groups: [chat] }, { type: "setConversationTurnLimit", groupId: "chat-1", threadId: "talk", minutes: 30, dm: true });

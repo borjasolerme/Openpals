@@ -13,7 +13,6 @@ import { endWelcomeHere, markWelcomeSeen, saveWelcomeHints, stepAsideWelcome, ta
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { hintSeen, type OnboardingStatus } from "@/lib/onboarding";
-import { useShowThreads } from "@/lib/thread-preferences";
 import type { LocaleKey } from "@/locales";
 import type { CloudSendNotice } from "../../../electron/cloud-send.mjs";
 import { openBot, useStore } from "@/state/store";
@@ -61,7 +60,6 @@ const requestedView = (value: string | null): WelcomeView | null =>
 
 export function CloudWelcome() {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const welcome = useCloudWelcome();
   const record = withEarlyHints(state.config?.onboarding, welcome.early);
   const name = useCloudName();
@@ -142,7 +140,7 @@ export function CloudWelcome() {
   const sayHi = () => {
     end("done");
     dispatch({ type: "showChat" });
-    if (bot) openBot(dispatch, bot, showThreads);
+    if (bot) openBot(dispatch, bot);
   };
   const giveJob = () => {
     if (!bot) return;

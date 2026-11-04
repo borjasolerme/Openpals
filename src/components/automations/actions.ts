@@ -3,15 +3,12 @@ import { useState } from "react";
 
 import type { Automation } from "@/lib/automations";
 import { copyText } from "@/lib/copy-text";
-import type { RoutineRun } from "@/lib/routines";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { loadWebhookCredentials, removeWebhookCredential, saveWebhookCredential, webhookCredentialStore } from "@/lib/webhook-credentials";
 import type { WebhookCredential } from "@/lib/webhooks";
-import { api, openBotThread, useStore } from "@/state/store";
+import { api, openBot, useStore } from "@/state/store";
 
 export function useAutomationActions() {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   /** What the error is about, e.g. "toggle:<id>", so it shows beside the thing that was clicked. */
@@ -77,10 +74,11 @@ export function useAutomationActions() {
     setTimeout(() => setCopied((current) => (current === webhookId ? null : current)), 1_800);
   });
 
-  const openRun = (automation: Automation, run: RoutineRun | undefined) => {
+  /** A run's question or sign-in reaches the bot's chat, where the person answers it. */
+  const openChat = (automation: Automation) => {
     const bot = state.bots.find((candidate) => candidate.id === automation.botId);
-    if (bot && run?.threadId) openBotThread(dispatch, bot, run.threadId, showThreads);
+    if (bot) openBot(dispatch, bot);
   };
 
-  return { busy, error, errorFor, setError, copied, toggle, runNow, remove, copyAddress, openRun };
+  return { busy, error, errorFor, setError, copied, toggle, runNow, remove, copyAddress, openChat };
 }

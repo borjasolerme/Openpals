@@ -212,12 +212,13 @@ describe("Automations page", () => {
 });
 
 describe("routine drawer", () => {
-  it("shows bot, plain schedule, instructions, where it runs, results and the last three runs", () => {
+  it("shows bot, plain schedule, instructions, where it runs and the last three runs, with no results destination", () => {
     const { html } = details(routineItem(routine));
     for (const text of ["Bot", "Runner", "Schedule", scheduleLabel(routine.schedule), "What to do", routine.prompt,
-      "Runs on", "This computer", "Post results to", "Morning briefs", "Run logs", "Active"]) {
+      "Runs on", "This computer", "Run logs", "Active"]) {
       expect(html, text).toContain(text);
     }
+    expect(html).not.toContain("Post results to");
     expect(html.match(/aria-label="Open Morning brief run:/g)).toHaveLength(3);
     expect(html).toContain("2 min");
   });
@@ -256,10 +257,10 @@ describe("routine drawer", () => {
     expect(details(routineItem(cronRoutine)).html).toContain(scheduleLabel(cronRoutine.schedule));
   });
 
-  it("keeps Edit and the results thread", () => {
+  it("keeps Edit, with no way into a results or run thread", () => {
     const { props, tree } = details(routineItem(routine));
     const controls = buttons(tree);
-    expect(controls.has("Open results thread")).toBe(true);
+    for (const gone of ["Open results thread", "Open thread"]) expect(controls.has(gone), gone).toBe(false);
     click(controls.get("Edit"));
     expect(props.onEdit).toHaveBeenCalledOnce();
   });
@@ -270,7 +271,7 @@ describe("routine editor", () => {
     seed: { kind: "routine", at: Date.now() + 3_600_000, durationMinutes: 30, botIds: [bot.id], routine: routineToEdit },
     bots: [bot], onClose: vi.fn(), onSavedCall: vi.fn(),
   }));
-  const hidden = ['<select aria-label="Repeat"', "Routine safety limit", "Runs the whole job on the bot&#x27;s cloud desktop", "Add attachment", "Post results to", "Routine type"];
+  const hidden = ['<select aria-label="Repeat"', "Routine safety limit", "Runs the whole job on the bot&#x27;s cloud desktop", "Add attachment", "Routine type"];
 
   it("keeps Simple mode to the basics with everything else behind More options", () => {
     const html = editor();
@@ -369,18 +370,18 @@ describe("routine editor", () => {
     expect(await save({ ...routine, enabled: false })).not.toHaveProperty("enabled");
   });
 
-  it("shows a routine with no thread of its own reporting into the bot's main thread", () => {
-    fixture.advanced = true;
-    const { resultsThreadId: _chosen, ...unchosen } = routine;
-    const destination = (html: string) => html.slice(html.indexOf("Post results to")).match(/^[\s\S]*?<\/select>/)![0];
-    expect(destination(editor(unchosen))).toContain('<option value="new" selected="">The bot&#x27;s main thread</option>');
-    expect(destination(editor(routine))).toContain('<option value="brief-thread" selected="">Morning briefs</option>');
+  it("asks nowhere for a results destination: results go to the bot's chat", () => {
+    for (const advanced of [false, true]) {
+      fixture.advanced = advanced;
+      expect(editor(routine)).not.toContain("Post results to");
+      expect(editor(cronRoutine)).not.toContain("Post results to");
+    }
   });
 
   it("leaves the Advanced editor as it was", () => {
     fixture.advanced = true;
     const html = editor();
-    for (const text of ['placeholder="Add title"', '<select aria-label="Repeat"', "Assign a bot", "Runs the whole job on the bot&#x27;s cloud desktop", "Post results to", "Routine type", "New event"]) {
+    for (const text of ['placeholder="Add title"', '<select aria-label="Repeat"', "Assign a bot", "Runs the whole job on the bot&#x27;s cloud desktop", "Routine type", "New event"]) {
       expect(html, text).toContain(text);
     }
     expect(html).not.toContain("More options");

@@ -1,10 +1,10 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { RoutineRunCardData } from "../../shared/routine-run";
 import type { Message } from "@/state/store";
-import { hasRoutineExecutionTask, RoutineRunCard } from "./RoutineRunCard";
+import { RoutineRunCard } from "./RoutineRunCard";
 
 function message(
   status: RoutineRunCardData["status"],
@@ -35,16 +35,15 @@ describe("RoutineRunCard", () => {
     const legacy = renderToStaticMarkup(createElement(RoutineRunCard, { message: message("completed") }));
     expect(legacy).toContain('dateTime="1970-01-01T00:00:00.001Z"');
   });
-  it("shows a compact completion receipt and a path to the isolated run", () => {
+  it("shows a compact completion receipt with no way into the run's own thread", () => {
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("completed", { summary: "The brief is ready with three follow-ups." }),
-      onOpen: vi.fn(),
     }));
 
     expect(markup).toContain("Morning brief");
     expect(markup).toContain("Completed");
     expect(markup).toContain("The brief is ready with three follow-ups.");
-    expect(markup).toContain("Open run");
+    expect(markup).not.toContain("Open run");
     expect(markup).toContain('aria-label="Morning brief routine run: Completed"');
   });
 
@@ -52,20 +51,17 @@ describe("RoutineRunCard", () => {
     const summary = `The brief is ready. ${"Detailed result. ".repeat(25)}\nFinal follow-up.`;
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("completed", { summary }),
-      onOpen: vi.fn(),
     }));
 
     expect(markup).toContain("Show report");
     expect(markup).toContain(summary);
     expect(markup).toContain("<details ");
     expect(markup).not.toContain("<details open");
-    expect(markup).toContain('aria-label="Open run for Morning brief"');
   });
 
   it("keeps a terminal team-goal outcome distinct from scheduler completion", () => {
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("completed", { goalStatus: "blocked", summary: "The team needs a missing credential." }),
-      onOpen: vi.fn(),
     }));
 
     expect(markup).toContain("Blocked");
@@ -93,29 +89,24 @@ describe("RoutineRunCard", () => {
   it("does not describe delegated work as a question or approval", () => {
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("waiting", { summary: "Waiting for work it handed on to finish." }),
-      onOpen: vi.fn(),
     }));
 
     expect(markup).toContain("Waiting for work it handed on to finish.");
-    expect(markup).toContain("Open run");
     expect(markup).not.toContain("Needs your input");
     expect(markup).not.toContain("Review");
   });
 
-  it("keeps an explicit team-goal input request actionable", () => {
+  it("says when a team goal needs the person's input", () => {
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("waiting", { goalStatus: "needs-input", summary: "Which region should I use?" }),
-      onOpen: vi.fn(),
     }));
     expect(markup).toContain("Needs your input");
-    expect(markup).toContain('aria-label="Review for Morning brief"');
   });
 
   it("shows a concise error without dumping a verbose run log into chat", () => {
     const verbose = `Provider failed ${"trace-line ".repeat(100)}`;
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
       message: message("failed", { error: verbose }),
-      onOpen: vi.fn(),
     }));
 
     expect(markup).toContain("Failed");
@@ -135,23 +126,5 @@ describe("RoutineRunCard", () => {
 
     const markup = renderToStaticMarkup(createElement(RoutineRunCard, { message: legacy }));
     expect(markup).toContain("Morning brief completed.");
-  });
-
-  it("does not offer a dead navigation action when the execution task is unavailable", () => {
-    const markup = renderToStaticMarkup(createElement(RoutineRunCard, {
-      message: message("missed", { executionThreadId: undefined, error: "Computer was offline." }),
-      onOpen: vi.fn(),
-    }));
-
-    expect(markup).toContain("Missed");
-    expect(markup).not.toContain("Open run");
-  });
-
-  it("recognizes only an execution thread still present in the owning bot's tasks", () => {
-    const tasks = [{ threadId: "source-thread" }, { threadId: "execution-thread" }];
-
-    expect(hasRoutineExecutionTask(tasks, "execution-thread")).toBe(true);
-    expect(hasRoutineExecutionTask(tasks, "deleted-thread")).toBe(false);
-    expect(hasRoutineExecutionTask(undefined, "execution-thread")).toBe(false);
   });
 });

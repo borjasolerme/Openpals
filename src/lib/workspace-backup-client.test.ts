@@ -15,8 +15,8 @@ describe("full-backup browser state", () => {
 
   it("replaces only allowlisted keys and clears old drafts absent from the backup", () => {
     const storage = memory({ "omb-drafts": "old", "omb-draft-attachments": "old attachment", "auth-token": "keep", "omb-webhook-credentials": "destination URL" });
-    applyWorkspaceClientState({ "omb-drafts": "restored", "omb-show-threads": "false" }, storage);
-    expect(Object.fromEntries(storage.entries)).toEqual({ "omb-drafts": "restored", "omb-show-threads": "false", "auth-token": "keep", "omb-webhook-credentials": "destination URL" });
+    applyWorkspaceClientState({ "omb-drafts": "restored", "omb-send-key": "enter" }, storage);
+    expect(Object.fromEntries(storage.entries)).toEqual({ "omb-drafts": "restored", "omb-send-key": "enter", "auth-token": "keep", "omb-webhook-credentials": "destination URL" });
   });
 
   it("carries the run card visibility choice in a workspace backup", () => {

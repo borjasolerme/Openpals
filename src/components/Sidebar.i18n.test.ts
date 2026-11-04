@@ -10,7 +10,7 @@ vi.mock("./DesktopCapabilities", () => ({
 }));
 
 import { ConfirmDialogCard } from "./ConfirmDialog";
-import { BotListItem, BotThreadList, botConfirmCopy, botRowProps, roomDeleteCopy } from "./Sidebar";
+import { BotListItem, botConfirmCopy, botRowProps, roomDeleteCopy } from "./Sidebar";
 
 const bot = (overrides: Partial<Bot> = {}): Bot => ({
   id: "atlas",
@@ -26,7 +26,7 @@ const bot = (overrides: Partial<Bot> = {}): Bot => ({
   ...overrides,
 }) as Bot;
 
-const rowProps = (value: Bot) => botRowProps(initialState, () => {}, value, { density: "comfortable", query: "", onMenu: () => {} });
+const rowProps = (value: Bot) => botRowProps(initialState, () => {}, value, { density: "comfortable", onMenu: () => {} });
 
 function renderRow(value: Bot): string {
   return renderToStaticMarkup(createElement(BotListItem, rowProps(value)));
@@ -37,13 +37,6 @@ afterEach(() => {
 });
 
 describe("sidebar rows", () => {
-  it("translates a legacy thread's fallback title", () => {
-    setLocale("ja");
-    const markup = renderToStaticMarkup(createElement(BotThreadList, { ...rowProps(bot()), selected: true }));
-    expect(markup).toContain(`title="${t("task.newShort")}"`);
-    expect(markup).not.toContain('title="New thread"');
-  });
-
   it("translates the row's own copy and its actions", () => {
     setLocale("pt-br");
     const markup = renderRow(bot({ chiefOfStaff: true, busy: true }));

@@ -51,14 +51,14 @@ it("with none yet, a click makes one through the server's new-conversation route
   const dispatch = vi.fn();
   server.answer = { bot: { id: "scout", threadId: "ben-chat" }, task: { threadId: "ben-chat", private: true } };
   const bot = scout([{ threadId: "ada-chat", private: true, createdAt: 5 }]);
-  openBot(dispatch, bot, false);
-  openBot(dispatch, bot, false);
+  openBot(dispatch, bot);
+  openBot(dispatch, bot);
   await settle();
   expect(server.calls).toEqual([["/api/bots/scout/tasks", { method: "POST", body: "{}" }]]);
   expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "taskSwitched", bot: server.answer && (server.answer as { bot: unknown }).bot }, { type: "select", id: "scout" }]);
   expect(stored.size, "nothing kept in this device's storage: the server says whose it is").toBe(0);
   dispatch.mockClear();
-  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }, { threadId: "ben-chat", private: true, createdAt: 6 }]), false);
+  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }, { threadId: "ben-chat", private: true, createdAt: 6 }]));
   expect(dispatch.mock.calls.map(([action]) => action), "next time it opens, nothing is made").toEqual([{ type: "switchTask", botId: "scout", threadId: "ben-chat" }]);
   expect(server.calls.length).toBe(1);
 });
@@ -66,8 +66,8 @@ it("with none yet, a click makes one through the server's new-conversation route
 it("a Member's existing conversation opens with no request; a refusal shows as an error; off a team the bot opens as it always has", async () => {
   setTeamChats(MEMBER);
   const dispatch = vi.fn();
-  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }]), true);
-  expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "select", id: "scout" }, { type: "switchTask", botId: "scout", threadId: "ada-chat" }]);
+  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }]));
+  expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "switchTask", botId: "scout", threadId: "ada-chat" }]);
   expect(server.calls).toEqual([]);
   dispatch.mockClear();
   server.fail = new Error("Members can't start a conversation here.");
@@ -76,7 +76,7 @@ it("a Member's existing conversation opens with no request; a refusal shows as a
   expect(dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "error", message: "Members can't start a conversation here." }]);
   setTeamChats(null);
   dispatch.mockClear();
-  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }]), false);
+  openBot(dispatch, scout([{ threadId: "ada-chat", private: true, createdAt: 5 }]));
   expect(dispatch.mock.calls.map(([action]) => action), "the bot's main chat, as before").toEqual([{ type: "select", id: "scout" }]);
   expect(openOwnTeamChat(dispatch, scout([]), () => {})).toBe(false);
 });

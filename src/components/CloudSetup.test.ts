@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { setLocale } from "@/lib/i18n";
 import { EMPTY_ONBOARDING, type WelcomeViewer } from "@/lib/onboarding";
 
-const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, ownHooks: 0, effects: [] as EffectCallback[], state: {} as any, dispatch: (() => {}) as (action: unknown) => void, showThreads: true }));
+const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, ownHooks: 0, effects: [] as EffectCallback[], state: {} as any, dispatch: (() => {}) as (action: unknown) => void }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => { const index = f.index++; if (!(index in f.values)) f.values[index] = typeof initial === "function" ? (initial as () => unknown)() : initial;
     return [f.values[index], (next: unknown) => { f.values[index] = typeof next === "function" ? (next as (value: unknown) => unknown)(f.values[index]) : next; }]; },
@@ -12,7 +12,6 @@ vi.mock("react", async original => ({ ...await original<typeof import("react")>(
   useEffect: (effect: EffectCallback) => { f.effects.push(effect); },
 }));
 vi.mock("@/state/store", async original => ({ ...await original<typeof import("@/state/store")>(), useStore: () => ({ state: f.state, dispatch: f.dispatch }), api: vi.fn() }));
-vi.mock("@/lib/thread-preferences", () => ({ useShowThreads: () => f.showThreads }));
 vi.mock("@/components/onboarding/view-transition", () => ({ withViewTransition: (update: () => void) => { update(); return null; } }));
 vi.mock("@/lib/cloud-intent", async original => {
   const actual = await original<typeof import("@/lib/cloud-intent")>();
@@ -60,7 +59,7 @@ let lent: unknown[];
 let dispatched: unknown[];
 
 beforeEach(() => {
-  vi.clearAllMocks(); f.values = []; f.index = 0; f.effects = []; f.showThreads = true; viewer = owner; lent = []; dispatched = [];
+  vi.clearAllMocks(); f.values = []; f.index = 0; f.effects = []; viewer = owner; lent = []; dispatched = [];
   welcomeShown = false; resetCloudWelcome();
   f.dispatch = action => { dispatched.push(action); };
   f.state = {
@@ -280,10 +279,6 @@ it("opens the chat the job went to as the bot's row does: with threads hidden at
   f.state.bots = [{ id: "b1", threadId: "t1", mainThreadId: "main", name: "Maus",
     tasks: [{ threadId: "t1", title: "Routine report", createdAt: 1 }, { threadId: "main", title: "Set up", createdAt: 2 }] }];
   await mount();
-  button("Open the chat")!.props.onClick!();
-  expect(dispatched).toEqual([{ type: "showChat" }, { type: "select", id: "b1" }]);
-  dispatched.length = 0;
-  f.showThreads = false;
   button("Open the chat")!.props.onClick!();
   expect(dispatched).toEqual([{ type: "showChat" }, { type: "switchTask", botId: "b1", threadId: "main" }]);
 });

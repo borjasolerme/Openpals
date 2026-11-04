@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { formattedReplyWidth, isFormattedReply, splitReplyBlocks } from "@/lib/formatted-reply";
 import { activeLocale, t } from "@/lib/i18n";
-import { useShowThreads } from "@/lib/thread-preferences";
 import { useReactor } from "@/lib/cloud-guest";
 import { otherSpeaker } from "@/lib/own-profile";
 import { Check, ChevronDown, FolderOpen, Loader2, Pin, Square, X } from "lucide-react";
@@ -9,7 +8,6 @@ import {
   api,
   useStore,
   formatTime,
-  openNotificationTarget,
   type Bot,
   type Group,
   type GroupDefaultResponder,
@@ -20,7 +18,7 @@ import { ScreenFrame } from "./ScreenFrame";
 import { RoomHoldsBanner } from "./RoomHoldsBanner";
 import { ThreadChip } from "./ThreadChip";
 import { ToolActivity } from "./ToolActivity";
-import { ThreadRefText } from "./ThreadRefs";
+import { MentionText } from "./MentionText";
 import { TurnPresence } from "./TurnPresence";
 import { showToolCallsEnabled } from "@/lib/feature-flags";
 import { CompactionChip, DigestChip } from "./DigestChip";
@@ -56,7 +54,7 @@ import { ReplyQuote } from "./ReplyQuote";
 import { ConnectorCard } from "./ConnectorCard";
 import { SecretRequestCard } from "./SecretRequestCard";
 import { SignInRequestCard } from "./SignInRequestCard";
-import { hasRoutineExecutionTask, RoutineRunCard } from "./RoutineRunCard";
+import { RoutineRunCard } from "./RoutineRunCard";
 import { GoalRunCard } from "./GoalRunCard";
 import { AttachmentGallery, MessageAttachmentGallery, replyAttachmentGroup } from "./AttachmentGallery";
 import { VoiceNoteBubble, type VoiceNoteAttachment } from "./VoiceNoteBubble";
@@ -251,7 +249,7 @@ function RoomTextMessage({
                 data-citation-owner={group.id}
                 data-citation-thread={group.threadId}
               >
-                <ThreadRefText text={display} peers={peers} everyone={!group.dm} />
+                <MentionText text={display} peers={peers} everyone={!group.dm} />
               </div>{m.bugReport && <BugReportNote report={m.bugReport} />}
               {cited && <SentCitations
                 citations={cited.citations}
@@ -330,7 +328,6 @@ export const Transcript = memo(function Transcript({
   onReply: (message: Message) => void;
 }) {
   const { state, dispatch } = useStore();
-  const showThreads = useShowThreads();
   const showToolCalls = showToolCallsEnabled(state.config);
   const canReact = useCanReact(group.threadId);
   const memberOf = (id?: string) => members.find((b) => b.id === id);
@@ -411,11 +408,6 @@ export const Transcript = memo(function Transcript({
         const m = item.message;
         const user = m.role === "user";
         const newCluster = !prev || prev.role !== m.role || prev.from?.botId !== m.from?.botId || Boolean(prev.comm) || newDay;
-        const routineOwner = m.kind === "routine.run" ? memberOf(m.from?.botId) : undefined;
-        const routineExecutionThreadId = m.routineRun?.executionThreadId;
-        const routineTarget = routineOwner && hasRoutineExecutionTask(routineOwner.tasks, routineExecutionThreadId)
-          ? { botId: routineOwner.id, threadId: routineExecutionThreadId }
-          : undefined;
         const canRetryRoom = m.id === retryableId && retryRequest !== null && !roomBusy;
         const row = isCancelledTranscriptRow(m) ? (
           <CancelledTurnRow onRetry={canRetryRoom ? retryRoom : undefined} />
@@ -450,12 +442,7 @@ export const Transcript = memo(function Transcript({
             </div>
           ) : m.kind === "routine.run" ? (
             <div className="flex justify-start">
-              <RoutineRunCard
-                message={m}
-                onOpen={routineTarget
-                  ? () => openNotificationTarget(dispatch, routineTarget, state, showThreads)
-                  : undefined}
-              />
+              <RoutineRunCard message={m} />
             </div>
           ) : m.kind === "activity" && m.tool ? (
             roomActivityVisible(m, showToolCalls) ? (

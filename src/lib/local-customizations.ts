@@ -5,7 +5,3 @@ const inTests = import.meta.env?.MODE === "test";
 
 /** Departments (sidebar sections): off = one flat list of bots, no section headers or "Move to section". */
 export const BOT_SECTIONS_ENABLED = inTests;
-
-/** Threads: off = one conversation per bot, as in Grok Bot. Thread lists, the "Show threads" setting and the bot
- * menu's thread items are gone, and bots open their main thread. Existing threads are kept, only hidden. */
-export const THREADS_ENABLED = inTests;

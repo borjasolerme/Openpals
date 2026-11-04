@@ -1,5 +1,5 @@
 // Security: model output never reaches the DOM as raw HTML (no rehype-raw); Shiki's output is generator-escaped.
-import { createContext, memo, use, useContext, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
+import { createContext, memo, useContext, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import Markdown, { defaultUrlTransform, type Components, type ExtraProps, type Options as MarkdownOptions } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -20,10 +20,7 @@ import { windowsPathDestinations } from "../../shared/markdown-windows-paths";
 import { GITHUB_REF_CLASS, isUseMyComputerUrl, LINK_CLASS, UseMyComputerLink, usePageOpener, withPageOpen } from "./ChatLinks";
 import { githubRefFromProps, remarkGithubRefs } from "@/lib/github-refs";
 import { GITHUB_REF_ICONS, LinkHoverCard } from "@/components/LinkHoverCard";
-import { useThreadLinkMenu } from "@/components/ThreadLinkMenu";
-import { looksLikeThreadRefUrl, parseThreadRefUrl, resolveThreadRefAddress, remarkThreadRefs } from "../lib/thread-refs";
 import { MarkdownImagePreview, MessageFolderFiles, OutsideWorkspaceFile, saveFailureText, useLocalFileSave, type MessageAttachmentContext } from "./AttachmentPreview";
-import { ThreadLink, ThreadRefsContext, threadLinkFromProps, type ThreadRefsValue } from "./ThreadRefs";
 import { MarkdownTable } from "./MarkdownTable";
 import { CodeBlock, CodePlate, codeHash } from "./CodeBlock";
 export { CodeBlock, HIGHLIGHT_CACHE_MAX, HIGHLIGHT_CACHE_MAX_CHARS, HIGHLIGHT_MAX_CHARS, type CodeBlockProps } from "./CodeBlock";
@@ -65,7 +62,7 @@ export const localFilePath = (href?: string): string | null => {
 };
 
 export function chatUrlTransform(value: string, key = "href"): string {
-  if (looksLikeThreadRefUrl(value) || isUseMyComputerUrl(value)) return value;
+  if (isUseMyComputerUrl(value)) return value;
   // Markdown-to-HTML percent-encodes a destination's backslashes (C:%5CUsers…); restore them and leave other escapes
   // for the server's single decode.
   const url = /^[a-zA-Z]:%5C/i.test(value) ? value.replace(/%5C/gi, "\\") : value;
@@ -563,8 +560,6 @@ export function messageNeedsKatex(text: string): boolean {
 interface MessageScope {
   message?: MessageAttachmentContext;
   imageOffsets?: Map<number, number>;
-  threads: ThreadRefsValue["threads"];
-  currentBotId?: string;
   delivered?: DeliveredFiles;
 }
 
@@ -572,7 +567,7 @@ export type DeliveredFiles = Readonly<Record<string, string>>;
 
 const fileName = (path: string) => path.split(/[\\/]/).at(-1) ?? path;
 
-const MessageScopeContext = createContext<MessageScope>({ threads: [] });
+const MessageScopeContext = createContext<MessageScope>({});
 
 function MarkdownCode({ node, children }: BlockProps) {
   const child: any = Array.isArray(children) ? children[0] : children;
@@ -610,14 +605,10 @@ function MarkdownImage(props: ComponentProps<"img"> & ExtraProps) {
 function MarkdownLink({ href, children, ...rest }: { href?: string; children?: ReactNode }) {
   // SAFETY: react-markdown hands hast data-* attributes through as string props
   const props = rest as Record<string, unknown>;
-  const { threads, currentBotId, message, delivered } = useContext(MessageScopeContext);
-  const linkMenu = useThreadLinkMenu(href), openPage = usePageOpener();
+  const { message, delivered } = useContext(MessageScopeContext);
+  const openPage = usePageOpener();
   if (!href) return <span className="break-words">{children}</span>;
   if (isUseMyComputerUrl(href)) return <UseMyComputerLink>{children}</UseMyComputerLink>;
-  const address = parseThreadRefUrl(href);
-  const ref = address ? resolveThreadRefAddress(threads, address, currentBotId) : null;
-  if (ref) return <ThreadLink target={ref} ambiguous={ref.ambiguous}>{children}</ThreadLink>;
-  if (address || looksLikeThreadRefUrl(href)) return <span className="break-words">{children}</span>;
   const localPath = localFilePath(href);
   if (localPath) {
     const copy = delivered && Object.hasOwn(delivered, fileName(localPath)) ? delivered[fileName(localPath)] : undefined;
@@ -634,7 +625,7 @@ function MarkdownLink({ href, children, ...rest }: { href?: string; children?: R
   const Icon = github ? GITHUB_REF_ICONS[github.kind] : null;
   return (
     <LinkHoverCard href={href} github={github}>
-      {(hoverAnchor) => { const anchor = withPageOpen(href, openPage, linkMenu.onContextMenu ? { ...hoverAnchor, onContextMenu: linkMenu.onContextMenu } : hoverAnchor); return <>{linkMenu.menu}{Icon ? (
+      {(hoverAnchor) => { const anchor = withPageOpen(href, openPage, hoverAnchor); return <>{Icon ? (
         <a {...anchor} href={href} target="_blank" rel="noreferrer" dir="ltr" title={href} data-github-ref={github!.kind} className={GITHUB_REF_CLASS}>
           <Icon size={13} aria-hidden="true" className="shrink-0 self-center text-ink-tertiary" />
           <span>{children}</span>
@@ -657,9 +648,6 @@ const MARKDOWN_COMPONENTS: Components = {
     );
   },
   span(props) {
-    // SAFETY: react-markdown hands hast data-* attributes through as string props
-    const link = threadLinkFromProps(props as Record<string, unknown>);
-    if (link) return <ThreadLink target={link.target} ambiguous={link.ambiguous}>{props.children}</ThreadLink>;
     const { node: _node, children, ...rest } = props;
     return <span {...rest}>{children}</span>;
   },
@@ -715,12 +703,8 @@ const MARKDOWN_COMPONENTS: Components = {
   },
 };
 
-// A thread link is "#" directly before a title, or an app link. A heading's "## " never reaches the plugin as text.
-const MAY_LINK_THREAD = /#[^\s#]|openmausbot/i;
-const NO_THREAD_REFS: ThreadRefsValue = { threads: [] };
-
-// One plugin list for everything every message shares; a message adds mentions only when it has an "@" and thread
-// links only when it may name one, so most messages render the same way whatever the bot list holds.
+// One plugin list for everything every message shares; a message adds mentions only when it has an "@", so most
+// messages render the same way whatever the bot list holds.
 const BASE_REMARK_PLUGINS: NonNullable<MarkdownOptions["remarkPlugins"]> = [[remarkGfm, GFM_OPTIONS], remarkMath, remarkWindowsPathDestinations, unwrapLinkedImages, remarkSoftBreaks, remarkGithubRefs];
 const NO_REHYPE_PLUGINS: NonNullable<MarkdownOptions["rehypePlugins"]> = [];
 let katexPlugins: { plugin: KatexPlugin; list: NonNullable<MarkdownOptions["rehypePlugins"]> } | null = null;
@@ -740,14 +724,6 @@ const peerSignature = (peers: readonly MentionPeer[]) => {
   }
   return signature;
 };
-// The thread list keeps its identity while its contents hold (ThreadRefsProvider), so a number per list stands for it.
-const threadListIds = new WeakMap<object, number>();
-let threadListCount = 0;
-const threadListId = (threads: object) => {
-  let id = threadListIds.get(threads);
-  if (id === undefined) threadListIds.set(threads, (id = ++threadListCount));
-  return id;
-};
 
 /** Test seam: drops every cached message. */
 export function clearChatMarkdownCache(): void {
@@ -759,8 +735,6 @@ function ChatMarkdownComponent({ text, message, mentionPeers = NO_MENTION_PEERS,
   mentionPeers?: readonly MentionPeer[]; everyone?: boolean; mentionPerson?: MentionPerson;
   delivered?: DeliveredFiles;
 }) {
-  // use() may be called conditionally: only a message that can hold a thread link subscribes to the thread list.
-  const { threads, currentBotId } = MAY_LINK_THREAD.test(text) ? use(ThreadRefsContext) : NO_THREAD_REFS;
   const { source, imageOffsets } = normalizeMessageMarkdown(text);
   const needsMath = normalizedSourceHasMath(source);
   const [katexReady, setKatexReady] = useState(() => katexPlugin !== null);
@@ -780,17 +754,16 @@ function ChatMarkdownComponent({ text, message, mentionPeers = NO_MENTION_PEERS,
     };
   }, [needsMath]);
   const mathPlugin = needsMath && katexReady ? katexPlugin : null;
-  const mentions = source.includes("@"), linksThreads = threads.length > 0;
-  const variant = `${mathPlugin ? "math" : ""}\u0003${mentions ? `${peerSignature(mentionPeers)}\u0001${everyone ? 1 : 0}\u0001${mentionPerson?.profileName ?? ""}` : ""}\u0003${linksThreads ? `${threadListId(threads)}\u0001${currentBotId ?? ""}` : ""}`;
+  const mentions = source.includes("@");
+  const variant = `${mathPlugin ? "math" : ""}\u0003${mentions ? `${peerSignature(mentionPeers)}\u0001${everyone ? 1 : 0}\u0001${mentionPerson?.profileName ?? ""}` : ""}`;
   // Markdown is a plain function of its options (no hooks), so its elements can be kept and drawn again.
   const markdown = markdownCache.render(text, variant, () => {
     const remarkPlugins = [...BASE_REMARK_PLUGINS];
     if (mentions) remarkPlugins.push([remarkMentions, { peers: mentionPeers, everyone, person: mentionPerson }]);
-    if (linksThreads) remarkPlugins.push(remarkThreadRefs(threads, currentBotId));
     return Markdown({ children: source, remarkPlugins, rehypePlugins: rehypePluginsFor(mathPlugin), urlTransform: chatUrlTransform, components: MARKDOWN_COMPONENTS });
   });
   return (
-    <MessageScopeContext.Provider value={{ message, imageOffsets, threads, currentBotId, delivered }}>
+    <MessageScopeContext.Provider value={{ message, imageOffsets, delivered }}>
       <div className="chat-md min-w-0 [&>*+*]:mt-2">{markdown}</div>
     </MessageScopeContext.Provider>
   );

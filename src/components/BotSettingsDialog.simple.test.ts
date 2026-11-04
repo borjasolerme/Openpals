@@ -117,7 +117,6 @@ const { BotPanel } = await import("./bot-panel/PanelShell");
 const { PanelHero } = await import("./bot-panel/PanelHero");
 const { AvatarEditorCard } = await import("./bot-panel/AvatarEditorCard");
 const { DetailsTab } = await import("./bot-panel/DetailsTab");
-const { BotConversations } = await import("./bot-panel/Conversations");
 const { SettingsPage } = await import("./bot-panel/SettingsPage");
 const { LibraryTab } = await import("./bot-panel/LibraryTab");
 const { ApprovalChip } = await import("./ComposerPlusMenu");
@@ -132,8 +131,6 @@ const { ChatShareMenu } = await import("./ChatMoreMenu");
 const { SoulField } = await import("./SoulField");
 const { LocalComputerAutoWarning } = await import("./LocalComputerAutoWarning");
 const { ModelPicker } = await import("./ModelPicker");
-const { ThreadModelsLine } = await import("./ThreadModelsLine");
-const { ModelSection } = await import("./bot-settings/ModelSection");
 const { RoutineList } = await import("./routines/RoutineList");
 const { RoutineEditor } = await import("./RoutinesPage");
 const { SignedInSites } = await import("./SignedInSites");
@@ -593,11 +590,11 @@ describe("the avatar editor", () => {
 
 
 describe("the Details tab", () => {
-  it("holds the model, the conversations, routines and this conversation's rows, in that order, with no switch or Thinking row", () => {
+  it("holds the model, routines and this conversation's rows, in that order, with no conversation list, switch or Thinking row", () => {
     const rendered = botTab(makeBot());
     expect(ofType(rendered, ModelPicker)!.props).toMatchObject({ bot: expect.objectContaining({ id: "scout" }), threadId: "thread-scout", contained: true });
-    expect(ofType(rendered, BotConversations)!.props.bot).toMatchObject({ id: "scout" });
-    const order = ['data-panel-row="model"', 'data-panel-card="conversations"', 'data-panel-empty="routines"', 'data-panel-item="find"', 'data-panel-item="activity"']
+    expect(rendered.html).not.toContain('data-panel-card="conversations"');
+    const order = ['data-panel-row="model"', 'data-panel-empty="routines"', 'data-panel-item="find"', 'data-panel-item="activity"']
       .map((marker) => rendered.html.indexOf(marker));
     expect(order.every((index) => index > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -621,7 +618,7 @@ describe("the Details tab", () => {
     fixture.derived.botRoutines = [routine()];
     const some = botTab(makeBot());
     expect(some.html).not.toContain('data-panel-empty="routines"');
-    expect(some.html.indexOf('data-panel-card="conversations"')).toBeLessThan(some.html.indexOf('data-panel-page="routines"'));
+    expect(some.html.indexOf('data-panel-row="model"')).toBeLessThan(some.html.indexOf('data-panel-page="routines"'));
   });
 
   it("values Routines by how many are on, and opens the routines page", () => {
@@ -1203,24 +1200,6 @@ describe("the bot settings dialog", () => {
     const row = find(dialog(makeBot()), "data-bot-settings-section", "model");
     click(Children.toArray(row.props.children)[0] as Node);
     expect(fixture.dispatch).toHaveBeenLastCalledWith({ type: "toggleSettings", open: true });
-  });
-
-  it("shows Switch them too in the full Model section, and its button switches them", () => {
-    fixture.advanced = true;
-    fixture.storeState = { settingsOpen: true, botSettingsSection: "model", botSettingsExpandAccordion: true };
-    const opus = { instanceId: "claude", model: "claude-opus-5-5" };
-    const tasks = [
-      { threadId: "thread-scout", title: "Follows", createdAt: 1, modelSelection: opus, followsBotModel: true },
-      ...[0, 1, 2].map((index) => ({ threadId: `own-${index}`, title: `Own ${index}`, createdAt: 1, modelSelection: { instanceId: "codex", model: "gpt-5.6" }, followsBotModel: false })),
-    ];
-    const rendered = dialog(makeBot({ tasks }));
-    expect(rendered.html).toContain("3 threads use their own model.");
-    expect(rendered.html).toContain("Switch them too");
-    fresh();
-    const section = capture(() => ModelSection({ bot: makeBot({ tasks }) }));
-    const line = ofType(section, ThreadModelsLine)!;
-    click(capture(() => ThreadModelsLine(line.props as never)).nodes.find((node) => node.props["data-switch-them-too"] !== undefined)!);
-    expect(fixture.dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ type: "followBotModel", botId: "scout" }));
   });
 });
 

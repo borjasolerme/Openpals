@@ -4,7 +4,6 @@ import { cn } from "@/lib/cn";
 import { useStore, type Bot } from "@/state/store";
 import { useBotEditor } from "./BotEditorContext";
 import { ProposalStatus } from "./ProposalStatus";
-import { ThreadModelsLine } from "../ThreadModelsLine";
 import { t } from "@/lib/i18n";
 import { Select } from "../Select";
 
@@ -28,7 +27,6 @@ export function ModelSection({ bot }: { bot: Bot }) {
             </div>
           }
         />
-        {!draft && <ThreadModelsLine bot={bot} className="mt-3" />}
         {!draft && <div className="mt-3 text-[13px] text-ink-secondary">{t("model.section.installationDefault")}</div>}
       </div>
 

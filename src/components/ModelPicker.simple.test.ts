@@ -898,20 +898,11 @@ describe("a thread's picker and its bot's model", () => {
     expect(closed).not.toContain("data-thread-models-notice");
   });
 
-  it("once the menu closes after a pick changes the bot's model, says how many threads keep their own, until it opens again", () => {
+  it("says nothing after a bot model change, even while another thread keeps its own model", () => {
     const forBot = scout(null, [{ threadId: "kept", model: haiku }, { threadId: "follows", model: null }]);
-    const opened = open(forBot);
-    pane(opened)!.props.onPick(instance("claude"), "claude-sonnet-5-5");
+    pane(open(forBot))!.props.onPick(instance("claude"), "claude-sonnet-5-5");
     expect(fixture.dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ type: "setModel", updateBotDefault: true }));
-    // Sonnet 5.5 has effort levels, so the menu stays open for them; the chip closes it.
-    expect(render(forBot).html).not.toContain("data-thread-models-notice");
-    const closed = open(forBot);
-    expect(closed.html).toContain("data-thread-models-notice");
-    expect(closed.html).toContain("menu-surface");
-    expect(closed.html).toContain("1 thread uses its own model.");
-    expect(closed.html).toContain("Switch it too");
-    open(forBot);
-    expect(render(forBot).html).not.toContain("data-thread-models-notice");
+    expect(open(forBot).html).not.toContain("data-thread-models-notice");
   });
 
   it("says nothing after a bot model change when every thread follows the bot", () => {
