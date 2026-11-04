@@ -274,7 +274,7 @@ test("a press while this computer's server is still starting says so", async () 
   h.start();
   h.press();
   await settle();
-  assert.deepEqual((await h.painted()).at(-1), { state: "error", text: "MausBot is still starting. Try again in a moment." });
+  assert.deepEqual((await h.painted()).at(-1), { state: "error", text: "Openpals is still starting. Try again in a moment." });
   h.talk.close();
 });
 

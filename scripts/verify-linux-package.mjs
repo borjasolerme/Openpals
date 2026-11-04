@@ -452,7 +452,7 @@ try {
     "usr",
     "share",
     "applications",
-    "com.openmausbot.app.desktop",
+    "com.openpals.app.desktop",
   );
   const scalableIcon = path.join(
     extracted,
@@ -469,9 +469,9 @@ try {
   const desktop = readFileSync(desktopFile, "utf8");
   for (const expected of [
     "Name=OpenMausBot",
-    "Exec=/opt/OpenMausBot/openmausbot %U",
+    "Exec=/opt/Openpals/openmausbot %U",
     "Icon=openmausbot",
-    "StartupWMClass=com.openmausbot.app",
+    "StartupWMClass=com.openpals.app",
     "Categories=Utility;",
   ]) {
     if (!desktop.includes(expected)) fail(`desktop entry is missing ${JSON.stringify(expected)}`);

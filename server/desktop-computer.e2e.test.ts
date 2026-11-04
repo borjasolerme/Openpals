@@ -12,7 +12,7 @@ import { freePortBlock } from "./testing/ports.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const NOT_THE_APP = "Only the OpenMausBot app on this computer can let a bot use it.";
+const NOT_THE_APP = "Only the Openpals app on this computer can let a bot use it.";
 
 describe("this computer belongs to the desktop app's own server", () => {
   let home = "";
@@ -113,7 +113,7 @@ describe("this computer belongs to the desktop app's own server", () => {
     mkdirSync(join(ui, "assets"), { recursive: true });
     writeFileSync(join(ui, "index.html"), "<title>Desktop computer</title>");
     writeFileSync(join(ui, "assets", "test.css"), "body{}");
-    for (const folder of [join(home, "user-data"), join(home, "Library", "Application Support", "OpenMausBot")]) {
+    for (const folder of [join(home, "user-data"), join(home, "Library", "Application Support", "Openpals")]) {
       mkdirSync(folder, { recursive: true, mode: 0o700 });
       writeFileSync(join(folder, "cua-connection.json"), JSON.stringify(record), { mode: 0o600 });
     }

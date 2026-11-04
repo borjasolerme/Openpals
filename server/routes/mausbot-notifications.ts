@@ -40,6 +40,6 @@ export function createMausBotNotificationRoutes(deps: LiveNotificationsDeps | No
       result = markRead(host, ctx.botId, body && typeof body === "object" ? (body as Record<string, unknown>).ids : undefined);
     }
     if (result.ok) return void ctx.json(ctx.res, 200, { text: result.text });
-    return void ctx.json(ctx.res, result.error.startsWith("Only MausBot") ? 403 : 400, { error: result.error });
+    return void ctx.json(ctx.res, result.error.startsWith("Only Pal") ? 403 : 400, { error: result.error });
   };
 }

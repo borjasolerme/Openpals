@@ -486,7 +486,7 @@ export function createBrowserHost(deps: BrowserHostDeps) {
         return true;
       }
       const ok = await clearBrowserSessionState(engine.binaryPath, name, { encryptionKey: browserEngineEncryptionKey() });
-      if (!ok) console.warn(`browser cleanup: could not clear saved state for session ${name}; restart OpenMausBot to retry this profile's cleanup. Do not use state clear --all: it erases other profiles too.`);
+      if (!ok) console.warn(`browser cleanup: could not clear saved state for session ${name}; restart Openpals to retry this profile's cleanup. Do not use state clear --all: it erases other profiles too.`);
       return ok;
     };
     const results = await Promise.all([eraseChromeBrowser(request), ...session ? [erased(session)] : []]);

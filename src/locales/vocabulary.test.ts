@@ -13,7 +13,9 @@ const RETIRED: ReadonlyArray<readonly [string, RegExp, string]> = [
   ["OpenMausBot Cloud", /OpenMausBot Cloud/i, "MausBot Cloud"],
   ["MausBot Pro", /MausBot Pro\b/, "MausBot Cloud"],
   // \b before "_" fails, so environment names such as OMB_PUBLIC_IPV4 pass.
-  ["OMB", /\bOMB\b/, "MausBot"],
+  ["OMB", /\bOMB\b/, "Openpals"],
+  // The fork's own name; OpenMausBot is the upstream project (credited in NOTICE and LICENSING.md).
+  ["OpenMausBot", /\bOpenMausBot\b/, "Openpals"],
   ["Cloud box", /Cloud box/i, "cloud desktop"],
   ["Hosted desktop", /Hosted desktop/i, "cloud desktop"],
   ["Cloud VM", /Cloud VM/i, "cloud desktop"],
@@ -45,6 +47,7 @@ const EN_ALLOWED: Record<string, string> = {
   "boatOffer.title": "Boat's credit offer names Boat, whose credit and plan it is",
   "boatOffer.body": "Boat's credit offer names Boat, whose credit and plan it is",
   "boatOffer.get": "Boat's credit offer names Boat, whose credit and plan it is",
+  "homeLine.clean": "MausBot Cloud copy, left as it is until the Cloud is removed from Openpals",
 };
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -60,6 +63,16 @@ const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = 
   { file: "src/lib/boat-offer.ts", snippet: "MausBot introduced me", why: "the email a person sends Boat to claim its credit" },
   { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
   { file: "electron/company-backups.mjs", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
+  { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },
+  { file: "electron/open-at-login.mjs", snippet: "X-OpenMausBot-Lending", why: "the marker that finds autostart entries already written" },
+  { file: "server/drivers/agents-devs-tools.ts", snippet: "OpenMausBot's developers", why: "@devs bug reports go to the upstream team" },
+  { file: "server/host/devs-reports.ts", snippet: "OpenMausBot's developers", why: "@devs bug reports go to the upstream team" },
+  { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },
+  { file: "server/decider/relay.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
+  { file: "server/extractor/contract.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
+  ...["server/browser-engine-release.ts", "server/update-check.ts", "src/lib/app-links.ts", "src/components/AnalyticsRow.tsx",
+    "src/components/CustomDomainSettings.tsx", "src/components/LinuxLocalControl.tsx", "src/components/bot-settings/ToolSelectionCard.tsx",
+    "src/components/keys/KeyPanels.tsx"].map((file) => ({ file, snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its releases, docs and issues" })),
 ];
 
 function* sources(dir: string): Generator<string> {
@@ -112,11 +125,11 @@ describe("one name per thing", () => {
   });
 
   const productNames = RETIRED.filter(([, , use]) => use === "MausBot Cloud");
-  it("translations never show OMB, T3 or an old name for MausBot Cloud, keep its name as it is, and say Boat only where the English does", () => {
+  it("translations never show OMB, T3, OpenMausBot or an old name for MausBot Cloud, keep its name as it is, and say Boat only where the English does", () => {
     const offending = Object.entries(locales).filter(([code]) => code !== "en").flatMap(([code, pack]) =>
       Object.entries(pack)
         .filter(([key]) => !PENDING_KEY_PREFIXES.some((prefix) => key.startsWith(prefix)))
-        .filter(([key, value]) => /\bOMB\b|\bT3\b/.test(value!) || productNames.some(([, pattern]) => pattern.test(value!))
+        .filter(([key, value]) => /\bOMB\b|\bT3\b|\bOpenMausBot\b/.test(value!) || productNames.some(([, pattern]) => pattern.test(value!))
           || (/MausBot Cloud/.test((en as Record<string, string>)[key]!) && !/MausBot Cloud/.test(value!))
           || (/boat/i.test(value!) && !/\bboats?\b/i.test((en as Record<string, string>)[key]!)))
         .map(([key]) => `${code}: ${key}`));
@@ -175,10 +188,10 @@ describe("one name per thing", () => {
       "restart OMB", "Cloud box", "Hosted desktop", "Run it in its cloud VM", "Boat cloud runner",
       "Open your Cloud dashboard", "Connect to my Cloud", "Your Cloud is ready", "Let my Cloud use this Mac",
       "Local (this computer)", "Choose Cloud to wake", "Auto, Cloud or Browser", "including one from T3",
-      "Auto uses this Boat", "New Boat computer",
+      "Auto uses this Boat", "New Boat computer", "Restart OpenMausBot", "locked by another OpenMausBot process",
     ]) expect(retiredIn(bad), bad).not.toEqual([]);
     for (const good of [
-      "Sign in to MausBot Cloud", "Pro active · verified by MausBot Cloud", "Restart OpenMausBot", "locked by another OpenMausBot process",
+      "Sign in to MausBot Cloud", "Pro active · verified by MausBot Cloud", "Restart Openpals", "locked by another Openpals process",
       "set OMB_PUBLIC_IPV4", "Open My Cloud", "Open the Cloud", "Choose Cloud desktop to wake", "Auto, Cloud desktop or Browser",
       "Included with your Cloud plan", "Add a Boat API key in Settings → API keys", "Connect Boat", "Check boat.dev",
       "Bots here can get their own cloud desktops from Boat, a paid service", "Cloud desktops by Boat",

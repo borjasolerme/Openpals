@@ -9,13 +9,13 @@ import { autostartEntry, createOpenAtLogin, installOpenAtLogin } from "./open-at
 
 /** Electron's login item API on macOS and Windows: one item per name, as Windows keeps one Run entry per name. */
 function fakeApp({ openAtLogin = false, isPackaged = true } = {}) {
-  const items = new Map(openAtLogin ? [["OpenMausBot", { args: [] }]] : []);
+  const items = new Map(openAtLogin ? [["Openpals", { args: [] }]] : []);
   return {
     isPackaged, items, wasOpenedAtLogin: false,
     getLoginItemSettings() {
       return { openAtLogin: items.size > 0, wasOpenedAtLogin: this.wasOpenedAtLogin, launchItems: [...items].map(([name, item]) => ({ name, args: item.args, enabled: true })) };
     },
-    setLoginItemSettings({ openAtLogin: on, args = [], name = "OpenMausBot" }) { if (on) items.set(name, { args }); else items.delete(name); },
+    setLoginItemSettings({ openAtLogin: on, args = [], name = "Openpals" }) { if (on) items.set(name, { args }); else items.delete(name); },
   };
 }
 
@@ -57,7 +57,7 @@ test("Windows: the person's item has a name of its own, apart from lending's hid
   login.follow(true);
   login.choose(true);
   assert.equal(login.chosen(), true);
-  assert.deepEqual(app.items.get("OpenMausBot at login"), { args: [] }, "no hidden flag");
+  assert.deepEqual(app.items.get("Openpals at login"), { args: [] }, "no hidden flag");
   login.follow(false);
   assert.equal(login.chosen(), true, "lending stopping leaves it");
   login.choose(false);
@@ -95,7 +95,7 @@ test("Windows: Settings shows on while Windows already starts the app, even from
 
 test("Windows: turning it off removes every entry that starts the app, and lending adds none until it is on again", async t => {
   const dir = await temp(t);
-  const app = windowsApp([{ name: "electron.app.OpenMausBot", args: ["--omb-hidden"] }, { name: "OpenMausBot at login" }]);
+  const app = windowsApp([{ name: "electron.app.OpenMausBot", args: ["--omb-hidden"] }, { name: "Openpals at login" }]);
   const login = createOpenAtLogin({ app, file: path.join(dir, "win.json"), platform: "win32", home: dir, argv: ["OpenMausBot.exe"] });
   login.choose(false);
   assert.deepEqual([...app.items.keys()], []);
@@ -103,7 +103,7 @@ test("Windows: turning it off removes every entry that starts the app, and lendi
   assert.equal(login.chosen(), false, "lending keeps to the person's choice");
   login.choose(true);
   login.follow(true);
-  assert.deepEqual([...app.items].sort(), [["OpenMausBot at login", { args: [], enabled: true }], ["electron.app.OpenMausBot", { args: ["--omb-hidden"], enabled: true }]]);
+  assert.deepEqual([...app.items].sort(), [["Openpals at login", { args: [], enabled: true }], ["electron.app.OpenMausBot", { args: ["--omb-hidden"], enabled: true }]]);
 });
 
 test("Linux: the person's autostart entry has no hidden flag and no lending mark, and lending never removes it", async t => {

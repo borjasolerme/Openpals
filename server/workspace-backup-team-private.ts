@@ -167,4 +167,4 @@ export function stripTeamPrivate(snapshot: { messages: string; runtime: string }
   });
 }
 
-export const TEAM_PRIVATE_NOTE = "Members' private chats are theirs alone and are not in this export: their conversations, what bots remember from them, their own MausBot and their About you stay out.";
+export const TEAM_PRIVATE_NOTE = "Members' private chats are theirs alone and are not in this export: their conversations, what bots remember from them, their own Pal and their About you stay out.";

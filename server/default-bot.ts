@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { writeFileAtomic } from "./atomic.ts";
-import { DEFAULT_BOT_COLOR, DEFAULT_BOT_NAME, defaultBotPerson } from "../shared/default-bot.ts";
+import { DEFAULT_BOT_COLOR, DEFAULT_BOT_NAME, defaultBotPerson, LEGACY_DEFAULT_BOT_NAME } from "../shared/default-bot.ts";
 import { takeImportName } from "../shared/import-name.ts";
 import type { BotRecord, Message, Store } from "./store.ts";
 
@@ -24,7 +24,7 @@ export function defaultBotRefusal(name: string): string {
 /** Why a PATCH may not change this bot so, or null. */
 export function defaultBotPatchRefusal(bot: BotRecord | null, body: Record<string, unknown>): string | null {
   for (const key of ["sidebarHidden", "welcomed"]) if (body[key] !== undefined && typeof body[key] !== "boolean") return `${key} must be true or false`;
-  if ((body.sidebarHidden !== undefined || body.welcomed !== undefined) && !bot?.defaultBot) return "Only MausBot is hidden this way; archive or delete other bots.";
+  if ((body.sidebarHidden !== undefined || body.welcomed !== undefined) && !bot?.defaultBot) return "Only Pal is hidden this way; archive or delete other bots.";
   return body.hidden === true && bot?.defaultBot ? defaultBotRefusal(bot.name) : null;
 }
 
@@ -74,11 +74,11 @@ export function forgetDefaultBot(dataDir: string, person: string): void {
 }
 
 /** A new install's own MausBot from before it was marked: the place's oldest bot, still live, outside any department,
- * not installed from a package, and still named MausBot or still in the colour a new install gave it. */
+ * not installed from a package, and still named Pal (or MausBot, its name before the fork) or still in the colour a new install gave it. */
 export function seededMausBot(bots: readonly BotRecord[]): BotRecord | undefined {
   const oldest = bots.reduce<BotRecord | undefined>((first, bot) => !first || bot.createdAt < first.createdAt ? bot : first, undefined);
   if (!oldest || oldest.hidden || oldest.movedTo || oldest.section?.trim() || oldest.installedPackage) return undefined;
-  return oldest.name === DEFAULT_BOT_NAME || oldest.color === STARTER_COLOR ? oldest : undefined;
+  return oldest.name === DEFAULT_BOT_NAME || oldest.name === LEGACY_DEFAULT_BOT_NAME || oldest.color === STARTER_COLOR ? oldest : undefined;
 }
 
 /** Puts the intro where its person sees it next: in its open conversation while nobody has written there, else at the

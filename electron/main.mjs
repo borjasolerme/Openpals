@@ -179,11 +179,11 @@ function applyUnreadBadge(win = mainWindow) {
 // GNOME groups the window with its desktop entry only when both identities match; set before ready.
 if (process.platform === "linux") {
   if (linuxDisablesGpu()) app.disableHardwareAcceleration();
-  app.setDesktopName("com.openmausbot.app.desktop");
+  app.setDesktopName("com.openpals.app.desktop");
 }
 
 if (!app.requestSingleInstanceLock()) {
-  console.log("[desktop] OpenMausBot is already running — focusing that window");
+  console.log("[desktop] Openpals is already running — focusing that window");
   process.exit(0);
 }
 
@@ -327,7 +327,7 @@ const serverSupervisor = createServerSupervisor({
     slog("server recovery paused after repeated failures; quit and reopen to retry");
     dialog.showErrorBox(
       "The bot server stopped",
-      "Automatic recovery could not restart the background server. Quit and reopen OpenMausBot to try again. Interrupted chat turns were not resent.\n\n" +
+      "Automatic recovery could not restart the background server. Quit and reopen Openpals to try again. Interrupted chat turns were not resent.\n\n" +
         `Server log: ${path.join(LOG_DIR, "server.log")}`,
     );
   },
@@ -1068,7 +1068,7 @@ async function runCompanyBackup(kind, input, scheduled = null) {
     const status = await localBackupStatus(proc);
     if (status.pendingRestore) {
       publishCompanyBackupState({ busy: false, pendingRestore: true });
-      throw new Error("Restart OpenMausBot to finish the pending restore before starting another backup operation.");
+      throw new Error("Restart Openpals to finish the pending restore before starting another backup operation.");
     }
     if (status.busy) throw companyBackupDeferred();
     const transfers = createCompanyBackups({
@@ -1272,7 +1272,7 @@ function notifyDesktopViewer(open) {
 }
 
 function openDesktopViewer(owner, rawUrl, rawTitle, contextId) {
-  if (!owner || owner.isDestroyed()) throw new Error("The OpenMausBot window is unavailable");
+  if (!owner || owner.isDestroyed()) throw new Error("The Openpals window is unavailable");
   const url = desktopViewerUrl(rawUrl);
   const titleCandidate = Object.prototype.toString.call(rawTitle) === "[object String]" ? rawTitle.trim() : "";
   const title = titleCandidate ? titleCandidate.slice(0, 80) : "Live desktop";
@@ -1372,7 +1372,7 @@ function openDesktopViewer(owner, rawUrl, rawTitle, contextId) {
 }
 
 function ensureDesktopWorkspace(owner) {
-  if (!owner || owner.isDestroyed()) throw new Error("The OpenMausBot window is unavailable");
+  if (!owner || owner.isDestroyed()) throw new Error("The Openpals window is unavailable");
   if (desktopWorkspaceManager) {
     if (desktopWorkspaceOwner !== owner) {
       throw new Error("The two-desktop view belongs to another app window");
@@ -1600,7 +1600,7 @@ async function switchLocalEnvironmentTo(targetDir, targetId, quiet = false) {
   const failedSwitch = () => {
     if (!quiet) dialog.showErrorBox(
       "Could not switch environments",
-      "OpenMausBot could not switch to that environment. The app log has the details.",
+      "Openpals could not switch to that environment. The app log has the details.",
     );
     return { ok: false, error: "switch-failed" };
   };
@@ -2929,7 +2929,7 @@ app.whenReady().then(async () => {
       persistEnvironments({ ...environmentsState, activeId: LOCAL_ID });
       dialog.showErrorBox(
         "The environment's folder is missing",
-        `${boot.missingDir} is not there anymore, so OpenMausBot came up on this computer's default data folder instead. Restore or remount that folder, then choose the environment again from the Server menu.`,
+        `${boot.missingDir} is not there anymore, so Openpals came up on this computer's default data folder instead. Restore or remount that folder, then choose the environment again from the Server menu.`,
       );
     }
     bootDataDir = boot.dataDir;
@@ -2943,8 +2943,8 @@ app.whenReady().then(async () => {
       runningDataDir = bootDataDir;
     } catch (error) {
       dialog.showErrorBox(
-        "OpenMausBot could not start safely",
-        error?.message ?? "Another process is using this OpenMausBot data folder.",
+        "Openpals could not start safely",
+        error?.message ?? "Another process is using this Openpals data folder.",
       );
       app.quit();
       return;
@@ -3077,8 +3077,8 @@ app.whenReady().then(async () => {
         runningDataDir = desktopDataDir();
       } catch (error) {
         dialog.showErrorBox(
-          "OpenMausBot could not start safely",
-          error?.message ?? "Another process is using this OpenMausBot data folder.",
+          "Openpals could not start safely",
+          error?.message ?? "Another process is using this Openpals data folder.",
         );
         app.quit();
         return;
@@ -3087,12 +3087,12 @@ app.whenReady().then(async () => {
       if (retried) {
         dialog.showErrorBox(
           "The environment was unhealthy",
-          `OpenMausBot could not start on ${bootDataDir} and came up on this computer's default data folder instead. Choose that environment again from the Server menu once it is available.`,
+          `Openpals could not start on ${bootDataDir} and came up on this computer's default data folder instead. Choose that environment again from the Server menu once it is available.`,
         );
       } else {
         dialog.showErrorBox(
-          "OpenMausBot could not start",
-          `OpenMausBot could not start on ${bootDataDir} or on this computer's default data folder. Check that both folders are readable, then start the app again.`,
+          "Openpals could not start",
+          `Openpals could not start on ${bootDataDir} or on this computer's default data folder. Check that both folders are readable, then start the app again.`,
         );
         app.quit();
       }

@@ -491,7 +491,7 @@ describe("a deleted bot's browser", () => {
     expect(await host.eraseDeletedBrowser(deleted)).toBe(false);
   });
 
-  it("elsewhere, is erased only with the agent-browser OpenMausBot installed, and otherwise just closed", async () => {
+  it("elsewhere, is erased only with the agent-browser Openpals installed, and otherwise just closed", async () => {
     engines();
     const { host } = setup(undefined);
     expect(await host.eraseDeletedBrowser(deleted)).toBe(true);
