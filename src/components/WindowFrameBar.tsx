@@ -4,14 +4,16 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/state/store";
 import { captionChrome, useDesktopCapabilities, windowFramed } from "./DesktopCapabilities";
+import { NotificationBell } from "./NotificationsPanel";
 
 /** A button in the frame's top bar: small, quiet, the bar's height and no more. */
 export const FRAME_BAR_BUTTON = "flex size-5.5 shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors hover:bg-fill hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus";
 
 /** The window frame's top bar (windowFramed), as thin as the traffic lights allow: they sit in it on macOS (main puts
  * them there: electron/window-chrome.mjs), the caption buttons on Windows (WindowCaptionButtons, drawn over its right
- * end). The app's settings close the right end. The whole bar drags the window. */
-export function WindowFrameBar() {
+ * end). The Notifications bell (when `notifications`: the tray is on here) and the app's settings close the right end.
+ * The whole bar drags the window. */
+export function WindowFrameBar({ notifications = false }: { notifications?: boolean }) {
   const { capabilities } = useDesktopCapabilities();
   const { dispatch } = useStore();
   if (!windowFramed(capabilities)) return null;
@@ -20,6 +22,7 @@ export function WindowFrameBar() {
   return (
     <div data-window-frame-bar {...dragProps} className="flex h-7 shrink-0 items-center justify-end bg-frame">
       <div data-frame-bar-end className={cn("flex items-center gap-0.5", mac ? "pr-2" : "pr-35")}>
+        {notifications && <NotificationBell bar={FRAME_BAR_BUTTON} />}
         <button
           type="button"
           data-frame-settings
