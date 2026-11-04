@@ -107,6 +107,15 @@ describe("the menu's first row", () => {
     expect(html).toContain('aria-label="Where this conversation works: Private desktop"');
   });
 
+  it("keeps Auto checked for the place Auto picked, which is no pin of the person's", () => {
+    const { html, rows: menu } = rows({ bot: { ...bot, computer: undefined }, task: { surface: "browser", surfaceAuto: true } });
+    expect(menu[0]).toEqual({ checked: true, text: "Auto Picks the right place for each task" });
+    expect(menu.filter((row) => row.checked)).toHaveLength(1);
+    expect(html).toContain('aria-label="Where this conversation works: Browser"');
+    expect(html).toContain("Browser — From this bot&#x27;s Works on setting");
+    expect(html).not.toContain("text-accent hover:text-accent");
+  });
+
   it("keeps following the bot's setting when the bot works on a specific place", () => {
     const { html, rows: menu } = rows({ bot: { ...bot, computer: "local" } });
     expect(menu[0]).toEqual({ checked: true, text: "Follow this bot's setting Currently This computer" });
@@ -138,6 +147,22 @@ describe("another server's page", () => {
     function Probe() { submenu = usePlaceMenuItem({ bot, onPin: () => {} }).submenu ?? []; return null; }
     renderToStaticMarkup(createElement(Probe));
     expect(labels(submenu)).toContain("This computer");
+  });
+});
+
+describe("the phone's place menu", () => {
+  it("keeps Auto checked for the place Auto picked, and still lets the person pin that place", () => {
+    const onPin = vi.fn();
+    let item: ReturnType<typeof usePlaceMenuItem> | undefined;
+    function Probe() {
+      item = usePlaceMenuItem({ bot: { ...bot, computer: undefined }, task: { surface: "browser", surfaceAuto: true }, onPin });
+      return null;
+    }
+    renderToStaticMarkup(createElement(Probe));
+    const menu = item!.submenu!;
+    expect(menu.filter((row) => row.active).map((row) => row.key)).toEqual(["place:follow"]);
+    menu.find((row) => row.key === "place:browser")!.onSelect();
+    expect(onPin).toHaveBeenCalledWith("browser");
   });
 });
 
