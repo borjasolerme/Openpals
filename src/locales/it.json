@@ -200,6 +200,7 @@
   "server.rooms.sameName.many": "Qui {count} bot si chiamano \"{name}\": {choices}. Scegli quello che intendi dall'elenco @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Capo di gabinetto",
+  "server.rooms.sameNameMissed": "Qui più di un bot si chiama \"{name}\", quindi quella menzione non ne ha raggiunto nessuno.",
   "server.rooms.noneActive": "Nessun membro attivo della stanza può rispondere. Ripristina un bot archiviato o aggiungi un membro attivo.",
   "server.rooms.stillStopping": "{bot} si sta ancora fermando: questo messaggio non è stato inviato",
   "server.rooms.someoneStillStopping": "Un membro della stanza si sta ancora fermando: questo messaggio non è stato inviato",

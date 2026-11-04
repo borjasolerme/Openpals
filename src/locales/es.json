@@ -194,6 +194,7 @@
   "server.rooms.sameName.many": "Aquí hay {count} bots llamados \"{name}\": {choices}. Elige el que quieres en la lista de @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Jefe de gabinete",
+  "server.rooms.sameNameMissed": "Aquí hay más de un bot llamado \"{name}\", así que esa mención no llegó a ninguno.",
   "server.rooms.noneActive": "Ningún miembro activo de la sala puede responder. Restaura un bot archivado o añade un miembro activo.",
   "server.rooms.stillStopping": "{bot} todavía se está deteniendo; este mensaje no se envió",
   "server.rooms.someoneStillStopping": "Un miembro de la sala todavía se está deteniendo; este mensaje no se envió",

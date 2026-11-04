@@ -201,6 +201,7 @@
   "server.rooms.sameName.many": "Здесь несколько ботов с именем «{name}» ({count}): {choices}. Выберите нужного в списке @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Начальник штаба",
+  "server.rooms.sameNameMissed": "Здесь несколько ботов с именем «{name}», поэтому упоминание не дошло ни до одного из них.",
   "server.rooms.noneActive": "Ни один активный участник группы не может ответить. Восстановите бота из архива или добавьте активного участника.",
   "server.rooms.stillStopping": "{bot} ещё останавливается, это сообщение не отправлено",
   "server.rooms.someoneStillStopping": "Участник группы ещё останавливается, это сообщение не отправлено",

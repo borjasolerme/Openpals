@@ -148,6 +148,7 @@
   "server.rooms.sameName.many": "Тут кілька ботів з іменем «{name}» ({count}): {choices}. Виберіть потрібного в списку @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Керівник штабу",
+  "server.rooms.sameNameMissed": "Тут кілька ботів з іменем «{name}», тому згадка не дійшла до жодного з них.",
   "server.rooms.noneActive": "Жоден активний учасник кімнати не може відповісти. Відновіть бота з архіву або додайте активного учасника.",
   "server.rooms.stillStopping": "{bot} ще зупиняється, це повідомлення не надіслано",
   "server.rooms.someoneStillStopping": "Учасник кімнати ще зупиняється, це повідомлення не надіслано",

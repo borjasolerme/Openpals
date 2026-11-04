@@ -177,6 +177,7 @@
   "server.rooms.sameName.many": "這裡有 {count} 個名為「{name}」的機器人：{choices}。請在 @ 清單中選擇你要的那個。",
   "server.rooms.sameName.choice": "{name}（{role}）",
   "server.rooms.sameName.chief": "幕僚長",
+  "server.rooms.sameNameMissed": "這裡有不只一個名為「{name}」的機器人，所以這次提及沒有送達其中任何一個。",
   "server.rooms.noneActive": "房間裡沒有能回覆的活躍成員。請還原一個已封存的機器人，或新增一個活躍成員。",
   "server.rooms.stillStopping": "{bot} 仍在停止中，這則訊息沒有送出",
   "server.rooms.someoneStillStopping": "有房間成員仍在停止中，這則訊息沒有送出",

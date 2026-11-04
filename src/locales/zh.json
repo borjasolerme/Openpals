@@ -226,6 +226,7 @@
   "server.rooms.sameName.many": "这里有 {count} 个名为“{name}”的机器人：{choices}。请在 @ 列表中选择你要的那个。",
   "server.rooms.sameName.choice": "{name}（{role}）",
   "server.rooms.sameName.chief": "总协调机器人",
+  "server.rooms.sameNameMissed": "这里有不止一个名为“{name}”的机器人，所以这次提及没有送达其中任何一个。",
   "server.rooms.noneActive": "群组聊天里没有能回复的活跃成员。请恢复一个已归档的机器人，或添加一位活跃成员。",
   "server.rooms.stillStopping": "{bot} 仍在停止中，这条消息没有发出",
   "server.rooms.someoneStillStopping": "有群组成员仍在停止中，这条消息没有发出",

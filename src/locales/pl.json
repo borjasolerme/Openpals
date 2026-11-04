@@ -201,6 +201,7 @@
   "server.rooms.sameName.many": "Botów o nazwie „{name}” jest tutaj {count}: {choices}. Wybierz właściwy z listy @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Szef sztabu",
+  "server.rooms.sameNameMissed": "Więcej niż jeden bot tutaj nazywa się „{name}”, więc ta wzmianka nie dotarła do żadnego z nich.",
   "server.rooms.noneActive": "Żaden aktywny członek pokoju nie może odpowiedzieć. Przywróć zarchiwizowanego bota albo dodaj aktywnego członka.",
   "server.rooms.stillStopping": "{bot} wciąż się zatrzymuje; ta wiadomość nie została wysłana",
   "server.rooms.someoneStillStopping": "Członek pokoju wciąż się zatrzymuje; ta wiadomość nie została wysłana",

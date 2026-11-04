@@ -223,6 +223,7 @@
   "server.rooms.sameName.many": "여기에 \"{name}\"(이)라는 봇이 {count}개 있습니다: {choices}. @ 목록에서 원하는 봇을 고르세요.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "비서실장",
+  "server.rooms.sameNameMissed": "여기에 \"{name}\"(이)라는 봇이 둘 이상 있어서 그 멘션은 어느 봇에도 전달되지 않았습니다.",
   "server.rooms.noneActive": "답할 수 있는 활성 멤버가 대화방에 없어요. 보관된 봇을 복원하거나 활성 멤버를 추가하세요.",
   "server.rooms.stillStopping": "{bot}이(가) 아직 멈추는 중이라 이 메시지는 전달되지 않았어요",
   "server.rooms.someoneStillStopping": "대화방 멤버가 아직 멈추는 중이라 이 메시지는 전달되지 않았어요",

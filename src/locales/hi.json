@@ -148,6 +148,7 @@
   "server.rooms.sameName.many": "यहाँ {count} बॉट का नाम \"{name}\" है: {choices}। @ सूची से वह चुनें जो आप चाहते हैं।",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "चीफ़ ऑफ़ स्टाफ़",
+  "server.rooms.sameNameMissed": "यहाँ \"{name}\" नाम के एक से ज़्यादा बॉट हैं, इसलिए वह उल्लेख उनमें से किसी तक नहीं पहुँचा।",
   "server.rooms.noneActive": "रूम का कोई सक्रिय सदस्य जवाब नहीं दे सकता। किसी आर्काइव बॉट को वापस लाएँ या कोई सक्रिय सदस्य जोड़ें।",
   "server.rooms.stillStopping": "{bot} अभी रुक रहा है; यह मैसेज नहीं भेजा गया",
   "server.rooms.someoneStillStopping": "रूम का एक सदस्य अभी रुक रहा है; यह मैसेज नहीं भेजा गया",

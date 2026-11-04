@@ -178,6 +178,7 @@
   "server.rooms.sameName.many": "Burada \"{name}\" adlı {count} bot var: {choices}. İstediğini @ listesinden seç.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Kurmay Başkanı",
+  "server.rooms.sameNameMissed": "Burada \"{name}\" adlı birden fazla bot var, bu yüzden o anma hiçbirine ulaşmadı.",
   "server.rooms.noneActive": "Odanın hiçbir etkin üyesi yanıt veremiyor. Arşivlenmiş bir botu geri yükleyin veya etkin bir üye ekleyin.",
   "server.rooms.stillStopping": "{bot} hâlâ duruyor; bu mesaj iletilmedi",
   "server.rooms.someoneStillStopping": "Bir oda üyesi hâlâ duruyor; bu mesaj iletilmedi",

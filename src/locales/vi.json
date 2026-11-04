@@ -178,6 +178,7 @@
   "server.rooms.sameName.many": "Ở đây có {count} bot tên \"{name}\": {choices}. Hãy chọn bot bạn muốn trong danh sách @.",
   "server.rooms.sameName.choice": "{name}, {role}",
   "server.rooms.sameName.chief": "Chief of Staff",
+  "server.rooms.sameNameMissed": "Ở đây có hơn một bot tên \"{name}\", nên lượt nhắc đó không đến được bot nào.",
   "server.rooms.noneActive": "Không có thành viên nào đang hoạt động trong phòng có thể trả lời. Hãy khôi phục một bot đã lưu trữ hoặc thêm một thành viên đang hoạt động.",
   "server.rooms.stillStopping": "{bot} vẫn đang dừng; tin nhắn này chưa được gửi",
   "server.rooms.someoneStillStopping": "Một thành viên của phòng vẫn đang dừng; tin nhắn này chưa được gửi",
