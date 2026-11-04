@@ -1323,6 +1323,8 @@
   "attach.downloading": "İndiriliyor…",
   "attach.downloaded": "İndirildi",
   "attach.showInFolder": "Klasörde göster",
+  "attach.showInFinder": "Finder'da göster",
+  "attach.originalMissing": "Orijinal dosya taşındı veya silindi",
   "attach.folderEmpty": "Bu klasörde burada açılabilecek dosya yok",
   "attach.folderFilesAria": "{name} içindeki dosyalar",
   "attach.folderTruncated": "Yalnızca ilk dosyalar listeleniyor",

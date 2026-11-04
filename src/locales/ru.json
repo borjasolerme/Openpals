@@ -1418,6 +1418,8 @@
   "attach.downloading": "Загрузка…",
   "attach.downloaded": "Загружено",
   "attach.showInFolder": "Показать в папке",
+  "attach.showInFinder": "Показать в Finder",
+  "attach.originalMissing": "Исходный файл перемещён или удалён",
   "attach.folderEmpty": "В этой папке нет файлов, которые можно открыть здесь",
   "attach.folderFilesAria": "Файлы в папке {name}",
   "attach.folderTruncated": "Показаны только первые файлы",

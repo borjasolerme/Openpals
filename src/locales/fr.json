@@ -616,6 +616,8 @@
   "attach.retrySaveAria": "Réessayer d'enregistrer {name}",
   "attach.downloading": "Téléchargement…",
   "attach.downloaded": "Téléchargé",
+  "attach.showInFinder": "Afficher dans le Finder",
+  "attach.originalMissing": "Le fichier d'origine a été déplacé ou supprimé",
   "task.renameHint": "Cliquez pour changer · double-clic ou clic droit pour renommer",
   "task.newBusy": "Laissez ce tour se terminer d'abord",
   "task.new": "Nouveau fil — une nouvelle conversation",

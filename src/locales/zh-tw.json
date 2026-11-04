@@ -1140,6 +1140,8 @@
   "attach.downloading": "下載中…",
   "attach.downloaded": "已下載",
   "attach.showInFolder": "在資料夾中顯示",
+  "attach.showInFinder": "在 Finder 中顯示",
+  "attach.originalMissing": "原始檔案已被移動或刪除",
   "attach.folderEmpty": "這個資料夾沒有可在此開啟的檔案",
   "attach.folderFilesAria": "{name} 中的檔案",
   "attach.folderTruncated": "僅列出前幾個檔案",

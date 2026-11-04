@@ -1576,6 +1576,8 @@
   "attach.downloading": "正在下载…",
   "attach.downloaded": "已下载",
   "attach.showInFolder": "在文件夹中显示",
+  "attach.showInFinder": "在访达中显示",
+  "attach.originalMissing": "原始文件已被移动或删除",
   "attach.folderEmpty": "这个文件夹里没有可在此打开的文件",
   "attach.folderFilesAria": "{name} 中的文件",
   "attach.folderTruncated": "只列出了前几个文件",

@@ -1532,6 +1532,8 @@
   "attach.downloading": "다운로드 중…",
   "attach.downloaded": "다운로드됨",
   "attach.showInFolder": "폴더에서 보기",
+  "attach.showInFinder": "Finder에서 보기",
+  "attach.originalMissing": "원본 파일이 이동되었거나 삭제되었습니다",
   "attach.folderEmpty": "이 폴더에는 여기서 열 파일이 없어요",
   "attach.folderFilesAria": "{name}의 파일",
   "attach.folderTruncated": "처음 몇 개 파일만 표시돼요",

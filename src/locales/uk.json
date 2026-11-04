@@ -773,6 +773,8 @@
   "attach.retrySaveAria": "Повторити збереження {name}",
   "attach.downloading": "Завантаження…",
   "attach.downloaded": "Завантажено",
+  "attach.showInFinder": "Показати у Finder",
+  "attach.originalMissing": "Оригінальний файл переміщено або видалено",
   "task.renameHint": "Клік для переключення · подвійний клік або правий клік для перейменування",
   "task.newBusy": "Дочекайтеся завершення цього запиту",
   "task.new": "Нова гілка — свіжа розмова",

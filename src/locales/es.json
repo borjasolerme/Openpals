@@ -1352,6 +1352,8 @@
   "attach.downloading": "Descargando…",
   "attach.downloaded": "Descargado",
   "attach.showInFolder": "Mostrar en la carpeta",
+  "attach.showInFinder": "Mostrar en el Finder",
+  "attach.originalMissing": "El archivo original se movió o se eliminó",
   "attach.folderEmpty": "Esta carpeta no tiene archivos que se puedan abrir aquí",
   "attach.folderFilesAria": "Archivos en {name}",
   "attach.folderTruncated": "Solo se muestran los primeros archivos",

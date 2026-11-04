@@ -1323,6 +1323,8 @@
   "attach.downloading": "Đang tải xuống…",
   "attach.downloaded": "Đã tải xuống",
   "attach.showInFolder": "Hiển thị trong thư mục",
+  "attach.showInFinder": "Hiển thị trong Finder",
+  "attach.originalMissing": "Tệp gốc đã bị di chuyển hoặc xóa",
   "attach.folderEmpty": "Thư mục này không có tệp nào để mở ở đây",
   "attach.folderFilesAria": "Các tệp trong {name}",
   "attach.folderTruncated": "Chỉ các tệp đầu tiên được liệt kê",

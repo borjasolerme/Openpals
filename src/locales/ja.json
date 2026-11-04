@@ -1432,6 +1432,8 @@
   "attach.downloading": "ダウンロード中…",
   "attach.downloaded": "ダウンロード済み",
   "attach.showInFolder": "フォルダー内で表示",
+  "attach.showInFinder": "Finder で表示",
+  "attach.originalMissing": "元のファイルは移動または削除されました",
   "attach.folderEmpty": "このフォルダーにはここで開けるファイルがありません",
   "attach.folderFilesAria": "{name} 内のファイル",
   "attach.folderTruncated": "最初のファイルのみ表示しています",

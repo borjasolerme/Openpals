@@ -1422,6 +1422,8 @@
   "attach.downloading": "Pobieranie…",
   "attach.downloaded": "Pobrano",
   "attach.showInFolder": "Pokaż w folderze",
+  "attach.showInFinder": "Pokaż w Finderze",
+  "attach.originalMissing": "Oryginalny plik został przeniesiony lub usunięty",
   "attach.folderEmpty": "W tym folderze nie ma plików do otwarcia",
   "attach.folderFilesAria": "Pliki w: {name}",
   "attach.folderTruncated": "Wyświetlane są tylko pierwsze pliki",

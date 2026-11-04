@@ -710,6 +710,8 @@
   "attach.retrySaveAria": "{name} erneut speichern",
   "attach.downloading": "Lade herunter…",
   "attach.downloaded": "Heruntergeladen",
+  "attach.showInFinder": "Im Finder zeigen",
+  "attach.originalMissing": "Die Originaldatei wurde verschoben oder gelöscht",
   "task.renameHint": "Klicken zum Wechseln · Doppelklick oder Rechtsklick zum Umbenennen",
   "task.newBusy": "Lass diesen Zug erst zu Ende gehen",
   "task.new": "Neuer Thread — ein frisches Gespräch",
