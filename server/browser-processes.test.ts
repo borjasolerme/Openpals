@@ -386,4 +386,73 @@ describe("a browser on Windows", () => {
       release();
     }
   });
+
+  it("keeps a daemon's own Chrome that the launcher batch file runs under cmd.exe, and stops it once that daemon is gone", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omb-win-launcher-"));
+    homes.push(root);
+    const dir = join(root, "Kept Profile");
+    mkdirSync(dir, { recursive: true });
+    mkdirSync(join(dir, "lockfile"));
+    const started = "2026-11-03T09:00:00.0000000Z";
+    const browser = process.pid;
+    let daemonRuns = true;
+    const commands: string[][] = [];
+    vi.mocked(execFile).mockImplementation(((file: string, args: string[], _options: unknown, done: (error: Error | null, stdout: string) => void) => {
+      commands.push([file, ...args]);
+      let stdout = "";
+      if (file === "powershell.exe" && args.at(-1)!.includes("OMB_PROCESS_ID")) stdout = `${started}\r\n`;
+      else if (file === "powershell.exe") {
+        stdout = JSON.stringify([{
+          ProcessId: browser, ParentProcessId: 4100, CommandLine: `"C:\\Chrome\\chrome.exe" "--user-data-dir=${dir}" --remote-debugging-port=0`,
+          Name: "chrome.exe", Started: started, ParentName: "cmd.exe", ParentStarted: "2026-11-03T08:59:59.5000000Z",
+          GrandparentId: daemonRuns ? 4000 : null, GrandparentName: daemonRuns ? "agent-browser.exe" : null,
+          GrandparentStarted: daemonRuns ? "2026-11-03T08:59:59.0000000Z" : null,
+        }]);
+      } else if (file === "tasklist") {
+        stdout = daemonRuns && args[1] === "PID eq 4000" ? `"agent-browser.exe","4000","Console","1","12,345 K"\r\n` : "INFO: No tasks are running which match the specified criteria.\r\n";
+      } else if (file === "taskkill") rmSync(join(dir, "lockfile"), { recursive: true, force: true });
+      queueMicrotask(() => done(null, stdout));
+      return {} as ChildProcess;
+    }) as unknown as typeof execFile);
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+    const engine = "C:\\Openpals\\resources\\browser-engine\\agent-browser.exe";
+    const launcher = "C:\\Users\\me\\AppData\\Roaming\\openmausbot\\browser\\chrome-launcher.cmd";
+    const killed = () => commands.filter(([file]) => file === "taskkill");
+    await releaseBrowserProfile(dir, engine, launcher);
+    expect(killed(), "a live daemon's Chrome is never stopped").toEqual([]);
+    await releaseBrowserProfile(dir, engine, launcher);
+    expect(commands.filter(([file]) => file === "powershell.exe"), "the kept Chrome is not listed again each turn").toHaveLength(1);
+    daemonRuns = false;
+    await releaseBrowserProfile(dir, engine, launcher);
+    expect(killed()).toEqual([["taskkill", "/PID", String(browser), "/T", "/F"]]);
+    expect(existsSync(join(dir, "lockfile"))).toBe(false);
+  });
+
+  it.runIf(process.platform === "win32")("lists a real browser under cmd.exe with its daemon, keeps it for that daemon and stops it for another", async () => {
+    const root = mkdtempSync(join(tmpdir(), "omb-win-cmd-"));
+    homes.push(root);
+    const dir = join(root, "Kept Profile");
+    mkdirSync(join(dir, "lockfile"), { recursive: true });
+    const ready = join(root, "ready").replaceAll("\\", "/");
+    // This test's node is the daemon; the node under cmd.exe names the profile as the bot's Chrome does.
+    const browser = `require('node:fs').writeFileSync('${ready}', ''); ${IDLE}`;
+    const shell = spawn("cmd.exe", ["/d", "/s", "/c", `""${process.execPath}" -e "${browser}" -- "--user-data-dir=${dir}""`], { stdio: "ignore", windowsHide: true, windowsVerbatimArguments: true });
+    const exited = new Promise((resolve) => shell.once("exit", resolve));
+    try {
+      await vi.waitFor(() => expect(existsSync(ready)).toBe(true), { timeout: 15_000 });
+      const killed = () => vi.mocked(execFile).mock.calls.filter(([file]) => file === "taskkill");
+      vi.mocked(execFile).mockClear();
+      await releaseBrowserProfile(dir, process.execPath, process.execPath);
+      expect(vi.mocked(execFile).mock.calls.some(([file]) => file === "powershell.exe"), "the profile's browsers were listed").toBe(true);
+      expect(killed(), "its daemon's browser is kept").toEqual([]);
+      rmSync(join(dir, "lockfile"), { recursive: true, force: true });
+      await releaseBrowserProfile(dir);
+      mkdirSync(join(dir, "lockfile"));
+      await releaseBrowserProfile(dir, "C:\\Tools\\agent-browser.exe", process.execPath);
+      expect(killed()).toHaveLength(1);
+      await Promise.race([exited, new Promise((_, reject) => setTimeout(() => reject(new Error("the stopped browser's shell still runs")), 10_000))]);
+    } finally {
+      shell.kill();
+    }
+  }, 60_000);
 });
