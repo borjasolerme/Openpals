@@ -1,6 +1,6 @@
 // The real box, where it can run: Linux with an unprivileged bubblewrap. Elsewhere the suite says so and skips;
 // `node dist-server/bot-box/box-check.js` proves it for an image.
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
@@ -12,6 +12,8 @@ import { runBoxSelfCheck } from "./self-check.ts";
 const detection = detectBox({ env: { ...process.env, OMB_BOT_BOX: "1" } });
 const available = detection.box === "bwrap" && detection.tools !== null;
 const root = mkdtempSync(join(tmpdir(), "omb-box-real-"));
+/** The CPU list is checked only where the host has one to put in the box. */
+const cpuList = existsSync("/sys/devices/system/cpu/possible");
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe.skipIf(!available)(`the real box (${detection.box === "bwrap" ? "bubblewrap works here" : `skipped: ${detection.reason}`})`, () => {
@@ -24,8 +26,8 @@ describe.skipIf(!available)(`the real box (${detection.box === "bwrap" ? "bubble
     const result = await runBoxSelfCheck(options());
     expect(result.error).toBeUndefined();
     expect(result.failed).toEqual([]);
-    expect(result.total).toBe(process.arch === "x64" ? 32 : 31);
-    expect(result.results.map((check) => check.id)).toEqual(expect.arrayContaining(["engine-runs", "engine-read-only", "cpu-list-readable", "no-provider-key-in-env", "broker-call-works", "broker-wrong-token-refused", "broker-other-grant-refused", "broker-key-not-on-disk", "base-url-is-broker"]));
+    expect(result.total).toBe((process.arch === "x64" ? 31 : 30) + (cpuList ? 1 : 0));
+    expect(result.results.map((check) => check.id)).toEqual(expect.arrayContaining([...(cpuList ? ["cpu-list-readable"] : []), "engine-runs", "engine-read-only", "no-provider-key-in-env", "broker-call-works", "broker-wrong-token-refused", "broker-other-grant-refused", "broker-key-not-on-disk", "base-url-is-broker"]));
   }, 120_000);
 
   it("each mutation fails the checks it guards, and only those", async () => {
