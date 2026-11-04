@@ -57,6 +57,7 @@ import {
   userSectionName,
   withPrimaryTile,
 } from "@/lib/sidebar-layout";
+import { BOT_SECTIONS_ENABLED } from "@/lib/local-customizations";
 import { stepKey, type BotDropPlace } from "@/lib/sidebar-bot-drop";
 import { BotDropLine, botRowDropClass, useSidebarBotDrag, type BotRowDrag } from "./SidebarBotDrag";
 import { useSidebarSections } from "./SidebarSections";
@@ -1117,7 +1118,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   } = simpleDesk ? withPrimaryTile(parts, myDefaultBot(state.bots, viewerEmail)?.id) : { ...parts, primary: null };
   const { botChats, sectionedRooms, unsectionedRooms } = partitionSidebarGroups(visibleGroups);
 
-  const sectionNames: string[] = [...(state.sections ?? []).filter((name) => !q || name.toLowerCase().includes(q.toLowerCase())), ...botDrag.pending];
+  const sectionNames: string[] = BOT_SECTIONS_ENABLED ? [...(state.sections ?? []).filter((name) => !q || name.toLowerCase().includes(q.toLowerCase())), ...botDrag.pending] : [];
   for (const bot of sectionedBots) {
     if (!sectionNames.includes(bot.section!)) sectionNames.push(bot.section!);
   }

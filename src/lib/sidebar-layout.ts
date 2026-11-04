@@ -2,6 +2,7 @@ import type { GroupGoalRunCardData } from "../../shared/group-goal-run";
 import type { ConnectorCardData } from "../../shared/connector-card";
 import type { DefaultBotFields } from "../../shared/default-bot";
 import { hiddenFromSidebar } from "./default-bot";
+import { BOT_SECTIONS_ENABLED } from "./local-customizations";
 
 export const PINNED_SECTION_ID = "builtin:pinned";
 export const CHANNELS_SECTION_ID = "builtin:channels";
@@ -105,6 +106,8 @@ export function pinnedCircleThreadListVisible(
   return circles && density !== "icons" && pinnedCount > 0;
 }
 
+const inSection = (bot: SidebarBot) => BOT_SECTIONS_ENABLED && Boolean(bot.section);
+
 export function partitionSidebarBots<T extends SidebarBot>(
   bots: T[],
   options?: { universalPins?: boolean; viewerEmail?: string | null; welcoming?: string | null },
@@ -113,22 +116,22 @@ export function partitionSidebarBots<T extends SidebarBot>(
   const visible = bots.filter((bot) => !bot.hidden && !hiddenFromSidebar(bot, options?.viewerEmail) && bot.id !== options?.welcoming);
   // The pin flag is the server's, the same on every client. Only the main Chief keeps its own top slot when pins are
   // not universal (a device's layout choice); a pinned Chief of a group is listed with the other pinned bots.
-  const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff || Boolean(bot.section)));
+  const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff || inSection(bot)));
   const pinnedIds = new Set(pinnedBots.map((bot) => bot.id));
-  const unsectionedChief = visible.find((bot) => bot.chiefOfStaff && !bot.section && !pinnedIds.has(bot.id)) ?? null;
-  const sectionChiefs = visible.filter((bot) => bot.chiefOfStaff && Boolean(bot.section) && !pinnedIds.has(bot.id));
+  const unsectionedChief = visible.find((bot) => bot.chiefOfStaff && !inSection(bot) && !pinnedIds.has(bot.id)) ?? null;
+  const sectionChiefs = visible.filter((bot) => bot.chiefOfStaff && inSection(bot) && !pinnedIds.has(bot.id));
   const sectionedBots = visible.filter(
-    (bot) => !bot.chiefOfStaff && Boolean(bot.section) && !pinnedIds.has(bot.id),
+    (bot) => !bot.chiefOfStaff && inSection(bot) && !pinnedIds.has(bot.id),
   );
   const unsectionedBots = visible.filter(
-    (bot) => !bot.chiefOfStaff && !bot.section && !pinnedIds.has(bot.id),
+    (bot) => !bot.chiefOfStaff && !inSection(bot) && !pinnedIds.has(bot.id),
   );
   return { unsectionedChief, pinnedBots, sectionChiefs, sectionedBots, unsectionedBots };
 }
 
 export function withPrimaryTile<T extends SidebarBot>(parts: ReturnType<typeof partitionSidebarBots<T>>, defaultBotId: string | undefined) {
   const primary = parts.unsectionedChief
-    ?? parts.pinnedBots.find((bot) => bot.chiefOfStaff && !bot.section)
+    ?? parts.pinnedBots.find((bot) => bot.chiefOfStaff && !inSection(bot))
     ?? [...parts.pinnedBots, ...parts.unsectionedBots].find((bot) => bot.id === defaultBotId)
     ?? null;
   if (!primary) return { ...parts, primary };

@@ -15,6 +15,7 @@ import { ownerMenuLabel, pickOwnerOf } from "./TeamOwner";
 import { mayChangeOwner, useTeamPeople } from "@/state/team-people";
 import { MENU_ITEM, MENU_ITEM_SEPARATOR, MENU_SHEET } from "./menu-recipe";
 import { useShowThreads } from "@/lib/thread-preferences";
+import { BOT_SECTIONS_ENABLED, THREADS_ENABLED } from "@/lib/local-customizations";
 import { submenuPosition } from "./SidebarPopoverMenu";
 import { submenuIntent, type SubmenuIntent } from "@/lib/submenu-intent";
 import { useAdvancedMode } from "@/lib/interface-mode";
@@ -239,7 +240,7 @@ export function BotContextMenu({
         <ChevronRight size={15} aria-hidden="true" className="text-ink-secondary rtl:-scale-x-100" />
       </button>
     );
-    const moveToSection = mayMove ? flyoutButton("move", moveRef, <FolderPlus size={16} className="text-ink-secondary" />, t("sidebar.bot.moveToSection")) : null;
+    const moveToSection = mayMove && BOT_SECTIONS_ENABLED ? flyoutButton("move", moveRef, <FolderPlus size={16} className="text-ink-secondary" />, t("sidebar.bot.moveToSection")) : null;
     const rename = onRename && item(<SquarePen size={16} className="text-ink-secondary" />, t("sidebar.bot.rename"), () => onRename(bot.id));
     const editProfile = item(<Pencil size={16} className="text-ink-secondary" />, t("sidebar.bot.simple.editProfile"), () => {
       openForSettings();
@@ -275,7 +276,7 @@ export function BotContextMenu({
       () => dispatch({ type: "updateBot", botId: bot.id, patch: { mainThreadChoice: bot.threadId } }),
       bot.mainThreadId === bot.threadId ? { disabled: true, hint: t("sidebar.bot.simple.isMainThread") } : undefined,
     );
-    const threads = [divider("threads"), newThread, viewThreads, setMain];
+    const threads = THREADS_ENABLED ? [divider("threads"), newThread, viewThreads, setMain] : [];
     const moreRow = flyoutButton("more", moreRef, <MoreHorizontal size={16} className="text-ink-secondary" />, t("sidebar.bot.more"));
     const leave = bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} className={MENU_ITEM} />] : member ? [] : [
       item(<Archive size={16} className="text-ink-secondary" />, t("sidebar.bot.archive"), () => onArchive(bot), { disabled: archiveBlocked, hint: archiveHint }),
