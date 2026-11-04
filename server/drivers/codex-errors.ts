@@ -2,7 +2,7 @@ import { hostTimeZone } from "../turn-clock.ts";
 import { USAGE_LIMIT } from "./retry.ts";
 import { CODEX_USAGE_LIMIT_REACHED } from "../../shared/codex-usage-limit.ts";
 
-/** How a Codex turn reaches OpenAI: OpenMausBot's ChatGPT plan, Codex's own sign-in, or any other provider. */
+/** How a Codex turn reaches OpenAI: Openpals' ChatGPT plan, Codex's own sign-in, or any other provider. */
 export type CodexRoute = "plan" | "own" | "other";
 
 // codex-cli 0.160.1 holding no login sends no Authorization header and gets this 401.
@@ -59,7 +59,19 @@ export function codexLimitFacts(raw: string, route: CodexRoute, codexErrorInfo?:
   return { limit: /\busage limit for \S+?\.(?:\s|$)/i.test(raw) ? "model" : "engine", ...(at === undefined ? {} : { limitResetsAt: at }) };
 }
 
+// ChatGPT's words, reported 2026-11-03, for a model its /models lists but the plan can't use through Codex:
+// "The 'gpt-6.1-sol' model is not supported when using Codex with a ChatGPT account."
+const PLAN_MODEL_REFUSED = /model is not supported when using Codex with a ChatGPT account/i;
+
+/** A ChatGPT plan turn refused because the signed-in account can't use the selected model. */
+export function codexPlanModelRefused(value: string, route: CodexRoute): boolean {
+  return route === "plan" && PLAN_MODEL_REFUSED.test(value);
+}
+
 export function codexUserError(value: string, route: CodexRoute, codexErrorInfo?: unknown): string {
+  if (codexPlanModelRefused(value, route)) {
+    return "This model isn't available on your ChatGPT plan, so it's now hidden from this account's model list. Pick another model.";
+  }
   if (route === "plan" && value.includes("subscription_sharing_usage_limit_exceeded")) {
     return "subscription_sharing_usage_limit_exceeded: Your ChatGPT plan usage limit was reached. Manage usage in ChatGPT Settings, or explicitly choose another provider.";
   }
