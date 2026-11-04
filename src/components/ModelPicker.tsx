@@ -223,7 +223,6 @@ export function ModelPicker({
   const { state, dispatch: storeDispatch, refreshInstances, refreshModels: refreshInstanceModels } = useStore();
   const [open, setOpen] = useState(false);
   const { bot, dispatch } = useAiSwitch({ bot: shown, threadId, contained, dispatch: storeDispatch, setOpen: (next) => (next ? openMenu() : setOpen(false)) });
-  // While the bot works the menu still opens to its reasoning level, which applies from the next turn; the model stays locked.
   const busyInstance = bot.busy && !contained ? state.instances.find((instance) => instance.instanceId === bot.modelSelection.instanceId) : undefined;
   const locked = Boolean(bot.busy) && !(busyInstance && offersReasoning(state, busyInstance, bot.modelSelection, threadId ?? bot.threadId));
   const motion = useMenuMotion(open && !locked);
@@ -447,6 +446,9 @@ export function ModelPicker({
   const botModelName = botModelInstance
     ? `${botModelInstance.displayName} · ${modelLabel(botModelInstance, profile.modelSelection.model)}`
     : profile.modelSelection.model;
+  // Only a thread on the bot's own model may carry a busy reasoning change to the bot default; otherwise the save would also copy this thread's model to the bot.
+  const busyUpdatesBotDefault = Boolean(threadId) && (simpleView ? simpleUpdatesBotDefault : scope === "bot")
+    && bot.modelSelection.instanceId === profile.modelSelection.instanceId && bot.modelSelection.model === profile.modelSelection.model;
 
   const pickBotModel = () => {
     if (bot.busy) return;
@@ -958,10 +960,15 @@ export function ModelPicker({
             compact
             bot={shown}
             threadId={threadId}
-            updateBotDefault={Boolean(threadId) && (simpleView ? simpleUpdatesBotDefault : scope === "bot")}
+            updateBotDefault={busyUpdatesBotDefault}
             className="px-3.5 py-[5px]"
             label={<span className="text-base text-ink">{active?.capabilities?.modelVariants ? t("model.simple.reasoning") : t("model.section.effort")}</span>}
           />
+          {threadId && (
+            <p data-model-busy-scope className="px-3.5 py-1 text-sm text-ink-tertiary">
+              {t(busyUpdatesBotDefault ? "model.scope.botHelp" : "model.scope.threadHelp")}
+            </p>
+          )}
           <p className="px-3.5 py-1 text-sm text-ink-tertiary">{t("model.reasoningNextTurn")}</p>
           <p className="px-3.5 py-1 text-sm text-ink-tertiary">{t(threadId ? "model.threadBusy" : "model.busy")}</p>
         </div>
