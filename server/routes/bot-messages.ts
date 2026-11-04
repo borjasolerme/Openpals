@@ -32,6 +32,7 @@ import type { BotRecord, GroupRecord, Message, Store } from "../store.ts";
 import { extractSteerImages } from "../turn-images.ts";
 import { followupFacts, helperFollowup, helperFollowupBody, mayFollowUp } from "../helper-followup.ts";
 import type { UsageTrigger } from "../usage-ledger.ts";
+import { parseMentionPicks } from "../../shared/room-mentions.ts";
 import { pinnedClientThreadGuard } from "./pinned-client-thread.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 
@@ -180,6 +181,8 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
       if (pointing && (guarded || pressed || fromAnApp)) return json(res, 400, { error: "only a typed message can carry what the person pointed at" });
       const followUp = parseFollowUp(body.followUp);
       if (followUp === null) return json(res, 400, { error: "followUp must be steer, queue or restart" });
+      const mentions = parseMentionPicks(body.mentions);
+      if (mentions === null) return json(res, 400, { error: "mentions must be a list of up to 20 bot ids" });
       if (followUp && (guarded || pressed || fromAnApp)) return json(res, 400, { error: "only a typed message can choose how it meets the running turn" });
       // A distinct route, so an older server answers 404 instead of ignoring the safety preconditions.
       const guardedBody = guarded ? guardedSendSchema.safeParse(body) : null;
@@ -301,6 +304,7 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
           // The bot's own shell reaches this route on a headless server (loopback is the owner), so only a
           // paired session or the desktop capability proves a person and lifts the webhook block.
           personPresent: auth.kind === "session" || DESKTOP_MANAGED, ...(followUp ? { followUp } : {}),
+          ...(mentions?.length && !press && !appSent ? { mentions } : {}),
         }, guardedStart);
         press?.settle("queueId" in receipt ? receipt.queueId : undefined);
         appContext?.deliver();

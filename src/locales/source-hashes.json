@@ -2117,7 +2117,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6382,7 +6386,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8448,7 +8456,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10514,7 +10526,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15497,7 +15513,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20354,7 +20374,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25861,7 +25885,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29372,7 +29400,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31810,7 +31842,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35807,7 +35843,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39804,7 +39844,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44725,7 +44769,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49687,7 +49735,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54496,7 +54548,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59913,7 +59969,11 @@
       "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c",
       "server.notify.secret": "5d6c45546c1c1975f38b8650e6a86613beda5b3dd6ab040d68cc1f2a600fadca",
       "server.notify.connect": "69e4a1b2d9ea87bebb2af9b61a9206e56d8cb01b067d7de26015840bdc27a6a7",
-      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0"
+      "notifications.status.secret": "4a36913173d48f892da73651e65c05def88c1ad2707e25a3d091c9ac0c1e40c0",
+      "server.rooms.sameName.two": "fbf6403dbd44662835fb978d978dfe3f2eabd9569333539d45e0b009f873e399",
+      "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
+      "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
+      "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38"
     }
   }
 }
