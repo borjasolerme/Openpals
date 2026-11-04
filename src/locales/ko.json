@@ -151,6 +151,7 @@
   "server.mcp.changed": "MCP 서버 {name} 변경했어요",
   "server.mcp.turnedOn": "MCP 서버 {name} 켰어요",
   "server.mcp.turnedOff": "MCP 서버 {name} 껐어요",
+  "server.mcp.restarted": "MCP 서버 {name} 다시 시작했어요",
   "server.mcp.tested": "MCP 서버 {name} 테스트했어요",
   "server.mcp.signedOut": "MCP 서버 {name}에서 로그아웃했어요",
   "server.mcp.removed": "MCP 서버 {name} 삭제했어요",

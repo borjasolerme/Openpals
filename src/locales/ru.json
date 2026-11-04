@@ -129,6 +129,7 @@
   "server.mcp.changed": "Изменён MCP-сервер {name}",
   "server.mcp.turnedOn": "Включён MCP-сервер {name}",
   "server.mcp.turnedOff": "Выключен MCP-сервер {name}",
+  "server.mcp.restarted": "Перезапущен MCP-сервер {name}",
   "server.mcp.tested": "Проверен MCP-сервер {name}",
   "server.mcp.signedOut": "Выполнен выход из MCP-сервера {name}",
   "server.mcp.removed": "Удалён MCP-сервер {name}",

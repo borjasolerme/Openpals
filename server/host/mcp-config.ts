@@ -19,7 +19,7 @@ export interface McpConfigDeps {
   persistMcpServers(next: Record<string, unknown>): void;
   savedCustomDomain(): string | null;
   appCatalog?: Pick<ChatAppsMcp, "probeOptions" | "serverChanged" | "forgetServer"> & Partial<Pick<ChatAppsMcp, "hasApps">>;
-  /** Whether each command server starts for each bot: checked again when one is added, changed or turned on. */
+  /** Whether each command server starts for each bot: checked again when one is added, changed, turned on or restarted. */
   health?: { changed(name: string): void };
   /** How bots' turns reach a URL server here: through the broker where turns are boxed (null: directly). */
   botsPath?(): BrokerPath | null;
@@ -37,6 +37,8 @@ export interface McpConfig {
    * refused for the whole request, its body included. */
   addMany(read: () => Promise<{ servers: Record<string, StoredMcpServer> } | McpConfigRefusal>): Promise<McpConfigResult>;
   setEnabled(name: string, enabled: boolean): McpConfigResult;
+  /** The next turn of every bot that uses it starts a new process, with what is saved today: keys, sign-in and all. */
+  restart(name: string): McpConfigResult;
   setApps(name: string, apps: boolean): McpConfigResult;
   remove(name: string): McpConfigResult;
   /** A 200 carries the probe result as its body, failures included: only a refusal to probe is an error. */
@@ -161,6 +163,12 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       if (!found.existing) return found.result!;
       persistMcpServers({ ...found.current, [name]: { ...found.existing, enabled } });
       if (enabled) appCatalog?.serverChanged(name);
+      health?.changed(name);
+      return saved(200);
+    }),
+    restart: (name) => write(() => {
+      const found = stored(name);
+      if (!found.existing) return found.result!;
       health?.changed(name);
       return saved(200);
     }),

@@ -106,6 +106,7 @@
   "server.mcp.changed": "Đã thay đổi máy chủ MCP {name}",
   "server.mcp.turnedOn": "Đã bật máy chủ MCP {name}",
   "server.mcp.turnedOff": "Đã tắt máy chủ MCP {name}",
+  "server.mcp.restarted": "Đã khởi động lại máy chủ MCP {name}",
   "server.mcp.tested": "Đã kiểm tra máy chủ MCP {name}",
   "server.mcp.signedOut": "Đã đăng xuất khỏi máy chủ MCP {name}",
   "server.mcp.removed": "Đã xóa máy chủ MCP {name}",

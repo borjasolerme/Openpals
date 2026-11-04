@@ -129,6 +129,7 @@
   "server.mcp.changed": "MCP サーバー {name} を変更しました",
   "server.mcp.turnedOn": "MCP サーバー {name} をオンにしました",
   "server.mcp.turnedOff": "MCP サーバー {name} をオフにしました",
+  "server.mcp.restarted": "MCP サーバー {name} を再起動しました",
   "server.mcp.tested": "MCP サーバー {name} をテストしました",
   "server.mcp.signedOut": "MCP サーバー {name} からサインアウトしました",
   "server.mcp.removed": "MCP サーバー {name} を削除しました",

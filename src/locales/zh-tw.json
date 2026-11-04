@@ -105,6 +105,7 @@
   "server.mcp.changed": "已變更 MCP 伺服器 {name}",
   "server.mcp.turnedOn": "已開啟 MCP 伺服器 {name}",
   "server.mcp.turnedOff": "已關閉 MCP 伺服器 {name}",
+  "server.mcp.restarted": "已重新啟動 MCP 伺服器 {name}",
   "server.mcp.tested": "已測試 MCP 伺服器 {name}",
   "server.mcp.signedOut": "已登出 MCP 伺服器 {name}",
   "server.mcp.removed": "已移除 MCP 伺服器 {name}",

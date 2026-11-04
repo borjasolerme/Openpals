@@ -30,6 +30,13 @@ moment ago*): it was aimed at the Off you saw, never at switching it straight
 back off.
 Compatible bots get it on their next task; no app restart is needed.
 
+A server you run as a command keeps running between a bot's tasks. A bot that
+changes the server's code reloads it with `mcp_server` action `restart`, which
+keeps the server's saved keys and sign-in; its next task starts the new code.
+Turning the server off and on does the same. Removing it deletes its saved
+keys, and a key the person entered on a card works once, so they would have to
+enter it again.
+
 Header and environment values are write-only: typed like passwords, never shown
 again, and a saved one left blank is kept. Tokens for URL servers go in
 headers, never in the address.

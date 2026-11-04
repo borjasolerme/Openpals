@@ -2124,7 +2124,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6395,7 +6396,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8468,7 +8470,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10541,7 +10544,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15526,7 +15530,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20386,7 +20391,8 @@
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "permissions.outbound.help": "f50c72c7db31cb4c0b7f71e2b5d96fc570aaa96c5fc3d26330ec94db681d21b3",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25895,7 +25901,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29412,7 +29419,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31856,7 +31864,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35859,7 +35868,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39862,7 +39872,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44785,7 +44796,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49749,7 +49761,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54560,7 +54573,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59979,7 +59993,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
-      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998",
+      "server.mcp.restarted": "c6467ff23c2a1d60e6333a8453a23bf395de6d427a6a5d31974cf1541688dc6d"
     }
   }
 }

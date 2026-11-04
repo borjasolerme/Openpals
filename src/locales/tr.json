@@ -106,6 +106,7 @@
   "server.mcp.changed": "MCP sunucusu {name} değiştirildi",
   "server.mcp.turnedOn": "MCP sunucusu {name} açıldı",
   "server.mcp.turnedOff": "MCP sunucusu {name} kapatıldı",
+  "server.mcp.restarted": "MCP sunucusu {name} yeniden başlatıldı",
   "server.mcp.tested": "MCP sunucusu {name} test edildi",
   "server.mcp.signedOut": "MCP sunucusu {name} oturumu kapatıldı",
   "server.mcp.removed": "MCP sunucusu {name} kaldırıldı",

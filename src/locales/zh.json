@@ -154,6 +154,7 @@
   "server.mcp.changed": "已更改 MCP 服务器 {name}",
   "server.mcp.turnedOn": "已开启 MCP 服务器 {name}",
   "server.mcp.turnedOff": "已关闭 MCP 服务器 {name}",
+  "server.mcp.restarted": "已重启 MCP 服务器 {name}",
   "server.mcp.tested": "已测试 MCP 服务器 {name}",
   "server.mcp.signedOut": "已退出 MCP 服务器 {name} 的登录",
   "server.mcp.removed": "已移除 MCP 服务器 {name}",

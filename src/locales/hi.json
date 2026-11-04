@@ -76,6 +76,7 @@
   "server.mcp.changed": "MCP सर्वर {name} बदला",
   "server.mcp.turnedOn": "MCP सर्वर {name} चालू किया",
   "server.mcp.turnedOff": "MCP सर्वर {name} बंद किया",
+  "server.mcp.restarted": "MCP सर्वर {name} फिर से शुरू किया",
   "server.mcp.tested": "MCP सर्वर {name} जाँचा",
   "server.mcp.signedOut": "MCP सर्वर {name} से साइन आउट किया",
   "server.mcp.removed": "MCP सर्वर {name} हटाया",
