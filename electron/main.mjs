@@ -1379,7 +1379,7 @@ ipcMain.handle("desktop:save-file", localOnly("desktop:save-file", async (event,
 ipcMain.handle("desktop:reveal-file", localOnly("desktop:reveal-file", async (_event, rawPath) => {
   return revealInFolder(rawPath, { reveal: (target) => shell.showItemInFolder(target) });
 }));
-ipcMain.handle("desktop:open-html", localOnly("desktop:open-html", (_event, source, name) => openHtmlCopy(source, name, { dir: path.join(app.getPath("temp"), "openpals-open"), open: (file) => shell.openPath(file) })));
+ipcMain.handle("desktop:open-html", localOnly("desktop:open-html", (_event, source, name) => openHtmlCopy(source, name, { dir: path.join(app.getPath("userData"), "open-html"), open: (file) => shell.openPath(file) })));
 ipcMain.handle("desktop:open-logs", localOnly("desktop:open-logs", () => openLogsFolder(LOG_DIR, { open: (folder) => shell.openPath(folder) })));
 ipcMain.handle("desktop:skin", (event, skin) => {
   if (!isKnownSkin(skin)) return false;
