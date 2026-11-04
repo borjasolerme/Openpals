@@ -2,7 +2,6 @@ import { hintSeen, hintSeenPatch, type OnboardingStatus } from "@/lib/onboarding
 
 /** The What's new popup's campaign: each person sees it once. A new id shows it once more. */
 export const WHATS_NEW_NOTICE = "whats-new-2026-11";
-export const UPDATES_CONSENT_NOTICE = "updates-consent";
 /** The Simple mode popup, once per browser (simple-mode-prompt.ts keeps whether it was closed). */
 export const SIMPLE_MODE_NOTICE = "simple-mode-prompt";
 export const CLOUD_INTRO = "cloud-trial-intro-v1";
@@ -19,14 +18,13 @@ export const BOAT_OFFER_NOTICE = "boat-credit-2026-11";
 export const GROK_MOVE_NOTICE = "grok-move-2026-11";
 
 /**
- * Every notice, in the order a launch asks them: one launch shows one notice, the first one due, and only the product-updates
- * question may follow it there. The rest wait for later launches, in this order.
+ * Every notice, in the order a launch asks them: one launch shows one notice, the first one due. The rest wait for later
+ * launches, in this order.
  */
 export const NOTICES = [
   GROK_MOVE_NOTICE,
   SIMPLE_MODE_NOTICE,
   WHATS_NEW_NOTICE,
-  UPDATES_CONSENT_NOTICE,
   TWO_PLACES_NOTICE,
   PRODUCT_HUNT_NOTICE,
   CLOUD_INTRO,
@@ -40,11 +38,10 @@ export type NoticeId = (typeof NOTICES)[number];
 
 export type NoticeFacts = Record<NoticeId, boolean | null>;
 
-/** `launch`: the notice this launch already showed (launchNotice), the only one besides the product-updates question that
- * may show again in it. */
+/** `launch`: the notice this launch already showed (launchNotice), the only one that may show again in it. */
 export function nextNotice(facts: NoticeFacts, seen: (id: NoticeId) => boolean, launch: NoticeId | null = null): NoticeId | null {
   for (const id of NOTICES) {
-    if (seen(id) || (launch !== null && id !== launch && id !== UPDATES_CONSENT_NOTICE)) continue;
+    if (seen(id) || (launch !== null && id !== launch)) continue;
     if (facts[id] === null) return null;
     if (facts[id]) return id;
   }

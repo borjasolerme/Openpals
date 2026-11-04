@@ -58,31 +58,6 @@ describe("buildDiagnosticsReport", () => {
     expect(report).toContain("rooms.turnTimeoutMinutes=5");
     expect(report).toContain("(no desktop crash events available)");
     expect(report).toContain("(server log unavailable)");
-    expect(report).toContain("(updater log unavailable)");
-  });
-
-  it("includes updater diagnostics separately and redacts signed redirects and headers", () => {
-    const report = buildDiagnosticsReport({
-      appInfo,
-      logTail: "server ready",
-      updaterLogTail: [
-        "[info] Downloading version 0.1.61",
-        "[error] GET https://release-assets.example.test/update.zip?X-Amz-Credential=private-account&X-Amz-Signature=signed-secret&jwt=private-jwt HTTP 403",
-        'headers {"authorization":"Basic dXNlcjpwYXNzd29yZA==","apiKey":"opaque-private-key"}',
-        "Set-Cookie: session=private-session; Secure; HttpOnly",
-      ].join("\n"),
-    });
-    expect(report).toContain("## Updater log tail — credentials and URL parameters auto-masked");
-    expect(report).toContain("Downloading version 0.1.61");
-    expect(report).toContain("https://release-assets.example.test/update.zip?«redacted URL parameters» HTTP 403");
-    for (const secret of ["private-account", "signed-secret", "private-jwt", "dXNlcjpwYXNzd29yZA==", "opaque-private-key", "private-session"]) {
-      expect(report).not.toContain(secret);
-    }
-    expect(report.indexOf("server ready")).toBeLessThan(report.indexOf("Downloading version 0.1.61"));
-  });
-
-  it.each(["", null, undefined])("handles an absent updater log (%s)", (updaterLogTail) => {
-    expect(buildDiagnosticsReport({ appInfo, updaterLogTail })).toContain("(updater log unavailable)");
   });
 
   it("removes URL userinfo, fragments, and unfamiliar query capabilities without hiding public paths", () => {
@@ -97,7 +72,7 @@ describe("buildDiagnosticsReport", () => {
     }
   });
 
-  it("masks JSON credential fields and cookies in updater HTTP dumps", () => {
+  it("masks JSON credential fields and cookies in HTTP dumps", () => {
     const redacted = redactSecretsInLine([
       '{"OMB_COMPOSIO_BROKER_TOKEN":"opaque-broker-value","password":"opaque-password-value"}',
       '{"Cookie":"session=private-cookie; tracking=private-tracker"}',
@@ -115,8 +90,7 @@ describe("buildDiagnosticsReport", () => {
     const report = buildDiagnosticsReport({
       appInfo,
       configSummary: { groq: { configured: true } },
-      logTail: `Groq HTTP 401: invalid key ${key}\nspawn env OMB_GROQ_API_KEY=${workspaceKey}`,
-      updaterLogTail: `upstream rejected ${otherKey}`,
+      logTail: `Groq HTTP 401: invalid key ${key}\nspawn env OMB_GROQ_API_KEY=${workspaceKey}\nupstream rejected ${otherKey}`,
     });
     for (const secret of [key, otherKey, workspaceKey]) expect(report).not.toContain(secret);
     expect(report).toContain("groq.configured=true");
@@ -380,20 +354,20 @@ describe("decodeLogTail", () => {
 });
 
 describe("readSafeLogTail", () => {
-  it("exports only a bounded complete-line updater tail from an isolated log fixture", () => {
-    const directory = mkdtempSync(join(tmpdir(), "openmausbot-updater-diagnostics-"));
+  it("exports only a bounded complete-line log tail from an isolated log fixture", () => {
+    const directory = mkdtempSync(join(tmpdir(), "openmausbot-diagnostics-"));
     try {
-      const log = join(directory, "updater.log");
-      const tail = "[info] update staged\n[error] https://updates.example.test/app.zip?jwt=private-query-token\n";
+      const log = join(directory, "server.log");
+      const tail = "[info] server ready\n[error] https://downloads.example.test/app.zip?jwt=private-query-token\n";
       writeFileSync(log, `${"old-private-line\n".repeat(20_000)}${tail}`, { mode: 0o600 });
       const result = readSafeLogTail(log);
       expect(result.bytes).toBeLessThanOrEqual(256 * 1024);
       expect(result.tail.endsWith(tail)).toBe(true);
-      const report = buildDiagnosticsReport({ updaterLogTail: result.tail });
-      expect(report).toContain("[info] update staged");
+      const report = buildDiagnosticsReport({ logTail: result.tail });
+      expect(report).toContain("[info] server ready");
       expect(report).not.toContain("private-query-token");
       expect(report).not.toContain(directory);
-      expect(readSafeLogTail(join(directory, "absent-updater.log"))).toBeNull();
+      expect(readSafeLogTail(join(directory, "absent.log"))).toBeNull();
     } finally {
       rmSync(directory, { force: true, recursive: true });
     }

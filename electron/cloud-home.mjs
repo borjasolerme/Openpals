@@ -274,12 +274,6 @@ export function isCloudHomeEntry(entry, { homeOrigin = null, remembered = null }
   return Boolean(entry?.origin) && (entry.origin === homeOrigin || entry.origin === remembered?.origin);
 }
 
-/** A hint, never a verified Cloud: the entry this app listed for it (`home`), or one still under the default name. */
-export function savedCloudHomeOrigin(state) {
-  const saved = Array.isArray(state?.environments) ? state.environments : [];
-  return (saved.find((entry) => entry?.home === true) ?? saved.find((entry) => entry?.name === CLOUD_HOME_NAME))?.origin ?? null;
-}
-
 /** The Admin's role words on the wire (owner, admin, member), and the three words the app shows for them. */
 export const CLOUD_TEAM_ROLES = environments.TEAM_ROLES;
 export const teamRoleLabel = environments.teamRoleLabel;

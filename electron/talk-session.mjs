@@ -192,7 +192,5 @@ export function createTalkSession({ speech, server, panel, voiceInUse, release, 
     },
     dismiss,
     close: dismiss,
-    /** Listening, or an ask on its way that has not been answered yet. */
-    busy: () => Boolean(current && UNDER_WAY.has(current.state)),
   };
 }

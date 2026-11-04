@@ -10,10 +10,9 @@ import { withTourFinished } from "@/lib/guided-tour";
 import { setLocale } from "@/lib/i18n";
 import { EMPTY_ONBOARDING, LOCAL_VIEWER, markWelcomeFinished, MET_CHIEF_HINT, type WelcomeViewer } from "@/lib/onboarding";
 import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
-import { createDesktopPrefs, registerDesktopPrefs } from "../../electron/desktop-prefs.mjs";
-import { createUpdatesConsent, registerUpdatesConsent } from "../../electron/updates-consent.mjs";
+import { registerDesktopPrefs } from "../../electron/desktop-prefs.mjs";
 
-const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as EffectCallback[], state: {} as any, updater: null as any, dispatch: null as any, brand: "default",
+const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as EffectCallback[], state: {} as any, dispatch: null as any, brand: "default",
   viewerEmail: undefined as string | null | undefined }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(),
   useState: (initial: unknown) => { const index = f.index++; if (!(index in f.values)) f.values[index] = typeof initial === "function" ? initial() : initial;
@@ -24,7 +23,6 @@ vi.mock("react", async original => ({ ...await original<typeof import("react")>(
 vi.mock("@/state/store", () => ({ useStore: () => ({ state: f.state, dispatch: f.dispatch }), api: vi.fn().mockResolvedValue({}),
   CLOUD_LINK_SETTINGS: { type: "toggleAppSettings", open: true, section: "cloudAccount", cloudLink: true } }));
 vi.mock("@/lib/analytics", () => ({ emailGateDone: () => false, track: vi.fn() }));
-vi.mock("@/lib/updater", () => ({ useUpdaterState: () => f.updater }));
 vi.mock("./cloud-buy/NightCard", () => ({ NightCard: ({ children }: { children: unknown }) => children }));
 vi.mock("./whats-new/TeamPicture", () => ({ TeamPicture: () => null }));
 // Who MausBot belongs to: unknown (as before the session answers) unless a test says otherwise.
@@ -87,7 +85,7 @@ function desktopMachine(): Desktop {
   registerDesktopPrefs({
     ipcMain: { handle: (channel, handler) => void machine.handlers.set(channel, handler as Handler), on: (channel, listener) => void machine.listeners.set(channel, listener as Handler) },
     read: () => machine.saved, write: value => { machine.saved = JSON.parse(JSON.stringify(value)); }, page: event => (event as { page: Page }).page,
-    cloudOffered: async () => machine.offered, localConfig: () => machine.config, now: () => now,
+    cloudOffered: async () => machine.offered, localConfig: () => machine.config,
   });
   return machine;
 }
@@ -138,7 +136,7 @@ const hints = () => f.state.config.onboarding.hintsSeen as string[];
 
 beforeEach(() => {
   vi.clearAllMocks(); vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-  storage = new Map(); f.values = []; f.index = 0; f.effects = []; f.updater = null; f.brand = "default"; f.dispatch = vi.fn(); now = NOW; desk = desktopMachine();
+  storage = new Map(); f.values = []; f.index = 0; f.effects = []; f.brand = "default"; f.dispatch = vi.fn(); now = NOW; desk = desktopMachine();
   setLocale("en"); viewer = LOCAL_VIEWER; account = signedOut; snapshot = { status: "none" }; offer = TRIAL_OFFER;
   session = new Map(); f.viewerEmail = undefined;
   vi.stubGlobal("sessionStorage", { getItem: (key: string) => session.get(key) ?? null, setItem: (key: string, value: string) => session.set(key, value) });
@@ -280,17 +278,17 @@ describe("the card after the update", () => {
     expect(bridges.cloud.offer, "nothing to load the offer for").not.toHaveBeenCalled();
   });
 
-  it("never over setup, a dialog, the Add a Cloud dialog or its tip, busy work, or an update being offered", async () => {
+  it("never over setup, a dialog, the Add a Cloud dialog or its tip, or busy work", async () => {
     returning();
     const waits: Array<() => void> = [
       () => { f.state.welcomeOpen = true; }, () => { f.state.tourOpen = true; }, () => { f.state.appSettingsOpen = true; },
-      () => { f.state.cloudAdd = { source: "app_menu" }; }, () => { f.state.cloudHowTo = true; }, () => { f.updater = { status: "downloaded" }; },
+      () => { f.state.cloudAdd = { source: "app_menu" }; }, () => { f.state.cloudHowTo = true; },
       () => { f.state.bots = [{ busy: true, tasks: [{ threadId: "t", createdAt: 1, usage: { turns: 2 } }] }]; }, () => { f.state.connected = false; },
     ];
     for (const wait of waits) {
       const saved = structuredClone(f.state); wait();
       expect(await launch(), wait.toString()).toBe("");
-      f.state = saved; f.updater = null;
+      f.state = saved;
     }
     expect(storage.get(`${CLOUD_INTRO}:days`)).toBeUndefined();
     expect(await launch()).toContain(INTRO);
@@ -420,12 +418,10 @@ describe("the Product Hunt launch card", () => {
     expect(await launch(), "until main says whether a move goes, nothing shows").not.toContain(PH);
   });
 
-  it("never on a branded build or an organization's desktop, never after the launch window, never over setup or an update", async () => {
+  it("never on a branded build or an organization's desktop, never after the launch window", async () => {
     fresh(); f.brand = "file";
     expect(await launch()).not.toContain(PH);
     f.brand = "default"; now = PRODUCT_HUNT_UNTIL;
-    expect(await launch()).not.toContain(PH);
-    now = NOW; f.updater = { status: "available", version: "9.9.9" };
     expect(await launch()).not.toContain(PH);
   });
 });
@@ -747,12 +743,12 @@ describe("What's new after the update", () => {
     expect(launchDialogShown()).toBe("notices");
   });
 
-  it("never during a bot's turn, a room's work, another dialog, a call, Settings, adding a Cloud or an update; it waits and comes back", async () => {
+  it("never during a bot's turn, a room's work, another dialog, a call, Settings or adding a Cloud; it waits and comes back", async () => {
     returning();
     const waits: Array<() => void> = [
       () => { f.state.bots = [{ busy: true, tasks: [{ threadId: "t", createdAt: 1, usage: { turns: 2 } }] }]; }, () => { f.state.groups = [{ working: true }]; },
       () => { modal = true; }, () => { f.state.liveCall = { status: "live" }; }, () => { f.state.appSettingsOpen = true; },
-      () => { f.state.cloudAdd = { source: "app_menu" }; }, () => { f.updater = { status: "downloaded" }; },
+      () => { f.state.cloudAdd = { source: "app_menu" }; },
       () => { account = { status: "signed-out", message: "restoring" }; }, () => { account = { status: "connecting" }; },
       () => { bridges.cloud.offer.mockImplementation(() => new Promise(() => {})); },
       () => { desk.handlers.set("desktop-notices:state", () => new Promise(() => {})); },
@@ -760,7 +756,7 @@ describe("What's new after the update", () => {
     for (const wait of waits) {
       const saved = structuredClone(f.state); wait();
       expect(await relaunch(), wait.toString()).toBe("");
-      f.state = saved; f.updater = null; account = signedOut; modal = false; bridges.cloud.offer.mockImplementation(async () => offer); desk = desktopMachine();
+      f.state = saved; account = signedOut; modal = false; bridges.cloud.offer.mockImplementation(async () => offer); desk = desktopMachine();
     }
     expect(steps()).toEqual([]); expect(seenOnDesktop()).toEqual([]);
     expect(on(await relaunch())).toBe("pro");
@@ -824,119 +820,6 @@ describe("What's new after the update", () => {
     viewer = { hosted: true, canSave: true }; showWindow(VPS);
     expect(on(await relaunch())).toBeNull();
     expect(steps()).toEqual([]); expect(seenOnDesktop()).toEqual([]);
-  });
-});
-
-describe("the product-updates question after the update", () => {
-  const QUESTION = "Get MausBot updates?", POPUP = "Meet the new MausBot Cloud";
-  const RECEIPT = "R".repeat(43);
-  let saved: unknown;
-  let accountAnswer: { status: string; textVersion: string } | null;
-  let client: Record<string, ReturnType<typeof vi.fn>>;
-  /** Main's own consent for this desktop, behind its real IPC: the real record and logic, a fake Cloud client. */
-  const wireConsent = () => {
-    const prefs = createDesktopPrefs({ read: () => saved, write: value => { saved = JSON.parse(JSON.stringify(value)); } });
-    const consent = createUpdatesConsent({ prefs, account: () => client as never, available: async () => true, now: () => now });
-    registerUpdatesConsent({ ipcMain: { handle: (channel, handler) => void desk.handlers.set(channel, handler as Handler) }, page: event => (event as { page: Page }).page, consent });
-  };
-  const answer = () => (saved as { updatesConsent?: { status: string } } | null)?.updatesConsent ?? null;
-  const type = (value: string) => { const input = tree().find(node => node.type === "input" && node.props.type === "email")!; expect(input).toBeTruthy(); input.props.onChange({ target: { value } }); };
-
-  beforeEach(() => {
-    saved = null; accountAnswer = null;
-    client = { state: vi.fn(() => account), updatesConsent: vi.fn(async () => ({ cloudContractVersion: 1, consent: accountAnswer })),
-      recordUpdatesConsent: vi.fn(async (status: string, textVersion: string) => { accountAnswer = { status, textVersion }; }),
-      updatesConsentByEmail: vi.fn(async () => RECEIPT), withdrawUpdatesConsent: vi.fn(async () => {}) };
-    wireConsent();
-  });
-
-  it("comes after What's new, never with it, and right after it closes; No thanks is kept and it is never asked again", async () => {
-    desk.saved = null; storage.delete(WHATS_NEW_NOTICE);
-    const first = await launch();
-    expect(first).toContain(POPUP); expect(first).not.toContain(QUESTION);
-    press("Not now"); await flush();
-    expect(render(), "right after it closes").toContain(QUESTION);
-    const next = await launch();
-    expect(next, "and after a reload in the same launch").toContain(QUESTION); expect(next).not.toContain(POPUP);
-    for (const text of ["about new features and tips, about twice a month. You can unsubscribe any time.", "Your email", "Yes, send me updates", "No thanks"])
-      expect(next).toContain(text);
-    for (const part of ['role="dialog"', 'aria-modal="true"', 'aria-labelledby="updates-consent-title"', 'type="email"', 'value=""']) expect(next).toContain(part);
-    expect(next).not.toContain('type="checkbox"');
-    press("No thanks"); await flush();
-    expect(render()).toBe("");
-    expect(answer()).toMatchObject({ status: "declined" });
-    expect(client.updatesConsentByEmail).not.toHaveBeenCalled();
-    expect(await launch()).not.toContain(QUESTION);
-    wireConsent();
-    expect(await launch(), "a restart reads it from the desktop's file").not.toContain(QUESTION);
-  });
-
-  it("waits for a new install's first reply and for a launch after the one whose welcome finished, then keeps its place after What's new", async () => {
-    desk.saved = null; storage.delete(WHATS_NEW_NOTICE);
-    f.state.bots = [];
-    markWelcomeFinished();
-    const first = await launch();
-    expect(first, "the welcome just closed and no bot has answered").not.toContain(QUESTION); expect(first).not.toContain(POPUP);
-    f.state.bots = structuredClone(FIRST_REPLY);
-    const answered = await launch();
-    expect(answered, "a bot has answered, but in the launch the welcome finished").not.toContain(QUESTION); expect(answered).not.toContain(POPUP);
-    session.clear();
-    const later = await launch();
-    expect(later).toContain(POPUP); expect(later).not.toContain(QUESTION);
-    press("Not now"); await flush();
-    expect(render(), "right after the popup closes, as #3379 orders it").toContain(QUESTION);
-  });
-
-  it("waits while MausBot's first-launch card is due, then follows it in the same launch once it closes", async () => {
-    f.viewerEmail = null;
-    f.state.bots = [{ ...structuredClone(FIRST_REPLY[0]), id: "maus", defaultBot: {} }];
-    expect(await launch(), "the card is due: the question waits for it").not.toContain(QUESTION);
-    markLaunchDialog("mausbot"); f.state.bots[0].welcomed = true;
-    const after = await launch();
-    expect(after, "the card closed in this launch: the question follows it, as it follows the popup").toContain(QUESTION);
-    expect(after, "the popup still waits for a later launch").not.toContain(POPUP);
-  });
-
-  it("never during onboarding, the tour or Settings; it shows once they are done, before the other cards", async () => {
-    returning();
-    f.state.welcomeOpen = true; expect(await launch()).toBe("");
-    f.state.welcomeOpen = false; f.state.appSettingsOpen = true; expect(await launch()).toBe("");
-    f.state.appSettingsOpen = false;
-    const html = await launch();
-    expect(html).toContain(QUESTION); expect(html).not.toContain(STAR);
-  });
-
-  it("signed out: an optional email; Yes sends it with no account and keeps the receipt. Signed in: one tap, on the account", async () => {
-    await launch(); expect(await settle()).toContain(QUESTION);
-    type("not-an-email"); press("Yes, send me updates"); await flush();
-    expect(render()).toContain("Enter a valid email address.");
-    expect(client.updatesConsentByEmail).not.toHaveBeenCalled();
-    type("person@example.test"); press("Yes, send me updates");
-    for (let i = 0; i < 5; i++) await flush();
-    expect(client.updatesConsentByEmail).toHaveBeenCalledWith(expect.objectContaining({ email: "person@example.test", textVersion: "2026-10-23" }));
-    expect(answer()).toMatchObject({ status: "opted_in", email: "person@example.test", receipt: RECEIPT });
-    expect(render()).toBe("");
-
-    saved = null; account = free; wireConsent();
-    await launch(); const signedIn = await settle();
-    expect(signedIn).toContain(QUESTION); expect(signedIn).not.toContain('type="email"');
-    press("Yes, send me updates");
-    for (let i = 0; i < 5; i++) await flush();
-    expect(client.recordUpdatesConsent).toHaveBeenCalledWith("opted_in", "2026-10-23");
-    expect(answer()).toMatchObject({ status: "opted_in", account: "a" });
-    expect(await launch()).not.toContain(QUESTION);
-  });
-
-  it("not on a branded build, a saved server's page, or in a remote client's window; My Cloud's own page asks too", async () => {
-    f.brand = "file"; expect(await launch()).not.toContain(QUESTION);
-    f.brand = "default";
-    viewer = { hosted: true, canSave: true }; showWindow(VPS); expect(await launch()).not.toContain(QUESTION);
-    showWindow(LOCAL_ORIGIN); viewer = LOCAL_VIEWER; (window.ogb as Record<string, any>).remoteClient.active = true;
-    expect(await launch()).not.toContain(QUESTION);
-    snapshot = { status: "none" }; viewer = { hosted: false, canSave: true, cloudHome: true }; f.state.config.cloudHome = true;
-    f.state.config.onboarding.hintsSeen = [...withTourFinished(undefined), "cloud-setup-hidden"]; showWindow(MY_CLOUD);
-    expect(await launch()).toContain(QUESTION);
-    expect(answer()).toBeNull();
   });
 });
 

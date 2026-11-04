@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Archive,
-  ArrowDownToLine,
   ArrowLeftRight,
   Check,
   CircleUserRound,
@@ -14,8 +13,6 @@ import {
   Keyboard,
   Laptop,
   LifeBuoy,
-  Loader2,
-  RefreshCw,
   Settings as SettingsIcon,
   Smartphone,
   UserRound,
@@ -40,17 +37,13 @@ import { SidebarPopoverMenu, type SidebarMenuItem } from "./SidebarPopoverMenu";
 import { ShortcutHint } from "./ShortcutHint";
 import { useSidebarPhoneStatus } from "./SidebarPhoneButton";
 import { api, useStore, type Action } from "@/state/store";
-import { serverCheckPhase, serverUpdateRow, type ServerUpdateCheck, type ServerUpdatePhase } from "@/lib/server-update";
 import type { CloudAccountBridge, CloudAccountState } from "../../electron/cloud-account.mjs";
-import { useUpdaterState, type UpdaterState } from "@/lib/updater";
-import { productName } from "../lib/brand";
 import { cloudColor } from "@/lib/cloud-look";
 import { cn } from "@/lib/cn";
 import { meterPercent, resetLine } from "@/lib/usage-meter";
 import type { CloudPlanSnapshot } from "../../electron/cloud-account.mjs";
 import { activeLocale, t } from "@/lib/i18n";
-import { FEEDBACK_URL, HELP_CENTER_URL, appVersion, openExternalLink } from "@/lib/app-links";
-import { useOtherServerName } from "@/lib/other-server";
+import { FEEDBACK_URL, HELP_CENTER_URL, openExternalLink } from "@/lib/app-links";
 import { profileForSession, readSessionState, type SessionState } from "@/lib/session";
 import {
   cloudPhoneDestination,
@@ -80,185 +73,6 @@ export function profileInitials(profile?: { name?: string; email?: string }): st
 
 export function profileLabel(profile?: { name?: string; email?: string }): string {
   return profile?.name?.trim() || profile?.email?.trim() || t("sidebar.profile.you");
-}
-
-export type UpdatePhase =
-  | UpdaterState["status"]
-  | "up-to-date"
-  // only a self-hosted server's check reports a release it cannot install itself
-  | "available"
-  // or that it already runs a newer version than this page
-  | "reload";
-
-export function updatePhase(state: UpdaterState | null, upToDate: boolean): UpdatePhase {
-  const status = state?.status ?? "idle";
-  if (status !== "idle") return status;
-  return upToDate ? "up-to-date" : "idle";
-}
-
-export function updateLabel(phase: UpdatePhase, state: UpdaterState | null): string {
-  switch (phase) {
-    case "downloading":
-      return state?.percent == null
-        ? t("sidebar.update.startingDownload")
-        : t("sidebar.update.downloading", { percent: Math.round(state.percent) });
-    case "preparing":
-      return t("sidebar.update.preparing");
-    case "downloaded":
-      return (
-        state?.installMode === "handoff"
-          ? t("sidebar.update.readyInstall", { app: productName(), version: state?.version ?? "" })
-          : t("sidebar.update.ready", { app: productName(), version: state?.version ?? "" })
-      ).replace("  ", " ");
-    case "installing":
-      return (
-        state?.message ||
-        (state?.installMode === "handoff"
-          ? t("sidebar.update.openingTerminal")
-          : t("sidebar.update.installing"))
-      );
-    case "checking":
-      return t("sidebar.update.checking");
-    case "handed-off":
-      return t("sidebar.update.handedOff");
-    case "error":
-      return state?.message?.trim() || t("sidebar.update.failed");
-    case "up-to-date":
-      return t("sidebar.update.upToDate");
-    default:
-      return t("sidebar.update.check");
-  }
-}
-
-export function updateBusy(phase: UpdatePhase, pending = false): boolean {
-  return pending || phase === "checking" || phase === "downloading" || phase === "preparing" || phase === "installing";
-}
-
-function UpdateIcon({ phase, pending, size = 18 }: { phase: UpdatePhase; pending: boolean; size?: number }) {
-  if (updateBusy(phase, pending)) return <Loader2 size={size} className="animate-spin" />;
-  if (phase === "up-to-date") return <Check size={size} />;
-  if (phase === "downloaded") return <ArrowDownToLine size={size} />;
-  return <RefreshCw size={size} />;
-}
-
-export function updateHasButton(phase: UpdatePhase): boolean {
-  return phase === "downloading" || phase === "preparing" || phase === "downloaded" || phase === "installing";
-}
-
-export function updateNoteworthy(phase: UpdatePhase, pending = false): boolean {
-  return pending || (phase !== "idle" && phase !== "up-to-date" && phase !== "checking");
-}
-
-interface UpdateEntry {
-  item: SidebarMenuItem;
-  phase: UpdatePhase;
-  pending: boolean;
-  label: string;
-  source?: "desktop" | "server";
-  installMode?: string;
-}
-
-/** The update a Simple account menu raises to its top row: one waiting to be installed, or one that failed. */
-export function simpleUpdateTop(entry: Pick<UpdateEntry, "phase" | "source" | "installMode"> | null): { label: string; action: string } | null {
-  const ready = () => t("sidebar.update.readyShort");
-  if (entry?.source === "desktop") {
-    if (entry.phase === "downloaded") return { label: ready(), action: t(entry.installMode === "handoff" ? "sidebar.update.installAction" : "sidebar.update.restartAction") };
-    if (entry.phase === "error") return { label: t("sidebar.update.failedShort"), action: t("sidebar.update.retryAction") };
-  }
-  if (entry?.source === "server") {
-    if (entry.phase === "available") return { label: ready(), action: t("sidebar.update.installAction") };
-    if (entry.phase === "reload") return { label: ready(), action: t("sidebar.update.restartAction") };
-  }
-  return null;
-}
-
-export function useUpdateItem(): UpdateEntry | null {
-  const state = useUpdaterState();
-  const updater = window.ogb?.updater;
-  const [pending, setPending] = useState(false);
-  const [checkedAt, setCheckedAt] = useState(0);
-  const status = state?.status ?? "idle";
-
-  useEffect(() => setPending(false), [status]);
-
-  const upToDate = Boolean(checkedAt) && (!state || state.status === "idle") && Date.now() - checkedAt < 3000;
-  useEffect(() => {
-    if (!upToDate) return;
-    const timer = setTimeout(() => setCheckedAt(0), 3000);
-    return () => clearTimeout(timer);
-  }, [upToDate]);
-
-  if (!updater || !state) return null;
-
-  const phase = updatePhase(state, upToDate);
-  const label = updateLabel(phase, state);
-  return {
-    phase,
-    pending,
-    label,
-    source: "desktop",
-    installMode: state.installMode,
-    item: {
-      key: "update",
-      label,
-      icon: <UpdateIcon phase={phase} pending={pending} />,
-      disabled: updateBusy(phase, pending) || state?.retryable === false,
-      keepOpen: true,
-      attention: phase === "downloaded" || phase === "error",
-      attentionTone: phase === "error" ? "danger" : "accent",
-      onSelect: () => {
-        if (phase === "downloaded") {
-          setPending(true);
-          return void updater.install();
-        }
-        setCheckedAt(Date.now());
-        void updater.check();
-      },
-    },
-  };
-}
-
-/** Without the packaged app's updater the server cannot replace itself, so the row says whether a newer release exists and how to install it. */
-export function useServerUpdateItem(enabled: boolean): UpdateEntry | null {
-  const [phase, setPhase] = useState<ServerUpdatePhase>("idle");
-  const [check, setCheck] = useState<ServerUpdateCheck | null>(null);
-  const otherServer = useOtherServerName(enabled);
-
-  useEffect(() => {
-    if (phase !== "up-to-date") return;
-    const timer = setTimeout(() => setPhase("idle"), 3000);
-    return () => clearTimeout(timer);
-  }, [phase]);
-
-  if (!enabled) return null;
-  const row = serverUpdateRow(phase, check, appVersion(), otherServer);
-  return {
-    phase,
-    pending: false,
-    label: row.label,
-    source: "server",
-    item: {
-      key: "update",
-      label: row.label,
-      subtitle: row.subtitle,
-      icon: <UpdateIcon phase={phase} pending={false} />,
-      disabled: phase === "checking",
-      keepOpen: true,
-      attention: phase === "available" || phase === "reload" || phase === "error",
-      attentionTone: phase === "error" ? "danger" : "accent",
-      onSelect: () => {
-        if (phase === "available" && check?.releaseUrl) return void openExternalLink(check.releaseUrl);
-        if (phase === "reload") return window.location.reload();
-        setPhase("checking");
-        void api<ServerUpdateCheck>("/api/updates/check", { timeoutMs: 20_000 })
-          .then((next) => {
-            setCheck(next);
-            setPhase(serverCheckPhase(next));
-          })
-          .catch(() => setPhase("error"));
-      },
-    },
-  };
 }
 
 function useConnectPhoneEntry(cloudHome: boolean): ConnectPhoneEntry | null {
@@ -350,21 +164,20 @@ export function toolMenuItems({ activeView, automationsNeedYou, onAutomations, o
 
 /** The account button's name: the person, then whatever its dot is raised for, then the move to My Cloud while it goes.
  * A failing move and automations that need the person share one segment. */
-export function accountLabel(name: string, { automationsNeedYou, update, move = null }: { automationsNeedYou: boolean; update: string | null; move?: AccountMoveKind | null }): string {
+export function accountLabel(name: string, { automationsNeedYou, move = null }: { automationsNeedYou: boolean; move?: AccountMoveKind | null }): string {
   const needsYou = move === "failed"
     ? t(automationsNeedYou ? "sidebar.account.moveAndAutomationsNeedYou" : "sidebar.account.moveNeedsYou")
     : automationsNeedYou ? t("sidebar.account.automationsNeedYou") : "";
-  return [name, needsYou, move === "sending" ? t("sidebar.account.moving") : "", update ?? ""].filter(Boolean).join(" · ");
+  return [name, needsYou, move === "sending" ? t("sidebar.account.moving") : ""].filter(Boolean).join(" · ");
 }
 
-export type AccountDot = "danger" | "accent";
-const DOT_COLOR: Record<AccountDot, string> = { danger: "bg-danger", accent: "bg-accent" };
+export type AccountDot = "danger";
+const DOT_COLOR: Record<AccountDot, string> = { danger: "bg-danger" };
 
-/** The avatar's dot: red while automations, a failed update or the failing move to My Cloud need the person, the accent
- * for an update; none for the move on its way or done (what it brought waits in the menu). */
-export function accountDot({ automationsNeedYou, update, move }: { automationsNeedYou: boolean; update: "failed" | "news" | null; move: AccountMoveKind | null }): AccountDot | null {
-  if (automationsNeedYou || update === "failed" || move === "failed") return "danger";
-  return update ? "accent" : null;
+/** The avatar's dot: red while automations or the failing move to My Cloud need the person; none for the move on its way
+ * or done (what it brought waits in the menu). */
+export function accountDot({ automationsNeedYou, move }: { automationsNeedYou: boolean; move: AccountMoveKind | null }): AccountDot | null {
+  return automationsNeedYou || move === "failed" ? "danger" : null;
 }
 
 /** `besideRail`: the window's rail of places stands beside the page and switches places, so Switch to… isn't offered twice. */
@@ -453,8 +266,6 @@ export function profileMenuItems({
   phone,
   usage,
   usageSummary = null,
-  update,
-  updateTop = null,
   move = [],
   account,
   accounts = [],
@@ -470,8 +281,6 @@ export function profileMenuItems({
   phone: SidebarMenuItem[];
   usage: boolean;
   usageSummary?: UsageSummary | null;
-  update: SidebarMenuItem | null;
-  updateTop?: { label: string; action: string } | null;
   /** the move to My Cloud's own rows, first of all (AccountMove) */
   move?: SidebarMenuItem[];
   account: string | null;
@@ -512,20 +321,12 @@ export function profileMenuItems({
   const accountItem: SidebarMenuItem | null = account ? { key: "account", label: account, icon: <CircleUserRound size={18} />, onSelect: onAccount } : null;
   const present = (...items: Array<SidebarMenuItem | null | false>) => items.filter((item): item is SidebarMenuItem => Boolean(item));
   if (!simple) {
-    const rest = [...present(usageItem), ...phone, support, settings, ...present(update), ...(accountItem ? [{ ...accountItem, separatorBefore: true }] : []), ...accounts.map((item, index) => (index === 0 ? { ...item, separatorBefore: true } : item))];
+    const rest = [...present(usageItem), ...phone, support, settings, ...(accountItem ? [{ ...accountItem, separatorBefore: true }] : []), ...accounts.map((item, index) => (index === 0 ? { ...item, separatorBefore: true } : item))];
     return [...move, ...rest.map((item, index) => (move.length && index === 0 ? { ...item, separatorBefore: true } : item))];
   }
-  const raised: SidebarMenuItem | null = update && updateTop ? {
-    ...update,
-    label: updateTop.label,
-    subtitle: undefined,
-    attention: false,
-    trailing: <span className="flex h-6 shrink-0 items-center rounded-full bg-ink px-2.5 text-[12px] font-medium text-app">{updateTop.action}</span>,
-  } : null;
   const groups = [
     move,
-    present(raised),
-    [...present(usageItem), ...phone, { ...support, submenu: raised ? help : [...help, ...present(update)] }, settings],
+    [...present(usageItem), ...phone, support, settings],
     simple.tools,
     [...simple.places, ...present(accountItem)],
     accounts,
@@ -562,9 +363,6 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
   const connectPhone = useConnectPhoneEntry(state.config?.cloudHome === true);
   const cloudPhone = useCloudPhoneDestination(connectPhone?.target === "computer");
   const destinations = phoneDestinations(connectPhone, cloudPhone.cloud);
-  const desktopUpdate = useUpdateItem();
-  const serverUpdate = useServerUpdateItem(!window.ogb?.updater);
-  const update = desktopUpdate ?? serverUpdate;
   const [aboutOpen, setAboutOpen] = useState(false);
   const [phoneAppOpen, setPhoneAppOpen] = useState(false);
   const [session, setSession] = useState<SessionState | null>(null);
@@ -600,8 +398,6 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
       }),
     usage: !remote,
     usageSummary: cloudUsage ?? engineUsage,
-    update: update?.item ?? null,
-    updateTop: simple ? simpleUpdateTop(update) : null,
     move: move.items,
     account: cloudAccount ? t("settings.section.cloudAccount") : null,
     accounts: accountMenuItems(accounts),
@@ -627,14 +423,12 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
     onFeedback: () => void openExternalLink(FEEDBACK_URL),
     onAccount: openCloudAccount,
   });
-  const noteworthy = update && updateNoteworthy(update.phase, update.pending) && !updateHasButton(update.phase);
   const needsYou = account?.automationsNeedYou === true;
   const initials = profileInitials(profile);
   const nameless = simple && initials === "?" ? <UserRound size={18} strokeWidth={1.75} aria-hidden /> : undefined;
-  const label = accountLabel(name, { automationsNeedYou: needsYou, update: simple && noteworthy && update ? update.label : null, move: move.kind });
-  const dot = accountDot({ automationsNeedYou: needsYou, update: noteworthy ? (update.phase === "error" ? "failed" : "news") : null, move: move.kind });
-  // Advanced's full row has its own update badge: its avatar's dot is the move's alone.
-  const moveDot = accountDot({ automationsNeedYou: false, update: null, move: move.kind });
+  const label = accountLabel(name, { automationsNeedYou: needsYou, move: move.kind });
+  const dot = accountDot({ automationsNeedYou: needsYou, move: move.kind });
+  const moveDot = accountDot({ automationsNeedYou: false, move: move.kind });
 
   return (
     <>
@@ -684,18 +478,6 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
               <span className="truncate text-[14px] font-medium leading-5 text-ink">{name}</span>
               <AccountMoveStatus kind={move.kind} place={move.place} />
             </span>
-            {noteworthy && (
-              <span
-                title={update.label}
-                aria-label={update.label}
-                className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full",
-                  update.phase === "error" ? "bg-danger/15 text-danger" : "bg-accent/15 text-accent",
-                )}
-              >
-                <UpdateIcon phase={update.phase} pending={update.pending} size={14} />
-              </span>
-            )}
           </span>
         )}
       />

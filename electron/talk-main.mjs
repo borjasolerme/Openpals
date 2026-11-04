@@ -74,8 +74,6 @@ export function installTalk({ ipcMain, localOnly, localOrHome, BrowserWindow, ap
       theme = skins.skinIsLight(id) ? "light" : "dark";
       logged("skin", () => panel?.setTheme(theme))();
     },
-    /** Listening, or an ask on its way that has not been answered yet. */
-    busy: () => session?.busy() ?? false,
     close() {
       logged("close", () => session?.close())();
       logged("close", () => shortcut?.close())();

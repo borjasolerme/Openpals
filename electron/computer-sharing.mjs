@@ -764,8 +764,6 @@ export function createComputerSharing({ file, fetch: fetchImpl, environments, cu
     },
     /** Lending to My Cloud is running, so it calls My Cloud whenever it is awake. */
     lendingToCloud: () => [...running.keys()].some(id => Boolean(records[id]?.cloud)),
-    /** A server is using this computer now: a job running on it, or its browsing going through this computer. */
-    busy: () => summary().busy !== null,
     saveCloud,
     /** The move's project folders, lent to the home it went to (My Cloud unless `place` names a server of the person's own)
      * with editing on top of the rest. It throws while lending there can't take them yet (paused, or not signed in there),

@@ -1,4 +1,4 @@
-// Anything that touches THIS computer (screen, files, logins, helpers, updater, local control) answers only the local server's UI.
+// Anything that touches THIS computer (screen, files, logins, helpers, local control) answers only the local server's UI.
 let localOrigin = null;
 
 function setLocalOrigin(origin) {

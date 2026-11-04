@@ -64,12 +64,9 @@ function railKeepsItsSize() {
 if (typeof window !== "undefined") {
   for (const type of ["resize", "DOMContentLoaded"]) window.addEventListener(type, () => { leaveRailRoom(); railKeepsItsSize(); });
 }
-const REMOTE_SAFE = new Set(["platform", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "workspaces", "rail", "cloudAdd", "cloudPlan", "cloudSendPage", "accountSheet", "desktopNotices", "desktopAnalytics", "desktopLanguage", "updatesConsent", "windowControls", "onOpenAppSettings", "windowFrame"]);
+const REMOTE_SAFE = new Set(["platform", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "workspaces", "rail", "cloudAdd", "cloudPlan", "cloudSendPage", "accountSheet", "desktopNotices", "desktopAnalytics", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
 /** My Cloud's own page once it is the person's home (main checks the sender again): it is this app's page then. */
 const HOME_PAGE = ["home", "onChatLink", "onPackageInstall", "exportDiagnostics", "openLogsFolder", "openAtLogin", "callActive"];
-function updaterOffered() {
-  try { return ipcRenderer.sendSync("update:offered") === true; } catch { return false; }
-}
 function homePage() {
   try { return ipcRenderer.sendSync("home:page") === true; } catch { return false; }
 }
@@ -91,7 +88,7 @@ ipcRenderer.on("desktop-language:changed", (_event, language) => {
   for (const listener of languageListeners) listener(language);
 });
 const onHomePage = !isLocalPage && homePage();
-const remoteKeys = isLocalPage ? REMOTE_SAFE : new Set([...REMOTE_SAFE, ...(updaterOffered() ? ["updater"] : []), ...(onHomePage ? HOME_PAGE : [])]);
+const remoteKeys = isLocalPage ? REMOTE_SAFE : new Set([...REMOTE_SAFE, ...(onHomePage ? HOME_PAGE : [])]);
 
 // Keep in parity with shared/workspace-backup-client.ts (a sandboxed preload cannot import it).
 const COMPANY_BACKUP_CLIENT_KEYS = [
@@ -373,7 +370,7 @@ const bridge = {
       throw new Error(message.replace(/^Error invoking remote method '[^']*':\s*(?:Error:\s*)?/, ""));
     }),
   revealInFolder: (filePath) => ipcRenderer.invoke("desktop:reveal-file", filePath),
-  // This app's own logs folder (server.log, desktop-crashes.log, updater.log); the page names no path.
+  // This app's own logs folder (server.log, desktop-crashes.log); the page names no path.
   openLogsFolder: () => ipcRenderer.invoke("desktop:open-logs"),
   openAtLogin: {
     state: () => ipcRenderer.invoke("open-at-login:state"),
@@ -381,22 +378,6 @@ const bridge = {
       ? ipcRenderer.invoke("open-at-login:set", on === true) : Promise.reject(new Error("Turn on the switch to open Openpals at login.")),
   },
   setCredential: (name, value) => ipcRenderer.invoke("credential:set", name, value),
-
-  updater: {
-    check: () => ipcRenderer.invoke("update:check"),
-    install: () => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("update:install") : Promise.reject(new Error("Choose Restart to update.")),
-    seen: () => ipcRenderer.invoke("update:seen"),
-    onState: (cb) => {
-      ipcRenderer
-        .invoke("update:get-state")
-        .then((s) => cb(s))
-        .catch(() => {});
-      const handler = (_event, s) => cb(s);
-      ipcRenderer.on("update:state", handler);
-      return () => ipcRenderer.removeListener("update:state", handler);
-    },
-  },
 
   /** A remote page may read the list but never change where this window goes. */
   environments: {
@@ -595,13 +576,6 @@ const bridge = {
       ? ipcRenderer.invoke("home:sign-in") : Promise.reject(new Error("Choose Sign in to sign in again.")),
     repair: () => ipcRenderer.invoke("home:repair"),
     updating: onHomePage && reloadedForUpdate(),
-  },
-  updatesConsent: {
-    state: () => ipcRenderer.invoke("updates-consent:state"),
-    choose: choice => ipcRenderer.invoke("updates-consent:choose", {
-      status: String(choice?.status),
-      ...(typeof choice?.email === "string" ? { email: choice.email } : {}),
-    }),
   },
   desktopProfile: {
     systemName: () => ipcRenderer.invoke("desktop-profile:system-name"),

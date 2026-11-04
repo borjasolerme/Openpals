@@ -1,5 +1,5 @@
 // The window's own frame in the real app, as the desktop window draws it on macOS and Windows: the top bar (the
-// traffic lights or the caption buttons, the rail's button, the place on screen in its middle, an update, Settings),
+// traffic lights or the caption buttons, the rail's button, the place on screen in its middle, Settings),
 // the rail of places beside it in the bar's colour, the sidebar and the chat in the app's card, the sidebar's edge dragged to
 // its avatars and back, the same window with the frame turned off, and the rail's tiles up close. Against a disposable fake-engine server, with the desktop bridge
 // of scripts/testing/rail-preview.tsx (the window's own rail drawn by its own page, in a frame).
@@ -26,7 +26,6 @@ const WIDTH = 1280, HEIGHT = 800;
 const ALL_SKINS = ["daylight", "midnight", "atelier", "foundry", "lagoon", "graphite", "linen", "dusk", "meadow", "pop", "halloween"];
 const SKINS = argument("--skins") === "all" ? ALL_SKINS : ["daylight", "midnight"];
 const LOOK: Record<string, string> = { daylight: "light", midnight: "dark" };
-const BAR = "[data-window-frame-bar]";
 const RAIL_PAGE = "document.querySelector('iframe[data-rail-page]')?.contentDocument";
 const RAIL_READY = `${RAIL_PAGE}?.querySelector('[data-rail-place]')`;
 
@@ -37,10 +36,8 @@ const VIEWS: Array<{ name: string; query: string; ready: string; width?: number;
   { name: "frame-simple", query: "chrome=1&mode=simple", ready: RAIL_READY, bar: true },
   { name: "frame-windows", query: "chrome=1&platform=win32", ready: RAIL_READY, bar: true },
   { name: "frame-windows-simple", query: "chrome=1&platform=win32&mode=simple", ready: RAIL_READY, bar: true },
-  { name: "frame-update", query: "chrome=1&update=downloaded", ready: `${RAIL_READY} && document.querySelector('${BAR} [data-update-indicator]')`, bar: true },
-  { name: "frame-downloading", query: "chrome=1&update=downloading", ready: `${RAIL_READY} && document.querySelector('${BAR} [data-update-indicator]')`, bar: true },
   { name: "frame-team", query: "chrome=1&team=1", ready: RAIL_READY, bar: true },
-  { name: "frame-team-windows", query: "chrome=1&team=1&platform=win32&update=downloaded", ready: `${RAIL_READY} && document.querySelector('${BAR} [data-update-indicator]')`, bar: true },
+  { name: "frame-team-windows", query: "chrome=1&team=1&platform=win32", ready: RAIL_READY, bar: true },
   { name: "frame-computer", query: "chrome=1&place=computer&rail=1", ready: RAIL_READY, bar: true },
   { name: "frame-long-name", query: "chrome=1&team=1&teamname=Northwind%20Analytics%20Research%20and%20Planning%20Group", ready: RAIL_READY, width: 900, bar: true },
   { name: "frame-icons", query: "chrome=1&density=icons", ready: RAIL_READY },

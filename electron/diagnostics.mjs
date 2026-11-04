@@ -75,7 +75,7 @@ const VALUE_PART = String.raw`("[^"]*"|'[^']*'|[^\s"',;)\]}]+)`;
 
 export function redactSecretsInLine(line) {
   let out = String(line ?? "");
-  // Updater errors include signed redirect URLs: keep host and path, never userinfo, query or fragment.
+  // Log lines can include signed URLs: keep host and path, never userinfo, query or fragment.
   out = out.replace(/\bhttps?:\/\/[^\s"'<>]+/gi, (url) => {
     const query = url.search(/[?#]/);
     const address = query < 0 ? url : url.slice(0, query);
@@ -270,7 +270,6 @@ export function buildDiagnosticsReport({
   appInfo = {},
   configSummary = {},
   desktopLogTail,
-  updaterLogTail,
   logTail,
   now = new Date().toISOString(),
 } = {}) {
@@ -307,13 +306,6 @@ export function buildDiagnosticsReport({
     for (const line of redactSecretsInLine(logTail).split(/\r?\n/)) lines.push(line);
   } else {
     lines.push("(server log unavailable)");
-  }
-  lines.push("");
-  lines.push("## Updater log tail — credentials and URL parameters auto-masked");
-  if (updaterLogTail && updaterLogTail.trim()) {
-    for (const line of redactSecretsInLine(updaterLogTail).split(/\r?\n/)) lines.push(line);
-  } else {
-    lines.push("(updater log unavailable)");
   }
   lines.push("");
   return lines.join("\n");

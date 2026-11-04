@@ -17,7 +17,6 @@ vi.mock("@/lib/sidebar-preferences", async (importOriginal) => ({
   useSidebarToolsLayout: () => fixture.toolsLayout,
 }));
 vi.mock("@/lib/web-panel-preferences", () => ({ useWebPanels: () => fixture.panels }));
-vi.mock("./UpdateIndicator", () => ({ UpdateIndicator: () => null }));
 import { SidebarAppsButton, SidebarBottomButtons, SidebarFooterNav } from "./SidebarFooterNav";
 
 type Props = { children?: ReactNode; [key: string]: unknown };

@@ -26,7 +26,7 @@ import "../../src/styles.css";
 // older app's page draws it; ?chrome draws the window's own rail instead, as the desktop window does: this page again
 // in a frame of the rail's width at the left (?railpage, the rail's own page with the list main gives it alone), and
 // the room the app's preload leaves for it. ?platform=win32 is a Windows window, its caption buttons drawn by the app;
-// ?update=downloading|downloaded an update on its way; ?team a team's Cloud its admin is on, ?teamname= the team's name.
+// ?team a team's Cloud its admin is on, ?teamname= the team's name.
 // ?framecolor=today|app paints the frame in another colour to compare: the grey it had, or the app's own. ?frame=off is
 // the window with its frame turned off (macOS's traffic lights back in the sidebar's corner; Windows' own title bar, as
 // after the app started again), and ?framepending a Windows window whose frame was just turned off, until the app
@@ -146,7 +146,6 @@ if (params.has("railpage")) {
     if (chrome && !hidden) { document.head.append(room); document.body.append(railPage); } else { room.remove(); railPage.remove(); }
   };
   besidePage();
-  const update = params.get("update");
   Object.assign(window, { ogb: {
     platform: windows ? "win32" : "darwin",
     app: { version: "0.1.130", ownPage: computer },
@@ -183,10 +182,6 @@ if (params.has("railpage")) {
       onState: (heard: (state: { available: boolean; hidden: boolean }) => void) => { stripHeard.add(heard); return () => { stripHeard.delete(heard); }; },
     },
     ...(windows && !frameOff ? { windowControls: { minimize: async () => true, toggleMaximize: async () => true, close: async () => true, state: async () => ({ maximized: false }), onMaximizedChanged: () => () => {} } } : {}),
-    ...(update ? { updater: { check: ok, install: ok, onState: (heard: (state: object) => void) => {
-      heard(update === "downloaded" ? { status: "downloaded", version: "0.1.136" } : { status: "downloading", percent: 45 });
-      return () => {};
-    } } } : {}),
   } });
 
   // The fixture server takes this browser for its owner: a team's member is signed in without the admin scope, and a

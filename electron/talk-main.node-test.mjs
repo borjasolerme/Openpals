@@ -91,10 +91,9 @@ test("main hands the talk wiring its speech sinks, this computer's own server an
   assert.doesNotMatch(main, /ipcMain\.handle\("(?:speech|talk-shortcut|call):/);
 });
 
-test("main tells the talk wiring when home changes and which skin the app painted, and counts a talk ask as busy for a quiet update", () => {
+test("main tells the talk wiring when home changes and which skin the app painted", () => {
   assert.match(main, /const homeWindow = createHomeWindow\(\{[^]*?rehomed: \(\) => talk\.homeChanged\(\),[^]*?\}\);\ninstallHomeWindowIpc/);
   assert.match(main, /ipcMain\.handle\("desktop:skin", \(event, skin\) => \{\s*if \(!isKnownSkin\(skin\)\) return false;\s*if \(chromeRail\.owns\(event\)\) return true;\s*try \{\s*talk\.skin\(skin\);/);
-  assert.match(main, /busy: \(\) => \(\(oneHome\.oneHome\.busy\(\) \|\| ownHome\?\.busy\(\)\) && "move"\) \|\| \(computerSharing\?\.busy\(\) && "lending"\) \|\| \(talk\.busy\(\) && "talk"\) \|\|/);
 });
 
 test("the talk bridge keys stay off other servers' pages; a call can be reported from My Cloud's page", () => {
@@ -291,18 +290,6 @@ test("the box takes the light or dark of the skin the app painted last, before o
   h.talk.skin(undefined);
   await settle();
   assert.equal((await h.painted()).at(-1).theme, "dark");
-  h.talk.close();
-});
-
-test("busy while a talk ask is under way, never before the shortcut is set up", () => {
-  const h = harness();
-  assert.equal(h.talk.busy(), false);
-  h.start();
-  assert.equal(h.talk.busy(), false);
-  h.press();
-  assert.equal(h.talk.busy(), true);
-  h.click("dismiss");
-  assert.equal(h.talk.busy(), false);
   h.talk.close();
 });
 

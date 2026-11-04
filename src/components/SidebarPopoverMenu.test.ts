@@ -23,17 +23,15 @@ it("draws an item's second line (where it connects) and third line (a note) unde
   expect(html).toContain('<span class="flex-1 truncate">Settings</span>');
 });
 
-it("draws an item's attention dot on the item itself, in its tone", () => {
+it("draws an item's attention dot on the item itself", () => {
   const html = render([
-    { key: "ready", label: "Restart to update", attention: true, attentionTone: "accent", onSelect: () => {} },
-    { key: "failed", label: "Update failed", attention: true, onSelect: () => {} },
+    { key: "automations", label: "Automations", attention: true, onSelect: () => {} },
     { key: "plain", label: "Settings", onSelect: () => {} },
   ]);
   const item = (label: string) => html.split('role="menuitem"').find((chunk) => chunk.includes(`>${label}</span>`)) ?? "";
-  expect(item("Restart to update")).toContain("rounded-full bg-accent");
-  expect(item("Update failed")).toContain("rounded-full bg-danger");
-  expect(item("Settings")).not.toMatch(/rounded-full bg-(accent|danger)/);
-  expect(html.split('role="menu"')[0]).not.toMatch(/rounded-full bg-(accent|danger)/);
+  expect(item("Automations")).toContain("rounded-full bg-danger");
+  expect(item("Settings")).not.toMatch(/rounded-full bg-danger/);
+  expect(html.split('role="menu"')[0]).not.toMatch(/rounded-full bg-danger/);
 });
 
 it("lets a sentence wrap instead of cutting it short, with its icon on the first line", () => {

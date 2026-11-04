@@ -49,7 +49,6 @@ export function installOwnHome(deps: {
   view(): OneHomeView | null;
   seen(): OneHomeView | null;
   retry(): Promise<void>;
-  busy(): boolean;
   away(): boolean;
   active(): boolean;
   origin(): string | null;

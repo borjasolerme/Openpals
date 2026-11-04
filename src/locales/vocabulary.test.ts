@@ -70,7 +70,7 @@ const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = 
   { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },
   { file: "server/decider/relay.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
   { file: "server/extractor/contract.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
-  ...["server/browser-engine-release.ts", "server/update-check.ts", "src/lib/app-links.ts", "src/components/AnalyticsRow.tsx",
+  ...["server/browser-engine-release.ts", "src/lib/app-links.ts", "src/components/AnalyticsRow.tsx",
     "src/components/CustomDomainSettings.tsx", "src/components/LinuxLocalControl.tsx", "src/components/bot-settings/ToolSelectionCard.tsx",
     "src/components/keys/KeyPanels.tsx"].map((file) => ({ file, snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its releases, docs and issues" })),
 ];

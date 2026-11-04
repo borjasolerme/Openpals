@@ -213,7 +213,6 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     view: () => home.view(),
     seen: () => home.seen(),
     retry: () => home.retry(),
-    busy: () => home.busy(),
     /** Home is the chosen server: its switch happened. */
     away: () => home.away(),
     /** A server of the person's own is chosen as home: no move to My Cloud starts. */

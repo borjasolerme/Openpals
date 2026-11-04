@@ -17,7 +17,6 @@ export interface SidebarMenuItem {
   /** one choice of several: announced as chosen or not; the row draws its own mark */
   checked?: boolean;
   attention?: boolean;
-  attentionTone?: "danger" | "accent";
   disabled?: boolean;
   separatorBefore?: boolean;
   heading?: string;
@@ -145,14 +144,7 @@ function MenuRows({
             )}
             {item.value && <span className="shrink-0 text-[13px] font-normal leading-[18px] tabular-nums text-ink-secondary">{item.value}</span>}
             {item.trailing}
-            {item.attention && (
-              <span
-                className={cn(
-                  "size-2 shrink-0 rounded-full",
-                  item.attentionTone === "accent" ? "bg-accent" : "bg-danger",
-                )}
-              />
-            )}
+            {item.attention && <span className="size-2 shrink-0 rounded-full bg-danger" />}
             {(item.submenu || item.chevron) && <ChevronRight size={14} aria-hidden className="-me-0.5 shrink-0 text-ink-secondary rtl:-scale-x-100" />}
           </button>
         </div>

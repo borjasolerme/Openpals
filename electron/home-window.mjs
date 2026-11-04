@@ -619,8 +619,6 @@ export function createHomeWindow(deps) {
     view,
     /** My Cloud's origin while it is home, else null. */
     cloudOrigin,
-    /** Whether the Cloud at `origin` sleeps now (see `asleepAt`): nothing in the background asks it then. */
-    asleepAt,
     /** The origin of the place the window shows (a team's Cloud, or My Cloud), else null. */
     placeOrigin,
     /** Home as last worked out. */

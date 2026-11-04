@@ -22,7 +22,7 @@ pnpm --filter @openmausbot/docs lint
 ```
 
 The changelog reads published releases from `milind-soni/OpenMausBot` plus the
-legacy updater archive, deduplicates them into one complete history, and caches
+legacy releases archive, deduplicates them into one complete history, and caches
 the result for five minutes. If one repository is temporarily unavailable, the
 other still renders; if both fail, the page links directly to GitHub.
 

@@ -1756,8 +1756,8 @@ without them works as before; a malformed one is dropped, never the machine):
   renewsAt, endsAt, keptDays, team?}` without the Cloud's id, which stays in
   main. See [Cancel trial / Cancel plan](#cancel-trial--cancel-plan). And each
   Ready Cloud's `power` (additive, as `cloud.power`, for a plan that sleeps):
-  lending to another Cloud of the person's own, the window's version check
-  and the quiet updater never reach a Cloud the Admin says is asleep, and go on
+  lending to another Cloud of the person's own and the window's version check
+  never reach a Cloud the Admin says is asleep, and go on
   at the next session read that says it is awake (`electron/cloud-account.mjs`
   `powerOf`).
 - `offer` (top level, beside `cloud`): what this account may buy now, only

@@ -221,27 +221,6 @@ test("a server that goes away as the words are sent says Open Openpals to talk",
   mock.timers.tick(TALK_TIMING.noticeHideMs); assert.equal(moved.closed, 1);
 });
 
-test("busy while listening, sending or thinking; not once a reply, a notice or nothing shows", async () => {
-  const { inputs, ask } = holdAsk([]);
-  const h = harness({ ask });
-  assert.equal(h.session.busy(), false);
-  h.session.press();
-  assert.equal(h.session.busy(), true, "listening");
-  say(h, "hello"); release(h); await flush();
-  assert.equal(h.views.at(-1).state, "sending");
-  assert.equal(h.session.busy(), true, "sending");
-  inputs[0].onUpdate({ kind: "thinking" });
-  assert.equal(h.session.busy(), true, "thinking");
-  inputs[0].onUpdate({ kind: "reply", text: "Hi" });
-  assert.equal(h.session.busy(), false, "reply");
-  h.session.dismiss();
-  assert.equal(h.session.busy(), false, "closed");
-
-  const refused = harness({ busy: true });
-  refused.session.press();
-  assert.equal(refused.session.busy(), false, "a notice");
-});
-
 test("a box that fails to close or to say where the pointer is still hides, and the next press works", async () => {
   const h = harness(); h.session.press(); say(h, "hello"); release(h); await flush();
   h.hoverFails = true; h.closeFails = true;

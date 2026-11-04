@@ -5,7 +5,6 @@ import { appVersion } from "@/lib/app-links";
 import type { LocaleKey } from "@/locales";
 import { productName } from "../lib/brand";
 import { AnalyticsRow } from "./AnalyticsRow";
-import { UpdatesConsentRow } from "./UpdatesConsent";
 import { OpenAtLoginRow } from "./OpenAtLoginRow";
 import { DefaultBotSidebarRow } from "./DefaultBotControls";
 import { TalkShortcutRow } from "./TalkShortcutRow";
@@ -30,8 +29,7 @@ import { WindowFrameRow } from "./WindowFrameRow";
 import { ProfileSummaryRow } from "./ProfileSettings";
 import { ImportSettings } from "./ImportSettings";
 import { NotificationRows } from "./NotificationSettingsRows";
-import { useServerUpdateItem } from "./SidebarProfileMenu";
-import { AdvancedModeRow, BrowserProfilesRow, ColorUserBubblesRow, FollowUpRow, LanguageRow, ReplayTourRow, SendKeyRow, UpdatesRow } from "./AppSettingsRows";
+import { AdvancedModeRow, BrowserProfilesRow, ColorUserBubblesRow, FollowUpRow, LanguageRow, ReplayTourRow, SendKeyRow } from "./AppSettingsRows";
 import { ThemeRow } from "./ThemeRow";
 import { AdminOnly } from "./AdminOnly";
 
@@ -182,26 +180,11 @@ export function SimpleBillingPage({ has, disclose, cloudAccount }: { has: Has; d
 
 const versionTitle = () => `${productName()} ${appVersion()}`;
 
-function ServerUpdatesRow() {
-  const entry = useServerUpdateItem(true);
-  if (!entry) return null;
-  const status = entry.phase === "idle" ? undefined : [entry.label, entry.item.subtitle].filter(Boolean).join(" ");
-  const action = entry.phase === "available" ? t("settings.simple.updates.seeRelease")
-    : entry.phase === "reload" ? t("settings.simple.updates.reload")
-      : entry.phase === "checking" ? t("common.checking") : t("settings.updates.check");
+export function SimpleAboutPage({ remoteActive }: { remoteActive: boolean }) {
   return (
-    <SettingRow title={versionTitle()} subtitle={status}>
-      <button type="button" className="ui-button" disabled={entry.item.disabled} onClick={entry.item.onSelect}>{action}</button>
-    </SettingRow>
-  );
-}
-
-export function SimpleUpdatesPage({ remoteActive }: { remoteActive: boolean }) {
-  return (
-    <SettingsGroup block="updates">
+    <SettingsGroup block="about">
       <SettingsRows>
-        {window.ogb?.updater ? <UpdatesRow title={versionTitle()} /> : <ServerUpdatesRow />}
-        <UpdatesConsentRow />
+        <SettingRow title={versionTitle()}>{null}</SettingRow>
         {!remoteActive && <ReplayTourRow />}
         <DiagnosticsRow simple />
       </SettingsRows>

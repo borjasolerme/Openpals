@@ -106,8 +106,8 @@ Use only mapped, tested commands:
 `control-omb ui` ([Chat UI, driven headlessly](chat-ui.md)) drives the real
 renderer in a headless Chrome by accessible name, so composer sends, transcript
 rows, tool chips and server feature flags are provable from the command line.
-Other renderer-only behavior—Settings, sidebar drag-and-drop, the VM modal, the
-built-in browser panel, and updater UI—is still not proven by the harness. Use
+Other renderer-only behavior—Settings, sidebar drag-and-drop, the VM modal, and the
+built-in browser panel—is still not proven by the harness. Use
 the relevant Electron/package smoke test and state that limitation. Add a map
 entry only after the shared control surface can really drive it.
 

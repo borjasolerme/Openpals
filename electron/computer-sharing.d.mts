@@ -147,8 +147,6 @@ export function createComputerSharing(options: {
   /** Lending's last requests have been answered or have timed out; a Cloud's answer can re-issue its session cookie. */
   goodbyesDone(): Promise<unknown>;
   lendingToCloud(): boolean;
-  /** A server is using this computer now: a job running on it, or its browsing going through this computer. */
-  busy(): boolean;
   saveCloud(env: Workspace, input: { folders: unknown; screen?: boolean; internet?: boolean; chrome?: boolean; terminal?: boolean }, version?: number): Promise<CloudLendingState>;
   /** The move's project folders, lent to My Cloud with editing; rejects while that can't happen yet. */
   lendProjects(paths: string[], place?: { id: string; origin: string; name: string } | null): Promise<void>;

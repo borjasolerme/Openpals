@@ -1,11 +1,9 @@
 // What this desktop keeps whatever page its window shows, whichever port its own page is served on: the notices someone
-// closed, its usage-analytics switch, the app's language, its answer to the product-updates email question, whether
-// the person hid the window's rail of places and whether they turned the window's frame off.
-import { randomBytes } from "node:crypto";
+// closed, its usage-analytics switch, the app's language, whether the person hid the window's rail of places and whether
+// they turned the window's frame off.
 import fs from "node:fs";
 import { onboardingHints } from "./onboarding-record.mjs";
 import { DEFAULT_TALK_KEY, isTalkKey } from "./talk-keys.mjs";
-import { createUpdatesConsent, parseUpdatesConsent, registerUpdatesConsent } from "./updates-consent.mjs";
 import { accountFullName } from "./system-name.mjs";
 
 export { DESKTOP_PORTS } from "./desktop-ports.mjs";
@@ -16,7 +14,6 @@ const WHATS_NEW = DESKTOP_NOTICES[0];
 const LANGUAGE = /^(?:[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2})?$/i;
 const isLanguage = value => typeof value === "string" && value.length <= 24 && LANGUAGE.test(value);
 const CHAT_ID = /^[\w-]{1,128}$/;
-const INSTALL_ID = /^[A-Za-z0-9_-]{22,64}$/;
 
 /** Security: a write that fails (a full disk, a kill mid-write) leaves the last whole record, analytics opt-out included.
  * A file another tool saved with a byte-order mark (Notepad on Windows) still reads. */
@@ -42,14 +39,11 @@ const parseChat = value => value && typeof value === "object" && typeof value.bo
 function parse(raw) {
   const record = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
   const seen = Array.isArray(record.seen) ? DESKTOP_NOTICES.filter(id => record.seen.includes(id)) : [];
-  const updatesConsent = parseUpdatesConsent(record.updatesConsent);
   const quickAsks = record.quickAsks && typeof record.quickAsks === "object" && !Array.isArray(record.quickAsks)
     ? Object.fromEntries(Object.entries(record.quickAsks).flatMap(([server, chat]) => { const parsed = parseChat(chat); return parsed ? [[server, parsed]] : []; }))
     : {};
   return { seen, ...(typeof record.analytics === "boolean" ? { analytics: record.analytics } : {}),
     ...(isLanguage(record.language) ? { language: record.language } : {}),
-    ...(typeof record.installId === "string" && INSTALL_ID.test(record.installId) ? { installId: record.installId } : {}),
-    ...(updatesConsent ? { updatesConsent } : {}),
     ...(typeof record.talkShortcut === "boolean" ? { talkShortcut: record.talkShortcut } : {}),
     ...(isTalkKey(record.talkKey) ? { talkKey: record.talkKey } : {}),
     ...(typeof record.railHidden === "boolean" ? { railHidden: record.railHidden } : {}),
@@ -81,21 +75,6 @@ export function createDesktopPrefs({ read, write }) {
     setLanguage(language) {
       if (!isLanguage(language)) return false;
       if (current().language !== language) save({ ...current(), language });
-      return true;
-    },
-    /** Random, made on first use: the only name the Admin's no-account consent endpoint counts this computer by. */
-    installId() {
-      const saved = current();
-      if (saved.installId) return saved.installId;
-      const installId = randomBytes(24).toString("base64url");
-      save({ ...saved, installId });
-      return installId;
-    },
-    updatesConsent: () => current().updatesConsent ?? null,
-    setUpdatesConsent(value) {
-      const updatesConsent = parseUpdatesConsent(value);
-      if (!updatesConsent) return false;
-      save({ ...current(), updatesConsent });
       return true;
     },
     talkShortcut: () => current().talkShortcut ?? true,
@@ -130,14 +109,12 @@ export function createDesktopPrefs({ read, write }) {
 }
 
 /**
- * `cloudAccount()`: the MausBot Cloud sign-in client, for the product-updates question (updates-consent.mjs), which is
- * asked where Cloud offers are (`cloudOffered`); without it nothing is asked and null is returned.
  * `page(event)`: "local" for this computer's page, "cloud" for My Cloud's own page as main verifies it, "server" for
  * another saved server open in this desktop's window, null for anything else. `cloudOffered()`: this desktop sells
  * MausBot Cloud, asked once its Cloud sign-in is restored. `localConfig()`: This computer's own workspace's config.json.
  * `languageChanged(language, sender)`: tells this desktop's other pages the language picked on one of them.
  */
-export function registerDesktopPrefs({ prefs: given, ipcMain, read, write, page, cloudOffered, cloudAccount, localConfig = () => null, languageChanged = () => {}, frame = null, now = Date.now, systemName = accountFullName }) {
+export function registerDesktopPrefs({ prefs: given, ipcMain, read, write, page, cloudOffered, localConfig = () => null, languageChanged = () => {}, frame = null, systemName = accountFullName }) {
   let prefs = given ?? null;
   const store = () => prefs ??= createDesktopPrefs({ read, write });
   const from = (channel, pages, handler) => (event, ...args) => {
@@ -188,10 +165,4 @@ export function registerDesktopPrefs({ prefs: given, ipcMain, read, write, page,
     try { frame?.changed(); } catch {}
     return frameState();
   }));
-  if (!cloudAccount) return null;
-  const consent = createUpdatesConsent({ prefs: { installId: () => store().installId(), updatesConsent: () => store().updatesConsent(), setUpdatesConsent: value => store().setUpdatesConsent(value) },
-    account: cloudAccount, available: cloudOffered, now });
-  registerUpdatesConsent({ ipcMain, page, consent });
-  void cloudOffered().then(offered => offered && consent.sync()).catch(() => {});
-  return consent;
 }

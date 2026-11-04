@@ -11,19 +11,14 @@ import {
   profileMenuItems,
   resetsIn,
   simplePhoneItems,
-  simpleUpdateTop,
   accountDot,
   accountLabel,
   toolMenuItems,
   type PlanUsageWindows,
   selectPhoneDestination,
   profileLabel,
-  updateBusy,
-  updateNoteworthy,
-  updateLabel,
-  updatePhase,
 } from "./SidebarProfileMenu";
-import { ANDROID_APK_URL, DOCS_URL, FEEDBACK_URL, HELP_CENTER_URL, IOS_APP_STORE_URL, platformLabel } from "@/lib/app-links";
+import { ANDROID_APK_URL, DOCS_URL, FEEDBACK_URL, HELP_CENTER_URL, IOS_APP_STORE_URL } from "@/lib/app-links";
 import { profileForSession } from "@/lib/session";
 import {
   cloudPhoneDestination,
@@ -36,13 +31,10 @@ import {
 import type { CloudAccountState } from "../../electron/cloud-account.mjs";
 import type { CloudMachine } from "../../electron/cloud-home.mjs";
 import { PHONE_APPS, PhoneAppDialog, type PhoneAppConnect } from "./PhoneAppDialog";
-import type { UpdaterState } from "@/lib/updater";
 import type { SidebarMenuItem } from "./SidebarPopoverMenu";
 import { moveMenuItems } from "./AccountMove";
 import { moveLine } from "@/lib/cloud-send";
 import { InitialsAvatar } from "./Avatar";
-
-const state = (patch: Partial<UpdaterState>): UpdaterState => ({ status: "idle", ...patch }) as UpdaterState;
 
 describe("profileInitials", () => {
   it("takes the first letter of the first two words", () => {
@@ -88,112 +80,6 @@ describe("the sidebar profile for a signed-in visitor", () => {
     expect(profileLabel(visible)).toBe("ada@example.test");
     expect(profileInitials(visible)).toBe("A");
     expect(visible?.avatarUrl).toBeUndefined();
-  });
-});
-
-describe("updatePhase", () => {
-  it("reports the bridge's own in-flight states", () => {
-    expect(updatePhase(state({ status: "checking" }), false)).toBe("checking");
-    expect(updatePhase(state({ status: "downloading" }), false)).toBe("downloading");
-    expect(updatePhase(state({ status: "preparing" }), false)).toBe("preparing");
-    expect(updatePhase(state({ status: "installing" }), false)).toBe("installing");
-  });
-
-  it("acknowledges a check that found nothing", () => {
-    expect(updatePhase(null, true)).toBe("up-to-date");
-    expect(updatePhase(null, false)).toBe("idle");
-  });
-
-  it("lets a real status outrank the acknowledgement", () => {
-    expect(updatePhase(state({ status: "downloading" }), true)).toBe("downloading");
-  });
-});
-
-describe("updateLabel", () => {
-  it("names the version it is ready to install", () => {
-    expect(updateLabel("downloaded", state({ status: "downloaded", version: "0.2.0" }))).toBe(
-      "Restart to update to Openpals 0.2.0",
-    );
-  });
-
-  it("shows progress only once there is a percentage", () => {
-    expect(updateLabel("downloading", state({ status: "downloading" }))).toBe("Starting download…");
-    expect(updateLabel("downloading", state({ status: "downloading", percent: 41.6 }))).toBe("Downloading… 42%");
-  });
-
-  it("distinguishes native preparation from restart readiness", () => {
-    expect(updateLabel("preparing", state({ status: "preparing", percent: 100 }))).toBe("Preparing update…");
-    expect(updateLabel("installing", state({ status: "installing", message: "Restart is taking longer than expected." })))
-      .toBe("Restart is taking longer than expected.");
-    expect(updateLabel("downloaded", state({ status: "downloaded", version: "0.2.0", installMode: "handoff" })))
-      .toBe("Install Openpals 0.2.0");
-    expect(updateLabel("installing", state({ status: "installing", installMode: "handoff" })))
-      .toBe("Opening a terminal…");
-  });
-
-  it("carries the updater's own message when something failed", () => {
-    expect(updateLabel("error", state({ status: "error", message: "Network unreachable" }))).toBe(
-      "Network unreachable",
-    );
-    expect(updateLabel("error", state({ status: "error" }))).toBe("The update didn't finish. Try again.");
-  });
-
-  it("points a hand-off at the terminal that finishes it", () => {
-    expect(updateLabel("handed-off", state({ status: "handed-off" }))).toBe(
-      "Finish the update in your terminal",
-    );
-  });
-
-  it("defaults to the invitation to check", () => {
-    expect(updateLabel("idle", null)).toBe("Check for updates");
-    expect(updateLabel("up-to-date", null)).toBe("You're up to date");
-  });
-});
-
-describe("updateBusy", () => {
-  it("blocks clicks while something is in flight", () => {
-    expect(updateBusy("checking")).toBe(true);
-    expect(updateBusy("downloading")).toBe(true);
-    expect(updateBusy("preparing")).toBe(true);
-    expect(updateBusy("installing")).toBe(true);
-    expect(updateBusy("downloaded")).toBe(false);
-    expect(updateBusy("idle")).toBe(false);
-  });
-
-  it("blocks the gap between the click and the bridge catching up", () => {
-    expect(updateBusy("downloaded", true)).toBe(true);
-    expect(updateBusy("error", true)).toBe(true);
-  });
-});
-
-describe("platformLabel", () => {
-  it("names the platforms we ship, and stays quiet otherwise", () => {
-    expect(platformLabel("darwin")).toBe("macOS");
-    expect(platformLabel("win32")).toBe("Windows");
-    expect(platformLabel("linux")).toBe("Linux");
-    expect(platformLabel("freebsd")).toBeNull();
-    expect(platformLabel(undefined)).toBeNull();
-  });
-});
-
-describe("updateNoteworthy", () => {
-  it("puts a real update on the profile row", () => {
-    expect(updateNoteworthy("downloading")).toBe(true);
-    expect(updateNoteworthy("preparing")).toBe(true);
-    expect(updateNoteworthy("downloaded")).toBe(true);
-    expect(updateNoteworthy("installing")).toBe(true);
-    expect(updateNoteworthy("error")).toBe(true);
-    expect(updateNoteworthy("handed-off")).toBe(true);
-  });
-
-  it("leaves a quiet updater quiet", () => {
-    expect(updateNoteworthy("idle")).toBe(false);
-    expect(updateNoteworthy("checking")).toBe(false);
-    expect(updateNoteworthy("up-to-date")).toBe(false);
-  });
-
-  it("shows the click that has not landed yet", () => {
-    expect(updateNoteworthy("idle", true)).toBe(true);
   });
 });
 
@@ -373,7 +259,6 @@ describe("profileMenuItems", () => {
   const build = (patch: Partial<Parameters<typeof profileMenuItems>[0]> = {}) => profileMenuItems({
     phone: [{ key: "phone-app", label: "Get the phone app", onSelect: noop }],
     usage: true,
-    update: null,
     account: "OpenMausBot Cloud",
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop, onAccount: noop,
     ...patch,
@@ -391,11 +276,6 @@ describe("profileMenuItems", () => {
     const items = build({ usage: false, account: null });
     expect(items.map((item) => item.key)).toEqual(["phone-app", "support", "settings"]);
     expect(items.some((item) => item.separatorBefore)).toBe(false);
-  });
-
-  it("keeps the update entry beside settings", () => {
-    const update = { key: "update", label: "Check for updates", onSelect: noop };
-    expect(build({ update }).map((item) => item.key)).toEqual(["usage", "phone-app", "support", "settings", "update", "account"]);
   });
 
   it("opens the Usage and account pages of Settings", () => {
@@ -423,7 +303,6 @@ describe("Simple mode's account menu", () => {
   const build = (patch: Partial<Parameters<typeof profileMenuItems>[0]> = {}) => profileMenuItems({
     phone: simplePhoneItems({ connected: false, onGetApp: noop }),
     usage: true,
-    update: { key: "update", label: "Check for updates", onSelect: noop },
     account: "MausBot Cloud",
     simple: { tools, places: placeMenuItems(place(), { owner: null, onCloudSettings: noop }) },
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop, onAccount: noop,
@@ -442,28 +321,7 @@ describe("Simple mode's account menu", () => {
       ["automations", "team-map"],
       ["place", "switch-place", "account"],
     ]);
-    expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).toEqual(["help", "feedback", "shortcuts", "about", "update"]);
-  });
-
-  it("raises an update that is ready or failed to its own top row with a pill, and keeps it out of support", () => {
-    const update = { key: "update", label: "Restart to update to Openpals 0.2.0", subtitle: "notes", attention: true, onSelect: noop };
-    const items = build({ update, updateTop: { label: "Update ready", action: "Restart" } });
-    expect(groups(items)[0]).toEqual(["update"]);
-    expect(items[0]).toMatchObject({ label: "Update ready", subtitle: undefined, attention: false });
-    expect(renderToStaticMarkup(createElement("div", null, items[0]!.trailing))).toContain(">Restart</span>");
-    expect(items[1]!.separatorBefore).toBe(true);
-    expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).not.toContain("update");
-  });
-
-  it("raises a downloaded or failed app update and a newer server, and nothing else", () => {
-    expect(simpleUpdateTop({ source: "desktop", phase: "downloaded" })).toEqual({ label: "Update ready", action: "Restart" });
-    expect(simpleUpdateTop({ source: "desktop", phase: "downloaded", installMode: "handoff" })).toEqual({ label: "Update ready", action: "Install" });
-    expect(simpleUpdateTop({ source: "desktop", phase: "error" })).toEqual({ label: "Update failed", action: "Retry" });
-    expect(simpleUpdateTop({ source: "server", phase: "available" })).toEqual({ label: "Update ready", action: "Install" });
-    expect(simpleUpdateTop({ source: "server", phase: "reload" })).toEqual({ label: "Update ready", action: "Restart" });
-    for (const phase of ["idle", "checking", "downloading", "up-to-date"] as const) expect(simpleUpdateTop({ source: "desktop", phase })).toBeNull();
-    expect(simpleUpdateTop({ source: "server", phase: "error" })).toBeNull();
-    expect(simpleUpdateTop(null)).toBeNull();
+    expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).toEqual(["help", "feedback", "shortcuts", "about"]);
   });
 
   it("gives the usage row a trailing meta and a chevron, with the reset as its second line", () => {
@@ -475,7 +333,7 @@ describe("Simple mode's account menu", () => {
 
   it("keeps Advanced's account menu as it was", () => {
     const items = build({ simple: undefined, usageSummary: { value: "12% used" } });
-    expect(items.map((item) => item.key)).toEqual(["usage", "phone-app", "support", "settings", "update", "account"]);
+    expect(items.map((item) => item.key)).toEqual(["usage", "phone-app", "support", "settings", "account"]);
     expect(items[0]!.chevron).toBeUndefined();
   });
 
@@ -489,44 +347,37 @@ describe("Simple mode's account menu", () => {
   });
 
   it("names the account button after the person and whatever its dot is raised for", () => {
-    expect(accountLabel("You", { automationsNeedYou: false, update: null })).toBe("You");
-    expect(accountLabel("Ada", { automationsNeedYou: true, update: "Update failed. Try again." })).toBe("Ada · Automations need you · Update failed. Try again.");
+    expect(accountLabel("You", { automationsNeedYou: false })).toBe("You");
+    expect(accountLabel("Ada", { automationsNeedYou: true })).toBe("Ada · Automations need you");
   });
 
   it("adds the move to My Cloud: a short warning once failing, shared with automations, and a quiet segment on its way", () => {
-    expect(accountLabel("Omkar", { automationsNeedYou: false, update: null, move: "failed" })).toBe("Omkar · My Cloud move needs you");
-    expect(accountLabel("Omkar", { automationsNeedYou: true, update: null, move: "failed" })).toBe("Omkar · My Cloud move and automations need you");
-    expect(accountLabel("Omkar", { automationsNeedYou: true, update: "Update ready", move: "failed" })).toBe("Omkar · My Cloud move and automations need you · Update ready");
-    expect(accountLabel("Omkar", { automationsNeedYou: false, update: null, move: "sending" })).toBe("Omkar · Moving to My Cloud…");
-    expect(accountLabel("Omkar", { automationsNeedYou: true, update: null, move: "sending" })).toBe("Omkar · Automations need you · Moving to My Cloud…");
-    expect(accountLabel("Omkar", { automationsNeedYou: false, update: null, move: "done" })).toBe("Omkar");
-    expect(accountLabel("Omkar", { automationsNeedYou: true, update: null, move: "done" })).toBe("Omkar · Automations need you");
-    expect(accountLabel("Omkar", { automationsNeedYou: false, update: null, move: null })).toBe("Omkar");
+    expect(accountLabel("Omkar", { automationsNeedYou: false, move: "failed" })).toBe("Omkar · My Cloud move needs you");
+    expect(accountLabel("Omkar", { automationsNeedYou: true, move: "failed" })).toBe("Omkar · My Cloud move and automations need you");
+    expect(accountLabel("Omkar", { automationsNeedYou: false, move: "sending" })).toBe("Omkar · Moving to My Cloud…");
+    expect(accountLabel("Omkar", { automationsNeedYou: true, move: "sending" })).toBe("Omkar · Automations need you · Moving to My Cloud…");
+    expect(accountLabel("Omkar", { automationsNeedYou: false, move: "done" })).toBe("Omkar");
+    expect(accountLabel("Omkar", { automationsNeedYou: true, move: "done" })).toBe("Omkar · Automations need you");
+    expect(accountLabel("Omkar", { automationsNeedYou: false, move: null })).toBe("Omkar");
   });
 
   it("raises the avatar's dot red for a failing move like automations, and none on its way or once done", () => {
-    expect(accountDot({ automationsNeedYou: false, update: null, move: "failed" })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: true, update: null, move: "failed" })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: false, update: "news", move: "failed" })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: false, update: null, move: "sending" })).toBeNull();
-    expect(accountDot({ automationsNeedYou: false, update: null, move: "done" })).toBeNull();
-    expect(accountDot({ automationsNeedYou: false, update: "news", move: "done" })).toBe("accent");
-    expect(accountDot({ automationsNeedYou: false, update: null, move: null })).toBeNull();
-    expect(accountDot({ automationsNeedYou: true, update: null, move: null })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: false, update: "failed", move: null })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: false, update: "news", move: "sending" })).toBe("accent");
+    expect(accountDot({ automationsNeedYou: false, move: "failed" })).toBe("danger");
+    expect(accountDot({ automationsNeedYou: true, move: "failed" })).toBe("danger");
+    expect(accountDot({ automationsNeedYou: false, move: "sending" })).toBeNull();
+    expect(accountDot({ automationsNeedYou: false, move: "done" })).toBeNull();
+    expect(accountDot({ automationsNeedYou: false, move: null })).toBeNull();
+    expect(accountDot({ automationsNeedYou: true, move: null })).toBe("danger");
   });
 
-  it("puts the move's row first, in its own group, above a raised update", () => {
+  it("puts the move's row first, in its own group", () => {
     const move = [{ key: "cloud-move", label: "Try My Cloud move again", title: "My Cloud did not answer.", onSelect: noop }];
-    const update = { key: "update", label: "Openpals 0.2.0 ready, restart", onSelect: noop };
     expect(groups(build({ move }))).toEqual([
       ["cloud-move"],
       ["usage", "phone-app", "support", "settings"],
       ["automations", "team-map"],
       ["place", "switch-place", "account"],
     ]);
-    expect(groups(build({ move, update, updateTop: { label: "Update ready", action: "Restart" } })).slice(0, 2)).toEqual([["cloud-move"], ["update"]]);
     expect(groups(build({ move: [] }))[0]).toEqual(["usage", "phone-app", "support", "settings"]);
   });
 
@@ -544,8 +395,8 @@ describe("Simple mode's account menu", () => {
 
   it("puts the move's row first in Advanced's account menu too, under its own divider", () => {
     const move = [{ key: "cloud-move", label: "Moving to My Cloud…", title: "Moving your bots to My Cloud… 34 of 120 chats", onSelect: noop }];
-    expect(groups(build({ simple: undefined, move }))).toEqual([["cloud-move"], ["usage", "phone-app", "support", "settings", "update"], ["account"]]);
-    expect(groups(build({ simple: undefined }))).toEqual([["usage", "phone-app", "support", "settings", "update"], ["account"]]);
+    expect(groups(build({ simple: undefined, move }))).toEqual([["cloud-move"], ["usage", "phone-app", "support", "settings"], ["account"]]);
+    expect(groups(build({ simple: undefined }))).toEqual([["usage", "phone-app", "support", "settings"], ["account"]]);
   });
 
   it("draws a person instead of a question mark for someone with no name, at the trigger's own size", () => {
