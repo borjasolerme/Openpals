@@ -1434,6 +1434,7 @@
   "model.searchLocal": "Cerca modelli locali",
   "model.busy": "Ferma il turno di questo bot prima di cambiarne il modello",
   "model.threadBusy": "Ferma il turno di questa conversazione prima di cambiarne il modello",
+  "model.reasoningNextTurn": "Il livello di ragionamento si applica dal prossimo messaggio",
   "model.choose": "Scegli modello",
   "model.providerSwitch.title": "Cambiare modello con i permessi Chiedi?",
   "model.providerSwitch.threadBody": "Passa questa conversazione a {model} e reimposta i permessi su Chiedi. Le approvazioni degli strumenti già date vengono cancellate. Il predefinito del bot e le altre conversazioni restano invariati. Poi puoi rivedere l'accesso per il nuovo fornitore.",

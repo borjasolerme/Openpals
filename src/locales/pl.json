@@ -1465,6 +1465,7 @@
   "model.searchLocal": "Szukaj modeli lokalnych",
   "model.busy": "Zatrzymaj turę tego bota przed zmianą jego modelu",
   "model.threadBusy": "Zatrzymaj turę tego wątku przed zmianą jego modelu",
+  "model.reasoningNextTurn": "Poziom rozumowania obowiązuje od następnej wiadomości",
   "model.choose": "Wybierz model",
   "model.providerSwitch.title": "Przełączyć model z uprawnieniami Pytaj?",
   "model.providerSwitch.threadBody": "Przełącz ten wątek na model {model} i zresetuj jego uprawnienia do Pytaj. Istniejące zatwierdzenia narzędzi zostaną wyczyszczone. Domyślne ustawienie bota i inne wątki pozostaną bez zmian. Później możesz przejrzeć dostęp dla nowego dostawcy.",

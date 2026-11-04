@@ -1182,6 +1182,7 @@
   "model.searchLocal": "搜尋本機模型",
   "model.busy": "變更模型前，請先停止這個機器人的回合",
   "model.threadBusy": "變更模型前，請先停止這個對話的回合",
+  "model.reasoningNextTurn": "推理等級從下一則訊息起生效",
   "model.choose": "選擇模型",
   "model.providerSwitch.title": "要使用「詢問」權限切換模型嗎？",
   "model.providerSwitch.threadBody": "將此對話切換為 {model}，並將其權限重設為「詢問」。現有的工具核准會清除。機器人的預設值與其他對話不會變更。之後你可以檢查新供應商的存取權。",

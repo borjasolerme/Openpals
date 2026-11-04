@@ -1366,6 +1366,7 @@
   "model.searchLocal": "Yerel modelleri ara",
   "model.busy": "Modelini değiştirmeden önce bu botun turunu durdurun",
   "model.threadBusy": "Modelini değiştirmeden önce bu konunun turunu durdurun",
+  "model.reasoningNextTurn": "Akıl yürütme düzeyi bir sonraki mesajdan itibaren geçerli olur",
   "model.choose": "Model seç",
   "model.providerSwitch.title": "Onay iste izinleriyle model değiştirilsin mi?",
   "model.providerSwitch.threadBody": "Bu konuyu {model} modeline geçirin ve izinlerini Onay iste olarak sıfırlayın. Mevcut araç onayları temizlenir. Bot varsayılanınız ve diğer konular değişmeden kalır. Daha sonra yeni sağlayıcı için erişimi inceleyebilirsiniz.",

@@ -2147,7 +2147,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6441,7 +6442,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8537,7 +8539,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10633,7 +10636,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15641,7 +15645,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20524,7 +20529,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -26056,7 +26062,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29596,7 +29603,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -32063,7 +32071,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -36089,7 +36098,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -40115,7 +40125,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -45061,7 +45072,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50048,7 +50060,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54882,7 +54895,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -60324,7 +60338,8 @@
       "skills.import.reason.lfs": "6b95b062dfef6dc357bd8186d099b4ab240cadd214216fa525b00fa629ed9d2c",
       "skills.import.reason.unlisted": "e48983d49bdf5816e7ae0961daea0498df2f4c2d8966a00143f4ac84123633d0",
       "app.done": "2d28d566242c507d1bef71f06e11db9a5ffbb107b3ee17719f756c24af4207dd",
-      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942"
+      "app.doneOpen": "ed077f3d8125d60dca1979c7133601bd187d47c73ed9975028f677e49e709942",
+      "model.reasoningNextTurn": "78495d79d41eb7bb923912041a65eddd8262014dd9b1441d11c50982f2af7d52"
     }
   }
 }

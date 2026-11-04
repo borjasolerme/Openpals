@@ -1395,6 +1395,7 @@
   "model.searchLocal": "Buscar modelos locales",
   "model.busy": "Detén el turno de este bot antes de cambiar su modelo",
   "model.threadBusy": "Detén el turno de este hilo antes de cambiar su modelo",
+  "model.reasoningNextTurn": "El nivel de razonamiento se aplica desde el próximo mensaje",
   "model.choose": "Elegir el modelo",
   "model.providerSwitch.title": "¿Cambiar de modelo con permisos «Preguntar»?",
   "model.providerSwitch.threadBody": "Este hilo pasará a {model} y sus permisos volverán a «Preguntar». Se borrarán las aprobaciones de herramientas existentes. El modelo predeterminado del bot y los demás hilos no cambian. Después podrás revisar el acceso del nuevo proveedor.",

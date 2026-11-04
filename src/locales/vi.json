@@ -1366,6 +1366,7 @@
   "model.searchLocal": "Tìm kiếm mô hình cục bộ",
   "model.busy": "Dừng lượt phản hồi của bot trước khi đổi mô hình",
   "model.threadBusy": "Dừng lượt phản hồi trong luồng này trước khi đổi mô hình",
+  "model.reasoningNextTurn": "Mức suy luận áp dụng từ tin nhắn tiếp theo",
   "model.choose": "Chọn mô hình",
   "model.providerSwitch.title": "Chuyển đổi mô hình với quyền Hỏi?",
   "model.providerSwitch.threadBody": "Chuyển luồng này sang {model} và đặt lại quyền thành 'Hỏi'. Các phê duyệt công cụ trước đó sẽ bị xóa. Cấu hình mặc định của bot và các luồng khác vẫn giữ nguyên. Bạn có thể xem lại quyền truy cập của nhà cung cấp mới sau đó.",

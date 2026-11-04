@@ -1587,6 +1587,7 @@
   "model.searchLocal": "로컬 모델 검색",
   "model.busy": "모델을 바꾸기 전에 이 봇의 턴을 멈추세요",
   "model.threadBusy": "모델을 바꾸기 전에 이 스레드의 턴을 멈추세요",
+  "model.reasoningNextTurn": "추론 수준은 다음 메시지부터 적용됩니다",
   "model.choose": "모델 선택",
   "model.providerSwitch.title": "확인 요청 권한으로 모델을 바꿀까요?",
   "model.providerSwitch.threadBody": "이 스레드를 {model}(으)로 바꾸고 권한을 확인 요청으로 초기화해요. 기존 도구 승인은 지워져요. 봇 기본값과 다른 스레드는 그대로예요. 나중에 새 제공자의 접근 권한을 검토할 수 있어요.",

@@ -1447,6 +1447,7 @@
   "model.searchLocal": "Buscar modelos locais",
   "model.busy": "Pare o turno deste bot antes de trocar o modelo",
   "model.threadBusy": "Pare o turno desta conversa antes de trocar o modelo",
+  "model.reasoningNextTurn": "O nível de raciocínio vale a partir da próxima mensagem",
   "model.choose": "Escolher o modelo",
   "model.providerSwitch.title": "Trocar de modelo com permissões “Pedir”?",
   "model.providerSwitch.threadBody": "Esta conversa passa para {model} e as permissões dela voltam para “Pedir”. As aprovações de ferramentas existentes são apagadas. O padrão do bot e as outras conversas não mudam. Você pode revisar o acesso do novo provedor depois.",

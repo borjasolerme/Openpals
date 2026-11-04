@@ -1475,6 +1475,7 @@
   "model.searchLocal": "ローカルモデルを検索",
   "model.busy": "モデルを変える前に、このボットのターンを止めてください",
   "model.threadBusy": "モデルを変える前に、このスレッドのターンを止めてください",
+  "model.reasoningNextTurn": "推論レベルは次のメッセージから適用されます",
   "model.choose": "モデルを選ぶ",
   "model.providerSwitch.title": "権限を「承認を求める」にしてモデルを切り替えますか？",
   "model.providerSwitch.threadBody": "このスレッドを {model} に切り替え、権限を「承認を求める」に戻します。既存のツール承認は消去されます。ボットの既定設定と他のスレッドは変わりません。切り替え後に、新しいプロバイダーのアクセス権を確認できます。",
