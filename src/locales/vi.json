@@ -3818,6 +3818,8 @@
   "mcp.apps.toggleAria": "Hiện ứng dụng từ {name} trong đoạn chat",
   "team.privateChats": "Các cuộc trò chuyện của bạn trong {team} là riêng tư. Chỉ bạn xem được: các thành viên khác và quản trị viên của {team} đều không xem được.",
   "team.privateHeader": "Riêng tư · chỉ bạn",
+  "liveConnection.help": "Vẫn chưa kết nối được. Hãy kiểm tra kết nối, đăng nhập và mọi trình chặn quảng cáo hoặc trình theo dõi cho trang này, rồi thử lại.",
+  "liveConnection.retry": "Thử lại",
   "chat.preview.older": "Phiên bản trước",
   "chat.preview.newer": "Phiên bản sau",
   "chat.preview.version": "v{n}",

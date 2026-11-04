@@ -1841,6 +1841,8 @@
   "mcp.apps.toggleAria": "Apps von {name} im Chat zeigen",
   "team.privateChats": "Deine Chats in {team} sind privat. Nur du kannst sie sehen: keine anderen Mitglieder, keine Admins von {team}.",
   "team.privateHeader": "Privat · nur du",
+  "liveConnection.help": "Immer noch keine Verbindung. Prüfe deine Verbindung, deine Anmeldung und einen Werbe- oder Tracker-Blocker für diese Seite und versuche es dann erneut.",
+  "liveConnection.retry": "Erneut versuchen",
   "chat.preview.older": "Frühere Version",
   "chat.preview.newer": "Spätere Version",
   "chat.preview.version": "v{n}",

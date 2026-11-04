@@ -4872,6 +4872,8 @@
   "team.privateChats": "{team} でのあなたのチャットは非公開です。見られるのはあなただけで、他のメンバーも {team} の管理者も見られません。",
   "team.privateHeader": "非公開 · あなただけ",
   "team.sharedHeader": "共有 · {team} の全員が閲覧できます",
+  "liveConnection.help": "まだ接続できません。接続、サインイン、このサイトの広告ブロッカーやトラッカーブロッカーを確認してから、もう一度お試しください。",
+  "liveConnection.retry": "再試行",
   "chat.preview.older": "前のバージョン",
   "chat.preview.newer": "次のバージョン",
   "chat.preview.version": "v{n}",

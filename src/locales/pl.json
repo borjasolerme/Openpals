@@ -4806,6 +4806,8 @@
   "team.privateChats": "Twoje czaty w {team} są prywatne. Tylko ty możesz je widzieć. Inni członkowie ani administratorzy {team} nie mają do nich dostępu.",
   "team.privateHeader": "Prywatne · tylko ty",
   "team.sharedHeader": "Udostępnione · widzą wszyscy w {team}",
+  "liveConnection.help": "Nadal nie można się połączyć. Sprawdź połączenie, logowanie i blokery reklam lub trackerów dla tej strony, a potem spróbuj ponownie.",
+  "liveConnection.retry": "Spróbuj ponownie",
   "chat.preview.older": "Wcześniejsza wersja",
   "chat.preview.newer": "Późniejsza wersja",
   "chat.preview.version": "v{n}",

@@ -3319,6 +3319,8 @@
   "mcp.apps.toggleAria": "在聊天中顯示 {name} 的應用程式",
   "team.privateChats": "你在 {team} 中的聊天是私密的。只有你看得到：其他成員和 {team} 的管理員都看不到。",
   "team.privateHeader": "私密 · 僅你可見",
+  "liveConnection.help": "仍然無法連線。請檢查網路連線、登入狀態以及此網站的廣告或追蹤封鎖工具，然後再試一次。",
+  "liveConnection.retry": "重試",
   "chat.preview.older": "上一個版本",
   "chat.preview.newer": "下一個版本",
   "chat.preview.version": "v{n}",

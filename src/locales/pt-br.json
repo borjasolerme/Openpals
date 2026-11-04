@@ -4728,6 +4728,8 @@
   "mcp.apps.toggleAria": "Mostrar apps de {name} no chat",
   "team.privateChats": "Suas conversas em {team} são privadas. Só você pode vê-las: nem outros membros, nem os administradores de {team}.",
   "team.privateHeader": "Privado · só você",
+  "liveConnection.help": "Ainda não foi possível conectar. Verifique sua conexão, seu login e qualquer bloqueador de anúncios ou rastreadores neste site, depois tente de novo.",
+  "liveConnection.retry": "Tentar de novo",
   "chat.preview.older": "Versão anterior",
   "chat.preview.newer": "Versão seguinte",
   "chat.preview.version": "v{n}",

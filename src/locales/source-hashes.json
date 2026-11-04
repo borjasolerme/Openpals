@@ -2092,7 +2092,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6332,7 +6334,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8373,7 +8377,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10414,7 +10420,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15373,7 +15381,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20206,7 +20216,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25689,7 +25701,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29175,7 +29189,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31588,7 +31604,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35560,7 +35578,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39532,7 +39552,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44429,7 +44451,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49367,7 +49391,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54152,7 +54178,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59545,7 +59573,9 @@
       "serverSetup.error.sshUnreachable": "92594bc0931467ccce693d4f9128a57b9363ae53299077d77262c9f786756357",
       "serverSetup.error.sshMissing": "02b09945d95d9e764f30956f4f81f0c633869b18413d348c6d171b0179f0b8f4",
       "serverSetup.error.unsupported": "c3c9d51039c310103ac2cffaac900302797cb92604b69a6faf6f66461614b37c",
-      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6"
+      "settings.logins.sharedBrowser": "3bb3ce749fb652c1c420e96c5bfb16d9380539ae454ea3aca4dbeb280e720ec6",
+      "liveConnection.help": "951345920883177346e61789c3dc73881e64bb3916cedde0a86a509926c19fbb",
+      "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f"
     }
   }
 }

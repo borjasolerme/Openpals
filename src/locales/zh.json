@@ -5357,6 +5357,8 @@
   "team.privateHeader": "私密 · 仅你可见",
   "team.sharedHeader": "共享 · {team} 中的所有人可见",
   "liveConnection.reconnecting": "正在重新连接… 连接恢复后新回复就会显示。",
+  "liveConnection.help": "仍然无法连接。请检查网络连接、登录状态以及此网站的广告或跟踪拦截器，然后重试。",
+  "liveConnection.retry": "重试",
   "liveConnection.offline": "你已离线。恢复在线后新回复就会显示。",
   "team.ownHelperHeader": "个人助手 · 其他成员看不到",
   "chat.preview.older": "上一个版本",

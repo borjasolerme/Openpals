@@ -1815,6 +1815,8 @@
   "mcp.apps.toggleAria": "{name} के ऐप चैट में दिखाएँ",
   "team.privateChats": "{team} में आपकी चैट निजी हैं। उन्हें सिर्फ़ आप देख सकते हैं: न दूसरे सदस्य, न {team} के एडमिन।",
   "team.privateHeader": "निजी · सिर्फ़ आप",
+  "liveConnection.help": "अब भी कनेक्ट नहीं हो पा रहा है। अपना कनेक्शन, साइन-इन और इस साइट के लिए कोई भी विज्ञापन या ट्रैकर ब्लॉकर जांचें, फिर दोबारा कोशिश करें।",
+  "liveConnection.retry": "फिर से कोशिश करें",
   "chat.preview.older": "पिछला वर्शन",
   "chat.preview.newer": "अगला वर्शन",
   "chat.preview.version": "v{n}",

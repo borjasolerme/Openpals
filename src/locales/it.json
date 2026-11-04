@@ -4699,6 +4699,8 @@
   "team.privateChats": "Le tue chat in {team} sono private. Solo tu puoi vederle: non gli altri membri, non gli amministratori di {team}.",
   "team.privateHeader": "Privato · solo tu",
   "team.sharedHeader": "Condiviso · tutti in {team} possono vedere",
+  "liveConnection.help": "Ancora impossibile connettersi. Controlla la connessione, l'accesso ed eventuali blocchi di annunci o tracker per questo sito, poi riprova.",
+  "liveConnection.retry": "Riprova",
   "chat.preview.older": "Versione precedente",
   "chat.preview.newer": "Versione successiva",
   "chat.preview.versionOf": "v{n} di {count}",

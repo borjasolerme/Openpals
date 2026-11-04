@@ -3818,6 +3818,8 @@
   "mcp.apps.toggleAria": "{name} uygulamalarını sohbette göster",
   "team.privateChats": "{team} içindeki sohbetlerin özeldir. Onları yalnızca sen görebilirsin: diğer üyeler de {team} yöneticileri de göremez.",
   "team.privateHeader": "Özel · yalnızca sen",
+  "liveConnection.help": "Hâlâ bağlanılamıyor. Bağlantını, oturum açma durumunu ve bu site için reklam ya da izleyici engelleyicileri kontrol et, sonra tekrar dene.",
+  "liveConnection.retry": "Tekrar dene",
   "chat.preview.older": "Önceki sürüm",
   "chat.preview.newer": "Sonraki sürüm",
   "chat.preview.version": "v{n}",
