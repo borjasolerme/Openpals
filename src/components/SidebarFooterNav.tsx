@@ -1,11 +1,11 @@
 import { Globe, Puzzle, Zap } from "lucide-react";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
+import { automationsFrom, hasUnseenProblemRun } from "@/lib/automations";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { useWebPanels } from "@/lib/web-panel-preferences";
-import { isRoutineProblemRun } from "@/lib/routines";
 import { useSidebarToolsLayout, type SidebarDensity } from "@/lib/sidebar-preferences";
 import { useStore } from "@/state/store";
 
@@ -78,10 +78,11 @@ export function SidebarAppsButton() {
   );
 }
 
-/** An unseen failed run. */
+/** An unseen failed run of an automation the Automations page lists (the same list, so opening it clears the dot). */
 export function useAutomationsNeedYou(): boolean {
   const { state } = useStore();
-  return state.routineRuns.some((run) => isRoutineProblemRun(run) && !run.seenAt);
+  return useMemo(() => hasUnseenProblemRun(automationsFrom({ routines: state.routines, webhooks: state.webhooks, runs: state.routineRuns, bots: state.bots })),
+    [state.routines, state.webhooks, state.routineRuns, state.bots]);
 }
 
 export function SidebarBottomButtons() {
