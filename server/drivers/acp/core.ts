@@ -25,7 +25,7 @@ import {
 } from "./quiet-status.ts";
 import { readSessionReport } from "./session-reports.ts";
 import { pickSessionModel, SessionModelControls, type AcpModelSelection } from "./session-model-controls.ts";
-import { versionFromProbe } from "./version-probe.ts"; import { engineHomes } from "../../engine-homes/engine-homes.ts";
+import { versionFromProbe } from "./version-probe.ts";
 
 export function skipSubscriptionAuthForLocalInject(model: string | undefined): boolean {
   return Boolean(decodeInjectId(model));
@@ -60,7 +60,7 @@ import { acpToolEndEvents } from "./tool-items.ts";
 import { AcpHost } from "./host.ts";
 import { endTurn, trackRunningTool, type AcpAskFinish, type AcpSession, type AcpTurn } from "./turn-state.ts";
 import { recoveryPromptFor } from "../../resume-recovery.ts";
-import { armIdleClose, engineIdleMs, sessionIdlePolicy, stopIdleClose } from "../session-idle.ts";
+import { armIdleClose, sessionIdlePolicy, stopIdleClose } from "../session-idle.ts";
 import { classifyError } from "../retry.ts";
 import { engineFailureKind, engineFailureMessage, stopCause } from "../engine-errors.ts";
 import { narrowsNativeTools, parseToolScope } from "../../../shared/tool-scope.ts";
@@ -465,7 +465,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
         const session = sessions.get(threadId);
         if (!session) return;
         if (session.idleTimer) clearTimeout(session.idleTimer);
-        session.idleTimer = armIdleClose(`${instanceId}\0${threadId}`, engineIdleMs(threadId, sessionIdle), { close: () => closeSession(threadId, "idle"),
+        session.idleTimer = armIdleClose(`${instanceId}\0${threadId}`, sessionIdle.idleMs, { close: () => closeSession(threadId, "idle"),
           idle: () => sessions.get(threadId) === session && !session.closing && !session.current });
       };
     // Session allows the driver keeps when the agent offered no `allow_always`: exact operations per
@@ -1098,7 +1098,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
           : spawnEnv;
         let launchedThisTurn = false;
         // The folder and the tool selection ride session/new, so threads differing only there can share a process; never two audiences of a Team Cloud, whose engine homes differ.
-        const hostKey = support.shareProcess && inheritedScopeFingerprint === null ? JSON.stringify([...processContract, launchModel ?? null, engineHomes.scope()]) : null;
+        const hostKey = support.shareProcess && inheritedScopeFingerprint === null ? JSON.stringify([...processContract, launchModel ?? null]) : null;
         const launchSession = () => {
           const opened = openSession(threadId, launch, [...(launch.args ?? []), ...spawnArgs], launchEnv, cwd, contractKey, hostKey);
           opened.launchModel = launchModel;

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Archive, BellDot, CheckCheck, ChevronRight, ClipboardCopy, Copy, Crown, Loader2, MoreHorizontal, Pencil, Pin, PinOff, SquarePen, Users } from "lucide-react";
+import { Archive, BellDot, CheckCheck, ChevronRight, ClipboardCopy, Copy, Crown, Loader2, MoreHorizontal, Pencil, Pin, PinOff, SquarePen } from "lucide-react";
 import { api, useStore, openBot, type Bot } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { useHeldMenuMotion } from "./MenuMotion";
@@ -10,13 +10,10 @@ import { BotDeleteMenuItem } from "./BotMenuDelete";
 import { HideDefaultBotItem } from "./DefaultBotControls";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { botUnreadThreadIds, markBotRead } from "@/lib/mark-read";
-import { ownerMenuLabel, pickOwnerOf } from "./TeamOwner";
-import { mayChangeOwner, useTeamPeople } from "@/state/team-people";
 import { MENU_ITEM, MENU_ITEM_SEPARATOR, MENU_SHEET, navigateMenu } from "./menu-recipe";
 import { submenuPosition } from "./SidebarPopoverMenu";
 import { submenuIntent, type SubmenuIntent } from "@/lib/submenu-intent";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { useMoveToTeam } from "./MoveToTeam";
 import type { MenuState } from "./Sidebar";
 
 type Flyout = "more";
@@ -53,10 +50,8 @@ export function BotContextMenu({
   const shown = motion.value;
   const { state, dispatch } = useStore();
   const member = useOwnerOrAdmin() === false;
-  const moveToTeam = useMoveToTeam({ blocked: (bot) => (bot.defaultBot ? t("teamMove.blockedDefault", { name: bot.name }) : bot.chiefOfStaff ? t("teamMove.blockedChief") : state.bots.filter((candidate) => !candidate.hidden).length <= 1 ? t("teamMove.blockedLast") : undefined) });
   const remoteClient = window.ogb?.remoteClient?.active === true;
   const bot = shown ? state.bots.find((b) => b.id === shown.botId) : undefined;
-  const team = useTeamPeople();
   const menuRef = useRef<HTMLDivElement>(null);
   const latestMenu = useRef(menu);
   useLayoutEffect(() => { latestMenu.current = menu; }, [menu]);
@@ -131,7 +126,7 @@ export function BotContextMenu({
     sheetOut.style.top = `${place.top}px`;
   });
 
-  if (!motion.shown || !bot || !shown) return <>{moveToTeam.dialog}</>;
+  if (!motion.shown || !bot || !shown) return null;
   const deleting = state.deletingBots[bot.id] === true;
   const engine = state.instances.find((instance) => instance.instanceId === bot.modelSelection.instanceId);
   const canCoordinate = engine?.capabilities?.agentsMcp === true;
@@ -214,7 +209,6 @@ export function BotContextMenu({
       openForSettings();
       if (!state.settingsOpen) dispatch({ type: "toggleSettings", open: true });
     });
-    const owner = team && mayChangeOwner(bot, team) ? item(<Users size={16} className="text-ink-secondary" />, ownerMenuLabel(bot, team), () => pickOwnerOf(bot, team, shown)) : null;
     const readState = readingBotId === bot.id || botUnreadThreadIds(bot).length > 0
       ? item(
         readingBotId === bot.id ? <Loader2 size={16} className="animate-spin text-ink-secondary" /> : <CheckCheck size={16} className="text-ink-secondary" />,
@@ -223,19 +217,17 @@ export function BotContextMenu({
         { disabled: readingBotId !== null, keepOpen: true },
       )
       : item(<BellDot size={16} className="text-ink-secondary" />, t("sidebar.bot.simple.markUnread"), () => dispatch({ type: "markUnread", botId: bot.id }));
-    const moreItems = remoteClient ? [editProfile, owner] : [
+    const moreItems = remoteClient ? [editProfile] : [
       editProfile,
-      team ? null : chiefItem(),
+      chiefItem(),
       member ? null : item(<Copy size={16} className="text-ink-secondary" />, t("sidebar.bot.duplicate"), () => dispatch({ type: "duplicateBot", botId: bot.id })),
-      owner,
-      ...moveToTeam.items(bot, item),
     ];
     const moreRow = flyoutButton("more", moreRef, <MoreHorizontal size={16} className="text-ink-secondary" />, t("sidebar.bot.more"));
     const leave = bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} className={MENU_ITEM} />] : member ? [] : [
       item(<Archive size={16} className="text-ink-secondary" />, t("sidebar.bot.archive"), () => onArchive(bot), { disabled: archiveBlocked, hint: archiveHint }),
       <BotDeleteMenuItem key="delete" deleting={deleting} className={MENU_ITEM} onClick={() => { onClose(); onDelete(bot); }} />,
     ];
-    return <>{moveToTeam.dialog}{createPortal(
+    return <>{createPortal(
       <div
         ref={menuRef}
         data-bot-menu
@@ -310,7 +302,7 @@ export function BotContextMenu({
     )}</>;
   }
 
-  return <>{moveToTeam.dialog}{createPortal(
+  return <>{createPortal(
     <div
       ref={menuRef}
       data-bot-menu
@@ -321,7 +313,6 @@ export function BotContextMenu({
       style={{ top: shown.y, left: shown.x }}
       className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[198px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
     >
-      {team && mayChangeOwner(bot, team) && item(<Users size={16} className="text-ink-secondary" />, ownerMenuLabel(bot, team), () => pickOwnerOf(bot, team, shown))}
       {remoteClient ? [
         item(<Pencil size={16} className="text-ink-secondary" />, t("sidebar.bot.editProfile"), () => {
           openForSettings();
@@ -336,7 +327,7 @@ export function BotContextMenu({
           bot.pinned ? t("sidebar.bot.unpin") : t("sidebar.bot.pin"),
           () => dispatch({ type: "updateBot", botId: bot.id, patch: { pinned: !bot.pinned } }),
         ),
-        team ? null : chiefItem(),
+        chiefItem(),
         item(<BellDot size={16} className="text-ink-secondary" />, t("sidebar.bot.markUnread"), () =>
           dispatch({ type: "markUnread", botId: bot.id }),
         ),
@@ -358,7 +349,7 @@ export function BotContextMenu({
         item(<ClipboardCopy size={16} className="text-ink-secondary" />, t("sidebar.copyConversationId"), () => {
           void copyText(bot.threadId);
         }),
-        divider("d3"), ...moveToTeam.items(bot, item),
+        divider("d3"),
         ...(bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} className={MENU_ITEM} />] : member ? [] : [
           item(<Archive size={16} className="text-ink-secondary" />, t("sidebar.bot.archive"), () => onArchive(bot), { disabled: archiveBlocked, hint: archiveHint }),
           <BotDeleteMenuItem key="delete" deleting={deleting} className={MENU_ITEM} onClick={() => { onClose(); onDelete(bot); }} />,

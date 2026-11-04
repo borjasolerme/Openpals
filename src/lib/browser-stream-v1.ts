@@ -2,7 +2,6 @@
 // speaks both: v1 is what agent-browser serves, and what an older server or companion still offers.
 import type { ControlTransport } from "./browser-control";
 import { t } from "./i18n";
-import { withBrowserScope } from "./team-browser";
 import type { PreviewStreamClient, PreviewStreamControl, PreviewStreamEvents, PreviewStreamInput } from "./browser-stream-client";
 
 type Body = Record<string, unknown>;
@@ -172,7 +171,7 @@ export function liveControl(value: { held?: unknown; owned?: unknown; controllin
  * The panel's size (`initialSize`, then each resize) goes with every connection and to the open view, so the page fills
  * the panel; a server without resizing refuses the action and its page keeps its own size.
  */
-export function createLiveStreamClient(botId: string, events: PreviewStreamEvents, post: LivePost, resume: LiveResume = { viewer: "" }, scope: Readonly<Record<string, string>> = {}, initialSize: { width: number; height: number } | null = null): LiveStreamClient {
+export function createLiveStreamClient(botId: string, events: PreviewStreamEvents, post: LivePost, resume: LiveResume = { viewer: "" }, initialSize: { width: number; height: number } | null = null): LiveStreamClient {
   let stopped = false;
   /** Stopped because its retries ran out, not refused for good: coming back to the window tries again. */
   let revivable = false;
@@ -248,7 +247,7 @@ export function createLiveStreamClient(botId: string, events: PreviewStreamEvent
       params.set("width", String(Math.round(size.width)));
       params.set("height", String(Math.round(size.height)));
     }
-    const query = withBrowserScope(params.size ? `?${params.toString()}` : "", scope);
+    const query = params.size ? `?${params.toString()}` : "";
     const live = new EventSource(`/api/bots/${encodeURIComponent(botId)}/browser/live${query}`);
     source = live;
     heardAt = Date.now();

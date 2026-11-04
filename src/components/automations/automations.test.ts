@@ -267,17 +267,6 @@ describe("More, for another app's automation", () => {
   });
 });
 
-describe("on a Cloud", () => {
-  it("never asks the person to keep the app open for another app's automation", () => {
-    const [automation] = automationsFrom({ routines: [], webhooks: [webhook] as never, runs: [] });
-    const props = { automation: automation!, sentence: "s", onClose: vi.fn(), onEdit: vi.fn(), onDeleted: vi.fn() };
-    expect(mount(createElement(AutomationPanel, props)).textContent).toContain("Keep Openpals open so it can receive.");
-    root!.unmount();
-    fixture.state.config = { cloudHome: true };
-    expect(mount(createElement(AutomationPanel, props)).textContent).not.toContain("Keep Openpals open");
-  });
-});
-
 describe("the calendar", () => {
   afterEach(() => { vi.useRealTimers(); });
   it("shows a future event of an automation that needs you in its status colour, and none of a deleted bot", () => {

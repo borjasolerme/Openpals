@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createXClient, createXRelayClient, errorFor, readIncludedXUsage, tregErrorFor, X_CLIENT_TIMEOUT_MS, normalizeHandle, parsePostRef, toPost, X_MESSAGES, XResearchError } from "./x-research.ts";
+import { createXClient, createXRelayClient, tregErrorFor, X_CLIENT_TIMEOUT_MS, normalizeHandle, parsePostRef, toPost, X_MESSAGES, XResearchError } from "./x-research.ts";
 
 /** 2026-10-08T00:12:34Z */
 const CREATED = 1791418354;
@@ -76,9 +76,9 @@ function fakeFetch(...responses: Reply[]) {
   return { fetcher: fetcher as unknown as typeof fetch, calls };
 }
 
-/** The Admin's X relay (a Cloud home's OMB_CLOUD_X_URL, or a desktop's from its Cloud sign-in). */
-const RELAY = "https://cloud.example.test/api/cloud/services/x";
-const clientWith = (fetcher: typeof fetch) => createXRelayClient({ url: RELAY, token: "omb_xd_test", fetcher });
+/** treg's base URL and the person's own treg key. */
+const TREG = "https://treg.example.test";
+const clientWith = (fetcher: typeof fetch) => createXRelayClient({ url: TREG, token: "treg_test_key", fetcher });
 
 async function failure(promise: Promise<unknown>): Promise<XResearchError> {
   try {
@@ -218,12 +218,10 @@ describe("search", () => {
     const result = await clientWith(fetcher).search({ query: "mausbot", sort: "latest", limit: 20 });
     expect(calls).toHaveLength(1);
     expect(calls[0]!.method).toBe("POST");
-    expect(calls[0]!.url.href).toBe(`${RELAY}/call/anyapi.x.search.posts`);
+    expect(calls[0]!.url.href).toBe(`${TREG}/call/anyapi.x.search.posts`);
     expect(calls[0]!.body).toEqual({ query: "mausbot", queryType: "Latest", limit: 20 });
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_test");
-    // Our treg key, the customer tag and the cost ceiling are the relay's to add; nothing of treg's is sent from here.
-    expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
-    expect(calls[0]!.headers.get("x-treg-route-max-cost")).toBeNull();
+    expect(calls[0]!.headers.get("x-treg-token")).toBe("treg_test_key");
+    expect(calls[0]!.headers.get("authorization")).toBeNull();
     expect(result.posts.map((post) => post.id)).toEqual(["12", "11"]);
     expect(result.newestId).toBe("12");
     expect(result.more).toBe(false);
@@ -264,7 +262,7 @@ describe("search", () => {
       { body: { output: { posts: [graphqlRow, searchRow("5")], next_cursor: "n2" }, raw: {}, _treg: { served_by: "tikhub.x.twitter-web-fetch-search-timeline" } } },
     );
     const result = await clientWith(fetcher).search({ query: "maus", sort: "latest", limit: 20 });
-    expect(calls[1]!.url.href).toBe(`${RELAY}/call/treg.x.search.posts`);
+    expect(calls[1]!.url.href).toBe(`${TREG}/call/treg.x.search.posts`);
     expect(calls[1]!.body).toEqual({ q: "maus" });
     expect(result.posts.map((post) => post.id)).toEqual(["77", "5"]);
     expect(result.more).toBe(true);
@@ -309,7 +307,7 @@ describe("userPosts", () => {
   it("reads an account's posts, naming the author, without its replies by default", async () => {
     const { fetcher, calls } = fakeFetch({ body: anyapi({ tweets: [timelineRow("3"), timelineRow("2", { isReply: true })], nextCursor: "" }) });
     const result = await clientWith(fetcher).userPosts({ handle: "maus", limit: 20, includeReplies: false });
-    expect(calls[0]!.url.href).toBe(`${RELAY}/call/anyapi.x.user.posts`);
+    expect(calls[0]!.url.href).toBe(`${TREG}/call/anyapi.x.user.posts`);
     expect(calls[0]!.body).toEqual({ handle: "maus", limit: 20 });
     expect(result.posts.map((post) => [post.id, post.author])).toEqual([["3", "@maus"]]);
   });
@@ -342,7 +340,7 @@ describe("userPosts", () => {
       { body: { output: { posts: [timelineRow("4")] }, raw: {}, _treg: { served_by: "tikhub.x.user.posts" } } },
     );
     const result = await clientWith(fetcher).userPosts({ handle: "maus", limit: 20, includeReplies: false });
-    expect(calls[1]!.url.href).toBe(`${RELAY}/call/treg.x.user.posts`);
+    expect(calls[1]!.url.href).toBe(`${TREG}/call/treg.x.user.posts`);
     expect(calls[1]!.body).toEqual({ username: "maus" });
     expect(result.posts.map((post) => [post.id, post.author])).toEqual([["4", "@maus"]]);
   });
@@ -357,9 +355,9 @@ describe("post", () => {
       { body: { output: { found: true, data: { items: [{ authorHandle: "a", id: "43", text: "r1" }, { authorHandle: "b", id: "44", text: "r2" }], nextCursor: "r2" } } } },
     );
     const result = await clientWith(fetcher).post({ id: "42", handle: "maus", replies: true });
-    expect(calls[0]!.url.href).toBe(`${RELAY}/call/anyapi.twitter.tweet`);
+    expect(calls[0]!.url.href).toBe(`${TREG}/call/anyapi.twitter.tweet`);
     expect(calls[0]!.body).toEqual({ url: "https://x.com/maus/status/42" });
-    expect(calls[1]!.url.href).toBe(`${RELAY}/call/anyapi.x.post.comments`);
+    expect(calls[1]!.url.href).toBe(`${TREG}/call/anyapi.x.post.comments`);
     expect(calls[1]!.body).toEqual({ url: "https://x.com/maus/status/42", limit: 20 });
     expect(result.post).toMatchObject({ id: "42", author: "@maus", likes: 9, reposts: 3, replies: 2, quotes: 1, views: 500 });
     expect(result.replies?.map((post) => post.author)).toEqual(["@a", "@b"]);
@@ -390,7 +388,7 @@ describe("profile", () => {
     expect(await clientWith(fetcher).profile("maus")).toEqual({
       handle: "@maus", name: "Maus", bio: "Open source Grok Bot", followers: 1200, following: 80, posts: 340, verified: true, url: "https://x.com/maus",
     });
-    expect(calls[0]!.url.href).toBe(`${RELAY}/call/treg.x.user.profile`);
+    expect(calls[0]!.url.href).toBe(`${TREG}/call/treg.x.user.profile`);
     expect(calls[0]!.body).toEqual({ username: "maus" });
   });
 
@@ -403,15 +401,6 @@ describe("profile", () => {
 });
 
 describe("errors", () => {
-  it("maps HTTP statuses to plain sentences", () => {
-    // What the Admin's relay answers (openmaus-cloud server/cloud-services.ts).
-    expect(errorFor(401, { error: "invalid_api_key" })).toMatchObject({ code: "bad_key", message: X_MESSAGES.badKey });
-    expect(errorFor(402, { error: "subscription_inactive" })).toMatchObject({ code: "no_credit", message: X_MESSAGES.noPlan });
-    expect(errorFor(422, { error: "invalid_request" }).code).toBe("bad_input");
-    expect(errorFor(429, {}).code).toBe("rate_limited");
-    for (const status of [404, 500, 502, 503]) expect(errorFor(status, {}).code).toBe("unavailable");
-    expect(errorFor(503, { error: "service_unavailable" }).message).toBe(X_MESSAGES.unavailable);
-  });
 
   it("treats a network failure, a timeout, junk and an oversized body as unavailable", async () => {
     for (const response of [
@@ -426,68 +415,8 @@ describe("errors", () => {
     }
   });
 
-  it("asks for a new Cloud sign-in when the relay refuses the token, and does not fall back", async () => {
-    const { fetcher, calls } = fakeFetch({ status: 401, body: { error: "invalid_api_key", message: "This X research token is not valid." } });
-    const error = await failure(clientWith(fetcher).search({ query: "maus", sort: "latest", limit: 20 }));
-    expect(error).toMatchObject({ code: "bad_key", message: X_MESSAGES.badKey });
-    expect(calls).toHaveLength(1);
-  });
-
-  it("does not fall back while the relay says treg is rate-limiting: a second call would only count against the plan too", async () => {
-    const { fetcher, calls } = fakeFetch({ status: 503, body: { error: "overloaded", message: "X research is busy right now. Try again in a moment." } });
-    const error = await failure(clientWith(fetcher).search({ query: "maus", sort: "latest", limit: 20 }));
-    expect(error).toMatchObject({ code: "rate_limited", message: X_MESSAGES.rateLimited });
-    expect(calls).toHaveLength(1);
-  });
-
   it("waits longer than the relay's own 30 s, so the relay's answer arrives before this side gives up and falls back", () => {
     expect(X_CLIENT_TIMEOUT_MS).toBeGreaterThan(30_000);
-  });
-
-  it("passes on the relay's own sentence when this month's allowance is used up, and says how to keep going", async () => {
-    const sentence = "Your Pro plan's 5,000 X research calls for October are used up. They reset on 1 November.";
-    const { fetcher, calls } = fakeFetch({ status: 429, body: { error: "quota_exceeded", message: sentence } });
-    const error = await failure(clientWith(fetcher).search({ query: "maus", sort: "latest", limit: 20 }));
-    expect(error).toMatchObject({ code: "rate_limited", message: `${sentence} Add your own treg key to keep going.` });
-    expect(calls).toHaveLength(1);
-    expect(errorFor(429, { error: "rate_limited", message: "Slow down." }).message).toBe(X_MESSAGES.rateLimited);
-  });
-});
-
-describe("the plan's included X calls this month", () => {
-  const plan = { token: "omb_xd_plan", api: `${RELAY}/`, included: true };
-  const usage = { calls: 312, max: 5_000, resetsAt: "2026-11-01T00:00:00.000Z" };
-
-  it("asks the relay's /usage with the plan's bearer, by GET, and reads its answer", async () => {
-    const { fetcher, calls } = fakeFetch({ body: usage });
-    expect(await readIncludedXUsage(plan, { fetcher })).toEqual(usage);
-    expect(calls).toHaveLength(1);
-    expect(calls[0]!.url.href).toBe(`${RELAY}/usage`);
-    expect(calls[0]!.method).toBe("GET");
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_plan");
-    expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
-  });
-
-  it("keeps a used-up month and a trial's end, and never counts past the allowance", async () => {
-    const trial = { calls: 9, max: 3, usedUp: true, resetsAt: usage.resetsAt, trialEndsAt: "2026-10-25T09:00:00.000Z" };
-    expect(await readIncludedXUsage(plan, { fetcher: fakeFetch({ body: trial }).fetcher })).toEqual({ ...trial, calls: 3 });
-    expect(await readIncludedXUsage(plan, { fetcher: fakeFetch({ body: { ...usage, calls: 5_000 } }).fetcher })).toEqual({ ...usage, calls: 5_000, usedUp: true });
-  });
-
-  it("says nothing for an own key, a refusal, an older relay without /usage, a malformed answer or no answer", async () => {
-    const own = fakeFetch();
-    expect(await readIncludedXUsage({ token: "treg_own", api: "https://treg.to", included: false }, { fetcher: own.fetcher })).toBeNull();
-    expect(own.calls).toEqual([]);
-    for (const reply of [
-      { status: 401, body: { error: "invalid_api_key", message: "This X research token is not valid." } },
-      { status: 404, body: { error: "not_found", message: "Not found." } },
-      { status: 402, body: { error: "subscription_inactive" } },
-      { status: 503, body: usage },
-      { body: { calls: "312", max: 5_000, resetsAt: usage.resetsAt } },
-      { body: { calls: 1, max: 5_000, resetsAt: "next month" } },
-      { body: "not json" },
-      new TypeError("fetch failed"),
-    ]) expect(await readIncludedXUsage(plan, { fetcher: fakeFetch(reply).fetcher })).toBeNull();
   });
 });
 
@@ -502,14 +431,6 @@ describe("with the person's own treg key", () => {
     expect(calls[0]!.headers.get("x-treg-token")).toBe("treg_own_key");
     expect(calls[0]!.headers.get("authorization")).toBeNull();
     expect(calls[0]!.headers.get("x-treg-route-max-cost")).toBeNull();
-  });
-
-  it("goes through the relay with a bearer when the credential is the plan's", async () => {
-    const { fetcher, calls } = fakeFetch({ body: anyapi({ items: [], nextCursor: "" }) });
-    await createXClient({ token: "omb_xd_plan", api: RELAY, included: true }, { fetcher }).search({ query: "maus", sort: "latest", limit: 20 });
-    expect(calls[0]!.url.toString()).toBe(`${RELAY}/call/anyapi.x.search.posts`);
-    expect(calls[0]!.headers.get("authorization")).toBe("Bearer omb_xd_plan");
-    expect(calls[0]!.headers.get("x-treg-token")).toBeNull();
   });
 
   it("passes treg's own refusals on as sentences: the key, the balance with its top-up link, a bad request, a rate limit", () => {

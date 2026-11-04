@@ -4,20 +4,11 @@ export interface DesktopNoticesState {
   /** Notices this desktop has shown and someone closed, on whichever page of its window; This computer's own workspace
    * record counts too (an earlier close of the What's new popup). */
   seen: string[];
-  /** This desktop sells MausBot Cloud: the installed app, not a branded build, not connected to another computer. */
-  cloud: boolean;
 }
-/** On every page this desktop's window shows: this computer's, My Cloud's or another saved server's. */
+/** On every page this desktop's window shows: this computer's or a saved server's. */
 export interface DesktopNoticesBridge {
   state(): Promise<DesktopNoticesState>;
   seen(id: string): Promise<void>;
-}
-/** The desktop's own switch, the same on every port its page is served from. */
-export interface DesktopAnalyticsBridge {
-  /** null until a choice is saved; a server's page is told only false, when this desktop turned analytics off. */
-  enabled(): boolean | null;
-  /** This computer's page only. */
-  set?(enabled: boolean): Promise<void>;
 }
 /** The app's language on this computer, one pick for every page its window shows. */
 export interface DesktopLanguageBridge {
@@ -30,8 +21,6 @@ export interface DesktopLanguageBridge {
 export interface DesktopPrefs {
   seen(): string[];
   markSeen(id: string): void;
-  analytics(): boolean | null;
-  setAnalytics(enabled: boolean): void;
   language(): string | null;
   /** False for anything that is not a locale code or "". */
   setLanguage(language: unknown): boolean;
@@ -66,9 +55,7 @@ export declare function registerDesktopPrefs(options: {
   ipcMain: { handle(channel: string, handler: (event: unknown, ...args: unknown[]) => unknown): void; on(channel: string, listener: (event: { returnValue?: unknown }) => void): void };
   read(): unknown;
   write(value: unknown): void;
-  page(event: unknown): "local" | "cloud" | "server" | null;
-  cloudOffered(): Promise<boolean>;
-  localConfig?(): unknown;
+  page(event: unknown): "local" | "server" | null;
   languageChanged?(language: string, sender: unknown): void;
   /** The window's frame: `made()`, the frame the window was made with (null before it is); `restarts`, a change waits for
    * the app to start again; `changed()`, the pages hear it. */

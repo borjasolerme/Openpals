@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { emailGateDone } from "@/lib/analytics";
 import { clearWelcomeDraft } from "@/lib/welcome-draft";
 import { hostedMember, LOCAL_VIEWER, welcomeDue, welcomeViewer, type WelcomeViewer } from "@/lib/onboarding";
 import { api, useStore } from "@/state/store";
@@ -40,7 +39,7 @@ export function WelcomeGate({ viewer }: { viewer: WelcomeViewer | null }) {
   const remoteClient = window.ogb?.remoteClient?.active === true;
   // A welcome finished elsewhere (another window, an older version's record) leaves no draft behind to resume later.
   const finished = Boolean(viewer && state.config) && !welcomeDue(state.config, {
-    remoteClient, legacyDone: emailGateDone(), hosted: viewer?.hosted, canSave: viewer?.canSave, cloudHome: viewer?.cloudHome,
+    remoteClient, hosted: viewer?.hosted, canSave: viewer?.canSave,
   });
   useEffect(() => {
     if (finished) clearWelcomeDraft();
@@ -60,13 +59,10 @@ export function WelcomeGate({ viewer }: { viewer: WelcomeViewer | null }) {
     !dismissed &&
     welcomeDue(state.config, {
       remoteClient,
-      legacyDone: emailGateDone(),
       hosted: viewer.hosted,
       canSave: viewer.canSave,
-      cloudHome: viewer.cloudHome,
     });
-  if (state.appSettingsOpen && (["desktopWorkspaces", "organization"].includes(state.appSettingsSection) ||
-    (state.appSettingsSection === "cloudAccount" && state.appSettingsCloudLink > 0))) return null;
+  if (state.appSettingsOpen && state.appSettingsSection === "desktopWorkspaces") return null;
   if (!state.welcomeOpen && !due) return null;
   const fallback = state.bots.find((b) => !b.hidden && b.chiefOfStaff) ?? state.bots.find((b) => !b.hidden) ?? null;
   const replay = state.welcomeOpen && !due;

@@ -1,67 +1,42 @@
-import type { CompanionAccountState } from "../types/ogb";
-import { t } from "./i18n";
-import type { CompanionEndpoint, CompanionPairingRouteMode } from "./companion-pairing";
+import type { CompanionPairingRouteMode } from "./companion-pairing";
 
-export type PhoneSetupPhase = "intro" | "sign-in" | "verifying" | "qr" | "success";
+export type PhoneSetupPhase = "intro" | "verifying" | "qr" | "success";
 
+/** `route`: the one the person chose to pair over (Tailscale or this network). */
 export interface PhoneSetupFlowState {
   active: boolean;
-  localFallback: boolean;
-  tailscaleFallback: boolean;
+  route: CompanionPairingRouteMode | null;
   baselineDeviceIds: string[];
   pairingAttempted: boolean;
   pairedDeviceName: string | null;
 }
 
 export type PhoneSetupEvent =
-  | { type: "start"; deviceIds: string[] }
-  | { type: "resume"; deviceIds: string[] }
-  | { type: "use-local" }
-  | { type: "use-tailscale" }
+  | { type: "start"; deviceIds: string[]; route: CompanionPairingRouteMode }
   | { type: "pairing-opened"; deviceIds: string[] }
   | { type: "paired"; deviceName: string }
   | { type: "reset" };
 
 export const initialPhoneSetupFlowState: PhoneSetupFlowState = {
   active: false,
-  localFallback: false,
-  tailscaleFallback: false,
+  route: null,
   baselineDeviceIds: [],
   pairingAttempted: false,
   pairedDeviceName: null,
 };
 
-/** User intent lives here so a refresh cannot turn a secure setup into local-only pairing. */
 export function phoneSetupReducer(
   state: PhoneSetupFlowState,
   event: PhoneSetupEvent,
 ): PhoneSetupFlowState {
   switch (event.type) {
     case "start":
-    case "resume":
       return {
         active: true,
-        localFallback: false,
-        tailscaleFallback: false,
+        route: event.route,
         baselineDeviceIds: [...event.deviceIds],
         pairingAttempted: false,
         pairedDeviceName: null,
-      };
-    case "use-local":
-      return {
-        ...state,
-        active: true,
-        localFallback: true,
-        tailscaleFallback: false,
-        pairingAttempted: false,
-      };
-    case "use-tailscale":
-      return {
-        ...state,
-        active: true,
-        localFallback: false,
-        tailscaleFallback: true,
-        pairingAttempted: false,
       };
     case "pairing-opened":
       return {
@@ -76,44 +51,11 @@ export function phoneSetupReducer(
   }
 }
 
-export type PhoneSetupAccountStatus = CompanionAccountState["status"] | "unavailable";
-
-export interface PhoneSetupSnapshot {
-  accountStatus: PhoneSetupAccountStatus;
-  accountBusy: boolean;
-  provisioning: boolean;
-  provisioningTimedOut?: boolean;
-  pairingOpen: boolean;
-}
-
-export const PHONE_SETUP_PROVISIONING_TIMEOUT_MS = 30_000;
-
-export function derivePhoneSetupPhase(
-  flow: PhoneSetupFlowState,
-  snapshot: PhoneSetupSnapshot,
-): PhoneSetupPhase {
+export function derivePhoneSetupPhase(flow: PhoneSetupFlowState, pairingOpen: boolean): PhoneSetupPhase {
   if (flow.pairedDeviceName) return "success";
   if (!flow.active) return "intro";
-  if (snapshot.pairingOpen || flow.pairingAttempted) return "qr";
-  if (snapshot.provisioningTimedOut) return "sign-in";
-  if (flow.localFallback || flow.tailscaleFallback) return "verifying";
-  if (snapshot.accountStatus === "signed-out" || snapshot.accountStatus === "unavailable") {
-    return "sign-in";
-  }
-  if (snapshot.accountStatus === "error") return "sign-in";
-  if (snapshot.accountBusy || snapshot.provisioning) return "verifying";
+  if (pairingOpen || flow.pairingAttempted) return "qr";
   return "verifying";
-}
-
-export type CompanionPairingMode =
-  | "local-only"
-  | "hosted-startable"
-  | "hosted-connecting"
-  | "hosted-ready";
-
-export interface PhoneSetupCompanionSnapshot {
-  enabled: boolean;
-  endpoints?: CompanionEndpoint[];
 }
 
 export async function preparePhonePairingRoute<State extends { enabled: boolean; error?: string }>(
@@ -145,63 +87,6 @@ export async function preparePhonePairingRoute<State extends { enabled: boolean;
   return state;
 }
 
-/** Automatic setup is hosted-HTTPS only, so a tailnet route cannot silently replace hosted access. */
-export const companionPairingMode = (
-  account: CompanionAccountState | null,
-  companion: PhoneSetupCompanionSnapshot | null,
-): CompanionPairingMode => {
-  if (companion?.endpoints?.some((endpoint) => endpoint.kind === "hosted")) {
-    return "hosted-ready";
-  }
-  if (!account?.available || account.status === "signed-out" || account.status === "error") {
-    return "local-only";
-  }
-  if (account.status === "ready" && !companion?.enabled) return "hosted-startable";
-  return "hosted-connecting";
-};
-
-export type PhonePairingGate = "open" | "start" | "wait" | "account-required";
-
-export function phonePairingGate(
-  account: CompanionAccountState | null,
-  companion: PhoneSetupCompanionSnapshot | null,
-  explicitRoute: boolean,
-): PhonePairingGate {
-  if (explicitRoute) return "open";
-  switch (companionPairingMode(account, companion)) {
-    case "hosted-ready":
-      return "open";
-    case "hosted-startable":
-      return "start";
-    case "hosted-connecting":
-      return "wait";
-    case "local-only":
-      return "account-required";
-  }
-}
-
-export function shouldPrepareSecureAddress(
-  routeMode: CompanionPairingRouteMode,
-  gate: PhonePairingGate,
-  account: CompanionAccountState | null,
-): boolean {
-  if (routeMode !== "automatic") return false;
-  if (gate === "open") return true;
-  return gate === "wait"
-    && account?.available === true
-    && (account.status === "ready" || account.status === "connecting");
-}
-
-export function secureAddressRequestLapsed(
-  account: CompanionAccountState | null,
-  companion: PhoneSetupCompanionSnapshot | null,
-): boolean {
-  return account?.available === true
-    && account.status === "ready"
-    && !account.endpoint
-    && phonePairingGate(account, companion, false) === "wait";
-}
-
 export function newlyPairedDevice<T extends { id: string; name: string }>(
   baselineDeviceIds: string[],
   devices: T[],
@@ -220,13 +105,6 @@ export function newlyPairedDeviceForFlow<T extends { id: string; name: string }>
 
 export function phoneSetupBaseline<T extends { id: string }>(devices: T[] | null): string[] | null {
   return devices ? devices.map((device) => device.id) : null;
-}
-
-export function shouldArmPhoneSetupProvisioningTimeout(
-  flow: Pick<PhoneSetupFlowState, "active">,
-  snapshot: Pick<PhoneSetupSnapshot, "provisioning" | "provisioningTimedOut">,
-): boolean {
-  return flow.active && snapshot.provisioning && !snapshot.provisioningTimedOut;
 }
 
 export interface PhonePairingAttemptLock {
@@ -393,45 +271,8 @@ const START_FAILURE_MESSAGE =
   "Remote access could not start. Open Advanced & troubleshooting, then try turning Remote access on again.";
 
 export function companionStartFailure(
-  companion: Pick<PhoneSetupCompanionSnapshot, "enabled"> & { error?: string },
+  companion: { enabled: boolean; error?: string },
 ): string | null {
   if (companion.enabled && !companion.error) return null;
   return companion.error?.trim() || START_FAILURE_MESSAGE;
-}
-
-const REQUEST_REFERENCE =
-  /\bReference:\s*([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\.?/i;
-const IPC_REJECTION =
-  /^Error invoking remote method ['"][^'"\r\n]+['"]:\s*(?:Error:\s*)?/i;
-const PUBLIC_ACCOUNT_MESSAGES = [
-  /^Enter a valid email address\.$/,
-  /^The secure connection request (?:was not accepted|was not allowed)\./,
-  /^That code (?:is not valid|expired)\./,
-  /^Your sign-in expired\./,
-  /^(?:Openpals|OpenMausBot) could not reach its secure connection service\./,
-  /^Too many attempts were made\./,
-  /^This computer was reconnected too often\./,
-  /^This account has reached its computer limit\./,
-  /^This computer is already connected\./,
-  /^The secure connection (?:is still being prepared|service could not finish setup|is still being removed)\./,
-  /^Secure HTTPS links are temporarily full\./,
-  /^Secure access is not available right now\./,
-  /^The secure connection service (?:had a problem|returned an unexpected response|is busy right now)\./,
-  /^The secure connection request could not be completed\./,
-];
-
-/** Electron prefixes rejected IPC errors with its channel machinery; keep that out of product copy. */
-export function normalizePhoneSetupActionError(cause: unknown, fallback: string): string {
-  const raw = cause instanceof Error ? cause.message : "";
-  const unwrapped = raw.replace(IPC_REJECTION, "").replace(/^Error:\s*/i, "").trim();
-  const reference = unwrapped.match(REQUEST_REFERENCE)?.[1] ?? "";
-  const message = unwrapped.replace(REQUEST_REFERENCE, "").trim();
-  const forbiddenCodeRequest =
-    /remote method ['"]companion-account:request-code['"]/i.test(raw)
-    && message.startsWith("The secure connection request was not allowed.");
-  const publicMessage = !forbiddenCodeRequest
-    && PUBLIC_ACCOUNT_MESSAGES.some((pattern) => pattern.test(message))
-    ? message
-    : fallback;
-  return reference ? t("phone.error.reference", { message: publicMessage, reference }) : publicMessage;
 }

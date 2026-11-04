@@ -43,7 +43,6 @@ vi.mock("@/lib/interface-mode", () => ({
   useAdvancedMode: () => fixture.advancedMode,
   setAdvancedMode: fixture.setAdvancedMode,
 }));
-vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
   const original = await importOriginal<typeof import("./SettingsPrimitives")>();
   return {
@@ -94,12 +93,12 @@ describe("Settings rail groups", () => {
     expect(SETTINGS_GROUPS.map((group) => group.id)).toEqual(["you", "ai", "computers", "account"]);
     const ids = SECTIONS.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toHaveLength(20); // 16 + the shared Skills library (AI group) + Logins (Devices) + Import and a team's Bot access (Account)
+    expect(ids).toHaveLength(17); // 14 + the shared Skills library (AI group) + Logins (Devices) + Import (Account)
     for (const entry of SECTIONS) expect(SETTINGS_GROUPS.map((group) => group.id)).toContain(entry.group);
   });
 
   it("shows every desktop page under its labelled group", () => {
-    vi.stubGlobal("window", { ogb: { environments: {}, organization: {}, cloudAccount: {} } });
+    vi.stubGlobal("window", { ogb: { environments: {} } });
     const html = render();
     for (const label of ["You", "AI", "Devices", "Account"]) expect(html).toContain(`>${label}</div>`);
     expect(html).toContain("glass-surface");
@@ -107,7 +106,7 @@ describe("Settings rail groups", () => {
       you: ["general", "appearance", "companion"],
       ai: ["engines", "connections", "decisionModel"],
       computers: ["desktopWorkspaces", "computer", "logins"],
-      account: ["cloudAccount", "organization", "usage", "backups", "import", "experimental"],
+      account: ["usage", "backups", "import", "experimental"],
     });
     expect(html).toContain('<optgroup label="AI">');
   });
@@ -117,22 +116,10 @@ describe("Settings rail groups", () => {
     const groups = rail(render());
     expect(groups.account).toEqual(["usage", "backups", "import", "people", "activity", "experimental"]);
     expect(Object.values(groups).flat()).not.toContain("desktopWorkspaces");
-    expect(Object.values(groups).flat()).not.toContain("cloudAccount");
-  });
-
-  it("gives a team's admins its Bot access page, and nobody else", () => {
-    fixture.config = { team: { id: "team-acme", name: "Acme" }, cloudHome: true };
-    fixture.ownerOrAdmin = true;
-    expect(rail(render()).account).toContain("botAccess");
-    fixture.ownerOrAdmin = false;
-    expect(Object.values(rail(render())).flat()).not.toContain("botAccess");
-    fixture.config = {};
-    fixture.ownerOrAdmin = true;
-    expect(Object.values(rail(render())).flat()).not.toContain("botAccess");
   });
 
   it("shows a paired remote client only Appearance, Remote access and Servers", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true }, environments: {}, organization: {}, cloudAccount: {} } });
+    vi.stubGlobal("window", { ogb: { remoteClient: { active: true }, environments: {} } });
     expect(rail(render())).toEqual({ you: ["appearance", "companion"], computers: ["desktopWorkspaces"] });
   });
 

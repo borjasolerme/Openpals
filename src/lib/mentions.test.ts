@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mentionChoicesForQuery, mentionClassName, mentionRanges, mentionRowDescription } from "./mentions";
+import { mentionChoicesForQuery, mentionRanges, mentionRowDescription } from "./mentions";
 
 const peers = [{ name: "Atlas" }, { name: "New Bot" }, { name: "New Bot 2" }, { name: "調査担当" }, { name: "Hidden", hidden: true }];
 const matches = (text: string, everyone = false) => mentionRanges(text, peers, everyone).map(({ start, end }) => text.slice(start, end));
@@ -36,13 +36,6 @@ describe("mention display ranges", () => {
   });
 });
 
-describe("the @devs tag in display ranges", () => {
-  it("is drawn like a tag, in any chat, unless a bot has that name", () => {
-    expect(matches("@devs the page froze, @Devs! but not ops@devs.test or @devsite")).toEqual(["@devs", "@Devs"]);
-    expect(mentionRanges("@devs hi", [{ name: "Devs", color: "blue" }]).map((range) => range.color)).toEqual(["#377FE6"]);
-  });
-});
-
 describe("the person's tag in display ranges", () => {
   const person = { profileName: "Sam" };
   const ranges = (text: string, roster = peers, everyone = false) => mentionRanges(text, roster, everyone, person)
@@ -63,25 +56,6 @@ describe("the person's tag in display ranges", () => {
   });
   it("leaves @everyone as it was", () => {
     expect(ranges("@everyone then @you", peers, true)).toEqual([["@everyone", false], ["@you", true]]);
-  });
-});
-
-describe("a teammate's tag in display ranges", () => {
-  const roster = [...peers, { name: "Bob Stone", person: true as const }, { name: "Bob", person: true as const }];
-  it("marks a teammate as a person, never in a bot's colour, and the viewer's own name stays theirs", () => {
-    const text = "@Atlas and @Bob Stone, then @Bob, then @Sam";
-    expect(mentionRanges(text, roster, false, { profileName: "Sam" }).map(({ start, end, person, you }) => [text.slice(start, end), person ?? false, you ?? false]))
-      .toEqual([["@Atlas", false, false], ["@Bob Stone", true, false], ["@Bob", true, false], ["@Sam", false, true]]);
-    expect(mentionClassName({ person: true })).toBe("mention-highlight mention-person");
-  });
-  it("gives a teammate a tie with a bot of the same name, whichever comes first in the list", () => {
-    const text = "@Bob, please";
-    for (const list of [[{ name: "Bob" }, { name: "Bob", person: true as const }], [{ name: "Bob", person: true as const }, { name: "Bob" }]]) {
-      expect(mentionRanges(text, list).map(({ person }) => person ?? false)).toEqual([true]);
-    }
-  });
-  it("does not let a teammate's name take the viewer's own tag away", () => {
-    expect(mentionRanges("@Sam", [{ name: "Sam", person: true }], false, { profileName: "Sam" })).toEqual([{ start: 0, end: 4, you: true }]);
   });
 });
 

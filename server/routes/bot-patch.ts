@@ -8,7 +8,6 @@ import { parseToolScope, toolScopeWidens } from "../../shared/tool-scope.ts";
 import { isMausColor, MAUS_COLOR_NAMES, type WireBot, type WireGroup } from "../../shared/wire.ts";
 import { validateBotCwd } from "../bot-cwd.ts";
 import { parseBotProfilePatch } from "../bot-profile.ts";
-import { accessFromVisibility } from "../../shared/bot-access.ts";
 import { parseVisibility } from "../bot-visibility.ts";
 import type { BrowserLive } from "../browser-live.ts";
 import type { BrowserRuntime } from "../browser-runtime.ts";
@@ -19,13 +18,12 @@ import { isValidSshAlias, type AppConfig } from "../config.ts";
 import type { ModelSelection } from "../contracts.ts";
 import type { createApprovalModeSupport } from "../harness-capabilities.ts";
 import type { ProviderRegistry } from "../harness/registry.ts";
-import type { hostedModelPolicy } from "../hosted-models.ts";
 import { MAX_MCP_SERVERS, mcpServerNameError } from "../mcp-registry.ts";
 import type { MemoryUpkeep } from "../memory-upkeep.ts";
 import { phoneAppsFor } from "../phones/access.ts";
 import { profileSnapshot } from "../profile-revision.ts";
 import { recordProfileChange } from "../profile-versions.ts";
-import { memberBotPatchViolation, requestSource, type RequestAuth } from "../request-auth.ts"; import { defaultBotPatchRefusal, ownsDefaultBot } from "../default-bot.ts";
+import { memberBotPatchViolation, requestSource, type RequestAuth } from "../request-auth.ts"; import { defaultBotPatchRefusal } from "../default-bot.ts";
 import type { RoutineManager } from "../routines.ts";
 import type { SessionRegistry } from "../sessions.ts";
 import { parseConnectorTools } from "../connector-tools.ts";
@@ -45,7 +43,6 @@ export interface BotPatchRouteDeps {
   browserLive: Pick<BrowserLive, "closeForBot">;
   memoryUpkeep: Pick<MemoryUpkeep, "dropBot">;
   cacheKeepWarm: Pick<CacheKeepWarm, "refresh">;
-  hostedModels: ReturnType<typeof hostedModelPolicy>;
   supportsApprovalMode: ReturnType<typeof createApprovalModeSupport>;
   routines(): RoutineManager | null;
   activeVpsThreads: { has(botId: string): boolean };
@@ -74,15 +71,13 @@ export interface BotPatchRouteDeps {
   forgetTemporaryBrowser(botId: string): Promise<void>;
   /** What this session may do with the bot: off a Team Cloud a member chats with every bot they see. */
   levelOf(auth: RequestAuth, botId: string): "none" | "view" | "chat" | "edit";
-  /** A Team Cloud, where a bot's sharing follows its visibility. */
-  team: boolean;
   /** The bot's conversations the main-thread resolver may pick: a Team Cloud keeps only team-visible ones. */
   mainThreadTasks(botId: string): readonly TaskRecord[];
 }
 
 export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
   const {
-    store, cfg, registry, sessions, browserRuntime, browserLive, memoryUpkeep, cacheKeepWarm, hostedModels, supportsApprovalMode, activeVpsThreads,
+    store, cfg, registry, sessions, browserRuntime, browserLive, memoryUpkeep, cacheKeepWarm, supportsApprovalMode, activeVpsThreads,
     hostedWorkspace: HOSTED_WORKSPACE, hostedFullAccessRefusal: HOSTED_FULL_ACCESS_REFUSAL, desktopManaged: DESKTOP_MANAGED, maxWorkspaceBots: MAX_WORKSPACE_BOTS,
     broadcast, wireBot, publicGroupState, audienceChanged, storedAvatarExists, requestedTaskBot, threadBusy, activeGroupTurnForBot,
     checkedModelSelection, engineSwitchNeedsAsk, currentBrowserSession, interruptAllDirectThreads, cancelGroupTurnOperations,
@@ -101,9 +96,8 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       }
       const pairedDevice = req.headers["x-openmausbot-companion"] === "1";
       if ((auth.kind === "session" && !auth.scopes.includes("admin")) || pairedDevice) {
-        const session = auth.kind === "session" ? auth.session : undefined;
         const level = pairedDevice ? "chat" : deps.levelOf(auth, m[1]);
-        const field = memberBotPatchViolation(body, level === "none" ? "chat" : level, ownsDefaultBot(store.bot(m[1]), session?.email), session?.membershipAuthority === "team");
+        const field = memberBotPatchViolation(body, level === "none" ? "chat" : level);
         if (field) {
           return json(res, 403, {
             error: pairedDevice
@@ -583,7 +577,6 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
         const parsed = parseVisibility(body.visibility);
         if (!parsed.ok) return json(res, 400, { error: parsed.error });
         patch.visibility = parsed.visibility;
-        if (deps.team) patch.access = accessFromVisibility(parsed.visibility);
       }
       if (body.alwaysAllow !== undefined) {
         if (!Array.isArray(body.alwaysAllow) || body.alwaysAllow.some((t: unknown) => typeof t !== "string")) {
@@ -724,8 +717,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       if (body.memoryUpkeep === false || body.memoryEnabled === false) memoryUpkeep.dropBot(bot.id);
       if (body.cacheKeepWarm !== undefined) cacheKeepWarm.refresh();
       if (computerSpecified && requestedComputer !== undefined) store.clearAutoSurfacePins(m[1], requestedComputer);
-      if (normalizedSelection && movedTask) store.patchTask(bot.id, movedTask.threadId, { modelSelection: undefined,
-        ...hostedModels?.resetTask(movedTask.modelSelection, normalizedSelection) });
+      if (normalizedSelection && movedTask) store.patchTask(bot.id, movedTask.threadId, { modelSelection: undefined });
       if (existingBot && (bot.browserProfile !== beforeBrowserProfile || bot.browser !== beforeBrowserEnabled)) {
         browserLive.closeForBot(bot.id);
         if (beforeBrowserProfile === "guest" && (bot.browserProfile !== "guest" || bot.browser === false)) {

@@ -133,16 +133,16 @@ export function computerToolsRefusal(toolScope: unknown, source: PlaceSource, bo
 export class PlaceUnavailableError extends Error {
   readonly place: Surface;
   readonly row: PlaceRow;
-  constructor(place: Surface, row: PlaceRow, cloudHome = false) {
-    super(placeRowText(row, cloudHome ? "my-cloud" : undefined));
+  constructor(place: Surface, row: PlaceRow) {
+    super(placeRowText(row));
     this.name = "PlaceUnavailableError";
     this.place = place;
     this.row = row;
   }
 }
 
-export function placeUnavailable(place: Surface, row: PlaceRow, cloudHome = false): PlaceUnavailableError {
-  return new PlaceUnavailableError(place, row, cloudHome);
+export function placeUnavailable(place: Surface, row: PlaceRow): PlaceUnavailableError {
+  return new PlaceUnavailableError(place, row);
 }
 
 export function surfaceLabel(surface: Surface): string {
@@ -183,24 +183,15 @@ const REPORT_BACK = "tell the bot that gave you this job which place you need an
 const SURFACE_AUTHORITY =
   ` For browser and computer tasks, use Openpals' mounted browser/computer tools first: inspect the target, perform the action, and verify its result before claiming success. Discover deferred tools by their server/name when needed. Do not substitute the provider's own desktop, a shell-launched browser, or another automation path for the selected Openpals surface. Ordinary code and file tasks may still use their normal tools. Announcing an action is not performing it. A request naming another place does not move these tools: this computer is the user's host, Local VM is an isolated desktop, the cloud computer is remote, and the built-in browser is a separate browser. If the requested place differs from the mounted one, ${ASK_TO_SWITCH}; never act on a different computer or describe a host window as a VM.`;
 
-/** A Cloud home has neither this computer nor a Local VM; each pair rewrites one phrase of the wording above. */
-const CLOUD_HOME_WORDING: ReadonlyArray<readonly [string, string]> = [
-  ["this computer is the user's host, Local VM is an isolated desktop, the cloud computer is remote, and the built-in browser is a separate browser",
-    "the cloud computer is remote, the built-in browser is a separate browser, and the user's own computer cannot be reached from here"],
-  [" or describe a host window as a VM", ""],
-  ["select an available Local VM without asking", "select an available cloud computer without asking"],
-  [" Never silently replace an explicitly requested VM with the host desktop.", ""],
-];
-
 /** Built from what was actually mounted, never from the setting, so the model is only told about tools it can call. */
 export function surfacePrompt(
   mounted: MountedSurfaces,
-  opts: { pinned?: Surface | null; note?: string; canSelect?: boolean; cloudHome?: boolean; botOpened?: boolean } = {},
+  opts: { pinned?: Surface | null; note?: string; canSelect?: boolean; botOpened?: boolean } = {},
 ): string {
   const reportBack = opts.botOpened && !opts.canSelect;
   const computer = mounted.computer ? surfaceLabel(mounted.computer) : null;
   let text = "";
-  if (mounted.computer === "local" && !opts.cloudHome) {
+  if (mounted.computer === "local") {
     text = mounted.browser
       ? ` Two surfaces are mounted this turn: the built-in browser (the browser server's browser_navigate, browser_snapshot, browser_click, browser_fill and friends) and this computer (the computer server's tools). Web tasks → the built-in browser. Desktop apps, files and shell → this computer tools. Pick one surface for a task and stay on it; if you need the user to sign in, say which surface — the Browser tab or this computer.${YOUR_COMPUTER_BESIDE_BROWSER}`
       : YOUR_COMPUTER_ALONE;
@@ -228,6 +219,5 @@ export function surfacePrompt(
   if (opts.canSelect && !computer && !mounted.browser) text += " No computer or browser tools are mounted yet; select_computer is the way to connect them before screen work, not a reason to claim you already performed it.";
   if (computer || mounted.browser) text += CONNECTED_APP_FIRST;
   if (computer || mounted.browser) text += " For online research, use the selected Openpals browser when a search service is unavailable. A failed tool proves only that this attempt failed, not that every browser is unavailable. Inspect the current page after navigation; report a sign-in page, redirect or error as such. A completed model turn is not proof that the user's task succeeded.";
-  if (opts.cloudHome) for (const [desktop, cloudHome] of CLOUD_HOME_WORDING) text = text.replace(desktop, cloudHome);
   return text + (opts.note ?? "");
 }

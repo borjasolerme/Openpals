@@ -33,8 +33,6 @@ beforeAll(async () => {
   });
   await new Promise<void>((resolve) => api.listen(0, "127.0.0.1", resolve));
   vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
-  vi.stubEnv("OMB_CLOUD_BOAT_URL", undefined);
-  vi.stubEnv("OMB_CLOUD_BOAT_TOKEN", undefined);
   vi.resetModules();
   boat = await import("../boat.ts");
   journal = await import("../boat-create-idempotency.ts");

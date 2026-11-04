@@ -95,7 +95,7 @@ export function createReplyTracker({ threadId, sendId }) {
 
 const JSON_HEADERS = { "content-type": "application/json" };
 
-/** A server whose bots moved to My Cloud refuses every change with 409 `{ code: "moved" }`. */
+/** A computer whose bots moved to a server of the person's own refuses every change with 409 `{ code: "moved" }`. */
 async function refusal(response) {
   const body = response.status === 409 ? await response.json().catch(() => null) : null;
   if (!body) void response.body?.cancel().catch(() => {});

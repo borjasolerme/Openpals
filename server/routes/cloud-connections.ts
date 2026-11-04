@@ -38,11 +38,8 @@ export interface ConnectionsAnswer {
 export type Adopted = { ok: true; outcome: "adopted" | "kept" } | { ok: false; status: number; error: string };
 
 export interface CloudConnectionRouteDeps {
-  /** Only a Cloud home takes connections, and a server of one person's own from that person's session (`ownHome`). */
-  cloudHome: boolean;
-  ownHome?(auth: RequestAuth): boolean;
-  /** A Team Cloud: a person's own connections (a share, a sign-in, HighLevel) are refused with one plain line. */
-  personalRefusal?: (what: string) => string | null;
+  /** Only a server of one person's own takes connections, from that person's session. */
+  ownHome(auth: RequestAuth): boolean;
   list(): Promise<ConnectionsAnswer>;
   adoptShare(code: string): Promise<ShareOutcome>;
   adoptOwn(apiKey: string, userId: string): Promise<ShareOutcome>;
@@ -51,8 +48,6 @@ export interface CloudConnectionRouteDeps {
   /** `replaces`: the digest of the sign-in this computer moved here before, which a newer one may replace. */
   adoptSignIn(name: string, record: McpOAuthRecord, replaces: string | null): Adopted;
   adoptHighLevel(connection: HighLevelConnection, replaces: string | null): Adopted;
-  /** Keeps the keys of these engines unused while a trial's Claude credit lasts; false when they run now. */
-  holdKeys?(engines: string[]): boolean;
 }
 
 export function createCloudConnectionRoutes(deps: CloudConnectionRouteDeps): RouteHandler {
@@ -63,19 +58,11 @@ export function createCloudConnectionRoutes(deps: CloudConnectionRouteDeps): Rou
       if (method !== "GET") return json(res, 405, { error: "method not allowed" });
       return json(res, 200, await deps.list());
     }
-    if (!deps.cloudHome && deps.ownHome?.(auth) !== true) return json(res, 404, { error: "not found" });
-    if (path === "/api/cloud-connections/held-keys") {
-      if (method !== "PUT") return json(res, 405, { error: "method not allowed" });
-      const asked = z.object({ for: z.array(z.string().regex(/^[\w.:-]{1,128}$/u)).max(20) }).safeParse(await readBody(req, 4096));
-      if (!asked.success) return json(res, 400, { error: "send { for }: the engines a key runs" });
-      return json(res, 200, { held: deps.holdKeys?.(asked.data.for) ?? false });
-    }
+    if (!deps.ownHome(auth)) return json(res, 404, { error: "not found" });
     const signIn = SIGN_IN.exec(path);
     if (path !== "/api/cloud-connections/connected-apps" && path !== "/api/cloud-connections/highlevel" && !signIn) return json(res, 404, { error: "not found" });
     if (method !== (path === "/api/cloud-connections/connected-apps" ? "POST" : "PUT")) return json(res, 405, { error: "method not allowed" });
     if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) return json(res, 415, { error: "content-type must be application/json" });
-    const refused = deps.personalRefusal?.(signIn ? signIn[1]! : path === "/api/cloud-connections/highlevel" ? "HighLevel" : "these apps");
-    if (refused) { req.resume(); return json(res, 403, { error: refused }); }
     const body = await readBody(req, 64 * 1024);
     const replaces = url.searchParams.get("replaces");
     if (replaces !== null && !DIGEST.test(replaces)) return json(res, 400, { error: "replaces is a sign-in's digest" });

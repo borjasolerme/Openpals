@@ -29,8 +29,6 @@ export interface AskCardsDeps {
   /** The conversation that handed this one its work, while that work is live. */
   delegatorOf(threadId: string): { threadId: string; botId?: string } | undefined;
   notify(notification: Notification | null): void;
-  /** On a Team Cloud: what `botId` asks in `threadId` reaches the inbox conversation `inboxThreadId` as a copy. */
-  copiedInto(inboxThreadId: string, botId: string, threadId: string): boolean;
   /** The bot's turn in `threadId` waits on this card's live request. */
   live(threadId: string, requestId: string): boolean;
   /** The parked node's next turn carries the person's answer. */
@@ -67,9 +65,9 @@ function beforeQuestion(text: string): string {
   return lines.slice(0, Math.max(0, lines.findLastIndex((line) => NEEDS_INPUT_LINE.test(line.trim())))).join("\n").trim();
 }
 
-/** A question card's own message, not an inbox copy of one. */
+/** A question card's own message. */
 const ownQuestionCard = (message: Message): boolean =>
-  Boolean(message.card?.requestId && !message.inbox && !message.card.tool && isPersistentQuestionCard(message.card));
+  Boolean(message.card?.requestId && !message.card.tool && isPersistentQuestionCard(message.card));
 
 export function createAskCards(deps: AskCardsDeps) {
   const { store, delegatorOf, notify } = deps;
@@ -77,7 +75,7 @@ export function createAskCards(deps: AskCardsDeps) {
 
   function showWaitingOnPersonChip(threadId: string, requestId: string, asker: BotRecord, kind: "approval" | "answer") {
     const delegator = delegatorOf(threadId);
-    if (!delegator || delegator.threadId === threadId || deps.copiedInto(delegator.threadId, asker.id, threadId)) return;
+    if (!delegator || delegator.threadId === threadId) return;
     const chip = store.appendMessage(delegator.threadId, { role: "bot", kind: "activity",
       from: { botId: asker.id, name: asker.name, color: asker.color },
       tool: { name: `Waiting on your ${kind} in @${asker.name}` },
@@ -151,7 +149,7 @@ export function createAskCards(deps: AskCardsDeps) {
     const asksWithCard = Boolean(node.parentId && !node.cards?.length);
     const posted = asksWithCard && questionCard(node, question);
     if (restored && (asksWithCard ? !posted : !liveParent || chipShown(liveParent.threadId, node, chip))) return;
-    if (liveParent && !(asksWithCard && deps.copiedInto(liveParent.threadId, bot.id, node.threadId))) {
+    if (liveParent) {
       store.appendMessage(liveParent.threadId, {
         role: "bot", kind: "activity",
         from: { botId: bot.id, name: bot.name, color: bot.color },
@@ -220,7 +218,7 @@ export function createAskCards(deps: AskCardsDeps) {
   function answerParked(threadId: string, requestId: string, text: string): boolean {
     const id = requestId.startsWith(OPEN_QUESTION) ? requestId.slice(OPEN_QUESTION.length).replace(/-\d+$/, "") : "";
     const node = id ? deps.node(id) : undefined;
-    const message = store.messagesFor(threadId).find((candidate) => candidate.card?.requestId === requestId && !candidate.inbox);
+    const message = store.messagesFor(threadId).find((candidate) => candidate.card?.requestId === requestId);
     if (!node || node.status !== "waiting" || node.question === undefined || node.cards?.length || !message?.card || !deps.answerNode(node.id, text)) return false;
     store.patchMessage(threadId, message.id, { card: { ...message.card, answered: "answer", answeredText: text, answeredBy: undefined } });
     return true;

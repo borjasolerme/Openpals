@@ -1,5 +1,5 @@
 // This app's own prompt for a bot's ask: shown once nobody has touched the keyboard or mouse for a second, so a key meant
-// for something else never answers it, and never while the person is looking at that Cloud in this app, where the card is.
+// for something else never answers it, and never while the person is looking at that server in this app, where the card is.
 import { askPromptWords } from "./screen-words.mjs";
 import { deviceWord } from "./lending-indicator.mjs";
 

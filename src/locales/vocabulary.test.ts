@@ -60,19 +60,13 @@ const isSource = (name: string) => /\.(?:ts|tsx|mjs|cjs|js)$/.test(name) && !/\.
 const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = [
   { file: "shared/credential-request.ts", snippet: "when Boat is selected", why: "the card that asks for a person's own Boat key" },
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
-  { file: "src/lib/boat-offer.ts", snippet: "MausBot introduced me", why: "the email a person sends Boat to claim its credit" },
   { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
-  { file: "electron/company-backups.mjs", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
   { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },
   { file: "electron/open-at-login.mjs", snippet: "X-OpenMausBot-Lending", why: "the marker that finds autostart entries already written" },
-  { file: "server/drivers/agents-devs-tools.ts", snippet: "OpenMausBot's developers", why: "@devs bug reports go to the upstream team" },
-  { file: "server/host/devs-reports.ts", snippet: "OpenMausBot's developers", why: "@devs bug reports go to the upstream team" },
   { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },
   { file: "server/decider/relay.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
   { file: "server/extractor/contract.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
-  ...["server/browser-engine-release.ts", "src/lib/app-links.ts", "src/components/AnalyticsRow.tsx",
-    "src/components/CustomDomainSettings.tsx", "src/components/LinuxLocalControl.tsx", "src/components/bot-settings/ToolSelectionCard.tsx",
-    "src/components/keys/KeyPanels.tsx"].map((file) => ({ file, snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its releases, docs and issues" })),
+  { file: "server/browser-engine-release.ts", snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its Windows browser engine release" },
 ];
 
 function* sources(dir: string): Generator<string> {
@@ -166,16 +160,10 @@ describe("one name per thing", () => {
   it("copy that points at a control names it exactly as the control is labelled", () => {
     const e = en as Record<string, string>;
     const source = (file: string) => readFileSync(join(ROOT, file), "utf8");
-    const myCloud = /CLOUD_HOME_NAME = "([^"]+)"/.exec(source("electron/cloud-home.mjs"))?.[1];
     const thisComputer = /id: "workspace-local", label: "([^"]+)"/.exec(source("electron/environments.cjs"))?.[1];
     const serverMenuLocal = /\{ label: "([^"]+)", type: "radio", checked: !active/.exec(source("electron/menu.mjs"))?.[1];
-    expect([myCloud, thisComputer, serverMenuLocal]).toEqual([e["cloudSetup.myCloud"], e["place.local"], e["place.local"]]);
+    expect([thisComputer, serverMenuLocal]).toEqual([e["place.local"], e["place.local"]]);
     const pointers: Array<[string, string[]]> = [
-      ["cloudHome.connectHelp", [e["place.local"]!]],
-      ["cloudPhone.step1", [myCloud!]],
-      ["cloudAccount.onCloudSignIn", [e["cloudAccount.signInAgain"]!]],
-      ["cloudAccount.storageFailed", [e["cloudAccount.signOut"]!]],
-      ["cloudAccount.codeExpired", [e["cloudAccount.signIn"]!]],
       ["computer.routines.offWarning", [e["routines.runsOn.boat"]!]],
     ];
     const stale = pointers.flatMap(([key, labels]) => labels.filter((label) => !e[key]!.includes(label)).map((label) => `${key} → ${label}`));

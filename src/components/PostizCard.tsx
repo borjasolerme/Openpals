@@ -6,7 +6,6 @@ import { t } from "@/lib/i18n";
 import { openExternalLink } from "@/lib/app-links";
 import { reserveConnectionPage } from "@/lib/connector-oauth";
 import { completeMcpSignIn, mcpSignInLink, runMcpSignIn, type McpSignInStatus } from "@/lib/mcp-sign-in";
-import { keySaved, keySaveFailure } from "@/lib/product-events";
 import { POSTIZ_API, postizErrorText, postizHost, postizSaveErrorText } from "@/lib/postiz";
 import { isPostizStatus, POSTIZ_CLOUD, POSTIZ_KEY_PAGE, POSTIZ_SERVER, type PostizStatus } from "../../shared/postiz";
 import { cleanKey, looksLikeKey, saveCredential } from "./keys/key-save";
@@ -16,8 +15,6 @@ const pill = "inline-flex h-7 min-w-[64px] shrink-0 items-center justify-center 
 const field = "h-8 w-full min-w-0 rounded-lg bg-inset px-2.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent/50";
 const link = "text-[12px] text-accent-text underline underline-offset-2";
 const SERVER = encodeURIComponent(POSTIZ_SERVER);
-const OWN_SIGN_IN_POLL_MS = 1_500;
-const OWN_SIGN_IN_WAIT_MS = 5 * 60_000;
 
 /** OpenMausBot's own mark for Postiz: no Postiz artwork is bundled. */
 export function PostizIcon() {
@@ -29,9 +26,7 @@ export function PostizIcon() {
   );
 }
 
-type OwnConnection = { connected: boolean; how: "sign-in" | "key" | null } | null;
-
-/** The Postiz card in Apps: Postiz Cloud's sign-in, or an organisation API key for Postiz Cloud or a person's own
+/** The Postiz card in Apps: Postiz Cloud's sign-in, or an organisation API key for Postiz Cloud or the person's own
  * Postiz server. Once connected, bots get Postiz's tools as the `postiz` MCP server. */
 export function PostizCard({ refreshKey = 0, onConnection }: {
   refreshKey?: number;
@@ -50,16 +45,8 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
   const [keyMode, setKeyMode] = useState(false);
   const [key, setKey] = useState("");
   const [address, setAddress] = useState("");
-  const [onlyMe, setOnlyMe] = useState(false);
-  const [own, setOwn] = useState<OwnConnection>(null);
   const mounted = useRef(true);
   const signIn = useRef<{ controller: AbortController; complete?: (result: McpSignInStatus) => void } | null>(null);
-
-  const ownConnection = useCallback(async (): Promise<OwnConnection> => {
-    const mine = await api("/api/team/my-connections").catch(() => null) as { mcp?: Array<{ name: string; connected: boolean; how: "sign-in" | "key" | null }> } | null;
-    const entry = mine?.mcp?.find((each) => each.name === POSTIZ_SERVER);
-    return entry ? { connected: entry.connected, how: entry.how } : { connected: false, how: null };
-  }, []);
 
   const load = useCallback(async (check = false): Promise<PostizStatus | null> => {
     try {
@@ -68,7 +55,6 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
       if (!isPostizStatus(response)) throw new Error("unexpected Postiz status");
       setStatus(response);
       setLoadFailed(false);
-      if (response.team && response.scope === "person") setOwn(await ownConnection());
       return response;
     } catch (cause) {
       if (!mounted.current) return null;
@@ -76,13 +62,13 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
       else setLoadFailed(true);
       return null;
     }
-  }, [ownConnection]);
+  }, []);
 
   useEffect(() => {
     mounted.current = true;
     void load().then((loaded) => {
       // A sign-in or key revoked in Postiz shows as such: the server checks again at most every few minutes.
-      if (loaded?.state === "connected" && loaded.scope === "team") void load(true);
+      if (loaded?.state === "connected") void load(true);
     });
     return () => {
       mounted.current = false;
@@ -91,34 +77,12 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
     };
   }, [load, refreshKey]);
 
-  const person = status?.team === true && status.scope === "person";
-  const connected = person ? own?.connected === true : status?.state === "connected";
+  const connected = status?.state === "connected";
   useEffect(() => {
     onConnection?.(status ? connected : null);
   }, [status, connected, onConnection]);
 
   const applied = (config: ConfigStatus) => dispatch({ type: "configStatus", config });
-
-  /** Each person connects their own: the team's entry is on, and this person's own sign-in or key goes beside it. */
-  const makeOwn = async () => {
-    await api("/api/team/connection-scopes", { method: "PUT", body: JSON.stringify({ kind: "mcp", id: POSTIZ_SERVER, scope: "person" }) });
-    await api(`/api/mcp/servers/${SERVER}`, { method: "PATCH", body: JSON.stringify({ enabled: true }) });
-  };
-
-  const ownSignIn = async (controller: AbortController, open: (url: string) => Promise<boolean>) => {
-    const started = await api(`/api/team/my-connections/mcp/${SERVER}/sign-in`, { method: "POST" }) as { auth: McpSignInStatus };
-    const url = mcpSignInLink(started.auth.authorizationUrl);
-    if (!url) throw new Error(t("mcp.auth.failed"));
-    setFlow({ ...started.auth, flowId: null, pasteBack: false });
-    if (!await open(url) && mounted.current) setError(t("connectors.popupBlockedContinue"));
-    const until = Date.now() + OWN_SIGN_IN_WAIT_MS;
-    while (!controller.signal.aborted && Date.now() < until) {
-      await new Promise((resolve) => setTimeout(resolve, OWN_SIGN_IN_POLL_MS));
-      const mine = await ownConnection();
-      if (mine?.connected) return;
-    }
-    if (!controller.signal.aborted) throw new Error(t("postiz.signInExpired"));
-  };
 
   const connect = async () => {
     if (busy || signIn.current) return;
@@ -132,11 +96,6 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
     const open = async (url: string) => { const opened = await launch.open(url); launch.cancel(); return opened; };
     try {
       await api(`${POSTIZ_API}/sign-in`, { method: "POST" });
-      if (onlyMe || person) {
-        if (onlyMe && !person) await makeOwn();
-        await ownSignIn(controller, open);
-        return;
-      }
       const result = await runMcpSignIn(POSTIZ_SERVER, {
         api, signal: controller.signal,
         open: async (url) => { if (!await open(url) && mounted.current && !controller.signal.aborted) setError(t("connectors.popupBlockedContinue")); },
@@ -181,31 +140,21 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
 
   const connectWithKey = async () => {
     const value = cleanKey(key);
-    const target = person || onlyMe ? "" : address.trim();
+    const target = address.trim();
     if (busy) return;
     if (!looksLikeKey(value)) return setError(t("keys.notAKey"));
     setBusy("key");
     setError(null);
     try {
       await api(`${POSTIZ_API}/key-check`, { method: "POST", body: JSON.stringify({ key: value, ...(target ? { address: target } : {}) }) });
-      if (onlyMe || person) {
-        await api(`${POSTIZ_API}/sign-in`, { method: "POST" });
-        if (!person) await makeOwn();
-        const listed = await api(`/api/mcp/servers`) as { servers?: Array<{ name: string; url?: string }> };
-        const url = listed.servers?.find((server) => server.name === POSTIZ_SERVER)?.url;
-        await api(`/api/team/my-connections/mcp/${SERVER}/key`, { method: "PUT", body: JSON.stringify({ value, url }) });
-      } else {
-        const saved = state.config?.postiz?.url ?? "";
-        const wanted = target && postizHost(target) !== postizHost(POSTIZ_CLOUD) ? target : "";
-        if (wanted !== saved) applied(await api("/api/config", { method: "PUT", body: JSON.stringify({ postiz: { url: wanted } }) }));
-        applied(await saveCredential("postiz", value, state.config?.postiz?.configured !== true));
-      }
-      keySaved("postiz", "apps", "ok");
+      const saved = state.config?.postiz?.url ?? "";
+      const wanted = target && postizHost(target) !== postizHost(POSTIZ_CLOUD) ? target : "";
+      if (wanted !== saved) applied(await api("/api/config", { method: "PUT", body: JSON.stringify({ postiz: { url: wanted } }) }));
+      applied(await saveCredential("postiz", value, state.config?.postiz?.configured !== true));
       if (!mounted.current) return;
       setKey("");
       setKeyMode(false);
     } catch (cause) {
-      keySaved("postiz", "apps", keySaveFailure(cause));
       if (mounted.current) setError(postizSaveErrorText(cause, target || POSTIZ_CLOUD));
     } finally {
       if (mounted.current) {
@@ -220,12 +169,8 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
     setBusy("disconnect");
     setError(null);
     try {
-      if (person) {
-        await api(`/api/team/my-connections/mcp/${SERVER}`, { method: "DELETE" });
-      } else {
-        if (status?.keySaved) applied(await saveCredential("postiz", "", false));
-        await api(POSTIZ_API, { method: "DELETE" });
-      }
+      if (status?.keySaved) applied(await saveCredential("postiz", "", false));
+      await api(POSTIZ_API, { method: "DELETE" });
     } catch (cause) {
       if (mounted.current) setError(postizErrorText(cause, status?.address ?? POSTIZ_CLOUD));
     } finally {
@@ -240,17 +185,15 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
 
   if (hidden) return null;
   const waiting = busy === "sign-in";
-  const needsSignIn = !person && status?.state === "needs-sign-in";
-  const refused = !person && status?.state === "key-refused";
-  const blocked = status?.state === "blocked" || status?.state === "taken";
-  const description = status?.state === "taken" ? t("postiz.taken")
-    : status?.state === "blocked" ? status.message ?? t("postiz.description")
-      : connected
-        ? person ? t("postiz.connectedOwn")
-          : status?.how === "key" ? t("postiz.connectedKey", { host: status.host }) : t("postiz.connectedTo", { host: status?.host ?? "" })
-        : needsSignIn ? t("connectors.signedOut")
-          : refused ? t("postiz.keyRefused")
-            : t("postiz.description");
+  const needsSignIn = status?.state === "needs-sign-in";
+  const refused = status?.state === "key-refused";
+  const taken = status?.state === "taken";
+  const description = taken ? t("postiz.taken")
+    : connected
+      ? status?.how === "key" ? t("postiz.connectedKey", { host: status.host }) : t("postiz.connectedTo", { host: status?.host ?? "" })
+      : needsSignIn ? t("connectors.signedOut")
+        : refused ? t("postiz.keyRefused")
+          : t("postiz.description");
   const menu = (connected || needsSignIn || refused) && (
     <SidebarPopoverMenu
       placement="below"
@@ -264,7 +207,7 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
       )}
     />
   );
-  const offerConnect = status !== null && !connected && !blocked;
+  const offerConnect = status !== null && !connected && !taken;
 
   return (
     <div data-app-tile="postiz" data-postiz-state={status?.state ?? "loading"} className="flex min-w-0 flex-col rounded-xl px-2 py-2 transition-colors hover:bg-raised/40">
@@ -316,21 +259,13 @@ export function PostizCard({ refreshKey = 0, onConnection }: {
           </div>
         )}
         {error && <p role="alert" className="mt-1.5 text-[12px] text-danger">{error}</p>}
-        {offerConnect && !waiting && status.team && !person && (
-          <label data-postiz-only-me className="mt-1.5 flex items-center gap-2 text-[12px] text-ink-secondary">
-            <input type="checkbox" checked={onlyMe} onChange={(event) => setOnlyMe(event.target.checked)} /> {t("mcp.team.onlyMe")}
-          </label>
-        )}
-        {person && !connected && !waiting && <p className="mt-1.5 text-[12px] leading-relaxed text-ink-secondary">{t("postiz.personScope")}</p>}
         {offerConnect && !waiting && (keyMode ? (
           <form data-postiz-key-form className="mt-2 flex flex-col gap-2" onSubmit={(event) => { event.preventDefault(); void connectWithKey(); }}>
             <input type="password" autoComplete="off" spellCheck={false} aria-label={t("postiz.keyField")} placeholder={t("keys.postiz.placeholder")}
               value={key} disabled={busy === "key"} onChange={(event) => { setError(null); setKey(event.target.value); }} className={field} />
-            {!person && !onlyMe && (
-              <input type="url" autoComplete="off" spellCheck={false} aria-label={t("postiz.addressField")} placeholder={POSTIZ_CLOUD}
-                value={address} disabled={busy === "key"} onChange={(event) => { setError(null); setAddress(event.target.value); }} className={field} />
-            )}
-            <p className="text-[12px] leading-relaxed text-ink-secondary">{t(person || onlyMe ? "postiz.keyHelp" : "postiz.keyAndAddressHelp")}</p>
+            <input type="url" autoComplete="off" spellCheck={false} aria-label={t("postiz.addressField")} placeholder={POSTIZ_CLOUD}
+              value={address} disabled={busy === "key"} onChange={(event) => { setError(null); setAddress(event.target.value); }} className={field} />
+            <p className="text-[12px] leading-relaxed text-ink-secondary">{t("postiz.keyAndAddressHelp")}</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <button type="submit" disabled={busy !== null || !key.trim()} className={pill}>
                 {busy === "key" ? <Loader2 size={14} className="animate-spin" /> : t("connectors.action.connect")}

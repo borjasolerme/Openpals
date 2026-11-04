@@ -39,14 +39,12 @@ beforeEach(() => {
 });
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
-describe("the v1 view of one conversation's browser", () => {
-  it("asks for that conversation's browser on a Team Cloud, and for the bot's own browser elsewhere", () => {
-    createLiveStreamClient("scout", events(), vi.fn(), { viewer: "" }, { threadId: "ada-chat" });
-    createLiveStreamClient("scout", events(), vi.fn(), { viewer: "v-1" }, { threadId: "ada-chat" });
+describe("the v1 view of a bot's browser", () => {
+  it("asks for the bot's own browser, resuming the last viewer", () => {
+    createLiveStreamClient("scout", events(), vi.fn(), { viewer: "v-1" });
     createLiveStreamClient("scout", events(), vi.fn());
     expect(FixtureEventSource.instances.map((source) => source.url)).toEqual([
-      "/api/bots/scout/browser/live?threadId=ada-chat",
-      "/api/bots/scout/browser/live?resume=v-1&threadId=ada-chat",
+      "/api/bots/scout/browser/live?resume=v-1",
       "/api/bots/scout/browser/live",
     ]);
   });
@@ -119,7 +117,7 @@ describe("the v1 live client", () => {
 
   it("opens at the panel's size and sends each new size to its view while it only watches, the newest once the last is answered", async () => {
     const post = vi.fn<(body: Record<string, unknown>, viewerId: string) => Promise<unknown>>().mockResolvedValue({ ok: true });
-    const client = createLiveStreamClient("pepper", events(), post, { viewer: "" }, {}, { width: 365.4, height: 686 });
+    const client = createLiveStreamClient("pepper", events(), post, { viewer: "" }, { width: 365.4, height: 686 });
     const source = FixtureEventSource.instances.at(-1)!;
     expect(source.url).toBe("/api/bots/pepper/browser/live?width=365&height=686");
     expect(client.send({ type: "resize", width: 400, height: 700 })).toBe(true);
@@ -143,7 +141,7 @@ describe("the v1 live client", () => {
     const post = vi.fn<(body: Record<string, unknown>, viewerId: string) => Promise<unknown>>()
       .mockImplementation(async (body) => { if (body.type === "resize") throw Object.assign(new Error("Invalid browser action."), { status: 400 }); return { ok: true }; });
     const handlers = events({ onMessage: vi.fn(), onGone: vi.fn() });
-    const client = createLiveStreamClient("pepper", handlers, post, { viewer: "" }, {}, { width: 365, height: 686 });
+    const client = createLiveStreamClient("pepper", handlers, post, { viewer: "" }, { width: 365, height: 686 });
     const source = FixtureEventSource.instances.at(-1)!;
     source.emit("ready", { viewerId: "v1" });
     source.emit("control", { held: true, owned: true, controlling: true });

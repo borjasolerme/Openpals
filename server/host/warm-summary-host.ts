@@ -40,7 +40,6 @@ export interface WarmSummaryHostDeps {
   nativeCompactAt(instanceId: string): number | undefined;
   /** A turn is running or being set up in this conversation, or the bot is busy elsewhere. */
   busy(botId: string, threadId: string): boolean;
-  memoryShort(): boolean;
   /** What can wake a conversation without the person: a queued message, a teammate's answer, a wait, a routine. */
   queued(botId: string, threadId: string): boolean;
   coordinator: { activeDirect(threadId: string): boolean; awaitingTeammateThreads(): Set<string> };
@@ -129,7 +128,6 @@ export function createWarmSummaryHost(deps: WarmSummaryHostDeps) {
     },
     hold: ({ botId, threadId }) => {
       if (deps.busy(botId, threadId)) return { reason: "the bot is busy", retry: true };
-      if (deps.memoryShort()) return { reason: "memory is short", retry: true };
       if (deps.queued(botId, threadId)) return { reason: "a message is waiting for this conversation", retry: false };
       if (deps.coordinator.activeDirect(threadId) || deps.coordinator.awaitingTeammateThreads().has(threadId)) {
         return { reason: "a teammate is working on this conversation's request", retry: false };

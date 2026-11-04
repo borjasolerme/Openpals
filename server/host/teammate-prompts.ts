@@ -18,7 +18,6 @@ export interface TeammatePromptDeps {
   fullAccess(botId: string, threadId: string): boolean;
   /** The work in this thread was started by an outside event. */
   startedOutside(threadId: string): boolean;
-  guestDriven(threadId: string): boolean;
   confined(threadId: string): boolean;
   readableFrom(threadId: string): (other: string) => boolean;
   waitingForPerson(chief: BotRecord, teammates: readonly BotRecord[], readable: (threadId: string) => boolean): WaitingQuestion[];
@@ -46,7 +45,7 @@ export function createTeammatePrompts(deps: TeammatePromptDeps) {
 
   /** Security invariant: a webhook, routine or guest turn has no person behind it, so it neither hears nor says what waits on them. */
   const personBehind = (botId: string, threadId: string): boolean =>
-    !unattendedWork(botId, threadId) && !deps.guestDriven(threadId) && !deps.confined(threadId);
+    !unattendedWork(botId, threadId) && !deps.confined(threadId);
 
   /** Security invariant: only a turn the person is behind speaks for them. */
   const actsForPerson = (bot: BotRecord, threadId: string): boolean => chiefLevel(bot) && personBehind(bot.id, threadId);

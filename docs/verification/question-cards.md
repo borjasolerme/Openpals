@@ -86,28 +86,3 @@ Unit tests: `server/host/ask-cards.test.ts` (the card a parked question becomes,
 chip that stays out of the inbox, typed answers), `server/runtime/envelope.test.ts` (the ask line with and without a
 card tool), `src/components/QuestionCard.test.ts`, `src/components/QuestionCard.answer.test.ts` and
 `src/components/AskCard.test.ts` (the card family, its buttons and settled lines).
-
-## The cards, side by side
-
-```sh
-pnpm exec vite --port 5287
-```
-
-`http://127.0.0.1:5287/question-cards-preview.html` mounts the real chat, inbox card and inbox panel over a fixed store
-(`src/question-cards-preview.tsx`): `?state=question|approval|open|answered`, `surface=chat|inbox|panel`,
-`skin=midnight|daylight`, `mode=simple|advanced`, `lang=de`; `state=others` shows the key, sign-in, connection and
-first-run cards that share the card's shell.
-
-The before-and-after screenshots were removed because they showed real example data. To see each screen, run the
-command above and open `question-cards-preview.html` in a 1338×870 window with these settings (for Phone, narrow the
-window to a phone's width):
-
-| Screen | Settings |
-|---|---|
-| Set answers, chat | `?state=question&surface=chat&skin=midnight&mode=simple` |
-| Set answers, inbox | `?state=question&surface=inbox&skin=daylight&mode=simple` |
-| Set answers, panel | `?state=question&surface=panel&skin=midnight&mode=advanced` |
-| Approval | `?state=approval&surface=chat&skin=daylight&mode=advanced` |
-| Open question, inbox | `?state=open&surface=inbox&skin=midnight&mode=simple` |
-| Answered | `?state=answered&surface=chat&skin=daylight&mode=simple` |
-| Phone | `?state=question&surface=chat&skin=midnight&mode=simple` |

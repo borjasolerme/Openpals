@@ -1,12 +1,9 @@
-import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-import { memberAudience, roomAudience, TEAM_AUDIENCE } from "./audience.ts";
 import type { InstanceConfigMap, ProviderSnapshot } from "./contracts.ts";
-import { audienceHome } from "./engine-homes/layout.ts";
-import { accountReadableFrom, engineLimitsFor, type EngineLimitInstance } from "./engine-limits.ts";
+import { engineLimitsFor, type EngineLimitInstance } from "./engine-limits.ts";
 import type { PlanProviderRow, PlanUsageReport } from "./plan-usage.ts";
-import { createEngineLimitsRoutes, ENGINE_LIMITS_GUEST } from "./routes/engine-limits.ts";
+import { createEngineLimitsRoutes } from "./routes/engine-limits.ts";
 import { PASS } from "./routes/table.ts";
 
 const DATA = "/data";
@@ -20,7 +17,7 @@ const instance = (instanceId: string, driverKind = "claudeAgent", displayName: s
 const ready: ProviderSnapshot = { state: "available", authenticated: true, billing: "subscription" };
 const report = (...providers: PlanProviderRow[]): PlanUsageReport => ({ fetchedAt: AT, providers });
 const read = (input: Partial<Parameters<typeof engineLimitsFor>[0]> & { instances: EngineLimitInstance[] }) => engineLimitsFor({
-  configs: {}, status: () => ready, report: report(), turn: TEAM_AUDIENCE, dataDir: DATA, ...input,
+  configs: {}, status: () => ready, report: report(), ...input,
 });
 
 describe("usage limits a bot reads", () => {
@@ -87,39 +84,10 @@ describe("usage limits a bot reads", () => {
   });
 });
 
-describe("a Team Cloud's audience rule", () => {
-  const ada = memberAudience("ada"), bob = memberAudience("bob");
-  const adaHome = audienceHome(DATA, ada);
-  const inHome: InstanceConfigMap[string] = { driver: "claudeAgent", config: { configDir: join(adaHome, ".claude") } };
-  const inEnv: InstanceConfigMap[string] = { driver: "codex", environment: { CODEX_HOME: join(adaHome, ".codex") } };
-  const inPeople: InstanceConfigMap[string] = { driver: "claudeAgent", config: { configDir: join(DATA, "people", "ada", "claude") } };
-
-  it("a member's turn reads their own account and the team's, never another member's", () => {
-    for (const entry of [inHome, inEnv, inPeople]) {
-      expect(accountReadableFrom(entry, ada, DATA)).toBe(true);
-      expect(accountReadableFrom(entry, bob, DATA)).toBe(false);
-      expect(accountReadableFrom(entry, TEAM_AUDIENCE, DATA)).toBe(false);
-      expect(accountReadableFrom(entry, roomAudience("r1"), DATA)).toBe(false);
-    }
-    const team: InstanceConfigMap[string] = { driver: "claudeAgent", config: { configDir: join(audienceHome(DATA, TEAM_AUDIENCE), ".claude") } };
-    expect(accountReadableFrom(team, bob, DATA)).toBe(true);
-    expect(accountReadableFrom({ driver: "claudeAgent" }, bob, DATA)).toBe(true);
-    expect(accountReadableFrom(undefined, bob, DATA)).toBe(true);
-  });
-
-  it("leaves another member's account out of what a bot reads", () => {
-    const instances = [instance("ada", "claudeAgent", "Ada's Claude"), instance("team", "claudeAgent", "Team Claude")];
-    const configs = { ada: inHome, team: { driver: "claudeAgent" } } as InstanceConfigMap;
-    const input = { instances, configs, report: report(row("ada"), row("team")) };
-    expect(read({ ...input, turn: bob }).map((account) => account.account)).toEqual(["Team Claude"]);
-    expect(read({ ...input, turn: ada }).map((account) => account.account)).toEqual(["Ada's Claude", "Team Claude"]);
-  });
-});
-
 describe("the internal route", () => {
   const route = (over: Partial<Parameters<typeof createEngineLimitsRoutes>[0]> = {}) => {
     const load = vi.fn(async () => report(row("claude")));
-    const deps = { instances: () => [instance("claude")], configs: () => ({ claude: { driver: "claudeAgent" } }) as InstanceConfigMap, status: () => ready, load, audienceOf: () => TEAM_AUDIENCE, guestDriven: () => false, dataDir: DATA, ...over };
+    const deps = { instances: () => [instance("claude")], configs: () => ({ claude: { driver: "claudeAgent" } }) as InstanceConfigMap, status: () => ready, load, dataDir: DATA, ...over };
     return { load, run: createEngineLimitsRoutes(deps) };
   };
   const call = async (run: ReturnType<typeof route>["run"], method = "GET", path = "/api/internal/engine-limits") => {
@@ -134,14 +102,6 @@ describe("the internal route", () => {
     expect(status).toBe(200);
     expect(JSON.parse(body!.text!).accounts[0]).toMatchObject({ account: "Claude", status: "ok" });
     expect(load).toHaveBeenCalledWith([expect.objectContaining({ id: "claude", driver: "claude" })]);
-  });
-
-  it("refuses a turn someone else started, without reading anything", async () => {
-    const { run, load } = route({ guestDriven: () => true });
-    const { status, body } = await call(run);
-    expect(status).toBe(403);
-    expect(body?.error).toBe(ENGINE_LIMITS_GUEST);
-    expect(load).not.toHaveBeenCalled();
   });
 
   it("a failed read still answers, as unknown", async () => {

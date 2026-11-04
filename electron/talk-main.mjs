@@ -11,7 +11,7 @@ export { isTalkPanel } from "./talk-panel.mjs";
  * is ready. `speech`: speech.mjs's start/stop/finish/busy. `packaged`: asks go to `localRequest`, this computer's own
  * server; in development to `devUrl`, whose Vite /api proxy reaches `pnpm dev:server`.
  */
-export function installTalk({ ipcMain, localOnly, localOrHome, BrowserWindow, appleSpeech, speech, packaged, devUrl, nativeImage, iconPath, openLink, reveal, log, fetch = globalThis.fetch }) {
+export function installTalk({ ipcMain, localOnly, BrowserWindow, appleSpeech, speech, packaged, devUrl, nativeImage, iconPath, openLink, reveal, log, fetch = globalThis.fetch }) {
   const callPresence = createCallPresence();
   let shortcut = null, session = null, panel = null, theme = null;
 
@@ -35,7 +35,7 @@ export function installTalk({ ipcMain, localOnly, localOrHome, BrowserWindow, ap
     enabled: typeof change?.enabled === "boolean" ? change.enabled : undefined,
     key: typeof change?.key === "string" ? change.key : undefined,
   }) ?? TALK_SHORTCUT_UNAVAILABLE));
-  ipcMain.handle("call:active", localOrHome("call:active", (event, active) => {
+  ipcMain.handle("call:active", localOnly("call:active", (event, active) => {
     callPresence.set(event.sender, active === true);
   }));
 
@@ -45,8 +45,8 @@ export function installTalk({ ipcMain, localOnly, localOrHome, BrowserWindow, ap
   };
 
   return {
-    /** `remote()`: this desktop is a remote client of another computer. `away()`: this computer's bots moved to My Cloud,
-     * so its own copy is frozen. `starting()`: this computer's server is on its way up. `dataDir()`: the data folder
+    /** `remote()`: this desktop is a remote client of another computer. `away()`: this computer's bots moved to a server of
+     * the person's own, so its own copy is frozen. `starting()`: this computer's server is on its way up. `dataDir()`: the data folder
      * this process runs. */
     start({ globalShortcut, screen, prefs, remote, away, starting, localRequest, dataDir }) {
       const request = (route, init) => (packaged ? localRequest(route, init) : fetch(new URL(route, devUrl), init));
@@ -66,7 +66,7 @@ export function installTalk({ ipcMain, localOnly, localOrHome, BrowserWindow, ap
         log(`talk shortcut unavailable: ${error?.message ?? error}`);
       }
     },
-    /** Home changed (My Cloud, or this computer again): the key is let go or taken again to match. */
+    /** Home changed (a server of the person's own, or this computer): the key is let go or taken again to match. */
     homeChanged: logged("home change", () => shortcut?.refresh()),
     /** A page painted the app's skin (its id, resolved from the Theme setting): the box takes its light or dark. */
     skin(id) {

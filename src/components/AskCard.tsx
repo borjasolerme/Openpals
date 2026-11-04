@@ -11,17 +11,11 @@ import { ELEVATED_CARD } from "./elevated";
 /** The bot a card asks for: its face and name lead the card. */
 export type Asker = Pick<Bot, "name" | "color"> & Partial<Pick<Bot, "avatarUrl" | "avatarCrop" | "avatarZoom" | "avatarFocusX" | "avatarFocusY" | "mascotBody" | "mascotFaceColor">>;
 
-export function AskHeader({ asker, line, origin }: { asker: Asker; line: string; origin?: { label: string; hint: string; open(): void } }) {
+export function AskHeader({ asker, line }: { asker: Asker; line: string }) {
   return (
     <div data-ask-header="" className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-ink-secondary">
       <span aria-hidden="true" className="flex shrink-0"><BotAvatar bot={asker} state="happy" size={16} animated={false} motion="none" motionKey={0} label="" /></span>
       <span dir="auto" className="min-w-0 truncate">{line}</span>
-      {origin && (
-        <button type="button" onClick={origin.open} aria-label={origin.hint} title={origin.hint}
-          className="-ms-1 min-w-0 shrink truncate rounded-md px-1 text-ink-tertiary hover:bg-ink/[0.06] hover:text-ink-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
-          · {origin.label}
-        </button>
-      )}
     </div>
   );
 }

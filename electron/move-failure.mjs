@@ -1,4 +1,4 @@
-// A failed pass of the one-time move to My Cloud (one-home.mjs), as the Admin may be told it (move-status.mjs): where
+// A failed pass of the one-time move to the server (one-home.mjs), as the Admin may be told it (move-status.mjs): where
 // it failed, a stable code, and the journal's sentence with anything that could be the person's own words taken out.
 import { unanswered } from "./cloud-send.mjs";
 
@@ -37,12 +37,12 @@ const QUOTED = /"[^"]*"|“[^”]*”|‘[^’]*’|`[^`]*`|(^|[\s(])'[^'\s][^']
 const ADDRESS = /\b[a-z][a-z0-9+.-]*:\/\/\S+|[^\s@"'`]+@[^\s@"'`]+\.[^\s@"'`]+/giu;
 const PATH = /(?:[A-Za-z]:)?(?:[\\/][^\s\\/"'`]+){2,}[\\/]?/gu;
 const TOKEN = /[A-Za-z0-9_+/=-]{40,}/gu;
-/** What My Cloud itself said can name the person's things: only that it said something is kept. */
+/** What the server itself said can name the person's things: only that it said something is kept. */
 const SAID = /\bsaid:.*$/su;
 export const SENTENCE_MAX = 200;
 
 /**
- * A failure's sentence fit to leave this computer: one line of at most SENTENCE_MAX characters, with what My Cloud said in
+ * A failure's sentence fit to leave this computer: one line of at most SENTENCE_MAX characters, with what the server said in
  * its own words, anything quoted, web and email addresses, file paths and long tokens each replaced by "…". Ids stay; the
  * person's words, names and secrets never do. Null when there is nothing left to say.
  */

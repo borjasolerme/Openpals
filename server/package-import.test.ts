@@ -160,17 +160,6 @@ describe("importing a whole team", () => {
     expect(second.connections[0]!.name).toBe("crm-2");
   });
 
-  it("records a connection the organization's policy refuses and imports the rest", async () => {
-    const app = await installation({ refuse: (name) => (name === "crm" ? "Not approved by Acme." : undefined) });
-    const result = app.importer.importPackageDocument(app.parsePackageDocument(fixture("full-team.v2.json")), { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
-    expect(result.skipped).toContainEqual({ part: "connections[crm]", reason: "connection_refused_by_policy" });
-    expect(result.connections).toEqual([]);
-    expect(app.mcp.servers).toEqual({});
-    expect(result.bots).toHaveLength(3);
-    expect(app.store.bot(result.bots.find((bot) => bot.installedPackage?.agentKey === "lead")!.id)!.mcpServers).toEqual([]);
-  });
-
   it("leaves nothing behind when the last step fails", async () => {
     const app = await installation();
     const before = app.snapshot();

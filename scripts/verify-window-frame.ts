@@ -36,10 +36,8 @@ const VIEWS: Array<{ name: string; query: string; ready: string; width?: number;
   { name: "frame-simple", query: "chrome=1&mode=simple", ready: RAIL_READY, bar: true },
   { name: "frame-windows", query: "chrome=1&platform=win32", ready: RAIL_READY, bar: true },
   { name: "frame-windows-simple", query: "chrome=1&platform=win32&mode=simple", ready: RAIL_READY, bar: true },
-  { name: "frame-team", query: "chrome=1&team=1", ready: RAIL_READY, bar: true },
-  { name: "frame-team-windows", query: "chrome=1&team=1&platform=win32", ready: RAIL_READY, bar: true },
   { name: "frame-computer", query: "chrome=1&place=computer&rail=1", ready: RAIL_READY, bar: true },
-  { name: "frame-long-name", query: "chrome=1&team=1&teamname=Northwind%20Analytics%20Research%20and%20Planning%20Group", ready: RAIL_READY, width: 900, bar: true },
+  { name: "frame-long-name", query: "chrome=1&name=Northwind%20Analytics%20Research%20and%20Planning%20Group", ready: RAIL_READY, width: 900, bar: true },
   { name: "frame-icons", query: "chrome=1&density=icons", ready: RAIL_READY },
   { name: "frame-icons-simple", query: "chrome=1&density=icons&mode=simple", ready: RAIL_READY },
   // The sidebar's edge, dragged: narrower (the edge lit), then past the point where it becomes the column of avatars.

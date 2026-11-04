@@ -125,10 +125,10 @@ describe("a saved key", () => {
   });
 });
 
-describe("a key that comes with the Cloud plan", () => {
+describe("a key the connected-apps service stands in for", () => {
   it("says it is included and offers the person's own key only on request", () => {
-    fixture.config = { box: { configured: true, included: true } };
-    const html = render({ id: "box" });
+    fixture.config = { composio: { configured: false, mode: "managed" } };
+    const html = render({ id: "composio" });
     expect(html).toContain("Included with your Cloud plan");
     expect(html).toContain("Use your own key");
     expect(html).not.toContain("<input");

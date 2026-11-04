@@ -1,4 +1,4 @@
-// A lent computer's end of the device link: one WebSocket to My Cloud, through which My Cloud's browsers reach the web
+// A lent computer's end of the device link: one WebSocket to the server, through which the server's browsers reach the web
 // from this computer's own internet connection. Lending keeps it open; this runs one connection of it.
 import { createChromeDoor } from "./device-chrome.mjs";
 import { createDeviceEgress } from "./device-egress.mjs";
@@ -8,10 +8,10 @@ const PING_MS = 10_000;
 /** An opening that has not finished by now never will (a proxy that took the connection and went quiet): give up, so
  * lending dials again. */
 const OPEN_MS = 15_000;
-/** Nothing heard for this long: My Cloud is gone without closing (asleep, its network down), so the link ends here. */
+/** Nothing heard for this long: The server is gone without closing (asleep, its network down), so the link ends here. */
 const SILENT_MS = 25_000;
 
-/** The link's address on My Cloud for this lent computer. */
+/** The link's address on the server for this lent computer. */
 export function linkUrl(origin, path) {
   const url = new URL(path, origin);
   url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
@@ -21,8 +21,8 @@ export function linkUrl(origin, path) {
 /**
  * Runs one link connection until it ends, then resolves with its close code and reason; `signal` aborting ends it.
  * `egress`: what the computer's own check takes (resolve, connect, interfaces), for tests. `onStream(target, result)`:
- * each connection My Cloud asked for, with what this computer's check answered. `lends()`: what this computer lends right
- * now, read on every stream, so My Cloud is never taken at its word. `chrome`: the Chrome door's options, or an object
+ * each connection the server asked for, with what this computer's check answered. `lends()`: what this computer lends right
+ * now, read on every stream, so the server is never taken at its word. `chrome`: the Chrome door's options, or an object
  * with its own `open` to stand in for the door.
  */
 export function runDeviceLink({ url, headers = {}, egress = {}, signal, WebSocket: Socket = globalThis.WebSocket, pingMs = PING_MS, silentMs = SILENT_MS, openMs = OPEN_MS, lends = () => ({ internet: true, chrome: false }), chrome = {}, onOpen = () => {}, onStream = () => {}, traffic = () => {}, now = Date.now }) {

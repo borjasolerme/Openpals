@@ -1,13 +1,8 @@
 import type { NewBotDefaults } from "../../shared/new-bot-defaults";
 import { api, type Action, type Bot, type ModelSelection } from "@/state/store";
-import { teamChats } from "@/state/team-chats";
-import { currentTeamPeople, sharedOwner, type TeamPeople } from "@/state/team-people";
-import { openBot } from "@/state/thread-navigation";
-import type { BotSource } from "./analytics-allowlist";
 import { BotCreationDraft } from "./bot-creation-draft";
 import { createConfiguredBot } from "./create-configured-bot";
 import { t } from "./i18n";
-import { botCreated } from "./product-events";
 
 export interface BotDefaultsAnswer { defaults: NewBotDefaults; modelSelection: ModelSelection; suggestedName: string }
 
@@ -27,25 +22,16 @@ export function freeName(name: string, bots: ReadonlyArray<Pick<Bot, "name">>): 
   for (let next = 2; ; next++) if (!taken.has(`${name} ${next}`.toLowerCase())) return `${name} ${next}`;
 }
 
-/** Who a new team bot reports to: the person chosen, else whoever every bot reports to, else this person. */
-export function reportsToFor(chosen: string | null, bots: readonly Bot[], team: TeamPeople): string | null {
-  if (chosen) return chosen;
-  return sharedOwner(bots.filter((bot) => !bot.hidden), team)?.email ?? team.me?.email ?? null;
-}
-
-/** A bot just made joins the sidebar and, unless the caller keeps its own place, its chat opens: on a team's Cloud the
- * creator's own conversation, never the main chat every member reads. */
+/** A bot just made joins the sidebar and, unless the caller keeps its own place, its chat opens. */
 export function announceNewBot(dispatch: (action: Action) => void, bot: Bot, warnings: readonly string[],
-  { preserveSelection = false, source, role }: { preserveSelection?: boolean; source: BotSource; role?: string }) {
-  botCreated(source, role);
+  { preserveSelection = false }: { preserveSelection?: boolean } = {}) {
   dispatch({ type: "botAdded", bot, preserveSelection });
-  if (!preserveSelection && teamChats()) openBot(dispatch, bot);
   if (warnings.length) dispatch({ type: "error", message: warnings.join("\n") });
 }
 
 /** A paired device may not read the host's New bot defaults: the host applies them to an empty request. Auto on this
  * computer needs the person's own OK, so a bot whose defaults ask for it starts on Ask. */
-async function createNewBot(bots: readonly Bot[], team: TeamPeople | null, request: typeof api) {
+async function createNewBot(bots: readonly Bot[], request: typeof api) {
   if (typeof window !== "undefined" && window.ogb?.remoteClient?.active) {
     const { bot } = await request<{ bot: Bot }>("/api/bots", { method: "POST", body: "{}" });
     return { bot, warnings: [] as string[], startsOnAsk: false };
@@ -55,9 +41,8 @@ async function createNewBot(bots: readonly Bot[], team: TeamPeople | null, reque
   const draft = new BotCreationDraft(template, () => {}, request);
   const startsOnAsk = draft.bot.approvalMode === "auto" && draft.bot.computer === "local";
   if (startsOnAsk) draft.patch({ approvalMode: "ask" });
-  const reportsTo = team ? reportsToFor(null, bots, team) ?? undefined : undefined;
   try {
-    return { ...await createConfiguredBot(draft, request, undefined, undefined, undefined, reportsTo), startsOnAsk };
+    return { ...await createConfiguredBot(draft, request), startsOnAsk };
   } finally {
     draft.dispose();
   }
@@ -68,14 +53,14 @@ export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bo
   request: typeof api = api): Promise<void> {
   let made: Awaited<ReturnType<typeof createNewBot>>;
   try {
-    made = await createNewBot(bots, currentTeamPeople(), request);
+    made = await createNewBot(bots, request);
   } catch (cause) {
     const message = t("newBot.failed", { error: cause instanceof Error ? cause.message : String(cause) });
     if (action.onError) action.onError(message);
     else dispatch({ type: "error", message });
     return;
   }
-  announceNewBot(dispatch, made.bot, made.warnings, { preserveSelection: action.preserveSelection, source: "blank" });
+  announceNewBot(dispatch, made.bot, made.warnings, { preserveSelection: action.preserveSelection });
   if (made.startsOnAsk) dispatch({ type: "notice", notice: { kind: "note", botName: null, text: t("newBot.startsOnAsk", { name: made.bot.name }) } });
   action.onCreated?.(made.bot);
 }

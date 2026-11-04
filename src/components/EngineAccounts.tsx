@@ -16,7 +16,7 @@ import { MENU_SHEET } from "./menu-recipe";
 export type AccountGroup = "claude" | "chatgpt";
 
 export function accountGroupOf(instance: InstanceInfo): AccountGroup | null {
-  if (instance.readOnly || instance.trialCredit || instance.access === "custom" || instance.access === "api") return null;
+  if (instance.readOnly || instance.access === "custom" || instance.access === "api") return null;
   if (instance.driverKind === "claudeAgent") return "claude";
   const method = instance.authentication?.method;
   return instance.snapshot.chatgptPlan === true || ((method === "device-code" || method === "browser-pkce") && deviceSignInProvider(instance.driverKind) === "codex")
@@ -320,12 +320,8 @@ export function AccountsCard({ group, accounts, advanced, bare = false }: { grou
   const [signingIn, setSigningIn] = useState<string | null>(null);
   const primary = accounts[0]!;
   const installed = accounts.some((instance) => instance.snapshot.state === "available");
-  const policy = accounts.find((instance) => instance.policy)?.policy;
   return (
     <EngineCard instance={primary} summary={summaryFor(group, accounts)} bare={bare}>
-      {policy && <p className="mb-3 text-[12px] leading-relaxed text-ink-secondary">
-        <span className="font-medium text-ink">{t("policy.managedBy", { organization: policy.organizationName })}</span> · {policy.reason}
-      </p>}
       {!installed ? <EngineSetup instance={primary} unframed /> : (
         <div className="space-y-2">
           <ul data-accounts={group} className="divide-y divide-hairline/40 rounded-xl border border-hairline/50 bg-panel/40">

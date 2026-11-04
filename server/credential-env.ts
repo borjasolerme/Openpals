@@ -30,15 +30,11 @@ export const WORKSPACE_CREDENTIAL_ENV = [
   "OMB_OPENAI_LIVE_KEY", "OMB_TREG_KEY", "OMB_POSTIZ_API_KEY",
   "COMPOSIO_API_KEY",
   "OMB_COMPOSIO_BROKER_TOKEN",
-  "OMB_CLOUD_BOAT_TOKEN",
-  "OMB_CLOUD_VOICE_TOKEN",
-  "OMB_CLOUD_DECIDER_TOKEN",
-  "OMB_CLOUD_AI_TOKEN", "OMB_CLOUD_X_TOKEN", "OMB_CLOUD_CONNECTED_APPS_GRANT",
   // Not credentials, but they point a shell-capable agent at app-owned state.
   "OMB_BROWSER_CONNECTION", "OMB_USER_DATA", "OMB_BOAT_API",
 ] as const;
 
-/** Operator secrets only this process reads, plus every `OMB_CLOUD_` var (the underscore leaves out OMB_CLOUDFLARED_PATH). */
+/** Operator secrets only this process reads, plus every `OMB_CLOUD_` var a host may set, so none of it reaches an engine. */
 export const CONTROL_PLANE_ENV = ["OMB_LICENSE_KEY", "OMB_INSTALLATION_CREDENTIAL"] as const;
 export const CONTROL_PLANE_ENV_PREFIX = "OMB_CLOUD_";
 

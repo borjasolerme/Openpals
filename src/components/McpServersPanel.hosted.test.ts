@@ -194,18 +194,6 @@ describe.each(HOSTED_MCP_APPS)("The $label card", (app) => {
     expect(calls("PATCH")).toEqual([[`/api/mcp/servers/${app.id}`, { enabled: false }]]);
   });
 
-  it("cannot connect a server the organization manages or a policy that allows no custom servers", async () => {
-    servers = [listing(app, { managedBy: "Acme" })];
-    await mount();
-    expect((button(app, "Connect") as HTMLButtonElement).disabled).toBe(true);
-    await act(async () => root.unmount());
-    host.remove();
-    servers = [];
-    fixture.store = { ...fixture.store, config: { managedPolicy: { organizationName: "Acme", mcp: { allowCustom: false, allowlist: [] } } } };
-    await mount();
-    expect((button(app, "Connect") as HTMLButtonElement).disabled).toBe(true);
-  });
-
   it("opens each visible bot's Access settings on its MCP page from Bot access", async () => {
     await mount();
     const buttons = [...card(app).querySelectorAll("details button")];

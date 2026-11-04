@@ -17,7 +17,6 @@ function questions(fullAccess: boolean, since = NOW - 60_000, now = NOW): string
     store: { bots: [chief, teammate], bot: () => teammate },
     isUnattended: () => false,
     startedOutside: () => false,
-    guestDriven: () => false,
     confined: () => false,
     fullAccess: () => fullAccess,
     readableFrom: () => () => true,
@@ -48,11 +47,11 @@ describe("what a Chief is told about its teammates' questions", () => {
     expect(waitedWords(NOW - 2 * LONG_WAIT_MS, NOW)).toBe("for 2 days");
   });
 
-  it("a webhook, routine, guest or read-and-draft turn has no person behind it, whatever the bot's level", () => {
+  it("a webhook, routine or read-and-draft turn has no person behind it, whatever the bot's level", () => {
     const prompts = (over: Partial<TeammatePromptDeps>) => createTeammatePrompts({ store: { bots: [], bot: () => undefined }, isUnattended: () => false, startedOutside: () => false,
-      guestDriven: () => false, confined: () => false, ...over } as unknown as TeammatePromptDeps);
+      confined: () => false, ...over } as unknown as TeammatePromptDeps);
     expect(prompts({}).personBehind("own", "inbox")).toBe(true);
-    for (const over of [{ isUnattended: () => true }, { startedOutside: () => true }, { guestDriven: () => true }, { confined: () => true }]) {
+    for (const over of [{ isUnattended: () => true }, { startedOutside: () => true }, { confined: () => true }]) {
       expect(prompts(over).personBehind("own", "inbox")).toBe(false);
     }
   });

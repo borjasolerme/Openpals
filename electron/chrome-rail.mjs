@@ -8,11 +8,11 @@
 // transparent but for the sheet, and goes back to its strip when it closes.
 //
 // The page beside the rail draws the window's frame (its top bar, with the traffic lights in it) when it says so, as each
-// document does once it is on screen. One that doesn't, a Cloud or a server of the person's own on an older release,
+// document does once it is on screen. One that doesn't, a server or a server of the person's own on an older release,
 // gets the window as that release made it: the traffic lights back where it left room for them, and the rail's places
 // under them. A new document has the same few seconds as for the button before the window changes back.
 //
-// The person may hide it with a button on the page beside it. That page may be a Cloud or a server of their own on an
+// The person may hide it with a button on the page beside it. That page may be a server or a server of their own on an
 // older release with no such button, so the rail hides only beside a document that offered one; a new document has a
 // few seconds to offer it, and the rail comes back beside one that doesn't, or that stops responding.
 

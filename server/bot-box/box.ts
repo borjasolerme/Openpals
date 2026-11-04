@@ -180,7 +180,7 @@ export function defaultCodeRoots(): string[] {
 }
 
 export class BotBox {
-  private detection: BoxDetection = { box: "off", reason: "not-cloud", tools: null };
+  private detection: BoxDetection = { box: "off", reason: "switched-off", tools: null };
   private runner: BoxRunner | null = null;
   private egress: BoxEgressGate | null = null;
   private harness: HarnessGate | null = null;

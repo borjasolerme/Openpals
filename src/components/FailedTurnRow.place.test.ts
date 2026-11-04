@@ -28,14 +28,10 @@ vi.mock("@/lib/interface-mode", async (importOriginal) => ({
   useAdvancedMode: () => fixture.advanced,
 }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.ownerOrAdmin }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const { FailedTurnRow } = await import("./ChatView");
-const { placeRowViewFor } = await import("@/lib/place-view");
-
 
 const stored = (place: PlaceRow): NonNullable<Message["tool"]> => failedTurnTool(placeRowText(place), { place });
-const hours: PlaceRow = { state: "cc-no-hours", params: { bot: "Scout", plan: "Pro", hours: 50, month: "November" }, source: "works-on" };
 
 function show(tool: NonNullable<Message["tool"]>, onRetry?: () => void) {
   const html = renderToStaticMarkup(createElement(FailedTurnRow, { tool, engine: undefined, botId: "scout", threadId: "thread-scout", onRetry }));
@@ -52,14 +48,6 @@ beforeEach(() => {
 });
 
 describe("J11: a failed place's row", () => {
-  it("says no hours are left in one line, with one button: See your plan", () => {
-    const { html, buttons } = show(stored(hours), vi.fn());
-    expect(html).toContain("This month&#x27;s 50 cloud desktop hours are used up. They come back on 1 November.");
-    expect(buttons).toHaveLength(1);
-    expect(buttons[0]).toContain("See your plan");
-    expect(html).not.toContain("Retry");
-    expect(html).not.toContain("<details");
-  });
 
   it("offers Try again only where the conversation can retry", () => {
     const passing = stored({ state: "cc-unavailable", params: { bot: "Scout" }, source: "works-on" });
@@ -75,22 +63,6 @@ describe("J11: a failed place's row", () => {
     expect(show(pinned).buttons[0]).toContain("Clear this conversation&#x27;s place");
   });
 
-  it("gives a User no button that changes a setting, and says who can", () => {
-    fixture.ownerOrAdmin = false;
-    const { html, buttons } = show(stored(hours), vi.fn());
-    expect(html).toContain("They come back on 1 November. Ask an Admin to change it.");
-    expect(buttons).toHaveLength(0);
-  });
-
-  it("reads the Boat sign-up as My Cloud's on a desktop with a paid plan", () => {
-    const needsKey: PlaceRow = { state: "cc-needs-key", params: { bot: "Scout" }, source: "works-on" };
-    expect(show(stored(needsKey)).html).toContain("Bots here can get their own cloud desktops from Boat, a paid service.");
-    const seat = { server: "mac", plan: true, role: "admin", mode: "simple" } as const;
-    expect(placeRowViewFor(needsKey, seat)).toMatchObject({
-      state: "cc-on-my-cloud", line: "Cloud desktops from your plan work for Cloud bots for now.", action: { id: "open-my-cloud" },
-    });
-    expect(placeRowViewFor(needsKey, { ...seat, server: "my-cloud" }).state).toBe("cc-needs-key");
-  });
 });
 
 describe("the phone row", () => {
@@ -100,13 +72,10 @@ describe("the phone row", () => {
 
   it("carries the line and its action in words, whole, for every source", () => {
     const rows: Array<[PlaceRow, string]> = [
-      [hours, "This month's 50 cloud desktop hours are used up. They come back on 1 November. See your plan on the Plan page."],
       [{ state: "cc-unavailable", params: { bot: "Scout" }, source: "auto-pin" },
         "Cloud desktops can't start right now. It isn't anything you did. This conversation is back on Auto. Send your message again."],
       [{ state: "cc-unavailable", params: { bot: "Scout" }, source: "routine" },
         "Cloud desktops can't start right now. It isn't anything you did. Change where this routine runs."],
-      [{ state: "cc-at-once", params: { bot: "Bo", plan: "Personal", max: 1, holders: ["Ada"] }, source: "works-on" },
-        "Your Personal plan includes 1 cloud desktop, and Ada has it. Manage your cloud desktops in Settings → Bot desktops."],
     ];
     for (const [place, words] of rows) {
       const tool = stored(place);

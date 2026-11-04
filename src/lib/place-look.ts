@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import type { CloudSwatch } from "../../electron/cloud-list.mjs";
-import type { PlaceColorOutcome, PlaceLook } from "../../electron/place-look.mjs";
-import { cloudColor } from "@/lib/cloud-look";
+import type { PlaceColorOutcome, PlaceLook, PlaceSwatch } from "../../electron/place-look.mjs";
+import { placeColor } from "@/lib/place-colors";
 
 let current: PlaceLook | null = null;
 let started = false;
@@ -32,7 +31,7 @@ function start() {
   void refreshPlaceLook();
 }
 
-/** The colour of the place this page is, and whether it can be changed here: none in a browser and on an older app.
+/** The colour of the place this page is: none in a browser.
  * The sidebar's tint and Settings read the same one. */
 export function usePlaceLook(): PlaceLook | null {
   const [look, setLook] = useState<PlaceLook | null>(current);
@@ -46,9 +45,9 @@ export function usePlaceLook(): PlaceLook | null {
   return look;
 }
 
-/** The person chose a swatch: main saves it (on the Admin for a Cloud) and answers the place's look, which the tint and
- * the rail's circle follow at once. */
-export async function choosePlaceColor(swatch: CloudSwatch | null): Promise<PlaceColorOutcome> {
+/** The person chose a swatch: main saves it and answers the place's look, which the tint and the rail's circle follow at
+ * once. */
+export async function choosePlaceColor(swatch: PlaceSwatch | null): Promise<PlaceColorOutcome | "failed"> {
   const workspaces = bridge();
   if (!workspaces?.color) return "failed";
   const answer = await workspaces.color(swatch).catch(() => null);
@@ -60,6 +59,6 @@ export async function choosePlaceColor(swatch: CloudSwatch | null): Promise<Plac
 /** The sidebar's tint for a place's colour: that colour in the skin's own tone (styles.css .place-tint fades it out);
  * none without a colour, so the sidebar looks as it always did. */
 export function placeTint(color: unknown): { "--place-tint": string } | null {
-  const known = cloudColor(color);
+  const known = placeColor(color);
   return known ? { "--place-tint": `var(--identity-${known})` } : null;
 }

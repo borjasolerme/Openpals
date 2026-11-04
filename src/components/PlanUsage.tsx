@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { api } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import { Card, SIMPLE_CARD } from "./SettingsPrimitives";
-import { UsageSummaryCard } from "./CloudUsageMeter";
 import { formatPlanSpend, type PlanSpend } from "@/lib/plan-spend";
 
 interface PlanWindow {
@@ -43,6 +42,28 @@ interface PlanProvider {
 interface PlanUsageReport {
   fetchedAt: string;
   providers: PlanProvider[];
+}
+
+type MeterBand = "ok" | "near" | "full";
+const NEAR_LIMIT_PERCENT = 80;
+const SUMMARY_BAR: Record<MeterBand, string> = { ok: "bg-ink/80", near: "bg-warning", full: "bg-danger" };
+const meterBand = (percent: number): MeterBand => (percent >= 100 ? "full" : percent >= NEAR_LIMIT_PERCENT ? "near" : "ok");
+
+function UsageSummaryCard({ title, percent, label, note }: { title: string; percent: number; label: string; note: ReactNode }) {
+  const band = meterBand(percent);
+  return (
+    <section data-usage-summary="plan" data-band={band} aria-label={label} className={cn(SIMPLE_CARD, "px-4 py-3.5")}>
+      <p className="text-[13px] leading-[18px] text-ink">{title}</p>
+      <p className="mt-2 flex items-baseline gap-1.5">
+        <span className="text-[22px] font-medium leading-7 tracking-[-0.012em] text-ink tabular-nums">{percent}%</span>
+        <span className="text-[13px] text-ink-secondary">{t("settings.simple.billing.used")}</span>
+      </p>
+      <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="mt-2 h-1 w-full overflow-hidden rounded-full bg-ink/[0.04]">
+        <div className={cn("h-full rounded-full", SUMMARY_BAR[band])} style={{ width: `${percent > 0 ? Math.max(percent, 1) : 0}%` }} />
+      </div>
+      <p className="mt-2 text-[12px] leading-4 text-ink-secondary">{note}</p>
+    </section>
+  );
 }
 
 function formatResetDistance(resetsAt: string | null, now: number): string | null {
@@ -218,7 +239,7 @@ export function PlanUsageSummary() {
   if (spending) {
     const name = providerLabel(spending.provider);
     const used = Math.round(Math.min(100, Math.max(0, spending.budget.usedPercent)));
-    return <UsageSummaryCard kind="plan" title={t("settings.simple.billing.monthlySpend", { provider: name })} percent={used} label={`${name}: ${t("planUsage.used", { used })}`}
+    return <UsageSummaryCard title={t("settings.simple.billing.monthlySpend", { provider: name })} percent={used} label={`${name}: ${t("planUsage.used", { used })}`}
       note={spending.budget.spend ? formatPlanSpend(spending.budget.spend) : null} />;
   }
   if (!busiest) {
@@ -228,7 +249,7 @@ export function PlanUsageSummary() {
   const when = formatResetDistance(busiest.provider.weekly.resetsAt, now);
   const name = providerLabel(busiest.provider);
   return (
-    <UsageSummaryCard kind="plan" title={t("settings.simple.billing.weekly", { provider: name })} percent={percent} label={`${name}: ${t("planUsage.used", { used: percent })}`}
+    <UsageSummaryCard title={t("settings.simple.billing.weekly", { provider: name })} percent={percent} label={`${name}: ${t("planUsage.used", { used: percent })}`}
       note={when ? t("planUsage.resetsIn", { when }) : null} />
   );
 }

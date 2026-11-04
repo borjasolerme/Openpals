@@ -3,8 +3,6 @@ import {
   aiChoices,
   aiWorks,
   beatsFor,
-  cloudSignInDue,
-  companyModelCount,
   completionPatch,
   EMPTY_ONBOARDING,
   firstRunPatch,
@@ -14,12 +12,7 @@ import {
   hintSeenPatch,
   LOCAL_VIEWER,
   MET_CHIEF_HINT,
-  onboardingCloudOffered,
-  ONBOARDING_CLOUD_HINT,
-  organisationSignIn,
   resumeBeat,
-  showWelcome,
-  welcomeOnScreen,
   welcomeAi,
   welcomeDue,
   welcomeViewer,
@@ -32,41 +25,36 @@ const done = { completedAt: "2026-09-09T10:00:00.000Z", version: WELCOME_VERSION
 
 describe("welcomeDue", () => {
   it("waits for the server before deciding", () => {
-    expect(welcomeDue(null, { remoteClient: false, legacyDone: false })).toBe(false);
-    expect(welcomeDue(undefined, { remoteClient: false, legacyDone: false })).toBe(false);
+    expect(welcomeDue(null, { remoteClient: false })).toBe(false);
+    expect(welcomeDue(undefined, { remoteClient: false })).toBe(false);
   });
 
   it("shows the tour to a fresh workspace", () => {
-    expect(welcomeDue({}, { remoteClient: false, legacyDone: false })).toBe(true);
-    expect(welcomeDue({ onboarding: EMPTY_ONBOARDING }, { remoteClient: false, legacyDone: false })).toBe(true);
+    expect(welcomeDue({}, { remoteClient: false })).toBe(true);
+    expect(welcomeDue({ onboarding: EMPTY_ONBOARDING }, { remoteClient: false })).toBe(true);
   });
 
   it("never shows it to a paired remote client", () => {
-    expect(welcomeDue({}, { remoteClient: true, legacyDone: false })).toBe(false);
+    expect(welcomeDue({}, { remoteClient: true })).toBe(false);
   });
 
   it("respects a completion at the current version", () => {
-    expect(welcomeDue({ onboarding: done }, { remoteClient: false, legacyDone: false })).toBe(false);
+    expect(welcomeDue({ onboarding: done }, { remoteClient: false })).toBe(false);
   });
 
   it("re-shows a flow completed at an older version", () => {
-    expect(welcomeDue({ onboarding: { ...done, version: WELCOME_VERSION - 1 } }, { remoteClient: false, legacyDone: false })).toBe(true);
-  });
-
-  it("honours the old localStorage gate for one release", () => {
-    expect(welcomeDue({}, { remoteClient: false, legacyDone: true })).toBe(false);
-    expect(welcomeDue({ onboarding: { ...done, version: 0 } }, { remoteClient: false, legacyDone: true })).toBe(true);
+    expect(welcomeDue({ onboarding: { ...done, version: WELCOME_VERSION - 1 } }, { remoteClient: false })).toBe(true);
   });
 
   it("decides who gets the tour on a fresh workspace", () => {
     const fresh = { onboarding: EMPTY_ONBOARDING };
     const cases = [
-      { who: "local desktop", options: { remoteClient: false, legacyDone: false, ...LOCAL_VIEWER }, due: true },
-      { who: "remote client", options: { remoteClient: true, legacyDone: false, ...LOCAL_VIEWER }, due: false },
-      { who: "hosted admin", options: { remoteClient: false, legacyDone: false, hosted: true, canSave: true }, due: true },
-      { who: "hosted member", options: { remoteClient: false, legacyDone: false, hosted: true, canSave: false }, due: false },
-      { who: "member of a self-hosted server", options: { remoteClient: false, legacyDone: false, hosted: false, canSave: false }, due: false },
-      { who: "hosted, scope unknown", options: { remoteClient: false, legacyDone: false, hosted: true }, due: false },
+      { who: "local desktop", options: { remoteClient: false, ...LOCAL_VIEWER }, due: true },
+      { who: "remote client", options: { remoteClient: true, ...LOCAL_VIEWER }, due: false },
+      { who: "hosted admin", options: { remoteClient: false, hosted: true, canSave: true }, due: true },
+      { who: "hosted member", options: { remoteClient: false, hosted: true, canSave: false }, due: false },
+      { who: "member of a self-hosted server", options: { remoteClient: false, hosted: false, canSave: false }, due: false },
+      { who: "hosted, scope unknown", options: { remoteClient: false, hosted: true }, due: false },
     ];
     for (const { who, options, due } of cases) expect(welcomeDue(fresh, options), who).toBe(due);
   });
@@ -82,8 +70,6 @@ describe("welcomeViewer", () => {
     expect(welcomeViewer({})).toEqual(LOCAL_VIEWER);
     expect(welcomeViewer(null)).toEqual(LOCAL_VIEWER);
     expect(welcomeViewer({ scopes: ["admin"], hosted: "yes" })).toEqual({ hosted: false, canSave: true });
-    expect(welcomeViewer({ kind: "session", scopes: ["admin", "client"], cloudHome: true })).toEqual({ hosted: false, canSave: true, cloudHome: true });
-    expect(welcomeViewer({ kind: "session", scopes: ["admin", "client"], cloudHome: "yes" })).toEqual({ hosted: false, canSave: true });
   });
 
   it("calls only a hosted session without admin scope a hosted member", () => {
@@ -96,58 +82,6 @@ describe("welcomeViewer", () => {
     expect(spotlightsQuiet({ hosted: true, canSave: false })).toBe(true);
     expect(spotlightsQuiet({ hosted: false, canSave: false })).toBe(false);
     expect(spotlightsQuiet(LOCAL_VIEWER)).toBe(false);
-  });
-});
-
-describe("first run on an OMB Cloud home", () => {
-  const connected = welcomeViewer({ kind: "session", scopes: ["admin", "client"], via: "cookie", cloudHome: true });
-  const engine = (id: string, authenticated: boolean | undefined, state = "available") => ({ id, state, authenticated });
-  const ready = (instance: ReturnType<typeof engine>) => instance.state === "available" && instance.authenticated !== false;
-  const signedOut = [engine("claude", false), engine("codex", false), engine("opencodeGo", undefined, "unavailable")];
-
-  it("routes the connected app to the engine sign-in, not the welcome flow", () => {
-    expect(cloudSignInDue(connected, { connected: true, instances: signedOut }, ready)).toBe(true);
-    expect(welcomeDue({ onboarding: EMPTY_ONBOARDING }, { remoteClient: false, legacyDone: false, ...connected })).toBe(false);
-  });
-
-  it("hands over to the chat once any engine can run", () => {
-    for (const signedIn of [engine("claude", true), engine("codex", true), engine("anthropic-key", undefined)]) {
-      expect(cloudSignInDue(connected, { connected: true, instances: [...signedOut, signedIn] }, ready)).toBe(false);
-    }
-  });
-
-  it("waits for the server, and changes nothing anywhere else", () => {
-    expect(cloudSignInDue(connected, { connected: false, instances: signedOut }, ready)).toBe(false);
-    expect(cloudSignInDue(connected, { connected: true, instances: [] }, ready)).toBe(false);
-    expect(cloudSignInDue(null, { connected: true, instances: signedOut }, ready)).toBe(false);
-    expect(cloudSignInDue({ ...connected, canSave: false }, { connected: true, instances: signedOut }, ready)).toBe(false);
-    for (const viewer of [LOCAL_VIEWER, { hosted: true, canSave: true }, welcomeViewer({ kind: "session", scopes: ["admin", "client"] })]) {
-      expect(cloudSignInDue(viewer, { connected: true, instances: signedOut }, ready)).toBe(false);
-      expect(welcomeDue({ onboarding: EMPTY_ONBOARDING }, { remoteClient: false, legacyDone: false, ...viewer })).toBe(true);
-    }
-  });
-});
-
-describe("organisation sign-in in the engines beat", () => {
-  const bridge = { begin: () => {} };
-
-  it("is offered only by the packaged local desktop", () => {
-    expect(organisationSignIn({ organization: bridge }, { hosted: false })).toBe(bridge);
-    expect(organisationSignIn(undefined, { hosted: false })).toBeUndefined();
-    expect(organisationSignIn({}, { hosted: false })).toBeUndefined();
-    expect(organisationSignIn({ organization: bridge, remoteClient: { active: true } }, { hosted: false })).toBeUndefined();
-    expect(organisationSignIn({ organization: bridge }, { hosted: true })).toBeUndefined();
-    expect(organisationSignIn({ organization: bridge, remoteClient: { active: false } }, { hosted: false })).toBe(bridge);
-  });
-
-  it("counts the models the organisation approved", () => {
-    expect(companyModelCount(null)).toBe(0);
-    expect(companyModelCount({})).toBe(0);
-    expect(companyModelCount({ providers: [
-      { configured: true, models: ["a", "b"] },
-      { configured: false, models: ["c"] },
-      { configured: true, models: ["d"] },
-    ] })).toBe(3);
   });
 });
 
@@ -229,7 +163,7 @@ describe("persistence patches", () => {
   it("marks a first run as the one that met the Chief, keeping every hint already seen", () => {
     const now = new Date("2026-10-27T12:00:00.000Z");
     expect(firstRunPatch(undefined, now)).toEqual({ onboarding: { completedAt: now.toISOString(), version: WELCOME_VERSION, hintsSeen: [MET_CHIEF_HINT] } });
-    expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: [ONBOARDING_CLOUD_HINT] }, now).onboarding.hintsSeen).toEqual([ONBOARDING_CLOUD_HINT, MET_CHIEF_HINT]);
+    expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: ["computer"] }, now).onboarding.hintsSeen).toEqual(["computer", MET_CHIEF_HINT]);
     expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: [MET_CHIEF_HINT] }, now).onboarding, "already met").toEqual({ completedAt: now.toISOString(), version: WELCOME_VERSION });
     expect(completionPatch(now).onboarding, "a replay says nothing about a first chat").not.toHaveProperty("hintsSeen");
   });
@@ -250,27 +184,6 @@ describe("the first run's screens", () => {
     expect(resumeBeat(beatsFor({}), undefined)).toBe("meet");
     expect(resumeBeat(beatsFor({ hosted: true }), "chief")).toBe("meet");
     expect(resumeBeat(beatsFor({}), "engines" as never), "a step from the longer welcome").toBe("meet");
-  });
-});
-
-describe("the onboarding record's Cloud mark", () => {
-  it("still tells a later Cloud pitch that an earlier welcome offered the Cloud", () => {
-    expect(ONBOARDING_CLOUD_HINT).toBe("onboarding-cloud-v1");
-    expect(onboardingCloudOffered(undefined)).toBe(false);
-    expect(onboardingCloudOffered({ ...done, hintsSeen: ["tour-switcher"] })).toBe(false);
-    expect(onboardingCloudOffered({ ...done, hintsSeen: ["tour-switcher", ONBOARDING_CLOUD_HINT] })).toBe(true);
-  });
-});
-
-describe("welcomeOnScreen", () => {
-  it("knows while the welcome is on screen, however often it mounts and unmounts", () => {
-    expect(welcomeOnScreen()).toBe(false);
-    const first = showWelcome(), second = showWelcome();
-    expect(welcomeOnScreen()).toBe(true);
-    first(); first();
-    expect(welcomeOnScreen(), "a second hide of the same mount changes nothing").toBe(true);
-    second();
-    expect(welcomeOnScreen()).toBe(false);
   });
 });
 

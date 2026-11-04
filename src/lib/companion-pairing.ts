@@ -2,7 +2,7 @@ import { qrEndpoints, type CompanionEndpoint } from "../../shared/pairing-link";
 
 export type { CompanionEndpoint, CompanionEndpointKind } from "../../shared/pairing-link";
 
-export type CompanionPairingRouteMode = "automatic" | "local" | "tailscale";
+export type CompanionPairingRouteMode = "local" | "tailscale";
 
 export interface CompanionPairingRouteSource {
   port: number;
@@ -20,20 +20,6 @@ export interface CompanionPairingRoute {
   port: number;
   hosts?: string[];
   endpoints?: CompanionEndpoint[];
-}
-
-/** Both phone apps read a bare `host:port` as plain HTTP, so hosted routes carry their scheme. */
-export function companionPairingAddressText(route: CompanionPairingRoute): string {
-  const hosted = route.endpoints?.find((endpoint) => {
-    if (endpoint.kind !== "hosted") return false;
-    try {
-      return new URL(endpoint.url).hostname === route.address;
-    } catch {
-      return false;
-    }
-  });
-  if (hosted) return new URL(hosted.url).origin;
-  return `${route.address}:${route.port}`;
 }
 
 export interface CompanionPairingRoutePin {
@@ -58,31 +44,11 @@ const directHTTPOrigin = (host: string, port: number): string => {
   return `http://${authority}:${port}`;
 };
 
-/** Automatic setup is hosted-HTTPS only; Tailscale must be chosen explicitly and never replaces a provisioning hosted route. */
+/** The QR's route for the chosen way to pair: the tailnet only, or this network only, never a mix. */
 export function companionPairingRoute(
   source: CompanionPairingRouteSource,
   mode: CompanionPairingRouteMode,
 ): CompanionPairingRoute | null {
-  if (mode === "automatic") {
-    const hosted = qrEndpoints(source.endpoints).filter((endpoint) => endpoint.kind === "hosted");
-    const preferred = hosted[0] ?? null;
-    if (!preferred) return null;
-
-    const parsed = new URL(preferred.url);
-    const address = parsed.hostname;
-    const port = parsed.port ? Number(parsed.port) : 443;
-    return {
-      address,
-      port,
-      // Older phone builds assume cleartext HTTP for every legacy host, so a hosted TLS authority fails closed.
-      hosts: deduplicatedHosts([
-        address,
-        ...hosted.map((endpoint) => new URL(endpoint.url).hostname),
-      ]),
-      endpoints: hosted,
-    };
-  }
-
   const advertised = qrEndpoints(source.endpoints);
   if (mode === "tailscale") {
     let preferred = advertised.find((endpoint) => endpoint.kind === "tailnet") ?? null;
@@ -98,10 +64,10 @@ export function companionPairingRoute(
     const parsed = new URL(preferred.url);
     const address = parsed.hostname;
     const port = parsed.port ? Number(parsed.port) : 80;
-    const protectedRoutes = advertised.filter(
-      (endpoint) => endpoint.url !== preferred.url && ["hosted", "tailnet"].includes(endpoint.kind),
+    const otherTailnetRoutes = advertised.filter(
+      (endpoint) => endpoint.url !== preferred.url && endpoint.kind === "tailnet",
     );
-    const endpoints = [preferred, ...protectedRoutes].map((endpoint, index) => ({
+    const endpoints = [preferred, ...otherTailnetRoutes].map((endpoint, index) => ({
       ...endpoint,
       priority: index * 100,
     }));
@@ -141,13 +107,10 @@ export function companionPairingRoute(
   const parsed = new URL(preferred.url);
   const address = parsed.hostname;
   const port = parsed.port ? Number(parsed.port) : 80;
-  const protectedRoutes = advertised.filter(
-    (endpoint) => endpoint.url !== preferred.url && endpoint.kind === "hosted",
-  );
   const otherLocalRoutes = advertised.filter(
-    (endpoint) => endpoint.url !== preferred.url && !["hosted", "tailnet"].includes(endpoint.kind),
+    (endpoint) => endpoint.url !== preferred.url && (endpoint.kind === "lan" || endpoint.kind === "bonjour"),
   );
-  const endpoints = [preferred, ...protectedRoutes, ...otherLocalRoutes].map((endpoint, index) => ({
+  const endpoints = [preferred, ...otherLocalRoutes].map((endpoint, index) => ({
     ...endpoint,
     priority: index * 100,
   }));
@@ -174,15 +137,8 @@ export function companionPairingRoutePin(
   if (!route) return null;
 
   const endpoints = qrEndpoints(route.endpoints);
-  const firstEndpoint = endpoints[0] ?? null;
-  const protectedEndpoint = mode === "local"
-    ? null
-    : mode === "tailscale"
-      ? endpoints.find((endpoint) => endpoint.kind === "tailnet") ?? null
-      : firstEndpoint?.kind === "hosted"
-        ? firstEndpoint
-        : null;
-  if (mode !== "local" && !protectedEndpoint) return null;
+  const protectedEndpoint = mode === "tailscale" ? endpoints.find((endpoint) => endpoint.kind === "tailnet") ?? null : null;
+  if (mode === "tailscale" && !protectedEndpoint) return null;
 
   return {
     route: { ...route, endpoints },

@@ -9,9 +9,7 @@ export interface Connection {
   launcher?: string;
   for?: string[];
   signIn?: true;
-  mode?: "managed" | "own";
   account?: string;
-  installationId?: string;
 }
 
 /** The computer an MCP server that needs it is marked as running on. */
@@ -23,7 +21,7 @@ export interface ConnectionsRead extends CollectedConnections { engines: string[
 
 export interface ConnectionsLocal {
   json(route: string): Promise<unknown>;
-  handoff(what: { kind: "connection"; id: string } | { kind: "composio-share"; for: string } | { kind: "connection-release"; id: string; digest: string }): Promise<any>;
+  handoff(what: { kind: "connection"; id: string } | { kind: "connection-release"; id: string; digest: string }): Promise<any>;
 }
 
 export interface ConnectionsTarget {
@@ -41,8 +39,6 @@ export interface ConnectionsMoved {
   release: HeldSignIn[];
   /** Sign-ins that refresh themselves, left here for a later pass (`signIns: false`). */
   later: Array<{ id: string; label: string }>;
-  /** Keys a trial's Cloud keeps unused while its Claude credit lasts. */
-  held: Array<{ id: string; label: string }>;
 }
 
 export class ConnectionMoveError extends Error {

@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { NotificationLogEntry, NotifyKind } from "../shared/notification.ts";
-import { readTeamRolesWith } from "./chief-level.ts";
 import { MAUSBOT_TOOL_DEFINITIONS, MAUSBOT_TOOL_NAMES } from "./drivers/agents-mausbot-tools.ts";
 import { listUnread, markRead, type NotificationsHost } from "./mausbot-notifications.ts";
 import { createMausBotNotificationRoutes } from "./routes/mausbot-notifications.ts";
@@ -28,7 +27,6 @@ function setup(entries: NotificationLogEntry[], bots: BotRecord[] = [MAUS], team
   return { host, rows, announceRead };
 }
 
-afterEach(() => readTeamRolesWith(() => null));
 
 describe("reading unread notifications", () => {
   it("lists only unread ones with a lean, trimmed text, an age and where each opens", () => {
@@ -92,13 +90,12 @@ describe("who may", () => {
     const pip = { id: "pip", name: "Pip" } as BotRecord;
     const chief = { id: "chief", name: "Chief", chiefOfStaff: true } as BotRecord;
     const team = { id: "ada", name: "MausBot", defaultBot: { person: "ada@example.com" } } as BotRecord;
-    readTeamRolesWith(() => "admin");
     const { host, rows } = setup([entry("a", "done")], [MAUS, pip, chief, team]);
     for (const id of ["pip", "chief", "missing"]) {
       expect(listUnread(host, id)).toEqual({ ok: false, error: "Only Pal reads notifications in chat." });
       expect(markRead(host, id, ["a"])).toMatchObject({ ok: false });
     }
-    expect(listUnread(host, "ada")).toMatchObject({ ok: false, error: expect.stringContaining("read in the app") });
+    expect(listUnread(host, "ada")).toEqual({ ok: false, error: "Only Pal reads notifications in chat." });
     expect(markRead(host, "ada", ["a"])).toMatchObject({ ok: false });
     expect(rows[0]!.read).toBe(false);
   });

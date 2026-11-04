@@ -11,7 +11,7 @@ export type BoxKind = "bwrap" | "gvisor" | "user" | "off";
 export interface BoxDetection {
   box: BoxKind;
   /** Why the box is off, as a fixed code; never free text from a tool. */
-  reason: "switched-off" | "not-linux" | "no-bwrap" | "userns-refused" | "not-cloud" | null;
+  reason: "switched-off" | "not-linux" | "no-bwrap" | "userns-refused" | null;
   /** The found tools, when the box is on. */
   tools: { bwrap: string; socat: string | null } | null;
 }
@@ -24,17 +24,10 @@ export interface DetectInput {
   which?: (name: string) => string | null;
 }
 
-/** A Cloud home (`home`, or the Team Cloud role `team`) boxes turns unless told not to. */
-export function cloudRole(env: Record<string, string | undefined>): boolean {
-  return env.OMB_CLOUD_ROLE === "home" || env.OMB_CLOUD_ROLE === "team";
-}
-
-/** `OMB_BOT_BOX`: unset (Cloud homes on, others off), 0/off, 1/on/bwrap. */
-export function boxWanted(env: Record<string, string | undefined>): "on" | "off" | "default" {
+/** `OMB_BOT_BOX`: 1/on/bwrap boxes turns; unset or anything else leaves them unboxed. */
+export function boxWanted(env: Record<string, string | undefined>): boolean {
   const raw = (env.OMB_BOT_BOX ?? "").trim().toLowerCase();
-  if (raw === "0" || raw === "off" || raw === "false" || raw === "no") return "off";
-  if (raw === "1" || raw === "on" || raw === "bwrap" || raw === "true" || raw === "yes") return "on";
-  return "default";
+  return raw === "1" || raw === "on" || raw === "bwrap" || raw === "true" || raw === "yes";
 }
 
 export function whichOnPath(name: string, env: Record<string, string | undefined> = process.env): string | null {
@@ -61,9 +54,7 @@ export function probeBwrap(bwrap: string): boolean {
 }
 
 export function detectBox(input: DetectInput): BoxDetection {
-  const wanted = boxWanted(input.env);
-  if (wanted === "off") return { box: "off", reason: "switched-off", tools: null };
-  if (wanted === "default" && !cloudRole(input.env)) return { box: "off", reason: "not-cloud", tools: null };
+  if (!boxWanted(input.env)) return { box: "off", reason: "switched-off", tools: null };
   if ((input.platform ?? process.platform) !== "linux") return { box: "off", reason: "not-linux", tools: null };
   const which = input.which ?? ((name) => whichOnPath(name, input.env));
   const bwrap = which("bwrap");

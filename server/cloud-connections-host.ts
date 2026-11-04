@@ -1,11 +1,8 @@
-// The one-time move of this computer's connections to the person's own Cloud, in one object: its routes
-// (routes/cloud-connections.ts), the private port's answers to the desktop's main process (login-handoff.ts), and what
-// a bot on My Cloud is told about connections that need the person there (cloud-connections-prompt.ts).
+// The one-time move of this computer's connections to a server of the person's own, in one object: its routes
+// (routes/cloud-connections.ts) and the private port's answers to the desktop's main process (login-handoff.ts).
 import { hostname } from "node:os";
 
 import { answerConnection, connectionFingerprints, highlevelDigest, launchersOnPath, listConnections, releaseConnection, signInDigest } from "./cloud-connections.ts";
-import { createConnectionPrompt, type ConnectionPromptBot } from "./cloud-connections-prompt.ts";
-import { movedFrom } from "./cloud-send-arrived.ts";
 import * as composio from "./composio.ts";
 import { brokerAccess } from "./composio-broker-access.ts";
 import { adoptComposioShare, adoptOwnComposio, composioIdentity, composioShareCode } from "./composio-share.ts";
@@ -15,14 +12,11 @@ import type { ConnectionHandoffAnswer, ConnectionHandoffWhat } from "./login-han
 import type { McpOAuthManager } from "./mcp-oauth.ts";
 import type { RequestAuth } from "./request-auth.ts";
 import { isRemoteMcpServer, parseStoredMcpServer, type McpRunsOn } from "./mcp-registry.ts";
-import { personalConnectionRefusal, type CloudTeam } from "./cloud-team.ts";
 import { createCloudConnectionRoutes } from "./routes/cloud-connections.ts";
 
 export interface CloudConnectionsHostDeps {
-  /** This server is the person's Cloud home, reached at this public origin. */
-  cloudHome: { publicOrigin: string; team?: CloudTeam | null } | null;
-  /** A server of one person's own takes that person's connections as a Cloud home does. */
-  ownHome?(auth: RequestAuth): boolean;
+  /** A server of one person's own takes that person's connections. */
+  ownHome(auth: RequestAuth): boolean;
   config(): AppConfig;
   /** This server's own environment id: the computer a server that needs it is marked as running on. */
   environmentId: string;
@@ -30,10 +24,6 @@ export interface CloudConnectionsHostDeps {
   highlevel: Pick<HighLevelService, "store" | "connected" | "adopt" | "disconnect">;
   /** The engines (instance ids) ready to run here now. */
   engines(): Promise<string[]>;
-  /** A trial's moved keys, unused while its Claude credit lasts. */
-  heldKeys?: { hold(engines: readonly string[]): boolean } | null;
-  /** This server's data folder, where a Cloud home keeps the computer its bots moved from. */
-  dataDir?: string;
 }
 
 const managedService = (): boolean => { try { return brokerAccess() !== null; } catch { return false; } };
@@ -46,8 +36,6 @@ export function createCloudConnectionsHost(deps: CloudConnectionsHostDeps) {
   const sources = () => ({ config: deps.config(), mcpSignIn: (name: string, url: string) => deps.mcpOAuth.signInRecord(name, url), highlevel: () => deps.highlevel.store.get() });
   const composioConnected = async (slugs: string[]) =>
     Object.fromEntries(Object.entries(await composio.connectionStatus(deps.config(), slugs)).map(([slug, state]) => [slug, state.connected]));
-  const prompt = deps.cloudHome ? createConnectionPrompt({ mcpServers: () => deps.config().mcpServers, mcpAuth,
-    highlevelConnected: () => deps.highlevel.connected(), composioConnected, movedFrom: () => (deps.dataDir ? movedFrom(deps.dataDir)?.computer ?? null : null) }, deps.cloudHome.publicOrigin) : null;
   const connections = async () => {
     const cfg = deps.config();
     return listConnections({ config: cfg, mcpAuth, composio: await composioIdentity(cfg).catch(() => null), highlevel: () => deps.highlevel.store.get() });
@@ -57,12 +45,10 @@ export function createCloudConnectionsHost(deps: CloudConnectionsHostDeps) {
     connections,
     fingerprints: (nonce: string) => connectionFingerprints(nonce, sources()),
     routes: createCloudConnectionRoutes({
-      cloudHome: deps.cloudHome !== null,
-      ...(deps.ownHome ? { ownHome: deps.ownHome } : {}),
-      ...(deps.cloudHome?.team ? { personalRefusal: (what: string) => personalConnectionRefusal(deps.cloudHome!.team!, what) } : {}),
+      ownHome: deps.ownHome,
       async list() {
         return { computer, connections: await connections(), engines: await deps.engines().catch((): string[] => []), commands: commands ??= launchersOnPath(),
-          ...(deps.cloudHome === null && !managedService() ? { managedApps: false as const } : {}) };
+          ...(!managedService() ? { managedApps: false as const } : {}) };
       },
       adoptShare: adoptComposioShare,
       adoptOwn: (apiKey, userId) => adoptOwnComposio(deps.config(), apiKey, userId),
@@ -75,10 +61,9 @@ export function createCloudConnectionsHost(deps: CloudConnectionsHostDeps) {
         return { ok: true, outcome: deps.mcpOAuth.adopt(name, parsed.server.url, record, replaces ? (current) => signInDigest(current.tokens) === replaces : undefined) };
       },
       adoptHighLevel: (connection, replaces) => ({ ok: true, outcome: deps.highlevel.adopt(connection, replaces ? (current) => highlevelDigest(current) === replaces : undefined) }),
-      holdKeys: (engines) => deps.heldKeys?.hold(engines) ?? false,
     }),
 
-    /** The private port's ask: one connection's secrets, a code for the person's Cloud to act as this computer's
+    /** The private port's ask: one connection's secrets, a code for the person's server to act as this computer's
      * connected-apps account, or letting go of a sign-in that moved. */
     async handoff(what: ConnectionHandoffWhat): Promise<ConnectionHandoffAnswer> {
       if (what.kind === "composio-share") {
@@ -91,7 +76,5 @@ export function createCloudConnectionsHost(deps: CloudConnectionsHostDeps) {
       }
       return answerConnection(what.id, sources());
     },
-
-    prompt: (bot: ConnectionPromptBot): string => prompt?.(bot) ?? "",
   };
 }

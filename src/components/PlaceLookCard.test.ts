@@ -9,8 +9,8 @@ let host: HTMLDivElement, root: Root | null = null;
 beforeEach(() => { host = document.createElement("div"); document.body.append(host); });
 afterEach(async () => { await act(async () => root?.unmount()); root = null; host.remove(); vi.resetModules(); });
 
-const look = (over: Partial<PlaceLook> = {}): PlaceLook => ({ name: "Client A", color: "teal", swatch: "green", change: "admin", ...over });
-const COMPUTER: PlaceLook = { name: "This computer", color: null, swatch: null, change: "local" };
+const look = (over: Partial<PlaceLook> = {}): PlaceLook => ({ name: "Client A", color: "teal", swatch: "green", ...over });
+const COMPUTER: PlaceLook = { name: "This computer", color: null, swatch: null };
 const COLOR: Record<string, PlaceLook["color"]> = { blue: "blue", green: "teal", amber: "yellow", rose: "red", violet: "purple", slate: null };
 const saved = (from: PlaceLook) => (swatch: string | null) => ({ outcome: "saved", look: { ...from, color: COLOR[swatch ?? "slate"] ?? null, swatch: COLOR[swatch ?? "slate"] ? swatch as PlaceLook["swatch"] : null } });
 const SET = { version: "v1", width: 1200, height: 300 };
@@ -113,13 +113,8 @@ it("choosing a swatch saves it through main, and the tint follows at once", asyn
   expect(workspaces.color).toHaveBeenCalledTimes(1);
 });
 
-it("a team member sees the team's colour and picture and who may change them, and their clicks change nothing", async () => {
-  const { workspaces, pictures } = await page(look({ name: "Acme", change: null, reason: "member" }), { owner: false, banner: SET });
-  expect([...host.querySelectorAll("[data-swatch]")].every((candidate) => (candidate as HTMLButtonElement).disabled)).toBe(true);
-  expect(host.querySelector('[data-place-look="locked"]')?.textContent).toContain("Only its admins can change its color.");
-  await click(swatch("rose"));
-  expect(workspaces.color).not.toHaveBeenCalled();
-  expect(tint(), "they still see it").toContain("var(--identity-teal)");
+it("someone who isn't the server's admin sees its picture and can't change it", async () => {
+  const { pictures } = await page(look({ name: "Acme" }), { owner: false, banner: SET });
   expect([button("Change image")?.disabled, button("Remove")?.disabled]).toEqual([true, true]);
   expect(host.querySelector("[data-place-picture]")?.textContent).toContain("Only its admins can change its picture.");
   await click(button("Remove")!);
@@ -127,20 +122,14 @@ it("a team member sees the team's colour and picture and who may change them, an
   expect(host.querySelector("[data-place-banner] img"), "they see the picture").toBeTruthy();
 });
 
-it("the Admin's refusal, an Admin without the route, and a failure: said plainly, and the colour stays", async () => {
-  for (const [outcome, words] of [["refused", "Only its admins can change its color."], ["unsupported", "This Cloud's color can't be changed from the app yet."], ["failed", "The color wasn't saved. Try again."]] as const) {
+it("a failure: said plainly, and the colour stays", async () => {
+  for (const [outcome, words] of [["failed", "The color wasn't saved. Try again."]] as const) {
     await act(async () => root?.unmount());
     await page(look(), { answer: () => ({ outcome, look: look() }) });
     await click(swatch("rose"));
     expect(host.textContent).toContain(words);
     expect(swatch("green").getAttribute("aria-checked")).toBe("true");
   }
-});
-
-it("another Cloud of the person's own while the MausBot Cloud sign-in is away: locked, and says why", async () => {
-  await page(look({ change: null, reason: "signed-out" }));
-  expect(host.querySelector('[data-place-look="locked"]')?.textContent).toContain("Sign in to MausBot Cloud to change its color.");
-  expect(swatch("rose").disabled).toBe(true);
 });
 
 it("a browser or an older app: no colour and no tint, only the place's picture", async () => {

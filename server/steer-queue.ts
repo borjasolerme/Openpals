@@ -38,7 +38,6 @@ interface QueueEntry {
     callId?: string;
     fromApp?: Message["fromApp"];
     reaction?: string;
-    relay?: Message["relay"];
     /** The person's row already in the transcript, steered into a turn that was stopped before it read it: it runs as
      * it is, never as a second copy. */
     rowId?: string;
@@ -105,7 +104,7 @@ export function queueSteeredMessage(
   botId: string,
   threadId: string,
   text: string,
-  options: { prompt?: string; replyToId?: string; sendId?: string; dataContext?: Message["dataContext"]; reason?: SteerQueueReason; unattended?: boolean; peerAsk?: Message["peerAsk"]; origin?: WorkOrigin; sender?: ResolvedSender; trigger?: UsageTrigger; callId?: string; via?: "call"; reaction?: string; fromApp?: Message["fromApp"]; relay?: Message["relay"]; rowId?: string; first?: boolean; queuedAt?: number } = {},
+  options: { prompt?: string; replyToId?: string; sendId?: string; dataContext?: Message["dataContext"]; reason?: SteerQueueReason; unattended?: boolean; peerAsk?: Message["peerAsk"]; origin?: WorkOrigin; sender?: ResolvedSender; trigger?: UsageTrigger; callId?: string; via?: "call"; reaction?: string; fromApp?: Message["fromApp"]; rowId?: string; first?: boolean; queuedAt?: number } = {},
 ): QueuedSteer {
   const id = newId();
   const entry = queues.get(threadId) ?? { botId, items: [] };
@@ -127,7 +126,6 @@ export function queueSteeredMessage(
     ...spokenLineFields(options.via, options.callId),
     ...(options.fromApp ? { fromApp: options.fromApp } : {}),
     ...(options.reaction ? { reaction: options.reaction } : {}),
-    ...(options.relay ? { relay: options.relay } : {}),
     ...(options.rowId ? { rowId: options.rowId } : {}),
   };
   saveChatFollowup({ id, kind: "bot", ownerId: botId, threadId, payload: item });
@@ -155,10 +153,10 @@ export function hasQueuedSteeredMessages(botId: string, threadId: string): boole
   return entry?.botId === botId && entry.items.length > 0;
 }
 
-/** A message the person typed waits to run next, not a teammate's ask, an incident report, a relay or unattended work. */
+/** A message the person typed waits to run next, not a teammate's ask, an incident report or unattended work. */
 export function hasQueuedPersonMessage(botId: string, threadId: string): boolean {
   const entry = queues.get(threadId);
-  return entry?.botId === botId && entry.items.some((item) => !item.peerAsk && !item.unattended && !item.relay && !item.fromApp);
+  return entry?.botId === botId && entry.items.some((item) => !item.peerAsk && !item.unattended && !item.fromApp);
 }
 
 export function isSteeredMessageQueued(botId: string, threadId: string, queueId: string): boolean {
@@ -217,7 +215,6 @@ export function drainSteeredMessages(
           sender: item.sender,
           ...spokenLineFields(item.via, item.callId),
           ...(item.fromApp ? { fromApp: item.fromApp } : {}),
-          ...(item.relay ? { relay: item.relay } : {}),
           ...(item.reaction ? { reaction: item.reaction } : {}),
         }),
       );

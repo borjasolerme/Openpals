@@ -28,27 +28,25 @@ export function needsCli(instance: InstanceInfo | undefined): boolean {
   return instance?.snapshot.state !== "available";
 }
 
-export function serverTerminal(cloudHome: boolean): boolean {
-  return Boolean(window.ogb?.openInstallTerminal) && window.ogb?.remoteClient?.active !== true && !cloudHome;
+export function serverTerminal(): boolean {
+  return Boolean(window.ogb?.openInstallTerminal) && window.ogb?.remoteClient?.active !== true;
 }
 
-export function grokKeyInstead(instance: InstanceInfo, cloudHome: boolean): boolean {
-  return instance.driverKind === "grokAgent" && needsCli(instance) && !serverTerminal(cloudHome);
+export function grokKeyInstead(instance: InstanceInfo): boolean {
+  return instance.driverKind === "grokAgent" && needsCli(instance) && !serverTerminal();
 }
 
 export function CommandRow({
   command,
   actionLabel,
   compact = false,
-  allowTerminal = true,
 }: {
   command: string;
   actionLabel: string;
   compact?: boolean;
-  allowTerminal?: boolean;
 }) {
   const [status, setStatus] = useState<"copied" | "failed" | "opened" | null>(null);
-  const canOpen = typeof window !== "undefined" && allowTerminal && serverTerminal(false);
+  const canOpen = typeof window !== "undefined" && serverTerminal();
 
   const settle = (next: "copied" | "failed" | "opened") => {
     setStatus(next);
@@ -151,7 +149,7 @@ export function CommandRow({
 }
 
 function ServerEngineInstall({ instance, mode, command, quiet = false }: { instance: InstanceInfo; mode: "install" | "update"; command: string | null; quiet?: boolean }) {
-  const { state, dispatch, refreshModels } = useStore();
+  const { dispatch, refreshModels } = useStore();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -207,7 +205,7 @@ function ServerEngineInstall({ instance, mode, command, quiet = false }: { insta
       {terminalCommand && (
         <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-[12px] text-ink-secondary">
           <summary className="cursor-pointer select-none">{t("engineSetup.preferTerminal")}</summary>
-          <CommandRow command={terminalCommand} actionLabel={t(mode === "update" ? "engineSetup.openUpdate" : "engineSetup.openInstall")} compact allowTerminal={state.config?.cloudHome !== true} />
+          <CommandRow command={terminalCommand} actionLabel={t(mode === "update" ? "engineSetup.openUpdate" : "engineSetup.openInstall")} compact />
         </details>
       )}
     </div>
@@ -395,7 +393,7 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
 }
 
 export function isApiKeyEngine(instance: InstanceInfo | undefined): boolean {
-  if (!instance || instance.access !== "api" || instance.managed) return false;
+  if (!instance || instance.access !== "api") return false;
   return instance.driverKind !== "claudeAgent" || Boolean(instance.snapshot.version);
 }
 
@@ -438,7 +436,7 @@ function GrokKeyInstead({ className, unframed }: { className?: string; unframed:
         </span>
         <p className="min-w-0 text-[13px] leading-relaxed text-ink">{t("engineSetup.grok.notInstalled")}</p>
       </div>
-      {!remote && <KeyRow id="xai" bare via="model_picker" className="mt-2 px-0 pb-0" />}
+      {!remote && <KeyRow id="xai" bare className="mt-2 px-0 pb-0" />}
     </div>
   );
 }
@@ -466,7 +464,7 @@ function ApiKeyEngineSetup({ instance, className, unframed, configured = false }
       {!inline && isApiKeyEngine(instance) && needsSignIn(instance) && (
         <p role="alert" className="mt-2 text-[12px] leading-relaxed text-danger">{t("engineSetup.apiKey.rejected")}</p>
       )}
-      {inline ? <KeyRow id={inline} bare via="model_picker" rejected={isApiKeyEngine(instance) && needsSignIn(instance)} className="mt-2 px-0 pb-0" /> : !remote && (
+      {inline ? <KeyRow id={inline} bare rejected={isApiKeyEngine(instance) && needsSignIn(instance)} className="mt-2 px-0 pb-0" /> : !remote && (
         <button
           type="button"
           onClick={() => dispatch(openKeysFor(instance))}
@@ -503,8 +501,6 @@ export function EngineSetup({
   /** A paired desktop: sign-in and setup happen on the host, whose AIs it uses. */
   onHost?: boolean;
 }) {
-  const { state } = useStore();
-  const cloudHome = state.config?.cloudHome === true;
   const install = instance.install;
   const installCommand = installCommandFor(install);
   const signInCommand = install?.signInCommand;
@@ -551,7 +547,7 @@ export function EngineSetup({
     return <ApiKeyEngineSetup instance={instance} className={className} unframed={unframed} />;
   }
 
-  if (intent === "cloud" && grokKeyInstead(instance, cloudHome)) {
+  if (intent === "cloud" && grokKeyInstead(instance)) {
     return <GrokKeyInstead className={className} unframed={unframed} />;
   }
 
@@ -597,7 +593,7 @@ export function EngineSetup({
       {deviceSignIn || browserSignIn ? (
         <>
           <DeviceSignIn key={instance.instanceId} instanceId={instance.instanceId} browserPkce={browserSignIn} provider={provider} />
-          {deviceSignIn && provider !== "codex" && signInCommand && serverTerminal(cloudHome) && (
+          {deviceSignIn && provider !== "codex" && signInCommand && serverTerminal() && (
             <details className="mt-2 rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-[12px] text-ink-secondary">
               <summary className="cursor-pointer select-none">{t("engineSetup.preferTerminal")}</summary>
               <CommandRow command={signInCommand} actionLabel={t("engineSetup.openSignIn")} compact />
@@ -614,7 +610,6 @@ export function EngineSetup({
         <CommandRow
           command={command}
           actionLabel={signInOnly ? t("engineSetup.openSignIn") : t("engineSetup.openInstall")}
-          allowTerminal={!cloudHome}
         />
       ) : (
         <p className="mt-3 rounded-lg bg-inset px-2.5 py-2 text-[12px] leading-relaxed text-ink-secondary">

@@ -33,7 +33,6 @@ export class PackageImportError extends Error {
 
 export type ImportSkipReason =
   | "presets_not_supported_yet"
-  | "connection_refused_by_policy"
   | "too_many_connections"
   | "connection_invalid"
   | "run_limit_adjusted"
@@ -55,7 +54,6 @@ export interface PackageImportDeps {
   };
   mcp: {
     servers(): Readonly<Record<string, unknown>>;
-    refusal(name: string, server: object): string | undefined;
     persist(next: Record<string, unknown>): void;
   };
   sections: { writeBrief(section: string, text: string): void };
@@ -265,10 +263,6 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
         };
         if (!serverName || !parseStoredMcpServer(serverName, server).ok) {
           skipped.push({ part, reason: "connection_invalid" });
-          continue;
-        }
-        if (deps.mcp.refusal(serverName, server)) {
-          skipped.push({ part, reason: "connection_refused_by_policy" });
           continue;
         }
         next[serverName] = server;

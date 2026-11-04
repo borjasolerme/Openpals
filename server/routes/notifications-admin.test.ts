@@ -16,8 +16,6 @@ const session: SessionRecord = { id: "fixture", tokenHash: "0".repeat(64), label
   createdAt: 1, lastSeenAt: 1, expiresAt: Number.MAX_SAFE_INTEGER };
 const client: RequestAuth = { kind: "session", session, via: "bearer", scopes: ["client"] };
 const callers: Array<{ label: string; auth: RequestAuth; admin: boolean }> = [
-  { label: "Team Cloud member", auth: { ...client, session: { ...session, email: "bob@notifications.test",
-    membershipAuthority: "team", teamRole: "member" } }, admin: false },
   { label: "guest", auth: { ...client, via: "cookie" }, admin: false },
   { label: "paired client", auth: client, admin: false },
   { label: "service loopback", auth: { kind: "loopback", trust: "service", scopes: ["client"] }, admin: false },

@@ -12,7 +12,7 @@ import { createHighLevelRoutes } from "../routes/highlevel.ts";
 import { PASS } from "../routes/table.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { FAKE_LOCATION_ID, startFakeHighLevel, startFakeRelay, type FakeHighLevel, type FakeRelay } from "../testing/fake-highlevel.ts";
-import { HIGHLEVEL_RELAY_URL_DEFAULT, HighLevelRelayError, createHighLevelRelay, highlevelRelayUrl, type HighLevelRelay, type RelayTokens } from "./relay.ts";
+import { HighLevelRelayError, createHighLevelRelay, highlevelRelayUrl, type HighLevelRelay, type RelayTokens } from "./relay.ts";
 import { HighLevelSignIn } from "./sign-in.ts";
 import { HighLevelStore } from "./store.ts";
 import { createHighLevelService, type HighLevelService } from "./service.ts";
@@ -52,9 +52,9 @@ const until = async <T>(read: () => T, want: (value: T) => boolean, ms = 3_000):
 };
 
 describe("relay URL", () => {
-  it("defaults to accounts.openmausbot.com, accepts https or loopback http, and reads off as unavailable", () => {
-    expect(highlevelRelayUrl({})).toBe(HIGHLEVEL_RELAY_URL_DEFAULT);
-    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "" })).toBe(HIGHLEVEL_RELAY_URL_DEFAULT);
+  it("has no relay by default, accepts https or loopback http, and reads off as unavailable", () => {
+    expect(highlevelRelayUrl({})).toBeNull();
+    expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "" })).toBeNull();
     expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "https://relay.example.test/" })).toBe("https://relay.example.test");
     expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:4321" })).toBe("http://127.0.0.1:4321");
     expect(highlevelRelayUrl({ OMB_HIGHLEVEL_RELAY_URL: "http://relay.example.test" })).toBeNull();

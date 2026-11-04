@@ -2,7 +2,7 @@
 // together on, or none; undefined until main first answers, and always none in a browser or on another place's page.
 import { useEffect, useState } from "react";
 
-export interface TwoPlacesSuggestion { key: string; name: string; kind: "cloud" | "server" }
+export interface TwoPlacesSuggestion { key: string; name: string; kind: "server" }
 
 const bridge = () => (typeof window === "undefined" || window.ogb?.remoteClient?.active ? undefined : window.ogb?.twoPlaces);
 

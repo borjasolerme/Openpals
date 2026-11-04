@@ -1,8 +1,7 @@
 // This computer's copy once the person's bots moved to their own Cloud: one marker, moved.json in the data folder. A
 // frozen server admits no turns, runs no schedules, app events or memory upkeep, and answers every change but the
 // move's own with one sentence. Nothing in the workspace is edited, so lifting the marker leaves this computer exactly
-// as it was. A Cloud that ended, started only so its owner can take their things home (OMB_CLOUD_EXPORT_ONLY=1), runs
-// frozen the same way and is never lifted.
+// as it was.
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
@@ -22,7 +21,6 @@ export const HOME_SCREEN = "/home";
 export const RAIL_PAGE = "/rail";
 /** A path whose last part has an extension is a file of the page (a script, a picture), never a page. */
 const FILE = /\.[A-Za-z0-9]+$/u;
-export const ENDED_REFUSAL = "My Cloud has ended. It is open only so you can take your things home.";
 
 /** What a frozen server still changes: the freeze itself, the move's reads and lets-go, signing in and out, the backup
  * that takes things home, the Admin's signed routes, Files and the computers lent to it. (The lent screen lease has its
@@ -66,16 +64,16 @@ export async function switchAutomationsOff(automations: MoveAutomations, only?: 
   return done;
 }
 
-export function createMoveFreeze({ dataDir, exportOnly = false }: { dataDir: string; exportOnly?: boolean }) {
+export function createMoveFreeze({ dataDir }: { dataDir: string }) {
   const file = join(dataDir, "moved.json");
-  let frozen = exportOnly || existsSync(file);
+  let frozen = existsSync(file);
   const named = (field: "cloud" | "place"): string | null => {
     try { const value: unknown = JSON.parse(readFileSync(file, "utf8")); const named = Reflect.get(Object(value), field); return typeof named === "string" ? named : null; } catch { return null; }
   };
-  let movedTo = frozen && !exportOnly ? named("cloud") : null;
-  let place = frozen && !exportOnly ? named("place") : null;
+  let movedTo = frozen ? named("cloud") : null;
+  let place = frozen ? named("place") : null;
   const held: Array<{ start(): void; stop(): void }> = [];
-  const refusal = () => (frozen ? (exportOnly ? ENDED_REFUSAL : movedRefusal(place)) : null);
+  const refusal = () => (frozen ? movedRefusal(place) : null);
   const each = (step: "start" | "stop") => {
     for (const work of held) {
       try { work[step](); } catch (error) { console.warn(`move freeze: could not ${step} a schedule (${(error as Error).message})`); }
@@ -92,7 +90,7 @@ export function createMoveFreeze({ dataDir, exportOnly = false }: { dataDir: str
     /** Where a page of this computer's frozen copy goes instead: its home screen, never the frozen workspace. The
      * window's rail stays the rail: it shows no workspace, only the places main lists. */
     screen(path: string): string | null {
-      if (!frozen || exportOnly || path === HOME_SCREEN || path === RAIL_PAGE || FILE.test(path)) return null;
+      if (!frozen || path === HOME_SCREEN || path === RAIL_PAGE || FILE.test(path)) return null;
       return HOME_SCREEN;
     },
     /** Starts it now unless this server is frozen; a freeze stops it, and lifting the freeze starts it again. */
@@ -107,9 +105,8 @@ export function createMoveFreeze({ dataDir, exportOnly = false }: { dataDir: str
     /** Why a frozen server refuses this request, or null when it takes it. */
     refuses(method: string, path: string): string | null {
       // A lent computer keeps taking its own screen lease while frozen by a move: without it, every screen
-      // call from the home the bots moved to dies on this 409 while files and the terminal work. Only that one POST,
-      // and never on an ended Cloud's copy — that Cloud runs no bots, so nothing should be asking for a lease.
-      if (frozen && !exportOnly && method.toUpperCase() === "POST" && path === "/api/desktop/shared-computer-control") return null;
+      // call from the home the bots moved to dies on this 409 while files and the terminal work. Only that one POST.
+      if (frozen && method.toUpperCase() === "POST" && path === "/api/desktop/shared-computer-control") return null;
       return frozen && !READS.has(method.toUpperCase()) && !STILL_CHANGES.test(path) ? refusal() : null;
     },
     freeze(cloud: string | null, named: string | null = null): void {
@@ -123,22 +120,17 @@ export function createMoveFreeze({ dataDir, exportOnly = false }: { dataDir: str
     /** Deletes this computer's copy of the workspace, credentials included, once the move is long done; only a computer
      * frozen by a move ever does. The server starts again after, frozen and empty. */
     forget(): boolean {
-      if (exportOnly || !existsSync(file)) return false;
+      if (!existsSync(file)) return false;
       for (const name of readdirSync(dataDir)) if (!kept(name)) rmSync(join(dataDir, name), { recursive: true, force: true });
       return true;
     },
-    /** False for a server that may never be lifted: a Cloud that ended. */
-    lifts: () => !exportOnly,
-    /** False when this server may never be lifted: a Cloud that ended. */
-    unfreeze(): boolean {
-      if (exportOnly) return false;
-      if (!frozen) return true;
+    unfreeze(): void {
+      if (!frozen) return;
       rmSync(file, { force: true });
       frozen = false;
       movedTo = null;
       place = null;
       each("start");
-      return true;
     },
   };
 }

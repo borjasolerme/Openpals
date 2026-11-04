@@ -43,9 +43,8 @@ import { askInputSummary, commandSummary, toolDetailPreview } from "../tool-summ
 import { classifyError, computeBackoff, interruptibleDelay, RETRY_MAX_ATTEMPTS, USAGE_LIMIT } from "./retry.ts";
 import { claudeApiErrorMessage, claudeLimitFacts, claudeLimitRefusal, claudeUsageLimit, claudeLimitMessage, claudeVersionTooOld, type ClaudeLimit } from "./claude-limits.ts";
 import { createOrgModelBlocks, modelSwapNotice, withOrgBlocks } from "./claude-model-access.ts";
-import { engineHomes } from "../engine-homes/engine-homes.ts";
 import { TEAM_TOOLS_FAILED, failedCustomMcp, teamToolsFailed } from "./team-tools.ts";
-import { armIdleClose, engineIdleMs, sessionIdlePolicy, stopIdleClose } from "./session-idle.ts";
+import { armIdleClose, sessionIdlePolicy, stopIdleClose } from "./session-idle.ts";
 import { promptHalves, withVolatileNote } from "./prompt-split.ts";
 import { parseVersionTriple, versionAtLeast } from "./acp/version-probe.ts";
 import {
@@ -786,7 +785,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       console.error(`claude (${instanceId}): OMB_CLAUDE_INHERIT_USER_CONFIG=1 — bots inherit this machine's Claude Code MCP servers, skills, hooks and CLAUDE.md on every turn; remove it unless a bot needs a user-scope server`);
     }
     let models = config.managedModels ? { default: config.managedModels[0], options: config.managedModels.map(id => ({ id, label: id })) } : STATIC_CLAUDE_MODELS;
-    const orgBlocks = createOrgModelBlocks(() => engineHomes.everyHome(catalogEnv), (blocked) => { models = withOrgBlocks(models, blocked); });
+    const orgBlocks = createOrgModelBlocks(() => [catalogEnv], (blocked) => { models = withOrgBlocks(models, blocked); });
     const refreshModels = async () => {
       if (config.managed) return;
       try {
@@ -924,7 +923,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       if (!s) return;
       if (s.idleTimer) clearTimeout(s.idleTimer);
       const held = (warmHolds.get(threadId) ?? 0) - Date.now();
-      s.idleTimer = armIdleClose(`${instanceId}\0${threadId}`, Math.min(2_147_483_647, Math.max(engineIdleMs(threadId, sessionIdle), held)), { close: () => closeSession(threadId, "idle"),
+      s.idleTimer = armIdleClose(`${instanceId}\0${threadId}`, Math.min(2_147_483_647, Math.max(sessionIdle.idleMs, held)), { close: () => closeSession(threadId, "idle"),
         idle: () => sessions.get(threadId) === s && !s.closing && !s.turn && !active.has(threadId) && (warmHolds.get(threadId) ?? 0) <= Date.now() });
     };
     // Keep-warm pings and warm summaries fork a thread's session with its live launch contract (claude-warm-summary.ts).

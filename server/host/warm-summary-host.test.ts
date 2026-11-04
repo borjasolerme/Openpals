@@ -82,7 +82,6 @@ function setup(overrides: Partial<WarmSummaryHostDeps> = {}, options: { tokens?:
     enabled: () => true,
     nativeCompactAt: () => 200_000,
     busy: () => false,
-    memoryShort: () => false,
     queued: () => false,
     coordinator: { activeDirect: () => false, awaitingTeammateThreads: () => new Set() },
     waits: () => ({ all: () => [] }),

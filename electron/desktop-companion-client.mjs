@@ -41,15 +41,12 @@ const cleanLabel = (value, fallback) => {
   return label || fallback;
 };
 
-/** Only the control plane's `c-<32 hex>` names: any other name in those zones never receives a pairing code. Ship a new domain here first. */
-const MANAGED_COMPANION_HOSTNAME = /^c-[0-9a-f]{32}\.(?:openmausbot\.com|mausbot\.si)$/;
-
-/** HTTPS, or a Tailscale MagicDNS name (WireGuard protects its HTTP); a LAN IP would put the long-lived bearer on Wi-Fi in plaintext. */
+/** A Tailscale MagicDNS name only (WireGuard protects its HTTP); a LAN IP would put the long-lived bearer on Wi-Fi in plaintext. */
 export function normalizeDesktopCompanionEndpoint(value) {
   let raw = String(value ?? "").trim();
   if (!raw) return "";
   if (!/^https?:\/\//i.test(raw)) {
-    raw = /\.ts\.net(?::\d+)?\/?$/i.test(raw) ? `http://${raw}` : `https://${raw}`;
+    raw = `http://${raw}`;
   }
   let parsed;
   try {
@@ -58,11 +55,8 @@ export function normalizeDesktopCompanionEndpoint(value) {
     return "";
   }
   const hostname = parsed.hostname.toLowerCase();
-  const tailscaleHttp = parsed.protocol === "http:" && hostname.endsWith(".ts.net");
-  const managedHttps =
-    parsed.protocol === "https:" && MANAGED_COMPANION_HOSTNAME.test(hostname);
   if (
-    (!tailscaleHttp && !managedHttps) ||
+    parsed.protocol !== "http:" || !hostname.endsWith(".ts.net") ||
     parsed.username ||
     parsed.password ||
     (parsed.pathname !== "" && parsed.pathname !== "/") ||
@@ -71,13 +65,12 @@ export function normalizeDesktopCompanionEndpoint(value) {
   ) {
     return "";
   }
-  if (tailscaleHttp && !parsed.port) parsed.port = "8810";
+  if (!parsed.port) parsed.port = "8810";
   const port = Number(parsed.port);
   if (parsed.port && (!Number.isSafeInteger(port) || port < 1 || port > 65_535)) return "";
   return parsed.origin;
 }
 
-export const normalizeTailscaleCompanionEndpoint = normalizeDesktopCompanionEndpoint;
 export function desktopCompanionAccess(credentials) {
   const stored = credentials?.[DESKTOP_COMPANION_FIELD];
   if (!stored || typeof stored !== "object" || Array.isArray(stored)) return null;

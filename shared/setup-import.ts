@@ -17,7 +17,7 @@ export interface SetupImportRequest {
 
 export type SkillSkip = "conflict" | "failed";
 /** "conflict": a different server already has that name here; "failed": it could not be saved. */
-export type ToolSkip = "limit" | "policy" | "busy" | "conflict" | "failed";
+export type ToolSkip = "limit" | "busy" | "conflict" | "failed";
 
 /** Names and counts only. `review`: skills added switched off, because the scan flagged them, until a person reads them. */
 export interface SetupImportResult {

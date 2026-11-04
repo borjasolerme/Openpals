@@ -1,6 +1,6 @@
 # Desktop-to-desktop companion mode
 
-Every OpenMausBot desktop build can play either role:
+Every Openpals desktop build can play either role:
 
 - **Host mode** is the normal app. It owns the agents, conversations, credentials, routines, and computers.
 - **Client mode** controls a paired host through the same authenticated, default-deny companion API used by the phone app.
@@ -16,17 +16,6 @@ Desktop companion mode instead keeps the bundled UI and native integrations on
 the client, sends API traffic through the default-deny companion boundary, and
 provides the per-device VPS viewer and client-local Mac voice behavior described
 below. The two connection types intentionally do not share credentials.
-
-## Pair over secure HTTPS
-
-1. On the host, open **Settings → Remote access** and finish **Secure HTTPS pairing**.
-2. Open a pairing window so the host displays a six-digit code.
-3. On the client, open **Settings → Remote access → Connect to another computer**
-   and choose **Desktop companion**.
-4. Enter the host's managed companion address (`https://c-….openmausbot.com` or `https://c-….mausbot.si`) and the six-digit code.
-5. Choose **Pair and switch to client mode**. The client restarts and opens the host's bot UI.
-
-The HTTPS address uses the host's managed outbound tunnel. TLS is verified by the operating system, and the client does not need Tailscale. HTTPS is intentionally restricted to the names OpenMausBot issues (`c-` and 32 hexadecimal characters under `openmausbot.com` or `mausbot.si`) so a typo, or any other host in those domains, cannot receive the pairing code or a paired-device token. Desktop releases up to 0.1.103 accept only `openmausbot.com` names; update the client to pair with a host whose address is on `mausbot.si`, or pair over Tailscale.
 
 ## Pair over Tailscale
 
@@ -64,7 +53,7 @@ Pairing creates an independent device identity on the host. The resulting bearer
 - stored only in Electron's OS-encrypted credential document on the client;
 - never returned through the preload bridge, inserted into the page, placed in a URL, or written to browser storage;
 - injected by a loopback-only Electron relay after browser `Origin` headers are removed;
-- sent only to the exact saved managed HTTPS or `.ts.net` origin; absolute-form request targets cannot redirect it elsewhere.
+- sent only to the exact saved `.ts.net` origin; absolute-form request targets cannot redirect it elsewhere.
 
 The host companion remains the authorization boundary. Its route list defaults to deny, strips sensitive response fields, and can revoke the desktop client from **Settings → Remote access** like any other paired device. Interactive desktop access is a separate per-device capability that defaults off. Client mode does not expose host-only settings, local browser surfaces, Local VM controls, plugin credentials, destructive account revocation, or the event inspector. Connected Apps may be viewed and authorized remotely while their tokens and execution remain on the host.
 
@@ -77,7 +66,7 @@ desktop renderer
       │ same-origin HTTP/SSE, no bearer
       ▼
 Electron relay 127.0.0.1:8798 (fallbacks: 18798, 28798)
-      │ bearer injection over verified managed HTTPS or Tailscale/WireGuard
+      │ bearer injection over Tailscale/WireGuard
       ▼
 host companion :8810
       │ authentication + route allowlist + response scrubbing

@@ -14,7 +14,7 @@ const remote = (extra: Partial<StoredRemoteMcpServer> = {}): StoredRemoteMcpServ
 });
 
 describe("mcpOwner and botMayChange", () => {
-  const owner = (server: StoredMcpServer, personal: string[] = []) => mcpOwner("x", server, "bot1", personal);
+  const owner = (server: StoredMcpServer) => mcpOwner(server, "bot1");
 
   it("shared servers belong to everyone and may change", () => {
     expect(owner(stdio())).toBe("shared");
@@ -27,11 +27,6 @@ describe("mcpOwner and botMayChange", () => {
   it("another bot's server is refused", () => {
     expect(owner(stdio({ bot: "bot2" }))).toBe("theirs");
     expect(botMayChange("theirs")).toEqual({ ok: false, error: "That server belongs to another bot." });
-  });
-  it("a Team Cloud personal server wins over everything else", () => {
-    expect(owner(remote(), ["x"])).toBe("person");
-    expect(owner(stdio({ bot: "bot2" }), ["x"])).toBe("person");
-    expect(botMayChange("person")).toEqual({ ok: false, error: "This connection is each person's own. Change it in Settings." });
   });
   it("a bot's own server that runs elsewhere is elsewhere", () => {
     expect(owner(stdio({ bot: "bot1", runsOn: { environmentId: "e1", label: "Mac" } }))).toBe("elsewhere");
@@ -172,12 +167,6 @@ describe("botListing", () => {
     expect(botServerTarget(remote({ url: "https://mcp.example.com/abc123.def456.ghi789/mcp" }))).toBe("https://mcp.example.com/…/mcp");
     expect(botServerTarget(remote({ url: "https://mcp.example.com/mcp-server-production/mcp" }))).toBe("https://mcp.example.com/mcp-server-production/mcp");
     expect(botServerTarget(remote({ url: "https://mcp.zapier.com/api/mcp/s/mcp" }))).toBe("https://mcp.zapier.com/api/mcp/s/mcp");
-  });
-
-  it("reports owner managed when a policy manages the server", () => {
-    const listing = botListing("s", stdio(), { ...extra, managedBy: "Acme policy" });
-    expect(listing.owner).toBe("managed");
-    expect(listing.managedBy).toBe("Acme policy");
   });
 
   it("never includes env or header values", () => {

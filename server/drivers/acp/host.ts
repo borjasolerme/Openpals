@@ -3,7 +3,6 @@
 // threads to one host; every other driver links exactly one.
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 
-import { engineMemory } from "../../engine-memory.ts";
 import { appendNative } from "../native.ts";
 import { acpRpcError } from "./rpc-error.ts";
 
@@ -175,14 +174,12 @@ export class AcpHost {
     const link = new AcpLink(this, threadId);
     this.links.add(link);
     this.opened += 1;
-    engineMemory.attach(this.child, threadId);
     return link;
   }
 
   unlink(link: AcpLink): void {
     if (!this.links.delete(link)) return;
     if (!this.links.size) this.#lastOut = link;
-    if (![...this.links].some((other) => other.threadId === link.threadId)) engineMemory.detach(this.child, link.threadId);
   }
 
   #listening(): AcpLink[] {

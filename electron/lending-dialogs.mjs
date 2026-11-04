@@ -33,8 +33,8 @@ export function createLendingDialogs({ dialog, window, validate, isHome = async 
         try {
           const { response } = await dialog.showMessageBox({
             type: "warning", buttons: ["Let them run commands", "Cancel"], defaultId: 1, cancelId: 1,
-            message: "Let your Clouds run commands on this computer?",
-            detail: "Bots on your own Clouds could run any command on this computer as you, including reading and changing any file you can. You can turn this off from the Openpals icon's menu.",
+            message: "Let your server run commands on this computer?",
+            detail: "Bots on your server could run any command on this computer as you, including reading and changing any file you can. You can turn this off from the Openpals icon's menu.",
           });
           if (response !== 0) return false;
         } finally { askingTerminal = false; }

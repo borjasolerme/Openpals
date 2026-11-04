@@ -8,7 +8,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AppConfig } from "../config.ts";
 import { createMcpConfig } from "../host/mcp-config.ts";
-import type { TeamConnectionsHost } from "../host/team-connections-host.ts";
 import { addBotMcpServer, keepForBot } from "../mcp-bot-servers.ts";
 import { botListing, mcpOwner } from "../mcp-bot-rules.ts";
 import { McpOAuthManager } from "../mcp-oauth.ts";
@@ -23,8 +22,6 @@ import { PASS, type RouteContext } from "./table.ts";
 const BOT = "kiwi";
 const THREAD = "thread-1";
 const MAC = { environmentId: "env-mac", label: "Ada's Mac" };
-const OWNER_ONLY = "MCP servers are managed by the owner.";
-const ASK_ADMIN = "Ask a workspace admin to add it.";
 
 const linear = { type: "http", url: "https://mcp.linear.app/mcp", headers: {}, enabled: true };
 const notes = { command: "npx", args: ["-y", "notes-mcp"], env: { NOTES_TOKEN: "saved-token" }, enabled: true };
@@ -36,12 +33,9 @@ const userinfo = `https://ada:${USER_TOKEN}@mcp.example.com/mcp-server-productio
 interface Options {
   full?: boolean;
   guest?: boolean;
-  admin?: boolean;
-  personal?: string[];
   mcpServers?: string[];
   leftOut?: string[];
   servers?: Record<string, unknown>;
-  refuse?: (name: string) => string | undefined;
   boxed?: boolean;
   usedBy?: Record<string, string[]>;
   signInRefusal?: { status: number; error: string };
@@ -54,11 +48,9 @@ function fixture(options: Options = {}) {
   let busy = false;
   const config = createMcpConfig({
     cfg, sessions: { isLive: () => true }, mcpOAuth,
-    teamConnections: { personMcp: () => options.personal ?? [], people: {} as TeamConnectionsHost["people"] },
-    cloudHome: null, fallbackPublicUrl: null,
+    fallbackPublicUrl: null,
     mcpConfigBusy: { get: () => busy, set: (value) => { busy = value; } },
     mcpServerResponse: () => ({ servers: listMcpServers(cfg.mcpServers) }),
-    mcpPolicyRefusal: (name) => options.refuse?.(name),
     persistMcpServers: (next) => { cfg.mcpServers = next; },
     savedCustomDomain: () => null,
     changed: () => {},
@@ -80,7 +72,6 @@ function fixture(options: Options = {}) {
       appendMessage: (_threadId, message) => { const row = { ...message, id: `card-${chat.length + 1}` }; chat.push(row); return row; },
       patchMessage: (_threadId, id, patch) => { const row = chat.find((item) => item.id === id); if (row) row.card = patch.card; },
     },
-    teamCloud: false,
     apply: (request, fields) => applyMcpChange(deps, request, fields),
     answer: (_threadId, _messageId, text) => { answers.push(text); return true; },
     decide: (row) => { decisions.push(row.decision); },
@@ -91,16 +82,10 @@ function fixture(options: Options = {}) {
     readBody: async () => body as Record<string, unknown>,
     sender, threadId: THREAD,
     fullAccess: () => options.full ?? true,
-    guestDriven: () => options.guest ?? false,
-    teamAdmin: () => options.admin ?? true,
     canUse: (name) => !options.leftOut?.includes(name),
     config, cfg: () => cfg as AppConfig,
-    personal: () => options.personal ?? [],
     authState: (name, url) => mcpOAuth.authState(name, url),
-    managedBy: (name) => options.refuse?.(name) ? "Acme IT" : undefined,
-    policyRefusal: (name) => options.refuse?.(name),
     signOut: (name, url) => mcpOAuth.signOut(name, url),
-    testAs: () => null,
     redeem: (raw) => vault.redeem(raw, owner, (path) => path.length === 2 && (path[0] === "env" || path[0] === "headers" || (path[0] === "oauth" && path[1] === "clientSecret")), "mcp_server's env, headers and oauth.clientSecret"),
     addToBotList: (name) => { listedOn.push({ bot: sender.id, name }); },
     botAdd: (current, raw) => addBotMcpServer(current, raw, BOT, dataDir, options.boxed ?? false),
@@ -297,15 +282,6 @@ describe("internal mcp_server route, Full access", () => {
     expect(probe).not.toHaveBeenCalled();
   });
 
-  it("refuses a Team Cloud personal server for changes", async () => {
-    const { post, stored } = fixture({ servers: { linear }, personal: ["linear"] });
-    for (const action of ["update", "enable", "disable", "remove"]) {
-      const out = await post({ action, name: "linear", url: "https://elsewhere.example/mcp" });
-      expect(out, action).toEqual({ status: 403, body: { error: "This connection is each person's own. Change it in Settings." } });
-    }
-    expect(stored("linear")).toMatchObject({ url: linear.url, enabled: true });
-  });
-
   it("refuses a server that runs on another computer, test included", async () => {
     const probe = probeWith({ ok: true, tools: [] });
     const { post, stored, lines } = fixture({ servers: { notes: { ...notes, enabled: false, runsOn: MAC } } });
@@ -315,48 +291,6 @@ describe("internal mcp_server route, Full access", () => {
     expect(await post({ action: "test", name: "notes" })).toEqual({ status: 409, body: { error: "This server runs on Ada's Mac, so it isn't started here." } });
     expect(probe).not.toHaveBeenCalled();
     expect(lines).toEqual([]);
-  });
-
-  it("refuses removing a server the organisation's policy refuses, with the policy's words", async () => {
-    const refuse = (name: string) => (name === "linear" ? "Acme IT hasn't approved this MCP server." : undefined);
-    const { post, cfg } = fixture({ servers: { linear }, refuse });
-    expect(await post({ action: "remove", name: "linear" })).toEqual({ status: 403, body: { error: "Acme IT hasn't approved this MCP server." } });
-    expect(cfg.mcpServers).toEqual({ linear });
-  });
-
-  it("refuses with the policy's words where the organisation's policy refuses the server", async () => {
-    const refuse = (name: string) => (name === "linear" ? "Acme IT hasn't approved this MCP server." : undefined);
-    const { post, stored } = fixture({ servers: { linear: { ...linear, enabled: false } }, refuse });
-    const out = await post({ action: "enable", name: "linear" });
-    expect(out).toEqual({ status: 403, body: { error: "Acme IT hasn't approved this MCP server." } });
-    expect(stored("linear")?.enabled).toBe(false);
-  });
-
-  it("a non-admin on a Team Cloud is refused with \"Ask a workspace admin to add it.\" for add, update, enable, disable, sign_out and remove", async () => {
-    const probe = probeWith({ ok: true, tools: [] });
-    const { post, cfg } = fixture({ admin: false, servers: { linear } });
-    const before = structuredClone(cfg.mcpServers);
-    for (const payload of [
-      { action: "add", name: "github", url: "https://api.github.example/mcp" },
-      { action: "update", name: "linear", url: "https://mcp.linear.app/v2" },
-      { action: "enable", name: "linear" },
-      { action: "disable", name: "linear" },
-      { action: "sign_out", name: "linear" },
-      { action: "remove", name: "linear" },
-    ]) {
-      expect(await post(payload), payload.action).toEqual({ status: 403, body: { error: ASK_ADMIN } });
-    }
-    expect(cfg.mcpServers).toEqual(before);
-    expect(probe).not.toHaveBeenCalled();
-  });
-
-  it("every action, list included, is refused in a guest-driven thread with \"MCP servers are managed by the owner.\"", async () => {
-    const { call, post, cfg } = fixture({ guest: true, servers: { linear } });
-    expect(await call("GET")).toEqual({ status: 403, body: { error: OWNER_ONLY } });
-    for (const action of ["list", "add", "update", "enable", "disable", "test", "sign_in", "sign_out", "remove"]) {
-      expect(await post({ action, name: "linear" }), action).toEqual({ status: 403, body: { error: OWNER_ONLY } });
-    }
-    expect(cfg.mcpServers).toEqual({ linear });
   });
 
   it("add for a bot whose tool selection leaves the server out says so and does not widen toolScope", async () => {
@@ -383,20 +317,6 @@ describe("internal mcp_server route, Full access", () => {
     expect(full.cfg.mcpServers?.linear).toEqual(linear);
   });
 
-  it("a secretRef is committed only after the change persists", async () => {
-    probeWith({ ok: true, tools: [] });
-    const refuse = (name: string) => (name === "blocked" ? "Not approved." : undefined);
-    const { post, ref, stored } = fixture({ refuse });
-    const key = ref("lin_secret");
-    const refused = await post({ action: "add", name: "blocked", url: "https://mcp.linear.app/mcp", headers: { Authorization: `Bearer ${key}` } });
-    expect(refused.status).toBe(403);
-    const added = await post({ action: "add", name: "linear", url: "https://mcp.linear.app/mcp", headers: { Authorization: `Bearer ${key}` } });
-    expect(added.status).toBe(201);
-    expect(stored("linear")).toMatchObject({ headers: { Authorization: "Bearer lin_secret" } });
-    const reused = await post({ action: "add", name: "again", url: "https://mcp.linear.app/mcp", headers: { Authorization: `Bearer ${key}` } });
-    expect(reused.body.error).toContain("already used");
-  });
-
   it("an update whose only change is a fresh secretRef keeps the other saved keys", async () => {
     probeWith({ ok: true, tools: [] });
     const { post, ref, stored } = fixture({ servers: { notes: { ...notes, env: { NOTES_TOKEN: "saved-token", NOTES_SPACE: "saved-space" } } } });
@@ -404,17 +324,6 @@ describe("internal mcp_server route, Full access", () => {
     expect(status).toBe(200);
     expect(stored("notes")).toMatchObject({ command: "npx", args: ["-y", "notes-mcp"], env: { NOTES_TOKEN: "fresh-token", NOTES_SPACE: "saved-space" } });
     expect(body.dropped).toBeUndefined();
-  });
-
-  it("an update the config refuses leaves its secretRef unspent", async () => {
-    probeWith({ ok: true, tools: [] });
-    const refuse = (name: string) => (name === "notes" ? "Not approved." : undefined);
-    const blocked = fixture({ servers: { notes }, refuse });
-    const key = blocked.ref("fresh-token");
-    expect(await blocked.post({ action: "update", name: "notes", env: { NOTES_TOKEN: key } })).toEqual({ status: 403, body: { error: "Not approved." } });
-    expect(blocked.stored("notes")).toMatchObject({ env: { NOTES_TOKEN: "saved-token" } });
-    expect((await blocked.post({ action: "add", name: "other", url: "https://other.example/mcp", headers: { Authorization: key } })).status).toBe(201);
-    expect(blocked.stored("other")).toMatchObject({ headers: { Authorization: "fresh-token" } });
   });
 
   it("an update across transports is refused and changes nothing", async () => {
@@ -435,13 +344,6 @@ describe("internal mcp_server route, Full access", () => {
     between.deps.config = { ...between.config, setEnabled: () => ({ status: 409, error: "MCP servers are already being updated." }) };
     const out = await createInternalMcpRoutesCall(between.deps, { action: "add", name: "github", url: "https://api.github.example/mcp" });
     expect(out).toEqual({ status: 409, body: { error: "Saved github, but it is still off: MCP servers are already being updated. Try again in a moment." } });
-  });
-
-  it("an update to an address the organisation's policy refuses is refused with the policy's words", async () => {
-    const refuse = (name: string) => (name === "linear" ? "Acme IT hasn't approved this MCP server." : undefined);
-    const { post, stored } = fixture({ servers: { linear }, refuse });
-    expect(await post({ action: "update", name: "linear", url: "https://mcp.linear.app/v2" })).toEqual({ status: 403, body: { error: "Acme IT hasn't approved this MCP server." } });
-    expect(stored("linear")).toMatchObject({ url: linear.url });
   });
 
   it("an update keeps the add path's folder rules where bots are boxed", async () => {
@@ -487,17 +389,6 @@ describe("internal mcp_server route, Full access", () => {
     expect(body.dropped).toBeUndefined();
   });
 
-  it("list marks a server on another computer as not this bot's and a policy-refused one as managed", async () => {
-    const refuse = (name: string) => (name === "linear" ? "Not approved." : undefined);
-    const { call } = fixture({ servers: { linear, notes: { ...notes, runsOn: MAC } }, refuse });
-    const { body } = await call("GET");
-    const rows = JSON.parse(body.text!.slice(body.text!.indexOf("\n") + 1)) as Array<Record<string, unknown>>;
-    expect(rows).toEqual([
-      expect.objectContaining({ name: "linear", owner: "managed", managedBy: "Acme IT", forThisBot: true }),
-      expect.objectContaining({ name: "notes", owner: "elsewhere", forThisBot: false }),
-    ]);
-  });
-
   it("an update that sends back the address list showed keeps the saved address, headers and sign-in; a new address drops them", async () => {
     probeWith({ ok: true, tools: [] });
     const { call, post, stored, mcpOAuth } = fixture({ servers: { zap: zapier } });
@@ -518,12 +409,12 @@ describe("internal mcp_server route, Full access", () => {
 
   it("list returns botListing rows for servers this bot can see and hides another bot's own", async () => {
     const servers = { linear, notes: { ...notes, bot: BOT }, scout: { ...notes, bot: "scout" }, docs: { type: "http", url: "https://docs.example/mcp?key=1", headers: { "X-Key": "k" }, enabled: false } };
-    const { call } = fixture({ servers, personal: ["docs"] });
+    const { call } = fixture({ servers });
     const { status, body } = await call("GET");
     expect(status).toBe(200);
     const parse = (name: string) => { const parsed = parseStoredMcpServer(name, servers[name as keyof typeof servers]); if (!parsed.ok) throw new Error(parsed.error); return parsed.server; };
     const row = (name: string, owner: ReturnType<typeof mcpOwner>) => botListing(name, parse(name), { owner, authState: "none", forThisBot: true });
-    expect(JSON.parse(body.text!.slice(body.text!.indexOf("\n") + 1))).toEqual([row("linear", "shared"), row("notes", "own"), row("docs", "person")]);
+    expect(JSON.parse(body.text!.slice(body.text!.indexOf("\n") + 1))).toEqual([row("linear", "shared"), row("notes", "own"), row("docs", "shared")]);
     expect(body.text).not.toContain("scout");
     expect(body.text).not.toContain("key=1");
   });
@@ -760,12 +651,6 @@ describe("internal mcp_server route, below Full access", () => {
     for (const token of [PATH_TOKEN, USER_TOKEN]) expect(everything).not.toContain(token);
   });
 
-  it("a proposal the organisation's policy refuses posts no card", async () => {
-    const { post, chat } = fixture({ full: false, servers: { linear: { ...linear, enabled: false } }, refuse: (name) => (name === "linear" ? "Acme IT blocks linear." : undefined) });
-    for (const action of ["enable", "remove"]) expect(await post({ action, name: "linear" }), action).toEqual({ status: 403, body: { error: "Acme IT blocks linear." } });
-    expect(chat).toEqual([]);
-  });
-
   it("sign_in asks for a Sign in card at any level, in one activity line, and tells the bot to end its turn", async () => {
     for (const full of [true, false]) {
       const { post, signIns, lines, decided } = fixture({ full, servers: { linear } });
@@ -776,9 +661,6 @@ describe("internal mcp_server route, below Full access", () => {
       expect(lines).toEqual(["Asked to sign in to MCP server linear"]);
       expect(decided).toEqual([]);
     }
-    const personal = fixture({ servers: { linear }, personal: ["linear"], admin: false });
-    expect((await personal.post({ action: "sign_in", name: "linear" })).status).toBe(202);
-    expect(personal.signIns).toEqual([{ name: "linear", url: linear.url }]);
   });
 
   it("sign_in on a server that is off posts no card and tells the bot to call enable", async () => {
@@ -800,8 +682,6 @@ describe("internal mcp_server route, below Full access", () => {
     expect(signIns).toEqual([]);
     expect(lines).toEqual([]);
 
-    const member = fixture({ admin: false, servers: { linear } });
-    expect(await member.post({ action: "sign_in", name: "linear" })).toEqual({ status: 403, body: { error: "Ask a workspace admin to sign in to linear." } });
     const refused = fixture({ servers: { linear }, signInRefusal: { status: 409, error: "Nobody can sign in to linear from here." } });
     expect(await refused.post({ action: "sign_in", name: "linear" })).toEqual({ status: 409, body: { error: "Nobody can sign in to linear from here." } });
     expect(refused.lines).toEqual([]);

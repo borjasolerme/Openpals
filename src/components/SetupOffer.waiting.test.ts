@@ -8,7 +8,7 @@ import type { Bot, Message } from "@/state/store";
 
 const fixture = vi.hoisted(() => ({ api: vi.fn(), dispatch: vi.fn(), bots: [] as unknown[], instances: [] as unknown[] }));
 vi.mock("@/state/store", () => ({ api: fixture.api, useStore: () => ({ state: { bots: fixture.bots, instances: fixture.instances }, dispatch: fixture.dispatch }) }));
-vi.mock("@/lib/cloud-guest", () => ({ useReactor: () => "user", currentReactor: () => "user" }));
+vi.mock("@/lib/reactor", () => ({ useReactor: () => "user", currentReactor: () => "user" }));
 vi.mock("./AskCard", async (original) => ({ ...await original<typeof import("./AskCard")>(), returnFocusToComposer: vi.fn() }));
 import { SetupOffer } from "./SetupOffer";
 

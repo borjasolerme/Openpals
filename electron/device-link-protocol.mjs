@@ -1,13 +1,13 @@
-// One WebSocket between a lent computer and My Cloud carries many TCP streams. My Cloud opens one for each connection
+// One WebSocket between a lent computer and the server carries many TCP streams. The server opens one for each connection
 // its browsers make, the computer connects it, and each side sends a stream's bytes only while the other has room for
 // them, so neither end buffers more than a window per stream.
 //
-// Text frames are JSON: open {id, host, port} or {id, chrome: true} (My Cloud), opened {id} / refused {id, reason} / failed {id, reason} (the
-// computer), credit {id, bytes}, end {id}, close {id}, ping / pong, and hello {seenAs} (My Cloud, once). A binary frame
+// Text frames are JSON: open {id, host, port} or {id, chrome: true} (the server), opened {id} / refused {id, reason} / failed {id, reason} (the
+// computer), credit {id, bytes}, end {id}, close {id}, ping / pong, and hello {seenAs} (the server, once). A binary frame
 // is a stream's bytes: its id as 4 bytes, big-endian, then at most MAX_CHUNK bytes.
 
 export const linkPath = (computerId) => `/api/shared-computers/${computerId}/link`;
-/** Close codes My Cloud sends: going to sleep (the computer waits for it to wake), and lending there ended. */
+/** Close codes the server sends: going to sleep (the computer waits for it to wake), and lending there ended. */
 export const LINK_ASLEEP = 4001;
 export const LINK_ENDED = 4002;
 export const STREAM_WINDOW = 256 * 1024;
@@ -21,7 +21,7 @@ const validId = (id) => Number.isInteger(id) && id > 0 && id <= MAX_ID;
 
 /**
  * `send(frame)` writes a string or Buffer to the WebSocket. `accept(target)`, on the computer's side only, connects a
- * stream My Cloud opened and answers `{ socket }`, `{ refused }` or `{ failed }`. `traffic()` is called whenever bytes move.
+ * stream the server opened and answers `{ socket }`, `{ refused }` or `{ failed }`. `traffic()` is called whenever bytes move.
  */
 export function createLinkMux({ send, accept = null, window = STREAM_WINDOW, maxStreams = MAX_STREAMS, openMs = OPEN_MS, traffic = () => {} }) {
   const streams = new Map();
@@ -153,7 +153,7 @@ export function createLinkMux({ send, accept = null, window = STREAM_WINDOW, max
       }
       onData(Buffer.isBuffer(data) ? data : Buffer.from(data instanceof ArrayBuffer ? new Uint8Array(data) : data));
     },
-    /** My Cloud's side: a stream to `host:port`, or to the computer's Chrome, through the computer. `{ gone }` when the link ended before it answered. */
+    /** The server's side: a stream to `host:port`, or to the computer's Chrome, through the computer. `{ gone }` when the link ended before it answered. */
     open(target) {
       if (closed) return Promise.resolve({ gone: true });
       if (streams.size >= maxStreams) return Promise.resolve({ failed: "busy" });

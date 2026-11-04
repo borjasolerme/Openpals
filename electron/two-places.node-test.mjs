@@ -16,7 +16,7 @@ function world({ here = ["Scout"], cloud = null, garage = ["Ledger"], settled = 
   const place = (key, name, kind, bots) => ({ key, name, kind, read: async () => { w.reads++; return w[bots] ? summary(...w[bots]) : null; }, bring: async () => { w.brought.push(key); } });
   w.two = createTwoPlaces({
     local: async () => summary(...w.here),
-    places: () => [...(w.cloud ? [place("cloud:https://omb-u-1.fly.dev", "My Cloud", "cloud", "cloud")] : []), place("server:https://garage.example.test", "Garage server", "server", "garage")],
+    places: () => [...(w.cloud ? [place("server:https://family.example.test", "Family server", "server", "cloud")] : []), place("server:https://garage.example.test", "Garage server", "server", "garage")],
     settled: () => w.settled, dismissed: w.dismissed, onChange: () => { w.changes++; }, now: () => w.at,
   });
   return w;
@@ -29,7 +29,7 @@ test("a bot counts only as a move would carry it: by name, never a place's untou
   assert.deepEqual([...parseDismissed({ v: 1, keys: ["server:https://garage.example.test", "nonsense", 3] })], ["server:https://garage.example.test"]);
 });
 
-test("bots here and bots on a server of the person's own: one suggestion to bring them together there, My Cloud first when both", async () => {
+test("bots here and bots on a server of the person's own: one suggestion to bring them together there, the first listed when both", async () => {
   const w = world();
   assert.deepEqual(w.two.state(), { suggest: null }, "nothing is known before the first look");
   await w.two.refresh();
@@ -38,7 +38,7 @@ test("bots here and bots on a server of the person's own: one suggestion to brin
   assert.deepEqual(w.two.bots(), { here: ["Scout"], places: { "server:https://garage.example.test": ["Ledger"] } });
   const both = world({ cloud: ["Chief"] });
   await both.two.refresh();
-  assert.equal(both.two.state().suggest?.name, "My Cloud");
+  assert.equal(both.two.state().suggest?.name, "Family server");
 });
 
 test("no suggestion when only one place has bots, while a move is under way, or for a place that couldn't say", async () => {
@@ -61,8 +61,8 @@ test("no suggestion when only one place has bots, while a move is under way, or 
 test("Not now is remembered for that place, after the app opens again too; another place may still be suggested", async () => {
   const w = world({ cloud: ["Chief"] });
   await w.two.refresh();
-  assert.equal(w.two.state().suggest?.key, "cloud:https://omb-u-1.fly.dev");
-  assert.deepEqual(w.two.dismiss("cloud:https://omb-u-1.fly.dev"), { suggest: { key: "server:https://garage.example.test", name: "Garage server", kind: "server" } });
+  assert.equal(w.two.state().suggest?.key, "server:https://family.example.test");
+  assert.deepEqual(w.two.dismiss("server:https://family.example.test"), { suggest: { key: "server:https://garage.example.test", name: "Garage server", kind: "server" } });
   w.two.dismiss("server:https://garage.example.test");
   assert.deepEqual(w.two.state(), { suggest: null });
   const reopened = createTwoPlaces({ local: async () => summary("Scout"), settled: () => true, dismissed: w.dismissed, now: () => w.at,
@@ -75,11 +75,11 @@ test("Not now is remembered for that place, after the app opens again too; anoth
 test("the one tap starts the move to the place suggested, and only to it", async () => {
   const both = world({ cloud: ["Chief"] });
   await both.two.refresh();
-  await assert.rejects(both.two.accept("server:https://garage.example.test"), /can't be brought together there/u, "My Cloud is the one suggested");
+  await assert.rejects(both.two.accept("server:https://garage.example.test"), /can't be brought together there/u, "Family server is the one suggested");
   assert.deepEqual(both.brought, []);
   const w = world();
   await w.two.refresh();
-  await assert.rejects(w.two.accept("cloud:https://omb-u-1.fly.dev"), /can't be brought together there/u);
+  await assert.rejects(w.two.accept("server:https://family.example.test"), /can't be brought together there/u);
   assert.deepEqual(await w.two.accept("server:https://garage.example.test"), { suggest: null });
   assert.deepEqual(w.brought, ["server:https://garage.example.test"]);
 });
@@ -96,35 +96,30 @@ test("each place is read again at most every ten minutes, unless something about
   assert.equal(w.reads, 3);
 });
 
-test("main's places: My Cloud only while the person keeps this computer's bots here, a server only when it says it is theirs alone; never a team's Cloud", async () => {
+test("main's places: a server only when it says it is theirs alone, and only while nothing moves", async () => {
   const handlers = new Map(), asked = [];
-  let keep = { shown: true, on: true, moved: false }, offered = new Set(["garage"]), journal = null, active = false;
+  let offered = new Set(["garage"]), active = false;
   const environments = [
     { id: "garage", kind: "remote", name: "Garage server", origin: "https://garage.example.test" },
-    { id: "family", kind: "remote", name: "Family server", origin: "https://family.example.test" },
-    { id: "acme", kind: "remote", name: "Acme", origin: "https://omb-t-acme.fly.dev", team: { id: "t-acme", role: "owner" } },
+    { id: "office", kind: "remote", name: "Office server", origin: "https://office.example.test" },
   ];
   const main = installTwoPlacesMain({
     ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) }, guard: (_channel, handler) => handler,
     localRequest: async () => Response.json(summary("Scout")),
     fetch: async (url) => { asked.push(new URL(url).origin); return Response.json(summary("Chief")); },
-    environments: () => environments, cloud: () => ({ origin: "https://omb-u-1.fly.dev", asleep: false }),
-    oneHome: { journal: () => journal, keep: { state: () => keep, set: async (on) => { keep = { ...keep, on }; } } },
+    environments: () => environments,
     ownHome: { owns: (place) => offered.has(place.id), offers: (place) => offered.has(place.id), start: async (id) => { active = true; asked.push(`start:${id}`); }, active: () => active,
       away: () => false, refresh: () => {} },
     dismissed: memory(), tell: () => {},
   });
   try {
     await main.refresh({ force: true });
-    assert.deepEqual(await handlers.get("two-places:state")({}), { suggest: { key: "cloud:https://omb-u-1.fly.dev", name: "My Cloud", kind: "cloud" } });
-    assert.deepEqual([...new Set(asked)].sort(), ["https://garage.example.test", "https://omb-u-1.fly.dev"], "never the team's Cloud or a server others use");
-    await handlers.get("two-places:accept")({}, "cloud:https://omb-u-1.fly.dev");
-    assert.equal(keep.on, false, "the one tap lets this computer's bots move to My Cloud, as anyone's first move");
-    await main.refresh({ force: true });
-    assert.equal(main.state().suggest?.key, "server:https://garage.example.test");
-    journal = { v: 1, phase: "copy", cloud: { origin: "https://omb-u-1.fly.dev", account: "acct" } };
+    assert.deepEqual(await handlers.get("two-places:state")({}), { suggest: { key: "server:https://garage.example.test", name: "Garage server", kind: "server" } });
+    assert.deepEqual([...new Set(asked)].sort(), ["https://garage.example.test"], "never a server others use");
+    await handlers.get("two-places:accept")({}, "server:https://garage.example.test");
+    assert.deepEqual(asked.at(-1), "start:garage", "the one tap starts the move there");
     assert.deepEqual(main.state(), { suggest: null }, "nothing while a move is under way");
-    journal = null;
+    active = false;
     offered = new Set();
     assert.deepEqual(main.state(), { suggest: null }, "a server that stopped saying it is theirs alone is never suggested");
   } finally { main.close(); }
@@ -138,14 +133,14 @@ test("each place of the person's own hears which bots their other places have, n
   const two = createTwoPlaces({
     local: async () => (mine === null ? null : summary(...mine)),
     here: { name: async () => "Work laptop", tell: async (payload) => { told.here.push(payload); } },
-    places: () => [place("cloud:https://omb-u-1.fly.dev", "My Cloud", "cloud", () => ["Chief"], "cloud"), place("server:https://garage.example.test", "Garage server", "server", () => ledger, "garage")],
+    places: () => [place("server:https://family.example.test", "Family server", "server", () => ["Chief"], "cloud"), place("server:https://garage.example.test", "Garage server", "server", () => ledger, "garage")],
     settled: () => true, quiet: () => moving, dismissed: memory(),
   });
   await two.refresh();
   assert.deepEqual(told.garage, [{ v: 1, self: { name: "Garage server", kind: "server" },
-    places: [{ name: "Work laptop", kind: "computer", bots: ["Scout"] }, { name: "My Cloud", kind: "cloud", bots: ["Chief"] }] }]);
+    places: [{ name: "Work laptop", kind: "computer", bots: ["Scout"] }, { name: "Family server", kind: "server", bots: ["Chief"] }] }]);
   assert.deepEqual(told.here, [{ v: 1, self: { name: "this computer", kind: "computer" },
-    places: [{ name: "My Cloud", kind: "cloud", bots: ["Chief"] }, { name: "Garage server", kind: "server", bots: ["Ledger"] }] }]);
+    places: [{ name: "Family server", kind: "server", bots: ["Chief"] }, { name: "Garage server", kind: "server", bots: ["Ledger"] }] }]);
   assert.equal(told.cloud.length, 1);
   assert.ok(!/https?:|bot:/u.test(JSON.stringify(told)), "never an address or an id");
   await two.refresh({ force: true });
@@ -172,5 +167,5 @@ test("each place of the person's own hears which bots their other places have, n
   ledger = ["Ledger", "Quill", "Ink"];
   await two.refresh({ force: true });
   assert.equal(told.here.length, 2, "this computer's bots moved: it is told nothing more, whatever changed elsewhere");
-  assert.deepEqual(told.garage.at(-1).places.map((entry) => entry.name), ["My Cloud"], "and the others no longer hear of bots on it");
+  assert.deepEqual(told.garage.at(-1).places.map((entry) => entry.name), ["Family server"], "and the others no longer hear of bots on it");
 });

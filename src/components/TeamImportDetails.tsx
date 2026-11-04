@@ -1,5 +1,4 @@
-// The template preview body: what a team, package or backup brings and what stays behind. Shared by Templates and
-// the organization shelf.
+// The template preview body: what a team, package or backup brings and what stays behind.
 import { BookOpen, CalendarClock, Check, Crown, MessageSquare, NotebookPen, Plug, Users } from "lucide-react";
 
 import { cn } from "@/lib/cn";
@@ -13,10 +12,9 @@ export const TEAM_GLYPHS = [
   "bg-emerald-500/15 text-emerald-300",
 ] as const;
 
-export function TeamImportDetails({ pending, importedNames, org = false }: {
+export function TeamImportDetails({ pending, importedNames }: {
   pending: PendingTeamImport;
   importedNames: string[];
-  org?: boolean;
 }) {
   return (
     <>
@@ -47,9 +45,9 @@ export function TeamImportDetails({ pending, importedNames, org = false }: {
       )}
       {Boolean(pending.skills?.length) && (
         <div className="mt-4 rounded-xl border border-hairline px-4 py-3 text-[13px] text-ink-secondary">
-          <div className="font-medium text-ink">{org ? t("orgLibrary.skillsOn") : pending.version === 2 ? t("teamImport.skillsOff") : t("templates.skillsDisabled")}</div>
+          <div className="font-medium text-ink">{pending.version === 2 ? t("teamImport.skillsOff") : t("templates.skillsDisabled")}</div>
           <p className="mt-1 break-words">{pending.skills?.join(", ")}</p>
-          {!org && <p className="mt-1">{pending.version === 2 ? t("teamImport.skillsReview") : t("templates.skillsReview")}</p>}
+          <p className="mt-1">{pending.version === 2 ? t("teamImport.skillsReview") : t("templates.skillsReview")}</p>
         </div>
       )}
       {pending.library && Boolean(pending.presets?.length) && (
@@ -98,8 +96,6 @@ export function TeamImportDetails({ pending, importedNames, org = false }: {
         <p>
           {pending.kind === "backup"
             ? t("templates.backupSafety", { archived: pending.archivedBots ? t("templates.archivedBots", { count: pending.archivedBots }) : "" })
-            : org
-            ? pending.members.length ? t("orgLibrary.teamSafety") : t("orgLibrary.librarySafety")
             : pending.library
             ? t("teamImport.librarySafety")
             : pending.version === 2

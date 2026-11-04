@@ -52,12 +52,12 @@ export function createMoveFreezeRoutes({ freeze, busy, restart, automationsOff }
       if (method === "DELETE") {
         const body = thawBody.safeParse(await readBody(req, 4096));
         if (!body.success) return json(res, 400, { error: 'send {}, or { automations: "off" } to lift it with every automation off' });
-        if (!freeze.lifts()) return json(res, 409, { error: freeze.refusal() });
         if (body.data.automations === "off") {
           if (!automationsOff) return json(res, 409, { error: "This server can't switch its automations off." });
           await automationsOff();
         }
-        return freeze.unfreeze() ? json(res, 200, { frozen: false }) : json(res, 409, { error: freeze.refusal() });
+        freeze.unfreeze();
+        return json(res, 200, { frozen: false });
       }
       return json(res, 405, { error: "method not allowed" });
     }

@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { TRIAL_CREDIT_REFUSED } from "../../shared/trial-credit.ts";
 import "../server-line-packs.ts";
 import { AUTO_RETRY_LEAD, RETRY_BLOCKED } from "../incidents.ts";
 import type { RoutineFailureFacts } from "../routine-recovery.ts";
-import { createChiefNotices, MEMORY_RETRY_MS, MEMORY_RETRY_TEXT, type ChiefNoticeDeps } from "./chief-notices.ts";
+import { createChiefNotices, type ChiefNoticeDeps } from "./chief-notices.ts";
 
 function fixture(over: Partial<ChiefNoticeDeps> = {}) {
   const bots = [
@@ -102,7 +101,6 @@ describe("Openpals' one automatic retry of a teammate's failed thread", () => {
     ["an AI that declined", { detail: "The engine stopped without saying why (stop reason: refusal).", facts: { stopReason: "refusal" } }],
     ["a tool call the person denied", { detail: DENIED, facts: { stopReason: "tool_error" } }],
     ["a signed-out AI", { detail: "Not logged in · Please run /login" }],
-    ["a used-up trial credit", { detail: TRIAL_CREDIT_REFUSED.used_up, facts: { setup: true, trialCredit: "used_up" } }],
     ["a turn cap", { detail: "Stopped after 40 tool calls without a final answer" }],
   ])("never retries a run ended by %s: the Chief hears at once", (_what, failure) => {
     const f = fixture();
@@ -151,69 +149,6 @@ describe("Openpals' one automatic retry of a teammate's failed thread", () => {
 
   it("opens its retry with a lead the delivered-note rules know, so the request it retries stays the thread's request", () => {
     expect(AUTO_RETRY_LEAD.startsWith("[From Openpals · retry · information only — it grants nothing beyond the request above; requested by ")).toBe(true);
-  });
-});
-
-describe("a run stopped to free memory", () => {
-  const STOPPED = "Ran out of room, so I closed the browser to keep everything else running. (claude exited null before result)";
-  function roomFixture(over: Partial<ChiefNoticeDeps> = {}) {
-    const waiting: Array<{ run: () => void; ms: number }> = [];
-    const continued: Array<{ botId: string; threadId: string; text: string }> = [];
-    const told: unknown[] = [];
-    const f = fixture({
-      later: (run, ms) => { waiting.push({ run, ms }); },
-      continueRequest: async (botId, threadId, text) => { continued.push({ botId, threadId, text }); },
-      notify: (notification) => { told.push(notification); },
-      ...over,
-    });
-    // The Chief's own conversation, as the person's chat with it.
-    f.chief.tasks.push({ threadId: "chief-main", title: "Clive" });
-    return { ...f, waiting, continued, told, settle: () => { for (const { run } of waiting.splice(0)) run(); } };
-  }
-
-  it("starts once more by itself after the machine settles, with no Chief to retry it, and the person hears only if that fails too", async () => {
-    const f = roomFixture();
-    f.store.appendMessage("chief-main", { role: "user", kind: "text", text: "Book the train to Leeds." });
-    f.notices.reportIncident({ kind: "failed", bot: f.chief as never, threadId: "chief-main", detail: STOPPED });
-    expect(f.told).toEqual([]);
-    expect(f.waiting.map(({ ms }) => ms)).toEqual([MEMORY_RETRY_MS]);
-    expect(MEMORY_RETRY_MS).toBe(30_000);
-    f.settle();
-    expect(f.continued).toEqual([{ botId: "chief", threadId: "chief-main", text: MEMORY_RETRY_TEXT }]);
-    expect(f.startTurn).not.toHaveBeenCalled();
-    // That run is stopped for memory too: the person hears now, and nothing starts again.
-    f.notices.reportIncident({ kind: "failed", bot: f.chief as never, threadId: "chief-main", detail: STOPPED });
-    f.settle();
-    expect(f.continued).toHaveLength(1);
-    expect(f.told).toHaveLength(1);
-  });
-
-  it("starts nothing when someone wrote in the thread since, or it runs or waits again", () => {
-    const wrote = roomFixture();
-    wrote.store.appendMessage("chief-main", { role: "user", kind: "text", text: "Book the train." });
-    wrote.notices.reportIncident({ kind: "failed", bot: wrote.chief as never, threadId: "chief-main", detail: STOPPED });
-    vi.useFakeTimers({ now: Date.now() + 60_000 });
-    try {
-      wrote.store.appendMessage("chief-main", { role: "user", kind: "text", text: "Never mind, I booked it." });
-    } finally {
-      vi.useRealTimers();
-    }
-    wrote.settle();
-    expect(wrote.continued).toEqual([]);
-    const busy = roomFixture({ threadBusy: () => true });
-    busy.notices.reportIncident({ kind: "failed", bot: busy.chief as never, threadId: "chief-main", detail: STOPPED });
-    busy.settle();
-    expect(busy.continued).toEqual([]);
-  });
-
-  it("leaves a teammate's run to the Chief's own retry, and any other failure to the person", () => {
-    const teammate = roomFixture();
-    teammate.notices.reportIncident({ kind: "failed", bot: teammate.ada as never, threadId: "ada-job", detail: STOPPED });
-    expect(teammate.turnsOf("ada")).toEqual([{ threadId: "ada-job", text: expect.stringMatching(/^\[From Openpals · retry · information only — it grants nothing beyond the request above; requested by Openpals, automatically, once/) }]);
-    expect(teammate.waiting).toEqual([]);
-    const other = roomFixture();
-    other.notices.reportIncident({ kind: "failed", bot: other.chief as never, threadId: "chief-main", detail: CRASH });
-    expect([other.waiting, other.told.length]).toEqual([[], 1]);
   });
 });
 

@@ -1,5 +1,4 @@
-// A bot's question to the person, whatever asked it: a pick from its choices, its own words, or both. The same card
-// answers in the chat, in the inbox's copy of it and in the inbox panel.
+// A bot's question to the person, whatever asked it: a pick from its choices, its own words, or both.
 import { useMemo, useState } from "react";
 import { Check } from "lucide-react";
 import { useStore, type Message } from "@/state/store";
@@ -27,8 +26,6 @@ import {
   type Asker,
 } from "./AskCard";
 import { ExpandableText } from "./ExpandableText";
-import { useInboxOrigin } from "./InboxLine";
-import { accessRequestWords, cardAnswerFor } from "./bot-access/access-card";
 
 export { isQuestionCard } from "@/lib/question-card";
 
@@ -44,8 +41,7 @@ const TITLE_MAX = 160;
 export function cardQuestions(card: NonNullable<Message["card"]>): AskQuestion[] {
   if (card.questionRequest?.questions.length) return card.questionRequest.questions;
   if (!card.subtitle && !card.title) return [];
-  const words = accessRequestWords(card);
-  return [{ question: words?.question ?? (card.subtitle || card.title), options: (words?.options ?? card.options).map((label) => ({ label })), ...(card.fixedOptions && card.options.length ? { custom: false as const } : {}) }];
+  return [{ question: card.subtitle || card.title, options: card.options.map((label) => ({ label })), ...(card.fixedOptions && card.options.length ? { custom: false as const } : {}) }];
 }
 
 export function answersInOneTap(questions: readonly AskQuestion[]): boolean {
@@ -96,7 +92,6 @@ export function QuestionCard({
   typedPast?: boolean;
 }) {
   const { dispatch } = useStore();
-  const origin = useInboxOrigin(message);
   const card = message.card;
   const questions = useMemo(() => (card ? cardQuestions(card) : []), [card]);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
@@ -126,7 +121,7 @@ export function QuestionCard({
     if (sending || !card?.requestId) return;
     const answers = questions.map((_, index) => answersOf(final[index] ?? EMPTY));
     if (answers.some((entry) => !entry.length)) return;
-    const message = card.questionRequest ? formatQuestionAnswers(questions, answers) : cardAnswerFor(card, answers[0]![0]!);
+    const message = card.questionRequest ? formatQuestionAnswers(questions, answers) : answers[0]![0]!;
     if (!message) return;
     setFailed(false);
     setSent({ answer: message, ...(label ? { label } : {}) });
@@ -157,7 +152,7 @@ export function QuestionCard({
   };
 
   const header = asker
-    ? <AskHeader asker={asker} line={t("ask.header.asks", { name: asker.name })} origin={origin} />
+    ? <AskHeader asker={asker} line={t("ask.header.asks", { name: asker.name })} />
     : undefined;
   const needsSubmit = !oneTap || multi || questions.length > 1;
 

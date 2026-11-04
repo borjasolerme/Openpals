@@ -3,11 +3,9 @@
 import { BookOpen, Check, Info, Loader2, Plug } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { track } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { importOutcome, localSetupImport, setupImportApi, skillsSummary, toolsSummary, type SetupImportClient } from "@/lib/setup-import";
-import { useStore } from "@/state/store";
 import { detectionCount, detectionSources, type SetupDetection, type SetupImportResult, type SetupSource } from "../../shared/setup-import";
 import { GrokBotMark } from "./GrokBotMark";
 import { GrokMoveDialog } from "./lazy-screens";
@@ -149,7 +147,6 @@ function AiAppsImport({ client, local }: { client: SetupImportClient; local: boo
     setStatus("working");
     try {
       const brought = await client.apply(request);
-      track("setup_import_applied", { skills: brought.skills?.added.length ?? 0, tools: brought.tools?.added.length ?? 0 });
       setResult(brought);
       setStatus("idle");
     } catch {
@@ -173,10 +170,9 @@ export function GrokImportSection() {
 }
 
 export function ImportSettings({ client = setupImportApi }: { client?: SetupImportClient }) {
-  const { state } = useStore();
   return (
     <div className="flex flex-col gap-4">
-      <AiAppsImport client={client} local={localSetupImport(state.config?.cloudHome === true)} />
+      <AiAppsImport client={client} local={localSetupImport()} />
       <GrokImportSection />
     </div>
   );

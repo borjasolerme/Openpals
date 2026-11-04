@@ -6,7 +6,7 @@ const ADA = "ada@acme.test";
 
 function world(running: Record<string, UsageTrigger> = {}) {
   const sections: Record<string, string> = { payroll: "Finance", helpdesk: " " };
-  return createUsageAttribution({ section: (botId) => sections[botId], routineWriter: (id) => (id === "digest" ? ADA : undefined), threadTrigger: (threadId) => running[threadId] });
+  return createUsageAttribution({ section: (botId) => sections[botId], threadTrigger: (threadId) => running[threadId] });
 }
 const row = (botId: string, trigger: UsageTrigger, turnId?: string, parent?: string, parentThread = "t") =>
   ({ botId, trigger, ...(turnId ? { turnId } : {}), ...(parent ? { parent: { threadId: parentThread, turnId: parent } } : {}) });
@@ -18,10 +18,9 @@ describe("who and which department a usage row was spent for", () => {
     expect(attribute(row("helpdesk", { kind: "owner" }))).not.toHaveProperty("section");
   });
 
-  it("names a routine's writer, and leaves a routine nobody on the team wrote as it was", () => {
+  it("leaves a routine's row as it was", () => {
     const attribute = world();
-    expect(attribute(row("payroll", { kind: "routine", routineId: "digest" })).trigger).toEqual({ kind: "routine", routineId: "digest", email: ADA });
-    expect(attribute(row("payroll", { kind: "routine", routineId: "other" })).trigger).toEqual({ kind: "routine", routineId: "other" });
+    expect(attribute(row("payroll", { kind: "routine", routineId: "digest" })).trigger).toEqual({ kind: "routine", routineId: "digest" });
   });
 
   it("follows delegated work back to the person whose turn started it, through teammates of teammates", () => {

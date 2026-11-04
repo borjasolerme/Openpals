@@ -2,14 +2,13 @@
 
 The Postiz card in Apps (the Social category) connects the social media
 scheduler [Postiz](https://postiz.com) as one MCP server named `postiz`, so the
-MCP gate, each bot's server selection and a Team Cloud's scopes treat it like
-any other server. OpenMausBot only calls Postiz's public
+MCP gate and each bot's server selection treat it like any other server. OpenMausBot only calls Postiz's public
 MCP and OAuth endpoints; Postiz is AGPL-3.0 and none of its code is copied.
 
 - **Sign in with Postiz** (the default) uses Postiz Cloud's
   `/mcp-oauth-dynamic` endpoint with dynamic client registration and PKCE,
   through the existing MCP sign-in (`server/mcp-oauth.ts`): the loopback
-  callback on the desktop, the Cloud's own https address on a Cloud.
+  callback on the desktop, the server's own https address on a self-hosted server.
 - **Use an API key instead** sends the organisation key as a bearer token to
   `<address>/mcp`, Postiz Cloud unless the person enters their own Postiz
   server. The key is checked (MCP `initialize` and `tools/list`) before it is
@@ -61,11 +60,9 @@ None of the above reaches Postiz. With a real account:
 2. Ask a bot to list your Postiz channels, then to draft a post. Check it shows
    in Postiz's calendar as a draft, and that the bot asked first if its approval
    level asks.
-3. On a Cloud, connect the same way. If Postiz refuses to register the Cloud's
-   https address, the card falls back to pasting the redirect address; note
+3. On a self-hosted server, connect the same way. If Postiz refuses to register
+   the server's https address, the card falls back to pasting the redirect address; note
    which happened.
 4. Disconnect the app in Postiz; Apps → Postiz should then offer Reconnect.
 5. Use an API key instead (Postiz → Settings → Public API), with and without
    your own server's address; a wrong key must be refused in plain words.
-6. On a Team Cloud, connect with Only for me, then have a teammate connect their
-   own Postiz from their team page.

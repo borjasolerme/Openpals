@@ -720,19 +720,7 @@ describe("the model picker in Simple mode", () => {
     }));
   });
 
-  it("says who manages a provider its organisation blocks, with nothing to pick or set up", () => {
-    const blocked: InstanceInfo = { ...openaiKey, policy: { organizationName: "Acme", reason: "Acme allows only company models." } };
-    fixture.instances = [claude(), blocked];
-    const opened = open(bot());
-    expect(group(opened, "openai")!.body).toEqual({ kind: "policy", organization: "Acme" });
-    const html = region(menu(opened.html), 'data-simple-provider="openai"', "data-simple-effort-band");
-    expect(html).toContain("Managed by Acme");
-    expect(html).toContain("Bots cannot use this model provider while this computer is connected to Acme.");
-    expect(html).not.toContain("data-simple-set-up");
-    expect(html).not.toContain("GPT-5.6");
-    pane(opened)!.props.onPick(blocked, "gpt-5.6");
-    expect(fixture.dispatch).not.toHaveBeenCalled();
-  });
+;
 
   it("tells same-named models apart by their route", () => {
     fixture.instances = [engine("pi", "piAgent", "pi", "custom", [
@@ -916,10 +904,9 @@ describe("every capability of the picker stays reachable", () => {
   const withLocal = claude(true, [...claudeModels, { id: "ollama::qwen3", label: "qwen3 (Ollama)", custom: true }]);
   const updated: InstanceInfo = { ...withLocal, snapshot: { ...withLocal.snapshot, update: { title: "Update Claude", message: "A newer CLI is out.", command: "claude update" } } };
   const missing: InstanceInfo = { ...cursor, snapshot: { state: "unavailable", reason: "`cursor-agent` isn't installed" } };
-  const managed: InstanceInfo = { ...openaiKey, policy: { organizationName: "Acme", reason: "Company models only." } };
   const signedOutWork: InstanceInfo = { ...claude(false), instanceId: "claude-work", displayName: "Work" };
   const plan: InstanceInfo = { ...engine("chatgpt", "codex", "ChatGPT plan", "subscription", []), snapshot: { state: "available", version: "1.0.0", authenticated: true, chatgptPlan: true } };
-  const rich = () => [updated, signedOutWork, missing, managed, plan, local];
+  const rich = () => [updated, signedOutWork, missing, plan, local];
   function followed(): Bot {
     const profile: Bot = { ...bot("high"), tasks: [{ threadId: "thread-scout", title: "This one", createdAt: 1,
       modelSelection: { instanceId: "claude", model: "claude-sonnet-5-5" }, followsBotModel: false }] };
@@ -947,7 +934,6 @@ describe("every capability of the picker stays reachable", () => {
       "local models beside a provider's own": html.includes(">Local models</div>") && labels(opened, "claude").includes("qwen3 (Ollama)"),
       "show every model of a provider": html.includes("data-simple-show-all"),
       "a signed-out account signs in": body("claude-work") === "signIn",
-      "a managed provider says who manages it": body("openai") === "policy" && html.includes("Managed by Acme"),
       "a provider with nothing listed checks again": body("chatgpt") === "empty" && html.includes("data-simple-refresh"),
       "thinking levels in the provider's own names, and back to Default": html.includes(">X-High</button>") && html.includes(">Use default</button>"),
       "AI accounts in Settings": html.includes("data-simple-manage"),
@@ -1000,7 +986,7 @@ describe("every capability of the picker stays reachable", () => {
 
   it("in Advanced mode, from the chip and the full picker", () => {
     fixture.advanced = true;
-    fixture.instances = [updated, signedOutWork, codex, plan, managed, local];
+    fixture.instances = [updated, signedOutWork, codex, plan, local];
     const forBot = followed();
     const chipHtml = renderToStaticMarkup(render(forBot).nodes.find((node) => node.props["data-tour"] === "model")!);
     const opened = open(forBot);
@@ -1009,7 +995,6 @@ describe("every capability of the picker stays reachable", () => {
       "chip shows account, model and effort": chipHtml.includes("data-model-account") && chipHtml.includes("data-model-effort"),
       "use the bot's model, checked while following": opened.nodes.some((node) => node.type === FollowBotModelRow),
       "engine rail with Cloud, API keys and Local, and a way to add keys": html.includes(">Cloud<") && html.includes(">API keys<") && html.includes(">Local<") && html.includes("data-rail-add-api-key"),
-      "a managed engine stays on the rail, dimmed": html.includes("Managed by Acme") && html.includes("opacity-40"),
       "this thread or the bot's default": html.includes("Only this thread"),
       "engine name, refresh and version": html.includes("data-model-refresh") && html.includes("2.1.300"),
       "the Claude account select": html.includes('aria-label="Account"'),

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
-import { setEmailGateDone, track } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { chiefStepFits, myDefaultBot, setChiefStepOpen, useViewerEmail } from "@/lib/default-bot";
-import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, showWelcome, type BeatId } from "@/lib/onboarding";
+import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, type BeatId } from "@/lib/onboarding";
 import { clearWelcomeDraft, readWelcomeDraft, saveWelcomeDraft } from "@/lib/welcome-draft";
 import { api, useStore } from "@/state/store";
 import { ChiefIntro } from "./ChiefIntro";
@@ -15,10 +14,10 @@ const FADE_MS = 150;
 type Config = ReturnType<typeof useStore>["state"]["config"];
 
 /** A genuine first run on this computer's own page names the person after its account, where their profile has none
- * (never on a Cloud, a Team Cloud or a remote page). The name stays theirs to change in Settings. */
+ * (never on a remote page). The name stays theirs to change in Settings. */
 async function nameFromComputer(config: Config, done: (config: NonNullable<Config>) => void): Promise<void> {
   const bridge = window.ogb;
-  if (!config || config.onboarding?.completedAt || config.profile?.name?.trim() || config.cloudHome || config.team) return;
+  if (!config || config.onboarding?.completedAt || config.profile?.name?.trim()) return;
   if (!localDesktopPage() || bridge?.remoteClient?.active) return;
   const name = await bridge?.desktopProfile?.systemName().catch(() => null);
   if (!name) return;
@@ -74,23 +73,18 @@ export function WelcomeFlow({
   record.current = state.config?.onboarding;
 
   useEffect(() => {
-    track("onboarding_step", { step: beat, replay });
     if (keepsDraft && !finishing.current) saveWelcomeDraft({ beat });
-  }, [beat, replay, keepsDraft]);
+  }, [beat, keepsDraft]);
 
-  // A Cloud sheet opened over the welcome never switches the window away from it (CloudAddDialog).
-  useEffect(() => (embedded ? undefined : showWelcome()), [embedded]);
   useEffect(() => {
     if (!replay && !embedded && !hosted) void nameFromComputer(state.config, (config) => dispatch({ type: "configStatus", config }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const finish = useCallback(
-    async (reason: "completed" | "skipped", botId: string | null) => {
+    async (botId: string | null) => {
       if (finishing.current) return;
       finishing.current = true;
-      track("onboarding_completed", { reason, at: beat, replay });
-      setEmailGateDone("submitted");
       if (!replay && !embedded) markWelcomeFinished();
       if (keepsDraft) clearWelcomeDraft();
       onDone(botId);
@@ -101,7 +95,7 @@ export function WelcomeFlow({
       } catch {
       }
     },
-    [beat, dispatch, onDone, replay, embedded, keepsDraft, hosted],
+    [dispatch, onDone, replay, embedded, keepsDraft],
   );
 
   // The first screen fades away before the Chief step comes up; a timer moves on, since a hidden window runs no
@@ -110,7 +104,7 @@ export function WelcomeFlow({
   const leaving = useRef(false);
   const next = useCallback(() => {
     if (finishing.current || leaving.current) return;
-    if (!toChief) return void finish("completed", null);
+    if (!toChief) return void finish(null);
     leaving.current = true;
     root.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: LEAVE_MS, easing: "ease-in", fill: "forwards" });
     setTimeout(() => {
@@ -167,7 +161,7 @@ export function WelcomeFlow({
       )}
     >
       {chief ? (
-        <ChiefIntro replay={replay} onLeave={fadeScrim} onDone={(botId) => void finish("completed", botId)} />
+        <ChiefIntro replay={replay} onLeave={fadeScrim} onDone={(botId) => void finish(botId)} />
       ) : (
         <MeetScreen hosted={hosted} onNext={next} />
       )}

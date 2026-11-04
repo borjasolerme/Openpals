@@ -9,8 +9,6 @@ vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => false }));
 
 const { BotEditorStore, initialState } = await import("@/state/store");
 const { PermissionsSection } = await import("./PermissionsSection");
-const { setTeamPeople } = await import("@/state/team-people");
-const { t } = await import("@/lib/i18n");
 type Derived = Parameters<typeof PermissionsSection>[0]["derived"];
 
 const base: Bot = {
@@ -83,19 +81,6 @@ describe("Full access in bot settings", () => {
     choose("Approve for me");
     expect(dispatch).not.toHaveBeenCalled();
     expect(dialogs()).toBe(1);
-  });
-});
-
-describe("on a team", () => {
-  const chief: Bot = { ...base, chiefOfStaff: true };
-  afterEach(() => setTeamPeople(null));
-
-  it("offers no Chief of Staff card; off a team it stays", () => {
-    render(chief);
-    expect(host.textContent).toContain(t("permissions.chief.title"));
-    setTeamPeople({ people: [], me: null, admin: true, needsYou: [] });
-    render(chief);
-    expect(host.textContent).not.toContain(t("permissions.chief.title"));
   });
 });
 

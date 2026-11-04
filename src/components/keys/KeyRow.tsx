@@ -4,8 +4,6 @@ import { useStore } from "@/state/store";
 import { installCommandFor } from "@/state/engine-install";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import type { KeyResult, KeyVia } from "@/lib/analytics-allowlist";
-import { keyRemoved, keySaved, keySaveFailure, savedKeyResult } from "@/lib/product-events";
 import { InstanceProviderMark } from "../ProviderIcons";
 import { keyEntry, keyForInstance, looksLikeOtherKey, savedState, type KeyEntry, type KeyId, type SavedState } from "./key-catalog";
 import { checkKey, cleanKey, looksLikeKey, saveKey } from "./key-save";
@@ -81,7 +79,6 @@ function errorText(cause: unknown): string {
 export function KeyRow({
   id,
   row: rowId,
-  via = "settings",
   onSaved,
   bare = false,
   rejected: rejectedHere,
@@ -90,7 +87,6 @@ export function KeyRow({
 }: {
   id: KeyId;
   row?: KeyId;
-  via?: KeyVia;
   onSaved?: (configured: boolean) => void;
   bare?: boolean;
   rejected?: boolean;
@@ -155,8 +151,8 @@ export function KeyRow({
             : saved.included ? { tone: "ok", text: t("keys.includedWithCloudPro") }
               : null;
 
-  const runCheck = async (): Promise<KeyResult> => {
-    if (!target.test) return "unverified";
+  const runCheck = async (): Promise<void> => {
+    if (!target.test) return;
     const mine = ++generation.current;
     setBusy("checking");
     try {
@@ -166,10 +162,8 @@ export function KeyRow({
         setVerdict(check.ok ? check.text : null);
         setProblem(check.ok ? null : check.text);
       }
-      return check.result;
     } catch (cause) {
       if (mine === generation.current) setProblem(errorText(cause));
-      return "unverified";
     }
   };
 
@@ -199,10 +193,9 @@ export function KeyRow({
       if (hadFocus) focusAfter.current = now.configured ? "replace" : "input";
       if (!now.configured) setProblem(t("keys.row.notKept"));
       onSaved?.(now.configured);
-      keySaved(target.analytics, via, now.configured && target.test ? await runCheck() : savedKeyResult(target.analytics));
+      if (now.configured && target.test) await runCheck();
     } catch (cause) {
       setProblem(errorText(cause));
-      keySaved(target.analytics, via, keySaveFailure(cause));
     } finally {
       busyRef.current = false;
       setBusy(null);
@@ -248,7 +241,6 @@ export function KeyRow({
       setReplacing(false);
       setDraft("");
       onSaved?.(target.saved(status).configured);
-      keyRemoved(target.analytics, via);
     } catch (cause) {
       setProblem(errorText(cause));
     } finally {

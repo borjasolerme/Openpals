@@ -42,7 +42,6 @@ describe("the store side of waits", () => {
   let notify: ReturnType<typeof vi.fn<(n: Notification | null) => void>>;
   let enqueue: ReturnType<typeof vi.fn<WaitHostDeps["enqueue"]>>;
   let host: ReturnType<typeof createWaitHost>;
-  let cloudHost: ReturnType<typeof createWaitHost>;
 
   beforeEach(() => {
     store = fakeStore();
@@ -50,11 +49,10 @@ describe("the store side of waits", () => {
     wrote = vi.fn<WaitHostDeps["wrote"]>();
     notify = vi.fn();
     enqueue = vi.fn<WaitHostDeps["enqueue"]>(() => ({ id: "run-1" }));
-    const deps = (cloudHome: boolean): WaitHostDeps => ({
-      store: store as unknown as WaitHostDeps["store"], directChat: () => true, threadBusy: () => busy, wrote, notify, enqueue, cloudHome, now: () => NOW,
+    const deps = (): WaitHostDeps => ({
+      store: store as unknown as WaitHostDeps["store"], directChat: () => true, threadBusy: () => busy, wrote, notify, enqueue, now: () => NOW,
     });
-    host = createWaitHost(deps(false));
-    cloudHost = createWaitHost(deps(true));
+    host = createWaitHost(deps());
   });
 
   it("posts a wait's line once, marks the chat unread and notifies only when it fired", () => {
@@ -100,11 +98,8 @@ describe("the store side of waits", () => {
     host.followUp({ ...wait, followUp: "Deploy it." });
     expect(enqueue).toHaveBeenLastCalledWith({ webhookId: "wait:w1", webhookName: "the build", prompt: "[Wait finished: the build] Deploy it.",
       botId: "bot-1", runOn: "maus", deliveryId: "w1", receivedAt: NOW, eventSource: "wait", resultsThreadId: "t-1" });
-    cloudHost.followUp({ ...wait, followUp: "Deploy it." });
-    expect(enqueue.mock.lastCall![0]).not.toHaveProperty("resultsThreadId");
-    expect(waitRunChat({ botId: "bot-1", resultsThreadId: "t-1" }, () => true, false)).toBe("t-1");
-    expect(waitRunChat({ botId: "bot-1", resultsThreadId: "t-1" }, () => true, true)).toBeNull();
-    expect(waitRunChat({ botId: "bot-1", resultsThreadId: "room" }, () => false, false)).toBeNull();
+    expect(waitRunChat({ botId: "bot-1", resultsThreadId: "t-1" }, () => true)).toBe("t-1");
+    expect(waitRunChat({ botId: "bot-1", resultsThreadId: "room" }, () => false)).toBeNull();
   });
 
   it("knows a deleted bot from an idle one", () => {

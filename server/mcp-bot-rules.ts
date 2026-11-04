@@ -3,7 +3,7 @@ import { isSecretName } from "./redact.ts";
 import type { McpAuthState } from "./mcp-oauth.ts";
 import { isRemoteMcpServer, type StoredMcpServer } from "./mcp-registry.ts";
 
-export type McpOwner = "shared" | "own" | "theirs" | "person" | "elsewhere";
+export type McpOwner = "shared" | "own" | "theirs" | "elsewhere";
 
 /** A bot may never send these: they are the person's switches. */
 export const BOT_STRIPPED_KEYS: readonly string[] = ["bot", "runsOn", "apps", "enabled"];
@@ -11,8 +11,7 @@ export const BOT_STRIPPED_KEYS: readonly string[] = ["bot", "runsOn", "apps", "e
 const WHOLE_REF = /^secret-ref:[0-9a-f]{32}$/;
 const SECRET_FLAG_ARG = /^--(?:token|password|passwd|api-key|apikey|secret|access-key|auth-token)$/i;
 
-export function mcpOwner(name: string, server: StoredMcpServer, botId: string, personal: readonly string[]): McpOwner {
-  if (personal.includes(name)) return "person";
+export function mcpOwner(server: StoredMcpServer, botId: string): McpOwner {
   if (!isRemoteMcpServer(server) && server.bot && server.bot !== botId) return "theirs";
   if (server.runsOn) return "elsewhere";
   if (!isRemoteMcpServer(server) && server.bot) return "own";
@@ -23,7 +22,6 @@ export function mcpOwner(name: string, server: StoredMcpServer, botId: string, p
 export function botMayChange(owner: McpOwner, server?: StoredMcpServer): { ok: true } | { ok: false; error: string } {
   switch (owner) {
     case "theirs": return { ok: false, error: "That server belongs to another bot." };
-    case "person": return { ok: false, error: "This connection is each person's own. Change it in Settings." };
     case "elsewhere": return { ok: false, error: `This server runs on ${server?.runsOn?.label ?? "another computer"}, so it can't be changed here.` };
     default: return { ok: true };
   }
@@ -166,15 +164,14 @@ export function botChangeLines(existing: StoredMcpServer, next: StoredMcpServer,
 export function botListing(
   name: string,
   server: StoredMcpServer,
-  extra: { owner: McpOwner; authState: McpAuthState; forThisBot: boolean; managedBy?: string },
+  extra: { owner: McpOwner; authState: McpAuthState; forThisBot: boolean },
 ): Record<string, unknown> {
   const common = {
     name,
     enabled: server.enabled,
-    owner: extra.managedBy ? "managed" : extra.owner,
+    owner: extra.owner,
     signIn: extra.authState,
     forThisBot: extra.forThisBot,
-    ...(extra.managedBy ? { managedBy: extra.managedBy } : {}),
   };
   if (isRemoteMcpServer(server)) {
     return { ...common, transport: server.type ?? "http", url: botAddress(server.url), headerKeys: Object.keys(server.headers ?? {}) };

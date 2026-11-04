@@ -41,7 +41,7 @@ const fixture = vi.hoisted(() => {
     openExternal: (() => Promise.resolve()) as (url: string) => Promise<void>,
     derived: {} as Record<string, unknown>,
     apps: { phase: "ready", apps: [], connectedSlugs: [] } as BotApps,
-    places: {} as Record<string, [boolean, boolean, string]>,
+    places: {} as Record<string, [boolean, string]>,
   };
 });
 vi.mock("react", async (original) => ({
@@ -92,8 +92,8 @@ vi.mock("./bot-settings/SkillsSection", async (importOriginal) => ({
 vi.mock("./bot-panel/use-memory-doc", () => ({ useMemoryDoc: () => fixture.memory }));
 vi.mock("./PlaceChip", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./PlaceChip")>()),
-  usePlaceViews: () => Object.fromEntries(Object.entries(fixture.places).map(([place, [policy, reachable, short]]) =>
-    [place, { policy, reachable, view: { state: reachable ? "ready" : "blocked", params: {}, short, line: `${short}.`, action: null } }])),
+  usePlaceViews: () => Object.fromEntries(Object.entries(fixture.places).map(([place, [reachable, short]]) =>
+    [place, { reachable, view: { state: reachable ? "ready" : "blocked", params: {}, short, line: `${short}.`, action: null } }])),
 }));
 vi.mock("./bot-settings/useBotApps", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./bot-settings/useBotApps")>()),
@@ -260,7 +260,7 @@ beforeEach(() => {
   };
   fixture.apps = { phase: "ready", apps: [], connectedSlugs: [] };
   fixture.places = {
-    cloud: [true, true, "Cloud desktop"], vm: [true, true, "Private desktop"], local: [true, true, "Your screen"], browser: [true, true, "Web pages only"],
+    cloud: [true, "Cloud desktop"], vm: [true, "Private desktop"], local: [true, "Your screen"], browser: [true, "Web pages only"],
   };
   (window as unknown as { ogb?: unknown }).ogb = undefined;
 });
@@ -900,15 +900,9 @@ describe("the Where it works page", () => {
     expect(patch).toHaveBeenLastCalledWith({ computer: null });
   });
 
-  it("holds a place the bot cannot use with the reason as its hint, and leaves out the Cloud desktop when none is offered", () => {
-    fixture.places.cloud = [true, false, "Not ready"];
+  it("holds a place the bot cannot use with the reason as its hint", () => {
+    fixture.places.cloud = [false, "Not ready"];
     expect(find(where(makeBot()), "data-panel-choice", "cloud").props).toMatchObject({ disabled: true, hint: "Not ready." });
-    fixture.places.cloud = [false, false, "Not offered"];
-    expect(choices(where(makeBot())).map(([value]) => value)).toEqual(["auto", "local", "browser"]);
-    fixture.places.local = [false, false, "Not offered"];
-    fixture.places.browser = [false, false, "Not offered"];
-    expect(choices(where(makeBot())).map(([value]) => value)).toEqual(["auto"]);
-    expect(choices(where(makeBot({ computer: "browser" }))).map(([value, , disabled]) => [value, disabled])).toEqual([["auto", false], ["browser", true]]);
   });
 
   it("names the browser My Chrome when the bot's profile is the person's own Chrome", () => {
@@ -1022,14 +1016,14 @@ describe("the drill-in pages", () => {
     for (const text of ["Tidy now", "Upkeep", "Obsidian", "Daily logs", "Journal"]) expect(rendered.html).not.toContain(text);
     click(rendered.nodes.filter((node) => node.props.label === "Forget")[0]!);
     await Promise.resolve();
-    expect(fixture.saveMemory).toHaveBeenLastCalledWith("scout", "MEMORY.md", "# Notes\n\n- Uses Resolve Studio\n", "h1", false);
+    expect(fixture.saveMemory).toHaveBeenLastCalledWith("scout", "MEMORY.md", "# Notes\n\n- Uses Resolve Studio\n", "h1");
     await Promise.resolve();
     expect(fixture.memory.setDoc).toHaveBeenLastCalledWith(expect.objectContaining({ text: "# Notes\n\n- Uses Resolve Studio\n", hash: "h2" }));
 
     (find(body("memory"), "data-panel-form", "memory-add").props.onChange as (value: string) => void)("  Prefers the free version ");
     (find(body("memory"), "data-panel-form", "memory-add").props.onSubmit as () => void)();
     await Promise.resolve();
-    expect(fixture.saveMemory).toHaveBeenLastCalledWith("scout", "MEMORY.md", "# Notes\n- Likes short replies\n\n- Uses Resolve Studio\n- Prefers the free version\n", "h1", false);
+    expect(fixture.saveMemory).toHaveBeenLastCalledWith("scout", "MEMORY.md", "# Notes\n- Likes short replies\n\n- Uses Resolve Studio\n- Prefers the free version\n", "h1");
   });
 
   it("says when memory is off, empty or unreadable, and re-reads on a conflict", async () => {

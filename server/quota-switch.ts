@@ -11,7 +11,7 @@ import { classifyError } from "./drivers/retry.ts";
 import { PROBE_TIMEOUT_MS } from "./engine-install.ts";
 import { spokenLineFields } from "./live-call-record.ts";
 import type { WorkOrigin } from "./peer-provenance.ts";
-import type { BotRecord, Message, Store, TaskRecord } from "./store.ts";
+import type { BotRecord, Message, Store } from "./store.ts";
 import type { TurnStops } from "./turn-outcome.ts";
 import { signedOutStop, type LimitTakeover, type TakeoverScope } from "./host/limit-takeover.ts";
 
@@ -46,7 +46,6 @@ export interface QuotaSwitchDeps {
   access?: (instanceId: string) => EngineAccess | undefined;
   refusal?: (engine: QuotaSwitchEngine) => string | undefined;
   gate: (thread: BotRecord, selection: ModelSelection) => { ok: true; selection: ModelSelection } | { ok: false; error: string };
-  reset?: (from: ModelSelection, to: ModelSelection) => Partial<TaskRecord> | undefined;
   busy: (botId: string, threadId: string) => boolean;
   request: (threadId: string) => QuotaRequest | undefined;
   /** A line spoken on a Live call is resent as spoken, so its words stay out of the log. */
@@ -163,7 +162,7 @@ export function createQuotaSwitch(deps: QuotaSwitchDeps): QuotaSwitch {
     const checked = deps.gate(bot, selection);
     if (!checked.ok) return false;
     try {
-      store.switchTaskModel(botId, threadId, checked.selection, false, false, deps.reset?.(bot.modelSelection, checked.selection));
+      store.switchTaskModel(botId, threadId, checked.selection, false, false);
     } catch {
       return false;
     }
@@ -307,7 +306,7 @@ export function createQuotaSwitch(deps: QuotaSwitchDeps): QuotaSwitch {
       const checked = deps.gate(bot, selection);
       if (!checked.ok) return refuse(`could not switch to ${chosen.name} — ${checked.error}`);
       try {
-        store.switchTaskModel(botId, threadId, checked.selection, false, false, deps.reset?.(bot.modelSelection, checked.selection));
+        store.switchTaskModel(botId, threadId, checked.selection, false, false);
       } catch {
         return refuse(`could not switch to ${chosen.name} — the model switch could not be saved.`);
       }

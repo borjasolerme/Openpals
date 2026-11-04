@@ -3,7 +3,7 @@ import type { DesktopPrefs } from "./desktop-prefs.mjs";
 export type TalkKeyId = "ctrl-opt-space" | "ctrl-shift-space" | "opt-shift-space";
 export interface TalkShortcutState {
   /** False hides the setting and lets the key go: not macOS with Apple speech, this desktop is a remote client, or this
-   * computer's bots moved to My Cloud (its own copy is frozen). */
+   * computer's bots moved to the server (its own copy is frozen). */
   available: boolean;
   enabled: boolean;
   key: TalkKeyId;

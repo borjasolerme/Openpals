@@ -1,26 +1,21 @@
 import { withMcpSignIn, type McpOAuthManager } from "../mcp-oauth.ts";
 import { brokeredServer, type BrokerPath } from "../bot-box/broker-probe.ts";
-import { probeMcpServer, sendsCredentials, type McpProbeOptions, type McpProbeResult } from "../mcp-probe.ts";
+import { probeMcpServer, type McpProbeOptions, type McpProbeResult } from "../mcp-probe.ts";
 import { MAX_MCP_SERVERS, isRemoteMcpServer, parseStoredMcpServer, type McpRunsOn, type StoredMcpServer, type StoredRemoteMcpServer } from "../mcp-registry.ts";
 import { postizKeyHeaders } from "../postiz/connection.ts";
 import type { AppConfig } from "../config.ts";
 import type { ChatAppsMcp } from "../chat-apps-mcp.ts";
-import type { CloudHomeConfig } from "../cloud-home.ts";
 import type { BusyFlag } from "../routes/config.ts";
 import type { SessionRegistry } from "../sessions.ts";
-import type { TeamConnectionsHost } from "./team-connections-host.ts";
 
 export interface McpConfigDeps {
   cfg: Pick<AppConfig, "mcpServers" | "postiz">;
   sessions: Pick<SessionRegistry, "isLive">;
   mcpOAuth: McpOAuthManager;
-  teamConnections: Pick<TeamConnectionsHost, "personMcp" | "people">;
-  cloudHome: Pick<CloudHomeConfig, "publicOrigin"> | null;
   fallbackPublicUrl: string | null;
   mcpConfigBusy: BusyFlag;
   /** Secrets as booleans, sign-in state attached. */
   mcpServerResponse(): Record<string, unknown>;
-  mcpPolicyRefusal(name: string, server: object): string | undefined;
   persistMcpServers(next: Record<string, unknown>): void;
   savedCustomDomain(): string | null;
   appCatalog?: Pick<ChatAppsMcp, "probeOptions" | "serverChanged" | "forgetServer"> & Partial<Pick<ChatAppsMcp, "hasApps">>;
@@ -52,8 +47,6 @@ export interface McpConfig {
   test(name: string, options: {
     asBot?: { id: string; cwd: string };
     signal: AbortSignal;
-    /** A person's own connection, asked for only when the server is theirs; null when there is no one to answer for it. */
-    person?: (url: string) => { oauth: McpOAuthManager; key?: { header: string; value: string } } | null;
   }): Promise<McpConfigResult>;
   /** The one flag every writer of `cfg.mcpServers` takes: two writers must not interleave a read with a save. */
   busy: BusyFlag;
@@ -79,17 +72,11 @@ async function probeAsBots(path: BrokerPath, name: string, target: StoredRemoteM
 /** A server of another computer's: its program, files or address are there, so it is never started or signed in to here. */
 export const runsElsewhere = (runsOn: McpRunsOn) => `This server runs on ${runsOn.label}, so it isn't started here.`;
 
-const personalHeaderValueRefusal = (personal: string[], name: string, server: StoredMcpServer) =>
-  personal.includes(name) && isRemoteMcpServer(server) && sendsCredentials(server)
-    ? "Personal MCP header values cannot be saved in shared configuration. Save your key in your personal connection."
-    : null;
-
 const MAX_CONCURRENT_MCP_PROBES = 2;
 export const MCP_CONFIG_BUSY = "MCP servers are already being updated.";
 
 export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpConfig {
-  const { cfg, mcpOAuth, mcpConfigBusy, mcpServerResponse, mcpPolicyRefusal, persistMcpServers, appCatalog, forgetPeople, health } = deps;
-  const personalHeaderRefusal = (name: string, server: StoredMcpServer) => personalHeaderValueRefusal(deps.teamConnections.personMcp(), name, server);
+  const { cfg, mcpOAuth, mcpConfigBusy, mcpServerResponse, persistMcpServers, appCatalog, forgetPeople, health } = deps;
   let mcpProbesInFlight = 0;
 
   const held = async <T,>(run: () => T | Promise<T>): Promise<T | McpConfigRefusal> => {
@@ -121,12 +108,7 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
     const existing = parseStoredMcpServer(name, current[name]);
     return existing.ok ? { current, existing: existing.server } : { result: { status: 400, error: existing.error } as McpConfigResult };
   };
-  const refused = (name: string, server: StoredMcpServer): McpConfigResult | null => {
-    const personalRefusal = personalHeaderRefusal(name, server);
-    if (personalRefusal) return { status: 400, error: personalRefusal };
-    const refusal = mcpPolicyRefusal(name, server);
-    return refusal ? { status: 403, error: refusal, code: "managed_policy" } : null;
-  };
+  const refused = (_name: string, _server: StoredMcpServer): McpConfigResult | null => null;
 
   return {
     busy: mcpConfigBusy,
@@ -157,10 +139,6 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       if (Object.keys(current).length + names.length > MAX_MCP_SERVERS) {
         return { status: 400, error: `You can add at most ${MAX_MCP_SERVERS} MCP servers.` };
       }
-      const personalRefusal = names.map((name) => personalHeaderRefusal(name, servers[name]!)).find(Boolean);
-      if (personalRefusal) return { status: 400, error: personalRefusal };
-      const blocked = names.filter((name) => mcpPolicyRefusal(name, servers[name] as object));
-      if (blocked.length) return { status: 403, error: `${mcpPolicyRefusal(blocked[0]!, servers[blocked[0]!] as object)} Not approved: ${blocked.join(", ")}.`, code: "managed_policy" };
       persistMcpServers({ ...current, ...servers });
       deps.connectionsChanged?.("added");
       return announced({ status: 201, body: { ...mcpServerResponse(), added: names } });
@@ -187,10 +165,6 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
     setEnabled: (name, enabled) => write(() => {
       const found = stored(name);
       if (!found.existing) return found.result!;
-      if (enabled) {
-        const refusal = mcpPolicyRefusal(name, found.existing);
-        if (refusal) return { status: 403, error: refusal, code: "managed_policy" };
-      }
       persistMcpServers({ ...found.current, [name]: { ...found.existing, enabled } });
       if (enabled) appCatalog?.serverChanged(name);
       health?.changed(name);
@@ -216,7 +190,7 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       deps.connectionsChanged?.("removed");
       return saved(200);
     }),
-    test: async (name, { signal, person, asBot }) => {
+    test: async (name, { signal, asBot }) => {
       const raw = cfg.mcpServers?.[name];
       if (raw === undefined) return { status: 404, error: "MCP server not found." };
       const parsed = parseStoredMcpServer(name, raw);
@@ -228,14 +202,8 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       mcpProbesInFlight += 1;
       try {
         let target = parsed.server;
-        let oauth = mcpOAuth;
-        const personal = deps.teamConnections.personMcp().includes(name);
-        if (personal && isRemoteMcpServer(target) && !target.oauth && Object.keys(target.headers).length > 0) {
-          const own = person?.(target.url);
-          if (!own) return { status: 403, error: "Sign in to the team to test your own connection." };
-          oauth = own.oauth;
-          target = { ...target, headers: own.key ? { [own.key.header]: own.key.value } : {} };
-        } else if (!personal && isRemoteMcpServer(target)) {
+        const oauth = mcpOAuth;
+        if (isRemoteMcpServer(target)) {
           target = { ...target, headers: { ...target.headers, ...postizKeyHeaders(cfg.postiz, name, target) } };
         }
         let sentSignIn = false;
@@ -246,7 +214,7 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
             sentSignIn = true;
           }
         }
-        const options = { ...(personal ? {} : appCatalog?.probeOptions(name, parsed.server) ?? {}), ...(asBot ? { asBot } : isRemoteMcpServer(target) ? {} : { asBot: deps.probeAs?.(target) ?? {} }) };
+        const options = { ...appCatalog?.probeOptions(name, parsed.server), ...(asBot ? { asBot } : isRemoteMcpServer(target) ? {} : { asBot: deps.probeAs?.(target) ?? {} }) };
         const viaBots = isRemoteMcpServer(target) ? deps.botsPath?.() ?? null : null;
         const result = viaBots && isRemoteMcpServer(target)
           ? await probeAsBots(viaBots, name, target, signal, options)

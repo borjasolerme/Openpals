@@ -1,4 +1,3 @@
-import { directMessageSent, roomMessageSent } from "@/lib/product-events";
 import { useComposerDictation } from "@/lib/use-composer-dictation";
 import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import { Mic, Paperclip, Square, X } from "lucide-react";
@@ -30,7 +29,7 @@ import {
   type ComposerSendSnapshot,
   type FailedComposerSend,
 } from "@/lib/drafts";
-import { DEVS_CHOICE, MentionMenu, teammateChoices, type MentionChoice } from "./MentionMenu"; import { useTeammates } from "@/state/team-people"; import { hiddenFromSidebar, useViewerEmail } from "@/lib/default-bot";
+import { MentionMenu, type MentionChoice } from "./MentionMenu"; import { hiddenFromSidebar, useViewerEmail } from "@/lib/default-bot";
 import { SlashCommandMenu } from "./SlashCommandMenu";
 import { MentionTextarea } from "./MentionTextarea";
 import { ComposerAttachments, pathForFile } from "./ComposerAttachments";
@@ -148,12 +147,11 @@ export function Composer({
   // Visible branch only: an approval left on an abandoned branch must not block the composer.
   const approvals = pendingApprovals(group ? group.messages : bot ? visibleMessages(bot) : []);
   const approval = approvals[0];
-  // A Turn on card can wait while the person walks to their computer: they can still write meanwhile.
-  const blocking = Boolean(approval && !approval.message.card?.computerAsk);
+  const blocking = Boolean(approval);
   const approvalBot = group
     ? members?.find((member) => member.id === approval?.message.from?.botId) ??
       members?.find((member) => member.id === groupBusyBotId)
-    : state.bots.find((one) => one.id === approval?.message.inbox?.from.botId) ?? bot;
+    : bot;
   const busyName = group
     ? (members?.find((b) => b.id === groupBusyBotId)?.name ??
       (groupWorking ? t("composer.busy.team") : t("composer.busy.aBot")))
@@ -324,7 +322,7 @@ export function Composer({
   }, [slash, dismissedSlashAt, group, bot, canLearn, state.instances, locale, slashSkills]);
   const commandPickerOpen = commandCandidates.length > 0;
 
-  const mention = mentionQueryAt(text, caret); const teammates = useTeammates(); const viewer = useViewerEmail();
+  const mention = mentionQueryAt(text, caret); const viewer = useViewerEmail();
   const candidates = useMemo(() => {
     if (!mention || mention.start === dismissedAt) return [];
     const pool: MentionChoice[] = group
@@ -335,8 +333,8 @@ export function Composer({
       : state.bots
           .filter((member) => member.id !== bot?.id && !member.hidden && !hiddenFromSidebar(member, viewer))
           .map((member) => ({ id: member.id, name: member.name, bot: member }));
-    return mentionChoicesForQuery([...pool, ...teammateChoices(teammates.people), DEVS_CHOICE], mention.query);
-  }, [mention, dismissedAt, state.bots, bot?.id, group, members, teammates, viewer]);
+    return mentionChoicesForQuery(pool, mention.query);
+  }, [mention, dismissedAt, state.bots, bot?.id, group, members, viewer]);
   const mentionEveryoneCount = (members ?? []).filter((member) => !member.hidden).length;
   const mentionPickerOpen = candidates.length > 0;
   const commandMotion = useMenuMotion(commandPickerOpen);
@@ -596,7 +594,6 @@ export function Composer({
         mode: effectiveChannelMode,
         onError: () => restoreDraft(sentDraft),
       });
-      roomMessageSent(effectiveChannelMode, busy);
     } else if (bot) {
       const points = effectiveChannelMode === "goal" ? null : takePointedChips(threadId);
       dispatch({
@@ -604,7 +601,6 @@ export function Composer({
         ...(points ? { pointed: points.pointed } : {}), ...(followUp ? { followUp } : {}),
         onError: () => { points?.restore(); restoreDraft(sentDraft); },
       });
-      directMessageSent(state.instances, bot.modelSelection?.instanceId, busy && followUp !== "steer");
     }
     setText("");
     setAttachments([]);
@@ -725,7 +721,7 @@ export function Composer({
               index={0}
               locale={activeLocale()}
               actions={<PendingApprovalActions part="primary" pending={approval} threadId={threadId} bot={approvalBot} onCancelTurn={interruptTurn} />}
-              more={approval.message.inbox ? undefined : <PendingApprovalActions part="more" pending={approval} threadId={threadId} bot={approvalBot} onCancelTurn={interruptTurn} />}
+              more={<PendingApprovalActions part="more" pending={approval} threadId={threadId} bot={approvalBot} onCancelTurn={interruptTurn} />}
             />
           </div>
         )}
@@ -744,8 +740,6 @@ export function Composer({
         />
         <QueuedComposerMessages
           items={queuedMessages}
-          oneThreadPerBot={state.config?.cloudStarter === true}
-          onSeePlans={() => dispatch({ type: "toggleAppSettings", open: true, section: "cloudAccount" })}
           onSteer={canSteerQueued ? steerQueued : undefined}
           steerInterrupts={!canSteer}
           steerMode={group ? "next" : "all"}
@@ -827,7 +821,7 @@ export function Composer({
           <MentionTextarea
           wrapperClassName={singleRow || simpleDock ? undefined : cn("@max-[30rem]/composer:order-first @max-[30rem]/composer:basis-full", stacked && "order-first basis-full")}
           inputRef={inputRef}
-          peers={[...(group ? members ?? [] : state.bots.filter((member) => member.id !== bot?.id)), ...teammates.peers]}
+          peers={group ? members ?? [] : state.bots.filter((member) => member.id !== bot?.id)}
           everyone={Boolean(group && !group.dm)}
           dir="auto"
           rows={1}

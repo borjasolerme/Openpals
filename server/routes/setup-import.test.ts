@@ -51,7 +51,6 @@ async function serve({ local = true, home = fixtureHome(), dataDir }: { local?: 
     local,
     cfg,
     mcpConfigBusy: { get: () => busy, set: (value) => { busy = value; } },
-    mcpPolicyRefusal: () => undefined,
     persistMcpServers: (next) => { cfg.mcpServers = next; },
     machine: () => ({ ...thisMachine(), home, platform: "darwin", env: {} }),
     ...(dataDir ? { dataDir } : {}),

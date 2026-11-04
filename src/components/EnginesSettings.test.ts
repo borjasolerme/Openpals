@@ -280,9 +280,6 @@ describe("Settings → Engines → setup cards", () => {
     expect(remote).toContain("open Settings → API keys on the computer running Openpals");
     expect(remote).not.toContain("data-key-row");
 
-    vi.stubGlobal("window", {});
-    fixture.instances = [{ ...openai({ state: "available", authenticated: true, version: null }), managed: { organizationId: "org", organizationName: "Acme" } }];
-    expect(renderToStaticMarkup(createElement(EnginesSettings))).not.toContain("data-key-row");
     fixture.config = undefined;
   });
 });

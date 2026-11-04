@@ -107,8 +107,6 @@ export interface BackendRequest {
   /** Workers AI only: the Cloudflare account the token belongs to. */
   accountId?: string;
   careful?: boolean;
-  /** Set only for the included relay, which is told the seam in a header. */
-  relaySeam?: DeciderSeam;
   state: unknown;
   questions: Record<string, DeciderQuestion>;
   signal: AbortSignal;

@@ -5,19 +5,19 @@ import { serverLine } from "./server-lines.ts";
 
 describe("serverLine", () => {
   it("writes the line in the language given, with its values filled in", () => {
-    expect(serverLine("de", "server.reports.sent", { report: "r-1" })).toBe("An das MausBot-Team gesendet (Bericht r-1). Milind und Omkar bekommen ihn per E-Mail.");
-    expect(serverLine(undefined, "server.reports.sent", { report: "r-1" })).toBe("Sent to the MausBot team (report r-1). Milind and Omkar get it by email.");
-    expect(serverLine("en", "server.reports.when.minutes", { count: 5 })).toBe("in about 5 minutes");
+    expect(serverLine("de", "server.mcp.added", { name: "github" })).toBe("MCP-Server github hinzugefügt");
+    expect(serverLine(undefined, "server.mcp.added", { name: "github" })).toBe("Added MCP server github");
+    expect(serverLine("en", "server.mcp.testTools.many", { count: 5 })).toBe("Test: 5 tools");
   });
 
   it("reads a regional tag as its language, and a language it has no words for as English", () => {
-    expect(serverLine("de-AT", "server.reports.when.soon")).toBe("so bald wie möglich");
-    expect(serverLine("pt", "server.reports.when.soon")).toBe(serverLine("pt-br", "server.reports.when.soon"));
-    expect(serverLine("zh-Hant", "server.reports.when.soon")).toBe(serverLine("zh-tw", "server.reports.when.soon"));
-    expect(serverLine("nl", "server.reports.when.soon")).toBe("as soon as it can");
+    expect(serverLine("de-AT", "server.mcp.listed")).toBe("MCP-Server geprüft");
+    expect(serverLine("pt", "server.mcp.listed")).toBe(serverLine("pt-br", "server.mcp.listed"));
+    expect(serverLine("zh-Hant", "server.mcp.listed")).toBe(serverLine("zh-tw", "server.mcp.listed"));
+    expect(serverLine("nl", "server.mcp.listed")).toBe("Checked MCP servers");
   });
 
   it("leaves a {name} it was given no value for as it is", () => {
-    expect(serverLine("en", "server.reports.refused", {})).toBe("The MausBot team's server refused this bug report, so nothing was sent: {detail}.");
+    expect(serverLine("en", "server.teammates.sendFailed", {})).toBe("Send failed — {detail}");
   });
 });

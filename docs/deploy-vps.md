@@ -2,33 +2,14 @@
 
 From a blank Linux server to OpenMausBot running on it around the clock, reachable from your laptop, the desktop app and your phone, with your bots working while every laptop is closed. It assumes nothing beyond being able to open a terminal and paste commands. About twenty minutes, most of it waiting.
 
-Three ways to make the server reachable are covered. Pick one; the rest of the guide is the same.
+Two ways to make the server reachable are covered. Pick one; the rest of the guide is the same.
 
 | | You need | Who can reach it | Best for |
 |---|---|---|---|
-| **A. Public address, no domain** (`serve --tunnel`) | an OpenMausBot account (email code) | anyone with a pairing code, over HTTPS | the fastest path; a phone on cellular |
 | **B. Your own domain** (Docker + Caddy) | a domain name, ports 80/443 | anyone with a pairing code, over HTTPS | a permanent address you own |
 | **C. Your Tailscale network** (`serve --tailscale`) | Tailscale on the server and your devices | only your tailnet | the most private; nothing public at all |
 
 Whichever you pick, the login is the same: you **pair** each device once with a short code and it stays signed in. A session lasts 30 days; using it with half that or less left renews it to a full 30, up to 180 days from pairing (`OMB_SESSION_TTL_DAYS` and `OMB_SESSION_MAX_DAYS` change both numbers). There is no password.
-
-## Hetzner launch check (2026-09-07)
-
-Path A was exercised on a blank Hetzner CX43 (x86-64, Ubuntu 24.04), using
-Node 24.20.0 and Codex 0.153.4. The published 0.1.60 baseline was followed by
-local candidate fixes from this change; these results do not certify the
-unmodified published 0.1.60 package.
-
-The paired web UI completed a real GPT-6-Astra chat, two automatically
-scheduled routine runs, and a browser title/screenshot test. The browser
-needed the Ubuntu sandbox setup below. A full reboot restored the service
-and managed tunnel automatically; the existing paired device, bots, chats,
-and paused schedule remained available. A new real chat turn also succeeded.
-
-A stopped application-data backup restored with matching file hashes and
-SQLite integrity. The restored copy was not started; provider reauthentication
-and browser-login migration were not tested. Docker, Tailscale, ARM64, other
-providers, and capacity limits were outside this run.
 
 ## What runs on a server, and what does not
 
@@ -68,26 +49,6 @@ Run the `npx` commands and engine sign-ins below in this account. Keep a separat
 administrator shell for system packages and systemd. If you already signed in as
 root, sign in again as `maus`; those accounts have different homes and credentials.
 
-## Path A: a public address with one command
-
-No domain, no proxy, no open port. The server gets an address like `https://c-7f3a9c.openmausbot.com` through a Cloudflare tunnel; only traffic through the tunnel reaches it, and that traffic still has to pair.
-
-```sh
-npx openmausbot setup          # once: choose AI access, connect, and choose a model
-npx openmausbot login          # once: an emailed code signs this machine in and reserves its address
-npx openmausbot serve --tunnel # runs the server there and prints the pairing link with a QR code
-```
-
-`setup` connects an AI provider; it is separate from the OpenMausBot account.
-Use Codex's device-code option over SSH, or enter a hidden API key for a
-chat-only connection. More engines can be added later. See [CLI setup](cli-onboarding.md).
-
-`login` asks for your email, sends an 8-digit code, and prints the address it reserved for this machine. `serve --tunnel` downloads `cloudflared` on the first run (a pinned version with a verified digest, into `~/.openmausbot`), starts the server, connects the tunnel, and after a few seconds prints `tunnel: live at https://…`. Leave it running; see "Keep it running" for a service.
-
-The account credentials live in `~/.openmausbot/tunnel-account.json`, readable only by your user. `npx openmausbot logout` releases the address.
-
-Skip to "Install and sign the engines in".
-
 ## Path B: your own domain, with Docker
 
 One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
@@ -103,7 +64,7 @@ One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 3. **Get the deploy files and set the name:**
 
    ```sh
-   git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot/deploy
+   git clone https://github.com/borjasolerme/Openpals && cd Openpals/deploy
    cp .env.example .env
    nano .env                # DOMAIN=maus.example.com ; ENGINES=@anthropic-ai/claude-code @openai/codex
    ```
@@ -192,7 +153,7 @@ npx openmausbot pair --label "Kitchen iPad"
 ```
 pairing code:  RR8Y-BLR6-H939
 expires:       10:59:45 AM (single use)
-open or scan:  https://c-7f3a9c.openmausbot.com/pair#code=RR8Y-BLR6-H939
+open or scan:  https://maus.example.com/pair#code=RR8Y-BLR6-H939
 ```
 
 - **A browser:** open the link. The code is filled in; press **Connect**. That browser is paired for 30 days, renewed on use as above.
@@ -235,7 +196,7 @@ User=maus
 WorkingDirectory=/home/maus
 Environment=HOME=/home/maus
 Environment=PATH=/home/maus/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/maus/.local/bin/openmausbot serve --tunnel --no-pair
+ExecStart=/home/maus/.local/bin/openmausbot serve --tailscale --no-pair
 Restart=always
 RestartSec=5
 
@@ -245,10 +206,10 @@ WantedBy=multi-user.target
 
 ```sh
 sudo systemctl daemon-reload && sudo systemctl enable --now openmausbot
-journalctl -u openmausbot -f            # the server's log, including "tunnel: live at …"
+journalctl -u openmausbot -f            # the server's log
 ```
 
-Use `--tailscale` instead of `--tunnel` for path C. `--no-pair` skips printing a code at every restart; mint one with `npx openmausbot pair` when you need it. Docker (path B) restarts on its own (`restart: unless-stopped`).
+This is path C. `--no-pair` skips printing a code at every restart; mint one with `npx openmausbot pair` when you need it. Docker (path B) restarts on its own (`restart: unless-stopped`).
 
 Adjust the account, home, and PATH if yours differ; Node 24 must be available on
 that PATH. The service runs the installed CLI directly, so a restart uses the
@@ -267,7 +228,7 @@ same release without an npm install prompt or an implicit upgrade.
 
   Check that installation succeeded before starting. A service restart by itself
   does not update the installed package. For foreground `npx` usage, specify the
-  desired release as `npx --yes openmausbot@X.Y.Z serve --tunnel`.
+  desired release as `npx --yes openmausbot@X.Y.Z serve --tailscale`.
 - **Path B:** `cd OpenMausBot/deploy && docker compose pull omb && docker compose up -d`.
 
 Routines and queued work survive a restart. A teammate turn running at that moment runs again once at the next start, told to check what it already did, and the bot that asked for it is told. A person's own turn and a running routine are not run again: the conversation says it was interrupted. Update between runs where you can.
@@ -279,8 +240,8 @@ process, or `sudo systemctl stop openmausbot` from the administrator shell for
 the service above. Stop any engine processes and managed desktops still writing
 files you intend to back up.
 
-For paths A and C, this backs up application state (bots, chats, routines, tunnel
-credentials, and paired sessions). Run it from the service account's shell:
+For path C, this backs up application state (bots, chats, routines and paired
+sessions). Run it from the service account's shell:
 
 ```sh
 umask 077
@@ -314,17 +275,13 @@ service with `sudo systemctl start openmausbot`, or `docker compose start omb`.
 
 Read this before putting anything else in front of the server.
 
-- The server only ever listens on loopback (`127.0.0.1:8799`). Never publish that port yourself. The tunnel, Caddy and Tailscale each reach it from the same machine.
-- A request that arrives through a proxy or the tunnel is treated as remote and needs a session, whatever headers it carries. A proxy of your own (nginx, Traefik, Cloudflare Tunnel) must forward the real `Host` and add `X-Forwarded-For` and `X-Forwarded-Proto`, must not buffer the event stream, and must **not** rewrite `Host` to `127.0.0.1`.
+- The server only ever listens on loopback (`127.0.0.1:8799`). Never publish that port yourself. Caddy and Tailscale each reach it from the same machine.
+- A request that arrives through a proxy is treated as remote and needs a session, whatever headers it carries. A proxy of your own (nginx, Traefik, Cloudflare Tunnel) must forward the real `Host` and add `X-Forwarded-For` and `X-Forwarded-Proto`, must not buffer the event stream, and must **not** rewrite `Host` to `127.0.0.1`.
 - Pairing is the login. Want a second wall in front of it? Path B's `Caddyfile` has a commented `basic_auth` block for a shared password.
 - The session cookie is marked `Secure`; do not serve this over plain HTTP on the public internet.
 - The one thing a stranger can read is `/.well-known/openmausbot/environment` (the server's id, label, version, capabilities) and `/api/health` (only the app name). Everything else answers "pair this device".
 
 ## Troubleshooting
-
-**`serve --tunnel` says "no account on this machine yet".** Run `npx openmausbot login` on this machine first; the credentials are per machine.
-
-**The tunnel stays on "retrying".** The server is running and usable locally; the public hop is not verified yet. Wait a minute (Cloudflare needs a moment on a fresh address), then check `journalctl`/the terminal for the reason. If it never comes up, `npx openmausbot logout && npx openmausbot login` issues a fresh address.
 
 **Path B: the page never loads or shows a certificate error.** Caddy could not get a certificate. Check that the name resolves to the server and that ports 80 and 443 are open; `docker compose logs caddy` shows the reason.
 

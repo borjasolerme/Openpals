@@ -1,4 +1,4 @@
-// Whether this computer's apps and screen can be lent to the person's own Clouds now and, when they can't, why and the
+// Whether this computer's apps and screen can be lent to the person's home server now and, when they can't, why and the
 // one fix. Read from computer control's own state: reading it never starts or asks anything.
 import capabilitiesModule from "./capabilities.cjs";
 import { missingPermissions } from "./lent-screen-failures.mjs";
@@ -11,7 +11,7 @@ const LINUX_UNSUPPORTED = new Set(["linux-wayland-seat-safety-blocked", "headles
 
 /**
  * `ready`: computer control works, so apps and screen are lent and used. `lent`: they are lent, which a Mac lacking only
- * macOS's permissions also is, so a Cloud's bot can ask macOS for them. Otherwise `reason`:
+ * macOS's permissions also is, so a server's bot can ask macOS for them. Otherwise `reason`:
  * - "starting": computer control is still starting;
  * - "permissions": macOS has not allowed Accessibility and Screen Recording;
  * - "blocked": its helper is missing, or the system refused to run it;

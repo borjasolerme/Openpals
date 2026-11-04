@@ -72,10 +72,10 @@ describe("New bot", () => {
 describe("setup navigation", () => {
   it.each([false, true])("preserves the current selection only for nested team creation (%s)", preserveSelection => {
     const bot = { id: "created", name: "Scout", messages: [] } as unknown as Bot;
-    const state = { ...initialState, activeView: "files" as const, selectedId: "existing" };
+    const state = { ...initialState, activeView: "web-panel" as const, selectedId: "existing" };
     const next = reducer(state, { type: "botAdded", bot, preserveSelection });
     expect(next.bots).toContain(bot);
-    expect(next.activeView).toBe(preserveSelection ? "files" : "chat");
+    expect(next.activeView).toBe(preserveSelection ? "web-panel" : "chat");
     expect(next.selectedId).toBe(preserveSelection ? "existing" : "created");
     expect(reducer(state, { type: "botAdded", bot })).toMatchObject({ activeView: "chat", selectedId: "created" });
   });

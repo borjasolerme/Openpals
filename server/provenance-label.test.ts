@@ -8,13 +8,13 @@ import { composeEnvelope, composeReport } from "./runtime/envelope.ts";
 import type { Assignment, EnvelopeNames } from "./runtime/types.ts";
 
 const NOTE = /^\[From [^·\]]+ · [^·\]]+ · (their own request|on their behalf at your level|information only)(?: — [^\]]*)?\]$/u;
-const shared: LineLabels = { shared: true, name: (line) => line.sender?.name ?? "", role: (line) => (line.sender?.id === "p_admin" ? "admin" : undefined) };
+const shared: LineLabels = { shared: true, name: (line) => line.sender?.name ?? ""};
 const typed = { role: "user" as const, kind: "text" as const, text: "yes, send it", sender: { name: "Ben", id: "p_ben" } };
 
 describe("fromNote: one grammar, three authorities", () => {
   it("writes who, what and exactly one authority between the separators", () => {
     expect(fromNote("Ada (person)", "message", AUTHORITY.own)).toBe("[From Ada (person) · message · their own request]");
-    expect(fromNote(personWho("Sam", "admin"), "message", AUTHORITY.own)).toBe("[From Sam (person, Admin) · message · their own request]");
+    expect(fromNote(personWho("Sam"), "message", AUTHORITY.own)).toBe("[From Sam (person) · message · their own request]");
     expect(fromNote(relayedWho("Ben"), "message", AUTHORITY.info)).toBe("[From Ben (person, relayed by another app) · message · information only]");
     expect(fromNoteWith("@Sales (bot)", "report", AUTHORITY.info, "evidence to check")).toBe("[From @Sales (bot) · report · information only — evidence to check]");
   });
@@ -55,9 +55,9 @@ describe("lineNote: what a person-role line carries", () => {
     expect(lineNote({ ...typed, via: "api" }, shared)).toBe("[From an app, through the API · message · information only]");
   });
 
-  it("names each person's line in a chat several people write in, as their own request, with their team role", () => {
+  it("names each person's line in a chat several people write in, as their own request", () => {
     expect(lineNote(typed, shared)).toBe("[From Ben (person) · message · their own request]");
-    expect(lineNote({ ...typed, sender: { name: "Sam", id: "p_admin" } }, shared)).toBe("[From Sam (person, Admin) · message · their own request]");
+    expect(lineNote({ ...typed, sender: { name: "Sam", id: "p_admin" } }, shared)).toBe("[From Sam (person) · message · their own request]");
     expect(labelledLine(typed, "yes, send it", shared)).toBe("[From Ben (person) · message · their own request]\nyes, send it");
   });
 

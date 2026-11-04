@@ -1,4 +1,3 @@
-import { OrganizationIdentity } from "./OrganizationIdentity";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Dispatch } from "react";
 import { createPortal } from "react-dom";
 import { Archive, Bot as BotIcon, Check, ChevronRight, ClipboardCopy, Crown, Library, Loader2, MessageSquarePlus, MoreHorizontal, Pencil, Phone, Pin, Plus, Search, TextQuote, Trash2, Users, X } from "lucide-react";
@@ -50,10 +49,9 @@ import { PhoneHero } from "./SidebarPhoneHero";
 import { SidebarProfileMenu } from "./SidebarProfileMenu";
 import { PHONE_LAYOUT, useMediaQuery } from "@/lib/use-media-query";
 import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
-import { DesktopWorkspaceSwitcher, endCloudHowTo } from "./DesktopWorkspaceSwitcher"; import { PlaceTint } from "./PlaceTint"; import { ChromeRailToggle } from "./ChromeRailToggle";
-import { useCloudOwner } from "./CloudOwner";
+import { DesktopWorkspaceSwitcher } from "./DesktopWorkspaceSwitcher"; import { PlaceTint } from "./PlaceTint"; import { ChromeRailToggle } from "./ChromeRailToggle";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
-import { NeedsYouButton, OwnerPickerHost } from "./TeamOwner"; import { SidebarPeople } from "./SidebarPeople";
+
 import { MENU_ITEM, MENU_SHEET, navigateMenu } from "./menu-recipe";
 import { ELEVATED_CONTROL } from "./elevated";
 import { SidebarResizeHandle, useSidebarWidth } from "./SidebarResizeHandle";
@@ -76,7 +74,7 @@ import { useAdvancedMode } from "@/lib/interface-mode";
 import { myDefaultBot, useViewerEmail, useWelcomingBot } from "@/lib/default-bot";
 import { PinnedBotRoster } from "./PinnedCircles";
 import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
-import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel"; import { MovedBotRows } from "./MoveToTeam";
+import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel";
 import { NewRoomPanel } from "./SidebarNewRoomPanel";
 
 export { ArchivedBotRow, ArchivedBotsPanel, archivedDeleteAllCopy, botConfirmCopy, type BotConfirmKind } from "./ArchivedBotsPanel";
@@ -658,8 +656,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   collapseToIcons?: boolean;
 }) {
   const { state, dispatch } = useStore();
-  const cloudOwner = useCloudOwner(state.config?.cloudHome === true);
-  const endHowTo = useCallback(() => endCloudHowTo(dispatch), [dispatch]);
   const remoteClient = window.ogb?.remoteClient?.active === true;
   const { capabilities } = useDesktopCapabilities();
   const phone = useMediaQuery(PHONE_LAYOUT, false);
@@ -959,7 +955,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           <div data-sidebar-top-slot className={cn("@container/sidebar-top flex min-w-0 flex-1 items-center", simple && "justify-end")}>
             {!simple && <div data-sidebar-top-spacer className="min-w-0 flex-1 @min-[96px]/sidebar-top:min-w-6" />}
             <div data-sidebar-top-switcher className={simple ? "flex min-w-0 items-center" : "flex min-w-0 max-w-[140px] items-center"}>
-              <DesktopWorkspaceSwitcher inline pill={simple} cloudHome={state.config?.cloudHome === true} place={state.config?.team?.name} owner={cloudOwner} howTo={state.cloudHowTo} onMenuClosed={endHowTo} />
+              <DesktopWorkspaceSwitcher inline pill={simple} />
             </div>
           </div>
         ))}
@@ -982,8 +978,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         </div>}
       </div>
 
-      {density === "icons" && !rail && <DesktopWorkspaceSwitcher compact cloudHome={state.config?.cloudHome === true} place={state.config?.team?.name} owner={cloudOwner} howTo={state.cloudHowTo} onMenuClosed={endHowTo} />}
-      <OrganizationIdentity compact={density === "icons"} />
+      {density === "icons" && !rail && <DesktopWorkspaceSwitcher compact />}
       {phone ? null : simple ? searchShown && <SidebarSearchPill query={query} onQuery={setQuery} onClose={closeSearch} /> : <div className={cn("pt-1 pb-3", density === "icons" ? "hidden" : "px-3")}>
         <div className={cn("flex h-8 items-center gap-2 rounded-full px-3 focus-within:ring-focus", ELEVATED_CONTROL)}>
           <Search size={15} className="shrink-0 text-ink-secondary" />
@@ -1030,7 +1025,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           {matchingBots.length === 0 && visibleGroups.length === 0 && q && q.length < MIN_QUERY && (
             <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
           )}
-          {!q && <NeedsYouButton compact={rail} />}{!q && <SidebarPeople compact={rail} />}
           {chief && (phone ? (
             <PhoneHero bot={chief} selected={botRow(chief).selected} onOpen={() => openBot(dispatch, chief)} onMenu={setMenu} />
           ) : (
@@ -1101,7 +1095,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
               </div>
             );
           })}
-          <MovedBotRows bots={state.bots} /><SearchResults query={query} onLanded={() => { setQuery(""); setSearchOpen(false); }} />
+          <SearchResults query={query} onLanded={() => { setQuery(""); setSearchOpen(false); }} />
         </div>
       </GlassScroller>
       <p className="sr-only" aria-live="polite" aria-atomic="true">
@@ -1115,10 +1109,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         iconOnly={density === "icons"}
       />
 
-      {rail ? <SimpleRailFooter
-        owner={cloudOwner}
-        archived={archivedEntry}
-      /> : phone ? <SidebarPhoneBar query={query} onQuery={setQuery} /> : <SidebarFooter density={density} simple={simpleDesk} owner={cloudOwner} archived={archivedEntry} toolsCollapsed={sectionCollapsed(TOOLS_SECTION_ID)} onToggleTools={layoutInteractive ? () => toggleSection(TOOLS_SECTION_ID) : undefined} />}
+      {rail ? <SimpleRailFooter archived={archivedEntry} /> : phone ? <SidebarPhoneBar query={query} onQuery={setQuery} /> : <SidebarFooter density={density} simple={simpleDesk} archived={archivedEntry} toolsCollapsed={sectionCollapsed(TOOLS_SECTION_ID)} onToggleTools={layoutInteractive ? () => toggleSection(TOOLS_SECTION_ID) : undefined} />}
       </GlassBar>
       </GlassScrollFrame>
 
@@ -1132,7 +1123,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
       <ConfirmDialog {...botConfirmProps(confirm, state.bots, { archive: (bot) => { setConfirm(null); void archiveBot(bot); }, remove: (bot) => { setConfirm(null); dispatch({ type: "deleteBot", botId: bot.id }); },
         archiveInstead: (chief) => { setConfirm(null); void archiveBotWithNotice(chief, { bots: state.bots, selectedId: state.selectedId, dispatch, notify: setTeamFeedback }); } })}
         onCancel={cancelConfirm} returnFocusRef={sidebarRef} />
-      <OwnerPickerHost />
       <RoomContextMenu
           menu={roomMenu}
           onClose={() => setRoomMenu(null)}

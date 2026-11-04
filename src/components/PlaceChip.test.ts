@@ -125,10 +125,6 @@ describe("the places a conversation can be pinned to", () => {
     expect(availability()).toMatchObject({ cloud: true, vm: true, local: true });
   });
 
-  it("never reaches them on an OMB Cloud home", () => {
-    fixture.config = { cloudHome: true };
-    expect(availability()).toMatchObject({ cloud: true, vm: false, local: false });
-  });
 });
 
 describe("J11: the chip names a place's problem in the panel's words", () => {

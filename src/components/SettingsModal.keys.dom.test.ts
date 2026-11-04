@@ -32,7 +32,6 @@ vi.mock("@/state/store", async (original) => {
   };
 });
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => fx.advanced, setAdvancedMode: vi.fn() }));
-vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn(), track: vi.fn() }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => null }));
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: {} }) }));
 vi.mock("./EnginesSettings", () => ({ EnginesSettings: marker("engines") }));
@@ -43,8 +42,6 @@ vi.mock("./CompanionSection", () => ({ CompanionSection: () => null }));
 vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: () => null }));
 vi.mock("./ConnectedWorkspacesSettings", () => ({ ConnectedWorkspacesSettings: marker("desktopWorkspaces") }));
 vi.mock("./LocalComputerSection", () => ({ LocalComputerSection: marker("computer") }));
-vi.mock("./CloudAccountSettings", () => ({ CloudAccountSettings: marker("cloudAccount") }));
-vi.mock("./OrganizationSettings", () => ({ OrganizationSettings: marker("organization") }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: marker("people") }));
 vi.mock("./ActivitySection", () => ({ ActivitySection: marker("activity") }));
 vi.mock("./UsageSection", () => ({ UsageSection: marker("usage") }));

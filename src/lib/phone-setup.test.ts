@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CompanionAccountState } from "../types/ogb";
 import {
   claimPhonePairingAttempt,
   closePhonePairingIfOwned,
@@ -11,26 +10,16 @@ import {
   keepPhonePairingIfCurrent,
   newlyPairedDevice,
   newlyPairedDeviceForFlow,
-  normalizePhoneSetupActionError,
-  phonePairingGate,
   phoneSetupBaseline,
   phoneSetupReducer,
   preparePhonePairingRoute,
   invalidatePhonePairingAttempt,
   queuePhonePairingAttempt,
   releasePhonePairingAttempt,
-  secureAddressRequestLapsed,
-  shouldArmPhoneSetupProvisioningTimeout,
-  shouldPrepareSecureAddress,
   startNonOverlappingPhoneSetupPoll,
   type PhonePairingAttemptLock,
   type PhonePairingAttemptQueue,
 } from "./phone-setup";
-
-const account = (status: CompanionAccountState["status"]): CompanionAccountState => ({
-  available: true,
-  status,
-});
 
 describe("phone setup flow", () => {
   it("refreshes Tailscale before validating an explicit tailnet route", async () => {
@@ -56,16 +45,14 @@ describe("phone setup flow", () => {
     expect(result).toBe(refreshed);
   });
 
-  it("does not probe Tailscale for HTTPS or direct Wi-Fi pairing", async () => {
-    for (const route of ["automatic", "local"] as const) {
-      const refreshTailscale = vi.fn(async () => ({ enabled: true }));
-      await preparePhonePairingRoute(route, false, {
-        read: vi.fn(async () => ({ enabled: true })),
-        start: vi.fn(async () => ({ enabled: true })),
-        refreshTailscale,
-      });
-      expect(refreshTailscale).not.toHaveBeenCalled();
-    }
+  it("does not probe Tailscale for direct Wi-Fi pairing", async () => {
+    const refreshTailscale = vi.fn(async () => ({ enabled: true }));
+    await preparePhonePairingRoute("local", false, {
+      read: vi.fn(async () => ({ enabled: true })),
+      start: vi.fn(async () => ({ enabled: true })),
+      refreshTailscale,
+    });
+    expect(refreshTailscale).not.toHaveBeenCalled();
   });
 
   it("does not begin a Tailscale probe after the setup attempt is cancelled", async () => {
@@ -100,190 +87,20 @@ describe("phone setup flow", () => {
     expect(result.enabled).toBe(true);
   });
 
-  it("moves from intro to sign-in and preserves the profile-independent resume path", () => {
+  it("moves from intro to preparing the chosen route, then back to intro on reset", () => {
     const started = phoneSetupReducer(initialPhoneSetupFlowState, {
       type: "start",
       deviceIds: ["existing"],
+      route: "local",
     });
-    expect(
-      derivePhoneSetupPhase(started, {
-        accountStatus: "signed-out",
-        accountBusy: false,
-        provisioning: false,
-        pairingOpen: false,
-      }),
-    ).toBe("sign-in");
+    expect(started.route).toBe("local");
+    expect(derivePhoneSetupPhase(started, false)).toBe("verifying");
+    expect(derivePhoneSetupPhase(started, true)).toBe("qr");
 
     const stopped = phoneSetupReducer(started, { type: "reset" });
     expect(stopped.active).toBe(false);
-    expect(
-      derivePhoneSetupPhase(stopped, {
-        accountStatus: "signed-out",
-        accountBusy: false,
-        provisioning: false,
-        pairingOpen: false,
-      }),
-    ).toBe("intro");
-
-    const resumed = phoneSetupReducer(stopped, { type: "resume", deviceIds: ["existing"] });
-    expect(resumed.active).toBe(true);
-  });
-
-  it("stops showing provisioning when the secure account fails or times out", () => {
-    const started = phoneSetupReducer(initialPhoneSetupFlowState, {
-      type: "start",
-      deviceIds: [],
-    });
-    expect(
-      derivePhoneSetupPhase(started, {
-        accountStatus: "error",
-        accountBusy: false,
-        provisioning: true,
-        pairingOpen: false,
-      }),
-    ).toBe("sign-in");
-    expect(
-      derivePhoneSetupPhase(started, {
-        accountStatus: "unavailable",
-        accountBusy: false,
-        provisioning: true,
-        pairingOpen: false,
-      }),
-    ).toBe("sign-in");
-    expect(
-      derivePhoneSetupPhase(started, {
-        accountStatus: "connecting",
-        accountBusy: false,
-        provisioning: true,
-        provisioningTimedOut: true,
-        pairingOpen: false,
-      }),
-    ).toBe("sign-in");
-  });
-
-  it("waits for hosted HTTPS even when Tailscale is already available", () => {
-    const companion = {
-      enabled: true,
-      endpoints: [{
-        kind: "tailnet" as const,
-        url: "http://mac.tail1234.ts.net:8810",
-        priority: 0,
-      }],
-    };
-    expect(phonePairingGate(account("connecting"), companion, false)).toBe("wait");
-    expect(phonePairingGate(account("ready"), companion, false)).toBe("wait");
-    expect(phonePairingGate(account("signed-out"), companion, false)).toBe("account-required");
-    expect(
-      phonePairingGate({ available: false, status: "signed-out" }, companion, false),
-    ).toBe("account-required");
-  });
-
-  it("tells the desktop about automatic pairing, which keeps or creates the secure address", () => {
-    const waiting = { enabled: true, endpoints: [] };
-    const gate = phonePairingGate(account("ready"), waiting, false);
-    expect(gate).toBe("wait");
-    expect(shouldPrepareSecureAddress("automatic", gate, account("ready"))).toBe(true);
-    expect(shouldPrepareSecureAddress("automatic", "wait", account("connecting"))).toBe(true);
-    expect(shouldPrepareSecureAddress("automatic", "open", account("ready"))).toBe(true);
-    expect(shouldPrepareSecureAddress("automatic", "open", null)).toBe(true);
-    for (const explicit of ["local", "tailscale"] as const) {
-      for (const any of ["wait", "open"] as const) {
-        expect(shouldPrepareSecureAddress(explicit, any, account("ready"))).toBe(false);
-      }
-    }
-    for (const other of ["start", "account-required"] as const) {
-      expect(shouldPrepareSecureAddress("automatic", other, account("ready"))).toBe(false);
-    }
-    for (const unusable of [
-      null,
-      account("error"),
-      account("signed-out"),
-      { ...account("ready"), available: false },
-    ]) {
-      expect(shouldPrepareSecureAddress("automatic", "wait", unusable)).toBe(false);
-    }
-  });
-
-  it("sees when nothing is creating the secure address a pairing waits for", () => {
-    const waiting = { enabled: true, endpoints: [] };
-    expect(secureAddressRequestLapsed(account("ready"), waiting)).toBe(true);
-    expect(secureAddressRequestLapsed(account("connecting"), waiting)).toBe(false);
-    expect(secureAddressRequestLapsed(account("error"), waiting)).toBe(false);
-    expect(secureAddressRequestLapsed(
-      { ...account("ready"), endpoint: "https://c-opaque.openmausbot.com" },
-      waiting,
-    )).toBe(false);
-    expect(secureAddressRequestLapsed(account("ready"), {
-      enabled: true,
-      endpoints: [{ kind: "hosted", url: "https://c-opaque.openmausbot.com", priority: 0 }],
-    })).toBe(false);
-    expect(secureAddressRequestLapsed(account("ready"), { enabled: false })).toBe(false);
-    expect(secureAddressRequestLapsed(null, waiting)).toBe(false);
-    expect(secureAddressRequestLapsed({ ...account("ready"), available: false }, waiting)).toBe(false);
-  });
-
-  it("opens local pairing only after the explicit Wi-Fi fallback", () => {
-    expect(
-      phonePairingGate(
-        { available: false, status: "signed-out" },
-        { enabled: true, endpoints: [] },
-        false,
-      ),
-    ).toBe("account-required");
-    expect(
-      phonePairingGate(
-        { available: false, status: "signed-out" },
-        { enabled: true, endpoints: [] },
-        true,
-      ),
-    ).toBe("open");
-  });
-
-  it("opens pairing immediately when the hosted route is ready", () => {
-    expect(
-      phonePairingGate(
-        account("ready"),
-        {
-          enabled: true,
-          endpoints: [{ kind: "hosted", url: "https://phone.example", priority: 0 }],
-        },
-        false,
-      ),
-    ).toBe("open");
-  });
-
-  it("opens Tailscale only after the explicit fallback is selected", () => {
-    const tailnet = {
-      enabled: true,
-      endpoints: [{
-        kind: "tailnet" as const,
-        url: "http://mac.tail1234.ts.net:8810",
-        priority: 100,
-      }],
-    };
-    expect(phonePairingGate(account("signed-out"), tailnet, false)).toBe("account-required");
-    expect(
-      phonePairingGate({ available: false, status: "signed-out" }, tailnet, false),
-    ).toBe("account-required");
-    expect(phonePairingGate(account("signed-out"), tailnet, true)).toBe("open");
-  });
-
-  it("arms the timeout during account IPC and explicit local setup", () => {
-    const local = phoneSetupReducer(
-      phoneSetupReducer(initialPhoneSetupFlowState, { type: "start", deviceIds: [] }),
-      { type: "use-local" },
-    );
-    expect(shouldArmPhoneSetupProvisioningTimeout(local, {
-      provisioning: true,
-      provisioningTimedOut: false,
-    })).toBe(true);
-    expect(derivePhoneSetupPhase(local, {
-      accountStatus: "connecting",
-      accountBusy: true,
-      provisioning: true,
-      provisioningTimedOut: true,
-      pairingOpen: false,
-    })).toBe("sign-in");
+    expect(stopped.route).toBeNull();
+    expect(derivePhoneSetupPhase(stopped, false)).toBe("intro");
   });
 
   it("closes a pairing window that resolves after cancellation", async () => {
@@ -389,24 +206,20 @@ describe("phone setup flow", () => {
     const started = phoneSetupReducer(initialPhoneSetupFlowState, {
       type: "start",
       deviceIds: ["old"],
+      route: "tailscale",
     });
     const device = newlyPairedDevice(started.baselineDeviceIds, [
       { id: "old", name: "Old phone" },
-      { id: "new", name: "Milind’s iPhone" },
+      { id: "new", name: "Ada’s iPhone" },
     ]);
-    expect(device?.name).toBe("Milind’s iPhone");
+    expect(device?.name).toBe("Ada’s iPhone");
 
     const success = phoneSetupReducer(started, {
       type: "paired",
       deviceName: device?.name ?? "Phone",
     });
     expect(
-      derivePhoneSetupPhase(success, {
-        accountStatus: "ready",
-        accountBusy: false,
-        provisioning: false,
-        pairingOpen: false,
-      }),
+      derivePhoneSetupPhase(success, false),
     ).toBe("success");
   });
 
@@ -414,6 +227,7 @@ describe("phone setup flow", () => {
     const preStart = phoneSetupReducer(initialPhoneSetupFlowState, {
       type: "start",
       deviceIds: [],
+      route: "local",
     });
     const historicalDevices = [
       { id: "old-1", name: "Old iPhone" },
@@ -431,7 +245,7 @@ describe("phone setup flow", () => {
     expect(pairingOpen.baselineDeviceIds).toEqual(["old-1", "old-2", "old-3"]);
     expect(newlyPairedDeviceForFlow(pairingOpen, historicalDevices)).toBeNull();
 
-    const newPhone = { id: "new-1", name: "Milind’s iPhone" };
+    const newPhone = { id: "new-1", name: "Ada’s iPhone" };
     expect(newlyPairedDeviceForFlow(pairingOpen, [...historicalDevices, newPhone])).toBe(newPhone);
 
     const success = phoneSetupReducer(pairingOpen, {
@@ -439,12 +253,7 @@ describe("phone setup flow", () => {
       deviceName: newPhone.name,
     });
     expect(
-      derivePhoneSetupPhase(success, {
-        accountStatus: "ready",
-        accountBusy: false,
-        provisioning: false,
-        pairingOpen: false,
-      }),
+      derivePhoneSetupPhase(success, false),
     ).toBe("success");
   });
 
@@ -493,54 +302,5 @@ describe("phone setup flow", () => {
       enabled: true,
       pairing: { ...fresh, expiresAt: 999 },
     }, null, 1_000)).toContain("Device pairing did not open");
-  });
-
-  it("unwraps Electron IPC account errors without exposing channel machinery", () => {
-    const requestId = "c285fe8c-f6f4-41a3-a737-7a2d1faf405a";
-    const message = normalizePhoneSetupActionError(
-      new Error(
-        `Error invoking remote method 'companion-account:request-code': Error: The secure connection request was not allowed. Try signing in again. Reference: ${requestId}.`,
-      ),
-      "We could not send the code. Try again.",
-    );
-    expect(message).toBe(`We could not send the code. Try again. Reference: ${requestId}.`);
-    expect(message).not.toContain("remote method");
-    expect(message).not.toContain("companion-account");
-  });
-
-  it("keeps the provider-capacity explanation instead of generic setup copy", () => {
-    const requestId = "44444444-4444-4444-8444-444444444444";
-    expect(
-      normalizePhoneSetupActionError(
-        new Error(
-          `Error invoking remote method 'companion-account:verify-code': Error: Secure HTTPS links are temporarily full. Try again in 10 minutes, or pair on this Wi-Fi or with Tailscale. Reference: ${requestId}.`,
-        ),
-        "We could not finish setup. Try again.",
-      ),
-    ).toBe(
-      `Secure HTTPS links are temporarily full. Try again in 10 minutes, or pair on this Wi-Fi or with Tailscale. Reference: ${requestId}.`,
-    );
-  });
-
-  it("keeps the rate-limit explanation and its wait instead of generic setup copy", () => {
-    const requestId = "66666666-6666-4666-8666-666666666666";
-    const busy = "The secure connection service is busy right now. Local Wi-Fi and Tailscale pairing still work; try again in 60 seconds.";
-    expect(
-      normalizePhoneSetupActionError(
-        new Error(
-          `Error invoking remote method 'companion-account:verify-code': Error: ${busy} Reference: ${requestId}.`,
-        ),
-        "We could not finish setup. Try again.",
-      ),
-    ).toBe(`${busy} Reference: ${requestId}.`);
-  });
-
-  it("replaces arbitrary IPC details with calm setup copy", () => {
-    expect(
-      normalizePhoneSetupActionError(
-        new Error("Error invoking remote method 'companion-account:request-code': Error: /private/keychain failed"),
-        "We could not send the code. Try again.",
-      ),
-    ).toBe("We could not send the code. Try again.");
   });
 });

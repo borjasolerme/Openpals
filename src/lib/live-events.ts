@@ -1,6 +1,5 @@
 // EventSource hides SSE comment keepalives, so liveness comes from the server's visible `ping` frame.
 import type { ServerFrame } from "../../shared/wire";
-import { cloudAsleep, markCloudAsleep, onCloudPower, sleepingFrame } from "./cloud-power";
 import { recordBotTextMessage, recordRuntimeEvent } from "./voice-latency-probe";
 import { noteTurnEvent } from "@/state/turn-status";
 
@@ -241,8 +240,7 @@ export function openLiveEvents(
 
   let connect: () => void;
   const scheduleReconnect = () => {
-    // A Cloud home that went to sleep: reconnecting would wake it. The person's next action does (src/lib/cloud-power.ts).
-    if (stopped || retryTimer !== null || !platform.isOnline() || !platform.isVisible() || cloudAsleep()) return;
+    if (stopped || retryTimer !== null || !platform.isOnline() || !platform.isVisible()) return;
     const exponent = Math.min(retryAttempt, 20);
     const delay = Math.min(retryMaxMs, retryMinMs * 2 ** exponent);
     retryAttempt += 1;
@@ -261,7 +259,7 @@ export function openLiveEvents(
   };
 
   connect = () => {
-    if (stopped || source || !platform.isOnline() || cloudAsleep()) return;
+    if (stopped || source || !platform.isOnline()) return;
     let current: LiveEventSourceLike;
     try {
       sourceScreens = screensWanted();
@@ -337,15 +335,6 @@ export function openLiveEvents(
         }
       }
 
-      if (sleepingFrame(frame as LiveFrame & { state?: unknown })) {
-        // The home agreed to sleep: close quietly (not a lost connection) and stay closed until the person is back. The
-        // cursor is past this frame by now, so waking never resumes before it: a Cloud that replays it would close us again.
-        clearRetry();
-        closeSource();
-        markCloudAsleep();
-        return;
-      }
-
       if (frame.kind !== "hello") {
         tapLiveFrame(frame as ServerFrame);
         handlers.onFrame(frame);
@@ -365,7 +354,7 @@ export function openLiveEvents(
 
   const recover = () => {
     // Background tabs suspend timers and network delivery: recover once on wake.
-    if (stopped || !platform.isOnline() || !platform.isVisible() || cloudAsleep()) return;
+    if (stopped || !platform.isOnline() || !platform.isVisible()) return;
     if (!source || shouldReconnectLiveEvents(lastHeardAt, platform.now(), staleMs)) {
       reconnectNow(source !== null);
     }
@@ -384,8 +373,6 @@ export function openLiveEvents(
   screenWishListeners.add(onScreenWish);
   connect();
   const staleTimer = setInterval(recover, staleCheckMs);
-  // The person is back after the Cloud slept: reconnect at once, which wakes it.
-  const stopPower = onCloudPower((asleep) => { if (!asleep) reconnectNow(false); });
   platform.windowTarget?.addEventListener("online", onOnline);
   platform.windowTarget?.addEventListener("focus", onFocus);
   platform.documentTarget?.addEventListener("visibilitychange", onVisibilityChange);
@@ -394,7 +381,6 @@ export function openLiveEvents(
     if (stopped) return;
     stopped = true;
     screenWishListeners.delete(onScreenWish);
-    stopPower();
     clearInterval(staleTimer);
     clearRetry();
     closeSource();

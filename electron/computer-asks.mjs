@@ -1,23 +1,23 @@
-// What a bot on one of the person's own Clouds asks of this computer when it can't use it now.
+// What a bot on one of the person's home server asks of this computer when it can't use it now.
 // Each ask comes up once in a prompt of this app's own; Turn on there, or on the card anywhere, does here what it takes.
-// After Not now nothing more comes up for that Cloud and need for a while: the card stays in the chat.
+// After Not now nothing more comes up for that server and need for a while: the card stays in the chat.
 import { fixableHere } from "./screen-words.mjs";
 
-/** After Not now in the prompt, the same Cloud asking for the same thing comes up again only after this long. */
+/** After Not now in the prompt, the same server asking for the same thing comes up again only after this long. */
 export const QUIET_AFTER_NOT_NOW_MS = 30 * 60_000;
 
 /**
  * `prompt(env, ask, signal)`: this app's own prompt, "turn-on", "not-now", or null when it didn't show (the person is
- * looking at that Cloud, where the card is) or `signal` closed it. `turnOn(env, ask)`: does here what the ask needs,
+ * looking at that server, where the card is) or `signal` closed it. `turnOn(env, ask)`: does here what the ask needs,
  * `{ ok: true }`, `{ ok: false, reason }` (why it still can't) or `{ declined: true }`. `answered(envId)`: an answer
- * waits to go to that Cloud.
+ * waits to go to that server.
  */
 export function createComputerAsks({ prompt, turnOn, answered = () => {}, now = Date.now, log = () => {} }) {
   /** Per ask: the card's Turn on taps already done here. */
   const acted = new Map();
   /** Per ask that came up: what closes its prompt. */
   const prompted = new Map();
-  /** The Clouds whose prompt is up now: one at a time each, the next on a later poll. */
+  /** The servers whose prompt is up now: one at a time each, the next on a later poll. */
   const showing = new Set();
   const quietUntil = new Map();
   const answers = new Map();
@@ -36,14 +36,14 @@ export function createComputerAsks({ prompt, turnOn, answered = () => {}, now = 
   }
 
   return {
-    /** What waits to go to this Cloud with its next poll. */
+    /** What waits to go to this server with its next poll. */
     pending: envId => answers.get(envId) ?? [],
-    /** They reached this Cloud. */
+    /** They reached this server. */
     sent(envId, sent) {
       const left = (answers.get(envId) ?? []).filter(entry => !sent.includes(entry));
       if (left.length) answers.set(envId, left); else answers.delete(envId);
     },
-    /** The asks a Cloud has open now. */
+    /** The asks a server has open now. */
     heard(env, asks) {
       const open = new Map(asks.filter(ask => ask && typeof ask.id === "string").map(ask => [ask.id, ask]));
       for (const [id, close] of prompted) if (open.get(id)?.state !== "asking") { close.abort(); prompted.delete(id); }

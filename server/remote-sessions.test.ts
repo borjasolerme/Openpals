@@ -187,7 +187,6 @@ describe("before pairing", () => {
     expect(descriptor.body.capabilities).toEqual({
       remoteSessions: true,
       selfUpdate: "operator",
-      emailSignIn: false,
       jobs: true,
       // A server nobody else signs in to can be its owner's bots' home: it takes their move once they pair.
       move: 1,

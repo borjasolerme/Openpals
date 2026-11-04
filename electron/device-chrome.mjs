@@ -1,4 +1,4 @@
-// The lent computer's own way to its Chrome, for a bot on My Cloud. It finds Chrome's DevTools port itself, from the
+// The lent computer's own way to its Chrome, for a bot on the server. It finds Chrome's DevTools port itself, from the
 // DevToolsActivePort file Chrome writes, connects to 127.0.0.1 only, and lets through nothing but the WebSocket upgrade.
 import { readFile as readFileFs } from "node:fs/promises";
 import { connect as tcpConnect } from "node:net";

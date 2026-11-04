@@ -64,7 +64,6 @@ function world(options: { live?: string[]; privateTo?: string; steers?: boolean;
     unattended: (_botId, threadId) => (options.unattended ?? []).includes(threadId),
     answerLive: async (threadId, requestId, text) => { if (options.takesAnswers === false) return false; answeredLive.push({ threadId, requestId, text }); return true; },
     settleSignIns: (parked) => { settled.push(parked.id); },
-    keptPrivate: (child, requester) => child.threadId === options.privateTo && requester.threadId !== options.privateTo,
     steer: async (threadId, text) => { if (options.steers === false) return false; steered.push({ threadId, text }); return true; },
   };
   return { routing: createQuestionRouting(deps), store, rows, node, nodes, answeredNodes, answeredLive, settled, steered };
@@ -79,7 +78,7 @@ describe("at Full access a question asked with an ask tool", () => {
         + "If you truly cannot choose, end your turn with NEEDS INPUT:, the question and Default: your pick, and @Fuchs decides.");
   });
 
-  it("still reaches the person when only they can give it, below Full access, in their own chat, in work an outside event started, and in work in their private chat", () => {
+  it("still reaches the person when only they can give it, below Full access, in their own chat, and in work an outside event started", () => {
     const w = world();
     w.node({ status: "running" });
     expect(w.routing.notAsked({ botId: "dachs", threadId: "work", level: "full", question: "Please sign in to the bank portal" })).toBeUndefined();
@@ -89,9 +88,6 @@ describe("at Full access a question asked with an ask tool", () => {
     const hooked = world();
     hooked.node({ status: "running", origin: { kind: "outside" } });
     expect(hooked.routing.notAsked({ botId: "dachs", threadId: "work", level: "full", question: "CSV or Excel?" })).toBeUndefined();
-    const theirs = world({ privateTo: "work" });
-    theirs.node({ status: "running", origin: { kind: "user", request: "Sort my inbox" } });
-    expect(theirs.routing.notAsked({ botId: "dachs", threadId: "work", level: "full", question: "CSV or Excel?" })).toBeUndefined();
   });
 });
 

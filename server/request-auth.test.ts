@@ -201,25 +201,12 @@ describe("scopes", () => {
     expect(clientBotPatchViolation({ avatarCrop: "square", name: "Renamed" })).toBe("name");
     expect(clientBotPatchViolation({ unread: true, autoApprove: true })).toBe("autoApprove");
     expect(clientBotPatchViolation({ cwd: "/" })).toBe("cwd");
-    // X research counts against the Cloud plan's X calls: a paired phone may not switch it on.
     expect(clientBotPatchViolation({ xResearch: true })).toBe("xResearch");
     expect(clientBotPatchViolation({ recordBrowserSteps: true })).toBe("recordBrowserSteps");
     expect(clientBotPatchViolation([])).toBe("body");
-    // A Team Cloud member changes no team bot's look, which everyone sees; their own MausBot's they do.
-    expect(clientBotPatchViolation({ color: "blue" }, false, true)).toBe("color");
-    expect(clientBotPatchViolation({ avatarUrl: null }, false, true)).toBe("avatarUrl");
-    expect(clientBotPatchViolation({ mascotBody: "cursor" }, false, true)).toBe("mascotBody");
-    expect(clientBotPatchViolation({ unread: false, pinned: true }, false, true)).toBeNull();
-    expect(clientBotPatchViolation({ color: "blue", name: "Mine" }, true, true)).toBeNull();
     expect(clientGroupPatchViolation({ name: "Ops", unread: false, turnTimeoutMinutes: 30 })).toBeNull();
     expect(clientGroupPatchViolation({ cwd: "/tmp" })).toBe("cwd");
     expect(clientGroupPatchViolation({ memberIds: [] })).toBe("memberIds");
-  });
-
-  it("refuses a session without the admin scope a bot's move into or out of a department", () => {
-    expect(clientBotPatchViolation({ section: "Work" }, false, true)).toBe("section");
-    expect(clientBotPatchViolation({ section: "" }, false, true)).toBe("section");
-    for (const method of ["POST", "PUT"]) expect(requiredScope(method, "/api/sidebar-sections"), method).toBe("admin");
   });
 
   it("lets a bot's maker without the admin scope say who it is and how it looks, never what it may do or whom it directs", () => {
@@ -683,15 +670,6 @@ describe("loopback trust: owner on one person's machine, service on a shared wor
     expect(desktop.warning).toMatch(/ignored in the desktop app/);
   });
 
-  it("is always service on an OMB Cloud home, where a local request is only ever a process on the machine", () => {
-    const pick = (env: NodeJS.ProcessEnv) => resolveLoopbackTrust({ env, desktopManaged: false, hostedWorkspace: false, cloudHome: true });
-    expect(pick({})).toEqual({ trust: "service", reason: "MausBot Cloud home", localBrowsers: false });
-    expect(pick({ OMB_LOOPBACK_TRUST: "service" })).toEqual({ trust: "service", reason: "MausBot Cloud home", localBrowsers: false });
-    const forced = pick({ OMB_LOOPBACK_TRUST: "owner" });
-    expect(forced.trust).toBe("service");
-    expect(forced.warning).toMatch(/ignored on a MausBot Cloud home/);
-  });
-
   it("lets only the CLI that started the server, holding its secret, mint a pairing code under service trust", () => {
     const secret = "c".repeat(43);
     const as = (method: string, path: string, header?: string, token: string | null = secret) =>
@@ -818,6 +796,5 @@ describe("a browser on this machine is not the owner", () => {
     expect(pick(dev, { fromSource: true, hostedWorkspace: true })).toMatchObject({ trust: "service", localBrowsers: false });
     expect(pick({ ...dev, OMB_LOOPBACK_TRUST: "service" }, { fromSource: true }).localBrowsers).toBe(false);
     expect(pick({ OMB_DEV_TRUST_LOCAL_BROWSER: "true" }, { fromSource: true })).toEqual({ trust: "owner", reason: "self-hosted default", localBrowsers: false });
-    expect(resolveLoopbackTrust({ env: dev, desktopManaged: false, hostedWorkspace: false, cloudHome: true, fromSource: true }).localBrowsers).toBe(false);
   });
 });

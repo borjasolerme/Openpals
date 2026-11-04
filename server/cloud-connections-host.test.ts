@@ -21,12 +21,12 @@ const LINEAR = "https://mcp.linear.app/sse";
 const signIn = (access: string, refresh: string): McpOAuthRecord => ({ url: LINEAR, state: "signed-in", clientId: "client", tokenEndpoint: "https://linear.app/token", tokens: { access, refresh, expiresAt: 10 } });
 const HIGHLEVEL: HighLevelConnection = { kind: "oauth", accessToken: "hl-access", refreshToken: "hl-refresh", expiresAt: 5, locationId: "loc_1", scopes: "", connectedAt: 1, state: "signed-in" };
 
-function host(cloudHome: boolean) {
+function host() {
   const dir = temp();
   const config = { mcpServers: { linear: { type: "http", url: LINEAR, headers: {}, enabled: true }, dodo: { command: "npx", args: ["dodo"], env: {}, enabled: true } } } as unknown as AppConfig;
   const mcpOAuth = new McpOAuthManager({ file: join(dir, "mcp-oauth.json") });
   const highlevel = createHighLevelService({ dataDir: dir, env: {} });
-  const connections = createCloudConnectionsHost({ cloudHome: cloudHome ? { publicOrigin: "https://omb-u-1.fly.dev" } : null, config: () => config,
+  const connections = createCloudConnectionsHost({ ownHome: () => true, config: () => config,
     environmentId: "env-desktop-1", mcpOAuth, highlevel, engines: async () => ["claude", "openrouter"] });
   async function call(method: string, path: string, body?: unknown, type = "application/json") {
     let status = 0, answered: unknown = null;
@@ -43,18 +43,16 @@ function host(cloudHome: boolean) {
 
 describe("a move's routes and private port", () => {
   it("names this server's connections, the computer it is, the engines it runs and the programs it has; never a secret", async () => {
-    const { call } = host(false);
+    const { call } = host();
     const listed = await call("GET", "/api/cloud-connections");
     expect(listed.status).toBe(200);
     expect(listed.body).toMatchObject({ computer: { environmentId: "env-desktop-1", label: expect.any(String) }, engines: ["claude", "openrouter"], commands: expect.any(Array),
       connections: [{ id: "mcp:linear", kind: "mcp" }, { id: "mcp:dodo", kind: "mcp", launcher: "npx" }] });
-    // Only a Cloud home takes connections.
-    expect((await call("PUT", "/api/cloud-connections/mcp/linear/sign-in", signIn("a", "r"))).status).toBe(404);
     expect((await call("GET", "/api/cloud-send")).out).toBe(PASS);
   });
 
   it("takes a moved sign-in for a server here at the same address, keeps one of its own, and lets a newer one replace only the one moved here", async () => {
-    const { call, mcpOAuth } = host(true);
+    const { call, mcpOAuth } = host();
     const route = "/api/cloud-connections/mcp/linear/sign-in";
     expect(await call("PUT", "/api/cloud-connections/mcp/notes/sign-in", signIn("a", "r"))).toMatchObject({ status: 404, body: { error: "This MCP server is not here yet." } });
     expect(await call("PUT", "/api/cloud-connections/mcp/dodo/sign-in", { ...signIn("a", "r") })).toMatchObject({ status: 404 });
@@ -75,7 +73,7 @@ describe("a move's routes and private port", () => {
   });
 
   it("takes a moved HighLevel connection, keeping one signed in here", async () => {
-    const { call, highlevel } = host(true);
+    const { call, highlevel } = host();
     expect((await call("PUT", "/api/cloud-connections/highlevel", { kind: "oauth" })).status).toBe(400);
     expect(await call("PUT", "/api/cloud-connections/highlevel", HIGHLEVEL)).toMatchObject({ status: 200, body: { adopted: true } });
     expect(highlevel.status()).toMatchObject({ state: "connected", kind: "oauth", location: { id: "loc_1" } });
@@ -84,7 +82,7 @@ describe("a move's routes and private port", () => {
   });
 
   it("hands over a sign-in over the private port, then forgets it here without signing it out", async () => {
-    const { connections, mcpOAuth } = host(false);
+    const { connections, mcpOAuth } = host();
     mcpOAuth.adopt("linear", LINEAR, signIn("a1", "r1"));
     const answer = await connections.handoff({ kind: "connection", id: "mcp:linear" });
     expect(answer).toMatchObject({ ok: true, connection: { mcp: { name: "linear", signIn: { tokens: { refresh: "r1" } } } }, digest: signInDigest({ access: "a1", refresh: "r1", expiresAt: 10 }) });
@@ -93,13 +91,5 @@ describe("a move's routes and private port", () => {
     expect(mcpOAuth.authState("linear", LINEAR)).toBe("signed-in");
     expect(await connections.handoff({ kind: "connection-release", id: "mcp:linear", digest })).toEqual({ ok: true, release: { released: true } });
     expect(mcpOAuth.authState("linear", LINEAR)).toBe("none");
-  });
-
-  it("tells a bot on My Cloud, and only there", () => {
-    const desktop = host(false), cloud = host(true);
-    cloud.mcpOAuth.markNeedsSignIn("linear", LINEAR);
-    desktop.mcpOAuth.markNeedsSignIn("linear", LINEAR);
-    expect(cloud.connections.prompt({})).toContain("linear (sign in here: https://omb-u-1.fly.dev/?connect=mcp%3Alinear)");
-    expect(desktop.connections.prompt({})).toBe("");
   });
 });

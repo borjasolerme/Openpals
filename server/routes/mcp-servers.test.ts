@@ -10,7 +10,6 @@ import { openCredentialBroker, type CredentialBroker } from "../bot-box/broker.t
 import type { BrokerPath } from "../bot-box/broker-probe.ts";
 import { DATA_DIR, type AppConfig } from "../config.ts";
 import { json, readBody } from "../harness/http.ts";
-import type { TeamConnectionsHost } from "../host/team-connections-host.ts";
 import { McpOAuthManager } from "../mcp-oauth.ts";
 import { listMcpServers } from "../mcp-registry.ts";
 import { startFakeHttpMcp, type FakeHttpMcp } from "../testing/fake-http-mcp-server.ts";
@@ -34,16 +33,13 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
   const changes: string[] = [];
   let busy = false;
   const mcpOAuth = new McpOAuthManager({ file: join(DATA_DIR, "mcp-route-oauth.json") });
-  const teamConnections = { personMcp: () => ["private"], people: {} as TeamConnectionsHost["people"] };
   const mcpServerResponse = () => ({ servers: listMcpServers(cfg.mcpServers).map((server) => ({ ...server, ...options.listed?.[server.name] })) });
   const sessions = { isLive: () => true };
   const config = createMcpConfig({
-    cfg, sessions, mcpOAuth, teamConnections,
-    cloudHome: null,
+    cfg, sessions, mcpOAuth, 
     fallbackPublicUrl: null,
     mcpConfigBusy: { get: () => busy, set: (value) => { busy = value; } },
     mcpServerResponse,
-    mcpPolicyRefusal: () => undefined,
     persistMcpServers: (next) => { cfg.mcpServers = next; },
     savedCustomDomain: () => null,
     connectionsChanged: (change) => { changes.push(change); },
@@ -52,8 +48,7 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
     ...(options.probeAs ? { probeAs: options.probeAs } : {}),
   });
   const route = createMcpServerRoutes({
-    cfg, bot: (id) => options.bots?.find((bot) => bot.id === id) ?? null, sessions, mcpOAuth, teamConnections,
-    cloudHome: null,
+    cfg, bot: (id) => options.bots?.find((bot) => bot.id === id) ?? null, sessions, mcpOAuth, 
     fallbackPublicUrl: null,
     mcpServerResponse,
     savedCustomDomain: () => null,
@@ -75,7 +70,7 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
   return { cfg, post, changes, base, get: () => fetch(`${base}/api/mcp/servers`), remove: (name: string) => fetch(`${base}/api/mcp/servers/${name}`, { method: "DELETE" }) };
 }
 
-it("says when a server is added, imported or removed on purpose, so a Cloud home's routines can wait while none is left", async () => {
+it("says when a server is added, imported or removed on purpose", async () => {
   const { post, remove, changes } = await serve();
   const added = await post("/api/mcp/servers", { name: "warehouse", url: "https://data.example.com/mcp", headers: { Authorization: "" } });
   expect(added.status, await added.clone().text()).toBe(201);
@@ -86,29 +81,7 @@ it("says when a server is added, imported or removed on purpose, so a Cloud home
   expect(changes).toEqual(["added", "added", "removed"]);
 });
 
-it.each([["private", "person"], ["public", "team"]])("lists the scope of %s in reads and mutation responses", async (name, scope) => {
-  const { post, get } = await serve();
-  const response = await post("/api/mcp/servers", { name, url: "https://mail.example.com/mcp", headers: { Authorization: "" } });
-  expect(response.status).toBe(201);
-  expect(await response.json()).toMatchObject({ servers: [{ name, scope }] });
-  expect(await (await get()).json()).toMatchObject({ servers: [{ name, scope }] });
-});
-
-it.each(["create", "import"])("rejects personal header values on %s without saving any server", async (action) => {
-  const { cfg, post } = await serve();
-  const entry = { url: "https://mail.example.com/mcp", headers: { Authorization: "Bearer private-secret" } };
-  const response = action === "create"
-    ? await post("/api/mcp/servers", { name: "private", ...entry })
-    : await post("/api/mcp/servers/import", { json: JSON.stringify({ mcpServers: { public: { url: "https://public.example.com/mcp" }, private: entry } }) });
-
-  expect(response.status).toBe(400);
-  const body = await response.json() as { error: string };
-  expect(body.error).toMatch(/personal.*header|header.*personal/i);
-  expect(JSON.stringify(body)).not.toContain("private-secret");
-  expect(cfg.mcpServers).toEqual({});
-});
-
-it.each(["create", "import"])("accepts blank personal headers on %s and retains team header values", async (action) => {
+it.each(["create", "import"])("keeps a blank header and a filled one as given on %s", async (action) => {
   const { cfg, post } = await serve();
   for (const [name, value] of [["private", ""], ["public", "Bearer team-secret"]] as const) {
     const entry = { type: "http", url: "https://mail.example.com/mcp", headers: { Authorization: value } };

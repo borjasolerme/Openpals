@@ -11,9 +11,9 @@ import type { BotBodyId } from "./bot-body.ts";
 import type { ReplyStyle } from "./reply-style.ts";
 import type { CredentialTargetId, CUSTOM_SECRET_TARGET, SecretDelivery } from "./credential-request.ts";
 import type { TeamSetupRequest } from "./team-setup.ts"; import type { DefaultBotFields, HelperIntroField } from "./default-bot.ts";
-import type { SetupCardFields } from "./setup-card.ts"; import type { BugReportField } from "./devs-report-status.ts"; import type { AccessRequestCardField, BotAccessFields } from "./bot-access.ts";
+import type { SetupCardFields } from "./setup-card.ts"; import type { BotAccessFields } from "./bot-access.ts";
 import type { RoutineRequestCardData } from "./routine-request.ts"; import type { SavedStepsMark } from "./saved-steps.ts";
-import type { WebhookRequestCardData } from "./webhook-request.ts"; import type { WaitCardField, WaitLineField } from "./wait-request.ts"; import type { ComputerAskField } from "./computer-ask.ts";
+import type { WebhookRequestCardData } from "./webhook-request.ts"; import type { WaitCardField, WaitLineField } from "./wait-request.ts";
 import type { AppEventAttempt, AppTrigger, AppTriggerRequestCardData, AppTriggerService } from "./app-triggers.ts";
 import type { ProfileRequestCardData } from "./profile-request.ts";
 import type { PlaceRow } from "./place-view.ts";
@@ -30,7 +30,6 @@ import type { NotificationLogEntry } from "./notification.ts";
 import type { Routine, RoutineRun } from "./routines.ts";
 import type { WebhookAttempt, WebhookTrigger } from "./webhooks.ts";
 import type { PublishedPageCard } from "./published-page.ts";
-import type { InboxItem, InboxTask } from "./inbox.ts";
 import type { LiveCallRecord, LiveCallState } from "./live-call-wire.ts";
 export type { LiveCallRecord, LiveCallState, LiveCallStatus, LiveClient, LiveEndReason, LiveKeySource, LiveSettings } from "./live-call-wire.ts";
 
@@ -130,7 +129,7 @@ export interface BotMovedTo {
 
 /** One task = one conversation with its own context, thread and provider
  * session. */
-export interface WireTask extends InboxTask {
+export interface WireTask {
   /** Outstanding handoffs, not an active provider turn. */
   waitingForTeammates?: boolean;
   threadId: string;
@@ -444,7 +443,7 @@ export type CardAnswerer = (
 export const EXCERPT_SUMMARY_HEADER = "Historical excerpts in chronological order; newer corrections override older requests. These excerpts may omit earlier details.";
 
 /** One transcript line, serialized as stored. */
-export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLineField, BugReportField {
+export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLineField {
   roomRequest?: { id: string; phase: "request" | "result" };
   id: string;
   role: "bot" | "user";
@@ -597,11 +596,6 @@ export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLine
   reaction?: string;
   /** comm chips: "Messaged @X", linking to the bot-bot channel. */
   comm?: { groupId: string; threadId?: string; withBotId: string; withName: string; withColor: string };
-  /** On a Team Cloud, a message passed between people: "told" on the chip in the asking conversation names whose inbox
-   * got it, "reply" on an answer that came back names who answered, "assistant" one their assistant answered for them. */
-  relay?: { kind: "told" | "reply" | "assistant"; email: string; name: string };
-  /** On a Team Cloud, a line in its person's inbox: who it is from and where it came from. */
-  inbox?: InboxItem;
   /** thread chips: "Opened thread #Title on @X". */
   threadRef?: { botId: string; threadId: string; title: string };
   /** A "Sent to" row for work addressed into a room the bot `name` isn't in, so it went to the bot directly. `room`
@@ -650,7 +644,7 @@ export function nextOpenThread<T extends OpenThreadCandidate>(tasks: readonly T[
   return [listed, open, own].map((candidates) => orderedThreadList(candidates)[0]).find((task) => task !== undefined);
 }
 
-export interface OptionCardData extends WaitCardField, ComputerAskField, AccessRequestCardField {
+export interface OptionCardData extends WaitCardField {
   /** calls: one per outbound call the card covers, in subtitle order. */
   outboundRequest?: { tool: string; app: string | null; calls?: Array<{ app: string | null; label: string }> };
   /** `revision`: the entry as it applied without a person, so Undo can tell it changed since. */

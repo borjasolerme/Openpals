@@ -16,6 +16,7 @@ import { removeTempDir } from "../testing/cleanup.ts";
 import { createPhones } from "./phones.ts";
 
 const cleanups: Array<() => Promise<void>> = [];
+const ASKED = { id: "asked-1", role: "user" as const, kind: "text" as const, text: "Put the appointment in my calendar.", at: 1 };
 afterEach(async () => { vi.restoreAllMocks(); for (const cleanup of cleanups.splice(0)) await cleanup(); });
 
 async function fixture() {
@@ -26,10 +27,11 @@ async function fixture() {
   const session = sessions.authenticate(paired.token)!;
   const bot = { id: "helper", name: "Helper", phoneApps: { calendar: "write" } } as BotRecord;
   const phones = createPhones({
-    dataDir: dir, shared: false, cloudHome: true, cloudOwnerKey: "owner", loopbackTrust: "owner", sharedMembership: () => false,
-    store: { bot: () => bot, groupByThread: () => undefined, messagesFor: () => [], appendMessage: (_thread, message) => ({ ...message, id: "message-1", at: message.at ?? Date.now() }) },
-    sessions, routines: () => null, ownerOrAdmin: () => true, cloudOwnerSession: () => true,
-    cloudLendingRefusal: () => null, cloudLendingTurn: () => { throw new Error("unused on Cloud home"); },
+    dataDir: dir, shared: false, loopbackTrust: "owner", sharedMembership: () => false,
+    store: { bot: () => bot, groupByThread: () => undefined, messagesFor: () => [ASKED], appendMessage: (_thread, message) => ({ ...message, id: "message-1", at: message.at ?? Date.now() }) },
+    sessions, routines: () => null, ownerOrAdmin: () => true,
+    // The owner's own request on this computer: the turn the phone job runs for.
+    cloudLendingTurn: () => ({ request: { messageId: ASKED.id, generations: new Set(["gen-1"]) }, generation: "gen-1", thread: [], cardAnswerer: () => undefined, routineRun: () => null }),
     originIsUser: () => true, request: () => undefined, nudge: () => {}, mint: () => "fixture-token", harnessUrl: "http://127.0.0.1:1", active: () => true,
   });
   let pollStarted!: () => void;

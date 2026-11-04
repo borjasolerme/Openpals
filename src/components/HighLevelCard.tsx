@@ -186,9 +186,9 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
     }
   };
 
-  if (status?.state === "unavailable") return null;
-
   const state = status?.state ?? null;
+  /** No OAuth relay on this server: a Private Integration token is the only way in. */
+  const tokenOnly = state === "unavailable";
   const connecting = flow !== null || busy === "connect" || state === "connecting";
   const connected = state === "connected";
   const needsSignIn = state === "needs-sign-in";
@@ -232,7 +232,7 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
             : <button type="button" disabled className={pill} aria-label={t("common.checking")}><Loader2 size={14} className="animate-spin" /></button>
         ) : connected ? (
           menu
-        ) : (
+        ) : tokenOnly ? null : (
           <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
@@ -261,7 +261,7 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
         )}
         {error && <p role="alert" className="mt-1.5 text-[12px] text-danger">{error}</p>}
         {!connecting && status !== null && !connected && !needsSignIn && (
-          tokenMode ? (
+          tokenMode || tokenOnly ? (
             <form
               data-highlevel-token-form
               className="mt-2 flex flex-col gap-2"
@@ -292,9 +292,11 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
                 <button type="submit" disabled={busy !== null} className={pill}>
                   {busy === "token" ? <Loader2 size={14} className="animate-spin" /> : t("connectors.action.connect")}
                 </button>
-                <button type="button" onClick={() => { setTokenMode(false); setError(null); }} className="text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink">
-                  {t("highlevel.useSignIn")}
-                </button>
+                {!tokenOnly && (
+                  <button type="button" onClick={() => { setTokenMode(false); setError(null); }} className="text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink">
+                    {t("highlevel.useSignIn")}
+                  </button>
+                )}
               </div>
             </form>
           ) : (

@@ -80,7 +80,7 @@ afterAll(async () => {
 });
 
 it("signs in with Postiz Cloud, gives the bot the postiz tools behind a hidden token, and Disconnect takes them away", async () => {
-  expect((await api("GET", "/api/postiz")).body).toMatchObject({ state: "not-connected", how: null, host: new URL(cloud.url).host, selfHosted: false, keySaved: false, team: false });
+  expect((await api("GET", "/api/postiz")).body).toMatchObject({ state: "not-connected", how: null, host: new URL(cloud.url).host, selfHosted: false, keySaved: false });
   expect((await api("POST", "/api/postiz/sign-in")).body).toMatchObject({ state: "not-connected", how: "sign-in" });
   const signInUrl = `${cloud.url}/mcp-oauth-dynamic`;
   expect((await api("GET", "/api/mcp/servers")).body.servers).toEqual([expect.objectContaining({ name: "postiz", url: signInUrl, enabled: false, headerKeys: [] })]);

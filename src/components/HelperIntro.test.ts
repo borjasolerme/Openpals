@@ -38,8 +38,6 @@ vi.mock("./onboarding/ConnectAi", async () => {
   return { ConnectAiDialog: ({ onClose }: { onClose: () => void }) => h("div", { "data-connect-ai": "", onClick: onClose }) };
 });
 vi.mock("./onboarding/welcome-ai", () => ({ useWelcomeAi: () => null }));
-const analytics = vi.hoisted(() => ({ track: vi.fn() }));
-vi.mock("@/lib/analytics", () => analytics);
 vi.mock("@/lib/setup-import", () => ({
   localSetupImport: () => f.local,
   setupImportApi: {},
@@ -76,7 +74,6 @@ beforeEach(() => {
   setLocale("en");
   f.dispatch.mockReset();
   f.detect.mockReset();
-  analytics.track.mockReset();
   f.advanced = false;
   f.local = false;
   f.reduced = false;
@@ -109,14 +106,11 @@ describe("what MausBot says first", () => {
     ];
     expect(introLines({ name: "MausBot", chief: true })).toEqual(said);
     expect(introLines({ name: "MausBot", chief: true, person: "Ada" })).toEqual(said);
-    expect(introLines({ name: "MausBot", chief: true, team: "Acme" })[1]).toBe(`${said[1]} On Acme, I'm here for you and look after your own bots.`);
   });
 
   it("keeps a helper's lines for a MausBot that is not the Chief", () => {
     expect(introLines({ name: "MausBot", chief: false })[0]).toBe("Hi! I'm MausBot, your helper for everything here.");
     expect(introLines({ name: "MausBot", chief: false, person: "Ada" })[0]).toBe("Hi Ada! I'm MausBot, your helper for everything here.");
-    const member = introLines({ name: "MausBot", chief: false, team: "Acme" });
-    expect(member[1]).toBe("Ask me how to do anything here. I can set up bots, apps and routines with you. On Acme, I'm here for you and look after your own bots.");
   });
 
   it("follows up on what it found, never naming the AI it thinks with", () => {
@@ -140,19 +134,19 @@ describe("in the chat (Simple mode)", () => {
     const first = host.querySelector<HTMLElement>('[data-helper-line="0"]')!;
     expect(first.dataset.chatBubble, "the chat's own Simple bubble").toBe("simple");
     expect(first.className).toContain(SIMPLE_BOT_BUBBLE);
-    expect(chips()).toEqual(["apps", "phone", "cloud"]);
-    expect([...host.querySelectorAll("[data-helper-step]")].map((node) => node.textContent)).toEqual(["Connect email & calendar", "Connect your phone", "Try Cloud"]);
+    expect(chips()).toEqual(["apps", "phone"]);
+    expect([...host.querySelectorAll("[data-helper-step]")].map((node) => node.textContent)).toEqual(["Connect email & calendar", "Connect your phone"]);
     expect(f.followups, "only a first run asks for a follow-up").toEqual([]);
   });
 
-  it("shows three chips at most, AI first, and one tapped makes room for the next", async () => {
+  it("shows three chips at most, AI first, and one tapped leaves", async () => {
     f.state = { ...f.state, instances: [claude(false)] };
     await show();
     expect(lines()[3]).toBe(t("helperIntro.followup.noAi"));
     expect(chips()).toEqual(["ai", "apps", "phone"]);
     await act(async () => { host.querySelector<HTMLElement>('[data-helper-step="phone"]')!.click(); });
     expect(f.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "toggleAppSettings", section: "companion" }));
-    expect(chips()).toEqual(["ai", "apps", "cloud"]);
+    expect(chips()).toEqual(["ai", "apps"]);
   });
 
   it("opens the Connect an AI dialog in place from its chip, not Settings", async () => {
@@ -187,17 +181,9 @@ describe("in the chat (Simple mode)", () => {
     expect(f.detect).not.toHaveBeenCalled();
   });
 
-  it("counts Try Cloud as the first run's Cloud moment, then opens Add a Cloud", async () => {
-    await show();
-    await act(async () => { host.querySelector<HTMLElement>('[data-helper-step="cloud"]')!.click(); });
-    expect(analytics.track).toHaveBeenCalledWith("onboarding_cloud", { action: "start_trial" });
-    expect(f.dispatch).toHaveBeenCalledWith({ type: "openCloudAdd", source: "app_onboarding" });
-  });
-
   it("opens the app's own flow for each chip", () => {
     expect(chipAction("apps")).toEqual({ type: "togglePlugins", open: true, surface: "apps" });
     expect(chipAction("phone")).toMatchObject({ type: "toggleAppSettings", section: "companion", phonePairing: true });
-    expect(chipAction("cloud")).toEqual({ type: "openCloudAdd", source: "app_onboarding" });
   });
 
   it("says nothing while the Chief step still introduces MausBot", async () => {
@@ -231,7 +217,7 @@ describe("as a first run lands in the chat", () => {
     expect(host.querySelector("[data-helper-typing]")).toBeNull();
     expect(chips()).toEqual([]);
     await tick(INTRO_TIMING.chips);
-    expect(chips()).toEqual(["apps", "phone", "cloud"]);
+    expect(chips()).toEqual(["apps", "phone"]);
     await show();
     expect(f.followups, "never asked twice").toHaveLength(1);
   });
@@ -257,7 +243,7 @@ describe("as a first run lands in the chat", () => {
     await show();
     expect(f.followups).toHaveLength(1);
     expect(lines()).toHaveLength(4);
-    expect(chips()).toEqual(["apps", "phone", "cloud"]);
+    expect(chips()).toEqual(["apps", "phone"]);
   });
 });
 
@@ -269,7 +255,7 @@ describe("in Advanced mode", () => {
     expect(host.textContent).toContain(t("helperIntro.title", { name: "MausBot" }));
     expect(host.textContent).toContain(t("helperIntro.chief"));
     expect(host.querySelector('[data-helper-ask="helperIntro.ask.overview"]')).not.toBeNull();
-    expect(chips()).toEqual(["bots", "apps", "phone", "cloud"]);
+    expect(chips()).toEqual(["bots", "apps", "phone"]);
     expect(host.querySelector("[data-helper-line]"), "no Simple bubbles").toBeNull();
     expect(f.followups).toEqual([]);
   });
@@ -286,6 +272,5 @@ describe("in Advanced mode", () => {
     expect(setupAction("bots")).toEqual({ type: "newBot" });
     expect(setupAction("apps")).toEqual({ type: "togglePlugins", open: true, surface: "apps" });
     expect(setupAction("phone")).toMatchObject({ type: "toggleAppSettings", section: "companion", phonePairing: true });
-    expect(setupAction("cloud")).toEqual({ type: "openCloudAdd", source: "app_onboarding" });
   });
 });

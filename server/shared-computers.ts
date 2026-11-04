@@ -1,8 +1,6 @@
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
-import type { DeviceLinks, LinkedComputer } from "./device-links.ts";
 import { awayNotice, deviceWord, lendScreenSteps, LENT_PLATFORMS, type LentComputers, type LentPlatform } from "./lent-computers.ts";
-import type { LentCopies } from "./lent-copies.ts";
 export { LentComputers } from "./lent-computers.ts";
 
 const folder = z.object({ id: z.string().uuid(), name: z.string().min(1).max(120), write: z.boolean() }).strict();
@@ -46,7 +44,7 @@ export type SharedComputerStatus = {
   id: string; name: string; online: boolean; busy: boolean; lastSeenAt: number;
   scopes: { folders: { id: string; name: string; write: boolean }[]; terminal: boolean; screen: boolean; internet: boolean; chrome: boolean };
 };
-/** A computer lent now or before: what the person's own Cloud page shows, online or not, across restarts. */
+/** A computer lent now or before: what the server's page shows, online or not, across restarts. */
 export type KnownLentComputer = {
   id: string; name: string; platform: "darwin" | "win32" | "linux" | null; online: boolean; busy: boolean; lent: boolean;
   lastSeenAt: number; lastUsedAt: number | null; scopes: { folders: number; terminal: boolean; screen: boolean; internet: boolean; chrome: boolean };
@@ -66,7 +64,7 @@ const RECONNECTING_MS = 60_000;
 const RECONNECT_WAIT_MS = 15_000;
 const OFFLINE = "This shared computer is offline. Keep its desktop app open; do not substitute files on the server.";
 const RESTARTING = "This server is restarting. Lending resumes by itself once it is back.";
-const lentButOffline = (name: string, seen: number, device: "PC" | "Mac" | "computer" = "computer") => `${name} is lent but has been offline for ${Math.max(1, Math.round((Date.now() - seen) / 60_000))} min: Openpals on it is closed, the ${device} is asleep or locked, or its desktop app is signed out of MausBot Cloud. Tell the person in one sentence to open Openpals on that ${device}; do not substitute files on the server.`;
+const lentButOffline = (name: string, seen: number, device: "PC" | "Mac" | "computer" = "computer") => `${name} is lent but has been offline for ${Math.max(1, Math.round((Date.now() - seen) / 60_000))} min: Openpals on it is closed, or the ${device} is asleep or locked. Tell the person in one sentence to open Openpals on that ${device}; do not substitute files on the server.`;
 
 /** Aborts when the client of a long poll goes away before it is answered. */
 export function responseGone(res: { once(event: "close", listener: () => void): unknown; readonly writableEnded: boolean }): AbortSignal {
@@ -76,14 +74,12 @@ export function responseGone(res: { once(event: "close", listener: () => void): 
 }
 
 /** The desktop's grant is the authority and checks every operation again; the server just never queues work outside what it lends. */
-export function sharedComputerScopeRefusal(registration: Registration, operation: Pick<Operation, "action" | "folder_id">, askTool: string | null = null): string | null {
+export function sharedComputerScopeRefusal(registration: Registration, operation: Pick<Operation, "action" | "folder_id">): string | null {
   switch (operation.action) {
     case "run_command":
-      if (!registration.terminal && askTool) return `${registration.name} doesn't let this Cloud run commands right now. Call ${askTool} with need "terminal" and why: it asks them with a one-tap Turn on, and you carry on once it's on. Never run the command another way or anywhere else.`;
-      return registration.terminal ? null : `${registration.name} does not lend its terminal, so commands cannot run there. Do not try to run the command another way or anywhere else; use its folders, or tell the person in one sentence what to run themselves, or, when it is their own Cloud, that they can turn on "Let Clouds run commands on this ${deviceWord(registration.platform)}" from the Openpals icon in its menu bar or taskbar.`;
+      return registration.terminal ? null : `${registration.name} does not lend its terminal, so commands cannot run there. Do not try to run the command another way or anywhere else; use its folders, or tell the person in one sentence what to run themselves, or, when it is their own server, that they can turn on "Let Clouds run commands on this ${deviceWord(registration.platform)}" from the Openpals icon in its menu bar or taskbar.`;
     case "computer_tools":
     case "computer_call":
-      if (!registration.computer && askTool) return `Apps and screen are not lent to this Cloud right now. ${askHint(askTool, "screen")}`;
       return registration.computer ? null : `Apps and screen are not lent to this server. ${lendScreenSteps(deviceWord(registration.platform))}`;
     case "list_files":
     case "read_file":
@@ -100,10 +96,6 @@ export function sharedComputerScopeRefusal(registration: Registration, operation
     }
   }
 }
-
-/** What a bot does on the person's own Cloud when their computer can't give what it needs: ask, never explain the fix. */
-const askHint = (askTool: string, need: "screen" | "folders" | "terminal") =>
-  `Call ${askTool} with need "${need}" and what you want to do: it asks them with a one-tap Turn on, and you carry on once it's on. Don't explain the fix in chat, and don't use your own cloud computer instead unless they ask.`;
 
 /** The person behind a request proven for this exact turn generation, not stopped, from a person's message; anything else is nobody. */
 export function provenRequestPerson(
@@ -122,15 +114,10 @@ export class SharedComputers {
   private closed = false;
   private sessionLive: (id: string) => boolean;
   private lent: LentComputers | undefined;
-  private links: Pick<DeviceLinks, "drop"> | undefined;
-  /** A Cloud home's copies of lent folders: what a computer that is away still lends (server/lent-copies.ts). */
-  private copies: Pick<LentCopies, "away" | "answer"> | undefined;
   /** A computer connected, changed what it lends, or stopped. */
   changed: () => void = () => {};
-  /** On the person's own Cloud, the bots' tool that asks them to turn on what their computer doesn't give now. */
-  askTool: string | null = null;
-  constructor(sessionLive: (id: string) => boolean, lent?: LentComputers, links?: Pick<DeviceLinks, "drop">, copies?: Pick<LentCopies, "away" | "answer">) {
-    this.sessionLive = sessionLive; this.lent = lent; this.links = links; this.copies = copies;
+  constructor(sessionLive: (id: string) => boolean, lent?: LentComputers) {
+    this.sessionLive = sessionLive; this.lent = lent;
   }
   private static key(session: string, id: string) { return `${session}\n${id}`; }
   register(registration: Registration, owner: SharedComputerOwner, secret: string) {
@@ -140,8 +127,6 @@ export class SharedComputers {
     const old = this.computers.get(key);
     if (old) {
       this.authorize(registration.id, owner.session, secret);
-      // Its link was let in for the internet connection and Chrome as lent then: lent or taken back since, the link starts over.
-      if ((old.registration.internet === true) !== (registration.internet === true) || (old.registration.chrome === true) !== (registration.chrome === true)) this.links?.drop(key);
       old.registration = registration; old.seen = Date.now();
       this.remember(registration, old.owner.person);
       this.changed();
@@ -151,7 +136,7 @@ export class SharedComputers {
     // A new id from the same session replaces its entry; no other session can reach, replace or squat this key.
     for (const [stale, entry] of this.computers) {
       if (entry.owner.session !== owner.session) continue;
-      this.computers.delete(stale); entry.wake?.(); this.links?.drop(stale);
+      this.computers.delete(stale); entry.wake?.();
       for (const job of entry.jobs.values()) this.finish(entry, job, failure("This computer's access changed. An in-flight action may have completed; inspect before retrying."));
     }
     if (this.computers.size >= TOTAL) throw failure("Too many shared computers");
@@ -165,7 +150,7 @@ export class SharedComputers {
   }
   private reap() {
     for (const [key, entry] of this.computers) {
-      if (entry.jobs.size === 0 && (!this.sessionLive(entry.owner.session) || Date.now() - entry.seen > RETAIN_MS)) { this.computers.delete(key); this.links?.drop(key); }
+      if (entry.jobs.size === 0 && (!this.sessionLive(entry.owner.session) || Date.now() - entry.seen > RETAIN_MS)) { this.computers.delete(key); }
     }
   }
   private online(entry: Computer) { return this.sessionLive(entry.owner.session) && Date.now() - entry.seen < 40_000; }
@@ -201,36 +186,14 @@ export class SharedComputers {
   away(principal: string | null) {
     if (!principal) return {};
     const online = this.list(principal);
-    return { ...awayNotice(this.lent?.list(principal) ?? [], new Set(online.map(registration => registration.id)), this.askTool), ...this.copies?.away(principal, online) };
+    return awayNotice(this.lent?.list(principal) ?? [], new Set(online.map(registration => registration.id)));
   }
   /** For a bot: how the person lends apps and screen, when an online computer of theirs lends neither. */
   screenNotLent(principal: string | null): { screen?: string } {
     if (!principal) return {};
     const entry = [...this.computers.values()].find(candidate => candidate.owner.person === principal && this.online(candidate) && !candidate.registration.computer);
     if (!entry) return {};
-    if (this.askTool) return { screen: `${entry.registration.name} doesn't lend its apps and screen right now. To use them, ${askHint(this.askTool, "screen").replace(/^Call/, "call")}` };
     return { screen: `${entry.registration.name} does not lend its apps and screen. ${lendScreenSteps(deviceWord(entry.registration.platform))}` };
-  }
-  /** A computer that lends its internet connection but is away: the bots' browsers here use My Cloud's own connection
-   * meanwhile, and say so once. Nothing while one is online, or when none lends it. */
-  internetAway(principal: string): { away: "PC" | "Mac" | "computer" } | null {
-    const online = new Set(this.list(principal).map(registration => registration.id));
-    const lending = (this.lent?.list(principal) ?? []).filter(record => record.internet === true && record.stoppedAt === null);
-    if (!lending.length || lending.some(record => online.has(record.id))) return null;
-    return { away: deviceWord(lending[0]!.platform) };
-  }
-  /** The newest computer lending its Chrome, and whether it is online now; null when none lends it. */
-  chromeLender(principal: string): { name: string; device: "PC" | "Mac" | "computer"; online: boolean } | null {
-    const record = (this.lent?.list(principal) ?? []).find(candidate => candidate.chrome === true && candidate.stoppedAt === null);
-    if (!record) return null;
-    return { name: record.name, device: deviceWord(record.platform), online: this.list(principal).some(registration => registration.id === record.id) };
-  }
-  /** The registered computer behind a device link: the same session and secret as its poll. */
-  linkable(id: string, session: string, secret: string): LinkedComputer {
-    const entry = this.authorize(id, session, secret);
-    entry.seen = Date.now();
-    return { key: SharedComputers.key(session, id), person: entry.owner.person, internet: entry.registration.internet === true, chrome: entry.registration.chrome === true, seenAs: null,
-      live: () => this.sessionLive(session), used: () => this.lent?.used(entry.owner.person, id) };
   }
   status(principal: string | null): SharedComputerStatus[] {
     if (!principal) return [];
@@ -300,7 +263,7 @@ export class SharedComputers {
   disconnect(id: string, session: string, secret: string, paused = false) {
     const entry = this.authorize(id, session, secret);
     if (paused) this.lent?.seen(entry.owner.person, id); else this.lent?.stopped(entry.owner.person, id);
-    this.computers.delete(SharedComputers.key(session, id)); entry.wake?.(); this.links?.drop(SharedComputers.key(session, id));
+    this.computers.delete(SharedComputers.key(session, id)); entry.wake?.();
     for (const job of entry.jobs.values()) this.finish(entry, job, failure("Computer disconnected. An in-flight action may have completed; inspect before retrying."));
     this.changed();
   }
@@ -312,18 +275,15 @@ export class SharedComputers {
       const known = lent();
       if (known && this.online(known)) break;
       if (!known || Date.now() - known.seen > RECONNECTING_MS || Date.now() >= deadline || !active()) {
-        // Away: its lent folders answer from their copy here, a write to one lent with editing waits for it.
-        const copy = active() ? this.copies?.answer(operation, principal, this.list(principal)) : null;
-        if (copy) return copy;
         const why = known && this.sessionLive(known.owner.session)
           ? lentButOffline(known.registration.name, known.seen, deviceWord(known.registration.platform))
           : this.offline(principal, operation.computer_id);
-        throw failure(this.askTool ? `${why} ${askHint(this.askTool, operation.action === "run_command" ? "terminal" : operation.action.startsWith("computer_") ? "screen" : "folders")}` : why);
+        throw failure(why);
       }
       await new Promise(resolve => setTimeout(resolve, 250));
     }
     const entry = lent()!;
-    const refusal = sharedComputerScopeRefusal(entry.registration, operation, this.askTool);
+    const refusal = sharedComputerScopeRefusal(entry.registration, operation);
     if (refusal) throw failure(refusal, 403);
     if (operation.action === "run_command" && entry.registration.commandTimeouts && !entry.registration.longCommands && (operation.timeout_seconds ?? 0) > OLD_MAX_COMMAND_SECONDS) {
       throw failure(`${entry.registration.name} runs an older Openpals that stops a command after at most ${OLD_MAX_COMMAND_SECONDS} seconds. Give timeout_seconds of ${OLD_MAX_COMMAND_SECONDS} or less, or run longer jobs in the background with output to a file.`, 400);
@@ -351,7 +311,6 @@ export class SharedComputers {
   }
   close() {
     this.closed = true;
-    for (const key of this.computers.keys()) this.links?.drop(key);
     for (const entry of this.computers.values()) {
       entry.wake?.();
       for (const job of entry.jobs.values()) this.finish(entry, job, failure("Workspace stopped. Inspect any in-flight action before retrying."));

@@ -11,11 +11,11 @@ import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
-/** The Admin relay's refusal envelope (boatError in openmaus-cloud). */
+/** Boat's refusal envelope. */
 const refusal = (status: number, code: string, message: string) =>
-  ({ status, body: { ok: false, type: "sandbox.error", status, code, message, error: { code, message, status } } });
-const HOURS = refusal(429, "limit_reached", "Your Pro plan's 50 cloud computer hours for October are used up. They reset on 1 November.");
-const AT_ONCE = refusal(429, "limit_reached", "Your Personal plan includes 1 cloud computer at once. Delete one to start another.");
+  ({ status, body: { ok: false, status, code, message, error: { code, message, status } } });
+const BILLING_WORDS = "Start the $20/month Boat plan to create sandboxes.";
+const BILLING = refusal(402, "billing_required", BILLING_WORDS);
 const DOWN = refusal(503, "service_unavailable", "Cloud computers are temporarily unavailable. Try again later.");
 
 describe("a cloud computer that can't start, against the real server", () => {
@@ -28,7 +28,6 @@ describe("a cloud computer that can't start, against the real server", () => {
   let boatServer: Server;
   let boatApi = "";
   let createAnswer: { status: number; body: unknown } | null = null;
-  let included = false;
   let creates = 0;
   const boxes: Array<{ id: string; name: string; state: string }> = [];
 
@@ -83,7 +82,6 @@ describe("a cloud computer that can't start, against the real server", () => {
         TEMP: home, TMP: home, TMPDIR: home, OMB_TEST_SEALED_PATH: "1",
         OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
         OMB_BOAT_API: boatApi, OMB_USER_DATA: join(home, "user-data"),
-        ...(included ? { OMB_CLOUD_BOAT_URL: boatApi, OMB_CLOUD_BOAT_TOKEN: "relay_place_view_fixture" } : {}),
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;
@@ -119,7 +117,8 @@ describe("a cloud computer that can't start, against the real server", () => {
         if (createAnswer) { res.statusCode = createAnswer.status; return res.end(JSON.stringify(createAnswer.body)); }
         const row = { id: `bx_${String(23456789 + boxes.length)}`, name: String(body.name ?? ""), state: "idle" };
         boxes.push(row);
-        return res.end(JSON.stringify({ sandbox: row }));
+        res.statusCode = 202;
+        return res.end(JSON.stringify({ ok: true, type: "sandbox.created", sandbox: row }));
       }
       if (path === "/sandboxes") return res.end(JSON.stringify({ sandboxes: boxes }));
       if (path.endsWith("/desktop")) return res.end(JSON.stringify({ desktopUrl: "https://desktop.fixture.invalid" }));
@@ -133,16 +132,15 @@ describe("a cloud computer that can't start, against the real server", () => {
     });
     await new Promise<void>(resolve => boatServer.listen(0, "127.0.0.1", resolve));
     boatApi = `http://127.0.0.1:${(boatServer.address() as { port: number }).port}`;
-    writeConfig(true);
+    writeFileSync(join(data, "config.json"), JSON.stringify({
+      box: { token: "boat_place_view_fixture" },
+      // Every turn first takes one screenshot through the cloud computer's tools: that call, not the message, starts the cloud computer.
+      instances: { claude: {
+        driver: "claudeAgent", config: { cli: join(ROOT, "server/testing/fake-claude-cli.ts") },
+        environment: { FAKE_CLAUDE_USES_CLOUD_COMPUTER: "1" },
+      } },
+    }));
   });
-  const writeConfig = (ownKey: boolean) => writeFileSync(join(data, "config.json"), JSON.stringify({
-    ...(ownKey ? { box: { token: "box_place_view_fixture" } } : {}),
-    // Every turn first takes one screenshot through the cloud computer's tools: that call, not the message, starts the cloud computer.
-    instances: { claude: {
-      driver: "claudeAgent", config: { cli: join(ROOT, "server/testing/fake-claude-cli.ts") },
-      environment: { FAKE_CLAUDE_USES_CLOUD_COMPUTER: "1" },
-    } },
-  }));
   afterAll(async () => {
     await stop();
     if (boatServer) await new Promise<void>(resolve => boatServer.close(() => resolve()));
@@ -151,42 +149,23 @@ describe("a cloud computer that can't start, against the real server", () => {
   afterEach(async () => {
     await stop();
     createAnswer = null; creates = 0; boxes.length = 0;
-    if (included) { included = false; writeConfig(true); }
   });
 
-  it("J5: no hours left says when they come back, offers the plan, and starts nothing", async () => {
+  it("J5: Boat's own refusal says why in Boat's words, offers Try again, and starts nothing", async () => {
     await start();
-    const { bot } = await apiOk("POST", "/api/bots", { name: "Hours Bot" });
+    const { bot } = await apiOk("POST", "/api/bots", { name: "Billing Bot" });
     await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
-    createAnswer = HOURS;
+    createAnswer = BILLING;
     await send(bot.id, bot.threadId, "Open the desktop.");
     const row = await failedRow(bot.threadId);
-    expect(row.tool.name).toBe("error: This month's 50 cloud desktop hours are used up. They come back on 1 November. See your plan on the Plan page.");
-    expect(row.tool.place).toEqual({ state: "cc-no-hours", params: { bot: "Hours Bot", plan: "Pro", hours: 50, month: "November" }, source: "works-on" });
+    expect(row.tool.name).toBe(`error: Your Boat account couldn't start Billing Bot's cloud desktop: ${BILLING_WORDS} Try again.`);
+    expect(row.tool.place).toEqual({ state: "cc-provider", params: { bot: "Billing Bot", words: BILLING_WORDS }, source: "works-on" });
     await idle(bot.id);
     expect(creates).toBe(1);
     expect(boxes).toEqual([]);
   }, 90_000);
 
-  it("J6: at once names the bot that holds the plan's cloud computer", async () => {
-    await start();
-    const { bot: holder } = await apiOk("POST", "/api/bots", { name: "Ada" });
-    await apiOk("PATCH", `/api/bots/${holder.id}`, { computer: "cloud" });
-    await send(holder.id, holder.threadId, "Use your desktop.");
-    await until(() => boxes.length, count => count === 1, "Ada's computer");
-    await idle(holder.id);
-    expect((await messages(holder.threadId)).some(message => String(message.tool?.name ?? "").startsWith("error:"))).toBe(false);
-
-    const { bot } = await apiOk("POST", "/api/bots", { name: "Bo" });
-    await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
-    createAnswer = AT_ONCE;
-    await send(bot.id, bot.threadId, "Use your desktop too.");
-    const row = await failedRow(bot.threadId);
-    expect(row.tool.name).toBe("error: Your Personal plan includes 1 cloud desktop, and Ada has it. Manage your cloud desktops in Settings → Bot desktops.");
-    expect(row.tool.place).toEqual({ state: "cc-at-once", params: { bot: "Bo", plan: "Personal", max: 1, holders: ["Ada"] }, source: "works-on" });
-  }, 90_000);
-
-  it("J7: a relay that can't start one says so plainly, with Try again and no Boat words", async () => {
+  it("J7: Boat that can't start one right now says so plainly, with Try again and no Boat words", async () => {
     await start();
     const { bot } = await apiOk("POST", "/api/bots", { name: "Down Bot" });
     await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
@@ -196,19 +175,6 @@ describe("a cloud computer that can't start, against the real server", () => {
     expect(row.tool.name).toBe("error: Cloud desktops can't start right now. It isn't anything you did. Try again.");
     expect(row.tool.name).not.toMatch(/boat|box|Works on to Auto/i);
     expect(row.tool.place).toEqual({ state: "cc-unavailable", params: { bot: "Down Bot" }, source: "works-on" });
-  }, 90_000);
-
-  it("the Admin's subscription_inactive reads as Plan ended, by its code, with See your plan", async () => {
-    included = true;
-    writeConfig(false);
-    await start();
-    const { bot } = await apiOk("POST", "/api/bots", { name: "Ended Bot" });
-    await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
-    createAnswer = refusal(402, "subscription_inactive", "Cloud computers are included with an active Cloud subscription.");
-    await send(bot.id, bot.threadId, "Open the desktop.");
-    const row = await failedRow(bot.threadId);
-    expect(row.tool.name).toBe("error: Your MausBot Cloud plan has ended, so cloud desktops are off. See your plan on the Plan page.");
-    expect(row.tool.place).toEqual({ state: "cc-ended", params: { bot: "Ended Bot" }, source: "works-on" });
   }, 90_000);
 
   it("an automatic pin that fails is cleared, and the row says the conversation is back on Auto", async () => {

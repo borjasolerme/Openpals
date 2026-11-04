@@ -1,6 +1,5 @@
 import type { NotificationTarget } from "@/lib/notify";
 import type { Action, AppState } from "./store";
-import { openOwnTeamChat } from "./team-chats";
 
 interface NotificationThreadOwner {
   id: string;
@@ -63,12 +62,10 @@ export function botOpensTo(bot: Pick<NotificationThreadOwner, "threadId" | "main
     ? bot.mainThreadId : bot.threadId;
 }
 
-/** On a team's Cloud, the person's own conversation with the bot, never the team's main chat (team-chats.ts). */
 export function openBot(
   dispatch: (action: Action) => void,
-  bot: Pick<NotificationThreadOwner, "id" | "threadId" | "mainThreadId" | "tasks"> & { yourAccess?: string },
+  bot: Pick<NotificationThreadOwner, "id" | "threadId" | "mainThreadId" | "tasks">,
 ) {
-  if (openOwnTeamChat(dispatch, bot, (threadId) => openBotThread(dispatch, bot, threadId))) return;
   const opened = botOpensTo(bot);
   if (opened === bot.threadId) dispatch({ type: "select", id: bot.id });
   else openBotThread(dispatch, bot, opened);

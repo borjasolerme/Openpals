@@ -36,8 +36,6 @@ const ENTRY_POINTS = [
   "openmausbot.ts",
   "pair-cli.ts",
   "workspace-backup.worker.ts",
-  // the OMB Cloud Pro home image's entry point
-  "cloud-home-start.ts",
   // the container image's entry point
   "server-launcher.ts",
   // Imported directly by the packaged smoke probes. An explicit root sibling,
@@ -94,32 +92,6 @@ await build({
   allowOverwrite: true,
   logLevel: "info",
   plugins: [serverLocalePlugin],
-});
-
-// `openmausbot serve --tunnel` spawns the connector guardian as its own
-// process, so it must exist as a file beside the server.
-await build({
-  entryPoints: [join(root, "electron", "managed-companion-guardian-main.mjs")],
-  bundle: true,
-  platform: "node",
-  target: "node20",
-  format: "esm",
-  outfile: join(root, "dist-server", "tunnel-guardian.js"),
-  allowOverwrite: true,
-  logLevel: "info",
-});
-
-// Runs itself when executed directly, so it must never be inlined into another
-// entry.
-await build({
-  entryPoints: [join(root, "scripts", "prepare-cloudflared.mjs")],
-  bundle: true,
-  platform: "node",
-  target: "node20",
-  format: "esm",
-  outfile: join(root, "dist-server", "prepare-cloudflared.js"),
-  allowOverwrite: true,
-  logLevel: "info",
 });
 
 // The enterprise layer (enterprise/LICENSE; delete the folder for pure OSS).

@@ -64,15 +64,14 @@ describe("looking for another AI tool's setup without holding up the welcome flo
 
   it("looks only from the desktop app's own window on its own server", () => {
     vi.stubGlobal("window", { ogb: { remoteClient: { active: false } } });
-    expect(localSetupImport(false)).toBe(true);
-    expect(localSetupImport(true)).toBe(false);
+    expect(localSetupImport()).toBe(true);
     vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    expect(localSetupImport(false)).toBe(false);
+    expect(localSetupImport()).toBe(false);
     // A server page the desktop app opened gets a bridge without remoteClient, like a browser.
     vi.stubGlobal("window", { ogb: {} });
-    expect(localSetupImport(false)).toBe(false);
+    expect(localSetupImport()).toBe(false);
     vi.stubGlobal("window", {});
-    expect(localSetupImport(false)).toBe(false);
+    expect(localSetupImport()).toBe(false);
   });
 });
 
@@ -95,7 +94,7 @@ describe("what the step says", () => {
     expect(importOutcome({
       skills: { added: ["pdf", "deploy"], present: [], skipped: [{ name: "review", reason: "conflict" }, { name: "lint", reason: "failed" }], filesLeftOut: 2, review: ["deploy"] },
       tools: { added: ["a", "b", "c", "d"], present: [], skipped: [
-        { name: "e", reason: "limit" }, { name: "f", reason: "limit" }, { name: "g", reason: "policy" }, { name: "h", reason: "busy" },
+        { name: "e", reason: "limit" }, { name: "f", reason: "limit" }, { name: "h", reason: "busy" },
         { name: "github", reason: "conflict" }, { name: "sentry", reason: "failed" },
       ] },
     })).toEqual({
@@ -108,7 +107,6 @@ describe("what the step says", () => {
         "Couldn't bring in lint and sentry. Try again later from Settings → Replay welcome tour.",
         "Large or non-text files in skill folders were left out.",
         "e and f didn't fit: your list of MCP servers is full.",
-        "Your organization doesn't allow g.",
         "Your MCP servers were being changed. Add h later in Apps → MCP servers.",
       ],
     });

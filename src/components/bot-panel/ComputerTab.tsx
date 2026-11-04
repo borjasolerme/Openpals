@@ -69,9 +69,9 @@ function usePlaceChoices(bot: Bot) {
   };
   const options: PlaceOption[] = [
     { value: "auto", label: t("computer.simple.dest.letItChoose") },
-    ...(placeViews.local.policy ? [choice("local")] : []),
-    ...(placeViews.browser.policy || current === "browser" ? [choice("browser")] : []),
-    ...(placeViews.cloud.policy ? [choice("cloud")] : []),
+    choice("local"),
+    choice("browser"),
+    choice("cloud"),
     ...(current === "vm" || current === "off" ? [{ value: current, label: EXTRA_PLACE_LABEL[current](), disabled: true }] : []),
   ];
   const liveSurface = bot.tasks?.find((task) => task.threadId === bot.threadId)?.surface;

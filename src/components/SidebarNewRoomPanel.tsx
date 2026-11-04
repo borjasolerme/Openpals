@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { track } from "@/lib/analytics";
 import { useStore } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { BotPickerList } from "./BotPickerList";
@@ -24,7 +23,6 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
       memberIds: [...picked],
       name: name.trim() || undefined,
     });
-    track("room_created", { members: picked.size });
     onClose();
   };
   return (

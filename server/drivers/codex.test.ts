@@ -1871,7 +1871,6 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
   });
 
   it.each([
-    ["Cloud home", "OMB_CLOUD_ROLE", "home"],
     ["hosted enterprise", "OMB_ADMIN_URL", "https://admin.example.test"],
   ])("refuses desktop ChatGPT plan sign-in on %s before accessing credentials or spawning", async (_name, variable, value) => {
     vi.stubEnv(variable, value);
@@ -3235,8 +3234,7 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
       expect(codexSignInRefused({ message: "Reconnecting... 1/5", codexErrorInfo: "serverOverloaded" })).toBe(false);
     });
 
-    it.each([["this computer", undefined], ["My Cloud", "home"]])("ends the turn at once, without starting Codex, when Codex has no login on %s", async (_where, role) => {
-      if (role) vi.stubEnv("OMB_CLOUD_ROLE", role);
+    it("ends the turn at once, without starting Codex, when Codex has no login", async () => {
       const codexHome = join(scratch, ".codex");
       mkdirSync(codexHome, { recursive: true });
       await create({ mode: "logged-out", environment: { HOME: scratch, USERPROFILE: scratch, CODEX_HOME: codexHome } });
@@ -3244,7 +3242,6 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
       const spawn = vi.spyOn(procs, "spawnCli");
       const { done, errors } = await runTurn("t-no-login");
       expect(errors).toEqual([expect.objectContaining({ message: codexNotSignedIn(), setup: true })]);
-      expect(codexNotSignedIn().includes("Sign-ins don't copy over when you move to My Cloud.")).toBe(Boolean(role));
       expect(done).toMatchObject({ ok: false, stopReason: "auth_required" });
       expect(spawn).not.toHaveBeenCalled();
     });
@@ -3309,7 +3306,7 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
     const plus = "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 5:23 PM.";
     const said = codexUserError(plus, "own");
     expect(said).toContain("ChatGPT");
-    expect(said).toContain("not your MausBot plan");
+    expect(said).toContain("This is OpenAI's limit.");
     expect(said).toMatch(/It resets at 5:23 PM \([^)]+\)\./);
     expect(said).not.toContain("Pro");
     expect(codexUserError("You've hit your usage limit for gpt-6.1-sol. Switch to another model now, or try again at Oct 17th, 2026 5:23 PM.", "own"))

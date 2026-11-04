@@ -125,9 +125,11 @@ describe("HighLevel card states", () => {
     expect(text()).toContain("Connected · Example Profiles");
   });
 
-  it("draws nothing when the server has no relay", async () => {
+  it("offers only the Private Integration token when the server has no relay", async () => {
     await mount({ state: "unavailable" });
-    expect(card()).toBeNull();
+    expect(card()).not.toBeNull();
+    expect(button("Connect HighLevel")).toBeFalsy();
+    expect(card()!.querySelector("[data-highlevel-token-form]")).not.toBeNull();
     expect(onConnection).toHaveBeenLastCalledWith(false);
   });
 });

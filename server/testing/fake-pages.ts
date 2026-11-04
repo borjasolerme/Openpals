@@ -36,7 +36,7 @@ export function fakePagesService(options: { quota?: number; plan?: string; admin
       const { action, pageId } = JSON.parse(body) as { action: string; pageId?: string };
       minted.push({ action, ...(pageId ? { pageId } : {}), caller: who });
       if (action === "create" && pages.size >= state.quota) {
-        return Response.json({ error: "page_limit", message: `You’ve used your ${state.quota} free pages. MausBot Cloud gives you more, and pages without the badge.`,
+        return Response.json({ error: "page_limit", message: `You’ve used your ${state.quota} free pages. More pages need another plan.`,
           usage: usage(), plan: state.plan, upgrade: true }, { status: 402 });
       }
       const id = action === "create" ? newId() : pageId!, token = `fake-token-${minted.length}`;

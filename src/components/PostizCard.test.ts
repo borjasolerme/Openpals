@@ -14,7 +14,7 @@ vi.mock("@/state/store", () => ({ api: fixture.api, useStore: () => ({ state: { 
 
 import { PostizCard } from "./PostizCard";
 
-const base = { address: "https://api.postiz.com", host: "api.postiz.com", selfHosted: false, keySaved: false, team: false, scope: "team" } as const;
+const base = { address: "https://api.postiz.com", host: "api.postiz.com", selfHosted: false, keySaved: false } as const;
 const notConnected: PostizStatus = { ...base, state: "not-connected", how: null };
 const connectedSignIn: PostizStatus = { ...base, state: "connected", how: "sign-in" };
 const authorizationUrl = "https://platform.postiz.com/oauth/authorize?client_id=pcd_1&state=s";
@@ -197,26 +197,4 @@ describe("the Postiz card", () => {
     expect(host.querySelector('[data-app-tile="postiz"]')).toBeNull();
   });
 
-  it("on a Team Cloud, lets the admin keep Postiz for each person, and connects their own", async () => {
-    await mount({ ...base, state: "not-connected", how: null, team: true });
-    expect(text()).toContain("Only for me");
-    fixture.api.mockImplementation(async (path: string, init?: RequestInit) => {
-      const method = init?.method ?? "GET";
-      calls.push([method, path, typeof init?.body === "string" ? JSON.parse(init.body) : undefined]);
-      if (path === "/api/postiz" && method === "GET") return { ...base, state: "not-connected", how: "sign-in", team: true, scope: "person" };
-      if (path === "/api/team/my-connections") return { mcp: [{ name: "postiz", connected: calls.filter(([, p]) => p === "/api/team/my-connections").length >= 2, how: "sign-in" }] };
-      if (path === "/api/team/my-connections/mcp/postiz/sign-in") return { auth: { phase: "waiting", flowId: "own", authorizationUrl, expiresAt: "2026-10-29T12:00:00Z" } };
-      return { ok: true, servers: [] };
-    });
-    await act(async () => host.querySelector<HTMLInputElement>("[data-postiz-only-me] input")!.click());
-    await act(async () => button("Connect Postiz")!.click());
-    await settle();
-    await act(async () => { await vi.advanceTimersByTimeAsync(3_200); });
-    await settle();
-    expect(calls).toContainEqual(["PUT", "/api/team/connection-scopes", { kind: "mcp", id: "postiz", scope: "person" }]);
-    expect(calls).toContainEqual(["PATCH", "/api/mcp/servers/postiz", { enabled: true }]);
-    expect(calls).toContainEqual(["POST", "/api/team/my-connections/mcp/postiz/sign-in", undefined]);
-    expect(openExternal).toHaveBeenCalledWith(authorizationUrl);
-    expect(calls.some(([, path]) => path === "/api/mcp/servers/postiz/sign-in")).toBe(false);
-  });
 });

@@ -1,4 +1,4 @@
-// This computer's screen lock, which the desktop's own server keeps: a lent screen call from the person's Cloud takes
+// This computer's screen lock, which the desktop's own server keeps: a lent screen call from the person's server takes
 // it for as long as the call runs, so the desktop's own bots and that call never use the screen at once. Each refusal
 // says its real reason, because a bot told "a person is using it" waits for a person who is not there.
 

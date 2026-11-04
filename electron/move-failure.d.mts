@@ -1,11 +1,11 @@
 export type MoveFailurePhase = "copy" | "freeze" | "final" | "check" | "switch";
 /**
  * Why a pass of the move failed: `rate_limited` (the Admin said too many requests, as for an owner session's pairing),
- * `unanswered` (no answer on the way to My Cloud: no network, a timeout, a 5xx), `session` (no owner session on My Cloud),
+ * `unanswered` (no answer on the way to the server: no network, a timeout, a 5xx), `session` (no owner session on the server),
  * `local` (this computer's server didn't answer), `freeze` (this computer's server could not pause), `no_cloud`,
- * `unreachable` (My Cloud answered nothing usable), `refused` (My Cloud refused the pass), `incomplete` (the check still
- * found things missing after three passes), `not_ready` (My Cloud stopped being ready while this computer was frozen),
- * `other_account` (another account signed in mid-move), `switch_refused` (My Cloud didn't switch an automation on or finish
+ * `unreachable` (the server answered nothing usable), `refused` (the server refused the pass), `incomplete` (the check still
+ * found things missing after three passes), `not_ready` (the server stopped being ready while this computer was frozen),
+ * `other_account` (another account signed in mid-move), `switch_refused` (the server didn't switch an automation on or finish
  * the move), `error` (anything else).
  */
 export type MoveFailureCode = "rate_limited" | "unanswered" | "session" | "local" | "freeze" | "no_cloud" | "unreachable" | "refused" | "incomplete"

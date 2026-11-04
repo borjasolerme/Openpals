@@ -22,11 +22,11 @@ export function slimMessage(message: Message): Message | Record<string, unknown>
 
 /** A message as a conversation page carries it: slimmed, and a plain tool step's long output cut to a preview marked
  * `clipped`. Input stays whole (labels parse it), and so do rows whose tool output is the reply itself (a teammate's
- * result, a relayed message, a handoff). */
+ * result, a handoff). */
 export function pageMessage(message: Message): Message | Record<string, unknown> {
   const slim = slimMessage(message);
   const tool = message.tool;
-  if (!tool || message.kind !== "activity" || message.relay || message.roomRequest || message.comm || message.threadRef) return slim;
+  if (!tool || message.kind !== "activity" || message.roomRequest || message.comm || message.threadRef) return slim;
   const output = tool.output;
   if (output === undefined || output.length <= TOOL_OUTPUT_PREVIEW) return slim;
   return { ...slim, tool: { ...tool, output: toolResultPrefix(output, TOOL_OUTPUT_PREVIEW), clipped: true } };

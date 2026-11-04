@@ -165,7 +165,6 @@ export function SidebarPopoverMenu({
   triggerClassName = "w-full",
   triggerTitle,
   triggerLabel,
-  triggerTour,
   onOpenChange,
   renderTrigger,
 }: {
@@ -178,7 +177,6 @@ export function SidebarPopoverMenu({
   triggerTitle?: string;
   /** the trigger's own name, when it says more than the menu's */
   triggerLabel?: string;
-  triggerTour?: string;
   onOpenChange?: (open: boolean) => void;
   renderTrigger: (state: { open: boolean }) => React.ReactNode;
 }) {
@@ -412,7 +410,6 @@ export function SidebarPopoverMenu({
         aria-controls={open ? menuId : undefined}
         aria-label={triggerLabel ?? ariaLabel}
         title={triggerTitle}
-        data-tour={triggerTour}
         onClick={(event) => {
           clearTimers();
           if (open && (pinned || !openOnHover)) close();

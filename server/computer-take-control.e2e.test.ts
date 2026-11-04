@@ -1,5 +1,5 @@
-// Taking control of a cloud computer while the panel's picture of it is still on its way. One stub plays the Admin's
-// Boat relay and can hold every screen capture, so each case starts with a preview in flight.
+// Taking control of a cloud computer while the panel's picture of it is still on its way. One stub plays Boat's public
+// API v1 on the person's own key and can hold every screen capture, so each case starts with a preview in flight.
 import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer, type Server } from "node:http";
@@ -13,7 +13,7 @@ import { freePortBlock } from "./testing/ports.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const FAKE_CLAUDE = join(ROOT, "server/testing/fake-claude-cli.ts");
-const INCLUDED = `box_omb_${randomUUID()}`;
+const OWN_KEY = `boat_own_${randomUUID()}`;
 const FRAME = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==", "base64");
 
 type Row = { id: string; name?: string; state: string };
@@ -23,7 +23,7 @@ describe("taking control never waits for the screen preview", () => {
   let base = "";
   let child: ChildProcess | null = null;
   let output = "";
-  let relay: Server;
+  let boat: Server;
   const rows: Row[] = [];
   const shots: string[] = [];
   let holdShots: Promise<void> | null = null;
@@ -60,8 +60,8 @@ describe("taking control never waits for the screen preview", () => {
   };
 
   beforeAll(async () => {
-    relay = createServer((req, res) => {
-      const url = new URL(req.url ?? "/", "http://relay.test");
+    boat = createServer((req, res) => {
+      const url = new URL(req.url ?? "/", "http://boat.test");
       let raw = "";
       req.on("data", chunk => { raw += chunk; });
       req.on("end", async () => {
@@ -69,28 +69,28 @@ describe("taking control never waits for the screen preview", () => {
           res.writeHead(status, { "content-type": "application/json" });
           res.end(JSON.stringify(payload));
         };
-        const path = url.pathname.replace(/^\/relay\/api\/box\/v1/, "");
-        if (req.headers.authorization !== `Bearer ${INCLUDED}` || !url.pathname.startsWith("/relay/api/box/v1")) {
+        const path = url.pathname.replace(/^\/boat\/api\/v1/, "");
+        if (req.headers.authorization !== `Bearer ${OWN_KEY}` || !url.pathname.startsWith("/boat/api/v1/")) {
           return send(401, { ok: false, code: "unauthorized", message: "Unauthorized" });
         }
         const body = raw ? JSON.parse(raw) : {};
-        if (path === "/boxes" && req.method === "GET") return send(200, { ok: true, boxes: rows, pageInfo: { nextCursor: null } });
-        if (path === "/boxes" && req.method === "POST") {
+        if (path === "/sandboxes" && req.method === "GET") return send(200, { ok: true, sandboxes: rows, pageInfo: { nextCursor: null } });
+        if (path === "/sandboxes" && req.method === "POST") {
           const row = { id: `bx_${"23456789abcdefgh"[rows.length]}3456789`, state: "ready" };
           rows.push(row);
-          return send(201, { ok: true, box: row });
+          return send(202, { ok: true, type: "sandbox.created", sandbox: row });
         }
-        const [, id = "", verb = ""] = /^\/boxes\/([^/]+)(?:\/(.+))?$/.exec(path) ?? [];
+        const [, id = "", verb = ""] = /^\/sandboxes\/([^/]+)(?:\/(.+))?$/.exec(path) ?? [];
         const row = rows.find(candidate => candidate.id === id);
         if (!row) return send(404, { ok: false, code: "not_found", message: "Not found" });
         if (!verb && req.method === "PATCH") {
           row.name = body.name;
-          return send(200, { ok: true, box: row });
+          return send(200, { ok: true, sandbox: row });
         }
-        if (!verb && req.method === "GET") return send(200, { ok: true, box: row });
+        if (!verb && req.method === "GET") return send(200, { ok: true, sandbox: row });
         if (verb === "stop" && req.method === "POST") {
           row.state = "archived";
-          return send(200, { ok: true, box: row });
+          return send(200, { ok: true, sandbox: row });
         }
         if (verb === "desktop" && req.method === "POST") return send(200, { desktopUrl: `https://desktop.invalid/${row.id}` });
         if (verb === "commands" && req.method === "POST") {
@@ -107,8 +107,8 @@ describe("taking control never waits for the screen preview", () => {
         send(404, { ok: false, code: "not_found", message: "Not found" });
       });
     });
-    await new Promise<void>(resolve => relay.listen(0, "127.0.0.1", resolve));
-    const relayBase = `http://127.0.0.1:${(relay.address() as { port: number }).port}`;
+    await new Promise<void>(resolve => boat.listen(0, "127.0.0.1", resolve));
+    const boatBase = `http://127.0.0.1:${(boat.address() as { port: number }).port}`;
 
     home = mkdtempSync(join(tmpdir(), "omb-take-control-"));
     const data = join(home, "data");
@@ -122,9 +122,8 @@ describe("taking control never waits for the screen preview", () => {
         PATH: process.env.PATH, ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
         HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, TEMP: home, TMP: home, TMPDIR: home,
         OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1),
-        OMB_BOAT_API: `${relayBase}/own-key-must-not-be-used`,
-        OMB_CLOUD_BOAT_URL: `${relayBase}/relay/api/box/v1`,
-        OMB_CLOUD_BOAT_TOKEN: INCLUDED,
+        OMB_BOAT_API: `${boatBase}/boat/api/v1`,
+        BOX_TOKEN: OWN_KEY,
       },
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -139,7 +138,7 @@ describe("taking control never waits for the screen preview", () => {
   afterAll(async () => {
     releaseShots();
     if (child) await waitForExit(child, { signal: "SIGTERM" });
-    if (relay) await new Promise<void>(resolve => { relay.closeAllConnections(); relay.close(() => resolve()); });
+    if (boat) await new Promise<void>(resolve => { boat.closeAllConnections(); boat.close(() => resolve()); });
     if (home) await removeTempDir(home);
   });
 

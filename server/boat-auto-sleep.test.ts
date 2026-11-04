@@ -1,12 +1,11 @@
-// The idle sleep over HTTP, against one stub that plays both Boat (/boat, public API v1) and the Admin's relay (/relay,
-// the legacy box dialect): the stop reaches whichever one the credential belongs to, after Chrome is asked to exit.
+// The idle sleep over HTTP, against a stub that plays Boat (/boat, public API v1) for the person's own key: the stop
+// reaches Boat after Chrome is asked to exit.
 import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { hostTimeout } from "./testing/host-timeout.ts";
 
-const INCLUDED = "box_omb_included-relay-token";
 const OWN = "boat_own-key";
 const botId = "auto-sleep-test";
 const boxId = "bx_23456789";
@@ -40,11 +39,9 @@ beforeAll(async () => {
         res.writeHead(status, { "content-type": "application/json", connection: "close" });
         res.end(JSON.stringify(payload));
       };
-      const [, prefix = "", rest = ""] = /^(\/boat\/api\/v1|\/relay\/api\/box\/v1)(\/.*)$/.exec(url.pathname) ?? [];
-      const legacy = prefix === "/relay/api/box/v1";
-      const expected = legacy ? `Bearer ${INCLUDED}` : `Bearer ${OWN}`;
-      if (!prefix || req.headers.authorization !== expected) return send(401, { ok: false, code: "unauthorized", message: "Unauthorized" });
-      const [root, one, many] = legacy ? ["/boxes", "box", "boxes"] : ["/sandboxes", "sandbox", "sandboxes"];
+      const [, prefix = "", rest = ""] = /^(\/boat\/api\/v1)(\/.*)$/.exec(url.pathname) ?? [];
+      if (!prefix || req.headers.authorization !== `Bearer ${OWN}`) return send(401, { ok: false, code: "unauthorized", message: "Unauthorized" });
+      const [root, one, many] = ["/sandboxes", "sandbox", "sandboxes"];
       const row = { id: boxId, name: machineName, state };
       if (rest === root) return send(200, { ok: true, [many]: [row], pageInfo: { nextCursor: null } });
       if (rest === `${root}/${boxId}` && req.method === "GET") return send(200, { ok: true, [one]: row });
@@ -93,8 +90,6 @@ describe("a cloud computer goes to sleep after its idle window", () => {
     busy = false;
     vi.stubEnv("BOX_TOKEN", undefined);
     vi.stubEnv("OMB_BOAT_API", `${base}/boat/api/v1`);
-    vi.stubEnv("OMB_CLOUD_BOAT_URL", `${base}/relay/api/box/v1`);
-    vi.stubEnv("OMB_CLOUD_BOAT_TOKEN", INCLUDED);
     vi.stubEnv("OMB_CLOUD_COMPUTER_IDLE_MS", "1000");
   });
 
@@ -117,20 +112,12 @@ describe("a cloud computer goes to sleep after its idle window", () => {
     expect(state).toBe("archived");
   });
 
-  it("with the cloud computer a Cloud plan includes, stops it through the Admin relay only", async () => {
-    await powerFor({});
-    power.used(botId);
-    await waitFor(() => stops().length === 1);
-    expect(stops()[0]).toMatchObject({ path: `/relay/api/box/v1/boxes/${boxId}/stop`, auth: `Bearer ${INCLUDED}` });
-    expect(requests.every(request => request.path.startsWith("/relay/"))).toBe(true);
-  });
-
-  it("after a restart, finds a computer left on through the relay and puts it to sleep", async () => {
-    await powerFor({});
+  it("after a restart, finds a computer left on and puts it to sleep", async () => {
+    await powerFor({ box: { token: OWN } });
     await power.armRunning();
-    expect(requests.map(request => `${request.method} ${request.path}`)).toEqual(["GET /relay/api/box/v1/boxes"]);
+    expect(requests.map(request => `${request.method} ${request.path.split("?")[0]}`)).toEqual(["GET /boat/api/v1/sandboxes"]);
     await waitFor(() => stops().length === 1);
-    expect(stops()[0]?.path).toBe(`/relay/api/box/v1/boxes/${boxId}/stop`);
+    expect(stops()[0]?.path).toBe(`/boat/api/v1/sandboxes/${boxId}/stop`);
   });
 
   it("keeps a busy computer on, and leaves one already asleep alone", async () => {
@@ -147,9 +134,9 @@ describe("a cloud computer goes to sleep after its idle window", () => {
     expect(requests.map(request => request.method)).toEqual(["GET"]);
   });
 
-  it("a stop the relay refuses is logged and retried after a longer wait each time", async () => {
+  it("a stop Boat refuses is logged and retried after a longer wait each time", async () => {
     stopStatus = 503;
-    await powerFor({});
+    await powerFor({ box: { token: OWN } });
     power.used(botId);
     await waitFor(() => stops().length === 3 && logs.length === 3, hostTimeout(10_000));
     for (const line of logs) {

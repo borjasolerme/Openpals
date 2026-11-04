@@ -79,7 +79,7 @@ test("the icon's menu says plainly what the Clouds can't use, why, and offers th
   fix.click();
   assert.equal(started, 1, "one click starts screen control");
   indicator.update({ clouds: ["My Cloud"], screen: { ready: true, lent: true, reason: null, fix: null } });
-  assert.deepEqual(trays[0].menu.filter(item => item.label).map(item => item.label), ["My Cloud can use this PC", "Pause", "Let Clouds run commands on this PC", "See activity"]);
+  assert.deepEqual(trays[0].menu.filter(item => item.label).map(item => item.label), ["My Cloud can use this PC", "Pause", "Let your server run commands on this PC", "See activity"]);
 });
 
 test("the app's own prompt names the bot, its Cloud, what it wants and why, and why it can't now", () => {

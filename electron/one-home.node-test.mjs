@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { arrivedCounts, CHECK_PASSES, COPY_RETRY_MS, createOneHome, FAILING_LINE_MS, FROZEN_RETRY_MS, KEPT_MS, missingOf, QUIET_MS, switchOn } from "./one-home.mjs";
-import { oneHomeCloud } from "./one-home-main.mjs";
+import { arrivedCounts, CHECK_PASSES, COPY_RETRY_MS, createOneHome, FAILING_LINE_MS, FROZEN_RETRY_MS, missingOf, QUIET_MS, switchOn } from "./one-home.mjs";
 
-const CLOUD = "https://omb-t-1.fly.dev";
+const CLOUD = "https://garage.example.test";
 const reply = (status, body = {}) => ({ ok: status < 400, status, body });
 
 /**
  * One home with fakes on every side: the journal on disk (kept across "relaunches"), this computer's server (frozen or
- * not, and who is busy), the send (each pass and check, and which fail), My Cloud's owner sessions (every call it got),
+ * not, and who is busy), the send (each pass and check, and which fail), the server's sessions (every call it got),
  * the clock and its timers. `relaunch()` makes a new one-home over the same journal and server, as the app does after a
  * crash.
  */
@@ -17,10 +16,10 @@ function world({ cloud = {}, switches = { "routine:r1": true, "routine:r2": fals
   let journal = null, clock = 1_000_000, typedAt = 0;
   const timers = [];
   const w = {
-    cloud: { origin: CLOUD, account: "acct-1", machine: CLOUD, ready: true, moves: true, ended: false, paid: false, ...cloud },
-    server: { frozen: false, freezes: 0, unfreezes: 0, forgot: 0 },
-    passes: [], checked: 0, cloudCalls: [], localCalls: [], lent: [], phone: { paired: true, stopped: 0, started: 0 }, opened: [], restarted: 0, brought: [],
-    again: null, version: "0.1.121",
+    cloud: { origin: CLOUD, account: "acct-1", machine: CLOUD, ready: true, moves: true, ended: false, ...cloud },
+    server: { frozen: false, freezes: 0, unfreezes: 0 },
+    passes: [], checked: 0, cloudCalls: [], localCalls: [], lent: [], phone: { paired: true, stopped: 0, started: 0 }, opened: [],
+    version: "0.1.121",
     get journal() { return journal; },
     set journal(value) { journal = value; },
     now: () => clock,
@@ -44,7 +43,7 @@ function world({ cloud = {}, switches = { "routine:r1": true, "routine:r2": fals
           },
           async check() { w.checked++; return { ok: checks.shift() ?? true }; },
           switches: () => switches,
-          snapshot: () => ({ running: w.running ?? null, whole: { result: { notes: [{ kind: "held", connection: "OpenRouter" }] } } }),
+          snapshot: () => ({ running: w.running ?? null }),
         },
         local: {
           async freeze() {
@@ -64,7 +63,6 @@ function world({ cloud = {}, switches = { "routine:r1": true, "routine:r2": fals
             return {};
           },
           async call(method, route, body) { w.localCalls.push([method, route, body]); return reply(200); },
-          async forget() { w.server.forgot++; },
         },
         async session() {
           return {
@@ -78,11 +76,8 @@ function world({ cloud = {}, switches = { "routine:r1": true, "routine:r2": fals
         },
         lend: async (projects) => { w.lent.push(projects); },
         phone: { paired: () => w.phone.paired, stop: async () => { w.phone.stopped++; }, start: async () => { w.phone.started++; } },
-        openHome: () => w.opened.push("cloud"),
-        openLocal: () => w.opened.push("local"),
+        openHome: () => w.opened.push("home"),
         lastInput: () => typedAt,
-        again: { bring: async () => { const next = w.again?.() ?? { later: 60_000 }; w.brought.push(next); return next; } },
-        restart: () => { w.restarted++; },
         version: w.version,
         now: () => clock,
         timers: { set: (work, ms) => { const timer = { work, ms }; timers.push(timer); return timer; }, clear: (timer) => { const at = timers.indexOf(timer); if (at >= 0) timers.splice(at, 1); } },
@@ -96,7 +91,7 @@ function world({ cloud = {}, switches = { "routine:r1": true, "routine:r2": fals
   return w;
 }
 
-test("a new buyer's move runs every phase and ends with home on My Cloud, this computer lent and its phone link off", async () => {
+test("a move runs every phase and ends with home on the server, this computer lent and its phone link off", async () => {
   const w = world();
   await w.home.kick();
   assert.equal(w.journal.phase, "done");
@@ -107,9 +102,9 @@ test("a new buyer's move runs every phase and ends with home on My Cloud, this c
   assert.deepEqual(w.cloudCalls.find(([, route]) => route === "/api/cloud-send/arrived")?.[2], { v: 1, computer: "MacBook Air", webhooks: ["w1"] });
   assert.deepEqual(w.lent, [["/Users/p/code/shop"]], "lent once, with each bot's own project folder");
   assert.equal(w.phone.stopped, 1);
-  assert.deepEqual(w.opened, ["cloud"]);
+  assert.deepEqual(w.opened, ["home"]);
   assert.equal(w.home.away(), true);
-  assert.deepEqual(w.home.view(), { phase: "done", at: w.journal.doneAt, counts: { bots: 2, skills: 0, logins: 1, onePassword: false, chats: 1, routines: 1 }, phone: true, held: ["OpenRouter"] });
+  assert.deepEqual(w.home.view(), { phase: "done", at: w.journal.doneAt, counts: { bots: 2, skills: 0, logins: 1, onePassword: false, chats: 1, routines: 1 }, phone: true });
   assert.equal(w.home.seen(), null, "the done line shows until it is closed");
 
   await w.relaunch().kick();
@@ -260,7 +255,7 @@ test("an app killed at any phase goes on from the journal: nothing is switched o
   }
 });
 
-test("before the switch, moves switched off or a Cloud that ended lift the freeze; after it, only coming home does", async () => {
+test("before the switch, moves switched off or a server forgotten here lift the freeze; after it, nothing does", async () => {
   const off = world();
   off.journal = { v: 1, phase: "final", cloud: { origin: CLOUD, account: "acct-1", machine: CLOUD } };
   off.server.frozen = true;
@@ -286,7 +281,7 @@ test("before the switch, moves switched off or a Cloud that ended lift the freez
   gone.server.frozen = true;
   gone.cloud.ready = false;
   await gone.relaunch().kick();
-  assert.equal(gone.server.frozen, false, "a frozen computer never waits on a Cloud that isn't there");
+  assert.equal(gone.server.frozen, false, "a frozen computer never waits on a server that isn't there");
 
   const never = world();
   never.server.frozen = true;
@@ -295,41 +290,7 @@ test("before the switch, moves switched off or a Cloud that ended lift the freez
   assert.equal(never.server.frozen, true);
 });
 
-test("when My Cloud ends after the move, this computer is home again at once, then brings My Cloud's changes back and switches on what was on there", async () => {
-  const w = world();
-  await w.home.kick();
-  assert.equal(w.journal.phase, "done");
-  w.cloud.ended = true;
-  await w.home.kick();
-  assert.equal(w.server.frozen, false, "home again at once");
-  assert.equal(w.journal.phase, "home-again");
-  assert.deepEqual(w.home.view(), { phase: "home-again" });
-  assert.equal(w.phone.started, 1, "its phone link comes back");
-  assert.deepEqual(w.opened, ["cloud", "local"]);
-  assert.equal(w.home.away(), false);
-
-  w.again = () => ({ restored: "restore-1", switches: { "routine:r1": true, "routine:r9": true, "webhook:w1": false } });
-  w.advance(60_000);
-  await w.tick();
-  assert.equal(w.journal.phase, "back");
-  assert.equal(w.restarted, 1, "the app opens again to finish the restore");
-  await w.relaunch().kick();
-  assert.deepEqual(w.localCalls.map(([method, route, body]) => [method, route, body]).sort(), [["PATCH", "/api/routines/r1", { enabled: true }], ["PATCH", "/api/routines/r9", { enabled: true }],
-    ["POST", "/api/cloud-send/home", { v: 1 }]], "and the bots whose webhooks moved say their address is here again");
-  assert.equal(w.journal.switchBack, undefined);
-  assert.deepEqual(w.home.view(), { phase: "back" });
-  w.home.seen();
-  assert.equal(w.home.view(), null);
-
-  const deleted = world();
-  await deleted.home.kick();
-  deleted.cloud.ended = true;
-  deleted.again = () => ({ deleted: true });
-  await deleted.home.kick();
-  assert.deepEqual(deleted.home.view(), { phase: "back", lost: true });
-});
-
-test("another account's Cloud never moves this computer's copy, nor lifts its freeze once the move is done", async () => {
+test("another server never moves this computer's copy, nor lifts its freeze once the move is done", async () => {
   const w = world();
   await w.home.kick();
   w.cloud.account = "acct-2";
@@ -345,7 +306,7 @@ test("another account's Cloud never moves this computer's copy, nor lifts its fr
   assert.deepEqual(fresh.passes, []);
 });
 
-test("a newer app tops up once from the frozen copy, which is deleted 30 days after the move once My Cloud was paid for", async () => {
+test("a newer app tops up once from the frozen copy", async () => {
   const w = world();
   await w.home.kick();
   w.version = "0.1.122";
@@ -353,33 +314,6 @@ test("a newer app tops up once from the frozen copy, which is deleted 30 days af
   assert.deepEqual(w.passes, ["copy", "final", "final"]);
   await w.relaunch().kick();
   assert.equal(w.passes.length, 3, "once per version");
-
-  w.cloud.paid = true;
-  await w.home.kick();
-  assert.equal(w.server.forgot, 0, "kept for 30 days after the move, paid or not");
-  w.cloud.paid = false;
-  w.advance(KEPT_MS);
-  await w.home.kick();
-  assert.equal(w.server.forgot, 0, "kept until My Cloud has been paid for");
-  w.cloud.paid = true;
-  await w.home.kick();
-  assert.equal(w.server.forgot, 1);
-  await w.home.kick();
-  assert.equal(w.server.forgot, 1);
-});
-
-test("one home reads the Admin's word: a ready Cloud the account may move to, and a held one that ended", () => {
-  const state = (machine, extra = {}) => ({ status: "connected", account: { id: "acct-1" }, entitlement: { status: "active" }, machine, ...extra });
-  assert.equal(oneHomeCloud({ status: "signed-out" }), null);
-  assert.deepEqual(oneHomeCloud(state({ status: "ready", origin: CLOUD, moves: true })), { origin: CLOUD, account: "acct-1", machine: CLOUD, ready: true, moves: true, ended: false, paid: true, verified: true });
-  assert.equal(oneHomeCloud(state({ status: "ready", origin: CLOUD })).moves, false, "no move unless the Admin lets this account move");
-  assert.equal(oneHomeCloud(state({ status: "stopped", hold: { until: 5 } })).ended, true);
-  assert.equal(oneHomeCloud(state({ status: "stopped" })).ended, false, "stopped alone is not ended");
-  assert.equal(oneHomeCloud(state({ status: "ready", origin: CLOUD }, { trial: { state: "active" } })).paid, false);
-  assert.equal(oneHomeCloud({ ...state({ status: "ready", origin: CLOUD, moves: true }), status: "unavailable" }).ready, false);
-  const team = [{ id: "team-acme", name: "Acme", role: "owner", machine: { status: "ready", origin: "https://omb-t-2.fly.dev", moves: true } }];
-  assert.deepEqual(oneHomeCloud(state(undefined, { entitlement: { plan: "pro", tier: "team", status: "active" }, teams: team })),
-    { origin: null, account: "acct-1", machine: null, ready: false, moves: false, ended: false, paid: false, verified: true }, "a Team plan has no My Cloud: nothing moves, and nothing here counts as paid for");
 });
 
 test("automations switch on through their own routes, and the done line counts only what both sides hold", () => {

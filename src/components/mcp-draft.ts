@@ -26,7 +26,7 @@ export interface McpOAuthClientListing {
   redirectUri: string;
 }
 export type McpServerListing = (StdioMcpListing | RemoteMcpListing) & {
-  scope?: "team" | "person"; managedBy?: string; runsOn?: { environmentId: string; label: string }; apps?: boolean;
+  runsOn?: { environmentId: string; label: string }; apps?: boolean;
   /** The bot whose own server this is. */
   bot?: string;
   /** The bots it is off for, because it doesn't start for them. */
@@ -194,9 +194,3 @@ export function draftBody(
   return { ok: true, body: { command, args: parseMcpArguments(draft.args), env: env.values } };
 }
 
-/** The one key a URL server is reached with, which a Team Cloud keeps as this person's own when it's only for them. */
-export function soleKey(draft: McpDraft): string | null {
-  if (draft.transport !== "remote" || draft.oauthClientId.trim()) return null;
-  const named = draft.headers.filter((row) => row.name.trim());
-  return named.length === 1 ? rowValue(named[0]!).trim() || null : null;
-}

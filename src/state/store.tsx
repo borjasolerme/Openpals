@@ -1,4 +1,3 @@
-import { cloudAsleep, onCloudPower } from "../lib/cloud-power";
 import { api, ApiError } from "./api";
 import {
   createContext,
@@ -75,7 +74,7 @@ import { reconcileSnapshotQueues, rememberConsumedQueueId, replaceBotQueues } fr
 export type { MausColor } from "@/lib/mascot";
 export type { RoutineRunCardData } from "../../shared/routine-run";
 
-export interface OptionCardData extends Pick<WireOptionCard, "fixedOptions" | "webhookRequest" | "appTriggerRequest" | "yourComputer" | "computerAsk" | "waitRequest" | "stopped" | "accessRequest" | "mcpRequest"> {
+export interface OptionCardData extends Pick<WireOptionCard, "fixedOptions" | "webhookRequest" | "appTriggerRequest" | "yourComputer" | "waitRequest" | "stopped" | "mcpRequest"> {
   title: string;
   subtitle: string;
   options: string[];
@@ -114,7 +113,7 @@ export type SecretRequestCardData = Omit<import("../../shared/wire").SecretReque
 
 export type ComputerControlState = { held: boolean; helpReason: string | null; help?: import("../../shared/wire").ComputerHelpRef | null };
 
-export interface Message extends Pick<import("../../shared/wire").WireMessage, "widget" | "app" | "fromApp" | "pointed" | "routedBy" | "quickModel" | "automation" | "publishedPage" | "sender" | "setupSuggestion" | "helperIntro" | "helperFollowup" | "setupOffer" | "savedSteps" | "setupChoices" | "setupChoicesPending" | "setupChoicesUpdating" | "setupRequest" | "relay" | "inbox" | "sentDirectly" | "doneWhen" | "bugReport"> {
+export interface Message extends Pick<import("../../shared/wire").WireMessage, "widget" | "app" | "fromApp" | "pointed" | "routedBy" | "quickModel" | "automation" | "publishedPage" | "sender" | "setupSuggestion" | "helperIntro" | "helperFollowup" | "setupOffer" | "savedSteps" | "setupChoices" | "setupChoicesPending" | "setupChoicesUpdating" | "setupRequest" | "sentDirectly" | "doneWhen"> {
   id: string;
   role: "bot" | "user";
   kind: "text" | "options" | "activity" | "screen" | "connector" | "secret" | "signin" | "routine.run" | "goal.run" | "digest" | "compaction" | "call" | "widget" | "app";
@@ -212,7 +211,7 @@ export interface ModelSelection {
   variant?: string;
 }
 
-export interface Task extends Pick<WireTask, "private" | "setupRequest" | "inbox" | "openAsks"> {
+export interface Task extends Pick<WireTask, "private" | "setupRequest"> {
   waitingForTeammates?: boolean;
   threadId: string;
   routineRunId?: string;
@@ -400,13 +399,13 @@ function openedUnreadDivider(state: AppState, threadId: string, unread: boolean,
   return messageId ? { threadId, messageId } : null;
 }
 
-import type { BrowserEngineSummary, BrowserProfile, ConfigStatus, ManagedPolicySummary } from "./config-status";
-export type { BrowserEngineSummary, BrowserProfile, ConfigStatus, ManagedPolicySummary };
+import type { BrowserEngineSummary, BrowserProfile, ConfigStatus } from "./config-status";
+export type { BrowserEngineSummary, BrowserProfile, ConfigStatus };
 
 // A section left out here is wiped from state.config whenever a config frame lands.
 export type ConfigStatusFrame = Pick<
   ConfigStatus,
-  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "xResearch" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing" | "managedPolicy" | "cloudHome" | "team" | "workspaceBanner"
+  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing" | "workspaceBanner"
 >;
 
 export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
@@ -415,7 +414,7 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
     mistral: frame.mistral,
     cerebras: frame.cerebras,
     groq: frame.groq, greenference: frame.greenference, deepseek: frame.deepseek,
-    meta: frame.meta, xResearch: frame.xResearch, treg: frame.treg, postiz: frame.postiz,
+    meta: frame.meta, treg: frame.treg, postiz: frame.postiz,
     anthropic: frame.anthropic,
     openai: frame.openai,
     openrouter: frame.openrouter,
@@ -444,8 +443,7 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
     edition: frame.edition,
     budgets: frame.budgets,
     billing: frame.billing,
-    managedPolicy: frame.managedPolicy,
-    ...(frame.cloudHome ? { cloudHome: true } : {}), ...(frame.team ? { team: frame.team } : {}), ...(frame.workspaceBanner ? { workspaceBanner: frame.workspaceBanner } : {}),
+    ...(frame.workspaceBanner ? { workspaceBanner: frame.workspaceBanner } : {}),
   };
 }
 
@@ -457,9 +455,6 @@ export interface InstanceInfo {
   displayName: string;
   icon?: import("../../shared/provider-icon").ProviderIcon;
   readOnly?: boolean;
-  trialCredit?: "active" | "used_up" | "ended";
-  managed?: { organizationId: string; organizationName: string };
-  policy?: { organizationName: string; reason: string; team?: boolean };
   snapshot: {
     state: "available" | "unavailable";
     reason?: string;
@@ -507,8 +502,6 @@ export interface InstanceInfo {
 export type AppSettingsSection =
   | "general"
   | "desktopWorkspaces"
-  | "organization"
-  | "cloudAccount"
   | "appearance"
   | "experimental"
   | "connections"
@@ -519,7 +512,7 @@ export type AppSettingsSection =
   | "computer"
   | "logins"
   | "usage"
-  | "people" | "botAccess"
+  | "people"
   | "activity"
   | "backups"
   | "workspaces"
@@ -561,9 +554,9 @@ export interface AppState {
   liveCallVersion: number;
   liveCallLookupSeq: number;
   selectedId: string;
-  activeView: "chat" | "routines" | "files" | "web-panel";
+  activeView: "chat" | "routines" | "web-panel";
   /** Folders a finished move left on this computer, for Files to offer sharing. */
-  filesSuggest: string[] | null; webPanelId?: string;
+  webPanelId?: string;
   routines: Routine[];
   routineRuns: RoutineRun[];
   routinesLoadState: "loading" | "ready" | "error"; routineRunsSince: number | null;
@@ -584,11 +577,8 @@ export interface AppState {
   notifications: NotificationLogEntry[];
   appSettingsOpen: boolean;
   appSettingsSection: AppSettingsSection;
-  appSettingsCloudLink: number;
   appSettingsPhonePairing: number;
   shortcutsOpen: boolean;
-  cloudAdd: { source: import("@/lib/cloud-plan").CloudSource; signIn?: true } | null;
-  cloudHowTo: boolean;
   welcomeOpen: boolean;
   tourOpen: boolean;
   botSettingsSection: BotSettingsSection;
@@ -641,7 +631,6 @@ export type Action =
   | { type: "botsOrdered"; botIds: string[] }
   | { type: "showRoutines"; section?: "schedule" | "logs"; view?: "calendar" | "list"; botId?: string; routineId?: string; runStatus?: RoutineRunStatusFilter }
   | { type: "showWebPanel"; id: string }
-  | { type: "showFiles"; suggest?: string[] }
   | { type: "showChat" }
   | { type: "routinesHydrated"; routines: Routine[]; runs: RoutineRun[]; since?: number }
   | { type: "routinesLoadFailed" } | { type: "routineRunsLoaded"; runs: RoutineRun[]; from?: number; to?: number }
@@ -781,9 +770,6 @@ export type Action =
   | { type: "unreadDividerDone"; threadId: string }
   | { type: "toggleAppSettings"; open?: boolean; section?: AppSettingsSection; cloudLink?: boolean; phonePairing?: boolean }
   | { type: "toggleShortcuts"; open?: boolean }
-  | { type: "openCloudAdd"; source: import("@/lib/cloud-plan").CloudSource; signIn?: true }
-  | { type: "closeCloudAdd" }
-  | { type: "cloudHowTo"; open: boolean }
   | { type: "toggleWelcome"; open?: boolean }
   | { type: "toggleTour"; open?: boolean }
   | {
@@ -870,7 +856,6 @@ function dismissOnboardingCard(state: AppState, botId: string): AppState {
   return quiz ? patchCard(state, botId, quiz.id, { dismissed: true }) : state;
 }
 
-export const CLOUD_LINK_SETTINGS = { type: "toggleAppSettings", open: true, section: "cloudAccount", cloudLink: true } as const satisfies Action;
 
 export function reducer(state: AppState, action: Action): AppState {
   if (action.type === "messageAdded" || action.type === "messagePatched" || action.type === "threadActive" || action.type === "optimisticMessageRemoved") {
@@ -966,11 +951,11 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case "showChat":
       return state.activeView === "chat" ? state : { ...state, activeView: "chat" };
-    case "showFiles": case "showWebPanel":
+    case "showWebPanel":
       return {
         ...state,
-        activeView: action.type === "showFiles" ? "files" : "web-panel",
-        filesSuggest: action.type === "showFiles" && action.suggest?.length ? action.suggest : null, webPanelId: action.type === "showWebPanel" ? action.id : state.webPanelId,
+        activeView: "web-panel",
+        webPanelId: action.id,
         settingsOpen: false, computerOpen: false, inspectorOpen: false, activityOpen: false, appSettingsOpen: false, pluginsOpen: false,
       };
     case "routinesHydrated":
@@ -1514,7 +1499,6 @@ export function reducer(state: AppState, action: Action): AppState {
         appSettingsOpen: open,
         activityOpen: open ? false : state.activityOpen,
         appSettingsSection: action.section ?? state.appSettingsSection,
-        appSettingsCloudLink: action.cloudLink && open ? state.appSettingsCloudLink + 1 : 0,
         appSettingsPhonePairing: action.phonePairing && open ? state.appSettingsPhonePairing + 1 : 0,
         settingsOpen: open ? false : state.settingsOpen,
         computerOpen: open ? false : state.computerOpen,
@@ -1530,12 +1514,6 @@ export function reducer(state: AppState, action: Action): AppState {
         shortcutsOpen: open,
       };
     }
-    case "openCloudAdd":
-      return { ...state, cloudAdd: state.cloudAdd ?? { source: action.source, ...(action.signIn ? { signIn: true as const } : {}) }, cloudHowTo: false };
-    case "closeCloudAdd":
-      return state.cloudAdd ? { ...state, cloudAdd: null } : state;
-    case "cloudHowTo":
-      return state.cloudHowTo === action.open ? state : { ...state, cloudHowTo: action.open };
     case "toggleTour": {
       const open = action.open ?? !state.tourOpen;
       return { ...state, tourOpen: open, appSettingsOpen: open ? false : state.appSettingsOpen };
@@ -1830,7 +1808,6 @@ export const initialState: AppState = {
   routineRuns: [], routineRunsSince: null,
   routinesLoadState: "loading",
   routinesFocus: { nonce: 0 },
-  filesSuggest: null,
   webhooks: [],
   webhookAttempts: [],
   webhookIngress: null,
@@ -1846,11 +1823,8 @@ export const initialState: AppState = {
   notifications: [],
   appSettingsOpen: false,
   appSettingsSection: "general",
-  appSettingsCloudLink: 0,
   appSettingsPhonePairing: 0,
   shortcutsOpen: false,
-  cloudAdd: null,
-  cloudHowTo: false,
   welcomeOpen: false,
   tourOpen: false,
   botSettingsSection: "overview",
@@ -2216,7 +2190,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
     const wrapped: React.Dispatch<Action> = (action) => {
-      if (["select", "newTask", "switchTask", "newGroupTask", "switchGroupTask", "showChat", "showRoutines", "showFiles", "showWebPanel"].includes(action.type)) selectionRevision.current++;
+      if (["select", "newTask", "switchTask", "newGroupTask", "switchGroupTask", "showChat", "showRoutines", "showWebPanel"].includes(action.type)) selectionRevision.current++;
       // Pin before any await or optimistic state change.
       action = pinBotThreadAction(action, stateRef.current.bots);
       if (action.type === "taskSwitched") action = { ...action, bot: withTaskWrites(action.bot) as Bot };
@@ -2891,10 +2865,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       refresh.attempt += 1;
       refresh.timer = setTimeout(() => {
         refresh.timer = null;
-        const retry = () => void loadPeripheral(part, true).catch((nextError) => schedulePeripheralRetry(part, nextError));
-        // A Cloud home asleep: retry once it is awake again, never wake it for this.
-        if (!cloudAsleep()) return retry();
-        const stop = onCloudPower((asleep) => { if (!asleep) { stop(); if (alive) retry(); } });
+        void loadPeripheral(part, true).catch((nextError) => schedulePeripheralRetry(part, nextError));
       }, delay);
     };
     const loadPeripheral = async (part: PeripheralPart, protectLiveFrames: boolean): Promise<void> => {

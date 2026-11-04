@@ -1,5 +1,4 @@
-// Anything the relay does not accept never goes through the included token: only with the person's own key. Cloud's
-// Admin runs the same checks on its side, from the same fixtures (fixtures/relay-seams.json): change both together.
+// The shapes a decision request may take: a bot's own question (the decide tool) is checked here before it is sent.
 import { jevRequestBody } from "./jev.ts";
 import { INBOX_DISMISSED_MAX, INBOX_EMAIL_KEYS, INBOX_TRIAGE_INSTRUCTIONS, INBOX_TRIAGE_OPTIONS, INBOX_TRIAGE_STATE_KEYS } from "./inbox-triage.ts";
 import { ROOM_ROUTING_INSTRUCTIONS, ROOM_ROUTING_STATE_KEYS } from "./room-routing.ts";
@@ -14,17 +13,11 @@ export const RELAY_MAX_STATE_BYTES = 24_000;
 /** A bot's own question (`decide` tool): generous, but bounded so the relay can count it. */
 export const BOT_DECIDE_LIMITS = { questions: 8, options: 20, levels: 10, id: /^[A-Za-z0-9_.-]{1,64}$/, instructions: 1_000, meaning: 300 } as const;
 
-/** A job added later stays out until the relay accepts it. */
-const RELAY_SEAMS: ReadonlySet<DeciderSeam> = new Set<DeciderSeam>(["roomRouting", "keyCheck", "inboxTriage", "botDecide"]);
 const ROOM_STATE_KEYS: ReadonlySet<string> = new Set(ROOM_ROUTING_STATE_KEYS);
 const ROOM_STATE_REQUIRED = ROOM_ROUTING_STATE_KEYS.filter((key) => key !== "recent_messages");
 const INBOX_STATE_KEYS: ReadonlySet<string> = new Set(INBOX_TRIAGE_STATE_KEYS);
 const INBOX_EMAIL: ReadonlySet<string> = new Set(INBOX_EMAIL_KEYS);
 const INBOX_DETAIL_MAX = 300;
-
-export function relaySeam(seam: DeciderSeam): boolean {
-  return RELAY_SEAMS.has(seam);
-}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);

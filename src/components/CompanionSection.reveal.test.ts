@@ -13,11 +13,8 @@ vi.mock("../lib/phone-pairing", () => ({ revealPhonePairing: (root: unknown) => 
 vi.mock("@/state/store", () => ({ useStore: () => ({ state: { config: {} } }) }));
 vi.mock("./PhoneSetupFlow", () => ({
   companionBridge: () => ({}),
-  usePhoneSetupController: () => ({ state: f.state, busy: false, accountBusy: false, account: null, accountError: null, error: null, localFallback: false, tailscaleFallback: false, tailscaleAvailable: false, hostedReady: false }),
+  usePhoneSetupController: () => ({ state: f.state, busy: false, error: null, route: "local", tailscaleAvailable: false }),
   PhoneSetupFlowView: () => null,
-  companionAccountActionError: () => null,
-  loadCompanionBridgeState: () => null,
-  shouldHydrateCompanionEmail: () => false,
 }));
 import { CompanionSection } from "./CompanionSection";
 

@@ -67,7 +67,6 @@ vi.mock("@/lib/interface-mode", () => ({
   useAdvancedMode: () => fixture.advancedMode,
   setAdvancedMode: fixture.setAdvancedMode,
 }));
-vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: () => null }));
 vi.mock("@/lib/chrome-rail", () => ({ useChromeRail: () => fixture.rail, setChromeRailHidden: (hidden: boolean) => fixture.railHidden.push(hidden) }));
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
@@ -395,27 +394,4 @@ describe("Settings → Appearance", () => {
     expect(render()).not.toContain('<option value="desktopWorkspaces"');
   });
 
-  it("offers optional Organisation settings only through the local desktop bridge", () => {
-    fixture.section = "organization";
-    vi.stubGlobal("window", { ogb: { organization: {} } });
-    const local = render();
-    expect(local).toContain('<option value="organization" selected="">Organization</option>');
-    expect(local).toContain("personal and local models");
-    fixture.section = "appearance";
-    vi.stubGlobal("window", {});
-    expect(render()).not.toContain('<option value="organization"');
-    vi.stubGlobal("window", { ogb: { organization: {}, remoteClient: { active: true } } });
-    expect(render()).not.toContain('<option value="organization"');
-    expect(render()).toContain("Midnight");
-  });
-  it("offers personal Cloud separately and only through the local desktop bridge", () => {
-    fixture.section = "cloudAccount";
-    vi.stubGlobal("window", { ogb: { cloudAccount: {} } });
-    expect(render()).toContain('<option value="cloudAccount" selected="">MausBot Cloud</option>');
-    expect(render()).toContain("Free local use");
-    fixture.section = "appearance";
-    vi.stubGlobal("window", {}); expect(render()).not.toContain('<option value="cloudAccount"');
-    vi.stubGlobal("window", { ogb: { cloudAccount: {}, remoteClient: { active: true } } });
-    expect(render()).not.toContain('<option value="cloudAccount"');
-  });
 });

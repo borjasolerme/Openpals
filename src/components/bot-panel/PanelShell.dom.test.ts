@@ -22,7 +22,6 @@ vi.mock("../DesktopCapabilities", async (importOriginal) => ({
 }));
 vi.mock("../Avatar", () => ({ BotAvatar: () => null, MausAvatar: () => null }));
 vi.mock("../AvatarImageGenerator", () => ({ AvatarImageGenerator: () => null }));
-vi.mock("@/lib/use-organization-branding", () => ({ useOrganizationBranding: () => null }));
 const stub = (name: string) => (props: Record<string, unknown>) =>
   createElement("div", { [`data-stub-${name}`]: true, "data-editing-instructions": props.editingInstructions === true ? "true" : undefined });
 vi.mock("./DetailsTab", () => ({ DetailsTab: stub("details") }));
@@ -227,7 +226,7 @@ describe("the chat header's pill", () => {
     document.body.append(header);
     const headerRoot = createRoot(header);
     const onToggle = vi.fn();
-    flushSync(() => headerRoot.render(createElement(ChatHeadPill, { bot: withTasks, avatar: { state: "idle" }, privacy: null, onToggle, ...props })));
+    flushSync(() => headerRoot.render(createElement(ChatHeadPill, { bot: withTasks, avatar: { state: "idle" }, onToggle, ...props })));
     return { header, onToggle, done: () => { flushSync(() => headerRoot.unmount()); header.remove(); } };
   };
 
@@ -272,14 +271,6 @@ describe("the chat header's pill", () => {
     }
   });
 
-  it("says who can read a team chat", () => {
-    const quiet = pill({ privacy: { kind: "private" } });
-    try {
-      expect(quiet.header.querySelector('[data-chathead-privacy="private"]')!.textContent).toBe("Private · only you");
-    } finally {
-      quiet.done();
-    }
-  });
 });
 
 describe("Escape in the bot panel", () => {

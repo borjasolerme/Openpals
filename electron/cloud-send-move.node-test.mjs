@@ -4,10 +4,8 @@ import test from "node:test";
 import { EMPTY, itemKey } from "./cloud-send-parts.mjs";
 import { createCloudSend, sendNotice } from "./cloud-send.mjs";
 import { manifestGaps, noGaps } from "./cloud-send-check.mjs";
-import { installCloudSend, openOwnerSession } from "./cloud-send-main.mjs";
 
 const CLOUD = "https://omb-u-1.fly.dev";
-const LOCAL = "http://127.0.0.1:4100";
 const summary = (items, extra = {}) => ({ v: 1, appVersion: "0.1.120", items, chats: 1, ...extra });
 const bot = (id, parts) => ({ key: itemKey.bot(id), kind: "bot", label: id, id, parts });
 const json = (value, status = 200) => new Response(JSON.stringify(value), { status });
@@ -15,9 +13,9 @@ const reply = (status, body) => ({ status, ok: status < 400, body });
 const stored = (value = null) => ({ read: () => value, write(next) { value = structuredClone(next); }, get value() { return value; } });
 
 /**
- * This computer (`here`: its items, bots, connections and conversations) and a My Cloud that keeps what it is sent
- * (`there`: items by key, so a bot it makes takes its defaults until its fields arrive). `takesMove`: My Cloud says it
- * takes a move. `rowIds`: how many rows each of this computer's conversations has (one by default). Every call to My Cloud
+ * This computer (`here`: its items, bots, connections and conversations) and a the server that keeps what it is sent
+ * (`there`: items by key, so a bot it makes takes its defaults until its fields arrive). `takesMove`: the server says it
+ * takes a move. `rowIds`: how many rows each of this computer's conversations has (one by default). Every call to the server
  * is in `calls`.
  */
 function sides({ here = [], bots = {}, there = [], connections = [], secrets = {}, takesMove = true, conversations = [], rowIds = {}, onCall = () => {} } = {}) {
@@ -36,7 +34,7 @@ function sides({ here = [], bots = {}, there = [], connections = [], secrets = {
       if (route === "/api/cloud-send" || route === "/api/cloud-send?move=1") return reply(200, summary([...cloud.values()]));
       if (method === "GET" && route === "/api/cloud-send/files") return reply(200, { v: 1, files: [], space: { freeBytes: 1e12, volumeBytes: 1e12 } });
       if (method === "GET" && route === "/api/cloud-send/chats") return reply(200, { v: 1, conversations: [] });
-      if (route === "/api/cloud-connections") return reply(200, { computer: { environmentId: "env-cloud", label: "My Cloud" }, connections: [], engines: ["claude"], commands: ["node"] });
+      if (route === "/api/cloud-connections") return reply(200, { computer: { environmentId: "env-cloud", label: "The server" }, connections: [], engines: ["claude"], commands: ["node"] });
       if (method === "POST" && route === "/api/bots") {
         cloud.set(itemKey.bot(body.id), bot(body.id, { soul: "starter", title: EMPTY, name: "n" }));
         return reply(201, { bot: { id: body.id } });
@@ -92,7 +90,7 @@ function sides({ here = [], bots = {}, there = [], connections = [], secrets = {
   return { calls, cloud, deps, opened, asked };
 }
 
-test("a move carries everything: what was once kept here goes, what was removed on My Cloud stays removed, and apps and keys go before the bots", async () => {
+test("a move carries everything: what was once kept here goes, what was removed on the server stays removed, and apps and keys go before the bots", async () => {
   const off = { [itemKey.bot("ember")]: "you", [itemKey.bot("juno")]: "removed" };
   const make = () => sides({
     here: [bot("ember", { soul: "s1" }), bot("juno", { soul: "s2" })], bots: { ember: { soul: "s1" }, juno: { soul: "s2" } },
@@ -103,23 +101,16 @@ test("a move carries everything: what was once kept here goes, what was removed 
   moving.deps.store = stored({ v: 1, clouds: { [CLOUD]: { off } } });
   const outcome = await createCloudSend(moving.deps).send({ reason: "move" });
   assert.deepEqual(outcome.result.failed, []);
-  assert.deepEqual(outcome.result.bots, ["ember"], "kept here once, it goes now; removed on My Cloud, it never comes back");
+  assert.deepEqual(outcome.result.bots, ["ember"], "kept here once, it goes now; removed on the server, it never comes back");
   assert.equal(outcome.result.connections, 1);
   const key = moving.calls.indexOf("PATCH /api/config"), first = moving.calls.indexOf("POST /api/bots");
   assert.ok(key >= 0 && key < first, `the key went before the first bot: ${moving.calls.join(", ")}`);
   assert.deepEqual(moving.opened, [{ move: true }]);
-
-  const sending = make();
-  sending.deps.store = stored({ v: 1, clouds: { [CLOUD]: { off } } });
-  const button = await createCloudSend(sending.deps).send();
-  assert.deepEqual(button.result.bots, [], "Send everything still keeps here what the person kept here");
-  assert.ok(!sending.calls.includes("PATCH /api/config"), "only a move carries apps and keys");
-  assert.deepEqual(sending.opened, [null]);
 });
 
 test("a move goes only to a Cloud that says it takes one, and touches nothing on one that doesn't", async () => {
   const old = sides({ here: [bot("ember", { soul: "s1" })], bots: { ember: { soul: "s1" } }, takesMove: false });
-  await assert.rejects(createCloudSend(old.deps).send({ reason: "move" }), /^CloudSendError: My Cloud is updating\. Your bots move there by themselves when it's done\.$/u);
+  await assert.rejects(createCloudSend(old.deps).send({ reason: "move" }), /^CloudSendError: The server needs an update before your bots can move there\./u);
   assert.deepEqual(old.calls.filter((call) => !call.startsWith("GET ")), ["logout"]);
 });
 
@@ -137,14 +128,14 @@ test("the first pass leaves a sign-in that refreshes itself here; the final pass
   assert.deepEqual(move.asked.filter((what) => what.kind === "connection-release").map((what) => what.id), ["mcp:linear"]);
 });
 
-test("a bot a move made on My Cloud has all its fields sent again when the move was cut short before they were recorded", async () => {
+test("a bot a move made on the server has all its fields sent again when the move was cut short before they were recorded", async () => {
   let cut = true;
   const move = sides({ here: [bot("ember", { soul: "h:mine", title: "h:boss" })], bots: { ember: { soul: "mine", title: "boss" } },
     onCall: (method, route) => { if (cut && method === "PATCH" && route === "/api/bots/ember") throw new TypeError("fetch failed"); } });
   const send = createCloudSend(move.deps);
   const first = await send.send({ reason: "move" });
   assert.equal(first.result.failed[0]?.key, itemKey.bot("ember"));
-  assert.equal(move.cloud.get(itemKey.bot("ember")).parts.soul, "starter", "My Cloud made the bot with its own defaults");
+  assert.equal(move.cloud.get(itemKey.bot("ember")).parts.soul, "starter", "The server made the bot with its own defaults");
   cut = false;
   move.calls.length = 0;
   await send.send({ reason: "move" });
@@ -153,34 +144,16 @@ test("a bot a move made on My Cloud has all its fields sent again when the move 
   assert.ok(!move.calls.includes("POST /api/bots"), "the bot is not made twice");
 });
 
-test("each item is recorded from My Cloud's own answer as soon as it went, so a send cut short later never takes it for My Cloud's own change", async () => {
-  const store = stored({ v: 1, clouds: { [CLOUD]: { sent: { [itemKey.bot("juno")]: { team: ["p1", "p1"] } } } } });
-  let cutAtEnd = true;
-  const move = sides({ here: [bot("juno", { team: "p2" })], bots: { juno: { peers: ["ember"] } }, there: [bot("juno", { team: "p1" })],
-    onCall: (method, route, _body, cloud) => {
-      // My Cloud keeps the team without the bot it lacks: its own hash for what it took.
-      if (method === "PATCH" && route === "/api/bots/juno") { cloud.get(itemKey.bot("juno")).parts.team = "p3"; return reply(200, {}); }
-      if (cutAtEnd && method === "GET" && route === "/api/cloud-send?move=1" && cloud.get(itemKey.bot("juno")).parts.team === "p3") throw new TypeError("fetch failed");
-    } });
-  move.deps.store = store;
-  const send = createCloudSend(move.deps);
-  await assert.rejects(send.send({ reason: "move" }), /fetch failed/u);
-  assert.ok(move.calls.includes(`GET /api/cloud-send?item=${encodeURIComponent(itemKey.bot("juno"))}&move=1`));
-  cutAtEnd = false;
-  const row = (await send.compare()).rows.find((entry) => entry.key === itemKey.bot("juno"));
-  assert.equal(row.state, "on-both", "what My Cloud took is in step, not My Cloud's own change");
-});
-
-test("a bot My Cloud made as this computer stopped, before the answer came, is the move's own: all its fields go when it goes on", async () => {
-  // Seen in the real app on Oct 22: killed mid-move, My Cloud made "Otto" 70 ms later, and the move went on taking it for
-  // My Cloud's own bot: its colour never went, and the check called it missing on every pass.
+test("a bot the server made as this computer stopped, before the answer came, is the move's own: all its fields go when it goes on", async () => {
+  // Seen in the real app on Oct 22: killed mid-move, the server made "Otto" 70 ms later, and the move went on taking it for
+  // the server's own bot: its colour never went, and the check called it missing on every pass.
   let dying = true;
   const move = sides({ here: [bot("ember", { soul: "h:mine" })], bots: { ember: { soul: "mine" } },
     onCall: (method, route, body, cloud) => {
       if (dying && method === "POST" && route === "/api/bots") { cloud.set(itemKey.bot(body.id), bot(body.id, { soul: "starter" })); throw new TypeError("fetch failed"); }
     } });
   await createCloudSend(move.deps).send({ reason: "move" });
-  assert.equal(move.cloud.get(itemKey.bot("ember")).parts.soul, "starter", "My Cloud made it, this computer never heard");
+  assert.equal(move.cloud.get(itemKey.bot("ember")).parts.soul, "starter", "The server made it, this computer never heard");
   dying = false;
   move.calls.length = 0;
   await createCloudSend(move.deps).send({ reason: "move" });
@@ -193,73 +166,25 @@ test("a bot My Cloud made as this computer stopped, before the answer came, is t
   await createCloudSend(never.deps).send({ reason: "move" });
   lost = false;
   const again = await createCloudSend(never.deps).send({ reason: "move" });
-  assert.deepEqual(again.result.bots, ["juno"], "one My Cloud never made goes now, and never counts as removed there");
+  assert.deepEqual(again.result.bots, ["juno"], "one the server never made goes now, and never counts as removed there");
   assert.equal(never.cloud.get(itemKey.bot("juno")).parts.soul, "h:j");
 });
 
-test("a move keeps My Cloud's version of a part both sides hold otherwise with nothing recorded, and records it, so its check never calls it missing", async () => {
+test("a move keeps the server's version of a part both sides hold otherwise with nothing recorded, and records it, so its check never calls it missing", async () => {
   // The same bot on both sides with no send ever recorded (an earlier whole-workspace Copy, or a lost cloud-send.json),
-  // and its approval changed on My Cloud since: §2.2 keeps My Cloud's. Seen in the real app on Oct 22: the check called
+  // and its approval changed on the server since: §2.2 keeps the server's. Seen in the real app on Oct 22: the check called
   // `access` missing on every pass, so the move froze, thawed and tried again every hour without end.
   const here = [bot("ember", { soul: "s1", access: EMPTY })], there = [bot("ember", { soul: "s1", access: "a-full" })];
   const move = sides({ here, bots: { ember: { soul: "s1" } }, there });
   const send = createCloudSend(move.deps);
   await send.send({ reason: "move" });
-  assert.ok(!move.calls.includes("PATCH /api/bots/ember"), `My Cloud's is kept, nothing goes: ${move.calls.join(", ")}`);
+  assert.ok(!move.calls.includes("PATCH /api/bots/ember"), `The server's is kept, nothing goes: ${move.calls.join(", ")}`);
   const sent = move.deps.store.value.clouds[CLOUD].sent;
   assert.deepEqual(sent[itemKey.bot("ember")].access, [EMPTY, "a-full"], "the move's decision is recorded");
   assert.equal(noGaps(manifestGaps({ items: here }, { items: there }, { sent })), true, "the check agrees with the plan");
-
-  const button = sides({ here, bots: { ember: { soul: "s1" } }, there });
-  await createCloudSend(button.deps).send();
-  assert.equal(button.deps.store.value.clouds[CLOUD].sent[itemKey.bot("ember")].access, undefined, "Send everything still leaves it to the person");
 });
 
-test("Settings learns how many conversations are still to go, and a pass says how many did not all go", async () => {
-  const conversations = ["a", "b", "c"].map((threadId) => ({ bot: "ember", threadId, last: 1, lastId: `${threadId}-1`, busy: threadId === "c" }));
-  const move = sides({ here: [bot("ember", { soul: "s" })], there: [bot("ember", { soul: "s" })], bots: { ember: { soul: "s" } }, conversations,
-    onCall: (method, route, body) => route === "/api/cloud-send/chats"
-      ? reply(200, { conversations: 0, messages: 1, accepted: body.conversations.map((entry) => entry.threadId).filter((id) => id !== "b"), waiting: ["b"], removed: [] }) : null });
-  const send = createCloudSend(move.deps);
-  assert.deepEqual((await send.compare()).chats, { waiting: 3 });
-  const outcome = await send.send({ reason: "move" });
-  assert.equal(outcome.result.chats.left, 2, "one a bot is answering in, and one My Cloud did not take yet");
-  assert.deepEqual(send.snapshot().chats, { waiting: 2 });
-});
-
-test("a move's session counts as someone using My Cloud, so it stays awake; any other session main opens never does", async () => {
-  const headers = [];
-  const fetchImpl = async (url, init) => { headers.push([String(url).replace(CLOUD, ""), init.headers["x-omb-background"] ?? null, init.body]); return json({ token: "omb_sess_fake" }); };
-  const target = { origin: CLOUD, grant: async () => ({ origin: CLOUD, code: "C" }) };
-  const moving = await openOwnerSession(target, fetchImpl, { label: "Move to My Cloud", background: false });
-  await moving.call("GET", "/api/cloud-send");
-  await moving.close();
-  const sending = await openOwnerSession(target, fetchImpl);
-  await sending.call("GET", "/api/cloud-send");
-  assert.deepEqual(headers.map(([route, background]) => [route, background]), [
-    ["/api/auth/pair", null], ["/api/cloud-send", null], ["/api/auth/logout", null], ["/api/auth/pair", "1"], ["/api/cloud-send", "1"],
-  ]);
-  assert.equal(JSON.parse(headers[0][2]).label, "Move to My Cloud");
-
-  const paired = [];
-  const handlers = new Map();
-  const listing = { computer: { environmentId: "env", label: "Mac" }, connections: [], engines: [], commands: [] };
-  const main = installCloudSend({
-    ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) }, cloudPage: () => "local", server: () => null,
-    local: async (route) => json(route === "/api/cloud-send" || route === "/api/cloud-send?move=1" ? summary([]) : route === "/api/cloud-connections" ? listing : { v: 1, dataDir: "/d", conversations: [] }),
-    home: () => target, cookieFetch: async () => json({}, 401), reconnect: async () => false, power: { asleep: () => false },
-    file: () => "/nonexistent/cloud-send.json", window: () => null, localOrigin: () => LOCAL,
-    fetch: async (url, init) => {
-      const route = String(url).replace(CLOUD, "");
-      if (route === "/api/auth/pair") { paired.push([JSON.parse(init.body).label, init.headers["x-omb-background"] ?? null]); return json({ token: "omb_sess_fake" }); }
-      return json(route === "/api/cloud-send" || route === "/api/cloud-send?move=1" ? summary([]) : route === "/.well-known/openmausbot/environment" ? { capabilities: { move: 1 } } : route === "/api/cloud-connections" ? listing : {});
-    },
-  });
-  assert.equal((await main.move()).reason, "move");
-  assert.deepEqual(paired, [["Move to My Cloud", null]]);
-});
-
-test("an app or key that could not move is said with My Cloud's reason, counted, and never stops the bots", async () => {
+test("an app or key that could not move is said with the server's reason, counted, and never stops the bots", async () => {
   const move = sides({ here: [bot("ember", { soul: "s1" })], bots: { ember: { soul: "s1" } },
     connections: [{ id: "key:openrouter", kind: "key", label: "OpenRouter", for: ["openrouter"] }],
     secrets: { "key:openrouter": { connection: { config: { openrouter: { key: "sk-or-v1-fake" } } } } },
@@ -267,12 +192,12 @@ test("an app or key that could not move is said with My Cloud's reason, counted,
   const send = createCloudSend(move.deps);
   const outcome = await send.send({ reason: "move" });
   assert.deepEqual(outcome.result.bots, ["ember"]);
-  assert.deepEqual(outcome.result.failed, [{ key: "key:openrouter", kind: "connection", label: "OpenRouter", error: "My Cloud said: this key is not for this Cloud", final: true }]);
+  assert.deepEqual(outcome.result.failed, [{ key: "key:openrouter", kind: "connection", label: "OpenRouter", error: "The server said: this key is not for this Cloud", final: true }]);
   assert.deepEqual(sendNotice(send.snapshot()).last.reasons, [{ what: { bots: [], skills: 0, logins: 0, onePassword: false, settings: 0, connections: 1, chats: false },
-    error: "My Cloud said: this key is not for this Cloud" }]);
+    error: "The server said: this key is not for this Cloud" }]);
 });
 
-test("a move has My Cloud keep as its owner's the lines it already held of this computer's bots and rooms, by row id only, and Send everything never asks", async () => {
+test("a move has the server keep as its owner's the lines it already held of this computer's bots and rooms, by row id only, and no other send does", async () => {
   const conversations = [
     { bot: "ember", threadId: "t-ember", last: 1, lastId: "t-ember-1", busy: false },
     { bot: "juno", threadId: "t-juno", last: 1, lastId: "t-juno-1", busy: false },
@@ -288,13 +213,10 @@ test("a move has My Cloud keep as its owner's the lines it already held of this 
   const outcome = await createCloudSend(make().deps).send({ reason: "move" });
   assert.deepEqual(outcome.result.failed, []);
   assert.deepEqual(asked, [[["t-ember", 5_000, "t-ember-1"], ["t-ember", 5_000, "t-ember-5001"]], [["t-ember", 2_001, "t-ember-10001"], ["t-room", 1, "t-room-1"]]],
-    "Ember's and the room's row ids, at most 10,000 a request; Juno is not on My Cloud");
-  asked.length = 0;
-  await createCloudSend(make().deps).send();
-  assert.deepEqual(asked, [], "only the move asks");
+    "Ember's and the room's row ids, at most 10,000 a request; Juno is not on the server");
 });
 
-test("a move names at most 200 of the conversations My Cloud held a request, never one removed there, and says it when My Cloud refuses", async () => {
+test("a move names at most 200 of the conversations the server held a request, never one removed there, and says it when the server refuses", async () => {
   const conversations = [
     ...Array.from({ length: 201 }, (_, i) => ({ bot: "ember", threadId: `t-ember-${i}`, last: 1, lastId: `t-ember-${i}-1`, busy: false })),
     { bot: "ember", threadId: "t-gone", last: 1, lastId: "t-gone-1", busy: false },
@@ -313,10 +235,10 @@ test("a move names at most 200 of the conversations My Cloud held a request, nev
   };
   assert.deepEqual((await createCloudSend(make().deps).send({ reason: "move" })).result.failed, []);
   assert.deepEqual(asked.map((threads) => threads.length), [200, 1]);
-  assert.ok(!asked.flat().includes("t-gone"), "removed on My Cloud, its lines are never named");
+  assert.ok(!asked.flat().includes("t-gone"), "removed on the server, its lines are never named");
   refuse = true;
   const refused = await createCloudSend(make().deps).send({ reason: "move" });
-  assert.deepEqual(refused.result.failed.map((failure) => [failure.key, failure.error]), [["chats", "My Cloud said: the store is busy"]]);
+  assert.deepEqual(refused.result.failed.map((failure) => [failure.key, failure.error]), [["chats", "The server said: the store is busy"]]);
 });
 
 test("a move sends what only it carries last, after the chats and their settings, switched off there; an app event only in the final pass, which this computer then lets go of", async () => {
@@ -352,9 +274,9 @@ test("a move sends what only it carries last, after the chats and their settings
   assert.deepEqual(move.deps.store.value.clouds[CLOUD].on, { "routine:r1": true, "app-event:e1": false }, "what was on here is kept for the switch, after this computer let go");
 });
 
-test("what a move carries last is never taken for removed on My Cloud, so a routine changed here before the final pass still goes", async () => {
+test("what a move carries last is never taken for removed on the server, so a routine changed here before the final pass still goes", async () => {
   // Seen in the real app on Oct 22: after a plain move, cloud-send.json had every routine and webhook it had just carried
-  // as "removed", because the pass's closing plan read My Cloud before the automations went.
+  // as "removed", because the pass's closing plan read the server before the automations went.
   const routine = (def) => ({ key: "routine:r1", kind: "routine", label: "Digest", id: "r1", bot: "ember", parts: { def } });
   const here = [bot("ember", { soul: "s" }), routine("d1")];
   const put = [];
@@ -372,9 +294,9 @@ test("what a move carries last is never taken for removed on My Cloud, so a rout
   assert.deepEqual(put, ["routine:r1", "routine:r1"], "changed here since, it goes again in the final pass");
 });
 
-test("a routine on both sides whose only difference is its runs goes in a move, so the runs made here reach My Cloud; one changed on both keeps My Cloud's", async () => {
-  // Seen in the real app on Oct 22: a computer whose workspace My Cloud already held (an earlier Copy) kept running a
-  // routine; the move kept My Cloud's run list, and its check found "1 runs missing" on every pass, so it never finished.
+test("a routine on both sides whose only difference is its runs goes in a move, so the runs made here reach the server; one changed on both keeps the server's", async () => {
+  // Seen in the real app on Oct 22: a computer whose workspace the server already held (an earlier Copy) kept running a
+  // routine; the move kept the server's run list, and its check found "1 runs missing" on every pass, so it never finished.
   const routine = (def, runs) => ({ key: "routine:r1", kind: "routine", label: "Digest", id: "r1", bot: "ember", parts: { def, runs } });
   const make = (here, there) => {
     const put = [];
@@ -384,14 +306,14 @@ test("a routine on both sides whose only difference is its runs goes in a move, 
   };
   const runsOnly = make(routine("d1", "runs-here"), routine("d1", "runs-there"));
   await createCloudSend(runsOnly.move.deps).send({ reason: "move" });
-  assert.deepEqual(runsOnly.put, ["routine:r1"], "its runs go: My Cloud adds them by id");
+  assert.deepEqual(runsOnly.put, ["routine:r1"], "its runs go: the server adds them by id");
 
   const both = make(routine("d-here", "runs-here"), routine("d-there", "runs-there"));
   await createCloudSend(both.move.deps).send({ reason: "move" });
-  assert.deepEqual(both.put, [], "changed on both: My Cloud's routine is kept");
+  assert.deepEqual(both.put, [], "changed on both: the server's routine is kept");
 });
 
-test("a bot's fields only a move carries go over My Cloud's move route, absent ones as cleared; any other send never carries them", async () => {
+test("a bot's fields only a move carries go over the server's move route, absent ones as cleared", async () => {
   const fields = [];
   const make = () => sides({ here: [bot("ember", { soul: "s", pinned: "p1", projects: "j1" })], there: [bot("ember", { soul: "s", pinned: "-", projects: "-" })], bots: { ember: { soul: "s" } },
     onCall: (method, route, body) => { if (method === "PUT" && route === "/api/cloud-send/kind") { fields.push(body); return reply(200, { v: 1, ok: true }); } return null; } });
@@ -400,10 +322,6 @@ test("a bot's fields only a move carries go over My Cloud's move route, absent o
     ? json({ v: 1, dataDir: "/desk", record: { pinned: true, projects: [{ id: "p1", name: "Launch" }], hidden: true } }) : local(route, init))(moving.deps.local);
   await createCloudSend(moving.deps).send({ reason: "move" });
   assert.deepEqual(fields.map((body) => [body.key, body.record]), [["bot:ember", { pinned: true, projects: [{ id: "p1", name: "Launch" }] }]]);
-  fields.length = 0;
-  const sending = make();
-  await createCloudSend(sending.deps).send({ reason: "button" });
-  assert.deepEqual(fields, []);
 });
 
 test("while the chats go, the move's progress counts chats only: the automations after them never add to it", async () => {

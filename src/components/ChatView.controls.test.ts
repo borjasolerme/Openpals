@@ -10,7 +10,7 @@ import { failedTurnTool } from "../../shared/failed-turn";
 const fixture = vi.hoisted(() => {
   vi.stubGlobal("window", {});
   vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => {} });
-  return { advanced: true, menus: [] as { ariaLabel: string; items: { key: string; disabled?: boolean; heading?: string; active?: boolean }[] }[], dispatch: vi.fn(), canWrite: null as boolean | null, showToolCalls: false, platform: "other", localReasonCode: "cua-driver-unavailable", localMessage: "", model: null as ComponentProps<typeof ModelPicker> | null,
+  return { advanced: true, menus: [] as { ariaLabel: string; items: { key: string; disabled?: boolean; heading?: string; active?: boolean }[] }[], dispatch: vi.fn(), showToolCalls: false, platform: "other", localReasonCode: "cua-driver-unavailable", localMessage: "", model: null as ComponentProps<typeof ModelPicker> | null,
     approval: null as ComponentProps<typeof ApprovalModeSelector> | null };
 });
 vi.mock("@/state/store", async (importOriginal) => {
@@ -26,7 +26,6 @@ vi.mock("./DesktopCapabilities", async (importOriginal) => ({
   ...await importOriginal<typeof import("./DesktopCapabilities")>(),
   useDesktopCapabilities: () => ({ capabilities: { dictation: { available: false }, host: { packaged: true, platform: fixture.platform }, localComputer: { available: false, reasonCode: fixture.localReasonCode, message: fixture.localMessage } }, ready: true }),
 }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => fixture.advanced, setAdvancedMode: vi.fn() }));
 // The trigger still renders, so the markup assertions in this file see the same header.
 vi.mock("./SidebarPopoverMenu", async (importOriginal) => ({
@@ -36,7 +35,7 @@ vi.mock("./SidebarPopoverMenu", async (importOriginal) => ({
     return props.renderTrigger({ open: false });
   },
 }));
-vi.mock("@/lib/cloud-guest", () => ({ useCanWriteIn: () => fixture.canWrite, useReactor: () => "user" }));
+vi.mock("@/lib/reactor", () => ({ useReactor: () => "user" }));
 vi.mock("./CitationUI", async (importOriginal) => ({
   ...await importOriginal<typeof import("./CitationUI")>(),
   CitationSelectionToolbar: () => createElement("span", { "data-testid": "citation-toolbar" }),
@@ -52,7 +51,6 @@ vi.mock("./ApprovalModeSelector", () => ({ ApprovalModeSelector: (props: Compone
 
 const { ChatView, ErrorRow, FailedTurnRow } = await import("./ChatView");
 const { claudeUpdateTarget } = await import("@/lib/failed-turn");
-const { NewConversationInstead } = await import("./NewConversationInstead");
 const { activityPreview } = await import("@/lib/failed-turn");
 afterAll(() => vi.unstubAllGlobals());
 
@@ -393,7 +391,7 @@ describe("thread control placement", () => {
   });
   it("sends a Codex usage limit to the account's Codex usage page, not Retry", () => {
     const codex = { instanceId: "codex", driverKind: "codex", displayName: "Codex", snapshot: { state: "available", authenticated: true } } as unknown as InstanceInfo;
-    const limit = `${CODEX_USAGE_LIMIT_REACHED} This is OpenAI's limit, not your MausBot plan. It resets at 5:23 PM (UTC).`;
+    const limit = `${CODEX_USAGE_LIMIT_REACHED} This is OpenAI's limit. It resets at 5:23 PM (UTC).`;
     const markup = renderToStaticMarkup(createElement(FailedTurnRow, { tool: failedTurnTool(limit), engine: codex, onRetry: () => {} }));
     expect(markup).toContain(limit.replaceAll("'", "&#x27;"));
     expect(markup).toContain(`href="${CODEX_USAGE_URL}"`);
@@ -637,32 +635,5 @@ describe("screen reader announcements", () => {
     const markup = renderToStaticMarkup(createElement(ChatView, { bot }));
     expect(markup.match(/data-testid="transcript-announcer"/g)).toHaveLength(1);
     expect(markup).toMatch(/<p role="status" aria-live="polite" aria-atomic="true" class="sr-only" data-testid="transcript-announcer">/);
-  });
-});
-
-describe("a guest's composer on a Cloud home", () => {
-  it("offers a new conversation in one click, with no dialog", () => {
-    const onNew = vi.fn();
-    const markup = renderToStaticMarkup(createElement(NewConversationInstead, { onNew }));
-    expect(markup).toContain("You can only write in conversations you started on this Cloud.");
-    expect(markup).toContain(">New conversation<");
-    expect(markup).not.toContain("<textarea");
-    const tree = NewConversationInstead({ onNew }) as { props: { children: Array<{ type: string; props: { onClick?: () => void } }> } };
-    tree.props.children.find((child) => child.type === "button")!.props.onClick!();
-    expect(onNew).toHaveBeenCalledOnce();
-  });
-
-  it("takes the composer's place only where the device may not write", () => {
-    fixture.canWrite = false;
-    const refused = renderToStaticMarkup(createElement(ChatView, { bot }));
-    expect(refused).toContain('data-testid="cloud-guest-composer"');
-    expect(refused).not.toContain("<textarea");
-    expect(refused).not.toContain('data-testid="citation-toolbar"');
-    fixture.canWrite = true;
-    const allowed = renderToStaticMarkup(createElement(ChatView, { bot }));
-    expect(allowed).not.toContain('data-testid="cloud-guest-composer"');
-    expect(allowed).toContain("<textarea");
-    expect(allowed).toContain('data-testid="citation-toolbar"');
-    fixture.canWrite = null;
   });
 });

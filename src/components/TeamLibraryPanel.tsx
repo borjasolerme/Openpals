@@ -1,13 +1,9 @@
-import { track } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { teamImportPreview, type PendingTeamImport } from "@/lib/team-import";
 import { addTemplate } from "@/lib/template-add";
-import { orgCardAction, orgPackagePreview, type OrgLibraryListing, type OrgLibraryPackage } from "@/lib/org-library";
-import type { PackageDocument } from "../../shared/package-format";
-import type { Routine } from "@/lib/routines";
 import { api, useStore, type Bot, type Group } from "@/state/store";
-import { ArrowLeft, Check, Compass, ExternalLink, FolderOpen, Github, Loader2, Search, Share2, UploadCloud, Users, X } from "lucide-react";
+import { ArrowLeft, Compass, ExternalLink, FolderOpen, Github, Loader2, Search, Share2, UploadCloud, Users, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { catalogCopy, catalogMatches, type TeamCatalog, type TeamCatalogEntry } from "@/lib/team-catalog";
@@ -15,7 +11,6 @@ import { catalogCopy, catalogMatches, type TeamCatalog, type TeamCatalogEntry } 
 import { TEAM_GLYPHS, TeamImportDetails } from "./TeamImportDetails";
 import { ReadyBotGallery } from "./ReadyBotGallery";
 import { ShareTeamDialog } from "./ShareTeamDialog";
-import { OrgLibraryTab } from "./TeamLibraryPanelOrg";
 import { MAX_TEAM_BACKUP_BYTES } from "../../shared/team-backup";
 import { takeImportName } from "../../shared/import-name";
 const COMMUNITY_TEAMS_REPOSITORY = "https://github.com/milind-soni/openmausbot-teams";
@@ -29,8 +24,7 @@ export interface TeamImportResult {
   connections?: number;
 }
 
-type ImportSource = "library" | "file" | "github";
-type TeamTab = "org" | "explore" | "import" | "scout" | "share";
+type TeamTab = "explore" | "import" | "scout" | "share";
 
 interface ScoutResult {
   profile: { name: string; summary: string; stacks: string[] };
@@ -103,7 +97,6 @@ export function TeamLibraryPanel({
   const [catalogError, setCatalogError] = useState("");
   const [busySlug, setBusySlug] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingTeamImport | null>(null);
-  const [source, setSource] = useState<ImportSource>("file");
   const [githubUrl, setGithubUrl] = useState("");
   const [githubLoading, setGithubLoading] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -121,12 +114,6 @@ export function TeamLibraryPanel({
   const [creating, setCreating] = useState(false);
   const [sharing, setSharing] = useState<string | null>(null);
   const [nestedDialog, setNestedDialog] = useState(false);
-  const [orgListing, setOrgListing] = useState<OrgLibraryListing | null>(null);
-  const [orgBusy, setOrgBusy] = useState<string | null>(null);
-  const [orgNotice, setOrgNotice] = useState("");
-  const [orgError, setOrgError] = useState("");
-  const [pendingOrg, setPendingOrg] = useState<OrgLibraryPackage | null>(null);
-  const tabChosen = useRef(false);
   // Monotonic scout token: a late response from an older scout must never overwrite a newer one's state.
   const scoutRequest = useRef(0);
 
@@ -152,21 +139,6 @@ export function TeamLibraryPanel({
     void loadCatalog();
   }, [loadCatalog]);
 
-  const loadOrgLibrary = useCallback(async () => {
-    try {
-      // SAFETY: this endpoint is owned by the app and returns OrgLibraryListing.
-      const listing = (await api("/api/org-library")) as OrgLibraryListing;
-      setOrgListing(listing);
-      if (listing.organization && !tabChosen.current) setTab("org");
-    } catch {
-      setOrgListing({ organization: null, packages: [] });
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadOrgLibrary();
-  }, [loadOrgLibrary]);
-
   useEffect(() => {
     dialogRef.current?.focus();
     return () => returnFocusRef.current?.focus();
@@ -178,10 +150,8 @@ export function TeamLibraryPanel({
       if (event.key === "Escape" && !importing) {
         event.preventDefault();
         event.stopPropagation();
-        if (pending) {
-          setPending(null);
-          setPendingOrg(null);
-        } else onClose();
+        if (pending) setPending(null);
+        else onClose();
         return;
       }
       if (event.key !== "Tab") return;
@@ -206,9 +176,8 @@ export function TeamLibraryPanel({
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [importing, onClose, pending, sharing, nestedDialog]);
 
-  const previewManifest = (preview: PendingTeamImport, nextSource: ImportSource) => {
+  const previewManifest = (preview: PendingTeamImport) => {
     setPending(preview);
-    setSource(nextSource);
     setError("");
   };
 
@@ -224,14 +193,14 @@ export function TeamLibraryPanel({
         throw cause;
       }
     }
-    previewManifest(teamImportPreview(manifest), "file");
+    previewManifest(teamImportPreview(manifest));
   };
 
   const loadLibraryTeam = async (entry: TeamCatalogEntry) => {
     setBusySlug(entry.slug);
     setError("");
     try {
-      previewManifest(teamImportPreview(await api(`/api/team-library/teams/${entry.slug}`)), "library");
+      previewManifest(teamImportPreview(await api(`/api/team-library/teams/${entry.slug}`)));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -252,7 +221,7 @@ export function TeamLibraryPanel({
         method: "POST",
         body: JSON.stringify({ url: requestedUrl.trim() }),
       });
-      previewManifest(teamImportPreview(manifest), "github");
+      previewManifest(teamImportPreview(manifest));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -262,7 +231,6 @@ export function TeamLibraryPanel({
 
   useEffect(() => {
     if (!initialUrl) return;
-    tabChosen.current = true;
     setTab("import");
     setGithubUrl(initialUrl);
     void loadGithubUrl(initialUrl);
@@ -275,7 +243,6 @@ export function TeamLibraryPanel({
     setError("");
     try {
       const response = await addTemplate(pending.manifest, dispatch);
-      track("team_imported", { members: response.bots.length, source, mode: "add", format: pending.kind });
       onImported({
         name: pending.name,
         members: response.bots.length,
@@ -289,62 +256,7 @@ export function TeamLibraryPanel({
     }
   };
 
-  const loadOrgDetails = async (entry: OrgLibraryPackage) => {
-    setOrgBusy(entry.packageId);
-    setOrgError("");
-    try {
-      // SAFETY: this endpoint is owned by the app and returns the verified release.
-      const preview = (await api(`/api/org-library/packages/${entry.packageId}`)) as { document: PackageDocument };
-      setPending(orgPackagePreview(preview.document));
-      setPendingOrg(entry);
-      setError("");
-    } catch (cause) {
-      setOrgError(cause instanceof Error ? cause.message : String(cause));
-    } finally {
-      setOrgBusy(null);
-    }
-  };
 
-  const addOrgPackage = async (entry: OrgLibraryPackage) => {
-    setOrgBusy(entry.packageId);
-    setImporting(true);
-    setOrgError("");
-    setOrgNotice("");
-    setError("");
-    try {
-      // SAFETY: this endpoint is owned by the app and returns the added records.
-      const response = (await api("/api/org-library/add", {
-        method: "POST",
-        body: JSON.stringify({ packageId: entry.packageId }),
-      })) as { alreadyAdded: boolean; bots?: Bot[]; groups?: Group[]; routines?: Routine[]; connections?: unknown[] };
-      for (const bot of response.bots ?? []) dispatch({ type: "botAdded", bot });
-      for (const group of response.groups ?? []) dispatch({ type: "groupPatched", group });
-      for (const routine of response.routines ?? []) dispatch({ type: "routinePatched", routine });
-      const first = response.bots?.find((bot) => !bot.hidden);
-      track("team_imported", { members: response.bots?.length ?? 0, source: "organization", mode: "add", format: "package" });
-      if (first) {
-        dispatch({ type: "select", id: first.id });
-        onImported({
-          name: entry.name,
-          members: response.bots!.length,
-          ...(response.connections?.length ? { connections: response.connections.length } : {}),
-        });
-        return;
-      }
-      setPending(null);
-      setPendingOrg(null);
-      if (!response.alreadyAdded) setOrgNotice(t("orgLibrary.addedSkills", { name: entry.name }));
-      await loadOrgLibrary();
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : String(cause);
-      if (pendingOrg) setError(message);
-      else setOrgError(message);
-      await loadOrgLibrary();
-    } finally {
-      setOrgBusy(null);
-      setImporting(false);
-    }
-  };
 
   const scoutTarget = scoutFolder.trim();
 
@@ -362,7 +274,6 @@ export function TeamLibraryPanel({
       setScouted(result);
       setScoutedFolder(folder);
       setRoomName(result.suggestion.roomName);
-      track("team_scouted", { signals: result.suggestion.manifest.team.members.length - 1 });
       void api(`/api/teams/scout/directory?cwd=${encodeURIComponent(folder)}`)
         // SAFETY: this endpoint is owned by the app and returns candidates.
         .then((extra) => {
@@ -420,7 +331,6 @@ export function TeamLibraryPanel({
         dispatch({ type: "groupPatched", group: { ...response.group, messages: [] } });
         dispatch({ type: "select", id: response.group.id });
       }
-      track("team_imported", { members: response.bots.length, source: "scout", mode: "project" });
       onImported({
         name: room,
         members: response.bots.length,
@@ -456,7 +366,6 @@ export function TeamLibraryPanel({
                 <button
                   onClick={() => {
                     setPending(null);
-                    setPendingOrg(null);
                     setError("");
                   }}
                   disabled={importing}
@@ -510,7 +419,7 @@ export function TeamLibraryPanel({
         {pending ? (
           <>
             <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-6 sm:px-8">
-              <TeamImportDetails pending={pending} importedNames={importedNames} org={pendingOrg !== null} />
+              <TeamImportDetails pending={pending} importedNames={importedNames} />
               {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{error}</div>}
             </div>
 
@@ -525,23 +434,7 @@ export function TeamLibraryPanel({
                   ? ""
                   : t("teamImport.newSection", { name: pending.teamName ?? pending.name })}
               </div>
-              {pendingOrg ? (
-                orgCardAction(pendingOrg) === "add" ? (
-                  <button
-                    onClick={() => void addOrgPackage(pendingOrg)}
-                    disabled={importing}
-                    aria-label={t("orgLibrary.addAria", { name: pendingOrg.name })}
-                    className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white hover:bg-accent/90 disabled:opacity-60"
-                  >
-                    {importing && <Loader2 size={15} className="animate-spin" />}
-                    {importing ? t("orgLibrary.adding") : t("orgLibrary.add")}
-                  </button>
-                ) : (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-raised px-4 py-2 text-[13px] text-ink-secondary">
-                    <Check size={14} className="text-success" />{t("orgLibrary.added")}
-                  </span>
-                )
-              ) : <button
+              <button
                 onClick={() => void importTeam()}
                 disabled={importing}
                 className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white hover:bg-accent/90 disabled:opacity-60"
@@ -550,35 +443,17 @@ export function TeamLibraryPanel({
                 {importing
                   ? t("templates.importing")
                   : pending.kind === "backup" ? t("templates.importBackup") : pending.library ? t("teamImport.addPresets") : t("templates.addTeam")}
-              </button>}
+              </button>
             </footer>
           </>
         ) : (
           <>
             <div className="flex flex-col gap-3 px-6 pb-4 pt-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
               <div className="flex w-fit rounded-xl bg-raised/70 p-1" role="tablist" aria-label={t("templates.source") }>
-                {orgListing?.organization && (
-                  <button
-                    role="tab"
-                    aria-selected={tab === "org"}
-                    onClick={() => {
-                      tabChosen.current = true;
-                      setTab("org");
-                      setError("");
-                    }}
-                    className={cn(
-                      "max-w-[220px] truncate rounded-lg px-4 py-2 text-[14px] transition-colors",
-                      tab === "org" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
-                    )}
-                  >
-                    {t("orgLibrary.tab", { name: orgListing.organization.name })}
-                  </button>
-                )}
                 <button
                   role="tab"
                   aria-selected={tab === "explore"}
                   onClick={() => {
-                    tabChosen.current = true;
                     setTab("explore");
                     setError("");
                   }}
@@ -593,7 +468,6 @@ export function TeamLibraryPanel({
                   role="tab"
                   aria-selected={tab === "import"}
                   onClick={() => {
-                    tabChosen.current = true;
                     setTab("import");
                     setError("");
                   }}
@@ -608,7 +482,6 @@ export function TeamLibraryPanel({
                   role="tab"
                   aria-selected={tab === "scout"}
                   onClick={() => {
-                    tabChosen.current = true;
                     setTab("scout");
                     setError("");
                   }}
@@ -623,7 +496,6 @@ export function TeamLibraryPanel({
                   role="tab"
                   aria-selected={tab === "share"}
                   onClick={() => {
-                    tabChosen.current = true;
                     setTab("share");
                     setError("");
                   }}
@@ -650,16 +522,6 @@ export function TeamLibraryPanel({
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-7 pt-5 sm:px-8">
-              {tab === "org" && orgListing?.organization && (
-                <OrgLibraryTab
-                  listing={orgListing as OrgLibraryListing & { organization: { id: string; name: string } }}
-                  busy={orgBusy}
-                  notice={orgNotice}
-                  error={orgError}
-                  onAdd={(entry) => void addOrgPackage(entry)}
-                  onDetails={(entry) => void loadOrgDetails(entry)}
-                />
-              )}
               {tab === "explore" && (
                 <div>
                   <ReadyBotGallery search={search} onDialog={setNestedDialog} onAdded={onClose} />

@@ -16,9 +16,9 @@ export const setupImportApi: SetupImportClient = {
 };
 
 /** The desktop app's own window on its own server: never a hosted server, another server it connects to, or a browser. */
-export function localSetupImport(hosted: boolean): boolean {
+export function localSetupImport(): boolean {
   const remote = globalThis.window?.ogb?.remoteClient;
-  return !hosted && remote !== undefined && remote.active !== true;
+  return remote !== undefined && remote.active !== true;
 }
 
 export const DETECT_TIME_BOX_MS = 2_000;
@@ -89,7 +89,6 @@ export function importOutcome(result: SetupImportResult): { line: string; notes:
   skipped([...(result.skills?.skipped ?? []), ...(result.tools?.skipped ?? [])], "failed", "onboarding.import.failed");
   if (result.skills?.filesLeftOut) notes.push(t("onboarding.import.filesLeftOut"));
   skipped(result.tools?.skipped, "limit", "onboarding.import.limit");
-  skipped(result.tools?.skipped, "policy", "onboarding.import.policy");
   skipped(result.tools?.skipped, "busy", "onboarding.import.busy");
   const leftOut = Boolean(result.skills?.skipped.length || result.tools?.skipped.length);
   if (parts.length) return { line: t("onboarding.import.added", { list: list(parts) }), notes, done: true };

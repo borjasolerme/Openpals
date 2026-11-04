@@ -10,7 +10,6 @@ vi.mock("@/state/store", async (importOriginal) => ({
   api: vi.fn(),
   useStore: () => ({ state: { appSettingsSection: "connections", instances: [], config: fixture.config }, dispatch: vi.fn() }),
 }));
-vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
 
 beforeEach(() => {
   fixture.config = undefined;
@@ -48,22 +47,4 @@ describe("Settings → Connections", () => {
     expect(html).toContain("Keys for other OpenCode providers");
   });
 
-  it("sends nobody on a Cloud to a terminal, only to the keys for other providers", async () => {
-    const { configStatusFromFrame } = await import("@/state/store");
-    fixture.config = configStatusFromFrame({
-      composio: { configured: false },
-      box: { configured: false },
-      vps: { configured: false, sshAlias: "" },
-      rooms: { turnTimeoutMinutes: 10 },
-      mcp: { callTimeoutMinutes: 10 },
-      localVm: { mode: "shared", maxInstances: 1 },
-      cloudHome: true,
-    });
-    const { SettingsModal } = await import("./SettingsModal");
-    const html = renderToStaticMarkup(createElement(SettingsModal));
-    expect(html).toContain("OpenCode API key");
-    expect(html).not.toContain("opencode auth login");
-    expect(html).not.toContain("More providers for OpenCode bots");
-    expect(html).toContain("Keys for other OpenCode providers");
-  });
 });

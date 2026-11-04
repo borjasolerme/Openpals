@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 
 export function LiveKeySetup({ onSaved, compact = false }: { onSaved: () => void; compact?: boolean }) {
-  const { state, dispatch } = useStore();
+  const { dispatch } = useStore();
   const [key, setKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export function LiveKeySetup({ onSaved, compact = false }: { onSaved: () => void
     >
       <div className="text-[14px] font-medium text-ink">{t("call.live.keyTitle")}</div>
       <div className="text-[13px] leading-[1.45] text-ink-secondary">{t("call.live.keyExplain")}</div>
-      <div className="text-[13px] leading-[1.45] text-ink-secondary">{liveDisclosure({ cloudHome: state.config?.cloudHome === true })}</div>
+      <div className="text-[13px] leading-[1.45] text-ink-secondary">{liveDisclosure()}</div>
       <input
         type="password"
         autoComplete="off"

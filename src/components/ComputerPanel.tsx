@@ -9,7 +9,7 @@ import { CalendarClock, ChevronRight, Columns2, Box, Check, Cloud, Sparkles, Glo
 import { api, ApiError, currentTaskBot, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { setAdvancedMode, useAdvancedMode } from "@/lib/interface-mode";
 import { ComputerFilesPane } from "./ComputerFilesPane";
-import { effectivePlace, isComputerPlace, placeLabelKey, placeOffered } from "@/lib/place";
+import { effectivePlace, isComputerPlace, placeLabelKey } from "@/lib/place";
 import type { CloudBackend } from "../../shared/wire";
 import { KeyRow } from "./keys/KeyRow"; import { openKeySettings } from "./keys/key-focus";
 import { cn } from "@/lib/cn";
@@ -156,10 +156,10 @@ export function ComputerPanel({
   const localAvailable = capabilities.localComputer.available;
   const isLinux = capabilities.host.platform === "linux";
   const providerSupportsLocal = instanceSupportsLocalComputer(state.instances, bot);
-  const localSelectable = placeOffered("local", state.config) && localComputerSelectable({ capabilities, providerSupportsLocal });
+  const localSelectable = localComputerSelectable({ capabilities, providerSupportsLocal });
   const [localAutoWarningTarget, setLocalAutoWarningTarget] = useState<string | null>(null);
   const localDisabledReason = localComputerDisabledReason({ capabilities, providerSupportsLocal });
-  const placeSeat = usePlaceSeat(state.config, capabilities.host.platform);
+  const placeSeat = usePlaceSeat(capabilities.host.platform);
   const [phase, setPhase] = useState<Phase>("checking");
   const [persistedComputerSelection, setPersistedComputerSelection] = useState<{
     botId: string;
@@ -1090,7 +1090,6 @@ export function ComputerPanel({
     </div>
   );
 
-  const managedPolicy = state.config?.managedPolicy;
   const busyBoat = busyBoatView(boatState, profileBot.busy === true);
   const cloudComputer: PlaceFacts["computer"] = !computerStatusCurrent || livePlace !== "cloud" || cloudBackend !== "box" ? undefined
     : phase === "starting" ? "starting"
@@ -1107,7 +1106,7 @@ export function ComputerPanel({
     ...(refusal ? { refusal } : {}),
   });
   const cloudRefused = bot.computer === "cloud" && cloudBackend === "box" && phase === "error" && error && !(error instanceof LocalizedPanelError)
-    ? cloudRefusal({ message: errorText ?? "", status: Number((error as { status?: unknown }).status ?? 0) || undefined }, state.config?.box?.included === true)
+    ? cloudRefusal({ message: errorText ?? "", status: Number((error as { status?: unknown }).status ?? 0) || undefined })
     : undefined;
   const cloudView = viewOf("cloud", cloudRefused);
   const autoView = viewOf("auto");
@@ -1118,15 +1117,13 @@ export function ComputerPanel({
     ["local", "vm.dest.local", "computer.dest.localDesc", Monitor],
     ["browser", "vm.dest.browser", "computer.dest.browserDesc", Globe],
     ["off", "vm.dest.off", "computer.dest.offDesc", Power],
-  ] as const).filter(([mode]) => mode === null || mode === "off" || (placeOffered(mode, state.config) && !(mode === "local" && capabilities.localComputer.reasonCode === "remote-server"))).map(([mode, labelKey, descriptionKey, Icon]) => {
+  ] as const).filter(([mode]) => mode === null || mode === "off" || (!(mode === "local" && capabilities.localComputer.reasonCode === "remote-server"))).map(([mode, labelKey, descriptionKey, Icon]) => {
     const selected = mode === null ? !profileBot.computer : profileBot.computer === mode;
-    const managedKind = mode === "local" ? "thisComputer" : mode === "vm" ? "localVm" : mode === "cloud" ? (profileBot.cloudBackend === "vps" ? "vps" : "box") : null;
-    const managedBy = managedPolicy && managedKind && !managedPolicy.computers[managedKind] ? t("policy.managedBy", { organization: managedPolicy.organizationName }) : undefined;
     const view = mode === null ? autoView : mode === "cloud" ? cloudView : viewOf(mode);
-    const disabled = Boolean(managedBy) || placeBlocked(view);
-    const issue = !managedBy && placeHasIssue(view);
-    const unavailableTitle = managedBy ?? (issue ? view.line : mode === "browser" ? t("computer.browserOnlyTitle") : undefined);
-    return { mode, labelKey, descriptionKey, Icon, simpleLabel: worksOnSimpleLabel(mode ?? undefined, capabilities.host.platform), selected, managedBy, disabled, unavailableTitle, view, issue };
+    const disabled = placeBlocked(view);
+    const issue = placeHasIssue(view);
+    const unavailableTitle = issue ? view.line : mode === "browser" ? t("computer.browserOnlyTitle") : undefined;
+    return { mode, labelKey, descriptionKey, Icon, simpleLabel: worksOnSimpleLabel(mode ?? undefined, capabilities.host.platform), selected, disabled, unavailableTitle, view, issue };
   });
   const worksOnView = placeOptions.find(({ selected }) => selected)?.view ?? autoView;
   const runPlaceAction = (id: PlaceActionId) => {
@@ -1522,7 +1519,7 @@ export function ComputerPanel({
         )}
         {(boatKeyShown || (phase === "unconfigured" && cloudView.action?.id === "add-boat-key")) && (
           <div data-boat-key className="mt-3 rounded-xl bg-card py-1.5">
-            <KeyRow id="box" via="computer_panel"
+            <KeyRow id="box"
               onSaved={(configured) => { setBoatKeyShown(true); if (configured) setRetry((n) => n + 1); }}
             />
           </div>
@@ -1684,10 +1681,10 @@ export function ComputerPanel({
           <div className="mt-4 rounded-xl bg-card p-4">
             <div className="text-[15px] font-medium text-ink">{t("computer.worksOn")}</div>
             <p className="mt-1 text-[12px] leading-5 text-ink-secondary">
-              {t(state.config?.cloudHome ? "computer.worksOnHintCloudHome" : "computer.worksOnHint")}
+              {t("computer.worksOnHint")}
             </p>
           <div role="group" aria-label={t("computer.destinationAria")} className="mt-3 grid auto-rows-fr grid-cols-2 gap-2">
-            {placeOptions.map(({ mode, labelKey, descriptionKey, Icon, selected, managedBy, disabled, unavailableTitle, issue, view }) => (
+            {placeOptions.map(({ mode, labelKey, descriptionKey, Icon, selected, disabled, unavailableTitle, issue, view }) => (
               <button
                 key={mode ?? "auto"}
                 disabled={disabled}
@@ -1710,7 +1707,7 @@ export function ComputerPanel({
                   <span>{t(labelKey)}</span>
                 </span>
                 <span className="mt-1.5 block text-[11px] leading-4 text-ink-secondary">
-                  {managedBy ?? (issue ? view.short : t(descriptionKey))}
+                  {issue ? view.short : t(descriptionKey)}
                 </span>
               </button>
             ))}

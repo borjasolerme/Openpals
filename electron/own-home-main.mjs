@@ -1,13 +1,15 @@
-// The one-time move that makes a server of the person's own their only home, as My Cloud is: chosen once on that server's
-// circle ("Make … my home"), then run by one-home.mjs over cloud-send.mjs, which carry everything, stop this computer for
-// good and switch on there what was on here, so no routine ever runs in two places. Every pass goes over this window's own
-// sign-in at that server, as the person's: never a sign-in of its own, and never signed out here.
+// The one-time move that makes a server of the person's own their only home: chosen once on that server's circle ("Make …
+// my home"), then run by one-home.mjs over cloud-send.mjs, which carry everything, stop this computer for good and switch
+// on there what was on here, so no routine ever runs in two places. Every pass goes over this window's own sign-in at that
+// server, as the person's: never a sign-in of its own, and never signed out here. The move's line shows on this
+// computer's own page (`cloud-send:*`).
 //
 // Security: only a server that says this sign-in is its one owner's (server/own-home.ts) is ever chosen or written to, and
 // the choice is bound to that server's identity, so another server behind the same address takes nothing of this
 // computer's and is never lent it.
-import { createCloudSend } from "./cloud-send.mjs";
-import { freezeAnswer } from "./one-home-main.mjs";
+import { createLoginHandoffClient } from "./cloud-logins.mjs";
+import { MOVE_LINE, resultKey } from "./cloud-send-parts.mjs";
+import { createCloudSend, sendNotice } from "./cloud-send.mjs";
 import { awayIn, createOneHome, parseJournal } from "./one-home.mjs";
 
 const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -22,6 +24,14 @@ const START_RETRY_MS = 30_000;
 
 const tagged = (message, code, extra = {}) => Object.assign(new Error(message), { code, ...extra });
 
+/** This computer's server's answer to the move's freeze: frozen, or what still holds the move, by name ("" when it has
+ * none) and what it is (server/routes/move-freeze.ts). */
+export function freezeAnswer(got) {
+  if (got.status === 409 && typeof got.body?.busy === "string") return { busy: got.body.busy, ...(typeof got.body.what === "string" ? { what: got.body.what } : {}) };
+  if (!got.ok || got.body?.frozen !== true) throw Object.assign(new Error("Openpals on this computer could not pause."), { status: got.status });
+  return { frozen: true };
+}
+
 async function answer(response) {
   const text = await response.text();
   try { return { ok: response.ok, status: response.status, body: text ? JSON.parse(text) : null }; }
@@ -35,8 +45,8 @@ export function parseChoice(value) {
   return value;
 }
 
-/** A saved place that is a server the person connected by hand: never This computer, My Cloud or a team's Cloud. */
-export const handSaved = (entry) => record(entry) && entry.kind === "remote" && typeof entry.origin === "string" && !entry.home && !entry.team && !entry.cloud;
+/** A saved place that is a server the person connected by hand: never This computer or a local environment. */
+export const handSaved = (entry) => record(entry) && entry.kind === "remote" && typeof entry.origin === "string";
 
 /**
  * This window's sign-in at a server, as one request after another: the session cookie, same-origin. `who()` is that
@@ -82,29 +92,47 @@ function jsonStore(store) {
 
 /**
  * @param {{
+ *   ipcMain: { handle(channel: string, handler: (...args: any[]) => unknown): void },
+ *   page(event: unknown): boolean,
+ *   server(): { postMessage(message: unknown): void } | null | undefined,
+ *   window(): { isDestroyed(): boolean, webContents: { send(channel: string, value: unknown): void, on?(event: string, listener: () => void): void, mainFrame: { url: string } } } | null,
+ *   localOrigin(): string,
  *   localRequest(route: string, init?: RequestInit): Promise<Response>,
  *   fetch: typeof fetch,
  *   environments(): any[],
- *   handoff(what: { kind: string, [key: string]: unknown }): Promise<any>,
  *   journal: { read(): unknown, write(value: unknown): void },
  *   choice: { read(): unknown, write(value: unknown): void },
  *   sendState: { read(): unknown, write(value: unknown): void },
- *   cloudJournal(): unknown,
  *   lend?(projects: string[], place: any): Promise<unknown>,
  *   phone?: { paired(): boolean, stop(): Promise<void>, start(): Promise<void> },
  *   openHome?(place: any): void,
- *   lastInput?(): number,
  *   version?: string,
  *   onChange?(): void,
  *   now?(): number,
  *   log?(line: string): void,
- * }} deps `localRequest`: this computer's server, as its owner. `fetch`: this window's own requests, with its sign-ins.
- * `handoff`: this computer's server's private port, which hands a moving secret to main alone. `cloudJournal()`: the move
- * to My Cloud's journal: while it is under way or done, no server of the person's own is chosen.
+ * }} deps `page(event)`: the asking page is this computer's own. `server()`: this computer's server's process, whose
+ * private port hands a moving secret to main alone. `window()`: the window whose page shows the move's line and whose
+ * typing the move waits out. `localRequest`: this computer's server, as its owner. `fetch`: this window's own requests,
+ * with its sign-ins.
  */
-export function installOwnHome({ localRequest, fetch: fetchImpl, environments, handoff, journal: journalStore, choice: choiceStore, sendState, cloudJournal, lend, phone, openHome, lastInput,
+export function installOwnHome({ ipcMain, page, server, window, localOrigin, localRequest, fetch: fetchImpl, environments, journal: journalStore, choice: choiceStore, sendState, lend, phone, openHome,
   version, onChange = () => {}, now = Date.now, log = () => {} }) {
   const journal = jsonStore(journalStore), choice = jsonStore(choiceStore);
+  const handoffClient = createLoginHandoffClient();
+  const handoff = (what) => handoffClient.request(server(), what);
+  let lastInput = 0;
+  const watched = new WeakSet();
+  /** When the person last typed or clicked in the window. */
+  const typed = () => {
+    const win = window();
+    if (win && !win.isDestroyed() && !watched.has(win.webContents)) {
+      watched.add(win.webContents);
+      win.webContents.on?.("before-input-event", () => { lastInput = Date.now(); });
+      // A watch set up just now has seen nothing yet: it counts as a key now, never as "typed long ago".
+      lastInput = Math.max(lastInput, Date.now());
+    }
+    return lastInput;
+  };
   const chosen = () => parseChoice(choice.read());
   const placeOf = (picked = chosen()) => (picked ? environments().find((entry) => handSaved(entry) && entry.origin === picked.origin) ?? null : null);
   const owners = new Map();
@@ -122,20 +150,18 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     local: (route, init) => localRequest(route, { method: init?.method ?? "GET", signal: AbortSignal.timeout(30_000) }),
     cloud: {
       origin: () => chosen()?.origin ?? null,
-      asleep: () => false,
-      read: (route) => serverRequests(chosen(), fetchImpl).request("GET", route),
       open: () => openServerSession(chosen(), fetchImpl),
     },
     handoff,
     store: jsonStore(sendState),
-    onChange: () => onChange(),
+    onChange: () => changed(),
   });
-  /** The chosen server as the move sees a Cloud: always ready, never ended once home is there, since nothing ends it; until
+  /** The chosen server as the move sees it: always ready, never ended once home is there, since nothing ends it; until
    * then, a server forgotten in this app ends the move before anything runs there. */
   const target = () => {
     const picked = chosen();
     if (!picked) return null;
-    return { origin: picked.origin, account: `own:${picked.environmentId}`, machine: picked.origin, ready: true, moves: true, paid: false, name: picked.name,
+    return { origin: picked.origin, account: `own:${picked.environmentId}`, machine: picked.origin, ready: true, moves: true, name: picked.name,
       ended: !placeOf(picked) && !awayIn(parseJournal(journal.read())) };
   };
   const home = createOneHome({
@@ -145,8 +171,8 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     local: {
       ...local,
       freeze: async (origin) => freezeAnswer(await local.call("POST", "/api/move/freeze", { cloud: origin, place: chosen()?.name })),
-      async unfreeze(options) {
-        const got = await local.call("DELETE", "/api/move/freeze", options?.automations === "off" ? { automations: "off" } : undefined);
+      async unfreeze() {
+        const got = await local.call("DELETE", "/api/move/freeze");
         if (!got.ok) throw Object.assign(new Error("Openpals on this computer could not go on again."), { status: got.status });
       },
       frozen: async () => (await local.json("/api/move/freeze"))?.frozen === true,
@@ -155,11 +181,39 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     ...(lend ? { lend: (projects) => lend(projects, placeOf()) } : {}),
     ...(phone ? { phone } : {}),
     openHome: () => { const place = placeOf(); if (place) openHome?.(place); },
-    ...(lastInput ? { lastInput } : {}),
+    lastInput: typed,
     ...(version ? { version } : {}),
-    onChange: () => onChange(),
+    onChange: () => changed(),
     log,
   });
+
+  /** The send's notice with the move's line, as this computer's page shows it. */
+  const notice = () => {
+    const line = home.view();
+    return { ...sendNotice(send.snapshot()), ...(line ? { move: line } : {}) };
+  };
+  function changed() {
+    const win = window();
+    try {
+      if (win && !win.isDestroyed() && new URL(win.webContents.mainFrame.url).origin === localOrigin()) win.webContents.send("cloud-send:notice-changed", notice());
+    } catch {}
+    onChange();
+  }
+  const onPage = (channel, handler) => (event, ...args) => {
+    if (!page(event)) throw new Error(`${channel} is only available in this app's window`);
+    return handler(...args);
+  };
+  ipcMain.handle("cloud-send:notice", onPage("cloud-send:notice", notice));
+  ipcMain.handle("cloud-send:dismiss", onPage("cloud-send:dismiss", (signature) => {
+    if (String(signature) !== MOVE_LINE) { send.dismiss(String(signature)); return notice(); }
+    // The done line says what the move brought; the move's own send result is not said again after it.
+    home.seen();
+    const last = send.snapshot().last;
+    if (last) send.dismiss(resultKey(last));
+    return notice();
+  }));
+  // The move's Try again, after a day of failing.
+  ipcMain.handle("cloud-send:move-retry", onPage("cloud-send:move-retry", async () => { await home.retry(); return notice(); }));
 
   /** The asks under way, one per server. */
   const asking = new Map();
@@ -193,8 +247,7 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     const known = handSaved(place) ? owners.get(place.id) : null;
     return Boolean(known?.own) && now() - known.at < OWNER_KNOWN_MS;
   };
-  const moving = () => { const kept = parseJournal(journal.read()); return Boolean(kept) && kept.phase !== "back"; };
-  const cloudMoving = () => { const kept = parseJournal(cloudJournal()); return Boolean(kept) && kept.phase !== "back"; };
+  const moving = () => Boolean(parseJournal(journal.read()));
   let retry = null;
   /** Goes on with the move; a choice whose server was forgotten here before anything ran there is let go of, and one whose
    * move could not begin yet begins once it can. */
@@ -203,28 +256,20 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     await home.kick();
     const picked = chosen();
     if (!picked || moving()) return;
-    if (!placeOf(picked)) { choice.write(null); onChange(); return; }
+    if (!placeOf(picked)) { choice.write(null); changed(); return; }
     retry = setTimeout(() => { retry = null; void kick().catch((error) => log(`own home: ${error?.message ?? error}`)); }, START_RETRY_MS);
     retry.unref?.();
   }
 
   return {
     kick,
-    view: () => home.view(),
-    seen: () => home.seen(),
-    retry: () => home.retry(),
     /** Home is the chosen server: its switch happened. */
     away: () => home.away(),
-    /** A server of the person's own is chosen as home: no move to My Cloud starts. */
+    /** A server of the person's own is chosen as home. */
     active: () => Boolean(chosen()),
     /** The chosen server's address while home is there: This computer is no place of its own then. */
     origin: () => (home.away() ? chosen()?.origin ?? null : null),
-    /** The move under way, by its phase and the server's name: this computer's own screen says it while it is stopped. */
-    underWay() {
-      const kept = parseJournal(journal.read()), picked = chosen();
-      return kept && picked && !awayIn(kept) && kept.phase !== "back" ? { phase: kept.phase, name: picked.name } : null;
-    },
-    /** The chosen server while home is there: this computer is lent to it as it is to My Cloud. */
+    /** The chosen server while home is there: this computer is lent to it. */
     home() {
       const picked = chosen(), place = placeOf(picked);
       return picked && place && home.away() ? { id: place.id, origin: picked.origin, environmentId: picked.environmentId, name: place.name } : null;
@@ -232,9 +277,9 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
     /** A server connected by hand whose own word, fresh, is that it is this person's alone (read again now and then,
      * `refresh`). */
     owns,
-    /** A server whose circle may offer "Make … my home": theirs alone, and no move under way or done, to it or to My Cloud. */
+    /** A server whose circle may offer "Make … my home": theirs alone, and no move under way or done. */
     offers(place) {
-      return !moving() && !chosen() && !cloudMoving() && owns(place);
+      return !moving() && !chosen() && owns(place);
     },
     /** Asks each server connected by hand who owns it, unless it said so lately. */
     refresh() {
@@ -248,19 +293,17 @@ export function installOwnHome({ localRequest, fetch: fetchImpl, environments, h
       const place = environments().find((entry) => entry.id === id && handSaved(entry));
       if (!place) throw new Error("That server isn't in this app any more.");
       if (moving() || chosen()) throw new Error("Your bots are already moving.");
-      if (cloudMoving()) throw new Error("Your bots are moving to My Cloud.");
       const who = await serverRequests(place, fetchImpl).who().catch(() => null);
       if (!who?.signedIn) throw new Error(`This app isn't signed in to ${place.name}. Open ${place.name} in this app, then try again.`);
       if (!who.own) throw new Error(`${place.name} has other people on it, so your bots stay here. Only a server that's yours alone can be your bots' home.`);
       if (!who.takesMove || !who.environmentId) throw new Error(`Update Openpals on ${place.name} first, then try again.`);
       choice.write({ v: 1, id: place.id, origin: place.origin, environmentId: who.environmentId, name: place.name, at: now() });
-      onChange();
+      changed();
       void kick().catch((error) => log(`own home: ${error?.message ?? error}`));
       return { started: true };
     },
     close() { if (retry) clearTimeout(retry); retry = null; home.close(); },
-    journal: () => journal.read(),
-    /** The person's choice, as kept. */
-    chosen,
+    /** A handoff answer from this computer's server's private port (cloud-logins.mjs). */
+    receive: handoffClient.receive,
   };
 }

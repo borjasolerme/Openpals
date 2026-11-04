@@ -3,8 +3,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RuntimeEvent } from "../contracts.ts";
-import { engineHomes } from "../engine-homes/engine-homes.ts";
-import { audienceHome } from "../engine-homes/layout.ts";
 import * as procs from "../procs.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import {
@@ -114,7 +112,6 @@ input.on("line", (line) => {
 describe.skipIf(process.platform === "win32")("Muse Code's process", () => {
   let root = "";
   afterEach(async () => {
-    engineHomes.stop();
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     await removeTempDir(root);
@@ -130,12 +127,11 @@ describe.skipIf(process.platform === "win32")("Muse Code's process", () => {
     return { cli, log };
   };
 
-  it("starts through the shared launcher, in the conversation's engine home, and stops with the instance", async () => {
+  it("starts through the shared launcher and stops with the instance", async () => {
     const { cli, log } = fakeMuse();
     const home = join(root, "home");
     const dataDir = join(home, ".openmausbot");
     mkdirSync(dataDir, { recursive: true });
-    engineHomes.start({ dataDir, serverHome: home, audienceOf: () => "member:p_bob", threads: () => [], log: () => {} });
     const spawned = vi.spyOn(procs, "spawnCli");
 
     const instance = await MuseCodeDriver.create({ instanceId: "museCode", displayName: "Muse Code", enabled: true,
@@ -145,7 +141,7 @@ describe.skipIf(process.platform === "win32")("Muse Code's process", () => {
       const completed = new Promise<RuntimeEvent>((resolve) => instance.adapter.onEvent((event) => {
         if (event.type === "turn.completed") resolve(event);
       }));
-      await engineHomes.within("t-bob", () => instance.adapter.sendTurn({ threadId: "t-bob", text: "hi", cwd: root }));
+      await instance.adapter.sendTurn({ threadId: "t-bob", text: "hi", cwd: root });
       expect(await completed).toMatchObject({ ok: true });
 
       const bot = spawned.mock.calls.findIndex((call) => call[3] === "bot");
@@ -154,7 +150,7 @@ describe.skipIf(process.platform === "win32")("Muse Code's process", () => {
       expect(spawned.mock.calls[bot]![2]).toMatchObject({ cwd: root, box: { allowEnv: ["HOME"] } });
       engine = spawned.mock.results[bot]!.value;
       const launches = readFileSync(log, "utf8").trim().split("\n").map((line) => JSON.parse(line) as { argv: string[]; home: string });
-      expect(launches.find((launch) => launch.argv.includes("--trust-workspace"))?.home).toBe(audienceHome(dataDir, "member:p_bob"));
+      expect(launches.find((launch) => launch.argv.includes("--trust-workspace"))?.home).toBe(home);
     } finally {
       await instance.dispose();
     }

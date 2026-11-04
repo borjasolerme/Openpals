@@ -10,8 +10,6 @@ vi.mock("./EnginesSettings", () => ({ EnginesSettings: () => "AI ACCOUNTS" }));
 vi.mock("./LocalComputerSection", () => ({ LocalComputerSection: () => "CLOUD DESKTOPS" }));
 vi.mock("./UsageSection", () => ({ UsageSection: () => "USAGE TABLE" }));
 vi.mock("./PlanUsage", () => ({ PlanUsageSummary: () => "PLAN USAGE" }));
-vi.mock("./CloudUsageMeter", () => ({ useCloudUsageSettings: () => ({ usage: null, upgrade: null, dialog: null }), CloudUsageDetails: () => null, CloudUsageSummaryView: () => null }));
-vi.mock("./ProIntroduction", () => ({ useCloudPlan: () => null, CloudPlanRow: () => null, CloudPlanFootnote: () => null }));
 vi.mock("./BrowserSettingsRows", () => ({ BuiltInBrowserRow: () => null, ServerSitesRow: () => null }));
 vi.mock("./AppSettingsRows", async (original) => ({ ...await original<object>(), BrowserProfilesRow: () => null }));
 vi.mock("./LoginsSettings", () => ({ LoginsSettings: () => null }));
@@ -24,7 +22,7 @@ const remoteAccess = { client: null, domain: null, pairing: null, companion: nul
 const pages = () => [
   renderToStaticMarkup(createElement(SimpleAiPage, { has, disclose, connections: "KEYS" })),
   renderToStaticMarkup(createElement(SimpleComputerPage, { has, disclose, remoteAccess, servers: null })),
-  renderToStaticMarkup(createElement(SimpleBillingPage, { has, disclose, cloudAccount: null })),
+  renderToStaticMarkup(createElement(SimpleBillingPage, { has, disclose })),
 ].join("\n");
 
 beforeEach(() => { fixture.admin = false; });

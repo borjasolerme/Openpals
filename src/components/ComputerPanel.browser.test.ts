@@ -87,11 +87,6 @@ describe("Computer panel Works on", () => {
     expect(markup).toContain("Choose where this bot works.</p>");
   });
 
-  it("lists neither on My Cloud, and says why", () => {
-    const markup = computerTab({ cloudHome: true });
-    expect(places(markup)).toEqual(["Auto", "Cloud desktop", "Browser", "Off"]);
-    expect(markup).toContain("Choose where this bot works. It can also use your computer whenever Openpals is open on it.");
-  });
 });
 
 describe("Computer panel header", () => {

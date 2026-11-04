@@ -21,14 +21,13 @@ vi.mock("./DesktopCapabilities", async (importOriginal) => ({
   ...await importOriginal<typeof import("./DesktopCapabilities")>(),
   useDesktopCapabilities: () => ({ capabilities: { dictation: { available: false }, host: { packaged: true, platform: "other" }, localComputer: { available: false, reasonCode: "x", message: "" } }, ready: true }),
 }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 const mode = vi.hoisted(() => ({ advanced: true }));
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => mode.advanced, setAdvancedMode: vi.fn() }));
 vi.mock("./SidebarPopoverMenu", async (importOriginal) => ({
   ...await importOriginal<typeof import("./SidebarPopoverMenu")>(),
   SidebarPopoverMenu: (props: { renderTrigger: (state: { open: boolean }) => unknown }) => props.renderTrigger({ open: false }),
 }));
-vi.mock("@/lib/cloud-guest", () => ({ useCanWriteIn: () => null, useReactor: () => "user" }));
+vi.mock("@/lib/reactor", () => ({ useReactor: () => "user" }));
 vi.mock("./CitationUI", async (importOriginal) => ({
   ...await importOriginal<typeof import("./CitationUI")>(),
   CitationSelectionToolbar: () => createElement("span"),

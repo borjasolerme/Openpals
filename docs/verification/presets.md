@@ -45,7 +45,7 @@ the standing instructions, then checks:
 
 A second test in the same file goes through the organization library itself
 (`OMB_TEST_ORG_LIBRARY_KEY` and `POST /api/testing/org-library`, as in
-[org-library.md](org-library.md)): the library fixture relayed in a catalog
+`server/org-library.ts`): the library fixture relayed in a catalog
 and added from the shelf answers with its preset, `state.json` records it
 under the install's `presets` with its release hash, New bot offers it under
 Acme Partners with skills on, adding the package again is a no-op, and once

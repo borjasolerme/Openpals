@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { PublishedPageCard } from "../../shared/published-page.ts";
-import { FAKE_DESKTOP_TOKEN, FAKE_HOME, FAKE_TOKEN_URL, fakePagesService } from "../testing/fake-pages.ts";
+import { FAKE_DESKTOP_TOKEN, FAKE_TOKEN_URL, fakePagesService } from "../testing/fake-pages.ts";
 import { applyIncludedPagesMessage, pagesHomeSignature } from "./access.ts";
 import { PageBundleError, readPageBundle } from "./bundle.ts";
 import { PublishedPagesStore } from "./store.ts";
@@ -35,7 +35,7 @@ function setup(options: { home?: boolean; quota?: number; selfHosted?: boolean }
   mkdirSync(work, { recursive: true });
   const cards: Array<{ threadId: string; id: string; text: string; card: PublishedPageCard }> = [];
   let ids = 0;
-  const pages = createPublishedPages({ dataDir: data, cloudHome: options.home ? FAKE_HOME : null, selfHosted: options.selfHosted, fetch: (input, init) => service.fetch(input, init),
+  const pages = createPublishedPages({ dataDir: data, selfHosted: options.selfHosted, fetch: (input, init) => service.fetch(input, init),
     patch: (threadId, messageId, text, card) => { const shown = cards.find((each) => each.id === messageId && each.threadId === threadId); if (shown) Object.assign(shown, { text, card }); } });
   const post = (threadId: string) => (text: string, card: PublishedPageCard) => { const id = `m${++ids}`; cards.push({ threadId, id, text, card }); return id; };
   const publish = (input: { path: string; title?: string; pageId?: string; botId?: string; threadId?: string }) => pages.publisher.publish({
@@ -135,16 +135,9 @@ describe("publishing a page", () => {
     await f.publish({ path: "one" });
     const refused = await f.publish({ path: "two", title: "Second" });
     expect(refused.status).toBe(402);
-    expect(refused.text).toBe("You’ve used your 1 free pages. MausBot Cloud gives you more, and pages without the badge. Tell the person this in your reply.");
-    expect(f.cards.at(-1)).toMatchObject({ text: "You’ve used your 1 free pages. MausBot Cloud gives you more, and pages without the badge.",
+    expect(refused.text).toBe("You’ve used your 1 free pages. More pages need another plan. Tell the person this in your reply.");
+    expect(f.cards.at(-1)).toMatchObject({ text: "You’ve used your 1 free pages. More pages need another plan.",
       card: { state: "limit", title: "Second", upgrade: true, plan: "free", usage: { pages: 1, limit: 1 } } });
-  });
-
-  it("publishes as a Cloud home with a request signed by its bootstrap secret", async () => {
-    const f = setup({ home: true });
-    writeSite(join(f.work, "site"));
-    expect((await f.publish({ path: "site" })).status).toBe(200);
-    expect(f.service.minted).toEqual([{ action: "create", caller: "home" }]);
   });
 
   it("refuses a missing path, a path outside the working folder, a single file that isn't a page, and a folder without index.html", async () => {

@@ -1,7 +1,7 @@
 import type { DesktopPrefs } from "./desktop-prefs.mjs";
 
 export declare const QUICK_ASKS_TITLE: "Quick asks";
-/** `starting`: this computer's server is not up yet; `moved`: its bots moved to My Cloud, so it takes no asks. */
+/** `starting`: this computer's server is not up yet; `moved`: its bots moved to the server, so it takes no asks. */
 export type TalkServerErrorCode = "server-down" | "starting" | "no-mausbot" | "refused" | "moved" | "lost";
 export declare class TalkServerError extends Error {
   constructor(code: TalkServerErrorCode);

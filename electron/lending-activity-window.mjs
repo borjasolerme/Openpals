@@ -1,4 +1,4 @@
-// See activity, from the menu-bar item: this computer's own record of what its Clouds did here, drawn by main as a static
+// See activity, from the menu-bar item: this computer's own record of what its servers did here, drawn by main as a static
 // page. Security: the record holds what servers sent (folder paths, commands, site names), so every value is escaped,
 // and the page runs no script and loads nothing.
 import { wordsFor } from "./lending-words.mjs";

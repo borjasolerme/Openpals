@@ -12,7 +12,6 @@ vi.mock("@/state/store", async (importOriginal) => {
 
 import {
   CloudComputersCard,
-  LocalComputerSection,
   LocalVmIdleTimeoutSetting,
   LocalVmInventoryCard,
   cloudComputerActionPlan,
@@ -558,23 +557,6 @@ describe("VPS computer inventory UI", () => {
     expect(running).not.toContain(">Remove</button>");
     expect(renderCard({ instances: [{ ...ownedVps, state: "paused" }] }))
       .toContain('bg-control text-ink-secondary">Pausado</span>');
-  });
-});
-
-describe("Settings → Computers on an OMB Cloud home", () => {
-  afterEach(() => { storeFixture.config = null; });
-  const cards = () => [...renderToStaticMarkup(createElement(LocalComputerSection)).matchAll(/<div class="text-\[16px\] font-semibold text-ink[^"]*">([^<]+)<\/div>/g)].map((match) => match[1]);
-
-  it("sets up a Local VM on a desktop or self-hosted server", () => {
-    expect(cards()).toEqual(expect.arrayContaining(["Cloud desktops", "Private desktops", "Setup"]));
-  });
-
-  it("shows no Local VM, and no steps to install one, where it cannot exist", () => {
-    storeFixture.config = { cloudHome: true };
-    const titles = cards();
-    expect(titles).toContain("Cloud desktops");
-    expect(titles).not.toContain("Private desktops");
-    expect(titles).not.toContain("Setup");
   });
 });
 

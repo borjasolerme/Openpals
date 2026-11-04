@@ -10,10 +10,7 @@ import { ASK_QUIET_ANSWER, ASK_QUIET_BUTTON, ASK_SECONDARY_BUTTON, AskDetail, As
 import { outboundSummary } from "@/lib/approval-summary";
 import { reviewedSkillSha256 } from "../../shared/skill-request";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
-import { useInboxOrigin } from "./InboxLine";
 import { yourComputerAsk } from "@/lib/your-computer";
-import { computerAskWords } from "@/lib/computer-ask";
-import { DESKTOP_DOWNLOAD_URL } from "../../shared/computer-ask";
 
 interface ApprovalLabels {
   [tool: string]: LocaleKey;
@@ -62,8 +59,6 @@ export function pendingApprovals(messages: Message[]): Pending[] {
 }
 
 export function spokenApprovalPrompt(pending: Pending, requester: string): string {
-  const turnOn = computerAskWords(pending.message.card, requester);
-  if (turnOn) return `${turnOn.line}. ${turnOn.reason}`;
   const ask = yourComputerAsk(pending.message.card, requester);
   if (ask) return `${requester}: ${ask.line}`;
   const card = pending.message.card;
@@ -121,11 +116,9 @@ function isDurable(pending: Pending): boolean {
 
 /** What will happen, in plain words; the command shown whole when it is what will run, and everything the card holds
  * behind Details. */
-function approvalWords(pending: Pending, botName?: string): { line: string; summary?: string; inline?: string; note?: string; detail: string } {
+function approvalWords(pending: Pending, botName?: string): { line: string; summary?: string; inline?: string; detail: string } {
   const card = pending.message.card;
   const outbound = card ? outboundSummary(card) : undefined;
-  const turnOn = computerAskWords(card, botName ?? t("approval.someone"));
-  if (turnOn) return { line: turnOn.line, summary: turnOn.why ?? turnOn.reason, ...(turnOn.why ? { note: turnOn.reason } : {}), detail: "" };
   const ask = yourComputerAsk(card, botName ?? t("approval.someone"));
   const detail = (pending.commandAllowlist?.command ?? ask?.detail ?? pending.detail).trim();
   if (outbound) return { line: outbound.headline, ...(outbound.summary ? { summary: outbound.summary } : {}), detail };
@@ -134,11 +127,6 @@ function approvalWords(pending: Pending, botName?: string): { line: string; summ
   if (isDurable(pending)) return { line: label(pending), detail };
   const action = COMMAND_TOOLS.has(pending.tool) ? t("approval.tool.runCommand") : toolLabel(pending.tool);
   return { line: botName ? t("approval.card.namedWantsTo", { name: botName, action }) : label(pending), inline: detail, detail };
-}
-
-/** An inbox's copy names the conversation it was asked in, as the way back there. */
-function CopyHeader({ message, asker, line }: { message: Message; asker: Asker; line: string }) {
-  return <AskHeader asker={asker} line={line} origin={useInboxOrigin(message)} />;
 }
 
 export const PendingApprovalPanel = memo(function PendingApprovalPanel({
@@ -165,7 +153,7 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
   const heldNote = outbound?.opaque && pending.heldCode === "approval.held.outbound"
     ? t("approval.opaqueCode")
     : tFromServer(pending.heldCode, pending.held);
-  const { line, summary, inline, note, detail } = approvalWords(pending, botName ?? asker?.name);
+  const { line, summary, inline, detail } = approvalWords(pending, botName ?? asker?.name);
   const detailsId = `approval-details-${pending.requestId}`;
   const hidden = detail && detail !== inline ? detail : "";
   const skill = pending.message.card?.skillRequest;
@@ -186,7 +174,7 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
     >
       <div className="flex min-w-0 items-center gap-2" aria-live="polite">
         <div className="min-w-0 flex-1">
-          {asker ? pending.message.inbox?.origin ? <CopyHeader message={pending.message} asker={asker} line={line} /> : <AskHeader asker={asker} line={line} /> : (
+          {asker ? <AskHeader asker={asker} line={line} /> : (
             <div className="flex items-center gap-1.5 text-[13px] leading-[18px] text-ink-secondary">
               <ShieldCheck size={15} className="shrink-0" aria-hidden="true" /><span className="min-w-0 truncate">{line}</span>
             </div>
@@ -213,7 +201,6 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
       </div>
       {summary && <p dir="auto" className="mt-1.5 break-words text-[15px] font-medium leading-[22px] text-ink">{summary}</p>}
       {inline && <AskDetail text={inline} mono label={t("approval.aria.reviewDetails")} />}
-      {note && <p dir="auto" data-computer-ask-reason className="mt-1 break-words text-[13px] leading-[18px] text-ink-secondary">{note}</p>}
       {heldNote && (outbound ? (
         <p className="mt-2 flex items-center gap-1.5 text-[13px] leading-[18px] text-warning">
           <Send size={13} aria-hidden="true" className="shrink-0" />
@@ -284,23 +271,6 @@ export function PendingApprovalActions({
   const marked = (action: string) => (tag ? { [`data-${tag}-action`]: action } : {});
   const showPrimary = part !== "more";
   const showMore = part !== "primary";
-  const turnOn = computerAskWords(pending.message.card, bot?.name ?? t("approval.someone"));
-  if (turnOn) {
-    if (!showPrimary) return null;
-    return (
-      <>
-        {turnOn.getApp && (
-          <a key="get" {...marked("get-app")} href={DESKTOP_DOWNLOAD_URL} target="_blank" rel="noreferrer" className={ASK_SECONDARY_BUTTON}>{turnOn.getApp}</a>
-        )}
-        <button key="deny" {...marked("deny")} type="button" onClick={() => decide("deny")} className={turnOn.turnOn ? ASK_SECONDARY_BUTTON : ASK_QUIET_ANSWER}>
-          {t("computerAsk.action.notNow")}
-        </button>
-        {turnOn.turnOn && (
-          <button key="allow" {...marked("allow")} type="button" onClick={() => decide("allow")} className={allow.className} style={allow.style}>{turnOn.turnOn}</button>
-        )}
-      </>
-    );
-  }
   const always = durableRequest ? null
     : bot && pending.allowKey
       ? { name: t("approval.action.alwaysAllow"), hint: t("approval.action.stopAsking", { name: bot.name, key: pending.allowKey }), run: () => decide("allow", true) }

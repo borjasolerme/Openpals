@@ -1,7 +1,6 @@
 import { Check, Copy, FileUp, Loader2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { track } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { foundExports, grokErrorText, lookForGrokBot, NOTHING_FOUND, previewGrokMove, runGrokMove, type GrokLook, type GrokPreview, type GrokReport } from "@/lib/grok-move";
@@ -100,7 +99,7 @@ function BringBack({ local, look, found, reply, error, onReply, onFile, onFound 
  * this computer is read until this dialog is open. */
 export function GrokMoveDialog({ onClose }: { onClose: () => void }) {
   const { state, dispatch } = useStore();
-  const local = localSetupImport(state.config?.cloudHome === true);
+  const local = localSetupImport();
   const [look, setLook] = useState<GrokLook>(NOTHING_FOUND);
   const [reply, setReply] = useState("");
   const [error, setError] = useState("");
@@ -161,7 +160,6 @@ export function GrokMoveDialog({ onClose }: { onClose: () => void }) {
     if (!preview) return;
     setImporting(true);
     const done = await runGrokMove(preview, dispatch);
-    track("team_imported", { members: preview.plans.length, source: "grok", mode: "add", format: "package" });
     setReport(done);
     setPreview(null);
     setImporting(false);

@@ -23,7 +23,6 @@ export interface MenuModelRow {
 }
 
 export type MenuGroupBody =
-  | { kind: "policy"; organization: string; team?: boolean }
   | { kind: "setUp" }
   | { kind: "signIn" }
   | { kind: "empty"; loading: boolean }
@@ -130,7 +129,6 @@ function currentRow(input: SimpleMenuInput): MenuCurrent {
   if (!active) return loading ? { ...row, pending: true } : { ...row, meta: t("model.simple.unavailable"), warning: true };
   if (!option && input.refreshing === active.instanceId) return { ...row, pending: true };
   if (option?.orgBlocked) return { ...row, meta: t("model.orgBlocked"), warning: true, blocked: true };
-  if (active.policy) return { ...row, meta: t("policy.managedBy", { organization: active.policy.organizationName }), warning: true };
   if (needsCli(active)) return { ...row, meta: t("model.setupRequired"), warning: true };
   if (needsSignIn(active) && !isCustomOnly(active) && !option?.custom) return { ...row, meta: t("model.signInRequired"), warning: true };
   if (bot.follows === true) return { ...row, meta: t("model.simple.botsModel", { name: bot.name }) };
@@ -143,16 +141,15 @@ function currentRow(input: SimpleMenuInput): MenuCurrent {
 export function simpleModelMenu(input: SimpleMenuInput): SimpleMenu {
   const { listed, selection, bot, expanded, probing } = input;
   const models = new Map(listed.map((instance) => [instance.instanceId, listedModels(instance)]));
-  const total = listed.filter((instance) => !instance.policy && !needsCli(instance))
+  const total = listed.filter((instance) => !needsCli(instance))
     .reduce((sum, instance) => sum + models.get(instance.instanceId)!.all.length, 0);
-  const search = total > SIMPLE_SEARCH_AFTER || listed.some((instance) => takesTypedModels(instance) && !instance.policy && !needsCli(instance));
+  const search = total > SIMPLE_SEARCH_AFTER || listed.some((instance) => takesTypedModels(instance) && !needsCli(instance));
   const query = search ? input.query.trim() : "";
   const { subscription, api, custom } = splitEngineRail(listed);
   const ordered = [...subscription, ...api, ...custom];
   const current = ordered.find((instance) => instance.instanceId === selection.instanceId);
 
   function groupBody(instance: InstanceInfo, provider: string): MenuGroupBody | null {
-    if (instance.policy) return query ? null : { kind: "policy", organization: instance.policy.organizationName, ...(instance.policy.team ? { team: true } : {}) };
     if (needsCli(instance)) return query ? null : { kind: "setUp" };
     const { signedOut, own, all } = models.get(instance.instanceId)!;
     if (all.length === 0) return query ? null : signedOut ? { kind: "signIn" } : { kind: "empty", loading: input.refreshing === instance.instanceId };

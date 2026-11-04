@@ -182,7 +182,6 @@ function BackupChooser({ bot, current, exclude, onPick, label, title, buttonRef,
             idPrefix={menuId}
             onQuery={setQuery}
             onPick={(instance, model) => {
-              if (instance.policy) return;
               onPick({ instanceId: instance.instanceId, model });
               close(true);
             }}

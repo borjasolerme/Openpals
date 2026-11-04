@@ -76,7 +76,6 @@ function setup(options: { helper?: { instanceId: string; model?: string } | null
       ["muse", turnsOnly("muse", "museCode")],
     ]),
     bots: new Map<string, SideJobBot>(["claude", "openrouter", "grok", "codex", "pi", "muse"].map((id) => [id, bot(id, id)])),
-    refused: new Set<string>(),
     overBudget: false,
     booked: [] as Booked[],
     logs: [] as string[],
@@ -84,7 +83,6 @@ function setup(options: { helper?: { instanceId: string; model?: string } | null
   const jobs = createSideJobs({
     bot: (id) => state.bots.get(id),
     instance: (id) => state.instances.get(id) ?? null,
-    refusal: (instance) => (state.refused.has(instance.instanceId) ? "the organisation does not allow this engine" : undefined),
     helper: () => state.helper,
     ...(options.modelAllowed ? { modelAllowed: options.modelAllowed } : {}),
     smallModels: options.smallModels ?? { refused: () => new Set(), remember: () => {} },
@@ -165,7 +163,6 @@ describe("the setup card's answers", () => {
     const jobs = createSideJobs({
       bot: (id) => ({ ...bot(id, id), modelSelection: { instanceId: id, model: id === "api" ? "x-large" : undefined } }),
       instance: (id) => instances.get(id) ?? null,
-      refusal: () => undefined,
       helper: () => ({ instanceId: "claude" }),
       ...(options.modelAllowed ? { modelAllowed: options.modelAllowed } : {}),
       smallModels: { refused: () => new Set(), remember: (_instance, model) => remembered.push(model) },
@@ -399,26 +396,13 @@ describe("what a helper call is booked as", () => {
 });
 
 describe("when the helper is not used", () => {
-  it("never takes over from a bot whose own engine is missing or disallowed", () => {
+  it("never takes over from a bot whose own engine is missing", () => {
     const { jobs, state } = setup();
-    state.refused.add("muse");
-    state.refused.add("codex");
     state.instances.delete("pi");
     for (const job of ["compaction", "memory", "skill-review", "setup-suggestions"] as const) {
-      expect(jobs.text(job, "muse"), job).toBeNull();
-      expect(jobs.text(job, "codex"), job).toBeNull();
       expect(jobs.text(job, "pi"), job).toBeNull();
       expect(jobs.text(job, "no-such-bot"), job).toBeNull();
     }
-  });
-
-  it("is never an engine the organisation does not allow", async () => {
-    const { jobs, state, claude } = setup();
-    state.refused.add("claude");
-    for (const job of ["compaction", "memory", "skill-review", "setup-suggestions"] as const) expect(jobs.text(job, "pi"), job).toBeNull();
-    expect(jobs.text("compaction", "codex")).toBeNull();
-    expect(claude.calls).toEqual([]);
-    expect(state.logs).toEqual([expect.stringContaining("the organisation does not allow this engine")]);
   });
 
   it("is never a model a hosted workspace has not been assigned", () => {
@@ -455,7 +439,6 @@ describe("when the helper is not used", () => {
       const jobs = createSideJobs({
         bot: (id) => bot(id, id),
         instance: (id) => engines[id] ?? null,
-        refusal: () => undefined,
         helper: () => ({ instanceId: "claude" }),
         smallModels: { refused: () => new Set(), remember: () => {} },
         assertWithinBudget: () => {},
@@ -468,7 +451,6 @@ describe("when the helper is not used", () => {
     const lookups = {
       "the setting": broken({ helper: () => { throw new Error("config.json could not be read"); } }),
       "the instance": broken({ instance: (id) => { if (id === "claude") throw new Error("the registry is reloading"); return turnsOnly("pi", "piAgent"); } }),
-      "the policy": broken({ refusal: (instance) => { if (instance.instanceId === "claude") throw new Error("the policy could not be read"); return undefined; } }),
       "the hosted list": broken({ helper: () => ({ instanceId: "claude", model: "m" }), modelAllowed: () => { throw new Error("no catalog"); } }),
     };
     for (const [what, { jobs, logs, claude }] of Object.entries(lookups)) {

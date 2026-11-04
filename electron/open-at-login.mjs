@@ -1,4 +1,4 @@
-// While this computer is lent, the app starts with the person's session, out of sight, so My Cloud's bots can use it
+// While this computer is lent, the app starts with the person's session, out of sight, so the server's bots can use it
 // again after a restart without anyone opening it. Lending only ever removes a login item it added, and only such a
 // launch starts hidden: one the person set up themselves, here or in the system's settings, opens the window.
 import fs from "node:fs";
@@ -93,7 +93,7 @@ export function createOpenAtLogin({ app, file, platform = process.platform, env 
   };
 }
 
-/** Settings' switch, on this computer's own page or My Cloud's page once it is home (`guard`); `changed` redraws the
+/** Settings' switch, on this computer's own page or the server's page once it is home (`guard`); `changed` redraws the
  * app menu's item. */
 export function installOpenAtLogin({ ipcMain, guard, loginItem, changed }) {
   const state = () => ({ available: loginItem.available(), on: loginItem.chosen() });

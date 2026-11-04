@@ -16,11 +16,8 @@ import { callResearchTool, RESEARCH_TOOL_NAMES } from "./agents-research-tools.t
 import { callHelperTool, HELPER_TOOL_NAMES } from "./agents-helper-tools.ts";
 import { callUsageLimitsTool, USAGE_LIMITS_TOOL } from "./agents-usage-tool.ts";
 import { callWaitTool, WAIT_TOOL_NAMES } from "./agents-wait-tools.ts";
-import { callComputerAskTool, COMPUTER_ASK_TOOL_NAMES } from "./agents-computer-ask-tool.ts";
 import { callMausBotTool, MAUSBOT_TOOL_NAMES } from "./agents-mausbot-tools.ts";
 import { callPageTool, PAGE_TOOL_NAMES } from "./agents-pages-tools.ts";
-import { callPersonTool, PERSON_TOOL_NAMES } from "./agents-person-tools.ts";
-import { callDevsTool, DEVS_TOOL_NAMES } from "./agents-devs-tools.ts";
 
 export interface ToolCallContext {
   botId: string;
@@ -217,12 +214,9 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
   if (HELPER_TOOL_NAMES.has(name)) return callHelperTool(name, args, context);
   if (MAUSBOT_TOOL_NAMES.has(name)) return callMausBotTool(name, args, context);
   if (PAGE_TOOL_NAMES.has(name)) return callPageTool(name, args, context);
-  if (PERSON_TOOL_NAMES.has(name)) return callPersonTool(name, args, context);
-  if (DEVS_TOOL_NAMES.has(name)) return callDevsTool(name, args, context);
   if (TRIGGER_TOOL_NAMES.has(name)) return callTriggerTool(name, args, context);
   if (WAIT_TOOL_NAMES.has(name)) return callWaitTool(name, args, context);
   if (name === USAGE_LIMITS_TOOL) return callUsageLimitsTool(context);
-  if (COMPUTER_ASK_TOOL_NAMES.has(name)) return callComputerAskTool(args, context);
   // Second lock: with sharing off the catalog already omits these tools.
   if (SHARED_COMPUTER_TOOL_NAMES.has(name) && !context.sharedComputers) {
     return { text: "Computer sharing is turned off in this workspace. There are no shared computers to use.", isError: true };

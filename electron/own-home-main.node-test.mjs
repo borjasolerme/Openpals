@@ -29,22 +29,23 @@ function servers(answers) {
   return { fetch, asked };
 }
 
-function install({ answers, cloudJournal = null, journal = null, choice = null, now = () => 1_000 }) {
+function install({ answers, journal = null, choice = null, now = () => 1_000 }) {
   const { fetch, asked } = servers(answers);
-  const changes = [];
+  const changes = [], handlers = new Map();
+  const chosen = memory(choice);
   const own = installOwnHome({
+    ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) }, page: (event) => event?.local === true,
+    server: () => null, window: () => null, localOrigin: () => "http://127.0.0.1:8799",
     localRequest: async () => new Response("", { status: 503 }),
     fetch,
-    environments: () => [garage, family, { id: "home", kind: "remote", name: "My Cloud", origin: "https://omb-u-1.fly.dev", home: true }],
-    handoff: async () => null,
+    environments: () => [garage, family, { id: "lab", kind: "local", name: "Lab", dataDir: "/x" }],
     journal: memory(journal),
-    choice: memory(choice),
+    choice: chosen,
     sendState: memory(),
-    cloudJournal: () => cloudJournal,
     onChange: () => changes.push(1),
     now,
   });
-  return { own, asked, changes };
+  return { own, asked, changes, handlers, chosen: () => chosen.read() };
 }
 
 test("a choice is kept only whole: the server's address, identity and name", () => {
@@ -55,9 +56,9 @@ test("a choice is kept only whole: the server's address, identity and name", () 
   }
 });
 
-test("only a server connected by hand can be made home: never This computer, My Cloud or a team's Cloud", () => {
+test("only a server connected by hand can be made home: never This computer or a named folder on it", () => {
   assert.equal(handSaved(garage), true);
-  for (const place of [{ id: "local", kind: "local", name: "This computer" }, { ...garage, home: true }, { ...garage, cloud: { id: "c" } }, { ...garage, team: { id: "t" } }]) {
+  for (const place of [{ id: "local", kind: "local", name: "This computer" }, { id: "lab", kind: "local", name: "Lab", dataDir: "/x" }, { ...garage, origin: undefined }, null]) {
     assert.equal(handSaved(place), false);
   }
 });
@@ -74,12 +75,6 @@ test("a server's circle offers Make my home only once it said it is this person'
   at += OWNER_KNOWN_MS;
   assert.equal(own.offers(garage), false, "an old word is asked again first");
   own.close();
-
-  const moving = install({ answers: { [garage.origin]: { own: true } }, cloudJournal: { v: 1, phase: "copy", cloud: { origin: "https://omb-u-1.fly.dev", account: "acct" } } });
-  moving.own.refresh();
-  await new Promise((resolve) => setTimeout(resolve, 20));
-  assert.equal(moving.own.offers(garage), false, "this computer's bots are on their way to My Cloud");
-  moving.own.close();
 });
 
 test("starting asks the server once more, and keeps this computer's bots here when it isn't theirs alone, isn't signed in or is too old", async () => {
@@ -89,23 +84,20 @@ test("starting asks the server once more, and keeps this computer's bots here wh
     [{ own: true, move: false }, "Update Openpals on Garage server first"],
   ];
   for (const [answer, words] of cases) {
-    const { own } = install({ answers: { [garage.origin]: answer } });
+    const { own, chosen } = install({ answers: { [garage.origin]: answer } });
     await assert.rejects(own.start("g"), (error) => error.message.includes(words));
-    assert.equal(own.chosen(), null);
+    assert.equal(chosen(), null);
     own.close();
   }
-  const cloud = install({ answers: { [garage.origin]: { own: true } }, cloudJournal: { v: 1, phase: "done", cloud: { origin: "https://omb-u-1.fly.dev", account: "acct" } } });
-  await assert.rejects(cloud.own.start("g"), /moving to My Cloud/u);
-  cloud.own.close();
   const unknown = install({ answers: {} });
-  await assert.rejects(unknown.own.start("home"), /isn't in this app/u, "My Cloud is never made home this way");
+  await assert.rejects(unknown.own.start("lab"), /isn't in this app/u, "a folder on this computer is never made home");
   unknown.own.close();
 
-  const { own, asked } = install({ answers: { [garage.origin]: { own: true } } });
+  const { own, asked, chosen } = install({ answers: { [garage.origin]: { own: true } } });
   assert.deepEqual(await own.start("g"), { started: true });
-  assert.deepEqual({ ...own.chosen(), at: 0 }, { v: 1, id: "g", origin: garage.origin, environmentId: ID, name: "Garage server", at: 0 });
+  assert.deepEqual({ ...chosen(), at: 0 }, { v: 1, id: "g", origin: garage.origin, environmentId: ID, name: "Garage server", at: 0 });
   assert.ok(asked.every((ask) => ask.origin === garage.origin && ask.headers.origin === garage.origin), "only that server, same-origin, with the window's sign-in");
-  assert.equal(own.active(), true, "no move to My Cloud starts now");
+  assert.equal(own.active(), true);
   await assert.rejects(own.start("g"), /already moving/u);
   own.close();
 });
@@ -122,16 +114,16 @@ test("each pass goes over the window's sign-in only to the server chosen, while 
   assert.ok(!asked.some((ask) => ask.path === "/api/auth/logout"), "the window's own sign-in stays");
 });
 
-test("while the move goes, this computer's screen names the server; once home is there, This computer is no place of its own", () => {
+test("while the move goes, this computer's page says so; once home is there, This computer is no place of its own", async () => {
   const choice = { v: 1, id: "g", origin: garage.origin, environmentId: ID, name: "Garage server", at: 1 };
   const cloud = { origin: garage.origin, account: `own:${ID}`, machine: garage.origin, name: "Garage server" };
   const moving = install({ answers: {}, choice, journal: { v: 1, phase: "final", cloud } });
-  assert.deepEqual(moving.own.underWay(), { phase: "final", name: "Garage server" });
+  assert.deepEqual((await moving.handlers.get("cloud-send:notice")({ local: true })).move, { phase: "finishing", place: "Garage server" });
+  assert.throws(() => moving.handlers.get("cloud-send:notice")({ local: false }), /only available in this app's window/u, "a server's page never reads it");
   assert.equal(moving.own.origin(), null);
   assert.equal(moving.own.home(), null, "nothing is lent before the switch");
   moving.own.close();
   const done = install({ answers: {}, choice, journal: { v: 1, phase: "done", cloud, doneAt: 1 } });
-  assert.equal(done.own.underWay(), null);
   assert.equal(done.own.origin(), garage.origin);
   assert.deepEqual(done.own.home(), { id: "g", origin: garage.origin, environmentId: ID, name: "Garage server" });
   assert.equal(done.own.offers(garage), false);

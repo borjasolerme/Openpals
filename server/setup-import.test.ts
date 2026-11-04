@@ -61,13 +61,12 @@ function machineFor(home: string, platform: NodeJS.Platform = "darwin", env: Rec
   return { machine, ops, touched: () => ops.map((entry) => entry.path) };
 }
 
-function hostFor(options: { servers?: Record<string, unknown>; refuse?: string[]; claudeUserMcp?: boolean; saveFails?: boolean } = {}) {
+function hostFor(options: { servers?: Record<string, unknown>; claudeUserMcp?: boolean; saveFails?: boolean } = {}) {
   let servers = options.servers ?? {};
   let busy = false;
   const saves: Array<Record<string, unknown>> = [];
   const host: SetupHost = {
     mcpServers: () => servers,
-    mcpPolicyRefusal: (name) => (options.refuse?.includes(name) ? "Not on your organization's approved list." : undefined),
     persistMcpServers: (next) => {
       if (options.saveFails) throw new Error("config.json could not be written");
       servers = next;
@@ -285,7 +284,7 @@ describe("finding what another AI tool already set up on this computer", () => {
     expect(sources.has("cursor")).toBe(true);
   });
 
-  it("leaves out servers already here by name, command or address, ones the organization refuses, and all of them when the list is full", () => {
+  it("leaves out servers already here by name, command or address, and all of them when the list is full", () => {
     const home = fixtureHome();
     plantTools(home);
     const { machine } = machineFor(home);
@@ -293,8 +292,8 @@ describe("finding what another AI tool already set up on this computer", () => {
       notion: { type: "http", url: "https://mcp.notion.com/mcp", headers: {}, enabled: true },
       gh: { command: "npx", args: ["-y", "@modelcontextprotocol/server-github"], env: {}, enabled: false },
     };
-    const names = detectSetup(machine, hostFor({ servers, refuse: ["filesystem"] }).host).tools.map((tool) => tool.name);
-    expect(names).toEqual(["linear", "sentry", "figma", "context7", "legacy", "local-tool"]);
+    const names = detectSetup(machine, hostFor({ servers }).host).tools.map((tool) => tool.name);
+    expect(names).toEqual(["linear", "filesystem", "sentry", "figma", "context7", "legacy", "local-tool"]);
     const full = Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`s${i}`, { command: `tool-${i}`, args: [], env: {}, enabled: false }]));
     expect(detectSetup(machine, hostFor({ servers: full }).host).tools).toEqual([]);
   });
@@ -607,18 +606,18 @@ describe("bringing MCP servers in", () => {
     expect(JSON.stringify(result)).not.toMatch(/secret_value|Bearer/);
   });
 
-  it("adds each server once, fills the list only to its limit, and leaves refused ones out", () => {
+  it("adds each server once, and fills the list only to its limit", () => {
     const home = fixtureHome();
     plantTools(home);
     const { machine } = machineFor(home);
     const existing = Object.fromEntries(Array.from({ length: 17 }, (_, i) => [`s${i}`, { command: `tool-${i}`, args: [], env: {}, enabled: true }]));
-    const { host, servers } = hostFor({ servers: { ...existing, notion: { type: "http", url: "https://MCP.notion.com/mcp", headers: {}, enabled: true } }, refuse: ["github"] });
+    const { host, servers } = hostFor({ servers: { ...existing, notion: { type: "http", url: "https://MCP.notion.com/mcp", headers: {}, enabled: true } } });
     expect(applySetupImport(machine, host, { tools: true }).tools).toEqual({
-      added: ["linear", "filesystem"],
+      added: ["github", "linear"],
       present: ["notion"],
       skipped: [
-        { name: "sentry", reason: "limit" }, { name: "figma", reason: "limit" }, { name: "context7", reason: "limit" },
-        { name: "legacy", reason: "limit" }, { name: "local-tool", reason: "limit" }, { name: "github", reason: "policy" },
+        { name: "filesystem", reason: "limit" }, { name: "sentry", reason: "limit" }, { name: "figma", reason: "limit" },
+        { name: "context7", reason: "limit" }, { name: "legacy", reason: "limit" }, { name: "local-tool", reason: "limit" },
       ],
     });
     expect(Object.keys(servers())).toHaveLength(20);

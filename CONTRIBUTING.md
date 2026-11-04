@@ -23,7 +23,7 @@ and logged in. macOS is the primary release platform and Ubuntu 24.04 x64 is the
 the harness server itself is portable Node and the test suite runs on macOS, Linux, and Windows.
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot
+git clone https://github.com/borjasolerme/Openpals && cd Openpals
 pnpm install
 
 pnpm dev:server    # harness server → 127.0.0.1:8799
@@ -43,31 +43,7 @@ To reproduce a failing CI test job, follow [Vitest shards](docs/ci.md#vitest-sha
 Use the job's checkout revision, OS, file filters, shard fraction, and
 `OMB_VITEST_E2E` value; the same shard number alone does not select the same files.
 
-`pnpm dev:desktop` downloads and verifies the pinned Cloudflare Tunnel connector for the current
-platform and architecture before Electron starts. Later launches re-verify and reuse the staged
-binary. Packaging continues to use `pnpm build:cloudflared`, which stages every architecture the
-host's desktop package build requires. To stage only the current development target without
-launching Electron, run `node scripts/prepare-cloudflared.mjs --current`.
-
 For Ubuntu installation and real desktop checks, see [`docs/linux-desktop.md`](docs/linux-desktop.md).
-
-## Ubuntu release checklist
-
-Ubuntu release packages must come from the manual **Package Ubuntu** workflow on an exact release commit or tag,
-not from a developer workstation. The Ubuntu 24.04 runner builds and verifies both formats, launches the unpacked
-app and AppImage, routes `click` and `type_text` through the overlay-free bundled Cua runtime on Xorg, runs the
-fail-closed Wayland CUA smoke,
-and produces one release artifact containing:
-
-- the versioned `.deb` and AppImage;
-- stable `OpenMausBot-amd64.deb` and `OpenMausBot.AppImage` copies used by the latest-download links;
-- `SHA256SUMS-ubuntu-x64.txt` covering both versioned and stable names.
-
-Before publishing, confirm that `package.json` has the release version and dispatch the workflow against the same
-commit used for the other platforms. Attach all five Ubuntu files to the matching release in the separate
-[OpenMausBot releases](https://github.com/milind-soni/OpenMausBot/releases). Then verify the checksum
-file and install the `.deb` plus launch the AppImage in a clean Ubuntu 24.04 x86_64 GNOME environment. Never combine
-packages built from different commits under one version.
 
 ## Repo map
 

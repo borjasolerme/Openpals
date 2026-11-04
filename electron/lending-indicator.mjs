@@ -5,9 +5,9 @@ export const deviceWord = (platform = process.platform) => platform === "darwin"
 
 const listed = names => names.length < 3 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 /** Beside the icon there is room for two names at most. */
-const short = names => names.length < 3 ? listed(names) : `${names.length} Clouds`;
+const short = names => names.length < 3 ? listed(names) : `${names.length} servers`;
 
-/** `screen`: computer control's state; while it isn't ready the line says what the Clouds
+/** `screen`: computer control's state; while it isn't ready the line says what the servers
  * can't use, and `screen` why. */
 export function indicatorText({ clouds, using, paused, screen = null }, device) {
   const it = `this ${device}`;
@@ -33,7 +33,7 @@ export function createLendingIndicator({ Tray, Menu, nativeImage, iconPath, onPa
       ...fix ? [{ label: fix, click: () => onStartScreen() }] : [],
       { type: "separator" },
       view.paused ? { label: "Resume", click: () => onResume() } : { label: "Pause", click: () => onPause() },
-      ...view.paused ? [] : [{ label: `Let Clouds run commands on this ${device}`, type: "checkbox", checked: view.terminal,
+      ...view.paused ? [] : [{ label: `Let your server run commands on this ${device}`, type: "checkbox", checked: view.terminal,
         // Electron 43 ticks a checkbox on click by itself: the menu keeps the saved choice until the person confirms one.
         click: () => { draw(view); onTerminal(!view.terminal); } }],
       { label: "See activity", click: () => onActivity() },

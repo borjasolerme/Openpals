@@ -3,11 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fixture = vi.hoisted(() => ({ effects: [] as EffectCallback[], dispatch: vi.fn(), api: vi.fn(), create: vi.fn(), setDraft: vi.fn(), ready: false, hook: 0, admin: false,
-  profile: {} as Record<string, unknown>, track: vi.fn(), advanced: true, appSettingsOpen: false, openBot: vi.fn(), close: vi.fn() }));
+  profile: {} as Record<string, unknown>, advanced: true, appSettingsOpen: false, openBot: vi.fn(), close: vi.fn() }));
 vi.mock("@/state/thread-navigation", async importOriginal => ({
   ...await importOriginal<typeof import("@/state/thread-navigation")>(), openBot: fixture.openBot,
 }));
-vi.mock("@/lib/analytics", () => ({ track: fixture.track }));
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => fixture.advanced }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.admin }));
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: {} }) }));
@@ -32,7 +31,6 @@ vi.mock("@/state/store", async importOriginal => {
   return { ...store, api: fixture.api, BotEditorStore: () => null, useStore: () => ({ state: { ...store.initialState, appSettingsOpen: fixture.appSettingsOpen }, dispatch: fixture.dispatch }) };
 });
 import { NewBotDialog } from "./NewBotDialog";
-import { setTeamChats } from "@/state/team-chats";
 import { Select } from "./Select";
 import type { BotCreationDraft } from "@/lib/bot-creation-draft";
 
@@ -65,13 +63,12 @@ beforeEach(() => {
   fixture.advanced = true;
   fixture.effects = []; fixture.dispatch.mockReset(); fixture.api.mockReset();
   fixture.ready = false; fixture.admin = false; fixture.create.mockReset(); fixture.setDraft.mockReset(); fixture.profile = {};
-  fixture.track.mockReset();
   fixture.appSettingsOpen = false;
   fixture.openBot.mockReset();
   fixture.close.mockReset();
   fixture.api.mockReturnValue(new Promise(() => {}));
 });
-afterEach(() => { vi.unstubAllGlobals(); setTeamChats(null); });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("bot draft dialog", () => {
   it("preserves upstream audience selection for browser admins before creation", () => {
@@ -164,11 +161,7 @@ describe("bot draft dialog", () => {
     expect(fixture.api).not.toHaveBeenCalled();
   });
 
-  it.each([
-    [["research"], { source: "template", template: "research" }],
-    [["coder", ""], { source: "blank" }],
-    [[], { source: "blank" }],
-  ])("reports the starting role chosen in the dialog (%j) once the bot is created", async (choices, props) => {
+  it.each([[["research"]], [["coder", ""]], [[]]])("creates the bot whatever starting role was chosen in the dialog (%j)", async (choices) => {
     vi.stubGlobal("window", {});
     fixture.ready = true;
     fixture.create.mockResolvedValue({ bot: { id: "created", name: "Fixture" }, warnings: [] });
@@ -176,20 +169,6 @@ describe("bot draft dialog", () => {
     for (const value of choices) chooseStartingRole(dialog, value);
     dialog.filter(node => node.type === "button").at(-1)!.props.onClick!();
     await vi.waitFor(() => expect(fixture.close).toHaveBeenCalledOnce());
-    expect(fixture.track.mock.calls).toEqual([["bot_created", props]]);
-  });
-
-  it("on a team's Cloud, opens the creator's own private chat with the new bot, never the team's shared main chat", async () => {
-    setTeamChats({ teamId: "acme", member: false, opened: [] });
-    fixture.ready = true;
-    const bot = { id: "created", name: "Fixture" };
-    fixture.create.mockResolvedValue({ bot, warnings: [] });
-    render().nodes.filter(node => node.type === "button").at(-1)!.props.onClick!();
-    await vi.waitFor(() => expect(fixture.openBot).toHaveBeenCalledTimes(1));
-    expect(fixture.openBot.mock.calls[0].slice(0, 2)).toEqual([fixture.dispatch, bot]);
-    const added = fixture.dispatch.mock.calls.findIndex(([action]) => action.type === "botAdded");
-    expect(added).toBeGreaterThanOrEqual(0);
-    expect(fixture.openBot.mock.invocationCallOrder[0]).toBeGreaterThan(fixture.dispatch.mock.invocationCallOrder[added]);
   });
 
   it("anywhere but a team's Cloud, leaves the new bot selected as it always was", async () => {
@@ -210,7 +189,6 @@ describe("bot draft dialog", () => {
     (dialog.find(named("DraftSection"))!.props as unknown as { draft: BotCreationDraft }).draft.choosePreset({ id: "My secret preset", skills: [], notes: [] });
     dialog.filter(node => node.type === "button").at(-1)!.props.onClick!();
     await vi.waitFor(() => expect(fixture.close).toHaveBeenCalledOnce());
-    expect(fixture.track.mock.calls).toEqual([["bot_created", { source: "preset" }]]);
   });
 
   it("reports nothing when saving the defaults for new bots, or when creating fails", async () => {
@@ -222,7 +200,6 @@ describe("bot draft dialog", () => {
     render().nodes.filter(node => node.type === "button").at(-1)!.props.onClick!();
     await vi.waitFor(() => expect(fixture.create).toHaveBeenCalled());
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(fixture.track).not.toHaveBeenCalled();
   });
 
   it("uses the same section editor for default templates", () => {

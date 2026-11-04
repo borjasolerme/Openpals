@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, utime
 import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { botThreadLimitText, defaultBotThreads, maxConcurrentBotThreads, maxConcurrentChildThreads } from "./bot-thread-limits.ts";
+import { botThreadLimitText, defaultBotThreads, maxConcurrentBotThreads } from "./bot-thread-limits.ts";
 import type { JsonValue } from "./schema.ts";
 
 import { cacheUntilConfigChanges,
@@ -127,21 +127,12 @@ describe("configuration boundaries", () => {
     expect(() => parseConfigPatch({ tts: { fishModel: "s1" } })).toThrow("fishModel");
   });
 
-  it("defaults to what each host holds, and a saved number wins except over a plan's limit", () => {
+  it("defaults to what the machine holds, and a saved number wins", () => {
     const GB = 1024 ** 3;
-    const desktop = (gb: number) => ({ memoryGate: false, totalBytes: gb * GB, oneThreadPerBot: false });
-    for (const [gb, threads] of [[2, 3], [4, 3], [8, 4], [16, 8], [26, 13], [32, 16], [128, 16]] as const) expect(maxConcurrentBotThreads({}, desktop(gb))).toBe(threads);
-    expect(maxConcurrentBotThreads({}, desktop(15.8)), "a 16 GB machine reports a little less").toBe(8);
-    for (const gb of [2, 8]) expect(maxConcurrentBotThreads({}, { memoryGate: true, totalBytes: gb * GB, oneThreadPerBot: false }), "the memory gate decides").toBe(16);
-    expect(maxConcurrentBotThreads({ threads: { maxConcurrentPerBot: 2 } }, desktop(64))).toBe(2);
-    expect(maxConcurrentBotThreads({ threads: { maxConcurrentPerBot: 2 } }, { memoryGate: true, totalBytes: 8 * GB, oneThreadPerBot: false })).toBe(2);
-    const starter = { memoryGate: true, totalBytes: 2 * GB, oneThreadPerBot: true };
-    expect(maxConcurrentBotThreads({}, starter)).toBe(1);
-    expect(maxConcurrentBotThreads({ threads: { maxConcurrentPerBot: 8 } }, starter), "a plan's limit is not a preference").toBe(1);
-    expect(maxConcurrentChildThreads({}, starter), "a bot's own turn is never held behind itself").toBe(16);
-    expect(maxConcurrentChildThreads({ threads: { maxConcurrentPerBot: 2 } }, desktop(64)), "only a plan's limit lets children through").toBe(2);
-    expect(botThreadLimitText({}, starter)).toContain("Starter runs one thread at a time per bot");
-    expect(botThreadLimitText({ threads: { maxConcurrentPerBot: 5 } }, desktop(16))).toBe("this bot has reached its limit of 5 parallel threads — wait for one to finish");
+    for (const [gb, threads] of [[2, 3], [4, 3], [8, 4], [16, 8], [26, 13], [32, 16], [128, 16]] as const) expect(maxConcurrentBotThreads({}, gb * GB)).toBe(threads);
+    expect(maxConcurrentBotThreads({}, 15.8 * GB), "a 16 GB machine reports a little less").toBe(8);
+    expect(maxConcurrentBotThreads({ threads: { maxConcurrentPerBot: 2 } }, 64 * GB)).toBe(2);
+    expect(botThreadLimitText({ threads: { maxConcurrentPerBot: 5 } }, 16 * GB)).toBe("this bot has reached its limit of 5 parallel threads — wait for one to finish");
     expect(parseStoredConfig({ threads: { maxConcurrentPerBot: 16 } })).toEqual({ threads: { maxConcurrentPerBot: 16 } });
     expect(maxConcurrentBotThreads(parseConfigPatch({ threads: { maxConcurrentPerBot: 1 } }))).toBe(1);
     for (const value of [0, -1, 17, 1.5, "10", null]) {
@@ -262,7 +253,6 @@ describe("configuration boundaries", () => {
     expect(() => parseStoredConfig({ defaultModelSelection })).toThrow("defaultModelSelection");
     expect(() => parseConfigPatch({ defaultModelSelection })).toThrow("defaultModelSelection");
   });
-
 
   it("canonicalizes legacy browser profile ids without dropping other stored settings", () => {
     expect(parseStoredConfig({
@@ -598,10 +588,9 @@ describe("configuration boundaries", () => {
     expect(parseConfigPatch({ features: { browser: false } })).toEqual({ features: { browser: false } });
     expect(builtInBrowserEnabled({ features: { browser: false } })).toBe(false);
     expect(builtInBrowserEnabled({ features: { browser: true } })).toBe(true);
-    const cloudHome = { OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93" };
-    expect(builtInBrowserEnabled({}, { OMB_PUBLIC_URL: "https://selfhosted.example.test" })).toBe(true);
-    expect(builtInBrowserEnabled({}, cloudHome)).toBe(true);
-    expect(builtInBrowserEnabled({ features: { browser: false } }, cloudHome)).toBe(false);
+    const selfHosted = { OMB_PUBLIC_URL: "https://selfhosted.example.test" };
+    expect(builtInBrowserEnabled({}, selfHosted)).toBe(true);
+    expect(builtInBrowserEnabled({ features: { browser: false } }, selfHosted)).toBe(false);
     expect(parseConfigPatch({ browserProfiles: [{ id: "work", name: " Work " }] })).toEqual({
       browserProfiles: [{ id: "work", name: "Work" }],
     });
@@ -1239,7 +1228,7 @@ describe("OpenCode Go configuration", () => {
     const stored = parseStoredConfig({
       profile: { name: "Ada" },
       opencodeGo: { providerKeys: {
-        VENICE_API_KEY: "venice-secret", venice_api_key: "lower", OPENCODE_API_KEY: "shadow", OMB_CLOUD_BOAT_TOKEN: "relay",
+        VENICE_API_KEY: "venice-secret", venice_api_key: "lower", OPENCODE_API_KEY: "shadow",
         BOX_TOKEN: "boat", NODE_OPTIONS: "--require x", GROQ_API_KEY: "has space",
         DEEPSEEK_API_KEY: 42, TOGETHER_API_KEY: null, FIREWORKS_API_KEY: { key: "nested" },
       } },
@@ -1286,7 +1275,7 @@ describe("saving OpenCode provider keys", () => {
       expect(refused(name)).toContain("such as VENICE_API_KEY");
     }
     expect(refused("OPENCODE_API_KEY")).toContain("OpenCode API key box");
-    for (const name of ["OPENCODE_SERVER_KEY", "OMB_CLOUD_BOAT_TOKEN", "OMB_LICENSE_KEY", "BOX_TOKEN", "COMPOSIO_API_KEY",
+    for (const name of ["OPENCODE_SERVER_KEY", "OMB_LICENSE_KEY", "BOX_TOKEN", "COMPOSIO_API_KEY",
       "OPENAI_COMPAT_API_KEY", "XAI_API_KEY", "MISTRAL_API_KEY", "CURSOR_API_KEY", "FACTORY_API_KEY"]) {
       expect(refused(name)).toBe(`OpenMaus keeps ${name} for itself, so OpenCode can't be given it here. Put this key in opencode.json instead.`);
     }
@@ -1523,40 +1512,6 @@ describe("credential env preference", () => {
     expect(loadConfig().tts?.voice).toBeUndefined();
     writeFileSync(join(DATA_DIR, "config.json"), JSON.stringify({ tts: { provider: "elevenlabs" } }));
     expect(loadConfig().tts?.voice).toBe("preset-voice");
-  });
-
-  it("never takes Cloud Pro's included tokens for the person's own keys, in config or an engine's environment", () => {
-    const included = {
-      OMB_CLOUD_BOAT_URL: "https://cloud.example.test/api/cloud/services/boat/api/box/v1",
-      OMB_CLOUD_BOAT_TOKEN: "box_omb_included-relay-token",
-      OMB_CLOUD_VOICE_URL: "https://cloud.example.test/api/cloud/services/voice/v1",
-      OMB_CLOUD_VOICE_TOKEN: "omb_voice_included-relay-token",
-      OMB_CLOUD_DECIDER_URL: "https://cloud.example.test/api/cloud/services/decider",
-      OMB_CLOUD_DECIDER_TOKEN: "omb_decide_included-relay-token",
-    };
-    for (const [name, value] of Object.entries(included)) vi.stubEnv(name, value);
-    try {
-      const cfg = loadConfig();
-      expect(cfg.box?.token).toBeUndefined();
-      expect(cfg.tts?.key).toBeUndefined();
-      expect(cfg.decider?.key).toBeUndefined();
-      for (const entry of Object.values(instanceConfigs(cfg))) {
-        for (const value of Object.values(entry.environment ?? {})) expect(Object.values(included)).not.toContain(value);
-      }
-      saveConfig({ tts: { voice: "chosen" }, box: { token: "" }, decider: { enabled: true, jobs: { roomRouting: true } } });
-      const disk = readFileSync(join(DATA_DIR, "config.json"), "utf8");
-      const runtime = JSON.stringify([loadConfig(), instanceConfigs(loadConfig()), persistableInstanceConfigs(loadConfig())]);
-      for (const token of [included.OMB_CLOUD_BOAT_TOKEN, included.OMB_CLOUD_VOICE_TOKEN, included.OMB_CLOUD_DECIDER_TOKEN]) {
-        expect(disk).not.toContain(token);
-        expect(runtime).not.toContain(token);
-      }
-      process.env.BOX_TOKEN = "box_own";
-      process.env.OMB_TTS_KEY = "sk-own";
-      expect(loadConfig()).toMatchObject({ box: { token: "box_own" }, tts: { key: "sk-own" } });
-      expect(JSON.stringify(instanceConfigs(loadConfig()))).not.toContain("box_own");
-    } finally {
-      vi.unstubAllEnvs();
-    }
   });
 
   it("saves and removes the verified domain without replacing existing settings", () => {
@@ -1929,10 +1884,6 @@ describe("workspace credential env strip", () => {
   it("covers in-process secrets and private app-state paths", () => {
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("BOX_TOKEN");
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_TTS_KEY");
-    expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_BOAT_TOKEN");
-    expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_VOICE_TOKEN");
-    expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_DECIDER_TOKEN");
-    expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_AI_TOKEN");
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_FISH_AUDIO_API_KEY");
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_OPENAI_IMAGE_KEY");
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_BROWSER_CONNECTION");
@@ -2289,7 +2240,7 @@ describe("a value derived from config.json", () => {
   );
 });
 
-describe("X research's included relay token", () => {
+describe("X research's treg key", () => {
   it("still loads a config.json saved with the old own treg token, and keeps that token out of the config", () => {
     const path = join(DATA_DIR, "config.json");
     mkdirSync(DATA_DIR, { recursive: true });
@@ -2306,8 +2257,7 @@ describe("X research's included relay token", () => {
     }
   });
 
-  it("keeps the plan's research token and the person's own treg key as workspace credentials that never reach an engine", () => {
-    expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_X_TOKEN");
+  it("keeps the person's own treg key as a workspace credential that never reaches an engine", () => {
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_TREG_KEY");
   });
 });

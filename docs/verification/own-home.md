@@ -6,12 +6,12 @@ itself; and that none of it happens for a server other people sign in to.
 
 ```sh
 pnpm exec vitest run server/own-home.e2e.test.ts server/own-home.test.ts server/move-freeze.test.ts
-node --test electron/own-home-main.node-test.mjs electron/lending-target.node-test.mjs electron/lend-automatically.node-test.mjs electron/one-home-main.node-test.mjs electron/cloud-rail.node-test.mjs electron/home-window.node-test.mjs electron/cloud-connections.node-test.mjs
+node --test electron/own-home-main.node-test.mjs electron/lending-target.node-test.mjs electron/lend-automatically.node-test.mjs electron/cloud-rail.node-test.mjs electron/cloud-connections.node-test.mjs
 ```
 
 `scripts/testing/own-home-fixture.ts` starts this computer's server as the
-desktop app starts it, and servers of the person's own (`openmausbot serve`,
-nothing of MausBot Cloud), each paired as a pairing link pairs it, with main's
+desktop app starts it, and servers of the person's own (`openmausbot serve`),
+each paired as a pairing link pairs it, with main's
 own wiring for the move (`electron/own-home-main.mjs`) between them. Its
 requests carry the pairing's session as the window's would. Temp homes and a
 synthetic Claude CLI; no network.
@@ -39,14 +39,10 @@ synthetic Claude CLI; no network.
 
 The node tests add the rest: a choice is bound to the server's identity, the
 offer needs the server's fresh word that it is the person's alone and no move
-under way, Make … my home is refused on My Cloud, a team's Cloud, a server not
-signed in or too old; every pass goes over the window's sign-in to that server
+under way, Make … my home is refused on a server not signed in or too old; every pass goes over the window's sign-in to that server
 only and never signs it out; lending to that server stops once it has other
-people on it or another server answers at its address; while a server of the
-person's own is chosen no move to My Cloud starts; the frozen screen names the
-server and never asks for a MausBot Cloud sign-in; and connected apps through
-MausBot's service stay on this computer (a final, plain reason) when the server
-has no such service, so the move's check still passes.
+people on it or another server answers at its address; and the frozen screen
+names the server.
 
 ## Bots in two places, noticed
 
@@ -63,13 +59,12 @@ suggestion names that server, the shared server is never even asked, and Not
 now is remembered after the app opens again; **Bring them together** starts the
 move there, and nothing is suggested while it goes.
 
-The node tests cover the rest: a bot counts as the move would carry it, My Cloud
-comes first and only while the person keeps this computer's bots here, nothing
+The node tests cover the rest: a bot counts as the move would carry it, nothing
 is suggested while a move is under way, after this computer's bots were deleted,
 or for a place that couldn't say, and each place is read again at most every ten
 minutes unless the places changed. `src/components/AppNotices.test.ts` shows the
 card once on this computer's page before any promotion, never during the welcome
-or the tour, and never on a Cloud's or a server's page, which never get the bridge.
+or the tour, and never on a server's page, which never gets the bridge.
 
 ## Bots that say where another bot lives
 
@@ -79,13 +74,9 @@ node --test electron/two-places.node-test.mjs
 ```
 
 The person's app tells each of their own places (this computer, a server that
-says it is theirs alone, My Cloud while awake) the names of the bots their other
-places have, and nothing more: no address, id or message. A team's place, or
-one others sign in to, is never told anything (`PUT /api/places/elsewhere`, owner
-only). A team the person's verified session says they are in is named to their own
-places, by name with the bots they see there once they have opened it, so a bot
-there says "Sales lives in Acme" and that it can ask there or move to Acme; a team
-they left is no longer named.
+says it is theirs alone) the names of the bots their other places have, and
+nothing more: no address, id or message. A place others sign in to is never told
+anything (`PUT /api/places/elsewhere`, owner only).
 `server/places-elsewhere.e2e.test.ts` checks, over the same fixture:
 
 - before the app said anything, `coordinate_bots` to a name nowhere here answers
@@ -98,6 +89,6 @@ they left is no longer named.
 - the person @mentioning that bot in a chat tells the answering bot where it
   lives, and in a room one plain line says so to the person.
 
-The unit tests add how My Cloud's way is said, two places of theirs that are no
+The unit tests add two places of theirs that are no
 computer (by hand, with a backup), a bot here of the same name winning, waits
 (`bot_idle`) answering the same way, and the word kept across a restart.

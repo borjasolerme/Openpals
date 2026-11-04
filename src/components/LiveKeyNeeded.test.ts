@@ -2,16 +2,15 @@ import { Children, createElement, isValidElement, type ReactElement, type ReactN
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, expect, it, vi } from "vitest";
 
-const f = vi.hoisted(() => ({ dispatch: vi.fn(), dismiss: vi.fn(), cloudHome: false }));
+const f = vi.hoisted(() => ({ dispatch: vi.fn(), dismiss: vi.fn() }));
 vi.mock("react", async (original) => ({ ...await original<typeof import("react")>(), useId: () => "live-key-title" }));
-vi.mock("@/state/store", () => ({ useStore: () => ({ state: { config: { cloudHome: f.cloudHome } }, dispatch: f.dispatch }) }));
+vi.mock("@/state/store", () => ({ useStore: () => ({ state: { config: {} }, dispatch: f.dispatch }) }));
 vi.mock("@/lib/live-call-media", () => ({ dismissLiveNotice: f.dismiss }));
 import { LiveKeyNeeded } from "./LiveKeyNeeded";
 import { finishKeyFocus, useKeyFocus } from "./keys/key-focus";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  f.cloudHome = false;
 });
 
 type Node = ReactElement<{ children?: ReactNode; onClick?: () => void }>;
@@ -25,8 +24,6 @@ it("says one plain thing, names OpenAI, and offers only the way to Settings → 
   expect(html.match(/<button/g)).toHaveLength(1);
   expect(html).toContain("The OpenAI key stays on your computer.");
   for (const gone of ["Pro", "plan", "<input", "$15"]) expect(html).not.toContain(gone);
-  f.cloudHome = true;
-  expect(renderToStaticMarkup(createElement(LiveKeyNeeded))).toContain("The OpenAI key stays in the Cloud.");
 });
 
 it("opens Settings at the OpenAI key in Voice and calls, and puts the prompt away", () => {

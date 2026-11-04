@@ -9,8 +9,7 @@ import type { AppConfig } from "../config.ts";
 import type { ConnectedReads, EmailHeader } from "../connected-reads.ts";
 import type { Decider } from "../decider/index.ts";
 import { INBOX_TRIAGE_INSTRUCTIONS, INBOX_TRIAGE_OPTIONS } from "../decider/inbox-triage.ts";
-import { relayAccepts } from "../decider/relay.ts";
-import { INBOX_FIELDS, relayAcceptsExtract } from "../extractor/contract.ts";
+import { INBOX_FIELDS } from "../extractor/contract.ts";
 import type { Extractor } from "../extractor/index.ts";
 import { RECORDS_END } from "../records-block.ts";
 import type { Routine, RoutineRun } from "../routines.ts";
@@ -61,12 +60,9 @@ describe("inbox triage on the helper models", () => {
       { id: "b", why: "Asks you to confirm the PO number, due 2026-10-30.", needsReply: true },
       { id: "c", why: "", needsReply: false },
     ]);
-    // Every request is one the Cloud relay accepts: the fixed fields, the fixed question, cleaned data.
-    for (const [seam, fields, input] of extractor.calls.mock.calls) expect(relayAcceptsExtract(seam as never, fields as never, input as never)).toBe(true);
-    for (const [seam, state, question] of decider.calls.mock.calls) {
+    for (const [seam, , question] of decider.calls.mock.calls) {
       expect(seam).toBe("inboxTriage");
       expect(question).toEqual({ instructions: INBOX_TRIAGE_INSTRUCTIONS, options: INBOX_TRIAGE_OPTIONS });
-      expect(relayAccepts("inboxTriage", state, { answer: { type: "choice", ...(question as { instructions: string; options: Record<string, string> }) } })).toBe(true);
     }
     expect(decider.calls.mock.calls[1]![1]).toMatchObject({ details: { ask: "confirm the PO number", needs_reply: true }, dismissed_senders: ["news@shop.example"] });
     expect(extractor.calls.mock.calls[0]!.slice(0, 2)).toEqual(["inboxTriage", INBOX_FIELDS]);

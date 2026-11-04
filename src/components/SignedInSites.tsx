@@ -7,10 +7,9 @@ interface SignedInSite { site: string; cookies: number; storage: number }
 interface SignedInSitesAnswer { running: boolean; sites: SignedInSite[] }
 
 /** Security: the server reads and clears the browser itself, running or not, and keeps the key. */
-export function SignedInSites({ target, scope = {}, sharedBy, disabled = false, bare = false }: {
+export function SignedInSites({ target, sharedBy, disabled = false, bare = false }: {
   target: { profile: string } | { bot: string };
   /** Which conversation's browser is meant, on a Team Cloud. */
-  scope?: Readonly<Record<string, string>>;
   sharedBy: string[];
   disabled?: boolean;
   bare?: boolean;
@@ -26,13 +25,13 @@ export function SignedInSites({ target, scope = {}, sharedBy, disabled = false, 
     catch (cause) { setError(cause instanceof Error && cause.message ? cause.message : t("settings.sites.error")); }
     finally { setBusy(false); }
   };
-  const load = () => run(() => api(`/api/browser-sites?${new URLSearchParams({ ...target, ...scope }).toString()}`));
+  const load = () => run(() => api(`/api/browser-sites?${new URLSearchParams(target).toString()}`));
   const signOut = (site?: string) => run(() => api("/api/browser-sites/sign-out", {
     method: "POST",
-    body: JSON.stringify({ ...target, ...scope, ...(site ? { site } : {}) }),
+    body: JSON.stringify({ ...target, ...(site ? { site } : {}) }),
   }));
 
-  const key = `${"bot" in target ? `bot:${target.bot}` : `profile:${target.profile}`}${scope.threadId ? `:${scope.threadId}` : ""}`;
+  const key = "bot" in target ? `bot:${target.bot}` : `profile:${target.profile}`;
   useEffect(() => {
     if (bare) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps

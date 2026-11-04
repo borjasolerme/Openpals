@@ -110,8 +110,6 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
 } = {}) {
   const { state: store, dispatch } = useStore();
   const botName = (id: string) => store.bots?.find((bot) => bot.id === id)?.name ?? id;
-  const policy = store.config?.managedPolicy;
-  const restricted = Boolean(policy && !policy.mcp.allowCustom);
   const [servers, setServers] = useState<McpServerListing[] | null>(null);
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -233,17 +231,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
     let latest = servers ?? [];
     try {
       for (const item of items) {
-        const body = item.ownKey
-          ? { ...item.body, headers: Object.fromEntries(Object.keys(item.body.headers ?? {}).map((name) => [name, ""])) }
-          : item.body;
-        latest = listed((await api("/api/mcp/servers", { method: "POST", body: JSON.stringify({ name: item.name, ...body }) })).servers);
-        if (item.ownKey) {
-          await api("/api/team/connection-scopes", { method: "PUT", body: JSON.stringify({ kind: "mcp", id: item.name, scope: "person" }) });
-          await api(`/api/team/my-connections/mcp/${encodeURIComponent(item.name)}/key`, { method: "PUT", body: JSON.stringify({ value: item.ownKey, url: body.url }) });
-          latest = listed((await api(`/api/mcp/servers/${encodeURIComponent(item.name)}`, {
-            method: "PUT", body: JSON.stringify({ ...body, enabled: false }),
-          })).servers);
-        }
+        latest = listed((await api("/api/mcp/servers", { method: "POST", body: JSON.stringify({ name: item.name, ...item.body }) })).servers);
         added.push(item.name);
       }
     } catch (cause) {
@@ -266,22 +254,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
     setError(null);
     setNotice(null);
     try {
-      let body = item.body;
-      let ownKey: string | undefined;
-      if (store.config?.team && existing.scope !== "team" && typeof body.url === "string" && !body.oauth) {
-        const connections = await api("/api/team/my-connections");
-        if (connections.mcp.some((connection: { name: string }) => connection.name === item.name)) {
-          const headers = (body.headers ?? {}) as Record<string, string | true>;
-          if (Object.keys(headers).length > 1) {
-            throw new Error("Personal MCP connections support one header. Remove the extra headers before saving.");
-          }
-          const value = Object.values(headers)[0];
-          ownKey = typeof value === "string" ? value : undefined;
-          body = { ...body, headers: Object.fromEntries(Object.keys(headers).map((name) => [name, ""])) };
-        }
-      }
-      listed((await api(`/api/mcp/servers/${encodeURIComponent(item.name)}`, { method: "PUT", body: JSON.stringify({ ...body, enabled: existing.enabled }) })).servers);
-      if (ownKey) await api(`/api/team/my-connections/mcp/${encodeURIComponent(item.name)}/key`, { method: "PUT", body: JSON.stringify({ value: ownKey, url: body.url }) });
+      listed((await api(`/api/mcp/servers/${encodeURIComponent(item.name)}`, { method: "PUT", body: JSON.stringify({ ...item.body, enabled: existing.enabled }) })).servers);
       closeEditor();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -513,7 +486,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
         </div>
         {server && signingIn === server.name ? <button type="button" onClick={() => signInAbort.current?.abort()} className="inline-flex h-7 shrink-0 items-center rounded-full bg-control/80 px-3 text-[13px] font-medium leading-5 text-ink">{t("mcp.auth.cancel")}</button> :
           <button type="button" aria-label={t(connected ? "hostedMcp.disconnect" : "hostedMcp.connect", { service: app.label })}
-            disabled={pending || (servers !== null && !connected && (Boolean(server?.managedBy) || (restricted && !policy?.mcp.allowlist.length)))}
+            disabled={pending}
             onClick={() => void (servers === null ? load() : connected && server ? signOut(server, app) : connectHosted(app))}
             className="inline-flex h-7 min-w-[64px] shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-[13px] font-medium leading-5 text-ink hover:bg-raised-hover disabled:opacity-40">
             {pending && (mine || busy === "load") ? <Loader2 size={14} className="animate-spin" /> : servers === null ? t("connectors.action.retry") : t(connected ? "connectors.disconnect" : "connectors.action.connect")}
@@ -564,8 +537,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
             </button>
             <button
               type="button"
-              disabled={busy !== null || (restricted && !policy?.mcp.allowlist.length)}
-              title={restricted && policy ? t("policy.managedBy", { organization: policy.organizationName }) : undefined}
+              disabled={busy !== null}
               onClick={() => openEditor("new")}
               className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-white disabled:opacity-40"
             >
@@ -574,9 +546,8 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
           </div>
         </div>
 
-        {restricted && policy && <p role="status" className="mt-3 text-[13px] leading-relaxed text-ink-secondary">{t("policy.mcpRestricted", { organization: policy.organizationName })}</p>}
         {(editing === "new" || editingServer) && (
-          <McpServerEditor key={`${editing}${fixingKeys ? ":keys" : ""}`} server={editingServer} fixKeys={fixingKeys} taken={(servers ?? []).map((server) => server.name)} team={Boolean(store.config?.team)}
+          <McpServerEditor key={`${editing}${fixingKeys ? ":keys" : ""}`} server={editingServer} fixKeys={fixingKeys} taken={(servers ?? []).map((server) => server.name)}
             busy={busy !== null} onCancel={closeEditor} onSubmit={(items) => void (editing === "new" ? addServers(items) : saveEdit(items))} />
         )}
         {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-[12px] text-danger">{typeof error === "string" ? error : t(error.key, error.params)}</div>}
@@ -617,9 +588,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
                         <span className="min-w-0 truncate text-[14px] font-medium text-ink">{hosted ? hosted.label : server.name}</span>
                         <span className={cn("rounded-full px-2 py-0.5 text-[11px]", server.enabled ? "bg-success/10 text-success" : "bg-raised text-ink-secondary")}>{t(server.enabled ? "mcp.badge.on" : "mcp.badge.off")}</span>
                         {auth && <span className={cn("rounded-full px-2 py-0.5 text-[11px]", auth === "signed-in" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>{t(auth === "signed-in" ? "mcp.auth.signedIn" : "mcp.auth.needsSignIn")}</span>}
-                        {server.managedBy && <span className="rounded-full bg-raised px-2 py-0.5 text-[11px] text-ink-secondary">{t("policy.managedBy", { organization: server.managedBy })}</span>}
                       </div>
-                      {server.managedBy && <div className="mt-1 text-[12px] text-ink-secondary">{t("policy.mcpBlocked", { organization: server.managedBy })}</div>}
                       {server.runsOn && <div data-mcp-runs-on className="mt-1 text-[12px] text-ink-secondary">{t("mcp.runsOn", { computer: server.runsOn.label })}</div>}
                       {server.bot && <div data-mcp-own-bot className="mt-1 text-[12px] text-ink-secondary">{t("mcp.ownBot", { bot: botName(server.bot) })}</div>}
                       {server.offFor?.length ? <div data-mcp-off-for className="mt-1 text-[12px] text-ink-secondary">{t("mcp.offFor", { bots: server.offFor.map(botName).join(", ") })}</div> : null}
@@ -635,7 +604,7 @@ export function McpServersPanel({ embedded = false, hostedCards, hideHosted = fa
                           <Loader2 size={14} className="animate-spin" /> {t("mcp.auth.cancel")}
                         </button>
                       ) : canSignIn ? (
-                        <button type="button" disabled={busy !== null || signingIn !== null || Boolean(server.managedBy)} onClick={() => void signIn(server)} className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-2 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-40">
+                        <button type="button" disabled={busy !== null || signingIn !== null} onClick={() => void signIn(server)} className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-2 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-40">
                           <LogIn size={14} /> {hosted ? t("hostedMcp.connect", { service: hosted.label }) : t("mcp.auth.signIn")}
                         </button>
                       ) : auth === "signed-in" ? (

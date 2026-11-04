@@ -1,6 +1,6 @@
 # MausBot, everyone's helper
 
-MausBot is the bot every place and every Team Cloud member gets once: a new
+MausBot is the bot every place gets once: a new
 install's first bot and its Chief of Staff, or, for an install that already has
 bots, a helper beside them. It is never deleted or archived; the person takes it
 off the sidebar with "Show MausBot in the sidebar" in Settings → General, which
@@ -18,8 +18,7 @@ pnpm exec vitest run server/default-bot.test.ts server/default-bot.e2e.test.ts \
   existing install gets one once on update and its Chief is untouched; a new
   install's renamed MausBot is adopted, not duplicated; the intro shows once,
   not after it was answered or dismissed; delete and archive are refused; a
-  move to My Cloud and coming home leave exactly one; each Team Cloud member
-  gets their own; a Team User's MausBot holds no Chief tools.
+  move to a server of the person's own leaves exactly one.
 - `server/default-bot.e2e.test.ts`: on a real fixture server, `DELETE
   /api/bots/:id` answers 409, the switch hides and shows it, and a MausBot that
   is not the Chief creates a bot with `create_bot`.

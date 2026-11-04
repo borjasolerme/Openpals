@@ -89,9 +89,9 @@ connections or directly invoke switching, forgetting, or host-only controls.
 
 ## Optional computer sharing
 
-**Computer sharing is disabled by default.** The exception is a Mac lending
-itself to the person's own Clouds, which happens by itself with a gate of its
-own; see `docs/cloud-pro.md`, "This computer works for your Clouds".
+**Computer sharing is disabled by default.** The exception is a computer lending
+itself to a server of the person's own that their bots moved to, which happens
+by itself with a gate of its own (see [own-home.md](own-home.md)).
 Connecting and switching hosted workspaces still works, but does not offer
 local file, terminal, or screen access. The flow below is maintainer-only
 verification with `features.sharedComputers: true` on both servers, not a

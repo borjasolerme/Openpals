@@ -8,7 +8,6 @@ import { mkdirSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createLoginHandoffClient } from "../../electron/cloud-logins.mjs";
 import { installOwnHome } from "../../electron/own-home-main.mjs";
 import { removeTempDir, waitForExit } from "../../server/testing/cleanup.ts";
 import { freePortBlock } from "../../server/testing/ports.ts";
@@ -158,26 +157,24 @@ await import(${JSON.stringify(pathToFileURL(join(SERVER_DIR, "testing", "fake-cl
   });
   const fixture = { beforeJournalWrite: null as OwnHomeFixture["beforeJournalWrite"] };
   const spies: OwnHomeFixture["spies"] = { lent: [], phoneStops: 0, opened: [] };
-  const asks = createLoginHandoffClient();
   const port = { postMessage: (message: unknown) => { desktop.send(message as object); } };
   const wire = () => installOwnHome({
+    ipcMain: { handle: () => {} }, page: () => true, window: () => null, localOrigin: () => desktopBase,
     localRequest: (route, init = {}) => fetch(`${desktopBase}${route}`, { ...init, headers: { ...init.headers as Record<string, string>, "x-openmausbot-desktop-owner": capability } }),
     fetch: windowFetch,
     environments: () => servers.map((server) => server.place),
-    handoff: (what) => asks.request(port, what as never),
     journal: file("own-home.json"),
     choice: file("own-home-choice.json"),
     sendState: file("own-home-send.json"),
-    cloudJournal: () => null,
+    server: () => port,
     lend: async (projects, place) => { spies.lent.push({ projects, place: place?.origin ?? null }); },
     phone: { paired: () => true, stop: async () => { spies.phoneStops++; }, start: async () => {} },
     openHome: (place) => { spies.opened.push(place.origin ?? ""); },
-    lastInput: () => 0,
     version: "0.1.135",
     log: (line) => { logs += `[main] ${line}\n`; },
   });
   let main = wire();
-  const listen = () => { desktop.on("message", (message) => { asks.receive(port, message); }); };
+  const listen = () => { desktop.on("message", (message) => { main.receive(port, message); }); };
   listen();
 
   return {

@@ -1,22 +1,17 @@
-// The extraction layer: the shape of its contract (shared with Cloud's Admin through fixtures/), Clairic and Clef on the
-// person's own Workers AI account, the relay, the OpenRouter fallback, and whose key is used. No live calls.
+// The extraction layer: the shape of its contract, Clairic and Clef on the person's own Workers AI account, the
+// OpenRouter fallback, and whose key is used. No live calls.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AppConfig } from "../config.ts";
-import relayFixtures from "./fixtures/extract-relay.json" with { type: "json" };
 import workersFixture from "./fixtures/workers-ai-clairic.json" with { type: "json" };
-import {
-  EXTRACT_LIMITS, extractRequestProblem, INBOX_FIELDS, parseExtractResponse, relayAcceptsExtract,
-} from "./contract.ts";
-import { createExtractor, describeExtractor, extractorAccount } from "./index.ts";
+import { EXTRACT_LIMITS, extractRequestProblem, INBOX_FIELDS } from "./contract.ts";
+import { createExtractor, extractorAccount } from "./index.ts";
 import { openrouterExtractSchema } from "./remote.ts";
-import type { ExtractInput, ExtractSeam, FieldSchema } from "./types.ts";
+import type { ExtractInput, FieldSchema } from "./types.ts";
 
 const CF_TOKEN = "cf_extract_unit_token_0123456789";
 const ACCOUNT = "fedcba9876543210fedcba9876543210";
 const OR_KEY = "sk-or-v1-extract-unit-0123456789";
-const RELAY = "https://cloud.example.test/api/cloud/services/decider";
-const INCLUDED = "omb_decide_extract_included_token_0123456789";
 const CF_RUN = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT}/ai/run/@cf/cloudflare`;
 const OWN: AppConfig = { decider: { enabled: true, workersAiToken: CF_TOKEN, workersAiAccountId: ACCOUNT } };
 const FIELDS = workersFixture.fields as FieldSchema;
@@ -32,27 +27,13 @@ const sent = (fetchImpl: FetchMock, index = 0) => {
 };
 /** Answers like Workers AI, by model, from the fixture. */
 const workersAi = () => vi.fn<typeof fetch>(async (url) => json(String(url).endsWith("/clairic") ? workersFixture.clairic.response : workersFixture.clef.response));
-const cloud = () => {
-  vi.stubEnv("OMB_CLOUD_DECIDER_URL", RELAY);
-  vi.stubEnv("OMB_CLOUD_DECIDER_TOKEN", INCLUDED);
-};
 
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.useRealTimers();
 });
 
-describe("the /v1/extract contract, from the fixtures shared with Cloud's Admin", () => {
-  it.each(relayFixtures.requests.map((fixture) => [fixture.name, fixture] as const))("request: %s", (_name, fixture) => {
-    const { fields, input } = fixture.body as unknown as { fields: FieldSchema; input: ExtractInput };
-    expect(relayAcceptsExtract(fixture.seam as ExtractSeam, fields, input)).toBe(fixture.accepts);
-  });
-
-  it.each(relayFixtures.responses.map((fixture) => [fixture.name, fixture] as const))("answer: %s", (_name, fixture) => {
-    const parsed = parseExtractResponse(fixture.body, fixture.fields as FieldSchema);
-    if ("malformed" in fixture) expect(parsed).toBeNull();
-    else expect(parsed?.values).toEqual(fixture.values);
-  });
+describe("the /v1/extract contract", () => {
 
   it("the caps the fixtures cannot carry: an image over 1 MB, and a body over 256 KB without its images", () => {
     const image = (bytes: number) => ({ mime: "image/png" as const, data: Buffer.alloc(bytes, 1).toString("base64") });
@@ -63,10 +44,6 @@ describe("the /v1/extract contract, from the fixtures shared with Cloud's Admin"
     expect(extractRequestProblem(one, { text: "x".repeat(EXTRACT_LIMITS.text + 1) })).toMatch(/200000 characters/);
     // 150,000 characters, but 300,000 bytes of UTF-8.
     expect(extractRequestProblem(one, { text: "é".repeat(150_000) })).toMatch(/256 KB/);
-  });
-
-  it("inbox triage's fields are the fixtures' exactly", () => {
-    expect(relayFixtures.seams.inboxTriage.fields).toEqual(INBOX_FIELDS);
   });
 });
 
@@ -114,40 +91,7 @@ describe("Clairic and Clef on the person's own Workers AI account", () => {
   });
 });
 
-describe("whose key reads: own Workers AI, Cloud's relay, OpenRouter, nothing", () => {
-  it("on Cloud, the person's own Workers AI key wins over the relay", async () => {
-    cloud();
-    const fetchImpl = workersAi();
-    await extractor(OWN, fetchImpl).extract("botExtract", { total: { type: "number" } }, INPUT);
-    expect(sent(fetchImpl).url).toBe(`${CF_RUN}/clairic`);
-  });
-
-  it("with no own key, Cloud's relay gets { seam, fields, input } with the included token", async () => {
-    cloud();
-    const fetchImpl = vi.fn<typeof fetch>(async () => json({ values: { total: 1080, currency: "USD" }, model: "clairic" }));
-    const fields: FieldSchema = { total: { type: "number" }, currency: { type: "enum", options: ["USD", "EUR"] } };
-    const result = await extractor({}, fetchImpl).extract("botExtract", fields, INPUT);
-    expect(result).toMatchObject({ ok: true, provider: "jev", values: { total: 1080, currency: "USD" }, model: "clairic" });
-    expect(sent(fetchImpl)).toEqual({ url: `${RELAY}/v1/extract`, auth: `Bearer ${INCLUDED}`, seam: "botExtract", body: { seam: "botExtract", fields, input: INPUT } });
-    expect(describeExtractor({})).toEqual({ provider: "jev", included: true, ready: true });
-  });
-
-  it("a request the relay would refuse never goes through the included token", async () => {
-    cloud();
-    const fetchImpl = vi.fn<typeof fetch>();
-    const result = await extractor({}, fetchImpl).extract("inboxTriage", { ...INBOX_FIELDS, body: { type: "string" } }, { text: "x" });
-    expect(result).toEqual({ ok: false, reason: "misconfigured" });
-    expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it("…and goes to OpenRouter instead when the person has an OpenRouter key", async () => {
-    cloud();
-    const fetchImpl = vi.fn<typeof fetch>(async () => json({ model: "google/gemini-2.5-flash", choices: [{ message: { content: JSON.stringify({ values: { body: "hi", sender: null, ask: null, deadline: null, amount: null, needs_reply: false, kind: "work" } }) } }] }));
-    const config: AppConfig = { decider: { enabled: true, openrouterKey: OR_KEY } };
-    const result = await extractor(config, fetchImpl).extract("inboxTriage", { ...INBOX_FIELDS, body: { type: "string" } }, { text: "x" });
-    expect(result).toMatchObject({ ok: true, provider: "openrouter" });
-    expect(sent(fetchImpl)).toMatchObject({ url: "https://openrouter.ai/api/v1/chat/completions", auth: `Bearer ${OR_KEY}` });
-  });
+describe("whose key reads: own Workers AI, OpenRouter, nothing", () => {
 
   it("the OpenRouter fallback asks a chat model for strict JSON of exactly the fields, nullable", async () => {
     const fetchImpl = vi.fn<typeof fetch>(async () => json({ choices: [{ message: { content: JSON.stringify({ values: workersFixture.values }) } }] }));
@@ -175,19 +119,5 @@ describe("whose key reads: own Workers AI, Cloud's relay, OpenRouter, nothing", 
     await expect(extractor({ decider: { ...OWN.decider, provider: "off" } }, fetchImpl).extract("botExtract", FIELDS, INPUT)).resolves.toEqual({ ok: false, reason: "disabled" });
     await expect(extractor({ decider: { ...OWN.decider, jobs: { inboxTriage: false } } }, fetchImpl).extract("inboxTriage", INBOX_FIELDS, { text: "x" })).resolves.toEqual({ ok: false, reason: "job_off" });
     expect(fetchImpl).not.toHaveBeenCalled();
-  });
-
-  it("the relay's 413 is too large, and is asked once", async () => {
-    cloud();
-    const fetchImpl = vi.fn<typeof fetch>(async () => new Response("too big", { status: 413 }));
-    await expect(extractor({}, fetchImpl).extract("botExtract", FIELDS, INPUT)).resolves.toMatchObject({ ok: false, reason: "too_large", status: 413 });
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-  });
-
-  it("the key check is one fixed extraction, through the relay too", async () => {
-    cloud();
-    const fetchImpl = vi.fn<typeof fetch>(async () => json({ values: { ok: true }, model: "clairic" }));
-    await expect(extractor({}, fetchImpl).testKey()).resolves.toMatchObject({ ok: true, values: { ok: true } });
-    expect(sent(fetchImpl).body).toEqual(relayFixtures.requests.find((fixture) => fixture.seam === "keyCheck" && fixture.accepts)!.body);
   });
 });

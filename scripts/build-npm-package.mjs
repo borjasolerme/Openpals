@@ -134,19 +134,16 @@ endpoints.
 API connections currently support chat only. Setup asks before a short,
 potentially billable API test; native setup confirms sign-in, with model
 access checked when you send a message. API billing is separate from
-ChatGPT/Claude subscriptions. New API keys in config.json and managed
-account credentials in tunnel-account.json are plaintext, not encrypted,
-with owner-only permissions (0600 on Unix). Keep these files private.
+ChatGPT/Claude subscriptions. New API keys in config.json are plaintext,
+not encrypted, with owner-only permissions (0600 on Unix). Keep these files private.
 
 Ctrl-C before saving AI setup leaves its pending OMB changes unapplied.
 During the later phone step, it keeps the AI setup already saved and exits
 without starting a server. Completed installs and sign-ins remain; run
 \`openmausbot setup\` to continue without deleting your data.
 
-For a service, use \`serve --tunnel\` after \`login\` for managed HTTPS,
-\`serve --tailscale\` for your tailnet, or your own reverse proxy. The
-\`login\` command signs in to an OpenMausBot account, not an AI provider;
-it does not start the tunnel itself.
+For a service, use \`serve --tailscale\` for your tailnet,
+\`serve --domain\` for your own domain, or your own reverse proxy.
 
 Scripts, CI and other agents can drive a running workspace without a screen:
 set a team up from a file, give a bot one job and wait until it and every

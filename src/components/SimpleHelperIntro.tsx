@@ -25,13 +25,12 @@ const ALL = 6;
 const DELAYS = [INTRO_TIMING.first, INTRO_TIMING.line, INTRO_TIMING.line, INTRO_TIMING.typing, INTRO_TIMING.followup, INTRO_TIMING.chips];
 
 /** MausBot's three lines: who it is, what it does here, and that it is looking around. A MausBot that is not the Chief
- * keeps its helper's lines; a Team Cloud member's leaves their day to the team's Chief. */
-export function introLines(input: { name: string; chief: boolean; person?: string; team?: string }): string[] {
-  const team = input.team ? t("helperIntro.team", { team: input.team }) : "";
-  const lead = input.chief ? t("helperIntro.lead.chiefOfStaff") : input.team ? t("helperIntro.lead.member") : t("helperIntro.lead.helper");
+ * keeps its helper's lines. */
+export function introLines(input: { name: string; chief: boolean; person?: string }): string[] {
+  const lead = input.chief ? t("helperIntro.lead.chiefOfStaff") : t("helperIntro.lead.helper");
   const hello = input.chief ? t("helperIntro.hello", { name: input.name })
     : input.person ? t("helperIntro.hi.helperNamed", { name: input.name, person: input.person }) : t("helperIntro.hi.helper", { name: input.name });
-  return [hello, [lead, team].filter(Boolean).join(" "), t("helperIntro.lookingAround")];
+  return [hello, lead, t("helperIntro.lookingAround")];
 }
 
 /** The follow-up in the viewer's language. */
@@ -63,7 +62,7 @@ function useLookAround(deep: boolean): Look {
         .map(([slug]) => cards.get(slug)?.label ?? slug))
       .catch(() => null);
     const phones = api<{ phones?: unknown[] }>("/api/phones").then((response) => (response.phones?.length ?? 0) > 0).catch(() => undefined);
-    const look = deep && localSetupImport(false) ? detectSetupWithin(setupImportApi) : null;
+    const look = deep && localSetupImport() ? detectSetupWithin(setupImportApi) : null;
     const timer = setTimeout(() => { if (active) setFound((now) => ({ ...now, settled: true })); }, LOOK_MS);
     void Promise.all([apps, phones, look?.found ?? null]).then(([appNames, phonePaired, detection]) => {
       if (active) setFound({ apps: appNames, phonePaired, importFound: Boolean(detection), settled: true });
@@ -114,9 +113,8 @@ export function SimpleHelperIntro({ botId, threadId, message, answered, followup
   const welcoming = useWelcomingBot();
   const hidden = welcoming === botId;
   const bot = state.bots.find((candidate) => candidate.id === botId);
-  const team = bot?.defaultBot?.person ? state.config?.team?.name : undefined;
   const person = greetingName(state.config?.profile?.name) || undefined;
-  const lines = introLines({ name: bot?.name ?? DEFAULT_BOT_NAME, chief: Boolean(bot?.chiefOfStaff), person, team });
+  const lines = introLines({ name: bot?.name ?? DEFAULT_BOT_NAME, chief: Boolean(bot?.chiefOfStaff), person });
   const look = useLookAround(!answered);
   const ai = thinksWith(bot, state.instances);
 
@@ -152,9 +150,6 @@ export function SimpleHelperIntro({ botId, threadId, message, answered, followup
   const chips = answered || shown < ALL || !facts ? [] : introChips({
     aiReady: ai === "own",
     ownBots: state.bots.filter((candidate) => !candidate.hidden && !candidate.defaultBot).length,
-    onCloud: state.config?.cloudHome === true,
-    team: Boolean(state.config?.team),
-    remote: typeof window !== "undefined" && window.ogb?.remoteClient?.active === true,
     appsConnected: Boolean(look.apps?.length),
     phonePaired: look.phonePaired,
     importFound: look.importFound,

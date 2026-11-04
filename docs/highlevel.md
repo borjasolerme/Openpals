@@ -8,7 +8,7 @@ HighLevel brand. Composio is not involved; the server (`server/highlevel/*`) tal
 ## How it works
 
 ```
-OMB server (desktop or Cloud home)         accounts.openmausbot.com (relay)              HighLevel
+OMB server                                 your OAuth relay (optional)                  HighLevel
   POST /api/highlevel/sign-in ───────────▶ POST /v1/highlevel/start → state + auth URL
   app opens the auth URL in the browser ─────────────────────────────────────────────▶ sign in, pick a location
                                             ◀── GET /v1/highlevel/callback?code&state ── redirect
@@ -70,7 +70,7 @@ listed.
 
 | Variable | Meaning |
 |---|---|
-| `OMB_HIGHLEVEL_RELAY_URL` | The relay. Default `https://accounts.openmausbot.com`. `off` disables the integration (`state: "unavailable"`); a Private Integration token still works. Loopback `http://` is accepted for tests. |
+| `OMB_HIGHLEVEL_RELAY_URL` | An OAuth relay you run, holding HighLevel's client secret. Unset (the default) or `off`: no OAuth sign-in (`state: "unavailable"`); a Private Integration token still works. Loopback `http://` is accepted for tests. |
 | `OMB_HIGHLEVEL_API_URL` | Tests only: a fake HighLevel in place of `https://services.leadconnectorhq.com`. |
 
 ## Tools (bots)

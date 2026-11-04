@@ -72,7 +72,7 @@ export function phoneSystemPrompt(
   return PHONE_PROMPT + sentences.join("");
 }
 
-/** "Omkar's iPhone is an iPhone", or "The iPhone" when the phone is named after its kind (iOS 16+ reports "iPhone"). */
+/** "Ada's iPhone is an iPhone", or "The iPhone" when the phone is named after its kind (iOS 16+ reports "iPhone"). */
 function describePhone(phone: { name: string; platform: PhonePlatform }): string {
   const kind = phone.platform === "ios" ? "iPhone" : "Android phone";
   return phone.name.trim().toLowerCase() === kind.toLowerCase() ? `The ${kind}` : `${phone.name} is an ${kind}`;

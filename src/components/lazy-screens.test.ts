@@ -155,7 +155,7 @@ describe("preloadScreens", () => {
   it("a page on this machine fetches nothing ahead: each screen loads when it opens", () => {
     vi.useFakeTimers();
     const preloads = stubPreloads();
-    expect(preloads.length).toBe(19);
+    expect(preloads.length).toBe(16);
     for (const host of ["127.0.0.1", "localhost", "[::1]"]) preloadScreens(host);
     vi.runAllTimers();
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
@@ -200,7 +200,7 @@ describe("preloadScreens", () => {
     preloadScreens("cloud.example");
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(60_000);
-    const rarelyOpened = [screens.CloudAddDialog, screens.GrokMoveDialog, screens.PhoneAppDialog, screens.ShareTeamDialog, screens.TeamLibraryPanel];
+    const rarelyOpened = [screens.GrokMoveDialog, screens.ShareTeamDialog, screens.TeamLibraryPanel];
     const stubbed = Object.values(screens).filter((value): value is ReturnType<typeof lazyScreen> => typeof value === "function" && "preload" in value);
     for (const screen of stubbed) expect(screen.preload).toHaveBeenCalledTimes(rarelyOpened.includes(screen as never) ? 0 : 1);
     expect(preloads.length).toBe(stubbed.length);
@@ -261,18 +261,17 @@ describe("launch bundle", () => {
     expect(reached.has("App.tsx")).toBe(true);
     expect(reached.has("components/Sidebar.tsx")).toBe(true);
     const deferred = [
-      "ActivityPanel", "BotSettingsDialog", "CloudAddDialog", "ComputerPanel", "InspectorPanel", "KeyboardShortcutsModal",
-      "LocalVmWorkspace", "NewBotDialog", "PhoneAppDialog", "PhoneSetupFlow", "PluginsPanel", "RemoteAgentSettingsPanel", "remote-desktop-panel", "RoutineCalendarPage",
+      "ActivityPanel", "BotSettingsDialog", "ComputerPanel", "InspectorPanel", "KeyboardShortcutsModal",
+      "LocalVmWorkspace", "NewBotDialog", "PhoneSetupFlow", "PluginsPanel", "RemoteAgentSettingsPanel", "remote-desktop-panel", "RoutineCalendarPage",
       "RoutinesPage", "SettingsModal", "ShareTeamDialog", "TeamLibraryPanel", "TriggersPage", "WebhookTrigger", "room-panel/RoomPanel",
     ].map((name) => `components/${name}.tsx`);
     expect(deferred.filter((file) => reached.has(file))).toEqual([]);
     expect(reached.has("lib/team-import.ts"), "the team library brings the YAML parser in").toBe(false);
   });
 
-  it("the sign-in and home pages leave the app out", () => {
+  it("the sign-in page leaves the app out", () => {
     const page = launchModules("main.tsx");
     expect(page.has("pair/PairPage.tsx")).toBe(true);
-    expect(page.has("components/HomeScreen.tsx")).toBe(true);
     expect(["App.tsx", "state/store.tsx", "components/Sidebar.tsx", "components/ChatView.tsx"].filter((file) => page.has(file))).toEqual([]);
   });
 

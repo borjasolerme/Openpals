@@ -16,7 +16,6 @@ import { ELEVATED_CONTROL, ELEVATED_HOVER, ELEVATED_OPEN } from "./elevated";
 import { ShortcutHint } from "./ShortcutHint";
 import { SidebarPopoverMenu, type SidebarMenuItem } from "./SidebarPopoverMenu";
 import { openBotSettings } from "./bot-panel/panel-link";
-import { ShareBotButton, useTeamName } from "./bot-access/ShareBotButton";
 
 /** One item list for the chat's ⋯ menu wherever it sits. The Simple bot panel draws the same items as rows, and its
  * Share button holds the two that export. */
@@ -154,25 +153,14 @@ export function ChatMoreMenu({ bot, phoneHeader = false }: { bot: Bot; phoneHead
 
 export const EXPORT_ITEMS = ["copy", "download"];
 
-/** The bot panel's round Share button: on a team who has access, with copying or downloading this conversation under
- * the ⋯ of its header; anywhere else a menu of those two. */
+/** The bot panel's round Share button: a menu of copying or downloading this conversation. */
 export function ChatShareMenu({ bot, className }: { bot: Bot; className: string }): JSX.Element {
-  return useTeamName() ? <ShareBotButton bot={bot} className={className} headerMenu={<ExportMore key={bot.threadId} bot={bot} />} />
-    : <ShareMenu key={bot.threadId} bot={bot} className={className} />;
+  return <ShareMenu key={bot.threadId} bot={bot} className={className} />;
 }
 
 const exportItems = (items: SidebarMenuItem[]): SidebarMenuItem[] => items.filter((item) => EXPORT_ITEMS.includes(item.key)).map((item) => ({
   ...item, heading: undefined, separatorBefore: false, label: t(item.key === "copy" ? "chat.export.copyConversation" : "chat.export.downloadConversation"),
 }));
-
-function ExportMore({ bot }: { bot: Bot }) {
-  const { items } = useChatMoreItems(bot);
-  return (
-    <SidebarPopoverMenu items={exportItems(items)} ariaLabel={t("chat.more")} align="end" triggerTitle={t("chat.more")}
-      triggerClassName="flex shrink-0 rounded-md p-1.5 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink aria-expanded:bg-ink/[0.06]"
-      renderTrigger={() => <MoreHorizontal size={16} aria-hidden="true" />} />
-  );
-}
 
 function ShareMenu({ bot, className }: { bot: Bot; className: string }) {
   const { items } = useChatMoreItems(bot);

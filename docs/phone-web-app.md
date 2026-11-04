@@ -4,14 +4,13 @@ The browser UI can be added to your phone's Home Screen. It opens in its own
 window and uses the same workspace, conversations and pairing as the browser.
 
 1. Open your workspace's **HTTPS web link** in Safari on iPhone or Chrome on
-   Android. Use an existing hosted address, Tailscale HTTPS address or your own
-   HTTPS reverse proxy. A phone cannot reach the computer through a localhost
+   Android. Use a Tailscale HTTPS address or your own HTTPS reverse proxy. A phone cannot reach the computer through a localhost
    link. See [self-hosting](self-hosting.md) for remote access and pairing.
 2. Pair the browser with that workspace using its normal pairing flow.
 3. On iPhone, open Safari's **Share** menu, choose **Add to Home Screen**, keep
    **Open as Web App** enabled if Safari offers it, then tap **Add**. On Android,
    open Chrome's menu and choose **Install app** or **Add to Home screen**.
-4. Open **OpenMausBot** from the Home Screen. If that browser keeps Home Screen
+4. Open **Openpals** from the Home Screen. If that browser keeps Home Screen
    apps in separate storage, pair this new window too. Installation does not
    grant access to a workspace by itself.
 

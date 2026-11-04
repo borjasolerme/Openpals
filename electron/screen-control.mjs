@@ -1,5 +1,5 @@
-// Computer control as lending sees it: its state for the icon's menu and for the person's own Clouds, a start of it
-// again (from the icon's menu, or Turn on on a Cloud's card), and each change kept in the app's log.
+// Computer control as lending sees it: its state for the icon's menu and for the person's home server, a start of it
+// again (from the icon's menu, or Turn on on a server's card), and each change kept in the app's log.
 import { screenStatus } from "./screen-status.mjs";
 
 /** `connection()`: computer control's state as cua.mjs last published it (a promise). `request()`: start it again, which

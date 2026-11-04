@@ -28,9 +28,6 @@
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
-.mention-highlight.mention-person {
-  text-decoration-style: dotted;
-}
 .mention-highlight.mention-you {
   --mention-color: var(--color-accent);
   color: var(--color-ink);
@@ -3059,7 +3056,7 @@ button:disabled.bg-danger {
   color: var(--bubble-selection-ink, #ffffff);
 }
 
-/* MausBot Cloud's night: a deep night sky in the dark skins and an indigo dusk in the light ones. light-dark() picks by
+/* The night skin: a deep night sky in the dark skins and an indigo dusk in the light ones. light-dark() picks by
    the color-scheme of the element that paints it. One star twinkles, the z's drift and now and then a star shoots, each
    slowly; the z's need transform-box to grow around their own centre. */
 :root {

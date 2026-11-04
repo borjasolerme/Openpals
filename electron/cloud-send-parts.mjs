@@ -1,5 +1,5 @@
-// Send to My Cloud: what each server reports it has (GET /api/cloud-send), and what this computer sends. One direction,
-// this computer to the person's own Cloud. Shared by the server (which hashes its own records) and main (which plans).
+// Send to the server: what each server reports it has (GET /api/cloud-send), and what this computer sends. One direction,
+// this computer to the person's own server. Shared by the server (which hashes its own records) and main (which plans).
 
 /** A bot, compared and sent part by part: each part is the fields PATCH /api/bots/:id takes for it. */
 export const BOT_PARTS = Object.freeze({
@@ -16,7 +16,7 @@ export const BOT_PARTS = Object.freeze({
   team: ["section", "approvePeerComms", "peers"],
   habits: ["notifications", "parkDirectMessages", "helperModel", "cacheKeepWarm", "recordBrowserSteps"],
 });
-/** A bot's parts only a move compares and carries: My Cloud sets them over its own move route, under the same ids. */
+/** A bot's parts only a move compares and carries: The server sets them over its own move route, under the same ids. */
 export const MOVE_BOT_PARTS = Object.freeze({
   archived: ["hidden"],
   pinned: ["pinned"],
@@ -37,10 +37,8 @@ export const MOVE_KINDS = Object.freeze([...AUTOMATION_KINDS, "imported-skill", 
 export const KINDS = Object.freeze(["bot", "skill", "login", "1password", "setting", ...MOVE_KINDS]);
 /** A part a server has no value for. */
 export const EMPTY = "-";
-/** What either page closes the one-time move's own line by (cloud-send:dismiss). */
+/** What this computer's page closes the one-time move's own line by (cloud-send:dismiss). */
 export const MOVE_LINE = "one-home";
-/** What My Cloud's page closes the line of a bot moving into a team by. */
-export const TEAM_MOVE_LINE = "team-move";
 /** Logins and 1Password are compared by when they changed, never by their secrets: two sides that both have one were
  * set up on their own, and from then on a change here goes. */
 const CONTENT_COMPARED = new Set(["bot", "skill", "setting", ...MOVE_KINDS]);
@@ -80,11 +78,11 @@ export function parseSendSummary(value) {
 }
 
 /**
- * The one rule, three-way per part. `sent[key][part]` is [this computer's hash, My Cloud's hash] right after the last
+ * The one rule, three-way per part. `sent[key][part]` is [this computer's hash, the server's hash] right after the last
  * send, or when both were last seen equal. A part goes when it changed here since and is unchanged there, or when My
- * Cloud has nothing for it ("-"). Any other difference is My Cloud's to keep ("differs") unless the person chooses
- * this computer's (`force`). An item sent before and gone from My Cloud was removed there: it is never brought back,
- * and its switch turns off. `off[key]`: the "Also on My Cloud" switch, off ("you") or off after a removal ("removed").
+ * server has nothing for it ("-"). Any other difference is the server's to keep ("differs") unless the person chooses
+ * this computer's (`force`). An item sent before and gone from the server was removed there: it is never brought back,
+ * and its switch turns off. `off[key]`: the "Also on the server" switch, off ("you") or off after a removal ("removed").
  *
  * @returns {{ rows: Array<{ key: string, kind: string, label: string, detail?: string, id?: string, bot?: string,
  *   state: "only-here" | "on-both" | "to-update" | "differs" | "removed" | "off", parts?: string[], differs?: string[] }>,
@@ -140,7 +138,7 @@ export function pendingRows(plan) {
   return plan.rows.filter((row) => (row.state === "only-here" || row.state === "to-update") && !(row.bot && adding.has(itemKey.bot(row.bot))));
 }
 
-/** A stable name for one set of differences: the strip on My Cloud hides until it changes. */
+/** A stable name for one set of differences: the strip on the server hides until it changes. */
 export function differenceSignature(plan) {
   return pendingRows(plan).map((row) => `${row.key}#${row.state}#${(row.parts ?? []).join(",")}`).sort().join("\n");
 }
@@ -148,7 +146,7 @@ export function differenceSignature(plan) {
 const FAILURE_REASONS = 3;
 
 /** What a send did not get across, grouped by reason (bots by name, logins only counted, never a site), and why a send
- * stopped as a whole; the strip on My Cloud and Settings → MausBot Cloud both say it. */
+ * stopped as a whole; the strip on the server and Settings → MausBot server both say it. */
 export function failedSummary(outcome) {
   const reasons = new Map();
   for (const entry of outcome.result.failed) {
@@ -166,5 +164,5 @@ export function failedSummary(outcome) {
   return { ...(reasons.size ? { reasons: [...reasons.values()].slice(0, FAILURE_REASONS) } : {}), ...(outcome.error ? { error: outcome.error } : {}) };
 }
 
-/** Close on My Cloud's strip: kept with the send whose result it closed. */
+/** Close on the server's strip: kept with the send whose result it closed. */
 export const resultKey = (last) => `result:${last.at}`;

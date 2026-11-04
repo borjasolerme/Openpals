@@ -21,7 +21,6 @@ vi.mock("react", async (original) => ({
 }));
 const store = vi.hoisted(() => ({ state: {} as Record<string, unknown>, dispatch: vi.fn(), api: vi.fn() }));
 vi.mock("@/state/store", () => ({ api: store.api, useStore: () => ({ state: store.state, dispatch: store.dispatch }) }));
-vi.mock("@/lib/analytics", () => ({ emailGateDone: () => false }));
 // The gate's job is choosing; the flow itself has its own recipe.
 vi.mock("./WelcomeFlow", () => ({ WelcomeFlow: () => null }));
 vi.mock("@/components/Avatar", () => ({ MausAvatar: () => null }));
@@ -132,13 +131,6 @@ describe("who gets the welcome flow", () => {
     expect(tree?.props.hosted).toBe(true);
   });
 
-  it("leaves an OMB Cloud home's first run to its engine sign-in", () => {
-    vi.stubGlobal("window", REMOTE_PAGE);
-    expect(gate({ hosted: false, canSave: true, cloudHome: true }).tree).toBeNull();
-    store.state = { ...store.state, welcomeOpen: true };
-    expect(gate({ hosted: false, canSave: true, cloudHome: true }).tree?.type).toBe(WelcomeFlow);
-  });
-
   it("gives a hosted member a note instead, and nothing that writes the workspace config", async () => {
     const { tree, html } = gate({ hosted: true, canSave: false });
     expect(tree?.type).toBe(SharedWorkspaceHint);
@@ -207,18 +199,6 @@ describe("who gets the welcome flow", () => {
     expect(gate(LOCAL_VIEWER).tree).toBeNull();
   });
 
-  it("steps aside for OMB Cloud opened by the Cloud link, not for a normal visit there", () => {
-    vi.stubGlobal("window", LOCAL_PAGE);
-    store.state = { ...store.state, appSettingsOpen: true, appSettingsSection: "cloudAccount", appSettingsCloudLink: 0 };
-    expect(gate(LOCAL_VIEWER).tree).not.toBeNull();
-    store.state = { ...store.state, appSettingsCloudLink: 1 };
-    expect(gate(LOCAL_VIEWER).tree).toBeNull();
-    store.state = { ...store.state, appSettingsSection: "general" };
-    expect(gate(LOCAL_VIEWER).tree).not.toBeNull();
-    store.state = { ...store.state, appSettingsOpen: false, appSettingsSection: "cloudAccount" };
-    expect(gate(LOCAL_VIEWER).tree).not.toBeNull();
-  });
-
   it("forgets a welcome draft once the welcome is done, however it was finished", () => {
     vi.stubGlobal("window", LOCAL_PAGE);
     localStorage.setItem(WELCOME_DRAFT_KEY, "kept");
@@ -231,9 +211,9 @@ describe("who gets the welcome flow", () => {
     expect(localStorage.getItem(WELCOME_DRAFT_KEY)).toBeNull();
   });
 
-  it("steps aside while Settings is open on the organization sign-in it offers, and is back after", () => {
+  it("steps aside while Settings is open on the servers it lets someone connect, and is back after", () => {
     vi.stubGlobal("window", LOCAL_PAGE);
-    store.state = { ...store.state, appSettingsOpen: true, appSettingsSection: "organization" };
+    store.state = { ...store.state, appSettingsOpen: true, appSettingsSection: "desktopWorkspaces" };
     expect(gate(LOCAL_VIEWER).tree).toBeNull();
     store.state = { ...store.state, appSettingsOpen: false };
     expect(gate(LOCAL_VIEWER).tree?.type).toBe(WelcomeFlow);

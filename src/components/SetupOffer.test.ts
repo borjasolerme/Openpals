@@ -14,7 +14,7 @@ vi.mock("react", async (original) => ({
   },
 }));
 vi.mock("@/state/store", () => ({ api: fixture.api, useStore: () => ({ state: { bots: fixture.bots, instances: fixture.instances }, dispatch: fixture.dispatch }) }));
-vi.mock("@/lib/cloud-guest", () => ({ useReactor: () => fixture.reactor, currentReactor: () => fixture.reactor }));
+vi.mock("@/lib/reactor", () => ({ useReactor: () => fixture.reactor, currentReactor: () => fixture.reactor }));
 vi.mock("./AskCard", async (original) => ({ ...await original<typeof import("./AskCard")>(), returnFocusToComposer: fixture.focus }));
 
 type Node = ReactElement<Record<string, unknown> & { children?: ReactNode }>;

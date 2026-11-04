@@ -115,8 +115,8 @@ describe("BotBox", () => {
     const lines: string[] = [];
     expect((await box.start({ dataDir: temp(), home: temp(), port: 8799, denyEnv: new Set(), env: {}, log: (line) => lines.push(line) })).box).toBe("off");
     expect(box.wrap({ command: "claude", args: [], env: {} })).toBeNull();
-    expect(box.report()).toMatchObject({ box: "off", reason: "not-cloud", checks: null, bridge: null, boxed: 0, refused: { egress: 0, harness: 0 }, broker: { on: false, tokens: 0, forwarded: 0, refused: 0, unbrokered: [] }, hardening: { seccomp: "off", denied: 0 } });
-    expect(lines).toEqual(["bot box: off (not-cloud)"]);
+    expect(box.report()).toMatchObject({ box: "off", reason: "switched-off", checks: null, bridge: null, boxed: 0, refused: { egress: 0, harness: 0 }, broker: { on: false, tokens: 0, forwarded: 0, refused: 0, unbrokered: [] }, hardening: { seccomp: "off", denied: 0 } });
+    expect(lines).toEqual(["bot box: off (switched-off)"]);
     expect(existsSync(join(dirs[0]!, "box"))).toBe(false);
   });
 

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Sparkles, X } from "lucide-react";
 
-import { currentReactor, useReactor } from "@/lib/cloud-guest";
+import { currentReactor, useReactor } from "@/lib/reactor";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";

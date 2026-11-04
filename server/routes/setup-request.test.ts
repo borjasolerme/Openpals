@@ -14,7 +14,7 @@ const person: RequestAuth = { kind: "loopback", scopes: ["admin", "client"] };
 const member = { kind: "session", scopes: ["client"], via: "bearer", session: { id: "s1" } } as unknown as RequestAuth;
 const admin = { kind: "session", scopes: ["admin", "client"], via: "bearer", session: { id: "s2" } } as unknown as RequestAuth;
 
-function setup(refusal: string | null = null, options: { canSetUp?: boolean; sendFails?: boolean; hold?: Promise<void> } = {}) {
+function setup(_refusal: string | null = null, options: { canSetUp?: boolean; sendFails?: boolean; hold?: Promise<void> } = {}) {
   const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }), undefined, undefined, "en");
   const bot = store.createBot({ name: "Ava" });
   let presser: string | undefined;
@@ -28,7 +28,7 @@ function setup(refusal: string | null = null, options: { canSetUp?: boolean; sen
     const line = store.appendMessage(threadId, { role: "user", kind: "text", text });
     return { ok: true as const, message: takeSetupRequest(store, { botId, threadId, line, person: true, mounted: true }) ?? line };
   };
-  const route = createSetupRequestRoutes({ store, language: () => "es", sendRefusal: () => refusal, presser: () => presser,
+  const route = createSetupRequestRoutes({ store, language: () => "es", presser: () => presser,
     canSetUp: () => options.canSetUp ?? true, send });
   const as = (who: string | undefined, caller: RequestAuth = member) => { presser = who; auth = caller; };
   const call = async (method: string, body: unknown, botId = bot.id, path = `/api/bots/${botId}/setup-request`) => {
@@ -108,10 +108,6 @@ describe("the Set me up route", () => {
     expect(await s.call("DELETE", { threadId: "other-thread" })).toMatchObject({ status: 404 });
     s.store.patchBot(s.bot.id, { soul: "Only water the garden." });
     expect(await s.call("POST", { threadId: s.bot.threadId })).toMatchObject({ status: 409 });
-    const guest = setup("On this Cloud you can only write in conversations you started.");
-    expect(await guest.call("POST", { threadId: guest.bot.threadId })).toMatchObject({ status: 403 });
-    expect(await guest.call("DELETE", { threadId: guest.bot.threadId })).toMatchObject({ status: 403 });
-    expect(guest.store.messagesFor(guest.bot.threadId)).toHaveLength(1);
   });
 
   it("records who pressed it where people share the place, and only they may close its chip", async () => {

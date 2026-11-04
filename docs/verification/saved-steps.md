@@ -190,7 +190,7 @@ fakes. This proves the harness path (journal, save, fresh target resolution,
 approvals through the normal handler, Stop, fallback with its note, the place,
 approval and switch checks), not real macOS accessibility trees, real
 cua-driver tokens, real timing between steps or a real model. Before merge,
-Omkar runs one replay against the real driver by hand on his Mac (for example
+a maintainer runs one replay against the real driver by hand on a Mac (for example
 TextEdit, New Document, set a value); agents never drive the host. Toggles
 are known by role only: a checkmarked menu item (`AXMenuItem`) or a toggle that
 reports itself as `AXButton` still saves its click, and no round or test can

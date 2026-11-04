@@ -52,7 +52,7 @@ test("the box's words and timings are fixed", () => {
     serverDown: "Open Openpals to talk",
     starting: "Openpals is still starting. Try again in a moment.",
     noMausbot: "Set up Pal first, then try again.",
-    moved: "Pal lives on My Cloud now — talk to it there",
+    moved: "Pal lives on your server now — talk to it there",
     permission: "Talking needs Microphone + Speech Recognition access — System Settings → Privacy & Security.",
     dictationOff: "Turn on Dictation in System Settings → Keyboard, then try again.",
     unavailable: "Talking couldn't start. Try again.",
@@ -179,12 +179,12 @@ test("permission and setup problems say what to fix, in the composer's words: on
   }
 });
 
-test("a server that can't take asks says why and stops listening: down, still starting, no Pal, or moved to My Cloud", async () => {
+test("a server that can't take asks says why and stops listening: down, still starting, no Pal, or moved to your server", async () => {
   const notices = [
     ["server-down", "Open Openpals to talk"],
     ["starting", TALK_TEXT.starting],
     ["no-mausbot", TALK_TEXT.noMausbot],
-    ["moved", "Pal lives on My Cloud now — talk to it there"],
+    ["moved", "Pal lives on your server now — talk to it there"],
   ];
   for (const [code, text] of notices) {
     const h = harness({ prepare: async () => { throw new TalkServerError(code); } });

@@ -22,7 +22,7 @@ await loadLocale(params.get("lang") ?? "en");
 const rail: RailState = { places: [
   { id: "local", name: "This computer", color: null, kind: "computer", opens: true, active: true, paint: { swatch: null } },
   { id: "garage", name: "Garage server", color: "teal", kind: "server", opens: true, makeHome: true, paint: { swatch: "green" } },
-], add: { cloud: true, link: true, address: false } };
+], add: { link: true, address: false } };
 const move = stateName === "failing"
   ? { phase: "copy" as const, place: "Garage server", failing: { error: "This app isn't signed in to Garage server. Open Garage server in this app, then try again." } }
   : stateName === "moving" ? { phase: "copy" as const, place: "Garage server", chats: { done: 14, total: 31 } } : null;

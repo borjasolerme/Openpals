@@ -1,4 +1,4 @@
-// A lent computer's own check on every connection My Cloud's browsers make through it: web ports on the public
+// A lent computer's own check on every connection the server's browsers make through it: web ports on the public
 // internet only. Never this computer, the devices on its networks, its home's own public address, link-local, a cloud
 // metadata service or a reserved range; it looks names up itself and connects only to the addresses it checked.
 import { lookup } from "node:dns/promises";
@@ -11,7 +11,7 @@ export const DEVICE_PORTS = Object.freeze([80, 443]);
 const CONNECT_MS = 10_000;
 const LOCAL_NAME = /^(?:[^.]+\.)*localhost\.?$/i;
 
-/** The addresses that are this computer's home: its networks and the public address My Cloud sees it connect from. */
+/** The addresses that are this computer's home: its networks and the public address the server sees it connect from. */
 export function homeAddresses(interfaces, seenAs) {
   const home = ownSubnets(interfaces);
   if (typeof seenAs === "string" && isIP(seenAs)) home.addAddress(seenAs, isIP(seenAs) === 6 ? "ipv6" : "ipv4");
@@ -33,7 +33,7 @@ const resolveName = (host) => lookup(host, { all: true, verbatim: true }).catch(
 
 /**
  * `open({ host, port })` answers `{ socket }` once connected, `{ refused }` with the reason, or `{ failed }`
- * ("unreachable", "refused", "timeout"). `seenAs()`: the address My Cloud last saw this computer connect from.
+ * ("unreachable", "refused", "timeout"). `seenAs()`: the address the server last saw this computer connect from.
  */
 export function createDeviceEgress({ resolve = resolveName, connect = tcpConnect, interfaces = networkInterfaces, seenAs = () => null, connectMs = CONNECT_MS } = {}) {
   return {

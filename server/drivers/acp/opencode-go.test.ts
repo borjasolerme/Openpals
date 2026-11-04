@@ -30,7 +30,6 @@ import { ATTACHMENTS_DIR } from "../../attachments.ts";
 import { enginesBinDir, serverInstallFor } from "../../engine-install.ts";
 import { registerFallbackPathDir, registerPathDir, resetPathCacheForTests } from "../../env-path.ts";
 import { standaloneAssetFor, standaloneEngineDir } from "../../engine-standalone.ts";
-import { cloudHomeConfigured } from "../../cloud-home.ts";
 import { DATA_DIR, OPENCODE_PROVIDER_ENV } from "../../config.ts";
 import * as quietStatus from "./quiet-status.ts";
 import { hostedWorkspaceConfigured } from "../../enterprise.ts";
@@ -358,16 +357,6 @@ describe("OpenCode catalog", () => {
     expect(describeOpenCodeAccountError("inactive_subscription", "opencode-go/minimax-m3")).toContain("OpenCode Go subscription");
   });
 
-  it("on a Cloud, sends another provider's refused key to Settings, not a terminal", () => {
-    for (const model of ["openrouter/openai/gpt-4o-mini", "venice/llama-3.3-70b", `${"very-long-provider-name".repeat(4)}/model`]) {
-      const cloud = describeOpenCodeAccountError("invalid_credentials", model, { cloudHome: true });
-      expect(cloud).not.toContain("opencode auth login");
-      expect(cloud).toContain("Save it under Keys for other OpenCode providers in Settings → API keys.");
-      expect(cloud.length, model).toBeLessThanOrEqual(160);
-      expect(describeOpenCodeAccountError("invalid_credentials", model, { cloudHome: false })).toContain("opencode auth login");
-    }
-  });
-
   it("passes the person's provider keys through, as the CLI would see them", async () => {
     const scratch = mkdtempSync(join(tmpdir(), "omb-opencode-go-"));
     try {
@@ -407,7 +396,7 @@ describe("OpenCode catalog", () => {
   });
 
   it("allows provider keys only where the server's environment is one person's own", () => {
-    const own = { cloudHome: false, hostedWorkspace: false, organisationManaged: false, sharedSignIn: false };
+    const own = { hostedWorkspace: false, sharedSignIn: false };
     expect(openCodeProviderKeysAllowed(own)).toBe(true);
     for (const key of Object.keys(own) as Array<keyof typeof own>) {
       expect(openCodeProviderKeysAllowed({ ...own, [key]: true }), key).toBe(false);
@@ -417,20 +406,17 @@ describe("OpenCode catalog", () => {
   it("is wired in index.ts before the first catalog probe, with the sign-in list", () => {
     const source = readFileSync(new URL("../../index.ts", import.meta.url), "utf8").replace(/\r\n/g, "\n");
     const wired = source.indexOf("setOpenCodeProviderKeyPolicy(openCodeKeysAllowed);");
-    const firstLoad = source.indexOf("await registry.load(providerConfigs(), decorateHostedProvider);");
+    const firstLoad = source.indexOf("await registry.load(providerConfigs());");
     expect(wired).toBeGreaterThan(0);
     expect(firstLoad).toBeGreaterThan(wired);
     expect(source.match(/setOpenCodeProviderKeyPolicy\(/g)).toHaveLength(1);
     const policy = source.slice(source.indexOf("const openCodeKeysAllowed = "), wired);
     expect(policy).toContain("sharedSignIn: sharedSignIn(signInAllowList())");
-    expect(policy).toContain("cloudHome: Boolean(CLOUD_HOME)");
     expect(policy).toContain("hostedWorkspace: HOSTED_WORKSPACE");
-    expect(policy).toContain("organisationManaged: openCodeOrganisationManaged()");
-    expect(source).toContain("openCodeOrganisationManaged = () => managedPolicy.current() !== null || managedDesktop.enrolled();");
   });
 
-  it("keeps the server's own provider keys out on a Cloud home or a managed desktop", async () => {
-    const scratch = mkdtempSync(join(tmpdir(), "omb-opencode-managed-"));
+  it("keeps the server's own provider keys out when the policy refuses them", async () => {
+    const scratch = mkdtempSync(join(tmpdir(), "omb-opencode-refused-"));
     setOpenCodeProviderKeyPolicy(() => false);
     for (const key of OPENCODE_PROVIDER_ENV) vi.stubEnv(key, `operator-${key}`);
     try {
@@ -450,12 +436,12 @@ describe("OpenCode catalog", () => {
       await instance.dispose();
     } finally {
       vi.unstubAllEnvs();
-      setOpenCodeProviderKeyPolicy(() => !cloudHomeConfigured() && !hostedWorkspaceConfigured());
+      setOpenCodeProviderKeyPolicy(() => !hostedWorkspaceConfigured());
       await removeTempDir(scratch);
     }
   });
 
-  it("lets the owner's saved provider keys through on a Cloud home, and only those", async () => {
+  it("lets the owner's saved provider keys through where the server's own are kept out, and only those", async () => {
     const scratch = mkdtempSync(join(tmpdir(), "omb-opencode-own-keys-"));
     setOpenCodeProviderKeyPolicy(() => false);
     for (const key of OPENCODE_PROVIDER_ENV) vi.stubEnv(key, `operator-${key}`);
@@ -486,7 +472,7 @@ describe("OpenCode catalog", () => {
       await instance.dispose();
     } finally {
       vi.unstubAllEnvs();
-      setOpenCodeProviderKeyPolicy(() => !cloudHomeConfigured() && !hostedWorkspaceConfigured());
+      setOpenCodeProviderKeyPolicy(() => !hostedWorkspaceConfigured());
       await removeTempDir(scratch);
     }
   });

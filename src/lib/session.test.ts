@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  BROWSER_SIGN_IN_FAILED, cloudOwnerOf, isConnected, isOwnerOrAdmin, previewBrowserSignIn, profileForSession, readSessionState, reasonWorthShowing, SERVICE_TRUST_REASON, signInWithBrowserGrant,
-  takeBrowserSignInFromLocation, takeInvitedEmailFromLocation, takePairingCodeFromLocation,
+  BROWSER_SIGN_IN_FAILED, isConnected, isOwnerOrAdmin, previewBrowserSignIn, profileForSession, readSessionState, reasonWorthShowing, SERVICE_TRUST_REASON, signInWithBrowserGrant,
+  takeBrowserSignInFromLocation, takePairingCodeFromLocation,
   type SessionState,
 } from "./session";
 
@@ -13,21 +13,6 @@ describe("what the pair page says about why it was shown", () => {
     expect(reasonWorthShowing("403")).toBeNull();
     expect(reasonWorthShowing(undefined)).toBeNull();
     expect(reasonWorthShowing("unauthorized: this session has expired or was revoked; pair this device again")).toMatch(/expired or was revoked/);
-  });
-});
-
-describe("the invited address on a pair link", () => {
-  it("prefills a valid address, drops it from the address bar, and ignores junk", () => {
-    const replaceState = vi.fn();
-    vi.stubGlobal("location", { search: "?email=Ada%40Example.test&x=1", pathname: "/pair", hash: "#code=ABCD" });
-    vi.stubGlobal("history", { replaceState });
-    expect(takeInvitedEmailFromLocation()).toBe("ada@example.test");
-    expect(replaceState).toHaveBeenCalledWith(null, "", "/pair?x=1#code=ABCD");
-    vi.stubGlobal("location", { search: "?email=not-an-address", pathname: "/pair", hash: "" });
-    expect(takeInvitedEmailFromLocation()).toBeNull();
-    vi.stubGlobal("location", { search: "", pathname: "/pair", hash: "" });
-    expect(takeInvitedEmailFromLocation()).toBeNull();
-    vi.unstubAllGlobals();
   });
 });
 
@@ -80,12 +65,6 @@ describe("the OMB Cloud page's \"Use in your browser\" link", () => {
     expect(await signInWithBrowserGrant(credential, "attempt-page-0002", spent)).toEqual({ ok: false, error: "pairing code is wrong or has expired" });
     expect(reasonWorthShowing(BROWSER_SIGN_IN_FAILED)).toBe(BROWSER_SIGN_IN_FAILED);
   });
-
-  it("names the Cloud's owner afterwards only for a browser sign-in's session on a Cloud home", () => {
-    expect(cloudOwnerOf({ kind: "session", cloudHome: true, owner: "ada@example.test" })).toBe("ada@example.test");
-    for (const session of [{ kind: "session", owner: "ada@example.test" }, { kind: "session", cloudHome: true }, { kind: "loopback" },
-      { cloudHome: true, owner: 7 }, { cloudHome: "yes", owner: "ada@example.test" }, null, undefined]) expect(cloudOwnerOf(session)).toBeNull();
-  });
 });
 
 describe("who the served UI is on its own machine", () => {
@@ -113,14 +92,13 @@ describe("the profile shown for a signed-in session", () => {
   const owner = { name: "Owner", email: "owner@example.test", avatarUrl: "/owner.png" };
   const ada: Extract<SessionState, { kind: "session" }> = { kind: "session", id: "s", label: "Ada's iPad", email: "ada@example.test", scopes: ["client"], expiresAt: 1 };
 
-  it("preserves the verified email, device label, and team membership", async () => {
+  it("preserves the verified email and device label, and reads an old Team Cloud field as nothing", async () => {
     const answer: typeof fetch = async () => new Response(JSON.stringify({
       kind: "session", id: "s", label: "Ada's iPad", email: "ada@example.test", scopes: ["client"], expiresAt: 1,
       team: { id: "team-1", name: "Shared Team", role: "member" },
     }), { status: 200 });
-    expect(await readSessionState(answer)).toMatchObject({
+    expect(await readSessionState(answer)).toEqual({
       kind: "session", id: "s", label: "Ada's iPad", email: "ada@example.test", scopes: ["client"], expiresAt: 1,
-      team: { id: "team-1", name: "Shared Team", role: "member" },
     });
   });
 
@@ -154,11 +132,9 @@ describe("the profile shown for a signed-in session", () => {
     expect(profileForSession(owner, { kind: "loopback" })).toBe(owner);
   });
 
-  it("keeps the configured profile for an admin session, with or without an email, and on a Team Cloud", () => {
+  it("keeps the configured profile for an admin session, with or without an email", () => {
     expect(profileForSession(owner, { kind: "session", id: "s", label: "Owner's browser", scopes: ["admin", "client"], expiresAt: 1 })).toBe(owner);
     expect(profileForSession(owner, { ...ada, scopes: ["admin", "client"] })).toBe(owner);
-    const member = { name: "Ada", email: "ada@example.test" };
-    expect(profileForSession(member, { ...ada, team: { id: "team-1", name: "Shared Team", role: "member" } })).toBe(member);
   });
 
   it("does not show the configured owner for email-less paired sessions", () => {

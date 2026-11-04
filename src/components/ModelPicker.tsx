@@ -377,7 +377,7 @@ export function ModelPicker({
   };
 
   const lookForLocal = (instance: InstanceInfo) => {
-    if (needsCli(instance) || instance.policy || probing.has(instance.instanceId)) return;
+    if (needsCli(instance) || probing.has(instance.instanceId)) return;
     setProbing((current) => new Set(current).add(instance.instanceId));
     void probeLocalModels(instance.instanceId, refreshInstanceModels).then(() => setProbing((current) => {
       const next = new Set(current);
@@ -465,7 +465,7 @@ export function ModelPicker({
   };
 
   const pick = (instance: InstanceInfo, model: string, variant?: string) => {
-    if (bot.busy || instance.policy) return;
+    if (bot.busy) return;
     const nextSelection = modelSelectionForPick(selection, instance, model);
     if (variant !== undefined) nextSelection.variant = variant;
     const updateBotDefault = !threadId || (simpleView ? simpleUpdatesBotDefault : scope === "bot");
@@ -568,8 +568,7 @@ export function ModelPicker({
 
   const currentOption = active?.models.options.find((option) => option.id === selection.model);
   const attention = !active ? undefined
-    : active.policy ? t("policy.managedBy", { organization: active.policy.organizationName })
-      : needsCli(active) ? t("model.setupRequired")
+    : needsCli(active) ? t("model.setupRequired")
         : needsSignIn(active) && !isCustomOnly(active) && !currentOption?.custom ? t("model.signInRequired") : currentOption?.orgBlocked ? t("model.orgBlocked") : undefined;
   const summary = active
     ? `${active.displayName} · ${modelLabel(active, selection.model)}${
@@ -786,12 +785,7 @@ export function ModelPicker({
                 </div>
               )}
 
-              {railInstance.policy ? (
-                <div data-policy-blocked className="min-h-0 flex-1 overflow-y-auto px-3.5 pb-3 pt-1 text-[13px] leading-[18px] text-ink-secondary">
-                  <p className="font-medium text-ink">{t("policy.managedBy", { organization: railInstance.policy.organizationName })}</p>
-                  <p className="mt-1">{t(railInstance.policy.team ? "policy.teamModelBlocked" : "policy.modelBlocked", { organization: railInstance.policy.organizationName })}</p>
-                </div>
-              ) : blocked ? (
+              {blocked ? (
                 <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 pt-1">
                   <EngineSetup instance={railInstance} intent={pane === "custom" ? "inject" : "cloud"} quiet={!advanced} onHost={remote} />
                   {!remote && railInstance.claudeAccount && needsSignIn(railInstance) && pane !== "custom" && (

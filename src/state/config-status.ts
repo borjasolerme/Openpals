@@ -19,9 +19,6 @@ export interface ConfigStatus {
   greenference?: SavedKey;
   deepseek?: SavedKey;
   meta?: SavedKey;
-  /** X research comes with MausBot Cloud plans: `included` while this server holds the plan's relay credential;
-   * `unavailable` when the Admin said no to this desktop's paid sign-in. */
-  xResearch?: { included: boolean; unavailable?: boolean };
   /** The person's own treg key for research: configured or not, never the key. */
   treg?: SavedKey;
   /** The Postiz organisation API key, and the Postiz server it belongs to when it is not Postiz Cloud. */
@@ -44,8 +41,7 @@ export interface ConfigStatus {
   budgets?: { monthlyUsd?: number; warnAtPercent?: number };
   billing?: { currency?: string; prices?: Record<string, { inputPerMillion: number; outputPerMillion: number; cachedInputPerMillion?: number }> };
   composio: SavedKey & { mode?: "managed" | "self-hosted" | "unavailable" };
-  /** `included`: cloud computers come with Cloud Pro, no key is saved. */
-  box: SavedKey & { included?: boolean };
+  box: SavedKey;
   vps: { configured: boolean; sshAlias: string };
   rooms: { turnTimeoutMinutes: number };
   /** Per-call ceiling (minutes) for a bot's MCP tools. Absent from servers
@@ -54,7 +50,6 @@ export interface ConfigStatus {
   /** Workspace defaults for new bots; absent effort = no level is sent. */
   newBots?: { effort?: EffortLevel };
   /** This Cloud is on the Starter plan, as the Admin last said; absent or false otherwise. */
-  cloudStarter?: boolean;
   threads?: { maxConcurrentPerBot: number; eventLogMaxBytes?: number; eventLogRetentionDays?: number };
   automaticRecovery?: { enabled: boolean; backup?: ModelSelection };
   /** Prompt-cache keep-warm for idle Claude threads. Absent from older servers. */
@@ -76,13 +71,10 @@ export interface ConfigStatus {
     model?: string;
     /** Fish Audio speech model; present only while Fish is the provider. */
     fishModel?: "s2.1-pro" | "s2.1-pro-free";
-    /** ElevenLabs voice comes with Cloud Pro; no key is saved. */
-    included?: boolean;
   };
   /** The decision model: switches and whether a key is on file. The key
    * itself never comes back. `enabled` is the switch as it takes effect
-   * (off while no key is saved). `included`: Cloud Pro's decisions, no key
-   * saved. OpenRouter only: `keySource` says which key is in use (its own, or
+   * (off while no key is saved). OpenRouter only: `keySource` says which key is in use (its own, or
    * the one under Settings → API keys); `sharedKey`: that one is on file. */
   decider?: {
     provider: "jev" | "workersai" | "openrouter";
@@ -91,7 +83,6 @@ export interface ConfigStatus {
     configured: boolean;
     keySource?: "own" | "shared";
     sharedKey?: boolean;
-    included?: boolean;
     enabled: boolean;
     jobs: { roomRouting: boolean };
   };
@@ -100,7 +91,7 @@ export interface ConfigStatus {
     own: { jev: boolean; workersAi: boolean; openrouter: boolean };
     sharedKey?: boolean;
     workersAiAccountId?: string;
-    extraction: { provider?: "jev" | "workersai" | "openrouter"; included?: boolean; ready: boolean };
+    extraction: { provider?: "jev" | "workersai" | "openrouter"; ready: boolean };
   };
   /** Live calls (OpenAI GPT-Live): configured-or-not, never the key. */
   live?: LiveSettings;
@@ -133,29 +124,6 @@ export interface ConfigStatus {
   browserEngine?: BrowserEngineSummary;
   /** Named browser sessions any bot can be pointed at. */
   browserProfiles?: BrowserProfile[];
-  /** The enrolled organisation's read-only desktop policy; null when this
-   * desktop is not enrolled or its Admin sends no policy. */
-  managedPolicy?: ManagedPolicySummary | null;
-  /** This server is an OMB Cloud home: it offers no "this computer" and no
-   * Local VM (server/cloud-home.ts). Absent everywhere else. */
-  cloudHome?: boolean;
-  /** A Team Cloud: the team this server is the home of, and the Plan page (MausBot Cloud) where its people and plan
-   * are managed. Absent everywhere else. */
-  team?: { id: string; name: string; cloudPage?: string };
-}
-
-export interface ManagedPolicySummary {
-  organizationName: string;
-  version: number;
-  companyModelsOnly: boolean;
-  allowedEngines: "all" | string[];
-  mcp: { allowCustom: boolean; allowlist: string[] };
-  computers: { thisComputer: boolean; localVm: boolean; box: boolean; vps: boolean };
-  remoteAccess: boolean;
-  /** Connected apps by service slug; absent from an older Team Cloud and from an organisation's policy. */
-  apps?: { allowAll: boolean; allowlist: string[] };
-  /** A Team Cloud's rules rather than an organisation's. */
-  team?: true;
 }
 
 export interface BrowserEngineSummary {
@@ -178,7 +146,7 @@ export interface BrowserEngineSummary {
   /** browserEngine.engine: "chrome" when the bots' browsers run on OpenMausBot's own Chrome driver. */
   engine?: "agent-browser" | "chrome";
   /** Self-hosted servers only: whether bots' browsers may open this server's own sites and its local network
-   * (browserEngine.egress.localNetwork, off by default). Absent on the desktop and on MausBot Cloud. */
+   * (browserEngine.egress.localNetwork, off by default). Absent on the desktop. */
   serverSites?: boolean;
 }
 

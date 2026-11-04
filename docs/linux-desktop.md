@@ -22,22 +22,11 @@ The local preview does **not** give the bot control of this computer by itself. 
 the global **Enable local control** choice and assigning a bot to **This computer**; every action still enters the
 approval flow. On Wayland, local control is disabled and legacy opt-ins are cleared automatically. Automatic Wayland
 helper installation, Linux dictation, and ARM64 remain unavailable and fail closed; follow their
-progress in [issue #29](https://github.com/milind-soni/OpenMausBot/issues/29) and the safety hold in
-[issue #345](https://github.com/milind-soni/OpenMausBot/issues/345). Bundled
-CUA supply-chain work is tracked in [issue #113](https://github.com/milind-soni/OpenMausBot/issues/113). Xorg is tracked in
-[issue #79](https://github.com/milind-soni/OpenMausBot/issues/79), and guarded GNOME/Wayland support in
-[issue #109](https://github.com/milind-soni/OpenMausBot/issues/109).
-
-## Download packages
-
-Choose one Ubuntu 24.04 x86_64 package from the latest release:
-
-- [Debian package (`OpenMausBot-amd64.deb`)](https://github.com/milind-soni/OpenMausBot/releases/latest/download/OpenMausBot-amd64.deb) — recommended; APT installs its desktop dependencies and configures the bundled bot browser's sandbox.
-- [Portable AppImage (`OpenMausBot.AppImage`)](https://github.com/milind-soni/OpenMausBot/releases/latest/download/OpenMausBot.AppImage) — does not install system files.
-- [SHA-256 checksums](https://github.com/milind-soni/OpenMausBot/releases/latest/download/SHA256SUMS-ubuntu-x64.txt)
-
-Versioned packages and previous releases remain available on the
-[releases page](https://github.com/milind-soni/OpenMausBot/releases).
+progress in upstream issue #29 and the safety hold in
+upstream issue #345. Bundled
+CUA supply-chain work is tracked in upstream issue #113. Xorg is tracked in
+upstream issue #79, and guarded GNOME/Wayland support in
+upstream issue #109.
 
 ## Build packages
 
@@ -48,8 +37,8 @@ Requirements for building from source:
 - pnpm 10.33.0 (Corepack can install the version declared by the project)
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot.git
-cd OpenMausBot
+git clone https://github.com/borjasolerme/Openpals.git
+cd Openpals
 corepack enable
 pnpm install --frozen-lockfile
 pnpm package:linux
@@ -57,20 +46,20 @@ pnpm package:linux
 
 The build creates:
 
-- `release/OpenMausBot-<version>-amd64.deb`
-- `release/OpenMausBot-<version>-x86_64.AppImage`
+- `release/Openpals-<version>-amd64.deb`
+- `release/Openpals-<version>-x86_64.AppImage`
 
 The AppImage uses a static runtime and does not require the legacy `libfuse2` package.
 
 ## Install and run
 
-Install a downloaded Debian package with APT so its desktop dependencies are resolved:
+Install the built Debian package with APT so its desktop dependencies are resolved:
 
 ```sh
-sudo apt install ./OpenMausBot-amd64.deb
+sudo apt install ./release/Openpals-<version>-amd64.deb
 ```
 
-Then open **OpenMausBot** from the GNOME application launcher. To remove it:
+Then open **Openpals** from the GNOME application launcher. To remove it:
 
 ```sh
 sudo apt remove openmausbot
@@ -79,15 +68,13 @@ sudo apt remove openmausbot
 The portable AppImage does not install system files:
 
 ```sh
-chmod +x release/OpenMausBot-*-x86_64.AppImage
-./release/OpenMausBot-*-x86_64.AppImage
+chmod +x release/Openpals-*-x86_64.AppImage
+./release/Openpals-*-x86_64.AppImage
 ```
-
-For a downloaded release AppImage, use `OpenMausBot.AppImage` in place of the versioned path above.
 
 ### Arch Linux and EndeavourOS (AppImage)
 
-Arch-based distributions are not an official target, but the release AppImage runs there. A minimal Arch
+Arch-based distributions are not an official target, but the AppImage runs there. A minimal Arch
 install lacks the FUSE helper and some desktop libraries the AppImage needs, so install them first:
 
 ```sh

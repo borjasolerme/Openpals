@@ -1,5 +1,5 @@
 // The private ask for one login's secrets, or one connection's (cloud-connections.mjs), which the one-time move
-// (cloud-send.mjs) carries to the person's own Cloud.
+// (cloud-send.mjs) carries to the person's own server.
 //
 // The secret leaves this computer's server only over Electron's private utility-process port (server/login-handoff.ts)
 // and is answered only to the process it was asked of; nothing here keeps or logs it.
@@ -47,7 +47,7 @@ export function createLoginHandoffClient({ timeoutMs = 10_000, randomId = random
   };
 }
 
-/** A login kept to some bots keeps only those that exist on the Cloud too: a send never opens a login to more bots. */
+/** A login kept to some bots keeps only those that exist on the server too: a send never opens a login to more bots. */
 export function botsOnCloud(bots, cloudBotIds) {
   if (bots === "all") return "all";
   return Array.isArray(bots) ? bots.filter(id => cloudBotIds.has(id)) : [];

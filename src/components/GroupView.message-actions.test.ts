@@ -19,8 +19,7 @@ vi.mock("./DesktopCapabilities", async (importOriginal) => ({
   useDesktopCapabilities: () => ({ capabilities: { dictation: { available: false }, host: { packaged: true, platform: "other" }, localComputer: { available: false, reasonCode: "x", message: "" } }, ready: true }),
   useCaptionChrome: () => ({}),
 }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
-vi.mock("@/lib/cloud-guest", () => ({ useCanWriteIn: () => fixture.canWrite, useReactor: () => "user" }));
+vi.mock("@/lib/reactor", () => ({ useReactor: () => "user" }));
 
 const { Transcript } = await import("./GroupView");
 const { MessageBoundary } = await import("./ChatView");
@@ -74,18 +73,6 @@ describe("room message actions", () => {
     expect(html).toContain('aria-haspopup="menu"');
     expect(html).not.toContain("Show raw markdown");
     expect(html).not.toContain("Pin message");
-  });
-
-  it("offers reactions only to a viewer who may write in the room: one who may not sees who reacted, as labels", () => {
-    const asked: Message = { ...text("a", "bot", "Shall I post it?"), reactions: [{ emoji: "👍", by: "p_ada", name: "Ada" }] };
-    const open = markup([asked]);
-    expect(open).toContain('aria-label="Add reaction"');
-    expect(open).toMatch(/<button[^>]*aria-label="Thumbs up: yes, go ahead: Ada"/);
-    fixture.canWrite = false;
-    const closed = markup([asked]);
-    expect(closed).not.toContain("Add reaction");
-    expect(closed).not.toMatch(/<button[^>]*aria-label="Thumbs up: yes, go ahead: Ada"/);
-    expect(closed).toMatch(/<span role="img" aria-label="Thumbs up: yes, go ahead: Ada"/);
   });
 
   it("puts read aloud, raw markdown and pin in a room reply's more menu", () => {

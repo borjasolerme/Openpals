@@ -29,15 +29,14 @@ async function made(side: Side, name: string) {
   const bot = (await side("POST", "/api/bots", { name })).body.bot as { id: string };
   expect((await side("PATCH", `/api/bots/${bot.id}`, { soul: `You are ${name}.` })).status).toBe(200);
 }
-/** Main's suggestion as the app wires it, with no MausBot Cloud: its channels, on this computer's page. */
+/** Main's suggestion as the app wires it, its channels, on this computer's page. */
 function install(dismissed = "two-places.json") {
   const handlers = new Map<string, (...args: unknown[]) => unknown>();
   const main = installTwoPlacesMain({
     ipcMain: { handle: (channel: string, handler: (...args: unknown[]) => unknown) => { handlers.set(channel, handler); } },
     guard: (_channel: string, handler: (...args: unknown[]) => unknown) => handler,
     localRequest: (route: string, init: RequestInit = {}) => fetch(`${fx.desktopBase}${route}`, { ...init, headers: { "x-openmausbot-desktop-owner": fx.ownerCapability } }),
-    fetch: fx.windowFetch, environments: () => [garage.place, family.place], cloud: () => ({ origin: null, asleep: false }),
-    oneHome: { journal: () => null, keep: { state: () => ({ shown: false, on: false, moved: false }), set: async () => {} } },
+    fetch: fx.windowFetch, environments: () => [garage.place, family.place], 
     ownHome: fx.main, dismissed: file(dismissed), tell: () => {},
   });
   const call = (channel: string, ...args: unknown[]) => Promise.resolve(handlers.get(channel)!({}, ...args)) as Promise<{ suggest: { key: string; name: string; kind: string } | null }>;
@@ -77,8 +76,8 @@ it("Bring them together starts the move to that server, and the suggestion goes"
     const shown = await fresh.call("two-places:state");
     expect(shown.suggest?.name).toBe("Garage server");
     expect(await fresh.call("two-places:accept", shown.suggest!.key)).toEqual({ suggest: null });
-    expect(fx.main.chosen()).toMatchObject({ origin: garage.base, name: "Garage server" });
-    await expect.poll(() => fx.main.view()?.place, { timeout: 10_000, interval: 50 }).toBe("Garage server");
+    expect(fx.main.active()).toBe(true);
+    await expect.poll(() => fx.main.home()?.origin, { timeout: 10_000, interval: 50 }).toBe(garage.base);
     expect(await fresh.call("two-places:state"), "a move under way: nothing to suggest").toEqual({ suggest: null });
   } finally { fresh.main.close(); }
 }, hostTimeout(120_000));

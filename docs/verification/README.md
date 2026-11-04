@@ -66,7 +66,6 @@ Use only mapped, tested commands:
 - [Native dictation retention and send-to-stop](dictation.md)
 - [Proactive routines and the brief](proactive-routines.md)
 - [Waits: tell me when, with no AI while waiting](waits.md)
-- [A new Cloud's first hour](first-hour.md)
 - [Chat widgets](widgets.md)
 - [Reactions](reactions.md)
 - [Chat widgets: prompts to try with a real bot](widget-prompts.md)
@@ -85,18 +84,14 @@ Use only mapped, tested commands:
 - [Qwen model route selection](qwen-models.md)
 - [Team backups](team-backups.md)
 - [Sharing a whole team](team-sharing.md)
-- [The organization library](org-library.md)
 - [Preset bots](presets.md)
 - [Teams and shared instructions](teams.md)
 - [Full workspace backups](workspace-backups.md)
-- [Optional company cloud backups](company-backups.md)
-- [Organization library: the desktop channel](desktop-library.md)
 - [Fleet: many workspaces on one server](fleet.md)
 - [Workspaces screen and the fleet agent](workspaces.md)
 - [Hosted workspace sign-in and revocation](hosted-workspaces.md)
 - [Shared-workspace trust: loopback, card answerers, decision log](shared-workspace-trust.md)
 - [Shared-workspace governance: bot visibility and admin activity](shared-workspace-governance.md)
-- [Who can see, chat with and change each team bot](team-bot-access.md)
 - [Usage ledger](usage-ledger.md)
 - [Bounded built-in tool results](tool-results.md)
 - [Memory: recall, upkeep and the tidy-up](memory-layer.md)
@@ -121,10 +116,6 @@ reply box and the Quick asks chat by hand on a packaged side-by-side build; the
 control surface cannot drive a global shortcut or the microphone, so it is not
 in the map above.
 
-The [move to My Cloud fixture](cloud-send.md) runs this computer's server and a
-Cloud home with the desktop's own wiring between them, and runs and checks the
-one-time move as main does.
-
 The [server of the person's own as home fixture](own-home.md) runs this
 computer's server and servers of the person's own with main's wiring for
 **Make <server> my home**: the move, routines that run once, this computer then
@@ -144,10 +135,9 @@ bot's turn getting the `postiz` tools with the token kept out of every answer,
 transcript and log, plain refusals, revocation and disconnect, against loopback
 stand-ins for Postiz.
 
-The [X card fixture](x-connector.md) checks the Apps page's X card: a plan's
-included calls with the month's use, the person's own treg key (saved, tested,
-removed, used first) and a used-up month, against loopback stand-ins for treg
-and the relay.
+The [X card fixture](x-connector.md) checks the Apps page's X card: the
+person's own treg key (saved, tested, removed), against a loopback stand-in for
+treg.
 
 The [Connected Apps OAuth fixture](connected-apps-oauth.md) checks blocked-popup
 recovery, safe authorization links and abandoned-account retries through real
@@ -158,17 +148,6 @@ real Settings connection component in disposable Electron windows.
 
 The [loading screen and tray smoke](startup-tray.md) checks the startup close
 button, hidden handoff, tray restore, and Quit in a disposable Electron profile.
-
-The [optional organization connection smoke](organization-settings.md) checks
-the real Settings panel and production desktop client against a synthetic
-Admin server, including cancellation, revocation and unchanged normal startup.
-
-The [personal Cloud account smoke](cloud-account.md) checks optional browser
-sign-in, server-verified Pro status and sign-out in a disposable Electron profile.
-
-The [rail of Clouds](cloud-rail.md) checks the session's list of Clouds, which
-pages may read the rail, opening a place by its id, hiding the rail, and buying
-another Cloud, with a loopback Admin and the real app in a disposable preview.
 
 The [embedded server recovery smoke](desktop-server-recovery.md) crashes real
 Electron-owned fixture servers, verifies bounded recovery and private access,

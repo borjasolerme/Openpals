@@ -1,5 +1,5 @@
-// Bots in two places can't work together: this computer has bots of its own while a server of the person's own, or My Cloud
-// they keep this computer's bots away from, has bots too. One plain suggestion on this computer's page brings them
+// Bots in two places can't work together: this computer has bots of its own while a server of the person's own has bots
+// too. One plain suggestion on this computer's page brings them
 // together there, one tap away from the one-time move to that place; dismissed, it stays dismissed for that place. Each of
 // the person's own places is also told the names of the bots their other places have, and nothing more, so a bot looking
 // for one of those says where it lives (server/places-elsewhere.ts).
@@ -12,7 +12,7 @@ const record = (value) => value !== null && typeof value === "object" && !Array.
 const MAX_PLACES = 20;
 /** A place is read again at most this often, unless something about the places changed. */
 export const LOOK_EVERY_MS = 10 * 60_000;
-const KEY = /^(?:cloud|server):[^\s]{1,300}$/u;
+const KEY = /^server:[^\s]{1,300}$/u;
 
 /** The bots a place's move summary names, by name: the ones a move would carry. */
 export function usedBots(summary) {
@@ -29,7 +29,7 @@ export function parseDismissed(value) {
  * @param {{
  *   local(): Promise<unknown>,
  *   here?: { name(): Promise<string | null>, tell(payload: unknown): Promise<unknown> },
- *   places(): Array<{ key: string, name: string, kind: "cloud" | "server" | "team", read(): Promise<unknown>, tell?(payload: unknown): Promise<unknown>, bring?(): Promise<unknown> }>,
+ *   places(): Array<{ key: string, name: string, kind: "server", read(): Promise<unknown>, tell?(payload: unknown): Promise<unknown>, bring?(): Promise<unknown> }>,
  *   settled(): boolean,
  *   quiet?(): boolean,
  *   dismissed: { read(): unknown, write(value: unknown): void },
@@ -37,11 +37,11 @@ export function parseDismissed(value) {
  *   now?(): number,
  *   log?(line: string): void,
  * }} deps `local()`: this computer's move summary, null once its bots moved. `here`: what the person's other places call
- * this computer, and telling it where their other bots live. `places()`: the person's own places besides this computer, My
- * Cloud first; each `read()` is that place's move summary (null while it can't be asked, a sleeping Cloud included),
- * `tell()` tells it where their other bots live, and `bring()` (only where this computer's bots could go now) is the
- * one-time move there; a team has neither, it is only read. `settled()`: no move is under way or done, so this computer's bots are its own. `quiet()`: a move is
- * under way, so nothing is read or told until it is done.
+ * this computer, and telling it where their other bots live. `places()`: the person's own servers besides this computer;
+ * each `read()` is that place's move summary (null while it can't be asked), `tell()` tells it where their other bots
+ * live, and `bring()` (only where this computer's bots could go now) is the one-time move there. `settled()`: no move is
+ * under way or done, so this computer's bots are its own. `quiet()`: a move is under way, so nothing is read or told
+ * until it is done.
  */
 export function createTwoPlaces({ local, here: computer = null, places, settled, quiet = () => false, dismissed, onChange = () => {}, now = Date.now, log = () => {} }) {
   /** What each place had when last read: its bots by name, and when. */
@@ -80,12 +80,7 @@ export function createTwoPlaces({ local, here: computer = null, places, settled,
       const signature = JSON.stringify(payload);
       if (told.get(receiver.key) === signature) continue;
       try {
-        // A place on an older version refuses a kind it does not know; it still hears about the person's own places.
-        await receiver.tell(payload).catch((error) => {
-          const own = payload.places.filter((place) => place.kind !== "team");
-          if (error?.status !== 400 || own.length === payload.places.length) throw error;
-          return receiver.tell({ ...payload, places: own });
-        });
+        await receiver.tell(payload);
         told.set(receiver.key, signature);
       } catch (error) { log(`two places: ${receiver.name} was not told where the other bots live (${error?.message ?? error})`); }
     }

@@ -37,7 +37,6 @@ export interface SetupMachine {
 /** What finding and bringing in need from the server. Skills need nothing from it: they are kept once for every bot. */
 export interface SetupHost {
   mcpServers(): Record<string, unknown>;
-  mcpPolicyRefusal(name: string, server: object): string | undefined;
   persistMcpServers(next: Record<string, unknown>): void;
   mcpConfigBusy: { get(): boolean; set(busy: boolean): void };
   /** "Also use my Claude Code MCP servers" is on: Claude bots already run Claude Code's own, so they are not offered. */
@@ -628,9 +627,9 @@ function foundTool(source: SetupSource, rawName: string, raw: Record<string, unk
   }
 }
 
-/** Every server the tools list, normalised and switched off by Paste config's parser, sorted into new, already here,
- * named like a different one here, and refused by the organization; a server two tools list is kept once. */
-function findTools(machine: SetupMachine, current: Record<string, unknown>, host: Pick<SetupHost, "mcpPolicyRefusal" | "claudeUserMcp">) {
+/** Every server the tools list, normalised and switched off by Paste config's parser, sorted into new, already here and
+ * named like a different one here; a server two tools list is kept once. */
+function findTools(machine: SetupMachine, current: Record<string, unknown>, host: Pick<SetupHost, "claudeUserMcp">) {
   const existing = Object.entries(current).flatMap(([name, raw]) => {
     const parsed = parseStoredMcpServer(name, raw);
     return parsed.ok ? [identity(parsed.server)] : [];
@@ -642,7 +641,6 @@ function findTools(machine: SetupMachine, current: Record<string, unknown>, host
   const fresh: FoundTool[] = [];
   const present: FoundTool[] = [];
   const conflicts: FoundTool[] = [];
-  const refused: FoundTool[] = [];
   const inPlace = host.claudeUserMcp?.() === true;
   for (const tool of setupPaths(machine).tools) {
     if (inPlace && tool.source === "claudeCode") continue;
@@ -655,11 +653,10 @@ function findTools(machine: SetupMachine, current: Record<string, unknown>, host
       seenIds.add(found.identity);
       if (takenIds.has(found.identity)) present.push(found);
       else if (takenNames.has(found.name)) conflicts.push(found);
-      else if (host.mcpPolicyRefusal(found.name, found.server)) refused.push(found);
       else fresh.push(found);
     }
   }
-  return { fresh, present, conflicts, refused };
+  return { fresh, present, conflicts };
 }
 
 function importTools(machine: SetupMachine, host: SetupHost): NonNullable<SetupImportResult["tools"]> {
@@ -671,7 +668,7 @@ function importTools(machine: SetupMachine, host: SetupHost): NonNullable<SetupI
   host.mcpConfigBusy.set(true);
   try {
     const current = host.mcpServers();
-    const { fresh, present, conflicts, refused } = findTools(machine, current, host);
+    const { fresh, present, conflicts } = findTools(machine, current, host);
     const room = Math.max(0, MAX_MCP_SERVERS - Object.keys(current).length);
     const adding = fresh.slice(0, room);
     let saved = true;
@@ -687,7 +684,6 @@ function importTools(machine: SetupMachine, host: SetupHost): NonNullable<SetupI
       present: present.map((tool) => tool.name),
       skipped: [
         ...(saved ? [] : skipped(adding, "failed")), ...skipped(fresh.slice(room), "limit"), ...skipped(conflicts, "conflict"),
-        ...skipped(refused, "policy"),
       ],
     };
   } finally {

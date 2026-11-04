@@ -1,16 +1,15 @@
 import { canManage, canReach } from "./peer-roster.ts";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { MOVE_BOT_FIELDS, moveKindsRoute, type MoveKindsDeps } from "./cloud-send-kinds.ts";
-import { chiefLevel, readTeamRolesWith } from "./chief-level.ts";
+import { chiefLevel } from "./chief-level.ts";
 import { DATA_DIR } from "./config.ts";
 import type { ModelSelection } from "./contracts.ts";
 import { defaultBotPatchRefusal, ensureDefaultBot } from "./default-bot.ts";
 import * as mdb from "./message-db.ts";
 import { Store, type BotRecord } from "./store.ts";
-import { availableTools, catalogProfileFromEnv } from "./drivers/agents-catalog.ts";
 import { createBrief } from "./host/brief.ts";
 
 const selection = (): ModelSelection => ({ instanceId: "claude", model: "claude-sonnet-5" });
@@ -30,7 +29,6 @@ function seededBefore(store: Store): BotRecord {
 
 describe("MausBot, every person's helper", () => {
   beforeEach(() => rmSync(DATA_DIR, { recursive: true, force: true }));
-  afterEach(() => readTeamRolesWith(() => null));
 
   it("gives a fresh install one MausBot, its Chief, in chrome, introduced once", () => {
     const store = new Store(selection);
@@ -234,20 +232,6 @@ describe("MausBot, every person's helper", () => {
     expect(intros(store, ada)[0]?.text).toContain("On Acme, I'm here for you and look after your own bots.");
     expect(intros(store, ada)[0]?.text).not.toContain("keep an eye on your day");
     expect(store.bots).toHaveLength(3);
-  });
-
-  it("holds a Chief's tools, never more than its member: a User's MausBot holds none", () => {
-    const store = new Store(selection);
-    const place = boot(store)!;
-    const member = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "user@example.com", team: "Acme" })!;
-    const admin = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "admin@example.com", team: "Acme" })!;
-    const tools = (bot: BotRecord) => availableTools(catalogProfileFromEnv({ OMB_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", OMB_BOT_ID: bot.id })).map((tool) => tool.name);
-    expect(tools(place)).toEqual(expect.arrayContaining(["create_bot", "propose_team_setup", "retry_thread", "manage_room"]));
-    expect([chiefLevel(member), chiefLevel(admin)]).toEqual([false, false]);
-    readTeamRolesWith((email) => email === "admin@example.com" ? "admin" : email === "user@example.com" ? "member" : null);
-    expect([chiefLevel(member), chiefLevel(admin)]).toEqual([false, true]);
-    expect(tools(member)).not.toContain("create_bot");
-    expect(tools(admin)).toContain("create_bot");
   });
 
   describe("moves", () => {

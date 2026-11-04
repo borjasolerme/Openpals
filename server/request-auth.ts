@@ -71,8 +71,6 @@ export function resolveLoopbackTrust(input: {
   env?: NodeJS.ProcessEnv;
   desktopManaged: boolean;
   hostedWorkspace: boolean;
-  /** A Cloud home's network traffic arrives through its edge proxy, so bare loopback is a bot's shell: always `service`. */
-  cloudHome?: boolean;
   /** This server runs from TypeScript source rather than a build. */
   fromSource?: boolean;
 }): { trust: LoopbackTrust; reason: string; warning?: string; localBrowsers: boolean } {
@@ -85,9 +83,6 @@ export function resolveLoopbackTrust(input: {
 function loopbackTrust(input: Parameters<typeof resolveLoopbackTrust>[0]): { trust: LoopbackTrust; reason: string; warning?: string } {
   const raw = (input.env ?? process.env).OMB_LOOPBACK_TRUST;
   const requested = raw?.trim().toLowerCase();
-  if (input.cloudHome) {
-    return { trust: "service", reason: "MausBot Cloud home", ...(raw !== undefined && requested !== "service" ? { warning: "OMB_LOOPBACK_TRUST is ignored on a MausBot Cloud home: a local request is always a service" } : {}) };
-  }
   if (input.desktopManaged) {
     return { trust: "owner", reason: "desktop app", ...(raw !== undefined ? { warning: "OMB_LOOPBACK_TRUST is ignored in the desktop app" } : {}) };
   }
@@ -435,19 +430,9 @@ const CLIENT_BOT_PATCH_FIELDS = new Set([
   "unread", "pinned", "pinnedMessageId", "color", "mascotExpression", "mascotBody", "mascotFaceColor",
   "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY", "sidebarHidden", "welcomed",
 ]);
-/** How a bot looks to everyone who sees it. */
-const SHARED_LOOK_FIELDS = new Set([
-  "color", "mascotExpression", "mascotBody", "mascotFaceColor", "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY",
-]);
-/** `ownMausBot`: the session's own MausBot on a Team Cloud, which its member may also rename. `teamMember`: a Team Cloud
- * member's session, which changes no other bot's look. */
-export function clientBotPatchViolation(body: unknown, ownMausBot = false, teamMember = false): string | null {
+export function clientBotPatchViolation(body: unknown): string | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return "body";
-  for (const key of Object.keys(body)) {
-    if (ownMausBot && key === "name") continue;
-    if (!CLIENT_BOT_PATCH_FIELDS.has(key) || (teamMember && !ownMausBot && SHARED_LOOK_FIELDS.has(key))) return key;
-  }
-  return null;
+  return Object.keys(body).find((key) => !CLIENT_BOT_PATCH_FIELDS.has(key)) ?? null;
 }
 
 /** All a paired device or a Team Cloud move-in may give a bot it makes or brings in: who the bot is, how it looks, its
@@ -477,8 +462,8 @@ const EDITOR_BOT_PATCH_FIELDS: ReadonlySet<string> = new Set([
 /** A member who can only view a bot marks it read, nothing else. */
 const VIEWER_BOT_PATCH_FIELDS: ReadonlySet<string> = new Set(["unread"]);
 
-export function memberBotPatchViolation(body: unknown, level: "view" | "chat" | "edit", ownMausBot = false, teamMember = false): string | null {
-  if (level === "chat") return clientBotPatchViolation(body, ownMausBot, teamMember);
+export function memberBotPatchViolation(body: unknown, level: "view" | "chat" | "edit"): string | null {
+  if (level === "chat") return clientBotPatchViolation(body);
   if (!body || typeof body !== "object" || Array.isArray(body)) return "body";
   const allowed = level === "edit" ? EDITOR_BOT_PATCH_FIELDS : VIEWER_BOT_PATCH_FIELDS;
   return Object.keys(body).find((key) => !allowed.has(key)) ?? null;

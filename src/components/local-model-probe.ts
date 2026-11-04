@@ -22,5 +22,5 @@ export function probeLocalModels(
 
 export function offersLocalModels(instance: InstanceInfo | undefined, localCount: number): boolean {
   if (!instance) return false;
-  return localCount > 0 || (instance.driverKind === "claudeAgent" && !needsCli(instance) && !instance.policy);
+  return localCount > 0 || (instance.driverKind === "claudeAgent" && !needsCli(instance));
 }

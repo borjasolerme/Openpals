@@ -103,14 +103,13 @@ describe("the Simple model menu", () => {
     expect(built.current!.meta).toBe("Claude");
   });
 
-  it("says why a provider cannot run: set up, sign in, managed, or nothing listed yet", () => {
+  it("says why a provider cannot run: set up, sign in, or nothing listed yet", () => {
     const missing = { ...cursor, snapshot: { state: "unavailable" as const, reason: "not found" } };
     const signedOut = { ...codex, snapshot: { state: "available" as const, authenticated: false } };
-    const managed = { ...openaiKey, policy: { organizationName: "Acme", reason: "Company models only." } };
     const plan = engine("chatgpt", "codex", "ChatGPT plan", "subscription", [], { snapshot: { state: "available", authenticated: true, chatgptPlan: true } });
-    const built = menu([claude(), missing, signedOut, managed, plan]);
+    const built = menu([claude(), missing, signedOut, plan]);
     expect(Object.fromEntries(built.groups.map((group) => [group.instance.instanceId, group.body]))).toMatchObject({
-      cursor: { kind: "setUp" }, codex: { kind: "signIn" }, openai: { kind: "policy", organization: "Acme" }, chatgpt: { kind: "empty", loading: false },
+      cursor: { kind: "setUp" }, codex: { kind: "signIn" }, chatgpt: { kind: "empty", loading: false },
     });
   });
 
@@ -205,8 +204,7 @@ describe("the Simple model menu", () => {
 
   it("counts only models a person can pick toward the search box", () => {
     const missing = engine("cursor", "cursorAgent", "Cursor", "subscription", claudeModels.slice(0, 6), { snapshot: { state: "unavailable", reason: "not found" } });
-    const managed = { ...engine("router", "openai-compat", "Router", "api", claudeModels), policy: { organizationName: "Acme", reason: "No." } };
-    expect(menu([claude(), missing, managed]).search).toBe(false);
+    expect(menu([claude(), missing]).search).toBe(false);
   });
 
   it("searches only past twelve models, across every provider, with the current model checked in place", () => {

@@ -9,7 +9,7 @@ import { MCP_CONFIG_BUSY, runsElsewhere, type McpConfig, type McpConfigRefusal }
 import { MCP_KEY_EXPIRED, type McpApplied, type McpCardAction, type McpUpdateFields } from "../host/mcp-requests.ts";
 import type { BotKept, BotMcpServerAdd } from "../mcp-bot-servers.ts";
 import { BOT_STRIPPED_KEYS, botChangeLines, botListing, botMayChange, botServerTarget, isSecretRef, mcpOwner, mergeBotUpdate } from "../mcp-bot-rules.ts";
-import type { McpAuthState, McpOAuthManager } from "../mcp-oauth.ts";
+import type { McpAuthState } from "../mcp-oauth.ts";
 import type { McpProbeResult } from "../mcp-probe.ts";
 import { isRemoteMcpServer, parseMcpServerMutation, parseStoredMcpServer, type StoredMcpServer, type StoredRemoteMcpServer, type StoredStdioMcpServer } from "../mcp-registry.ts";
 import { serverLine, type ServerLineKey } from "../server-lines.ts";
@@ -20,8 +20,6 @@ const ACTIONS = ["list", "add", "update", "enable", "disable", "test", "sign_in"
 type McpAction = (typeof ACTIONS)[number];
 const MAX_TOOL_NAMES = 100;
 
-const OWNER_ONLY = "MCP servers are managed by the owner.";
-const ASK_ADMIN = "Ask a workspace admin to add it.";
 
 /** When a change reaches the bot's tools: a turn's servers are fixed when it starts, and the person's answer to a card
  * resumes the bot with a new turn that already has them. */
@@ -40,23 +38,12 @@ export interface InternalMcpDeps {
   sender: { id: string; mcpServers?: string[] };
   threadId: string;
   fullAccess(): boolean;
-  /** Refuses every action, list included. */
-  guestDriven(): boolean;
-  /** True off a Team Cloud; on one, the person this turn acts for is an owner or admin. */
-  teamAdmin(): boolean;
   /** The bot's tool selection reaches this server; never widened here. */
   canUse(name: string): boolean;
   config: McpConfig;
   cfg(): AppConfig;
-  personal(): string[];
   authState(name: string, url: string): McpAuthState;
-  managedBy(name: string, server: StoredMcpServer): string | undefined;
-  policyRefusal(name: string, server: StoredMcpServer): string | undefined;
-  /** A team that uses only the servers its admins add: no server is added from a chat, whoever asks. */
-  addRefusal?(): string | undefined;
   signOut(name: string, url: string): Promise<void>;
-  /** The person this turn acts for, testing their own connection to a personal server. */
-  testAs(name: string, url: string): { oauth: McpOAuthManager; key?: { header: string; value: string } } | null;
   redeem(body: Record<string, unknown>): { ok: true; value: Record<string, unknown>; commit(): void } | { ok: false; error: string };
   addToBotList(name: string): void;
   botAdd(current: Record<string, unknown>, body: unknown): BotMcpServerAdd;
@@ -87,7 +74,6 @@ export type McpCall = { action: McpAction; name?: string };
 export function createInternalMcpRoutes(deps: InternalMcpDeps): RouteHandler {
   return async ({ res, path, method, json }) => {
     if (path !== PATH || (method !== "GET" && method !== "POST")) return PASS;
-    if (deps.guestDriven()) return json(res, 403, { error: OWNER_ONLY });
     const controller = new AbortController();
     const disconnect = () => { if (!res.writableEnded) controller.abort(); };
     res.once("close", disconnect);
@@ -152,7 +138,7 @@ async function act(deps: Ctx, body: unknown, signal: AbortSignal): Promise<Outco
   const parsed = parseStoredMcpServer(name, servers[name]);
   if (!parsed.ok) return { status: 400, error: parsed.error };
   const server = parsed.server;
-  const owner = mcpOwner(name, server, deps.sender.id, deps.personal());
+  const owner = mcpOwner(server, deps.sender.id);
   const may = botMayChange(owner, server);
   if (action === "sign_in") return signIn(deps, name, server, owner);
   if (action === "test") {
@@ -162,7 +148,6 @@ async function act(deps: Ctx, body: unknown, signal: AbortSignal): Promise<Outco
   }
 
   if (!may.ok) return { status: 403, error: may.error };
-  if (owner === "shared" && !deps.teamAdmin()) return { status: 403, error: ASK_ADMIN };
   if (action === "disable") return disable(deps, name);
   if (action === "sign_out") return signOut(deps, name, server);
   // A deliberate exception to server/direct-apply.ts, which applies a bot's change at every level with Undo: turning an
@@ -171,22 +156,20 @@ async function act(deps: Ctx, body: unknown, signal: AbortSignal): Promise<Outco
   if (!deps.fullAccess()) return propose(deps, action as McpCardAction, name, server, fields);
   if (action === "update") return update(deps, name, server, fields, signal);
   if (action === "enable") return enable(deps, name, server, signal);
-  return remove(deps, name, server);
+  return remove(deps, name);
 }
 
 function list(deps: Deps): Outcome {
-  const personal = deps.personal();
   const rows = Object.entries(deps.cfg().mcpServers ?? {}).flatMap(([name, raw]) => {
     const parsed = parseStoredMcpServer(name, raw);
     if (!parsed.ok) return [];
-    const owner = mcpOwner(name, parsed.server, deps.sender.id, personal);
+    const owner = mcpOwner(parsed.server, deps.sender.id);
     if (owner === "theirs") return [];
     const server = parsed.server;
     return [botListing(name, server, {
       owner,
       authState: isRemoteMcpServer(server) ? deps.authState(name, server.url) : "none",
       forThisBot: !server.runsOn && (!deps.sender.mcpServers || deps.sender.mcpServers.includes(name)) && deps.canUse(name),
-      managedBy: deps.managedBy(name, server),
     })];
   });
   say(deps, { action: "list" }, ["server.mcp.listed"]);
@@ -194,9 +177,6 @@ function list(deps: Deps): Outcome {
 }
 
 async function add(deps: Deps, name: string, fields: Record<string, unknown>, signal: AbortSignal): Promise<Outcome> {
-  const managed = deps.addRefusal?.();
-  if (managed) return { status: 403, error: managed };
-  if (!deps.teamAdmin()) return { status: 403, error: ASK_ADMIN };
   if (Object.hasOwn(deps.cfg().mcpServers ?? {}, name)) return { status: 409, error: `${name} already exists. Use update, or pick another name.` };
   const redeemed = deps.redeem(trimmedRefs({ name, ...fields }));
   if (!redeemed.ok) return { status: 400, error: redeemed.error };
@@ -290,12 +270,10 @@ function disable(deps: Deps, name: string): Outcome {
   return { status: 200, text: `Turned off MCP server ${name}. ${WHEN.live.leave}` };
 }
 
-/** A sign-in is the person's own act, so it takes a card at every level; a personal server's card signs in the turn's
- * person. */
+/** A sign-in is the person's own act, so it takes a card at every level. */
 function signIn(deps: Deps, name: string, server: StoredMcpServer, owner: ReturnType<typeof mcpOwner>): Outcome {
   if (server.runsOn) return { status: 409, error: runsElsewhere(server.runsOn) };
   if (!isRemoteMcpServer(server)) return { status: 400, error: "Only servers reached by URL can be signed in to." };
-  if (owner === "shared" && !deps.teamAdmin()) return { status: 403, error: `Ask a workspace admin to sign in to ${name}.` };
   if (!server.enabled) {
     return { status: 403, error: `${name} is off. Call mcp_server with action enable ${deps.fullAccess() ? "first" : "to ask the person to turn it on"}.` };
   }
@@ -316,9 +294,7 @@ async function signOut(deps: Deps, name: string, server: StoredMcpServer): Promi
   return { status: 200, text: `Signed out of MCP server ${name}. It stays ${server.enabled ? "on" : "off"}; call mcp_server with action sign_in to sign in again.` };
 }
 
-function remove(deps: Ctx, name: string, server: StoredMcpServer): Outcome {
-  const refusal = deps.policyRefusal(name, server);
-  if (refusal) return { status: 403, error: refusal };
+function remove(deps: Ctx, name: string): Outcome {
   const gone = deps.config.remove(name);
   if ("error" in gone) return refused(gone);
   deps.decide(`Removed MCP server ${name}`, "full-access");
@@ -338,7 +314,7 @@ export async function applyMcpChange(deps: Deps, request: Pick<McpChangeRequest,
     return { state: "failed", text: `${name} changed since you were asked, so nothing was applied.`, note: serverLine(language, "server.mcp.card.changedSince", { name }) };
   }
   if (fields && !deps.redeem(trimmedRefs(fields)).ok) return { state: "expired", text: MCP_KEY_EXPIRED, note: serverLine(language, "server.mcp.card.keyExpired") };
-  const approved: Ctx = { ...deps, approved: true, fullAccess: () => true, teamAdmin: () => true, decide: () => {}, activity: () => {} };
+  const approved: Ctx = { ...deps, approved: true, fullAccess: () => true, decide: () => {}, activity: () => {} };
   const outcome = await act(approved, { ...fields, action: request.action, name }, new AbortController().signal);
   if ("error" in outcome) return outcome.busy ? { state: "busy" } : { state: "failed", text: outcome.error };
   return { state: "applied", text: outcome.text };
@@ -351,8 +327,6 @@ function propose(deps: Deps, action: McpCardAction, name: string, server: Stored
   if (action === "update") {
     const planned = planUpdate(deps, name, server, fields);
     if ("error" in planned) return planned;
-    const refusal = deps.policyRefusal(name, planned.server);
-    if (refusal) return { status: 403, error: refusal };
     const { lines, keys, clientSecret } = botChangeLines(server, planned.server, fields);
     if (!lines.length && !keys.length && !clientSecret && !planned.dropped.length) return { status: 200, text: `${name} already has these settings, so nothing changed.` };
     const language = deps.language();
@@ -361,8 +335,6 @@ function propose(deps: Deps, action: McpCardAction, name: string, server: Stored
       ...(planned.dropped.length ? [serverLine(language, "server.mcp.card.cleared", { items: planned.dropped.join(", ") })] : [])].join("\n");
     return ask(deps, { action, name, subtitle, targetHash: targetHash(server), fields });
   }
-  const refusal = deps.policyRefusal(name, server);
-  if (refusal) return { status: 403, error: refusal };
   if (action === "remove") {
     const others = deps.usedBy(name);
     const language = deps.language();
@@ -398,7 +370,6 @@ async function probe(deps: Deps, name: string, server: StoredMcpServer, signal: 
   const result = await deps.config.test(name, {
     signal,
     asBot: { id: deps.sender.id, cwd: deps.ownCwd() },
-    person: (url) => deps.testAs(name, url),
   });
   if ("error" in result) return { text: `Not tested: ${result.error}`, line: ["server.mcp.testFailed"] };
   const probed = result.body as McpProbeResult;

@@ -5,7 +5,6 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { RailState } from "../../electron/cloud-rail.mjs";
 
 const fixture = vi.hoisted(() => ({ windowChrome: "mac-inset" as "mac-inset" | "win-caption", windowFrame: undefined as boolean | undefined }));
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 vi.mock("./DesktopCapabilities", async (importOriginal) => ({
   ...await importOriginal<typeof import("./DesktopCapabilities")>(),
   useDesktopCapabilities: () => ({ capabilities: { windowChrome: fixture.windowChrome, windowFrame: fixture.windowFrame }, ready: true }),
@@ -18,7 +17,7 @@ import { PlacesRail } from "./PlacesRail";
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let host: HTMLDivElement, root: Root | null = null;
 let tell: (framed: boolean) => void = () => {};
-const rail: RailState = { places: [{ id: "home", name: "My Cloud", color: null, kind: "cloud", opens: true, active: true }], add: { cloud: true, link: false, address: false } };
+const rail: RailState = { places: [{ id: "office", name: "Office", color: null, kind: "server", opens: true, active: true }], add: { link: true, address: false } };
 
 beforeEach(() => {
   setLocale("en");

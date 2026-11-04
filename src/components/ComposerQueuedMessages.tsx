@@ -50,12 +50,8 @@ export function QueuedComposerMessages({
   steerInterrupts = false,
   onCancel,
   onEdit,
-  oneThreadPerBot = false,
-  onSeePlans,
 }: {
   items: Array<{ queueId: string; text: string; reason?: SteerQueueReason }>;
-  oneThreadPerBot?: boolean;
-  onSeePlans?: () => void;
   onSteer?: () => void;
   steerMode?: "all" | "next";
   steering?: boolean;
@@ -100,8 +96,7 @@ export function QueuedComposerMessages({
       )}
       {items.some((item) => item.reason === "capacity") && (
         <p className="px-3 pt-2 text-[12px] text-ink-secondary">
-          {t(oneThreadPerBot ? "composer.queued.capacityStarter" : "composer.queued.capacity")}
-          {oneThreadPerBot && onSeePlans && <>{" "}<button type="button" className="underline" onClick={onSeePlans}>{t("composer.queued.seePlans")}</button></>}
+          {t("composer.queued.capacity")}
         </p>
       )}
       <ul className="divide-y divide-hairline/25" aria-label={t("composer.queued.list")}>

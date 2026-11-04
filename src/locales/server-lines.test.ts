@@ -390,7 +390,6 @@ const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, sni
     ["server/store.ts", "reached its turn limit"],
   ],
   "AI engines and limits": [
-    ["server/cloud-credit-moves.ts", "notice:  …  is connected, so this conversation uses it now instead of"],
     ["server/computer-engine-removal.ts", "The Computer choice in the model list was removed."],
     ["server/computer-engine-removal.ts", "This conversation now uses  … ."],
     ["server/computer-engine-removal.ts", "…  now uses  … ; this conversation keeps its own model."],
@@ -416,7 +415,6 @@ const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, sni
     ["server/drivers/codex-unsupported-calls.ts", "the tools"],
     ["server/drivers/codex-unsupported-calls.ts", "the call back without the tool's app name, so it never reached the too"],
     ["server/index.ts", "notice: This thread's model ( … ) isn't available, so it now uses  … '"],
-    ["server/index.ts", "Company connection changed — choose whether to reconnect or use a pers"],
     ["server/quota-switch.ts", "while  …  is signed out"],
     ["server/quota-switch.ts", "after hitting the usage limit"],
     ["server/quota-switch.ts", "switched to  … . Your request waits on a card above and continues on"],
@@ -601,7 +599,7 @@ describe("the guard", () => {
     expect(scan({
       "server/b.ts": [
         `const language = lineLanguage(person);`,
-        `store.appendMessage(id, { role: "bot", kind: "text", text: serverLine(language, "server.reports.sent", { report: id }) });`,
+        `store.appendMessage(id, { role: "bot", kind: "text", text: serverLine(language, "server.mcp.added", { name: id }) });`,
         `store.appendMessage(id, { role: "bot", kind: "activity", tool: { name: "data_show", ok: true } });`,
         `store.appendMessage(id, { role: "bot", kind: "text", text: reply.text });`,
         `const prompt = "Tell the person what you found, in their language.";`,
@@ -611,7 +609,7 @@ describe("the guard", () => {
   });
 
   it("finds English handed to a line from the packs", () => {
-    expect(scan({ "server/c.ts": `store.appendMessage(id, { role: "bot", kind: "text", text: serverLine(language, "server.reports.notYet", { why: "the server is down", when }) });` }))
+    expect(scan({ "server/c.ts": `store.appendMessage(id, { role: "bot", kind: "text", text: serverLine(language, "server.teammates.sendFailed", { detail: "the server is down" }) });` }))
       .toEqual(["server/c.ts line: the server is down"]);
   });
 });

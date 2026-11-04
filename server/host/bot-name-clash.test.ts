@@ -5,7 +5,7 @@ import { createBotNameClash } from "./bot-name-clash.ts";
 
 type Bot = { id: string; name: string; threadId: string; hidden?: boolean };
 
-/** Bots in memory, the team's people, and the owner's own name. */
+/** Bots in memory and the owner's own name. */
 function world(bots: Bot[], profileName?: string) {
   const listeners = new Set<(change: StoreChange) => void>();
   const notices: Array<{ threadId: string; name: string }> = [];
@@ -17,25 +17,21 @@ function world(bots: Bot[], profileName?: string) {
   };
   const clash = createBotNameClash({
     store: store as never, profileName: () => profileName,
-    people: () => [{ name: "Bob Stone", tags: ["Bob Stone", "Bob"] }, { name: "Ada", tags: ["Ada"] }],
   });
   const changed = (botId: string) => { for (const listener of listeners) listener({ type: "bot", botId }); };
   return { clash, notices, changed, bots };
 }
 
 describe("a bot named like a person here", () => {
-  it("says so once in its own chat when it is made or renamed with a teammate's name", () => {
-    const w = world([{ id: "scout", name: "Scout", threadId: "scout-main" }]);
+  it("says so once in its own chat when it is made or renamed with the owner's name", () => {
+    const w = world([{ id: "scout", name: "Scout", threadId: "scout-main" }], "Bob");
     w.bots.push({ id: "bob", name: "Bob", threadId: "bob-main" });
     w.changed("bob");
     w.changed("bob");
-    expect(w.notices).toEqual([{ threadId: "bob-main", name: 'notice: Bob Stone is also a person here, so "@Bob" reaches Bob Stone, not this bot. Rename the bot to keep them apart.' }]);
-    w.bots[0]!.name = "ada";
-    w.changed("scout");
-    expect(w.notices.at(-1)).toEqual({ threadId: "scout-main", name: 'notice: Ada is also a person here, so "@ada" reaches Ada, not this bot. Rename the bot to keep them apart.' });
+    expect(w.notices).toEqual([{ threadId: "bob-main", name: 'notice: Bob is also a person here, so "@Bob" reaches Bob, not this bot. Rename the bot to keep them apart.' }]);
     w.bots[0]!.name = "Scout";
     w.changed("scout");
-    expect(w.notices).toHaveLength(2);
+    expect(w.notices).toHaveLength(1);
   });
 
   it("counts the owner's own name, and says nothing for a name nobody here goes by, or about bots already there at start", () => {
@@ -48,7 +44,7 @@ describe("a bot named like a person here", () => {
   });
 
   it("stays quiet for an archived bot", () => {
-    const w = world([]);
+    const w = world([], "Bob Stone");
     w.bots.push({ id: "bob", name: "Bob", threadId: "bob-main", hidden: true });
     w.changed("bob");
     expect(w.notices).toEqual([]);

@@ -5,13 +5,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { applyStartupPreferences, formatSessions, parseArgs, runAccess, runLogin, runOnboardingCommand, serverEntry, type CliOptions, verifyPhoneEndpoint } from "./cli.ts";
+import { applyStartupPreferences, formatSessions, parseArgs, runAccess, runOnboardingCommand, serverEntry, type CliOptions, verifyPhoneEndpoint } from "./cli.ts";
 import { browserSignInLines, pairingBlock, qrToString } from "./cli-pairing.ts";
 import { readAdminActivityRange } from "./admin-activity.ts";
 import { SetupCancelled } from "./cli-prompts.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
-import { startControlPlaneStub } from "./testing/control-plane-stub.ts";
-import { freePortBlock } from "./testing/ports.ts";
 
 const SERVER_DIR = dirname(fileURLToPath(import.meta.url));
 const setup = vi.hoisted(() => ({ runSetup: vi.fn(), isSetupComplete: vi.fn(), readCliStartup: vi.fn(), saveCliStartup: vi.fn() }));
@@ -39,21 +37,18 @@ describe("openmausbot command line", () => {
     expect(parseArgs(["--port", "8125", "--no-open", "--local"], {})).toMatchObject({ command: "start", port: 8125, open: false, local: true });
     expect(parseArgs(["--help"], {})).toMatchObject({ command: "help" });
     expect(parseArgs(["-h"], {})).toMatchObject({ command: "help" });
-    expect(parseArgs(["--local", "--tunnel"], {})).toHaveProperty("error");
+    expect(parseArgs(["serve", "--tunnel"], {})).toEqual({ error: 'unknown argument "--tunnel"' });
     expect(parseArgs(["dance"], {})).toEqual({ error: 'unknown command "dance"' });
     expect(parseArgs(["serve", "--port"], {})).toEqual({ error: "--port needs a value" });
     expect(parseArgs(["serve", "--port", "70000"], {})).toEqual({ error: "--port must be 1-65535" });
     expect(parseArgs(["pair", "--public-url", "mini.example"], {})).toEqual({ error: "--public-url must start with http:// or https://" });
     expect(parseArgs(["serve", "--bogus"], {})).toEqual({ error: 'unknown argument "--bogus"' });
-    expect(parseArgs(["serve", "--tunnel"], {})).toMatchObject({ command: "serve", tunnel: true });
     expect(parseArgs(["setup", "--data-dir", "/tmp/cli-setup"], {})).toMatchObject({ command: "setup", dataDir: resolve("/tmp/cli-setup") });
     expect(parseArgs(["start", "--port", "8125", "--no-pair"], {})).toMatchObject({ command: "start", port: 8125, pair: false });
-    expect(parseArgs(["login", "--email", "a@b.test"], {})).toMatchObject({ command: "login", email: "a@b.test" });
-    expect(parseArgs(["logout"], {})).toMatchObject({ command: "logout" });
+    expect(parseArgs(["login"], {})).toEqual({ error: 'unknown command "login"' });
     expect(parseArgs(["browser", "install", "--with-deps"], {})).toMatchObject({ command: "browser", browserAction: "install", withDeps: true });
     expect(parseArgs(["browser", "status"], {})).toMatchObject({ command: "browser", browserAction: "status" });
     expect(parseArgs(["browser"], {})).toEqual({ error: "browser needs an action: install or status" });
-    expect(parseArgs(["serve", "--tailscale", "--tunnel"], {})).toEqual({ error: "choose one of --tailscale (your tailnet) and --tunnel (a public address)" });
     expect(parseArgs(["access", "add", "her@example.test", "--chat-only"], {})).toMatchObject({ command: "access", accessAction: "add", email: "her@example.test", chatOnly: true });
     expect(parseArgs(["access", "list"], {})).toMatchObject({ command: "access", accessAction: "list" });
     expect(parseArgs(["access"], {})).toEqual({ error: "access needs one of: list, add EMAIL [--chat-only], remove EMAIL" });
@@ -65,7 +60,6 @@ describe("openmausbot command line", () => {
     expect(parseArgs(["service"], {})).toEqual({ error: expect.stringContaining("service needs one of") });
     expect(parseArgs(["serve", "--domain", "Maus.Example.com"], {})).toMatchObject({ command: "serve", domain: "maus.example.com" });
     expect(parseArgs(["serve", "--domain", "localhost"], {})).toEqual({ error: expect.stringContaining("bare hostname") });
-    expect(parseArgs(["serve", "--domain", "maus.example.com", "--tunnel"], {})).toEqual({ error: expect.stringContaining("--domain already gives") });
   });
 
   it("takes the phone kind non-interactively, because a scripted pair never sees the chooser", () => {
@@ -283,16 +277,16 @@ describe("terminal onboarding commands", () => {
     preserveEnv();
     const options = command("start");
     setup.isSetupComplete.mockResolvedValue(true);
-    phoneSetup.mockResolvedValue({ options: { ...options, tunnel: true, client: true }, phone: "android" });
+    phoneSetup.mockResolvedValue({ options: { ...options, tailscale: true, client: true }, phone: "android" });
     const serve = vi.fn().mockResolvedValue(0);
     await runOnboardingCommand(options, io(), serve, flow);
-    expect(setup.saveCliStartup).toHaveBeenCalledWith(options.dataDir, { access: "tunnel", phone: "android" });
-    expect(serve).toHaveBeenLastCalledWith(expect.objectContaining({ tunnel: true, phone: "android", guided: true }));
+    expect(setup.saveCliStartup).toHaveBeenCalledWith(options.dataDir, { access: "tailscale", phone: "android" });
+    expect(serve).toHaveBeenLastCalledWith(expect.objectContaining({ tailscale: true, phone: "android", guided: true }));
     phoneSetup.mockClear();
-    setup.readCliStartup.mockReturnValue({ access: "tunnel", phone: "android" });
+    setup.readCliStartup.mockReturnValue({ access: "tailscale", phone: "android" });
     await runOnboardingCommand(options, io(), serve, flow);
     expect(phoneSetup).not.toHaveBeenCalled();
-    expect(serve).toHaveBeenLastCalledWith(expect.objectContaining({ tunnel: true, phone: "android" }));
+    expect(serve).toHaveBeenLastCalledWith(expect.objectContaining({ tailscale: true, phone: "android" }));
   });
 
   it("keeps the provider setup but does not start if phone setup is cancelled", async () => {
@@ -358,11 +352,15 @@ describe("terminal onboarding commands", () => {
 describe("saved startup access", () => {
   const options = () => parseArgs([], {}) as CliOptions;
   it("keeps local launches local and supports a one-time local override", () => {
-    expect(applyStartupPreferences(options(), { access: "local" })).toMatchObject({ tunnel: false, tailscale: false, publicUrl: undefined });
-    expect(applyStartupPreferences({ ...options(), local: true }, { access: "tunnel", phone: "ios" })).toMatchObject({ tunnel: false, phone: undefined });
+    expect(applyStartupPreferences(options(), { access: "local" })).toMatchObject({ tailscale: false, publicUrl: undefined });
+    expect(applyStartupPreferences({ ...options(), local: true }, { access: "tunnel", phone: "ios" })).toMatchObject({ phone: undefined });
+    // A tunnel saved before tunnels were removed starts local.
+    expect(applyStartupPreferences(options(), { access: "tunnel", phone: "ios" })).toMatchObject({ tailscale: false, publicUrl: undefined, phone: undefined });
   });
   it("explicit route flags take priority over saved settings", () => {
-    expect(applyStartupPreferences({ ...options(), tailscale: true }, { access: "tunnel" })).toMatchObject({ tailscale: true, tunnel: false });
+    const explicit = applyStartupPreferences({ ...options(), tailscale: true }, { access: "public-url", publicUrl: "https://maus.example.com" });
+    expect(explicit.tailscale).toBe(true);
+    expect(explicit.publicUrl).toBeUndefined();
   });
   it("refuses a saved URL that embeds a credential or points to localhost", () => {
     for (const publicUrl of ["https://localhost", "https://user:secret@example.com", "https://example.com/pair#code=secret"])
@@ -392,176 +390,6 @@ describe("phone endpoint identity", () => {
 
 const exited = (child: ChildProcess) => (child.exitCode !== null ? Promise.resolve(child.exitCode) : new Promise<number | null>((done) => child.once("exit", (code) => done(code))));
 
-describe.skipIf(process.platform === "win32")("serve --tunnel", () => {
-  const cli = (args: string[], env: NodeJS.ProcessEnv) =>
-    spawn(process.execPath, ["--experimental-strip-types", join(SERVER_DIR, "openmausbot.ts"), ...args], {
-      cwd: join(SERVER_DIR, ".."),
-      env: { PATH: process.env.PATH ?? "", ...env },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-  it("refuses without an account and says what to do; no local-only fallback", async () => {
-    const home = mkdtempSync(join(tmpdir(), "omb-cli-tunnel-none-"));
-    const port = 21000 + Math.floor(Math.random() * 9000);
-    const child = cli(["serve", "--tunnel", "--port", String(port), "--data-dir", join(home, "data")], { HOME: home, USERPROFILE: home });
-    let err = "";
-    child.stderr?.on("data", (chunk) => (err += String(chunk)));
-    try {
-      expect(await exited(child)).toBe(1);
-      expect(err).toContain("run `openmausbot login` first");
-      let dead = false;
-      try {
-        await fetch(`http://127.0.0.1:${port}/api/health`);
-      } catch {
-        dead = true;
-      }
-      expect(dead).toBe(true);
-    } finally {
-      await removeTempDir(home);
-    }
-  }, 30_000);
-
-  it("a fleet credential in the environment serves --tunnel with no account file and no code", async () => {
-    const home = mkdtempSync(join(tmpdir(), "omb-cli-fleet-"));
-    const dataDir = join(home, "data");
-    mkdirSync(dataDir, { recursive: true });
-    const stub = await startControlPlaneStub();
-    const fake = join(home, "cloudflared");
-    writeFileSync(fake, "#!/bin/sh\nexec sleep 300\n", { mode: 0o755 });
-    const port = await freePortBlock([0, 1, 10_000]);
-    const originPort = port + 10_000;
-    const fleetEnv = {
-      HOME: home,
-      USERPROFILE: home,
-      OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_BROWSER_CONNECTION: join(home, "browser-connection.json"),
-      OMB_CONTROL_PLANE_URL: stub.url,
-      OMB_CLOUDFLARED_PATH: fake,
-      OMB_TUNNEL_ORIGIN_PORT: String(originPort),
-    };
-    const rejected = cli(["serve", "--tunnel", "--no-pair", "--port", String(port), "--data-dir", dataDir], {
-      ...fleetEnv,
-      OMB_INSTALLATION_CREDENTIAL: `omb_install_${"x".repeat(22)}.${"y".repeat(43)}`,
-    });
-    let err = "";
-    rejected.stderr?.on("data", (chunk) => (err += String(chunk)));
-    expect(await exited(rejected)).toBe(1);
-    expect(err).toContain("was rejected");
-
-    const child = cli(["serve", "--tunnel", "--no-pair", "--port", String(port), "--data-dir", dataDir], {
-      ...fleetEnv,
-      OMB_INSTALLATION_CREDENTIAL: stub.seedInstallation("fleet box"),
-    });
-    let out = "";
-    child.stdout?.on("data", (chunk) => (out += String(chunk)));
-    child.stderr?.on("data", (chunk) => (out += String(chunk)));
-    const gateway = `http://127.0.0.1:${originPort}`;
-    try {
-      const deadline = Date.now() + 60_000;
-      while (!out.includes("Openpals is running") && Date.now() < deadline && child.exitCode === null) await new Promise((r) => setTimeout(r, 200));
-      expect(out).toContain("using the installation credential from OMB_INSTALLATION_CREDENTIAL");
-      expect(out).toContain(`reachable at ${stub.endpointUrl}`);
-      expect(existsSync(join(dataDir, "tunnel-account.json"))).toBe(false);
-      let status = 0;
-      const gatewayDeadline = Date.now() + 20_000;
-      while (Date.now() < gatewayDeadline && status !== 200) {
-        try {
-          status = (await fetch(`${gateway}/.well-known/openmausbot/environment`)).status;
-        } catch {
-          status = 0;
-        }
-        if (status !== 200) await new Promise((r) => setTimeout(r, 250));
-      }
-      expect(status).toBe(200);
-    } finally {
-      child.kill("SIGTERM");
-      await exited(child);
-      await stub.close();
-      await removeTempDir(home);
-    }
-  }, 120_000);
-
-  it("serves at the account's public address through the gateway, where every request is remote", async () => {
-    const home = mkdtempSync(join(tmpdir(), "omb-cli-tunnel-"));
-    const dataDir = join(home, "data");
-    mkdirSync(dataDir, { recursive: true });
-    const stub = await startControlPlaneStub();
-    const fake = join(home, "cloudflared");
-    writeFileSync(fake, "#!/bin/sh\nexec sleep 300\n", { mode: 0o755 });
-    // sign this data dir in, in-process, against the stub
-    vi.stubEnv("OMB_CONTROL_PLANE_URL", stub.url);
-    const quiet = { log: () => undefined, error: () => undefined, ask: async () => stub.otp };
-    expect(await runLogin({ command: "login", port: 1, dataDir, tailscale: false, tunnel: false, client: false, pair: true, json: false, email: "cli@example.test" }, quiet)).toBe(0);
-    vi.unstubAllEnvs();
-    const port = await freePortBlock([0, 1, 10_000]);
-    const originPort = port + 10_000;
-    const child = cli(["serve", "--tunnel", "--port", String(port), "--data-dir", dataDir, "--label", "tunnel test"], {
-      HOME: home,
-      USERPROFILE: home,
-      OMB_WEBHOOK_PORT: String(port + 1),
-      OMB_BROWSER_CONNECTION: join(home, "browser-connection.json"),
-      OMB_CONTROL_PLANE_URL: stub.url,
-      OMB_CLOUDFLARED_PATH: fake,
-      OMB_TUNNEL_ORIGIN_PORT: String(originPort),
-    });
-    let out = "";
-    child.stdout?.on("data", (chunk) => (out += String(chunk)));
-    child.stderr?.on("data", (chunk) => (out += String(chunk)));
-    const gateway = `http://127.0.0.1:${originPort}`;
-    try {
-      const deadline = Date.now() + 60_000;
-      while (!out.includes("open or scan:") && Date.now() < deadline && child.exitCode === null) await new Promise((r) => setTimeout(r, 200));
-      expect(out).toContain(`Openpals is running on http://127.0.0.1:${port}, reachable at ${stub.endpointUrl}`);
-      expect(out).toContain(`open or scan:  ${stub.endpointUrl}/pair#code=`);
-      expect(stub.calls).toContain("POST /v1/installations/self/endpoint");
-
-      let descriptor: Response | null = null;
-      const gatewayDeadline = Date.now() + 20_000;
-      while (Date.now() < gatewayDeadline) {
-        try {
-          descriptor = await fetch(`${gateway}/.well-known/openmausbot/environment`);
-          if (descriptor.status === 200) break;
-        } catch {
-          descriptor = null;
-        }
-        await new Promise((r) => setTimeout(r, 250));
-      }
-      expect(descriptor?.status, out.match(/^tunnel:.*$/gm)?.join("\n")).toBe(200);
-      // A request with no headers, which the loopback listener would take as the owner, is a stranger through the gateway.
-      const stranger = await fetch(`${gateway}/api/bots`);
-      expect(stranger.status).toBe(403);
-      expect(((await stranger.json()) as { error: string }).error).toMatch(/through a proxy/);
-      expect(await (await fetch(`${gateway}/api/health`)).json()).toEqual({ app: "openmausbot" });
-      expect(typeof ((await (await fetch(`http://127.0.0.1:${port}/api/health`)).json()) as { pid: unknown }).pid).toBe("number");
-      const match = /pairing code:  ([A-Z2-9-]+)/.exec(out);
-      expect(match).toBeTruthy();
-      const paired = await fetch(`${gateway}/api/auth/pair`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9" },
-        body: JSON.stringify({ code: match?.[1] ?? "", label: "phone" }),
-      });
-      expect(paired.status).toBe(200);
-      const { token } = (await paired.json()) as { token: string };
-      const mine = await fetch(`${gateway}/api/auth/session`, { headers: { authorization: `Bearer ${token}` } });
-      expect(mine.status).toBe(200);
-    } finally {
-      child.kill("SIGTERM");
-      await exited(child);
-      await stub.close();
-      await removeTempDir(home);
-    }
-    for (const url of [`${gateway}/api/health`, `http://127.0.0.1:${port}/api/health`]) {
-      let dead = false;
-      try {
-        await fetch(url);
-      } catch {
-        dead = true;
-      }
-      expect(dead, url).toBe(true);
-    }
-  }, 120_000);
-});
-
 describe("openmausbot access", () => {
   it("edits the sign-in allow-list in config.json without a running server", async () => {
     const home = mkdtempSync(join(tmpdir(), "omb-cli-access-"));
@@ -569,7 +397,7 @@ describe("openmausbot access", () => {
     const out: string[] = [];
     const err: string[] = [];
     const io = { log: (line: string) => out.push(line), error: (line: string) => err.push(line), ask: async () => "" };
-    const base = { command: "access" as const, port: 1, dataDir, tailscale: false, tunnel: false, client: false, pair: true, json: false };
+    const base = { command: "access" as const, port: 1, dataDir, tailscale: false, client: false, pair: true, json: false };
     try {
       expect(await runAccess({ ...base, accessAction: "list" }, io)).toBe(0);
       expect(out.at(-1)).toMatch(/pairing codes only/);

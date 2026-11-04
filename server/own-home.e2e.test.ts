@@ -51,7 +51,7 @@ it("only a server that is the person's alone says it is theirs, takes a move and
 
   // Asked anyway, the shared one keeps this computer's bots here, and its move routes refuse this sign-in.
   await expect(fx.main.start(family.place.id)).rejects.toThrow("Family server has other people on it, so your bots stay here.");
-  expect(fx.main.chosen()).toBeNull();
+  expect(fx.main.active()).toBe(false);
   expect((await family.as("POST", "/api/cloud-send/memory", { v: 1, about: "", teams: [] })).status).toBe(403);
   expect((await family.as("POST", "/api/cloud-send/arrived", { v: 1, computer: "Work laptop", webhooks: [] })).status).toBe(404);
   expect((await family.as("PUT", "/api/cloud-connections/highlevel", {})).status).toBe(404);
@@ -83,7 +83,7 @@ it("Make Garage server my home: bots, chats, memory and routines arrive, this co
   await expect.poll(() => idle(local), { timeout: 60_000, interval: 200 }).toBe(true);
 
   expect(await fx.main.start(garage.place.id)).toEqual({ started: true });
-  await expect.poll(() => fx.main.view()?.place, { timeout: 10_000, interval: 50 }).toBe("Garage server");
+  await expect.poll(() => fx.main.active(), { timeout: 10_000, interval: 50 }).toBe(true);
 
   // The app is killed the moment the freeze and the switch would be written down, and opens again.
   const killAt = new Set(["freeze", "switch"]);
@@ -142,16 +142,16 @@ it("Make Garage server my home: bots, chats, memory and routines arrive, this co
 
 it("this computer then works for Garage server by itself, and never for the server it shares with others", async () => {
   const places: Array<{ id: string; name: string; origin: string }> = [garage.place, family.place];
-  const target = createLendingTarget({ account: () => null, environments: () => places, ownHome: () => fx.main.home() });
+  const target = createLendingTarget({ environments: () => places, ownHome: () => fx.main.home() });
   expect(target.places().map((place) => place.origin)).toEqual([garage.base]);
-  expect(target.cloud(family.place)).toBeNull();
+  expect(target.cloud(family.place)).toMatchObject({ status: "signed-out" });
   const lent = mkdtempSync(join(fx.root, "lent-"));
   const sharing = createComputerSharing({ file: join(fx.root, "computer-sharing.json"), fetch: fx.windowFetch, environments: () => places,
-    home: lent, cloud: target.cloud, myCloud: target.environment, ownClouds: target.places, screen: () => false, cuaConnection: async () => null });
+    home: lent, cloud: target.cloud, homeServer: target.environment, ownClouds: target.places, screen: () => false, cuaConnection: async () => null });
   try {
     sharing.start({ maintainer: false });
     await expect.poll(async () => ((await garage.as("GET", "/api/shared-computers")).body?.computers ?? []).length, { timeout: 30_000, interval: 250 }).toBe(1);
-    expect(sharing.cloudState(garage.place)).toMatchObject({ enabled: true, terminal: false });
+    expect(sharing.state(garage.place.id)).toMatchObject({ enabled: true, terminal: false });
     expect(sharing.state(family.place.id).enabled).toBe(false);
     expect((await family.as("GET", "/api/shared-computers")).status, "nothing is lent where others sign in").not.toBe(200);
     // Pause: Garage server stops using this computer, until Resume.

@@ -4,11 +4,6 @@ import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { resolveCompanionEntry } from "./companion-entry.mjs";
-import {
-  cleanupCompanionOriginEndpoint,
-  companionOriginHealth,
-  createCompanionOriginEndpoint,
-} from "./companion-origin-gateway.mjs";
 
 // Must stay clear of the harness's 8799 and its webhook receiver's 8800.
 const CONTROL_PORT = 8811;
@@ -18,8 +13,6 @@ let proc = null;
 // New for each sidecar launch and held only by main and the sidecar, so a page served from the control port cannot drive it.
 let controlToken = "";
 let lastError = null;
-let advertisedHostedUrl = null;
-let originTarget = null;
 let lifecycleListener = () => {};
 const expectedStops = new WeakSet();
 
@@ -95,17 +88,7 @@ export function companionRunning() {
   return proc !== null;
 }
 
-/** Public state only: the connector credential never enters this module. */
-export function companionAdvertisedHostedUrl() {
-  return proc ? advertisedHostedUrl : null;
-}
-
-/** Main-process only: must never cross IPC into the renderer. */
-export function companionOriginTarget() {
-  return proc && originTarget ? { ...originTarget } : null;
-}
-
-/** The listener runs synchronously on exit and invalidates the guardian before this module removes the socket path. */
+/** The listener runs synchronously when the sidecar exits. */
 export function setCompanionLifecycleListener(listener = () => {}) {
   lifecycleListener = listener;
 }
@@ -132,7 +115,7 @@ export function stopCompanion() {
   return serialize(() => stop());
 }
 
-async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = null, secretPublicKey = null, log }) {
+async function start({ resourcesPath, harnessPort, mutationToken, secretPublicKey = null, log }) {
   if (proc) return companionState();
   lastError = null;
   const resolved = entryPoint(resourcesPath);
@@ -144,27 +127,8 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
   }
   log?.(`companion fork ${resolved.entry}`);
 
-  let allocatedOrigin;
-  try {
-    allocatedOrigin = createCompanionOriginEndpoint();
-  } catch {
-    lastError = "the private companion origin could not be created";
-    return companionState();
-  }
-  let cleanedOrigin = false;
-  const cleanupOrigin = () => {
-    if (cleanedOrigin) return;
-    cleanedOrigin = true;
-    cleanupCompanionOriginEndpoint(allocatedOrigin);
-  };
-
-  // Never inherit an endpoint from the launch environment: main passes one only after verifying the connector.
   const childEnvironment = { ...process.env };
-  delete childEnvironment.OMB_COMPANION_HOSTED_URL;
-  delete childEnvironment.OMB_COMPANION_INTERNAL_ORIGIN;
   delete childEnvironment.OMB_PHONE_SECRET_PUBLIC_KEY;
-  if (hostedUrl) childEnvironment.OMB_COMPANION_HOSTED_URL = hostedUrl;
-  childEnvironment.OMB_COMPANION_INTERNAL_ORIGIN = allocatedOrigin.socketPath;
   if (/^[A-Za-z0-9_-]{87}$/.test(String(secretPublicKey ?? ""))) {
     childEnvironment.OMB_PHONE_SECRET_PUBLIC_KEY = secretPublicKey;
   }
@@ -183,7 +147,6 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch {
-    cleanupOrigin();
     lastError = "the companion process could not be started";
     return companionState();
   }
@@ -204,15 +167,12 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
     exited = true;
     if (proc === child) {
       proc = null;
-      advertisedHostedUrl = null;
-      originTarget = null;
       lifecycleListener({
         type: "exit",
         expected: expectedStops.has(child),
         pid: child.pid,
       });
     }
-    cleanupOrigin();
     log?.(`companion exited code=${code}`);
   });
 
@@ -232,14 +192,7 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
         lastError = `port ${CONTROL_PORT} is already serving another companion — stop it and try again`;
         return companionState();
       }
-      if (!Number.isSafeInteger(child.pid) || child.pid <= 0) {
-        throw new Error("child pid unavailable");
-      }
-      const target = { pid: child.pid, socketPath: allocatedOrigin.socketPath };
-      if (!(await companionOriginHealth(target))) throw new Error("private origin not ready");
       proc = child;
-      advertisedHostedUrl = hostedUrl;
-      originTarget = Object.freeze(target);
       return companionState();
     } catch {
       await new Promise((r) => setTimeout(r, 150));
@@ -257,8 +210,6 @@ async function start({ resourcesPath, harnessPort, mutationToken, hostedUrl = nu
 async function stop() {
   const child = proc;
   proc = null;
-  advertisedHostedUrl = null;
-  originTarget = null;
   lastError = null;
   if (!child) return companionState();
   expectedStops.add(child);
@@ -278,16 +229,6 @@ async function stop() {
     setTimeout(finish, 5_000).unref?.();
   });
   return companionState();
-}
-
-/** Callers publish only after public health verification succeeds. */
-export function setCompanionHostedUrl(endpoint) {
-  return serialize(async () => {
-    if (!proc) return companionState();
-    const state = await control("PUT", "/hosted-endpoint", { url: endpoint || null });
-    advertisedHostedUrl = endpoint || null;
-    return state;
-  });
 }
 
 export async function companionState() {

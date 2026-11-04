@@ -26,21 +26,15 @@ const DESKTOP_OWNER = "owner";
 
 export interface PhonesDeps {
   dataDir: string;
-  /** A Team Cloud or a hosted workspace: several people share it, so no phone is anyone's. */
+  /** A hosted workspace: several people share it, so no phone is anyone's. */
   shared: boolean;
-  cloudHome: boolean;
-  /** The Cloud home owner's key; null off a Cloud home. */
-  cloudOwnerKey: string | null;
   loopbackTrust: LoopbackTrust;
   sharedMembership(): boolean;
   store: Pick<Store, "appendMessage" | "bot" | "groupByThread" | "messagesFor">;
   sessions: Pick<SessionRegistry, "list" | "isLive" | "onSessionRevoked">;
   routines(): { listRoutines(): Routine[] } | null;
   ownerOrAdmin(auth: RequestAuth): boolean;
-  cloudOwnerSession(auth: RequestAuth): boolean;
-  /** The lent-Mac test on a Cloud home: null when the turn may use the owner's things. */
-  cloudLendingRefusal(turn: Turn): string | null;
-  cloudLendingTurn(turn: Turn): CloudLendingTurn;
+  cloudLendingTurn(turn: Turn): Omit<CloudLendingTurn, "ownerPerson">;
   /** The harness's record says this turn's work came from the user. */
   originIsUser(turn: Turn): boolean;
   /** The thread's latest direct request: the line it answers, a routine's trigger, where its work came from. */
@@ -67,22 +61,20 @@ export function createPhones(deps: PhonesDeps) {
   });
   const ownerRoutinesFile = join(deps.dataDir, "owner-routines.json");
   const routineRecordsExisted = existsSync(ownerRoutinesFile);
-  /** Off a Cloud home: the routines the desktop owner wrote, so their runs and reports keep the owner's phones. */
-  const routineAuthors = deps.cloudHome ? null : createCloudRoutineAuthors(ownerRoutinesFile);
+  /** The routines the desktop owner wrote, so their runs and reports keep the owner's phones. */
+  const routineAuthors = createCloudRoutineAuthors(ownerRoutinesFile);
   const desktopPhones = () => desktopPhonesOffered({ sharedMembership: deps.sharedMembership(), loopbackTrust: deps.loopbackTrust });
   /** Whose phones this server offers at all, before any turn is looked at. */
-  const owner = () => (deps.shared ? null : deps.cloudHome ? deps.cloudOwnerKey : desktopPhones() ? DESKTOP_OWNER : null);
+  const owner = () => (!deps.shared && desktopPhones() ? DESKTOP_OWNER : null);
 
   function ownerOf(auth: RequestAuth): string | null {
     if (deps.shared) return null;
-    if (deps.cloudHome) return deps.cloudOwnerSession(auth) ? deps.cloudOwnerKey : null;
     return desktopPhones() && deps.ownerOrAdmin(auth) ? DESKTOP_OWNER : null;
   }
 
-  /** Whose phones a turn may use: on a Cloud home the owner's, when the lent Mac would allow the turn; elsewhere the desktop owner's. */
+  /** Whose phones a turn may use: the desktop owner's, when the owner test allows the turn. */
   function turnOwner(turn: Turn): string | null {
     if (deps.shared) return null;
-    if (deps.cloudHome) return deps.cloudLendingRefusal(turn) === null ? deps.cloudOwnerKey : null;
     if (!desktopPhones()) return null;
     const lending = desktopLendingTurn({ ...deps.cloudLendingTurn(turn), thread: store.messagesFor(turn.threadId) }, {
       adminPersons: () => new Set(deps.sessions.list().filter((session) => session.scopes.includes("admin")).map((session) => personKey(session))),

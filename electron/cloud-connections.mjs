@@ -1,19 +1,18 @@
-// This computer's connections, moved once with the rest of the person's things to their own Cloud: MCP servers with
+// This computer's connections, moved once with the rest of the person's things to their own server: MCP servers with
 // their secrets and sign-ins, the AI keys bots run on, connected apps and HighLevel. Secrets reach main only over the
-// server's private port (cloud-logins.mjs) and go only to the move's owner session on My Cloud. A sign-in that
-// refreshes itself moves: once My Cloud has it, this computer forgets its own copy, so only My Cloud uses it.
+// server's private port (cloud-logins.mjs) and go only to the move's owner session on the server. A sign-in that
+// refreshes itself moves: once the server has it, this computer forgets its own copy, so only the server uses it.
 //
 //   const collected = await collectConnections(local);
 //   const result = await sendConnections(collected, target, { local });
 //
 // `local`: this computer's server, `{ json(route), handoff(what) }`: a loopback read, and the private port's answer.
-// `target`: the owner session on My Cloud, `{ call(method, route, body?) }` answering `{ ok, status, body }`.
+// `target`: the owner session on the server, `{ call(method, route, body?) }` answering `{ ok, status, body }`.
 
 const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const sentence = (value) => (typeof value === "string" && value.trim() ? value.trim().slice(0, 300) : null);
 const pick = (source, names) => Object.fromEntries(names.filter((name) => source[name] !== undefined && source[name] !== null).map((name) => [name, source[name]]));
 const ID = /^(?:mcp:[a-z][a-z0-9_-]{0,31}|key:\w{1,40}|composio|highlevel)$/u;
-const INSTALLATION = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u;
 const ENVIRONMENT = /^[\w-]{1,128}$/u;
 const SLUG = /^[a-z0-9_][a-z0-9_-]{0,80}$/u;
 const ENGINE = /^[\w.:-]{1,128}$/u;
@@ -23,11 +22,11 @@ const KINDS = new Set(["mcp", "key", "composio", "highlevel"]);
 /** Keys first, so the engines they run are ready before anything that follows them; connected apps last. */
 const ORDER = { key: 0, mcp: 1, highlevel: 2, composio: 3 };
 const MCP_FIELDS = ["command", "args", "env", "type", "url", "headers", "oauth", "resultBudget", "enabled", "runsOn"];
-/** How long a move waits for My Cloud to run the engines whose keys just went. */
+/** How long a move waits for the server to run the engines whose keys just went. */
 const ENGINE_WAIT_MS = 10_000;
 
 export class ConnectionMoveError extends Error {
-  /** `final`: trying again can't fix it (My Cloud's policy or limits refused it). */
+  /** `final`: trying again can't fix it (the server's policy or limits refused it). */
   constructor(code, message, final = false) {
     super(message);
     this.name = "ConnectionMoveError";
@@ -50,12 +49,9 @@ export function parseConnections(value) {
       ...(typeof item.launcher === "string" && LAUNCHER.test(item.launcher) ? { launcher: item.launcher } : {}),
       ...(Array.isArray(item.for) ? { for: strings(item.for, ENGINE, 20) } : {}),
       ...(item.signIn === true ? { signIn: true } : {}),
-      ...(item.mode === "managed" || item.mode === "own" ? { mode: item.mode } : {}),
       ...(typeof item.account === "string" && item.account.length <= 120 ? { account: item.account } : {}),
-      ...(typeof item.installationId === "string" && INSTALLATION.test(item.installationId) ? { installationId: item.installationId } : {}),
     }));
-  return { computer: { environmentId, label: label.trim().slice(0, 120) }, connections, engines: strings(value.engines, ENGINE, 200), commands: strings(value.commands, LAUNCHER, 40),
-    ...(value.managedApps === false ? { managedApps: false } : {}) };
+  return { computer: { environmentId, label: label.trim().slice(0, 120) }, connections, engines: strings(value.engines, ENGINE, 200), commands: strings(value.commands, LAUNCHER, 40) };
 }
 
 /** This computer's connections, by name only, and the computer they are on. */
@@ -66,9 +62,9 @@ export async function collectConnections(local) {
 }
 
 function refused(answer, fallback) {
-  if (answer.status === 401) return new ConnectionMoveError("refused", "My Cloud did not let this app make the change. Open My Cloud in this app once, then try again.");
+  if (answer.status === 401) return new ConnectionMoveError("refused", "The server did not let this app make the change. Open the server in this app once, then try again.");
   const said = sentence(answer.body?.error);
-  return new ConnectionMoveError("refused", said ? `My Cloud said: ${said}` : fallback, answer.status === 400 || answer.status === 403);
+  return new ConnectionMoveError("refused", said ? `The server said: ${said}` : fallback, answer.status === 400 || answer.status === 403);
 }
 
 async function secrets(local, item) {
@@ -77,7 +73,7 @@ async function secrets(local, item) {
   return { connection: answer.connection, ...(typeof answer.digest === "string" && DIGEST.test(answer.digest) ? { digest: answer.digest } : {}) };
 }
 
-/** My Cloud's connections once it runs every one of these engines, asked every half second; the last ones read when it
+/** The server's connections once it runs every one of these engines, asked every half second; the last ones read when it
  * does not get there in time. */
 async function runningEngines(target, engines, waitMs, cloud) {
   for (const started = Date.now(); ; await new Promise((resolve) => setTimeout(resolve, 500))) {
@@ -90,7 +86,7 @@ async function runningEngines(target, engines, waitMs, cloud) {
 
 const signInRoute = (item) => (item.kind === "mcp" ? `/api/cloud-connections/mcp/${item.id.slice("mcp:".length)}/sign-in` : "/api/cloud-connections/highlevel");
 
-/** This computer's newer copy of a sign-in, in place of the one My Cloud took from it (`onCloud`); its digest, or null. */
+/** This computer's newer copy of a sign-in, in place of the one the server took from it (`onCloud`); its digest, or null. */
 async function sendAgain(local, target, item, onCloud) {
   const fresh = await secrets(local, item).catch(() => null);
   const signIn = item.kind === "mcp" ? fresh?.connection.mcp?.signIn : fresh?.connection.highlevel;
@@ -99,7 +95,7 @@ async function sendAgain(local, target, item, onCloud) {
   return answer?.ok && answer.body?.adopted === true ? fresh.digest : null;
 }
 
-/** This computer lets go of a sign-in My Cloud took (`digest`: what My Cloud has); one that refreshed here meanwhile
+/** This computer lets go of a sign-in the server took (`digest`: what the server has); one that refreshed here meanwhile
  * goes again first. True once let go of. */
 async function letGo(local, target, item, digest) {
   let onCloud = digest;
@@ -113,63 +109,49 @@ async function letGo(local, target, item, digest) {
 }
 
 /**
- * Makes My Cloud act as this computer's connected-apps account: with OpenMausBot's service, a one-time code minted for
- * My Cloud's own installation; with the person's own Composio project, the same key and user. A Cloud whose own apps
- * are connected keeps them, and says which apps connected here it lacks (`missing`).
- * `here` and `there`: the "composio" connection of this computer and of My Cloud (null when My Cloud has none yet).
+ * Makes the server act as this computer's connected-apps account: the person's own Composio project, the same key and
+ * user. A server whose own apps are connected keeps them, and says which apps connected here it lacks (`missing`).
+ * `here` and `there`: the "composio" connection of this computer and of the server (null when the server has none yet).
  */
-export async function adoptComposioId(target, { local, here, there, managedApps = true }) {
+export async function adoptComposioId(target, { local, here, there }) {
   if (here.account && there?.account === here.account) return { shared: true };
-  if (here.mode === "managed" && !managedApps) {
-    throw new ConnectionMoveError("no_service", "Your connected apps stay on this computer: that server has no connected-apps service of its own. Connect them again there in Apps.", true);
-  }
   const listed = await local.json("/api/connectors/connected").catch(() => null);
   const apps = Object.entries(record(listed?.services) ? listed.services : {}).filter(([slug, state]) => SLUG.test(slug) && record(state) && state.connected === true)
     .map(([slug]) => slug).slice(0, 200);
-  let body;
-  if (here.mode === "managed") {
-    if (!there?.installationId) throw new ConnectionMoveError("not_ready", "My Cloud's connected apps are not ready yet. Try again in a moment.");
-    const code = (await local.handoff({ kind: "composio-share", for: there.installationId }).catch(() => null))?.share?.code;
-    if (typeof code !== "string") throw new ConnectionMoveError("local", "This computer's connected apps could not be shared.");
-    body = { share: code, apps };
-  } else {
-    const own = (await secrets(local, here)).connection.composio;
-    if (!record(own) || typeof own.apiKey !== "string" || typeof own.userId !== "string") throw new ConnectionMoveError("local", "This computer's connected apps could not be read.");
-    body = { apiKey: own.apiKey, userId: own.userId, apps };
-  }
-  const answer = await target.call("POST", "/api/cloud-connections/connected-apps", body);
-  if (!answer.ok) throw refused(answer, "My Cloud did not take this computer's connected apps.");
+  const own = (await secrets(local, here)).connection.composio;
+  if (!record(own) || typeof own.apiKey !== "string" || typeof own.userId !== "string") throw new ConnectionMoveError("local", "This computer's connected apps could not be read.");
+  const answer = await target.call("POST", "/api/cloud-connections/connected-apps", { apiKey: own.apiKey, userId: own.userId, apps });
+  if (!answer.ok) throw refused(answer, "The server did not take this computer's connected apps.");
   if (answer.body?.shared === true) return { shared: true };
   return { kept: true, missing: Array.isArray(answer.body?.missing) ? answer.body.missing.filter((slug) => typeof slug === "string" && SLUG.test(slug)) : [] };
 }
 
 /**
- * Moves each of this computer's connections to My Cloud, keys first: each over My Cloud's own routes, with its secrets.
- * An MCP server that needs this computer (its program, files or address are here, or My Cloud lacks its program) goes
- * marked as running on this computer, which My Cloud never starts. A sign-in that refreshes itself goes too, and this
- * computer lets go of its copy once My Cloud has it (with `release: false`, the result lists it instead, for
+ * Moves each of this computer's connections to the server, keys first: each over the server's own routes, with its secrets.
+ * An MCP server that needs this computer (its program, files or address are here, or the server lacks its program) goes
+ * marked as running on this computer, which the server never starts. A sign-in that refreshes itself goes too, and this
+ * computer lets go of its copy once the server has it (with `release: false`, the result lists it instead, for
  * releaseConnections). One connection failing never stops the others.
  *
  * With `signIns: false`, a sign-in that refreshes itself stays here for a later pass (`later`), and the rest goes.
  *
- * Returns { moved, runsHere, kept, missing, failed, release, later, held }: what My Cloud has now; what went marked as
- * running here (`needs`: a program My Cloud lacks); what My Cloud kept of its own (its own sign-in, its own connected
- * apps); the connected apps of this computer's that My Cloud then lacks; what failed (`final`: trying again can't fix
- * it); the sign-ins My Cloud took that this computer still holds; the sign-ins left for a later pass; and the keys a
- * trial's Cloud keeps unused while its Claude credit lasts.
+ * Returns { moved, runsHere, kept, missing, failed, release, later }: what the server has now; what went marked as
+ * running here (`needs`: a program the server lacks); what the server kept of its own (its own sign-in, its own connected
+ * apps); the connected apps of this computer's that the server then lacks; what failed (`final`: trying again can't fix
+ * it); the sign-ins the server took that this computer still holds; and the sign-ins left for a later pass.
  */
 export async function sendConnections(collected, target, { local, release = true, signIns = true, waitMs = ENGINE_WAIT_MS, onProgress = () => {} } = {}) {
   const answer = await target.call("GET", "/api/cloud-connections").catch(() => null);
-  if (answer?.status === 404) throw new ConnectionMoveError("outdated", "My Cloud needs an update before it can take this computer's apps and keys. It updates by itself.");
+  if (answer?.status === 404) throw new ConnectionMoveError("outdated", "The server needs an update before it can take this computer's apps and keys. It updates by itself.");
   let cloud = answer?.ok ? parseConnections(answer.body) : null;
-  if (!cloud) throw new ConnectionMoveError("unreachable", "My Cloud did not answer. Try again in a moment.");
-  const result = { moved: [], runsHere: [], kept: [], missing: [], failed: [], release: [], later: [], held: [] };
+  if (!cloud) throw new ConnectionMoveError("unreachable", "The server did not answer. Try again in a moment.");
+  const result = { moved: [], runsHere: [], kept: [], missing: [], failed: [], release: [], later: [] };
   const done = (item) => result.moved.push({ id: item.id, label: item.label });
 
-  /** A sign-in to My Cloud; one that refreshes itself (`digest`) is then let go of here. My Cloud keeps one of its own. */
+  /** A sign-in to the server; one that refreshes itself (`digest`) is then let go of here. The server keeps one of its own. */
   async function moveSignIn(item, signIn, digest) {
     const put = await target.call("PUT", signInRoute(item), signIn);
-    if (!put.ok) throw refused(put, `My Cloud did not take ${item.label}'s sign-in.`);
+    if (!put.ok) throw refused(put, `The server did not take ${item.label}'s sign-in.`);
     if (put.body?.kept === true) return void result.kept.push({ id: item.id, label: item.label });
     if (!digest) return;
     const outcome = release ? await letGo(local, target, item, digest) : { released: false, digest };
@@ -180,12 +162,9 @@ export async function sendConnections(collected, target, { local, release = true
     async key(item) {
       const { connection } = await secrets(local, item);
       if (!record(connection.config)) throw new ConnectionMoveError("local", `${item.label} could not be read on this computer.`);
-      const holding = await target.call("PUT", "/api/cloud-connections/held-keys", { for: item.for ?? [] }).catch(() => null);
       const saved = await target.call("PATCH", "/api/config", connection.config);
-      if (!saved.ok) throw refused(saved, `My Cloud did not take the ${item.label} key.`);
-      if (holding?.ok && holding.body?.held === true) result.held.push({ id: item.id, label: item.label });
+      if (!saved.ok) throw refused(saved, `The server did not take the ${item.label} key.`);
       done(item);
-      return holding?.ok && holding.body?.held === true;
     },
     async mcp(item) {
       const { connection, digest } = await secrets(local, item);
@@ -201,7 +180,7 @@ export async function sendConnections(collected, target, { local, release = true
         saved = await target.call("POST", "/api/mcp/servers", { name, ...definition, ...(runsOn ? { runsOn } : {}) });
         if (saved.ok && enabled === true) saved = await target.call("PATCH", `/api/mcp/servers/${name}`, { enabled: true });
       }
-      if (!saved.ok) throw refused(saved, `My Cloud did not take ${item.label}.`);
+      if (!saved.ok) throw refused(saved, `The server did not take ${item.label}.`);
       if (runsOn) return void result.runsHere.push({ id: item.id, label: item.label, ...(missing && !item.runsHere && !record(marked) ? { needs: missing } : {}) });
       done(item);
       if (record(signIn)) {
@@ -220,7 +199,7 @@ export async function sendConnections(collected, target, { local, release = true
       if (result.kept.length === kept) done(item);
     },
     async composio(item) {
-      const outcome = await adoptComposioId(target, { local, here: item, there: cloud.connections.find((theirs) => theirs.id === "composio") ?? null, managedApps: cloud.managedApps !== false });
+      const outcome = await adoptComposioId(target, { local, here: item, there: cloud.connections.find((theirs) => theirs.id === "composio") ?? null });
       if (outcome.kept) {
         result.kept.push({ id: item.id, label: item.label });
         result.missing.push(...outcome.missing.map((slug) => ({ slug })));
@@ -237,8 +216,8 @@ export async function sendConnections(collected, target, { local, release = true
       engines.clear();
     }
     try {
-      const held = await steps[item.kind](item);
-      if (item.kind === "key" && !held) for (const engine of item.for ?? []) if (!cloud.engines.includes(engine)) engines.add(engine);
+      await steps[item.kind](item);
+      if (item.kind === "key") for (const engine of item.for ?? []) if (!cloud.engines.includes(engine)) engines.add(engine);
     } catch (error) {
       result.failed.push({ id: item.id, label: item.label, message: sentence(error?.message) ?? `${item.label} did not move.`, final: error?.final === true });
     }
@@ -248,7 +227,7 @@ export async function sendConnections(collected, target, { local, release = true
   return result;
 }
 
-/** Lets go of sign-ins My Cloud took that this computer still holds (`release` of a move's result); the ones it could
+/** Lets go of sign-ins the server took that this computer still holds (`release` of a move's result); the ones it could
  * not let go of yet. */
 export async function releaseConnections(pending, { local, target }) {
   const held = [];

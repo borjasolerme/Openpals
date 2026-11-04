@@ -13,7 +13,6 @@ export interface SetupImportRouteDeps {
   local: boolean;
   cfg: Pick<AppConfig, "mcpServers" | "features">;
   mcpConfigBusy: BusyFlag;
-  mcpPolicyRefusal(name: string, server: object): string | undefined;
   persistMcpServers(next: Record<string, unknown>): void;
   /** The computer whose files are read; tests point it at a fixture home. */
   machine?: () => SetupMachine;
@@ -32,7 +31,6 @@ export function createSetupImportRoutes(deps: SetupImportRouteDeps): RouteHandle
   const machine = deps.machine ?? thisMachine;
   const host: SetupHost = {
     mcpServers: () => deps.cfg.mcpServers ?? {},
-    mcpPolicyRefusal: deps.mcpPolicyRefusal,
     persistMcpServers: deps.persistMcpServers,
     mcpConfigBusy: deps.mcpConfigBusy,
     claudeUserMcp: () => claudeUserMcpEnabled(deps.cfg),

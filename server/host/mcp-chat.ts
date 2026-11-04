@@ -7,7 +7,6 @@ import { canUseMcpServer } from "../../shared/tool-scope.ts";
 import { DATA_DIR, type AppConfig } from "../config.ts";
 import { appendDecision } from "../decision-log.ts";
 import { json } from "../harness/http.ts";
-import type { ManagedDesktopPolicy } from "../managed-policy.ts";
 import { mcpOAuthRedirectUri, type McpOAuthManager } from "../mcp-oauth.ts";
 import { listMcpServers } from "../mcp-registry.ts";
 import type { RequestAuth } from "../request-auth.ts";
@@ -19,36 +18,29 @@ import { McpRequestService } from "./mcp-requests.ts";
 import type { McpServersHost } from "./mcp-servers-host.ts";
 import { createMcpSignInCards } from "./mcp-sign-in-cards.ts";
 import type { SecretCards } from "./secret-cards.ts";
-import type { TeamConnectionsHost } from "./team-connections-host.ts";
 
 export interface McpChatDeps {
   store: Store;
   cfg: AppConfig;
   mcpOAuth: McpOAuthManager;
-  teamConnections: TeamConnectionsHost;
   mcpServersHost: McpServersHost;
-  managedPolicy: ManagedDesktopPolicy;
   /** Built after this module, so read when used. */
   secretCards(): SecretCards;
   /** Built after this module, so read when used. */
   mcpConfig(): McpConfig;
-  teamCloud: boolean;
   threadLanguage(threadId: string): string | undefined;
   answerCardNode(threadId: string, messageId: string, text: string): boolean;
   fullAccessForSource(botId: string, threadId: string): boolean;
-  cloudGuestDriven(threadId: string): boolean;
   liveTurnByThread: ReadonlyMap<string, string>;
   broadcast(payload: Record<string, unknown>): void;
   publicOrigins(): ReadonlyArray<string | null | undefined>;
   threadVisible(auth: RequestAuth, threadId: string): boolean;
 }
 
-const mcpServerUrl = (server: object) => ("url" in server && typeof server.url === "string" ? server.url : undefined);
-
 export function createMcpChat(deps: McpChatDeps) {
-  const { store, cfg, mcpOAuth, teamConnections, mcpServersHost, managedPolicy, threadLanguage, answerCardNode, fullAccessForSource, cloudGuestDriven, liveTurnByThread, broadcast } = deps;
+  const { store, cfg, mcpOAuth, mcpServersHost, threadLanguage, answerCardNode, fullAccessForSource, liveTurnByThread, broadcast } = deps;
   const mcpRequests = new McpRequestService({
-    store, teamCloud: deps.teamCloud, language: threadLanguage,
+    store, language: threadLanguage,
     apply: async (request, fields) => {
       const bot = store.bot(request.botId);
       return bot ? applyMcpChange(mcpServerDeps(bot, request.threadId), request, fields) : { state: "failed", text: "This bot no longer exists." };
@@ -59,10 +51,6 @@ export function createMcpChat(deps: McpChatDeps) {
 
   const mcpSignInCards = createMcpSignInCards({
     store, cfg: () => cfg, mcpOAuth,
-    personal: () => teamConnections.personMcp(),
-    turnPerson: (threadId) => teamConnections.turnPerson(threadId),
-    oauthFor: (person) => teamConnections.people.oauth(person),
-    personName: (person) => teamConnections.nameOf(person),
     publicOrigins: deps.publicOrigins,
     language: threadLanguage,
     answer: answerCardNode,
@@ -77,24 +65,16 @@ export function createMcpChat(deps: McpChatDeps) {
     return true;
   }
 
-  /** The mcp_server route for one bot in one conversation. `generation` is the live turn's; absent when the person's answer
-   * to a card applies the change. */
-  function mcpServerDeps(sender: BotRecord, threadId: string, generation?: string): Omit<InternalMcpDeps, "readBody"> {
+  /** The mcp_server route for one bot in one conversation. */
+  function mcpServerDeps(sender: BotRecord, threadId: string): Omit<InternalMcpDeps, "readBody"> {
     const from = store.groupByThread(threadId) ? { botId: sender.id, name: sender.name, color: sender.color } : undefined;
     return {
       sender, threadId,
       fullAccess: () => fullAccessForSource(sender.id, threadId),
-      guestDriven: () => cloudGuestDriven(threadId),
-      teamAdmin: () => teamConnections.actsForAdmin(threadId, generation),
       canUse: (name) => canUseMcpServer(sender.toolScope, name),
-      config: deps.mcpConfig(), cfg: () => cfg, personal: () => teamConnections.personMcp(),
+      config: deps.mcpConfig(), cfg: () => cfg,
       authState: (name, url) => mcpOAuth.authState(name, url),
-      managedBy: mcpManagedBy, policyRefusal: mcpPolicyRefusal, addRefusal: () => managedPolicy.botMcpRefusal(),
       signOut: async (name, url) => { await mcpOAuth.signOut(name, url); broadcast({ kind: "mcp.changed" }); },
-      testAs: (name, url) => {
-        const person = teamConnections.turnPerson(threadId, generation);
-        return person ? teamConnections.people.connection(person, name, url) : null;
-      },
       redeem: (body) => deps.secretCards().redeemMcpServer(body, sender.id, threadId),
       addToBotList: (name) => { const bot = store.bot(sender.id); if (bot?.mcpServers) store.patchBot(bot.id, { mcpServers: [...new Set([...bot.mcpServers, name])] }); },
       botAdd: (current, body) => mcpServersHost.botAdd(current, body, sender.id),
@@ -110,25 +90,14 @@ export function createMcpChat(deps: McpChatDeps) {
   }
 
   function mcpServerResponse() {
-    const policy = managedPolicy.current();
     const servers = listMcpServers(cfg.mcpServers).map((server) => {
       if (!("url" in server)) return server;
       const auth = mcpOAuth.authState(server.name, server.url);
       const listed = server.oauth ? { ...server, oauth: { ...server.oauth, redirectUri: mcpOAuthRedirectUri(server.url) } } : server;
       return auth === "none" ? listed : { ...listed, auth };
-    }).map(mcpServersHost.listing).map((server) => {
-      const managedBy = mcpManagedBy(server.name, server);
-      return managedBy ? { ...server, managedBy } : server;
-    });
-    return { servers, ...(policy && !policy.mcp.allowCustom ? { managed: { organizationName: policy.organizationName, allowlist: policy.mcp.allowlist } } : {}) };
-  }
-  function mcpPolicyRefusal(name: string, server: object): string | undefined {
-    return managedPolicy.mcpRefusal(name, mcpServerUrl(server));
-  }
-  /** The organisation whose policy leaves this server out, if one does. */
-  function mcpManagedBy(name: string, server: object): string | undefined {
-    return managedPolicy.mcpAllowed(name, mcpServerUrl(server), "bot" in server && Boolean(server.bot)) ? undefined : managedPolicy.current()?.organizationName;
+    }).map(mcpServersHost.listing);
+    return { servers };
   }
 
-  return { mcpRequests, mcpSignInCards, mcpServerDeps, resolveAndSendMcp, mcpServerResponse, mcpPolicyRefusal };
+  return { mcpRequests, mcpSignInCards, mcpServerDeps, resolveAndSendMcp, mcpServerResponse };
 }

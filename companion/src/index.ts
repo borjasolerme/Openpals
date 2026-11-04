@@ -23,8 +23,6 @@ import {
 } from "./mdns.ts";
 import { notifyDeviceRevoked } from "./harness-notice.ts";
 import { createProxyHandler } from "./proxy.ts";
-import { companionOriginSocket, listenCompanionOrigin } from "./origin.ts";
-import { gzipTunnelReplies } from "./tunnel-gzip.ts";
 import { normalizedPhoneSecretPublicKey } from "./phone-secret-key.ts";
 import { machineNameFromConfig } from "./machine-name.ts";
 
@@ -61,7 +59,6 @@ const COMPANION_PORT = num(process.env.OMB_COMPANION_PORT, 8810);
 const CONTROL_PORT = num(process.env.OMB_CONTROL_PORT, 8811);
 const SERVICE_TYPE = "_openmausbot._tcp";
 let hostedUrl = hostedCompanionUrl(process.env.OMB_COMPANION_HOSTED_URL);
-const PRIVATE_ORIGIN = companionOriginSocket(process.env.OMB_COMPANION_INTERNAL_ORIGIN);
 const SECRET_PUBLIC_KEY = normalizedPhoneSecretPublicKey(
   process.env.OMB_PHONE_SECRET_PUBLIC_KEY ?? "",
 );
@@ -144,8 +141,6 @@ const companion = createServer(proxy);
 // Node's separate `upgrade` event.
 companion.on("upgrade", proxy.upgrade);
 // Large JSON replies go gzipped here: this is the only listener whose replies go up the home connection to Cloudflare.
-const managedOrigin = PRIVATE_ORIGIN ? createServer(gzipTunnelReplies(proxy)) : null;
-managedOrigin?.on("upgrade", proxy.upgrade);
 
 const control = createControlServer({
   devices,
@@ -214,9 +209,6 @@ async function main(): Promise<void> {
   await controlReady;
   await listen(control, CONTROL_PORT, "127.0.0.1");
   await listen(companion, COMPANION_PORT, "0.0.0.0");
-  if (managedOrigin && PRIVATE_ORIGIN) {
-    await listenCompanionOrigin(managedOrigin, PRIVATE_ORIGIN);
-  }
 
   // Before advertising, so the first record already carries the name; a later rename withdraws the old one.
   await refreshMachineName();
@@ -255,11 +247,9 @@ const shutdown = async (signal: string): Promise<void> => {
   proxy.closeViewers();
   companion.closeAllConnections?.();
   control.closeAllConnections?.();
-  managedOrigin?.closeAllConnections?.();
   await Promise.all([
     new Promise<void>((r) => companion.close(() => r())),
     new Promise<void>((r) => control.close(() => r())),
-    ...(managedOrigin ? [new Promise<void>((r) => managedOrigin.close(() => r()))] : []),
   ]);
   process.exit(0);
 };

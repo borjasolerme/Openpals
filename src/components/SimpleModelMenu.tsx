@@ -79,13 +79,6 @@ function MenuModel({ instance, row, onPick }: { instance: InstanceInfo; row: Men
 function GroupBody({ group, props }: { group: MenuGroup; props: SimpleModelMenuProps }) {
   const { instance, body } = group;
   switch (body.kind) {
-    case "policy":
-      return (
-        <div data-simple-policy className="flex flex-col gap-0.5 py-1 pl-8 pr-2">
-          <p className="text-[13px] leading-[18px] text-ink-secondary">{t("policy.managedBy", { organization: body.organization })}</p>
-          <p className="text-[12px] leading-4 text-ink-tertiary">{t(body.team ? "policy.teamModelBlocked" : "policy.modelBlocked", { organization: body.organization })}</p>
-        </div>
-      );
     case "setUp":
     case "signIn":
       return (
@@ -233,7 +226,7 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
               aria-pressed="true"
               title={current.title}
               onClick={(event) => {
-                const setUp = current.warning && current.instance && !current.instance.policy && !current.blocked ? current.instance : undefined;
+                const setUp = current.warning && current.instance && !current.blocked ? current.instance : undefined;
                 if (setUp) props.onSetUp(setUp, event.detail === 0);
                 else props.onPickCurrent();
               }}

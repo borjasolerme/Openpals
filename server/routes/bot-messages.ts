@@ -59,7 +59,6 @@ export interface BotMessageRouteDeps {
   directTurnDispatchClaims: { get(threadId: string): { threadId: string } | undefined };
   groupSpeakers: ReadonlyMap<string, { botId: string }>;
   desktopManaged: boolean;
-  cloudHome: boolean;
   DirectSendRefused: abstract new (...args: never[]) => { readonly status: number; readonly body: Record<string, unknown> };
   acceptDirectSend(input: DirectSendInput, guardedStart?: (currentAtStart: BotRecord) => Promise<DirectSendReceipt>): Promise<DirectSendReceipt>;
   directSendRefusal(botId: string, threadId: string): { status: number; body: Record<string, unknown> } | null;
@@ -69,8 +68,6 @@ export interface BotMessageRouteDeps {
   }): Promise<Message>;
   usageTriggerFor(auth: RequestAuth): UsageTrigger;
   messageSender(auth: RequestAuth): ResolvedSender | undefined;
-  cloudGuestSendRefusal(auth: RequestAuth, threadId: string): string | null;
-  cloudThreadRefusal(auth: RequestAuth, threadId: string): string | null;
   cardAnswerRefusal(auth: RequestAuth, threadId: string, requestId: string, behavior: string): string | null;
   commandRememberRefusal(auth: RequestAuth, threadId: string, requestId: string, behavior: string): string | null;
   requestBehavior(value: unknown): Behavior | null;
@@ -84,7 +81,6 @@ export interface BotMessageRouteDeps {
   engineSteersImages(instance: RunningInstance | undefined): boolean;
   resolveReplyTarget(threadId: string, value: unknown): Message | undefined;
   turnSelection(botId: string, threadId: string): ModelSelection | undefined;
-  policyModelRefusal(instance: { instanceId: string; driverKind: string }): string | undefined;
   clearUnattended(threadId: string): void;
   drainQueuedSends(): void;
   answeringCardAs(auth: RequestAuth, threadId: string, requestId: string, work: () => Promise<unknown>): Promise<void>;
@@ -126,10 +122,6 @@ export interface BotMessageRouteDeps {
   inboxReply?(auth: RequestAuth, threadId: string, replyToId: string, text: string, line: { sendId?: string; sender?: ResolvedSender }): { status: number; message?: Message; error?: string } | null;
   /** A typed line that answers a bot's question card; null sends it as usual. */
   typedCardAnswer?(auth: RequestAuth, threadId: string, text: string, target: Message | undefined, line: { sendId?: string; sender?: ResolvedSender }): Promise<{ status: number; message?: Message; error?: string } | null>;
-  /** On a Team Cloud: why the person a relayed message names may not chat with this bot; null when they may. */
-  relayRefusal?(bot: BotRecord, email: string | undefined): string | null;
-  /** The answer to someone's ask to chat with a team bot; null for any other card. */
-  resolveAccessRequest?(threadId: string, requestId: string, behavior: string, message: unknown): { status: number; body: unknown } | null;
 }
 
 /** External interfaces (the Slack worker) opt in. `onBehalfOf`, advertised by /api/health as
@@ -153,11 +145,10 @@ const guardedSendSchema = z.object({
 export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler {
   const {
     store, registry, handoffs, liveTurn, phoneSecretSubmissions, directTurnDispatchClaims, groupSpeakers,
-    desktopManaged: DESKTOP_MANAGED, cloudHome: CLOUD_HOME, DirectSendRefused,
-    acceptDirectSend, directSendRefusal, startTurn, usageTriggerFor, messageSender, cloudGuestSendRefusal, cloudThreadRefusal,
-    cardAnswerRefusal, commandRememberRefusal, requestBehavior, requestedTaskBot, botForThread, threadBusy,
+    desktopManaged: DESKTOP_MANAGED, DirectSendRefused,
+    acceptDirectSend, directSendRefusal, startTurn, usageTriggerFor, messageSender, cardAnswerRefusal, commandRememberRefusal, requestBehavior, requestedTaskBot, botForThread, threadBusy,
     botAtThreadCapacity, parksBehindCoordination, activeGroupTurnForBot, runningTurnInstance, engineSteersImages, resolveReplyTarget,
-    turnSelection, policyModelRefusal, clearUnattended, drainQueuedSends, answeringCardAs, resolveAndSendTrust, resolveAndSendTeamSetup, resolveAndSendMcp,
+    turnSelection, clearUnattended, drainQueuedSends, answeringCardAs, resolveAndSendTrust, resolveAndSendTeamSetup, resolveAndSendMcp,
     resolveAndSendRoutine, resolveAndSendProfile, resolveAndSendModel, resolveSkillRequest, sendSkillResolution, answerRequest,
     deliverLateQuestionAnswer, stopThreadForPerson, cancelDirectTurnDispatch, revokeInternalCapabilitiesForThread,
     cancelGroupTurnOperations, closeOpenApprovals, harnessCardOutcome, pressRecords, serverPress, relayedReaction, answeredIn, fromPhone, notePhoneSend, goals,
@@ -216,8 +207,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
         return json(res, 400, { error: "threadId must be a task id" });
       }
       const threadId = body.threadId ?? bot.threadId;
-      const notYours = cloudGuestSendRefusal(auth, threadId);
-      if (notYours) return json(res, 403, { error: notYours });
       if (body.mode !== undefined && body.mode !== "chat" && body.mode !== "goal") return json(res, 400, { error: "mode must be chat or goal" });
       if (body.mode === "goal") {
         if (guarded || pressed || fromAnApp || pointing) return json(res, 400, { error: "a goal is a plain typed message" });
@@ -232,8 +221,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
         return json(res, 202, { ok: true, threadId, message });
       }
       const onBehalfOf = guardedBody?.data?.onBehalfOf;
-      const relayRefused = guardedBody && (onBehalfOf || auth.kind === "loopback") ? deps.relayRefusal?.(bot, onBehalfOf?.email) : null;
-      if (relayRefused) return json(res, 403, { error: relayRefused });
       const trigger: UsageTrigger = onBehalfOf
         ? { kind: "user", ...(onBehalfOf.email ? { email: onBehalfOf.email } : {}), ...(onBehalfOf.name ? { label: onBehalfOf.name } : {}) }
         : usageTriggerFor(auth);
@@ -440,8 +427,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
       const body = await readBody(req);
       requirePinnedClientThread(m[1], body?.threadId);
       const bot = requestedTaskBot(m[1], body?.threadId);
-      const notYours = cloudThreadRefusal(auth, bot.threadId);
-      if (notYours) return json(res, 403, { error: notYours });
       await startTurn(bot.id, "Summarize conversation context", {
         threadId: bot.threadId, compactOnly: true, cardContinuation: true, trigger: usageTriggerFor(auth),
       });
@@ -454,8 +439,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
       const body = await readBody(req);
       requirePinnedClientThread(m[1], body?.threadId);
       const bot = requestedTaskBot(m[1], body.threadId);
-      const notYours = cloudThreadRefusal(auth, bot.threadId);
-      if (notYours) return json(res, 403, { error: notYours });
       const textRefused = messageTextRefusal(body.text);
       if (textRefused) return json(res, 400, { error: textRefused });
       const text = String(body.text ?? "").trim();
@@ -485,14 +468,10 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
           error: `provider instance "${rerunSelection.instanceId}" is unavailable — pick another model in settings`,
         });
       }
-      const rerunInstance = registry.get(rerunSelection.instanceId)!;
-      const rerunRefusal = policyModelRefusal(rerunInstance);
-      if (rerunRefusal) return json(res, 409, { error: rerunRefusal });
       const quoted = source.replyToId ? resolveReplyTarget(bot.threadId, source.replyToId) : undefined;
       const replyTo: ReplyTarget | undefined = quoted && source.reaction && text === source.text ? { ...quoted, reactedWith: source.reaction } : quoted;
       const dataContext = parseDataContext(body.dataContext) ?? (text === source.text ? source.dataContext : undefined);
-      const message = await startTurn(bot.id, text, { threadId: bot.threadId, editedMessageId: messageId, replyTo, sendId, trigger: usageTriggerFor(auth), dataContext,
-        ...(CLOUD_HOME ? { sender: messageSender(auth) } : {}) });
+      const message = await startTurn(bot.id, text, { threadId: bot.threadId, editedMessageId: messageId, replyTo, sendId, trigger: usageTriggerFor(auth), dataContext });
       return json(res, 202, { ok: true, message });
     }
 
@@ -501,8 +480,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
       const body = await readBody(req);
       requirePinnedClientThread(m[1], body?.threadId);
       const bot = requestedTaskBot(m[1], body.threadId);
-      const notYours = cloudThreadRefusal(auth, bot.threadId);
-      if (notYours) return json(res, 403, { error: notYours });
       if (threadBusy(bot.id, bot.threadId)) return json(res, 409, { error: "the thread is working — stop it before switching versions" });
       if (phoneSecretSubmissions.hasThread(bot.threadId)) {
         return json(res, 409, { error: "this task is securely saving a credential — try again when it finishes" });
@@ -532,8 +509,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
         if (refusal) return json(res, 403, { error: refusal });
       }
       return await answeringCardAs(auth, bot.threadId, String(body.requestId), async () => {
-        const access = deps.resolveAccessRequest?.(bot.threadId, String(body.requestId), behavior, body.message);
-        if (access) return json(res, access.status, access.body);
         if (resolveAndSendTrust(res, bot.threadId, String(body.requestId), behavior)) return;
         const answer = { botId: bot.id, threadId: bot.threadId, requestId: String(body.requestId), behavior };
         if (await resolveAndSendTeamSetup(res, answer, ownerReview(auth, req))) return;
@@ -603,8 +578,6 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
         if (refusal) return json(res, 403, { error: refusal });
       }
       return await answeringCardAs(auth, threadId, requestId, async () => {
-        const access = deps.resolveAccessRequest?.(threadId, requestId, behavior, body.message);
-        if (access) return json(res, access.status, access.body);
         if (resolveAndSendTrust(res, threadId, requestId, behavior)) return;
         const skillCard = store.messagesFor(threadId).find(
           (message) => message.card?.requestId === requestId && message.card.skillRequest,

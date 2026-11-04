@@ -1,4 +1,3 @@
-import { emailGateDone } from "@/lib/analytics";
 import { hintSeen, MET_CHIEF_HINT, welcomeDue, type WelcomeViewer } from "@/lib/onboarding";
 import type { AppState } from "@/state/store";
 
@@ -7,7 +6,7 @@ export function cornerPopupWaits(state: AppState,
   const busy = idle && (state.bots.some(bot => bot.busy || bot.tasks?.some(task => task.busy))
     || state.groups.some(group => group.working || group.busyBotId));
   const setup = state.welcomeOpen || state.tourOpen
-    || welcomeDue(state.config, { remoteClient: false, legacyDone: emailGateDone(), ...(viewer ? { hosted: viewer.hosted, canSave: viewer.canSave, cloudHome: viewer.cloudHome } : {}) });
+    || welcomeDue(state.config, { remoteClient: false, ...(viewer ? { hosted: viewer.hosted, canSave: viewer.canSave } : {}) });
   return !state.connected || !state.config || setup || busy || quiet || (!duringFirstChat && firstChatQuiet(state))
     || state.appSettingsOpen || state.settingsOpen || state.pluginsOpen || state.shortcutsOpen;
 }

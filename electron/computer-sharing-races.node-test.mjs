@@ -4,7 +4,6 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { setImmediate } from "node:timers/promises";
 import { createComputerSharing } from "./computer-sharing.mjs";
 
 async function fixture(t) {
@@ -24,7 +23,7 @@ async function fixture(t) {
         const held = heldIdentity;
         heldIdentity = null;
         if (held) { held.entered.resolve(); await held.released.promise; }
-        return Response.json({ kind: "session", id: info.sessionId, cloudHome: true, scopes: ["admin"] });
+        return Response.json({ kind: "session", id: info.sessionId, scopes: ["admin"] });
       }
       if (route === "/.well-known/openmausbot/environment") return Response.json({ environmentId: info.environmentId, capabilities: { sharedComputers: true } });
       if (route === "/api/shared-computers/connect") connects.push(JSON.parse(body));
@@ -49,10 +48,8 @@ async function fixture(t) {
   };
 }
 
-for (const mode of ["Cloud", "Computer access"]) {
-  const save = (f, terminal) => mode === "Cloud"
-    ? f.sharing.saveCloud(f.env, { folders: [], internet: true, terminal })
-    : f.sharing.save(f.env, { folders: [], computer: true, terminal }, f.info);
+for (const mode of ["Computer access"]) {
+  const save = (f, terminal) => f.sharing.save(f.env, { folders: [], computer: true, terminal }, f.info);
 
   test(`${mode}: Stop invalidates a pending terminal grant`, async t => {
     const f = await fixture(t);
@@ -69,7 +66,6 @@ for (const mode of ["Cloud", "Computer access"]) {
     assert.equal(kept.enabled, false);
     assert.equal(kept.terminal, false);
     assert.equal(kept.stopped.reason, "you");
-    assert.equal(f.sharing.lendingToCloud(), false);
     assert.ok(f.connects.every(grant => grant.terminal === false));
   });
 
@@ -82,7 +78,6 @@ for (const mode of ["Cloud", "Computer access"]) {
     held.release();
     assert.equal((await saving).enabled, false);
     assert.deepEqual(await f.records(), {});
-    assert.equal(f.sharing.lendingToCloud(), false);
     assert.deepEqual(f.connects, []);
   });
 
@@ -113,36 +108,3 @@ test("declining access invalidates a pending grant", async t => {
   assert.deepEqual(f.connects, []);
 });
 
-test("a change to another environment leaves a pending grant valid", async t => {
-  const f = await fixture(t);
-  const held = f.holdIdentity();
-  const saving = f.sharing.saveCloud(f.env, { folders: [], terminal: true });
-  await held.entered;
-  f.sharing.revoke({ ...f.env, id: "other" });
-  held.release();
-  assert.equal((await saving).enabled, true);
-  assert.equal((await f.records())[f.env.id].terminal, true);
-});
-
-test("a stopped worker cannot restore its terminal grant after identity refresh", async t => {
-  const f = await fixture(t);
-  await f.sharing.saveCloud(f.env, { folders: [], terminal: true });
-  await f.polled;
-  const held = f.holdIdentity();
-  f.sharing.start();
-  await held.entered;
-  f.sharing.revoke(f.env);
-  const stopped = (await f.records())[f.env.id];
-  f.info.sessionId = randomUUID();
-  held.release();
-  await setImmediate();
-  assert.deepEqual((await f.records())[f.env.id], stopped);
-  f.sharing.cloudChanged();
-  f.sharing.start();
-  await setImmediate();
-  assert.equal(f.sharing.cloudState(f.env).enabled, false);
-  assert.equal(f.sharing.cloudState(f.env).terminal, false);
-  assert.equal(f.sharing.lendingToCloud(), false);
-  assert.deepEqual((await f.records())[f.env.id], stopped);
-  assert.equal(f.connects.length, 1);
-});

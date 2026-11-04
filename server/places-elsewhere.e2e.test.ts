@@ -55,8 +55,7 @@ it("a bot asking for a teammate on the person's other place hears where it lives
   const main = installTwoPlacesMain({
     ipcMain: { handle: () => {} }, guard: (_channel: string, handler: (...args: unknown[]) => unknown) => handler,
     localRequest: (route: string, init: RequestInit = {}) => fetch(`${fx.desktopBase}${route}`, { ...init, headers: { ...init.headers as Record<string, string>, "x-openmausbot-desktop-owner": fx.ownerCapability } }),
-    fetch: fx.windowFetch, environments: () => [garage.place, family.place], cloud: () => ({ origin: null, asleep: false }),
-    oneHome: { journal: () => null, keep: { state: () => ({ shown: false, on: false, moved: false }), set: async () => {} } },
+    fetch: fx.windowFetch, environments: () => [garage.place, family.place], 
     ownHome: fx.main, tell: () => {},
     dismissed: { read: () => JSON.parse(readFileSync(file, "utf8")), write: (value: unknown) => { writeFileSync(`${file}.tmp`, JSON.stringify(value)); renameSync(`${file}.tmp`, file); } },
   });

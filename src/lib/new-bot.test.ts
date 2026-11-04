@@ -1,19 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const fixture = vi.hoisted(() => ({ track: vi.fn(), openBot: vi.fn() }));
-vi.mock("@/lib/analytics", () => ({ track: fixture.track }));
+const fixture = vi.hoisted(() => ({ openBot: vi.fn() }));
 vi.mock("@/state/thread-navigation", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/state/thread-navigation")>(), openBot: fixture.openBot,
 }));
 
 import type { Action, Bot } from "@/state/store";
-import { setTeamChats } from "@/state/team-chats";
-import { setTeamPeople, type TeamPeople } from "@/state/team-people";
 import { makeNewBot, type BotDefaultsAnswer } from "./new-bot";
-
-const ME = { email: "ada@acme.test", name: "Ada", role: "member", you: true as const };
-const BOB = { email: "bob@acme.test", name: "Bob", role: "admin" };
-const team: TeamPeople = { people: [ME, BOB], me: ME, admin: false, needsYou: [] };
 
 function server(answer: Partial<BotDefaultsAnswer> = {}, fail?: { on: "POST" | "PATCH"; error: string }) {
   const calls: Array<{ method: string; path: string; body: Record<string, unknown> }> = [];
@@ -43,8 +36,8 @@ async function newBot(request: never, action: Partial<Extract<Action, { type: "n
   return dispatch.mock.calls.map(([sent]) => sent);
 }
 
-beforeEach(() => { fixture.track.mockReset(); fixture.openBot.mockReset(); });
-afterEach(() => { vi.unstubAllGlobals(); setTeamPeople(null); setTeamChats(null); });
+beforeEach(() => { fixture.openBot.mockReset(); });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("New bot", () => {
   it("makes a bot at once from the New bot defaults and opens its chat", async () => {
@@ -54,7 +47,6 @@ describe("New bot", () => {
     expect(created()).toMatchObject({ name: "Pixel", modelSelection: { instanceId: "claude", model: "sonnet" }, requireAvailableModel: true, useDefaults: false });
     expect(created()).not.toHaveProperty("reportsTo");
     expect(sent).toEqual([{ type: "botAdded", bot: expect.objectContaining({ id: "created", name: "Pixel" }), preserveSelection: false }]);
-    expect(fixture.track.mock.calls).toEqual([["bot_created", { source: "blank" }]]);
   });
 
   it("names the bot so it never repeats one already here", async () => {
@@ -73,35 +65,11 @@ describe("New bot", () => {
     expect(sent.map((action) => action.type)).toEqual(["botAdded"]);
   });
 
-  it("on a team, makes it in this place, reporting to whoever every bot reports to or else to its creator, in their own chat", async () => {
-    setTeamPeople(team);
-    setTeamChats({ teamId: "acme", member: true, opened: [] });
-    const closers = [{ id: "closer", name: "Closer", reportsTo: BOB.email }] as Bot[];
-    const shared = server();
-    const sent = await newBot(shared.request, {}, closers);
-    expect(shared.created()).toMatchObject({ reportsTo: BOB.email });
-    expect(sent[0]).toMatchObject({ type: "botAdded", preserveSelection: false });
-    expect(fixture.openBot).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ id: "created" }));
-    const mixed = server();
-    await newBot(mixed.request, {}, [...closers, { id: "mine", name: "Mine", reportsTo: ME.email } as Bot]);
-    expect(mixed.created()).toMatchObject({ reportsTo: ME.email });
-  });
-
-  it("keeps the caller where it is when it asks to", async () => {
-    setTeamChats({ teamId: "acme", member: true, opened: [] });
-    const onCreated = vi.fn();
-    const sent = await newBot(server().request, { preserveSelection: true, onCreated });
-    expect(sent).toEqual([expect.objectContaining({ type: "botAdded", preserveSelection: true })]);
-    expect(fixture.openBot).not.toHaveBeenCalled();
-    expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: "created" }));
-  });
-
   it.each(["POST", "PATCH"] as const)("a failure (%s) shows one plain error and leaves no bot behind", async (on) => {
     const { calls, request } = server({}, { on, error: "this workspace is limited to 200 bots" });
     const sent = await newBot(request);
     expect(sent).toEqual([{ type: "error", message: "Couldn't make a new bot: this workspace is limited to 200 bots" }]);
     if (on === "PATCH") expect(calls.at(-1)).toMatchObject({ method: "DELETE", path: "/api/bots/created" });
-    expect(fixture.track).not.toHaveBeenCalled();
     const onError = vi.fn();
     expect(await newBot(server({}, { on, error: "offline" }).request, { onError })).toEqual([]);
     expect(onError).toHaveBeenCalledWith("Couldn't make a new bot: offline");

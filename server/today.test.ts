@@ -2,7 +2,6 @@ import { rmSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
 import { failedTurnTool } from "../shared/failed-turn.ts";
 import type { NeedsYouItem } from "../shared/today.ts";
-import { TRIAL_CREDIT_REFUSED } from "../shared/trial-credit.ts";
 import { SEES_EVERYTHING, VisibleSet, routineVisible } from "./bot-visibility.ts";
 import { DATA_DIR } from "./config.ts";
 import { closeMessageDb } from "./message-db.ts";
@@ -177,13 +176,10 @@ describe("needs you", () => {
     const rex = w.store.createBot({ name: "Rex", modelSelection: { instanceId: "claude", model: "claude-sonnet-5" } });
     const zed = w.store.createBot({ name: "Zed", modelSelection: { instanceId: "grok", model: "grok-5" } });
     const lou = w.store.createBot({ name: "Lou", modelSelection: { instanceId: "claude", model: "claude-sonnet-5" } });
-    const kai = w.store.createBot({ name: "Kai", modelSelection: { instanceId: "claude", model: "claude-sonnet-5" } });
     w.fail(w.atlas.threadId, at(9), "Invalid API key · Please run /login", { setup: true });
     w.fail(lou.threadId, at(8), "401 Unauthorized: OAuth token has expired");
-    w.fail(kai.threadId, at(8, 30), TRIAL_CREDIT_REFUSED.paused);
     w.fail(w.pepper.threadId, at(9, 30), "You've hit your usage limit. Try again at 3pm.");
-    w.fail(rex.threadId, at(10), TRIAL_CREDIT_REFUSED.used_up);
-    w.fail(rex.threadId, at(10, 5), "This month's cloud desktop hours are used up.", { place: { state: "cc-no-hours", params: { bot: "Rex" }, source: "works-on" } });
+    w.fail(rex.threadId, at(10, 5), "Bots here can get their own cloud desktops from Boat, a paid service.", { place: { state: "cc-needs-key", params: { bot: "Rex" }, source: "works-on" } });
     w.fail(zed.threadId, at(10, 6), "Cloud computers can't start right now.", { place: { state: "cc-unavailable", params: { bot: "Zed" }, source: "works-on" } });
     w.fail(zed.threadId, at(10, 7), "turn interrupted — Openpals restarted");
     w.tool(w.atlas.threadId, at(11), "mcp__composio__GMAIL_SEND_EMAIL", false, { output: "Error: 401 Unauthorized. The connected account's token has expired; reconnect Gmail." });
@@ -207,10 +203,9 @@ describe("needs you", () => {
     expect(kinds(needsYou)).toEqual([
       ["signed-out", "grok"],
       ["signed-out", "claude"],
-      ["out-of-credit", "used_up"],
       ["usage-limit", "codex"],
       ["connection", "Gmail"],
-      ["place", "cc-no-hours"],
+      ["place", "cc-needs-key"],
       ["question", "Should I email the whole list or only last month's buyers?"],
       ["question", "Which draft should go out?"],
       ["question", "Which list should I send the newsletter to?"],
@@ -289,7 +284,5 @@ describe("needs you", () => {
     w.fail(w.zed.threadId, NOW - 6 * 24 * HOUR, "Invalid API key · Please run /login", { setup: true });
     const member = todayReport(w.sources(), { ...ADMIN, admin: false }, NOW - HOUR, NOW);
     expect(member.needsYou.map((item) => item.kind)).toEqual(["question", "question", "question"]);
-    w.fail(w.atlas.threadId, NOW - 8 * 24 * HOUR, TRIAL_CREDIT_REFUSED.ended);
-    expect(kinds(todayReport(w.sources(), ADMIN, NOW - HOUR, NOW).needsYou)).toContainEqual(["out-of-credit", "used_up"]);
   });
 });

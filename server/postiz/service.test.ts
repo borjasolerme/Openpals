@@ -16,8 +16,6 @@ let dir: string;
 let cfg: Pick<AppConfig, "postiz" | "mcpServers">;
 let oauth: McpOAuthManager;
 let busy = false;
-let scope: "team" | "person" = "team";
-const forgotten: string[] = [];
 
 beforeAll(async () => {
   fake = await startFakePostiz();
@@ -32,8 +30,6 @@ beforeEach(() => {
   cfg = { mcpServers: {} };
   oauth = new McpOAuthManager({ file: join(dir, "mcp-oauth.json") });
   busy = false;
-  scope = "team";
-  forgotten.length = 0;
 });
 afterEach(() => {
   oauth.dispose();
@@ -44,8 +40,6 @@ const postiz = (loopback = true) => createPostiz({
   cfg: () => cfg, mcpOAuth: oauth,
   persistMcpServers: (next) => { cfg = { ...cfg, mcpServers: next }; },
   mcpConfigBusy: { get: () => busy, set: (value) => { busy = value; } },
-  mcpPolicyRefusal: (_name, server) => (server as { url: string }).url.includes("blocked.example") ? "Your organization allows only approved MCP servers." : undefined,
-  team: { team: null, scopes: { scope: () => scope }, forgetServer: (name) => forgotten.push(name) },
   loopback,
 });
 /** What config.ts would hold after the route saved this patch. */
@@ -73,7 +67,6 @@ describe("the API key", () => {
     expect(await service.checkKey("http://postiz.example.com", FAKE_POSTIZ_KEY)).toMatchObject({ ok: false, code: "address" });
     expect(await service.checkKey("http://127.0.0.1:9", FAKE_POSTIZ_KEY)).toMatchObject({ ok: false, code: "unreachable", error: "Couldn't reach a Postiz server at 127.0.0.1:9. Check the address and try again." });
     expect(await service.checkKey(`${fake.url}/not-postiz`, FAKE_POSTIZ_KEY)).toMatchObject({ ok: false, code: "not_postiz" });
-    expect(await service.checkKey("https://blocked.example", FAKE_POSTIZ_KEY)).toMatchObject({ ok: false, status: 403, code: "managed_policy" });
     expect(await postiz(false).checkKey(fake.url, FAKE_POSTIZ_KEY)).toMatchObject({ ok: false, code: "address", error: "Use your Postiz server's https:// address." });
   });
 
@@ -169,7 +162,6 @@ describe("Postiz Cloud's sign-in", () => {
     expect(await service.disconnect()).toMatchObject({ ok: true, status: { state: "not-connected" } });
     expect(cfg.mcpServers).toEqual({});
     expect(oauth.authState("postiz", url)).toBe("none");
-    expect(forgotten).toEqual(["postiz"]);
   });
 
   it("replaces a key connection, and never touches a server named postiz it did not set up", async () => {
@@ -200,13 +192,4 @@ describe("Postiz Cloud's sign-in", () => {
     await expect.poll(() => cfg.mcpServers?.postiz).toMatchObject({ url: `${fake.url}/mcp`, enabled: true });
   });
 
-  it("is refused by the organization's policy", () => {
-    process.env.OMB_POSTIZ_CLOUD_URL = "https://blocked.example";
-    try {
-      expect(postiz().status()).toMatchObject({ state: "blocked", message: "Your organization allows only approved MCP servers." });
-      expect(postiz().prepareSignIn()).toMatchObject({ ok: false, status: 403, code: "managed_policy" });
-    } finally {
-      process.env.OMB_POSTIZ_CLOUD_URL = fake.url;
-    }
-  });
 });

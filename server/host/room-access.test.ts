@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { BotRecord, Store } from "../store.ts";
-import { createRoomAccess, PRIVATE_CHAT_ROOM_WRITE } from "./room-access.ts";
+import { createRoomAccess } from "./room-access.ts";
 
 // Only a thread opened as a parallel room job answers to its room; a work
 // thread a room conversation opened for anything else does not.
@@ -69,26 +69,23 @@ describe("roomHandoffTarget", () => {
     taskByThread: (botId: string, threadId: string) => bots[botId]?.threadId === threadId ? { threadId } : undefined,
     messagesFor: () => [],
   } as unknown as Store;
-  const { roomHandoffTarget, roomHandoffProblem } = createRoomAccess({ store, privateTo: (threadId) => threadId === "private-thread" ? "ada" : null });
+  const { roomHandoffTarget, roomHandoffProblem } = createRoomAccess({ store });
   const chief = { groupId: "room", threadId: "room-thread", botId: "chief" };
 
   it("sends work addressed into a room to a bot outside it directly, in its own thread", () => {
-    const target = roomHandoffTarget({ groupId: "room", threadId: "room-thread", botId: "buyer" }, chief);
+    const target = roomHandoffTarget({ groupId: "room", threadId: "room-thread", botId: "buyer" });
     expect(target).toEqual({ botId: "buyer", threadId: "buyer-main" });
     expect(roomHandoffProblem(target, chief)).toBeUndefined();
   });
 
   it("keeps a member's work in the room, and every other room rule", () => {
     const member = { groupId: "room", threadId: "room-thread", botId: "member" };
-    expect(roomHandoffTarget(member, chief)).toBe(member);
-    const fromPrivate = { groupId: "room", threadId: "room-thread", botId: "buyer" };
-    expect(roomHandoffTarget(fromPrivate, { threadId: "private-thread" })).toBe(fromPrivate);
-    expect(roomHandoffProblem(fromPrivate, { groupId: undefined, threadId: "private-thread", botId: "chief" })).toBe(PRIVATE_CHAT_ROOM_WRITE);
+    expect(roomHandoffTarget(member)).toBe(member);
     const unfinished = { groupId: "fresh", threadId: "fresh-thread", botId: "buyer" };
-    expect(roomHandoffTarget(unfinished, chief)).toBe(unfinished);
+    expect(roomHandoffTarget(unfinished)).toBe(unfinished);
     expect(roomHandoffProblem(unfinished, chief)).toBe("Destination room setup is unfinished");
     for (const node of [{ groupId: "dm", threadId: "dm-thread", botId: "buyer" }, { groupId: "room", threadId: "room-thread", botId: "gone" }, { threadId: "buyer-main", botId: "buyer" }]) {
-      expect(roomHandoffTarget(node, chief)).toBe(node);
+      expect(roomHandoffTarget(node)).toBe(node);
     }
   });
 

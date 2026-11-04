@@ -14,7 +14,7 @@ const completed = (threadId, ok, turnId) => ({ kind: "runtime", event: { type: "
 const HELLO = { kind: "hello", cursor: "s:1", resumed: false };
 const CHAT = { botId: "m", threadId: "t1" };
 
-const MOVED = { error: "This bot lives on My Cloud now.", code: "moved" };
+const MOVED = { error: "This bot lives on your server now.", code: "moved" };
 
 function fakeServer({ bots, saved = null, sendStatus = 202, sendBody = { ok: true }, made = null, starting }) {
   const encoder = new TextEncoder();
@@ -98,7 +98,7 @@ test("a server still on its way up says starting, not down", async () => {
   await assert.rejects(server.talk.prepare(), { code: "server-down" });
 });
 
-test("a computer whose bots moved to My Cloud says so, on making the chat and on sending", async () => {
+test("a computer whose bots moved to a server of the person's own says so, on making the chat and on sending", async () => {
   const frozen = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], made: { status: 409, body: MOVED } });
   await assert.rejects(frozen.talk.prepare(), { name: "TalkServerError", code: "moved" });
   assert.deepEqual(frozen.saves, []);

@@ -1,5 +1,5 @@
 // The HighLevel connection as one object: its store, API client, sign-in flow and the status the app shows.
-// Desktop and Cloud home build the same service; only DATA_DIR and the relay URL differ.
+// Every server builds the same service; only DATA_DIR and the optional relay URL differ.
 import type { HighLevelStatus } from "../../shared/highlevel.ts";
 import { HIGHLEVEL_API_ENV, HighLevelClient, HighLevelError, lookupLocation } from "./client.ts";
 import { createHighLevelRelay, highlevelRelayUrl, type HighLevelRelay } from "./relay.ts";

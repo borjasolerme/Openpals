@@ -1,7 +1,6 @@
-// POST <OMB_CLOUD_DECIDER_URL>/v1/extract, shared with Cloud's Admin through fixtures/extract-relay.json: change both
-// together. { seam, fields, input } → { values, model }. A request that breaks a rule here never goes through the
-// included token, and an answer that breaks one is malformed: a value is never taken on trust.
-import type { ExtractedValues, ExtractImage, ExtractInput, ExtractSeam, FieldSchema, FieldSpec, FieldType, FieldValue } from "./types.ts";
+// What an extraction may ask and answer: { seam, fields, input } → { values, model }. A request that breaks a rule here is
+// never sent, and an answer that breaks one is malformed: a value is never taken on trust.
+import type { ExtractedValues, ExtractImage, FieldSchema, FieldSpec, FieldType, FieldValue } from "./types.ts";
 import { FIELD_TYPES } from "./types.ts";
 
 export const EXTRACT_PATH = "/v1/extract";
@@ -20,7 +19,6 @@ export const EXTRACT_LIMITS = {
   text: 200_000,
 } as const;
 export const IMAGE_MIMES: ReadonlySet<string> = new Set(["image/png", "image/jpeg", "image/webp"]);
-const SEAMS: ReadonlySet<string> = new Set<ExtractSeam>(["inboxTriage", "botExtract", "keyCheck"]);
 
 export const EXTRACT_KEY_CHECK = {
   fields: { ok: { type: "boolean", description: "Is this a connection check?" } } satisfies FieldSchema,
@@ -90,20 +88,6 @@ export function extractRequestProblem(fields: unknown, input: unknown): string |
   if (!(typeof input.text === "string" && input.text.trim()) && !(images?.length)) return "give text or an image to read";
   const withoutImages = { fields, input: { ...input, ...(images ? { images: (images as ExtractImage[]).map((image) => ({ mime: image.mime, data: "" })) } : {}) } };
   return Buffer.byteLength(JSON.stringify(withoutImages)) <= EXTRACT_LIMITS.bodyBytesWithoutImages ? null : "the request is over 256 KB without its images";
-}
-
-const sameSchema = (fields: FieldSchema, expected: FieldSchema): boolean => JSON.stringify(fields) === JSON.stringify(expected);
-
-/** Whether Cloud's relay takes this request: the general rules, then the seam's own shape. */
-export function relayAcceptsExtract(seam: ExtractSeam, fields: FieldSchema, input: ExtractInput): boolean {
-  try {
-    if (!SEAMS.has(seam) || extractRequestProblem(fields, input) !== null) return false;
-    if (seam === "keyCheck") return sameSchema(fields, EXTRACT_KEY_CHECK.fields) && JSON.stringify(input) === JSON.stringify(EXTRACT_KEY_CHECK.input);
-    if (seam === "inboxTriage") return sameSchema(fields, INBOX_FIELDS) && !input.images && typeof input.text === "string" && input.text.length <= INBOX_TEXT_MAX;
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;

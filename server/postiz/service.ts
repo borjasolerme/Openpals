@@ -10,7 +10,7 @@ import { probeMcpServer, type McpProbeResult } from "../mcp-probe.ts";
 import { isRemoteMcpServer, parseStoredMcpServer, type StoredMcpServer, type StoredRemoteMcpServer } from "../mcp-registry.ts";
 import { postizAddress, postizCloud, postizEntryMethod, postizKeyUrl, postizSignInUrl, savedPostizAddress } from "./connection.ts";
 
-export type PostizProblem = "address" | "unreachable" | "key_rejected" | "not_postiz" | "taken" | "busy" | "managed_policy";
+export type PostizProblem = "address" | "unreachable" | "key_rejected" | "not_postiz" | "taken" | "busy";
 export type PostizRefusal = { status: number; error: string; code: PostizProblem };
 export type PostizKeyCheck = { ok: true; tools: number } | ({ ok: false } & PostizRefusal);
 
@@ -19,9 +19,7 @@ export interface PostizDeps {
   mcpOAuth: McpOAuthManager;
   persistMcpServers(next: Record<string, unknown>): void;
   mcpConfigBusy: { get(): boolean; set(busy: boolean): void };
-  mcpPolicyRefusal(name: string, server: object): string | undefined;
   appCatalog?: { serverChanged(name: string): void; forgetServer(name: string): void };
-  team: { team: unknown; scopes: { scope(kind: "mcp", id: string): "team" | "person" }; forgetServer(name: string): void };
   /** Plain http to this computer's own Postiz: the desktop only, never a Cloud. */
   loopback: boolean;
   probe?: typeof probeMcpServer;
@@ -93,14 +91,10 @@ export function createPostiz(deps: PostizDeps) {
     const cfg = deps.cfg();
     const address = savedPostizAddress(cfg.postiz);
     const key = cfg.postiz?.key?.trim() ?? "";
-    const team = Boolean(deps.team.team);
     const base = {
       address, host: hostOf(address), selfHosted: address !== postizCloud(), keySaved: key !== "",
-      team, scope: team ? deps.team.scopes.scope("mcp", POSTIZ_SERVER) : "team" as const,
     };
     const how = method();
-    const refusal = deps.mcpPolicyRefusal(POSTIZ_SERVER, server(how === "key" ? postizKeyUrl(address) : postizSignInUrl(), false));
-    if (refusal) return { ...base, state: "blocked", how: null, message: refusal };
     if (how === "taken") return { ...base, state: "taken", how: null };
     const current = entry();
     if (!current || (how !== "sign-in" && how !== "key")) return { ...base, state: "not-connected", how: null };
@@ -119,8 +113,6 @@ export function createPostiz(deps: PostizDeps) {
     const address = postizAddress(rawAddress, { loopback: deps.loopback });
     if (!address.ok) return { ok: false, status: 400, code: "address", error: address.error };
     const target = server(postizKeyUrl(address.address), true);
-    const refusal = deps.mcpPolicyRefusal(POSTIZ_SERVER, target);
-    if (refusal) return { ok: false, status: 403, code: "managed_policy", error: refusal };
     const result = await probe({ ...target, headers: { Authorization: `Bearer ${key.trim()}` } }, KEY_CHECK_MS, signal);
     if (result.ok) return { ok: true, tools: result.total ?? result.tools.length };
     return { ok: false, ...keyCheckRefusal(result, address.address) };
@@ -135,8 +127,6 @@ export function createPostiz(deps: PostizDeps) {
       if (deps.mcpConfigBusy.get()) return { ok: false, status: 409, code: "busy", error: "MCP servers are being updated. Try again in a moment." };
       if (method() === "taken") return { ok: false, ...taken };
       const url = postizSignInUrl();
-      const refusal = deps.mcpPolicyRefusal(POSTIZ_SERVER, server(url, false));
-      if (refusal) return { ok: false, status: 403, code: "managed_policy", error: refusal };
       const current = entry();
       if (!current || current.url !== url) write(server(url, false));
       return { ok: true, status: status() };
@@ -189,7 +179,6 @@ export function createPostiz(deps: PostizDeps) {
       if (current) {
         await deps.mcpOAuth.signOut(POSTIZ_SERVER, current.url);
         write(null);
-        deps.team.forgetServer(POSTIZ_SERVER);
       }
       return { ok: true, status: status() };
     },

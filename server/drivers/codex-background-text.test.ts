@@ -254,7 +254,6 @@ describe("Codex generateMemoryText (fake CLI)", () => {
     const jobs = (smallModels: QuickModelFallback) => createSideJobs({
       bot: () => ({ id: "b1", name: "Bot", threadId: "main-b1", modelSelection: { instanceId: codex.instanceId, model: "gpt-fake-default" } }),
       instance: () => codex,
-      refusal: () => undefined,
       helper: () => null,
       smallModels,
       assertWithinBudget: () => {},

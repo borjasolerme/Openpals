@@ -31,8 +31,6 @@ export interface QuestionRoutingDeps {
   answerLive(threadId: string, requestId: string, text: string): Promise<boolean>;
   /** The open sign-in cards this work waits on were answered elsewhere: they settle, and the place goes back to its bot. */
   settleSignIns(node: HandoffView): void;
-  /** The work runs in one person's private chat and its requester's chat is not that one: its questions stay theirs. */
-  keptPrivate(node: HandoffView, requester: HandoffView): boolean;
   /** Hands `text` to the turn running in `threadId`, read at its next step as a person's line sent mid-turn is; false when
    * its engine cannot take it now. */
   steer(threadId: string, text: string): Promise<boolean>;
@@ -58,7 +56,7 @@ export function createQuestionRouting(deps: QuestionRoutingDeps) {
     if (input.level !== "full" || personOnly(input.question)) return undefined;
     const node = deps.active().find((n) => n.threadId === input.threadId && n.botId === input.botId && n.status === "running" && n.parentId !== undefined);
     const requester = node?.parentId ? deps.node(node.parentId) : undefined;
-    if (!node || !requester || node.origin?.kind === "outside" || deps.keptPrivate(node, requester)) return undefined;
+    if (!node || !requester || node.origin?.kind === "outside") return undefined;
     return `Not asked: at this level nobody is interrupted. Take the sensible default yourself, carry on, and say in one plain line what you chose. If you truly cannot choose, end your turn with NEEDS INPUT:, the question and Default: your pick, and @${store.bot(requester.botId)?.name ?? "your requester"} decides.`;
   }
 
@@ -71,7 +69,7 @@ export function createQuestionRouting(deps: QuestionRoutingDeps) {
     const parked = deps.parkedFor(target.id).filter((node) => node.parentId && !node.groupId && (!node.cards?.length || signInsOnly(node)))
       .map((node) => ({ threadId: node.threadId, question: withDefault(node.question ?? "").question, node }));
     const live = store.tasks(target.id).flatMap((task) => {
-      const card = store.messagesFor(task.threadId).findLast((row) => !row.inbox && answerableInWords(row.card) && deps.live(task.threadId, row.card!.requestId!));
+      const card = store.messagesFor(task.threadId).findLast((row) => answerableInWords(row.card) && deps.live(task.threadId, row.card!.requestId!));
       if (!card) return [];
       const node = deps.active().find((n) => n.threadId === task.threadId && n.botId === target.id && n.status === "running");
       return [{ threadId: task.threadId, question: card.card!.subtitle || card.card!.title, card, ...(node ? { node } : {}) }];
@@ -112,7 +110,7 @@ export function createQuestionRouting(deps: QuestionRoutingDeps) {
       const node = pick.node!;
       if (!deps.answerNode(node.id, message, by)) return refused();
       if (node.cards?.length) deps.settleSignIns(node);
-      const asked = store.messagesFor(node.threadId).find((row) => row.card?.requestId?.startsWith(`needs-input-${node.id}-`) && !row.inbox
+      const asked = store.messagesFor(node.threadId).find((row) => row.card?.requestId?.startsWith(`needs-input-${node.id}-`)
         && (!row.card.answered || (row.card.answeredBy?.kind === "bot" && row.card.answeredText === undefined)));
       if (asked?.card) store.patchMessage(node.threadId, asked.id, { card: { ...asked.card, answered: "answer", answeredText: message, answeredBy: { kind: "bot", name: sender.name } } });
     }
@@ -140,7 +138,7 @@ export function createQuestionRouting(deps: QuestionRoutingDeps) {
    * one only the person can answer, and not in work an outside event started, whose questions stay theirs. */
   function forPerson(botId: string, threadId: string): { row: Message; question: string } | undefined {
     if (deps.unattended(botId, threadId)) return undefined;
-    const row = store.messagesFor(threadId).findLast((one) => !one.inbox && answerableInWords(one.card) && deps.live(threadId, one.card!.requestId!));
+    const row = store.messagesFor(threadId).findLast((one) => answerableInWords(one.card) && deps.live(threadId, one.card!.requestId!));
     const question = row?.card ? row.card.subtitle || row.card.title : "";
     return row && !personOnly(question) ? { row, question } : undefined;
   }

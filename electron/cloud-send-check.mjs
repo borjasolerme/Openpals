@@ -1,30 +1,30 @@
-// What a move to the person's own Cloud checks once it has run, from both servers' own answers and never a secret:
+// What a move to the person's own server checks once it has run, from both servers' own answers and never a secret:
 // the two manifests (GET /api/cloud-send/manifest), each conversation's rows, its owner's lines and its visible path
-// (this computer's /api/cloud-send/chats/ids against My Cloud's /chats/verify), the attachments the rows name, and each
-// credential's fingerprint under a fresh nonce (this computer's private port against My Cloud's /verify-secrets).
+// (this computer's /api/cloud-send/chats/ids against the server's /chats/verify), the attachments the rows name, and each
+// credential's fingerprint under a fresh nonce (this computer's private port against the server's /verify-secrets).
 import { randomBytes } from "node:crypto";
 import { EMPTY } from "./cloud-send-parts.mjs";
 import { fileArrived } from "./cloud-send-kinds.mjs";
 
 const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const list = (value) => (Array.isArray(value) ? value : []);
-/** As many of a conversation's row ids, and of its path, as My Cloud checks at once. */
+/** As many of a conversation's row ids, and of its path, as the server checks at once. */
 const IDS = 5_000;
 const ATTACHMENT_NAMES = 2_000;
 const THREAD = /^[\w-]{1,200}$/u;
 
-/** My Cloud's journal shows at most this many of a bot's latest changes. */
+/** The server's journal shows at most this many of a bot's latest changes. */
 const JOURNAL_ROWS = 500;
 
-/** The rooms of `here` that a move carries: those with a bot that goes (`bots`). My Cloud makes a room only once one of
- * its bots is there (server/cloud-chat-merge.ts), so one whose bots were all deleted here, or removed on My Cloud, stays. */
+/** The rooms of `here` that a move carries: those with a bot that goes (`bots`). The server makes a room only once one of
+ * its bots is there (server/cloud-chat-merge.ts), so one whose bots were all deleted here, or removed on the server, stays. */
 export function roomsThatGo(here, bots) {
   return new Set(list(here?.rooms).filter((room) => record(room) && list(room.members).some((id) => bots.has(id))).map((room) => room.id));
 }
 
-/** The rooms of `here` My Cloud had once and lacks now, as `room:<id>`: a conversation of the room went (`chats`, the
+/** The rooms of `here` the server had once and lacks now, as `room:<id>`: a conversation of the room went (`chats`, the
  * cursors cloud-send.mjs keeps, "removed" included) and every one of its conversations with rows here did, so nothing
- * here makes it again; My Cloud answers that each was removed there. */
+ * here makes it again; the server answers that each was removed there. */
 export function roomsRemovedThere(here, there, chats) {
   const held = new Set(list(there?.rooms).map((room) => room.id));
   const went = (threadId) => record(chats) && chats[threadId] !== undefined;
@@ -33,12 +33,12 @@ export function roomsRemovedThere(here, there, chats) {
 }
 
 /**
- * What of this computer's manifest My Cloud's lacks: items, memory, rooms, connections and conversations it does not
+ * What of this computer's manifest the server's lacks: items, memory, rooms, connections and conversations it does not
  * have, and parts of items it holds otherwise than it took them; the pieces of a memory note, a team's context or memory,
  * a learned fact, a journal row, a bot file, a routine's finished run or a conversation's own setting it lacks. A part
  * counts as carried when it is equal on both sides, or when, since it last went (`sent`: what each side held then, as
- * cloud-send.mjs keeps it), this computer did not change it or My Cloud did (then My Cloud's is kept).
- * Left out: what was removed on My Cloud (`removed`, by key, `room:<id>` or conversation id), what this computer never
+ * cloud-send.mjs keeps it), this computer did not change it or the server did (then the server's is kept).
+ * Left out: what was removed on the server (`removed`, by key, `room:<id>` or conversation id), what this computer never
  * sends (`skip`), and a room no bot of which goes, with its conversations (roomsThatGo).
  */
 export function manifestGaps(here, there, { sent = {}, removed = new Set(), skip = new Set() } = {}) {
@@ -58,7 +58,7 @@ export function manifestGaps(here, there, { sent = {}, removed = new Set(), skip
     const differs = Object.entries(item.parts ?? {}).filter(([part, hash]) => {
       const cloud = on.parts?.[part] ?? EMPTY;
       const pair = sent[item.key]?.[part];
-      // Missing only when this computer changed it since it last went, and My Cloud did not: that change should have gone.
+      // Missing only when this computer changed it since it last went, and the server did not: that change should have gone.
       return hash !== cloud && !(Array.isArray(pair) && (pair[0] === hash || pair[1] !== cloud));
     }).map(([part]) => part);
     if (differs.length) gaps.parts.push({ key: item.key, label: item.label, parts: differs });
@@ -119,10 +119,10 @@ export async function* rowIdChunks(localJson, threadId) {
 }
 
 /**
- * Each conversation's rows and visible path checked on My Cloud, a chunk at a time, ids only: `missing`, the rows My
- * Cloud lacks; `unstamped`, the lines of its owner's it holds that do not carry the owner yet; `path`: "equal" when My
- * Cloud shows exactly this computer's path, "inside" when this computer's path appears in order inside a longer one of
- * My Cloud's (both sides added to it), "broken" otherwise.
+ * Each conversation's rows and visible path checked on the server, a chunk at a time, ids only: `missing`, the rows My
+ * server lacks; `unstamped`, the lines of its owner's it holds that do not carry the owner yet; `path`: "equal" when My
+ * server shows exactly this computer's path, "inside" when this computer's path appears in order inside a longer one of
+ * The server's (both sides added to it), "broken" otherwise.
  */
 export async function checkChats({ localJson, session, threads }) {
   const out = [];
@@ -134,7 +134,7 @@ export async function checkChats({ localJson, session, threads }) {
       const asked = { threadId, ids: chunk.ids, ...(holds ? { path: { after, ids: chunk.path, last: !chunk.more } } : {}) };
       const answer = await session.call("POST", "/api/cloud-send/chats/verify", { v: 1, conversations: [asked] });
       const checked = answer.ok ? list(answer.body?.conversations).find((entry) => entry?.threadId === threadId) : null;
-      if (!checked) throw Object.assign(new Error("My Cloud did not check the chats."), { status: answer.status });
+      if (!checked) throw Object.assign(new Error("The server did not check the chats."), { status: answer.status });
       missing += list(checked.missing).length;
       unstamped += Number.isSafeInteger(checked.unstamped) ? checked.unstamped : 0;
       if (asked.path) {
@@ -155,19 +155,19 @@ export const checkPassed = ({ gaps, chats, attachments, secrets }) => noGaps(gap
   && chats.every((thread) => !thread.missing && !thread.unstamped && thread.path !== "broken")
   && !attachments.length && !secrets.differs.length && !secrets.missing.length;
 
-/** The attachments of `names` My Cloud lacks. */
+/** The attachments of `names` the server lacks. */
 export async function missingAttachments(session, names) {
   const missing = [];
   for (let i = 0; i < names.length; i += ATTACHMENT_NAMES) {
     const asked = names.slice(i, i + ATTACHMENT_NAMES);
     const answer = await session.call("POST", "/api/cloud-send/chats/attachments", { names: asked });
-    if (!answer.ok) throw Object.assign(new Error("My Cloud did not check the attachments."), { status: answer.status });
+    if (!answer.ok) throw Object.assign(new Error("The server did not check the attachments."), { status: answer.status });
     missing.push(...list(answer.body?.missing).filter((name) => asked.includes(name)));
   }
   return missing;
 }
 
-/** Each of this computer's credentials, by id, as `equal`, `differs` (My Cloud holds another value) or `missing` there:
+/** Each of this computer's credentials, by id, as `equal`, `differs` (the server holds another value) or `missing` there:
  * their fingerprints under one fresh nonce on both sides, so nothing secret travels. */
 export async function checkSecrets({ handoff, session, skip = new Set(), nonce = randomBytes(32).toString("base64url") }) {
   const here = (await handoff({ kind: "verify-secrets", nonce }))?.secrets;

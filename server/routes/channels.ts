@@ -55,7 +55,6 @@ export interface ChannelRouteDeps {
   groupSpeakers: ReadonlyMap<string, { botId: string }>;
   groupTurnOperations: ReadonlyMap<string, ReadonlySet<{ threadId: string; cancelled: boolean }>>;
   lastReply: Pick<Map<string, string>, "delete">;
-  cloudThreadRefusal(auth: RequestAuth, threadId: string): string | null;
   messageSender(auth: RequestAuth): ResolvedSender | undefined;
   usageTriggerFor(auth: RequestAuth): UsageTrigger;
   publicGroupState(record: GroupRecord): WireGroup;
@@ -64,13 +63,6 @@ export interface ChannelRouteDeps {
   groupIsWorking(group: GroupRecord): boolean;
   groupThreadIsWorking(groupId: string, threadId: string): boolean;
   readCursor(threadId: string): { lastReadMessageId?: string };
-  /** A person opened this room (a Team Cloud's Needs you lines for them there are done). */
-  threadRead?(auth: RequestAuth, threadId: string): void;
-  /** A Team Cloud: marks the room read or unread for this person alone and answers the room as they see it; null where a
-   * room is read once for everyone. */
-  personMarkRoom?(auth: RequestAuth, room: GroupRecord, unread: boolean): WireGroup | null;
-  /** A room as this person has read it (a Team Cloud); the room itself anywhere else. */
-  groupFor?(auth: RequestAuth, group: WireGroup): WireGroup;
   pageSize(raw: string | null): number | null | undefined;
   messagePage(threadId: string, limit: number | undefined): MessagePage;
   resolveReplyTarget(threadId: string, value: unknown): Message | undefined;
@@ -100,21 +92,20 @@ const createGroupTaskRequestSchema = z.object({ title: z.string().optional() });
 export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
   const {
     store, cfg, broadcast, actorKey, threadStarters, phoneSecretSubmissions, sendSequencer, roomMemberContexts, skillReview,
-    groupSpeakers, groupTurnOperations, lastReply, cloudThreadRefusal, messageSender, usageTriggerFor, publicGroupState,
+    groupSpeakers, groupTurnOperations, lastReply, messageSender, usageTriggerFor, publicGroupState,
     groupWithThread, updateChannel, groupIsWorking, groupThreadIsWorking, readCursor, pageSize, messagePage,
     resolveReplyTarget, runningTurnInstance, startGroupTurn, engineSteersImages, applyRoomHoldsFromMessage, cancelGroupTurnOperations,
     drainQueuedChannelSends, clearTurnDigestState, closeOpenApprovals, revokeInternalCapabilitiesForThread,
     stagedSkillCleanupsForThread, rejectDeletedThreadSkillStages,
   } = deps;
   const DESKTOP_MANAGED = deps.desktopManaged;
-  const deleteRefusal = (auth: RequestAuth, groupId: string, threadId: string): { status: 403 | 404 | 409; error: string } | null => {
+  const deleteRefusal = (groupId: string, threadId: string): { status: 403 | 404 | 409; error: string } | null => {
     if (phoneSecretSubmissions.hasThread(threadId)) {
       return { status: 409, error: "this task is securely saving a credential — try again when it finishes" };
     }
     if (groupThreadIsWorking(groupId, threadId)) return { status: 409, error: "this task is running — stop it first" };
     if (!store.groupTaskByThread(groupId, threadId)) return { status: 404, error: "no such channel task" };
-    const notYours = cloudThreadRefusal(auth, threadId);
-    return notYours ? { status: 403, error: notYours } : null;
+    return null;
   };
   const deleteGroupTasks = (groupId: string, threadIds: string[]) => {
     const stagedSkillCleanups = new Map(threadIds.map((threadId) => [threadId, stagedSkillCleanupsForThread(threadId)]));
@@ -129,7 +120,6 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
     return result;
   };
   return async ({ req, res, url, path, method, auth, json, readBody }) => {
-    const own = (group: WireGroup) => deps.groupFor?.(auth, group) ?? group;
     let m: RegExpMatchArray | null = null;
     const routines = deps.routines();
 
@@ -151,7 +141,7 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       if (!task) return json(res, 500, { error: "couldn't create that task" });
       // Who opened it decides who may answer its cards on a shared workspace.
       if (auth.kind === "session") threadStarters.set(task.threadId, actorKey(auth));
-      return json(res, 201, { group: own(groupWithThread(store.group(group.id)!)), task });
+      return json(res, 201, { group: groupWithThread(store.group(group.id)!), task });
     }
 
     m = path.match(/^\/api\/groups\/([\w-]+)\/tasks\/delete$/);
@@ -164,14 +154,14 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       const allowed: string[] = [];
       const refused: BulkDeleteRefusal[] = [];
       for (const threadId of parsed.threadIds) {
-        const refusal = deleteRefusal(auth, group.id, threadId);
+        const refusal = deleteRefusal(group.id, threadId);
         if (!refusal) allowed.push(threadId);
         else refused.push({ threadId, reason: refusal.status === 409 ? "busy" : "not-found" });
       }
       if (allowed.length >= (group.tasks?.length ?? 1)) return json(res, 400, { error: "a channel keeps at least one task" });
       const result = deleteGroupTasks(group.id, allowed);
       if (!result) return json(res, 400, { error: "a channel keeps at least one task" });
-      return json(res, 200, { group: own(groupWithThread(result.group)), deleted: result.deleted, refused });
+      return json(res, 200, { group: groupWithThread(result.group), deleted: result.deleted, refused });
     }
 
     m = path.match(/^\/api\/groups\/([\w-]+)\/tasks\/([\w-]+)$/);
@@ -188,9 +178,8 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       if (switchLimit === null) return json(res, 400, { error: "messages must be a non-negative whole number" });
       const switched = store.switchGroupTask(group.id, m[2]);
       if (!switched) return json(res, 404, { error: "no such channel task" });
-      deps.threadRead?.(auth, switched.threadId);
       readThreadNotifications(switched.threadId, broadcast, auth);
-      const switchedSettings = own(publicGroupState(switched));
+      const switchedSettings = publicGroupState(switched);
       // "0": settings only (no `messages` key); a positive page: that tail; omitted: the whole transcript.
       const responseGroup = requestedMessages === "0"
         ? switchedSettings
@@ -223,8 +212,6 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       if (parsedLimit && !parsedLimit.ok) return json(res, 400, { error: parsedLimit.error });
       // Echoing the current title is not a rename: newer clients send it so an older server keeps the title.
       const titleChange = renaming && body.title !== existing.title;
-      const notYours = titleChange ? cloudThreadRefusal(auth, m[2]) : null;
-      if (notYours) return json(res, 403, { error: notYours });
       if (titleChange && groupThreadIsWorking(group.id, m[2])) {
         return json(res, 409, { error: "this task is running — stop it first" });
       }
@@ -242,11 +229,11 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       const group = store.group(m[1]);
       if (!group) return json(res, 404, { error: "no such channel" });
       if (group.dm) return json(res, 400, { error: "bot-to-bot channels keep one canonical conversation" });
-      const refusal = deleteRefusal(auth, group.id, m[2]);
+      const refusal = deleteRefusal(group.id, m[2]);
       if (refusal) return json(res, refusal.status, { error: refusal.error });
       const updated = deleteGroupTasks(group.id, [m[2]]);
       if (!updated?.deleted.length) return json(res, 400, { error: "a channel keeps at least one task" });
-      return json(res, 200, { group: own(groupWithThread(updated.group)) });
+      return json(res, 200, { group: groupWithThread(updated.group) });
     }
 
     m = path.match(/^\/api\/groups\/([\w-]+)$/);
@@ -256,35 +243,18 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
         const field = clientGroupPatchViolation(body);
         if (field) return json(res, 403, { error: `forbidden: this session may rename or mark a room, not change "${field}" (needs the admin scope)` });
       }
-      const renamed = store.group(m[1]);
-      if (renamed && body && typeof body === "object" &&
-        ((body.name !== undefined && body.name !== renamed.name) || (body.bulletin !== undefined && body.bulletin !== (renamed.bulletin ?? "")))) {
-        const notYours = cloudThreadRefusal(auth, renamed.threadId);
-        if (notYours) return json(res, 403, { error: notYours });
-      }
-      if (deps.personMarkRoom && auth.kind === "session" && renamed && typeof body?.unread === "boolean") {
-        const { unread, ...shared } = body;
-        const group = Object.keys(shared).length ? updateChannel(m[1], shared) : renamed;
-        return json(res, 200, { group: deps.personMarkRoom(auth, group, unread) ?? own(publicGroupState(group)) });
-      }
       const group = updateChannel(m[1], body);
-      return json(res, 200, { group: own(publicGroupState(group)) });
+      return json(res, 200, { group: publicGroupState(group) });
     }
     m = path.match(/^\/api\/groups\/([\w-]+)\/read$/);
     if (m && method === "POST") {
       const room = store.group(m[1]);
       if (!room) return json(res, 404, { error: "no such room" });
       sawThread(room.threadId);
-      deps.threadRead?.(auth, room.threadId);
-      const personal = deps.personMarkRoom?.(auth, room, false);
-      if (personal) {
-        readThreadNotifications(room.threadId, broadcast, auth);
-        return json(res, 200, { group: personal });
-      }
       const group = store.patchGroup(room.id, { unread: false, ...readCursor(room.threadId) })!;
       readThreadNotifications(room.threadId, broadcast, auth);
       broadcast({ kind: "group", group: publicGroupState(group) });
-      return json(res, 200, { group: own(publicGroupState(group)) });
+      return json(res, 200, { group: publicGroupState(group) });
     }
     m = path.match(/^\/api\/groups\/([\w-]+)$/);
     if (m && method === "DELETE") {
@@ -542,14 +512,12 @@ export function createChannelRoutes(deps: ChannelRouteDeps): RouteHandler {
       const group = store.group(m[1]);
       if (!group) return json(res, 404, { error: "no such room" });
       if (!group.memberIds.includes(m[2])) return json(res, 404, { error: "that bot is not in this room" });
-      const notYours = cloudThreadRefusal(auth, group.threadId);
-      if (notYours) return json(res, 403, { error: notYours });
       if (!roomMemberContexts.request(group.threadId, m[2])) {
         return json(res, 409, { error: "this bot has no measured context in this room yet" });
       }
       const visible = publicGroupState(store.group(group.id) ?? group);
       broadcast({ kind: "group", group: visible });
-      return json(res, 202, { ok: true, threadId: group.threadId, group: own(visible) });
+      return json(res, 202, { ok: true, threadId: group.threadId, group: visible });
     }
     m = path.match(/^\/api\/groups\/([\w-]+)\/interrupt$/);
     if (m && method === "POST") {

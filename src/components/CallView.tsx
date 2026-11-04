@@ -20,7 +20,6 @@ import { BotAvatar } from "./Avatar";
 import { LiveKeyNeeded } from "./LiveKeyNeeded";
 import { liveLineHeldElsewhere } from "./LiveCallBar";
 import { isRoutineApproval, isSkillApproval, pendingApprovals, spokenApprovalPrompt } from "./PendingApproval";
-import { callStarted } from "@/lib/product-events";
 import { useDesktopCapabilities } from "./DesktopCapabilities";
 import { callCapabilityHelp, type CallCapabilityHelp } from "@/lib/call-capability";
 import { onCallStartRequest } from "@/lib/call-start-request";
@@ -39,7 +38,6 @@ export type CallButtonPlacement = "header" | "composer" | "panel";
  * call mode. */
 /** `inverse` (phone composer): a round ink-coloured button with an app-coloured glyph: white on Midnight, dark on Meadow. */
 export function CallButton({ bot, placement = "header", fill, ink, inverse }: { bot: Bot; placement?: CallButtonPlacement; fill?: string; ink?: string; inverse?: boolean }) {
-  const { state } = useStore();
   return (
     <CallTargetButton
       placement={placement}
@@ -53,7 +51,6 @@ export function CallButton({ bot, placement = "header", fill, ink, inverse }: { 
       setupBotId={bot.id}
       requireExplicitVoices={false}
       liveCapable
-      onStart={(mode) => callStarted(state.instances, bot.modelSelection?.instanceId, mode)}
     />
   );
 }
@@ -66,7 +63,6 @@ export function CallTargetButton({
   setupBotId,
   requireExplicitVoices,
   liveCapable = false,
-  onStart,
   placement = "header",
   fill,
   ink = "#ffffff",
@@ -83,7 +79,6 @@ export function CallTargetButton({
   setupBotId?: string;
   requireExplicitVoices: boolean;
   liveCapable?: boolean;
-  onStart: (mode: CallMode) => void;
 }) {
   const { state, dispatch } = useStore();
   const { capabilities, ready: capabilitiesReady } = useDesktopCapabilities();
@@ -114,7 +109,6 @@ export function CallTargetButton({
   const unavailable = !active && !liveElsewhere && !liveMode && !turnsReady;
   const lineHeldElsewhere = liveMode && !onCall && liveLineHeldElsewhere(media, state.liveCall);
   const voiceSetupRequired = capabilitiesReady && supported && !voiceReady;
-  const cloudHome = state.config?.cloudHome === true;
   const [helpOpen, setHelpOpen] = useState(false);
   const [voiceSetupOpen, setVoiceSetupOpen] = useState(false);
   const [voiceSetupBotId, setVoiceSetupBotId] = useState(setupBotId);
@@ -174,7 +168,6 @@ export function CallTargetButton({
     setHelpOpen(false);
     setMenuOpen(false);
     if (next === "live" && liveThreadId !== undefined) {
-      onStart("live");
       void startLiveCall({ botId: targetId, threadId: liveThreadId });
       return;
     }
@@ -182,7 +175,6 @@ export function CallTargetButton({
       setHelpOpen(true);
       return;
     }
-    onStart("turns");
     startCall(targetId);
   };
 
@@ -313,7 +305,6 @@ export function CallTargetButton({
           mode={mode}
           turnsUnavailable={turnsHere ? null : capabilityHelp}
           placement={placement}
-          cloudHome={cloudHome}
           onClose={closePopovers}
           onChoose={(next) => {
             setCallMode(next);
@@ -349,7 +340,7 @@ export function CallTargetButton({
                 start("live");
               }}
               className="mt-2.5 mr-2 rounded-lg border border-hairline px-3 py-1.5 text-[12px] font-medium text-ink hover:bg-raised"
-              title={callModeHint("live", { cloudHome })}
+              title={callModeHint("live")}
             >
               {t("call.live.startInstead")}
             </button>
@@ -393,12 +384,11 @@ export function CallTargetButton({
   );
 }
 
-export function CallModeMenu({ id, mode, onChoose, onClose, placement = "header", cloudHome = false, turnsUnavailable = null }: {
+export function CallModeMenu({ id, mode, onChoose, onClose, placement = "header", turnsUnavailable = null }: {
   id: string;
   mode: CallMode;
   turnsUnavailable?: CallCapabilityHelp | null;
   placement?: CallButtonPlacement;
-  cloudHome?: boolean;
   onChoose: (mode: CallMode) => void;
   onClose: () => void;
 }) {
@@ -439,7 +429,7 @@ export function CallModeMenu({ id, mode, onChoose, onClose, placement = "header"
             <span className="min-w-0 flex-1">
               <span className={cn("block text-[14px] leading-[18px]", unavailable ? "text-ink-tertiary" : "text-ink")}>{t(entry.label)}</span>
               <span className="mt-0.5 block text-[12px] leading-[1.4] text-ink-secondary">
-                {unavailable ? `${unavailable.label}. ${unavailable.reason}` : callModeHint(entry.id, { cloudHome })}
+                {unavailable ? `${unavailable.label}. ${unavailable.reason}` : callModeHint(entry.id)}
               </span>
             </span>
             {mode === entry.id && <Check size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />}

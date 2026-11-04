@@ -136,19 +136,17 @@ export function ModelEngineRail({ instances, selectedInstance, claudeInstance, o
   const { subscription, api, custom: local } = railProviders(instances, selectedInstance, claudeInstance, openaiInstance);
   const railButton = ({ instance, target, selected, label }: RailProvider) => {
     const attention = needsCli(target) || needsSignIn(target) || Boolean(target.snapshot.update);
-    const managedBy = target.policy ? t("policy.managedBy", { organization: target.policy.organizationName }) : undefined;
     return (
       <button
         type="button"
         key={instance.instanceId}
         onClick={() => onSelect(target)}
-        aria-label={managedBy ? `${label} · ${managedBy}` : label}
+        aria-label={label}
         aria-pressed={selected}
-        title={`${label} · ${managedBy ?? engineStatus(target)}`}
+        title={`${label} · ${engineStatus(target)}`}
         className={cn(
           "group relative flex size-9 shrink-0 items-center justify-center rounded-[8px]",
           selected ? "bg-ink/[0.08]" : "hover:bg-ink/[0.06]",
-          managedBy && "opacity-40",
         )}
       >
         <InstanceProviderMark instance={target} size={18} subtle={!selected} />

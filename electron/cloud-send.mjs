@@ -1,18 +1,18 @@
-// Send to My Cloud: this computer's bots, their skills, logins, 1Password, settings and chats go to the person's own
-// Cloud. One direction; added and updated, never deleted; one action for every entry point. Chats go by row
-// (server/cloud-send-chats.ts): each conversation's rows after the last one My Cloud took, so its history goes once. A
-// Cloud too old for that gets Bring newer chats' copy, only from a send the person asked for.
+// Send to the server: this computer's bots, their skills, logins, 1Password, settings and chats go to the person's own
+// server. One direction; added and updated, never deleted; one action for every entry point. Chats go by row
+// (server/cloud-send-chats.ts): each conversation's rows after the last one the server took, so its history goes once. A
+// server too old for that gets Bring newer chats' copy, only from a send the person asked for.
 //
 // The move ("move") is the same send run to carry everything this computer has: its apps and keys first
 // (cloud-connections.mjs), then every bot and its chats whatever was once kept here, over an owner session that counts
-// as someone using My Cloud so it stays awake; a sign-in that refreshes itself goes only in the final pass, and this
-// computer lets go of its own copy once My Cloud has it. `check` then reads both sides to say what did not arrive
+// as someone using the server so it stays awake; a sign-in that refreshes itself goes only in the final pass, and this
+// computer lets go of its own copy once the server has it. `check` then reads both sides to say what did not arrive
 // (cloud-send-check.mjs).
 //
 // What each side has comes from both servers' GET /api/cloud-send; what goes is decided part by part (planSend in
 // cloud-send-parts.mjs) and recorded item by item, so a send cut short goes on from the item it reached. Every write is
-// one of My Cloud's own routes, over one owner session per send: the Admin's one-time code for the Cloud it verified,
-// redeemed at that Cloud alone, signed out after, as Copy does. A secret reaches main only over the server's private
+// one of the server's own routes, over one owner session per send: the Admin's one-time code for the server it verified,
+// redeemed at that server alone, signed out after, as Copy does. A secret reaches main only over the server's private
 // port (server/login-handoff.ts) and goes only to that session.
 import { createHash } from "node:crypto";
 import { AUTOMATION_KINDS, BOT_PARTS, EMPTY, MOVE_BOT_PARTS, MOVE_KINDS, PICTURE_PART, differenceSignature, failedSummary, itemKey, parseSendSummary, pendingRows, planSend, resultKey } from "./cloud-send-parts.mjs";
@@ -22,22 +22,18 @@ import { botsOnCloud } from "./cloud-logins.mjs";
 import { checkChats, checkPassed, checkSecrets, manifestGaps, missingAttachments, roomsRemovedThere, roomsThatGo, rowIdChunks } from "./cloud-send-check.mjs";
 
 const LOCAL_ROUTE = /^\/api\/(?:cloud-send|cloud-send\?move=1|cloud-send\/manifest|cloud-send\/chats|cloud-send\/chats\?attachments=1|cloud-send\/kind\?key=[\w%.-]{1,300}|cloud-send\/memory|cloud-send\/memory\?bot=[\w-]{1,128}|cloud-send\/files|cloud-send\/files\?path=[\w%.()~!*'-]{1,12000}&offset=\d{1,16}&length=\d{1,9}|cloud-send\/chats\/rows\?thread=[\w-]{1,200}&after=\d{1,16}&id=[\w%.-]{0,600}|cloud-send\/chats\/ids\?thread=[\w-]{1,200}&from=\d{1,9}|cloud-send\/chats\/attachment\/[A-Za-z0-9-]{1,80}\.[A-Za-z0-9]{1,10}|cloud-connections|connectors\/connected|config|bots\?messages=0|bots\/[\w-]{1,128}\/(?:skills|skills\/[a-z0-9-]{1,64}|memory|memory\/file\?path=[\w%.-]{1,200})|attachments\/[A-Za-z0-9-]{1,80}\.(?:png|jpg|gif|webp))$/u;
-/** One request's chats: a few conversations' rows, well under My Cloud's body limit. */
+/** One request's chats: a few conversations' rows, well under the server's body limit. */
 const CHATS_BATCH_BYTES = 4 * 1024 * 1024;
 const CHATS_BATCH_PAGES = 40;
-/** My Cloud checks at most this many attachment names a request. */
+/** The server checks at most this many attachment names a request. */
 const ATTACHMENT_NAMES = 2000;
-/** My Cloud takes at most this many row ids, of at most this many conversations, a request. */
+/** The server takes at most this many row ids, of at most this many conversations, a request. */
 const ROW_IDS = 10_000;
 const ROW_ID_CONVERSATIONS = 200;
 const MEMORY_FILES = 100;
 const PICTURE_TYPES = { png: "image/png", jpg: "image/jpeg", gif: "image/gif", webp: "image/webp" };
 const VAULT_ID = /^[\w-]{1,128}$/u;
-/** Whole sends, which carry the chats too; a send of some items (Use this computer's, one login) never does. */
-const CHAT_REASONS = new Set(["button", "my-cloud", "menu", "move"]);
-/** Bring newer chats' copy of the whole workspace, for a Cloud too old to take chats by row: never a move, which such a
- * Cloud refuses. */
-const OUTDATED_FOR_MOVE = "My Cloud is updating. Your bots move there by themselves when it's done.";
+const OUTDATED_FOR_MOVE = "The server needs an update before your bots can move there. Update Openpals on it, then try again.";
 
 const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 const sentence = (value) => (typeof value === "string" && value.trim() ? value.trim().replace(/\s+/g, " ").slice(0, 300) : null);
@@ -46,7 +42,7 @@ export class CloudSendError extends Error {
   constructor(code, message, options) { super(message, options); this.name = "CloudSendError"; this.code = code; }
 }
 
-/** Nothing answered on the way to My Cloud (no network, a timeout, a gateway error, the Admin's or My Cloud's), as
+/** Nothing answered on the way to the server (no network, a timeout, a gateway error, the Admin's or the server's), as
  * against a refusal: trying again soon may well work. */
 export function unanswered(error, depth = 0) {
   if (!error || depth > 4) return false;
@@ -55,27 +51,27 @@ export function unanswered(error, depth = 0) {
   return unanswered(error.cause, depth + 1);
 }
 
-/** One plain sentence for a failed write, from what My Cloud answered. */
+/** One plain sentence for a failed write, from what the server answered. */
 function refusal(answer, fallback) {
-  if (answer.status === 401 || answer.status === 403) return "My Cloud did not let this app make the change. Open My Cloud in this app once, then try again.";
+  if (answer.status === 401 || answer.status === 403) return "The server did not let this app make the change. Open the server in this app once, then try again.";
   if (answer.status === 409 && /limited to \d+ bots/u.test(answer.body?.error ?? "")) return sentence(answer.body.error);
-  return sentence(answer.body?.error) ? `My Cloud said: ${sentence(answer.body.error)}` : fallback;
+  return sentence(answer.body?.error) ? `The server said: ${sentence(answer.body.error)}` : fallback;
 }
 
-/** My Cloud's own 1Password refusal speaks to someone pasting a token on My Cloud's page; here it was this computer's.
+/** The server's own 1Password refusal speaks to someone pasting a token on the server's page; here it was this computer's.
  * 1Password refusing the token is final: sending it again can't help until 1Password is connected again here. */
 function onePasswordRefusal(answer) {
   const said = sentence(answer.body?.error);
   if (answer.status === 400 && said && /did not accept the token|not a whole 1Password|service account token/iu.test(said)) {
-    return Object.assign(new CloudSendError("refused", "My Cloud's 1Password did not accept this computer's token: it may have been revoked, expired, or lost access to its vault. Connect 1Password again in this computer's Settings → Logins, and it goes to My Cloud by itself."), { final: true });
+    return Object.assign(new CloudSendError("refused", "The server's 1Password did not accept this computer's token: it may have been revoked, expired, or lost access to its vault. Connect 1Password again in this computer's Settings → Logins, and it goes to the server by itself."), { final: true });
   }
-  return new CloudSendError("refused", refusal(answer, "My Cloud could not connect 1Password."));
+  return new CloudSendError("refused", refusal(answer, "The server could not connect 1Password."));
 }
 
 const pick = (source, names) => Object.fromEntries(names.filter((name) => source[name] !== undefined && source[name] !== null).map((name) => [name, source[name]]));
 
-/** A bot's fields for some parts, as My Cloud's PATCH takes them: nothing that names this computer's other bots unless
- * My Cloud has them, and never Custom approval, which only this computer's own window can grant. */
+/** A bot's fields for some parts, as the server's PATCH takes them: nothing that names this computer's other bots unless
+ * The server has them, and never Custom approval, which only this computer's own window can grant. */
 export function botPatch(bot, parts, cloudBots) {
   const body = {};
   for (const part of parts) {
@@ -91,7 +87,7 @@ export function botPatch(bot, parts, cloudBots) {
 
 const outcomeOf = (value) => record(value) && Number.isSafeInteger(value.at) && record(value.result) ? value : null;
 const COUNTED = ["bots", "updatedBots", "skills", "logins", "settings"];
-/** What reached My Cloud from this computer, all sends together. */
+/** What reached the server from this computer, all sends together. */
 function countsOf(value) {
   const chats = record(value?.chats) ? value.chats : {};
   const whole = (count) => Number.isSafeInteger(count) && count > 0 ? count : 0;
@@ -101,9 +97,9 @@ function countsOf(value) {
 const addCounts = (total, sent) => countsOf({ ...Object.fromEntries(COUNTED.map((key) => [key, total[key] + sent[key]])), onePassword: total.onePassword || sent.onePassword,
   chats: { conversations: total.chats.conversations + (sent.chats?.conversations ?? 0), messages: total.chats.messages + (sent.chats?.messages ?? 0) } });
 
-/** The state main keeps in its own folder: per Cloud what was sent, what the person kept here, the bots a send made
- * there whose fields still wait to be recorded (`created`), the bots a send asked My Cloud to make and has not heard back
- * about (`creating`), the sign-ins My Cloud took that this computer still holds
+/** The state main keeps in its own folder: per server what was sent, what the person kept here, the bots a send made
+ * there whose fields still wait to be recorded (`created`), the bots a send asked the server to make and has not heard back
+ * about (`creating`), the sign-ins the server took that this computer still holds
  * (`release`), the bot files a move put there (`files`, path to sha256), and whether each automation a move carried was
  * on here (`on`). */
 export function parseSendState(value) {
@@ -131,7 +127,7 @@ export function parseSendState(value) {
   return { v: 1, clouds };
 }
 
-/** What My Cloud's own page is told: the names of this computer's bots that wait, and counts. */
+/** What the server's own page is told: the names of this computer's bots that wait, and counts. */
 export function sendNotice(snapshot) {
   const rows = pendingRows({ rows: snapshot.rows ?? [] });
   const count = (kind) => rows.filter((row) => row.kind === kind).length;
@@ -151,7 +147,7 @@ export function sendNotice(snapshot) {
   };
 }
 
-/** A send's outcome as My Cloud's page is told it: counts and reasons only. */
+/** A send's outcome as the server's page is told it: counts and reasons only. */
 function told(outcome, dismissed) {
   return { at: outcome.at, reason: outcome.reason, failed: outcome.result.failed.length, sent: sentCounts(outcome.result),
     // Every failure is one trying again can't fix (1Password refused the token): no Try again.
@@ -159,7 +155,7 @@ function told(outcome, dismissed) {
     seen: dismissed === resultKey(outcome), ...failedSummary(outcome) };
 }
 
-/** What a send got across, in counts only: My Cloud's page names nothing of this computer's but its bots. */
+/** What a send got across, in counts only: The server's page names nothing of this computer's but its bots. */
 function sentCounts(result) {
   return { bots: result.bots.length, updatedBots: result.updatedBots.length, skills: result.skills, logins: result.logins, onePassword: result.onePassword,
     settings: result.settings.length, chats: result.chats ? { conversations: result.chats.conversations, messages: result.chats.messages } : null };
@@ -177,8 +173,6 @@ const movedResult = () => ({ moved: 0, memory: 0, files: { sent: 0, kept: 0 }, c
  *   local: (route: string) => Promise<Response>,
  *   cloud: {
  *     origin(): string | null,
- *     asleep(): boolean,
- *     read(route: string): Promise<Response>,
  *     open(options?: { move?: boolean }): Promise<{ call(method: string, route: string, body?: unknown): Promise<{ status: number, ok: boolean, body: any }>,
  *       upload(route: string, bytes: Uint8Array, type: string): Promise<{ status: number, ok: boolean, body: any }>, close(): Promise<void> }>,
  *   },
@@ -187,27 +181,19 @@ const movedResult = () => ({ moved: 0, memory: 0, files: { sent: 0, kept: 0 }, c
  *   onChange?: (snapshot: unknown) => void,
  *   now?: () => number,
  *   engineWaitMs?: number,
- *   space?: { disk(): unknown, grow(sizeGb: number): Promise<unknown> },
- *   team?: { bot: string, name: string, label: string },
- * }} deps `open({ move: true })`: the move's session, which counts as someone using My Cloud. `engineWaitMs`: how long a
- * move waits for My Cloud to run the engines whose keys it just took. `local(route, { method })`: a change on this
- * computer's server (an app event My Cloud now collects). `space`: My Cloud's plan disk and the Admin's grow. `team`: a
- * move of this one bot into a team (team-move.mjs): only the bot, its skills, files, chats and routines go, under the
- * name the team gave it; never apps, keys, logins, settings or its notes about the person. `local` is then the bot's
- * own Cloud, and `label` names the person beside a file or bot of the same name.
+ * }} deps `open({ move: true })`: the move's session. `engineWaitMs`: how long a move waits for the server to run the
+ * engines whose keys it just took. `local(route, { method })`: a change on this computer's server (an app event the
+ * server now collects).
  */
-export function createCloudSend({ local, cloud, handoff, store, onChange = () => {}, now = Date.now, engineWaitMs, space, team = null }) {
+export function createCloudSend({ local, cloud, handoff, store, onChange = () => {}, now = Date.now, engineWaitMs }) {
   let saved = parseSendState(safeRead(store));
   let view = { cloud: "none", plan: null, local: null, theirs: null, chats: null };
   let running = null, progress = null;
-  const only = team?.bot ?? null;
-  /** A route as a move of one bot asks it of either side: kept to that bot. */
-  const scoped = (route) => (only ? `${route}${route.includes("?") ? "&" : "?"}bot=${only}` : route);
 
   function safeRead(source) { try { return source.read(); } catch { return null; } }
   function persist() { try { store.write(saved); } catch {} }
   const entry = (origin) => (saved.clouds[origin] ??= { sent: {}, off: {}, dismissed: "", last: null, whole: null, arrived: countsOf(null), chats: {}, created: {}, creating: {}, release: [], files: {}, on: {} });
-  /** What a move ignores of what the person kept here: everything goes but what was removed on My Cloud. */
+  /** What a move ignores of what the person kept here: everything goes but what was removed on the server. */
   const removedOnly = (off) => Object.fromEntries(Object.entries(off).filter(([, why]) => why === "removed"));
   const connectionLocal = { json: (route) => localJson(route), handoff: (what) => handoff(what) };
 
@@ -233,7 +219,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
   }
   const publish = () => { const value = snapshot(); try { onChange(value); } catch {} return value; };
 
-  const allowed = (route) => LOCAL_ROUTE.test(route.replace(/[?&]bot=[\w-]{1,128}$/u, ""));
+  const allowed = (route) => LOCAL_ROUTE.test(route);
   async function localJson(route) {
     if (!allowed(route)) throw new CloudSendError("invalid", "Unsupported local request.");
     const response = await local(route);
@@ -252,33 +238,24 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     await response.body?.cancel();
     return { ok: response.ok, status: response.status };
   }
-  const kinds = createMoveKinds({ localJson, localBytes, localSend, entry, persist, refusal, space, scoped,
+  const kinds = createMoveKinds({ localJson, localBytes, localSend, entry, persist, refusal,
     progress: (value) => { progress = value; publish(); } });
 
-  async function readCloud() {
-    let response;
-    try { response = await cloud.read("/api/cloud-send"); } catch { return { state: cloud.asleep() ? "asleep" : "unreachable" }; }
-    if (response.status === 404) return { state: "outdated" };
-    if (!response.ok) return { state: response.status === 401 || response.status === 403 ? "signed-out" : "unreachable" };
-    const summary = parseSendSummary(await response.json().catch(() => null));
-    return summary ? { state: "ready", summary } : { state: "unreachable" };
-  }
-
-  /** `everything`: a move's plan, which goes past what the person once kept here. A bot a send made on My Cloud whose
+  /** `everything`: a move's plan, which goes past what the person once kept here. A bot a send made on the server whose
    * fields were not recorded yet has them all sent again. */
   function plan(origin, mine, theirs, force = [], { everything = false } = {}) {
     const kept = entry(origin);
     const planned = planSend({ local: mine, cloud: theirs, sent: kept.sent, off: everything ? removedOnly(kept.off) : kept.off, force: [...force, ...Object.keys(kept.created)] });
-    if (everything && !team) mergeRoutines(planned.rows);
+    if (everything) mergeRoutines(planned.rows);
     let changed = false;
     for (const [key, parts] of Object.entries(planned.baseline)) { kept.sent[key] = { ...kept.sent[key], ...parts }; changed = true; }
     for (const key of planned.removed) { kept.off[key] = "removed"; delete kept.sent[key]; delete kept.created[key]; changed = true; }
     if (everything) {
-      // A move has nobody to ask: a part both sides hold otherwise is My Cloud's (§2.2), and recorded as settled, so the
+      // A move has nobody to ask: a part both sides hold otherwise is the server's (§2.2), and recorded as settled, so the
       // move's check (manifestGaps) agrees with this plan instead of calling it missing on every pass.
       const here = new Map((mine?.items ?? []).map((item) => [item.key, item])), there = new Map((theirs?.items ?? []).map((item) => [item.key, item]));
       for (const row of planned.rows) {
-        // A routine's runs are history My Cloud adds by id and never drops: when they are all that differs, it goes.
+        // A routine's runs are history the server adds by id and never drops: when they are all that differs, it goes.
         if (row.kind === "routine" && row.differs?.includes("runs") && !row.differs.includes("def")) {
           row.differs = row.differs.filter((part) => part !== "runs");
           row.parts = [...(row.parts ?? []), "runs"];
@@ -300,36 +277,24 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     ? chatsWaiting(origin, theirs).then(({ ready, busy }) => ({ waiting: ready.length + busy })).catch(() => view.chats ?? null)
     : Promise.resolve(null);
 
-  /** Reads both sides and plans; never writes to My Cloud. */
-  async function compare() {
-    const origin = cloud.origin();
-    if (!origin) { view = { cloud: "none", plan: null, local: null, theirs: null, chats: null }; return publish(); }
-    if (cloud.asleep()) { view = { ...view, cloud: "asleep" }; return publish(); }
-    const [mine, theirs] = await Promise.all([localJson("/api/cloud-send").then(parseSendSummary).catch(() => null), readCloud()]);
-    if (!mine) { view = { ...view, cloud: "local-unavailable" }; return publish(); }
-    if (theirs.state !== "ready") { view = { cloud: theirs.state, plan: null, local: mine, theirs: null, chats: null }; return publish(); }
-    view = { cloud: "ready", plan: plan(origin, mine, theirs.summary), local: mine, theirs: theirs.summary, chats: await chatsLeft(origin, theirs.summary) };
-    return publish();
-  }
-
-  /** One send at a time; one asked while another runs waits for it, then runs as it was asked. A move (`reason: "move"`)
-   * carries everything; its final pass (`final`) carries the sign-ins that refresh themselves too, and this computer lets
-   * go of each once My Cloud has it. */
-  async function send({ keys = null, force = [], reason = "button", final = false } = {}) {
+  /** One pass of the move at a time; one asked while another runs waits for it. A pass carries everything; the final pass
+   * (`final`) carries the sign-ins that refresh themselves too, and this computer lets go of each once the server has it. */
+  async function send({ final = false } = {}) {
     while (running) await running.promise.catch(() => {});
     const origin = cloud.origin();
-    if (!origin) throw new CloudSendError("no_cloud", "This computer has no My Cloud yet.");
-    const job = { reason, final: reason === "move" && final === true, promise: null, chats: false };
+    if (!origin) throw new CloudSendError("no_cloud", "No server is chosen as your bots' home.");
+    const reason = "move";
+    const job = { reason, final: final === true, promise: null, chats: false };
     running = job;
     progress = null;
     publish();
     job.promise = (async () => {
-      try { return await sendTo(origin, job, { keys, force: Array.isArray(force) ? force.filter((key) => typeof key === "string") : [], reason }); }
+      try { return await sendTo(origin, job); }
       catch (error) {
-        // Kept as this send's outcome, so the strip and Settings say why, instead of an earlier send's result.
+        // Kept as this pass's outcome, so the line says why, instead of an earlier pass's result.
         const kept = entry(origin);
-        kept.last = { at: now(), reason, result: emptyResult(), error: sentence(error?.message) ?? "Nothing could be sent to My Cloud. Try again." };
-        if (!keys && CHAT_REASONS.has(reason)) kept.whole = kept.last;
+        kept.last = { at: now(), reason, result: emptyResult(), error: sentence(error?.message) ?? "Nothing could be sent to the server. Try again." };
+        kept.whole = kept.last;
         persist();
         if (unanswered(error)) view = { ...view, cloud: "unreachable" };
         throw error;
@@ -339,52 +304,45 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     return job.promise;
   }
 
-  async function sendTo(origin, job, { keys, force, reason }) {
-    const result = { ...emptyResult(), ...(reason === "move" ? movedResult() : {}) };
-    const mine = parseSendSummary(await localJson(reason === "move" ? scoped("/api/cloud-send?move=1") : "/api/cloud-send"));
+  async function sendTo(origin, job) {
+    const result = { ...emptyResult(), ...movedResult() };
+    const mine = parseSendSummary(await localJson("/api/cloud-send?move=1"));
     if (!mine) throw new CloudSendError("local", "Openpals on this computer did not answer. Try again in a moment.");
-    const withChats = !keys && CHAT_REASONS.has(reason);
-    const latest = await sendItems(origin, mine, result, { keys, force, job, withChats });
-    const outcome = { at: now(), reason, result };
+    const latest = await sendItems(origin, mine, result, job);
+    const outcome = { at: now(), reason: job.reason, result };
     const kept = entry(origin);
     kept.last = outcome;
-    if (withChats) kept.whole = outcome;
+    kept.whole = outcome;
     kept.arrived = addCounts(kept.arrived, sentCounts(result));
     persist();
     view = { cloud: "ready", plan: plan(origin, mine, latest), local: mine, theirs: latest, chats: await chatsLeft(origin, latest) };
     return outcome;
   }
 
-  /** A move goes only to a Cloud that says it takes one: an older one would lose the owner's lines and the checks. */
+  /** A move goes only to a server that says it takes one: an older one would lose the owner's lines and the checks. */
   async function assertTakesMove(session) {
     const described = await session.call("GET", "/.well-known/openmausbot/environment");
     if (!(Number(described.body?.capabilities?.move) >= 1)) throw new CloudSendError("outdated", OUTDATED_FOR_MOVE);
   }
 
-  /** Every item that waits, and then the chats, over one owner session, always signed out; what My Cloud holds after. A
-   * move's apps and keys go first, so the bots that follow find their engines; then the skills only a move carries, the
+  /** Every item that waits, and then the chats, over the move's session, always signed out; what the server holds after.
+   * The apps and keys go first, so the bots that follow find their engines; then the skills only a move carries, the
    * bots, their memory and files, the chats with each conversation's settings, and last the automations, switched off. An
    * app event goes only in the final pass, when this computer lets go of it. */
-  async function sendItems(origin, mine, result, { keys, force, job, withChats }) {
-    const move = job.reason === "move";
-    const summaryRoute = move ? scoped("/api/cloud-send?move=1") : "/api/cloud-send";
-    const session = await cloud.open(move ? { move: true } : undefined).catch((error) => { throw new CloudSendError("session", sentence(error?.message) ?? "This app could not sign in to My Cloud. Try again.", { cause: error }); });
+  async function sendItems(origin, mine, result, job) {
+    const move = true;
+    const summaryRoute = "/api/cloud-send?move=1";
+    const session = await cloud.open({ move: true }).catch((error) => { throw new CloudSendError("session", sentence(error?.message) ?? "This app could not sign in to the server. Try again.", { cause: error }); });
     try {
       const before = await session.call("GET", summaryRoute);
-      if (before.status === 404) throw new CloudSendError("outdated", move ? OUTDATED_FOR_MOVE : "My Cloud needs an update before it can receive bots from this computer. It updates by itself; try again later.");
+      if (before.status === 404) throw new CloudSendError("outdated", OUTDATED_FOR_MOVE);
       const theirs = before.ok ? parseSendSummary(before.body) : null;
-      if (!theirs) throw new CloudSendError("unreachable", refusal(before, "My Cloud did not answer. Try again."));
-      let computer = team ? { label: team.label } : null;
-      if (move) {
-        await assertTakesMove(session);
-        // A bot moving into a team carries nothing of the person's: their apps and keys stay.
-        if (!team) computer = await moveConnections(origin, session, result, job.final);
-      }
+      if (!theirs) throw new CloudSendError("unreachable", refusal(before, "The server did not answer. Try again."));
+      await assertTakesMove(session);
+      const computer = await moveConnections(origin, session, result, job.final);
       settleCreating(origin, theirs);
-      const planned = plan(origin, mine, theirs, force, { everything: move });
-      const wanted = keys ? new Set(keys) : null;
-      const rows = pendingRows(planned).filter((row) => !wanted || wanted.has(row.key) || (row.bot && wanted.has(itemKey.bot(row.bot))))
-        .filter((row) => row.kind !== "app-event" || job.final);
+      const planned = plan(origin, mine, theirs, [], { everything: true });
+      const rows = pendingRows(planned).filter((row) => row.kind !== "app-event" || job.final);
       const total = rows.length;
       progress = total ? { done: 0, total } : null;
       publish();
@@ -392,7 +350,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       const localItems = new Map(mine.items.map((item) => [item.key, item]));
       const cloudItems = new Map(theirs.items.map((item) => [item.key, item]));
       const ctx = { origin, session, result, cloudBots, localItems, cloudItems, planned: new Map(planned.rows.map((row) => [row.key, row])), bots: null, skillLists: new Map(),
-        sentKeys: new Set(), sentParts: {}, recorded: new Set(), move, ownMove: move && !team, summaryRoute, computer: computer?.label ?? null };
+        sentKeys: new Set(), sentParts: {}, recorded: new Set(), move, ownMove: move, summaryRoute, computer: computer?.label ?? null };
       const order = { "library-skill": 0, "imported-skill": 0, bot: 1, skill: 2, setting: 3, login: 4, "1password": 5 };
       const automations = new Set(AUTOMATION_KINDS);
       const goRow = async (row) => {
@@ -403,48 +361,43 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
         publish();
       };
       for (const row of rows.filter((entry) => !automations.has(entry.kind)).sort((a, b) => order[a.kind] - order[b.kind])) await goRow(row);
-      const moved = move ? await movedBots(ctx) : [];
-      if (move) {
-        // Its notes about the person stay with them when a bot moves into a team.
-        if (!team) await kinds.moveMemory(ctx, moved);
-        try { await kinds.moveFiles(ctx, moved, computer?.label); }
-        catch (error) { result.failed.push({ key: "files", kind: "files", label: "Files", error: sentence(error?.message) ?? "The files could not be sent." }); }
-      }
+      const moved = await movedBots(ctx);
+      await kinds.moveMemory(ctx, moved);
+      try { await kinds.moveFiles(ctx, moved, computer?.label); }
+      catch (error) { result.failed.push({ key: "files", kind: "files", label: "Files", error: sentence(error?.message) ?? "The files could not be sent." }); }
       const after = parseSendSummary((await session.call("GET", summaryRoute)).body);
       if (after) remember(origin, ctx, after);
       const latest = after ?? theirs;
-      if (withChats && latest.chats) {
+      if (latest.chats) {
         job.chats = true;
         progress = null;
         publish();
         try {
-          await sendChatRows(origin, session, latest, result, { everything: move });
-          if (move) await stampHeld(origin, session, latest);
+          await sendChatRows(origin, session, latest, result, { everything: true });
+          await stampHeld(origin, session, latest);
         } catch (error) { result.failed.push({ key: "chats", kind: "chats", label: "Chats", error: sentence(error?.message) ?? "The chats could not be added." }); }
       }
-      if (move) {
-        try { result.conversationSettings = await kinds.moveSettings(ctx); }
-        catch (error) { result.failed.push({ key: "conversation-settings", kind: "chats", label: "Chats", error: sentence(error?.message) ?? "The chats' settings could not be added." }); }
-        const last = rows.filter((entry) => automations.has(entry.kind));
-        for (const row of last) await goRow(row);
-        // The pass's closing plan reads My Cloud as it is now: read before the automations went, it would take each one
-        // just carried for one removed there.
-        if (last.length) return parseSendSummary((await session.call("GET", summaryRoute)).body) ?? latest;
-      }
+      try { result.conversationSettings = await kinds.moveSettings(ctx); }
+      catch (error) { result.failed.push({ key: "conversation-settings", kind: "chats", label: "Chats", error: sentence(error?.message) ?? "The chats' settings could not be added." }); }
+      const last = rows.filter((entry) => automations.has(entry.kind));
+      for (const row of last) await goRow(row);
+      // The pass's closing plan reads the server as it is now: read before the automations went, it would take each one
+      // just carried for one removed there.
+      if (last.length) return parseSendSummary((await session.call("GET", summaryRoute)).body) ?? latest;
       return latest;
     } finally {
       try { await session.close(); } catch {}
     }
   }
 
-  /** The bots of this computer's that My Cloud has now, with their names. */
+  /** The bots of this computer's that the server has now, with their names. */
   async function movedBots(ctx) {
     const bots = await localBots(ctx);
     return [...ctx.cloudBots].filter((id) => bots.has(id) && ctx.localItems.has(itemKey.bot(id))).map((id) => ({ id, name: bots.get(id).name }));
   }
 
   /** This computer's apps and keys, MCP servers, HighLevel and connected apps, over the move's session. A sign-in that
-   * refreshes itself goes only in the final pass; this computer then lets go of its copy once My Cloud has it, and one it
+   * refreshes itself goes only in the final pass; this computer then lets go of its copy once the server has it, and one it
    * could not let go of yet is kept and let go of on the next final pass. */
   async function moveConnections(origin, session, result, final) {
     const kept = entry(origin);
@@ -460,7 +413,6 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       onProgress: (step) => { progress = { done: step.done, total: step.total }; publish(); } });
     result.connections += moved.moved.length + moved.runsHere.length;
     for (const failure of moved.failed) failed(failure.id, failure.label, failure.message, failure.final);
-    for (const held of moved.held ?? []) result.notes.push({ kind: "held", connection: held.label });
     if (moved.release.length) {
       kept.release = [...kept.release.filter((held) => !moved.release.some((next) => next.id === held.id)), ...moved.release];
       persist();
@@ -468,17 +420,17 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     return collected.computer;
   }
 
-  /** The conversations whose newest row My Cloud has not taken, not answered in now: of bots My Cloud has and that are
-   * not kept here (`everything`: whatever was kept here), and of rooms, which My Cloud makes once one of their bots is
-   * there. A room nobody wrote in yet goes as its active thread with no rows (`empty`), once, so My Cloud makes it too. */
+  /** The conversations whose newest row the server has not taken, not answered in now: of bots the server has and that are
+   * not kept here (`everything`: whatever was kept here), and of rooms, which the server makes once one of their bots is
+   * there. A room nobody wrote in yet goes as its active thread with no rows (`empty`), once, so the server makes it too. */
   async function chatsWaiting(origin, theirs, { everything = false } = {}) {
-    const listed = await localJson(scoped("/api/cloud-send/chats"));
+    const listed = await localJson("/api/cloud-send/chats");
     const kept = entry(origin);
     const cloudBots = new Set(theirs.items.filter((item) => item.kind === "bot" && item.id).map((item) => item.id));
     const id = (value) => typeof value === "string" && /^[\w-]{1,128}$/u.test(value);
     const thread = (value) => typeof value === "string" && /^[\w-]{1,200}$/u.test(value);
     const keptHere = (botId) => everything ? kept.off[itemKey.bot(botId)] === "removed" : Boolean(kept.off[itemKey.bot(botId)]);
-    // My Cloud makes the room once one of its bots is there, as it does from a room's rows; one with no bot never goes.
+    // The server makes the room once one of its bots is there, as it does from a room's rows; one with no bot never goes.
     const empty = (Array.isArray(listed?.rooms) ? listed.rooms : []).filter((room) => record(room) && id(room.room) && thread(room.threadId)
       && Array.isArray(room.members) && room.members.length > 0)
       .map((room) => ({ room: room.room, threadId: room.threadId, last: 0, lastId: "", busy: false, empty: true }));
@@ -489,16 +441,15 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       if (cursor === "removed" || (head.bot && (!cloudBots.has(head.bot) || keptHere(head.bot)))) return false;
       return !cursor || cursor.after !== head.last || cursor.id !== head.lastId;
     });
-    return { dataDir: typeof listed?.dataDir === "string" ? listed.dataDir : "", ready: waiting.filter((head) => !head.busy), busy: waiting.filter((head) => head.busy).length,
-      owner: team && typeof listed?.owner === "string" && /^p_[\w-]{22}$/u.test(listed.owner) ? listed.owner : null };
+    return { dataDir: typeof listed?.dataDir === "string" ? listed.dataDir : "", ready: waiting.filter((head) => !head.busy), busy: waiting.filter((head) => head.busy).length };
   }
 
   /** Each waiting conversation's new rows, page by page, a few conversations per request; the cursor moves only past
-   * what My Cloud took, and once My Cloud did not take a page, the conversation's later pages wait for the next send too.
-   * The attachments those rows name go first, unless My Cloud has them. `result.chats.left`: the conversations that did
-   * not all go (a bot answering in one, or My Cloud not taking a page), for the next send. */
+   * what the server took, and once the server did not take a page, the conversation's later pages wait for the next send too.
+   * The attachments those rows name go first, unless the server has them. `result.chats.left`: the conversations that did
+   * not all go (a bot answering in one, or the server not taking a page), for the next send. */
   async function sendChatRows(origin, session, theirs, result, { everything = false } = {}) {
-    const { dataDir, ready, busy, owner: from } = await chatsWaiting(origin, theirs, { everything });
+    const { dataDir, ready, busy } = await chatsWaiting(origin, theirs, { everything });
     const kept = entry(origin);
     const total = ready.length;
     const held = new Set();
@@ -512,24 +463,23 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       for (let i = 0; i < names.length; i += ATTACHMENT_NAMES) {
         const asked = names.slice(i, i + ATTACHMENT_NAMES);
         const checked = await session.call("POST", "/api/cloud-send/chats/attachments", { names: asked });
-        if (!checked.ok) throw new CloudSendError("refused", refusal(checked, "My Cloud could not take the chats' attachments."));
+        if (!checked.ok) throw new CloudSendError("refused", refusal(checked, "The server could not take the chats' attachments."));
         for (const name of Array.isArray(checked.body?.missing) ? checked.body.missing.filter((name) => asked.includes(name)) : []) {
           const file = await localBytes(`/api/cloud-send/chats/attachment/${name}`);
           if (!file) continue;
           const stored = await session.upload(`/api/cloud-send/chats/attachment/${name}`, file, "application/octet-stream");
           if (stored.status === 413 || stored.status === 507) {
             result.failed.push({ key: `attachment:${name}`, kind: "chats", label: "Attachment", error: stored.status === 507
-              ? "My Cloud's room for attachments is full, so an attachment did not go. Its chat went without it."
-              : "An attachment is bigger than My Cloud takes, so it did not go. Its chat went without it.", ...(stored.status === 413 ? { final: true } : {}) });
+              ? "The server's room for attachments is full, so an attachment did not go. Its chat went without it."
+              : "An attachment is bigger than the server takes, so it did not go. Its chat went without it.", ...(stored.status === 413 ? { final: true } : {}) });
             continue;
           }
-          if (!stored.ok) throw new CloudSendError("refused", refusal(stored, "My Cloud could not take an attachment of the chats."));
+          if (!stored.ok) throw new CloudSendError("refused", refusal(stored, "The server could not take an attachment of the chats."));
         }
       }
-      // Into a team: whose lines on My Cloud become the mover's there.
-      const answer = await session.call("POST", "/api/cloud-send/chats", { v: 1, dataDir, ...(from ? { owner: from } : {}),
+      const answer = await session.call("POST", "/api/cloud-send/chats", { v: 1, dataDir,
         conversations: batch.map(({ owner, threadId, task, rows, leaf, sent }) => ({ ...owner, threadId, task, rows, leaf, sent })) });
-      if (!answer.ok) throw new CloudSendError("refused", refusal(answer, "My Cloud could not add the chats."));
+      if (!answer.ok) throw new CloudSendError("refused", refusal(answer, "The server could not add the chats."));
       const accepted = new Set(Array.isArray(answer.body?.accepted) ? answer.body.accepted : []);
       const removed = new Set(Array.isArray(answer.body?.removed) ? answer.body.removed : []);
       for (const page of batch) {
@@ -551,7 +501,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
         const page = await localJson(`/api/cloud-send/chats/rows?thread=${head.threadId}&after=${cursor?.after ?? 0}&id=${encodeURIComponent(cursor?.id ?? "")}`);
         if (!record(page) || !Array.isArray(page.rows)) break;
         if (page.restarted) delete kept.chats[head.threadId];
-        // A room nobody wrote in yet: its thread goes with no rows, which My Cloud takes as the room to make.
+        // A room nobody wrote in yet: its thread goes with no rows, which the server takes as the room to make.
         const room = head.empty === true && !page.rows.length && !page.lastId && record(page.roomInfo);
         if (page.rows.length || room) {
           const size = Buffer.byteLength(JSON.stringify(page.rows), "utf8");
@@ -572,10 +522,10 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     await flush();
   }
 
-  /** A move has My Cloud make its owner's lines and answers its owner's among the rows it already held of this computer's
+  /** A move has the server make its owner's lines and answers its owner's among the rows it already held of this computer's
    * bots and rooms, which an earlier send or a Bring left naming nobody: this computer's row ids go, never a row. */
   async function stampHeld(origin, session, theirs) {
-    const listed = await localJson(scoped("/api/cloud-send/chats"));
+    const listed = await localJson("/api/cloud-send/chats");
     const kept = entry(origin);
     const cloudBots = new Set(theirs.items.filter((item) => item.kind === "bot" && item.id).map((item) => item.id));
     const threads = (Array.isArray(listed?.conversations) ? listed.conversations : []).filter((head) => record(head) && (cloudBots.has(head.bot) || typeof head.room === "string")
@@ -584,7 +534,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     const flush = async () => {
       if (!batch.length) return;
       const answer = await session.call("POST", "/api/cloud-send/chats/owner", { v: 1, conversations: batch });
-      if (!answer.ok) throw new CloudSendError("refused", refusal(answer, "My Cloud could not keep the chats' lines as yours."));
+      if (!answer.ok) throw new CloudSendError("refused", refusal(answer, "The server could not keep the chats' lines as yours."));
       batch = []; ids = 0;
     };
     for (const threadId of threads) {
@@ -597,7 +547,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     await flush();
   }
 
-  /** What was sent is recorded against what My Cloud holds right after, a part it refused included: that part is tried
+  /** What was sent is recorded against what the server holds right after, a part it refused included: that part is tried
    * again only once it changes here. `keys`: only these. */
   function remember(origin, ctx, after, keys = ctx.sentKeys) {
     const kept = entry(origin);
@@ -612,19 +562,19 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     }
   }
 
-  /** Each item is recorded as soon as it went, from My Cloud's own answer for it and its skills, so a send cut short goes
-   * on from the next item instead of judging what already went as My Cloud's own change. */
+  /** Each item is recorded as soon as it went, from the server's own answer for it and its skills, so a send cut short goes
+   * on from the next item instead of judging what already went as the server's own change. */
   async function recordItem(ctx, key) {
     const keys = [...ctx.sentKeys].filter((sent) => !ctx.recorded.has(sent));
     if (!keys.length) return;
-    const answer = await ctx.session.call("GET", scoped(`/api/cloud-send?item=${encodeURIComponent(key)}${ctx.move ? "&move=1" : ""}`));
+    const answer = await ctx.session.call("GET", `/api/cloud-send?item=${encodeURIComponent(key)}${ctx.move ? "&move=1" : ""}`);
     const after = answer.ok ? parseSendSummary(answer.body) : null;
     if (!after) return;
     remember(ctx.origin, ctx, after, keys);
     persist();
   }
 
-  /** A bot a send asked My Cloud to make and never heard back about: one My Cloud has is that send's own, so all its
+  /** A bot a send asked the server to make and never heard back about: one the server has is that send's own, so all its
    * fields go (`created`); one it lacks was never made, and goes as new. */
   function settleCreating(origin, theirs) {
     const kept = entry(origin);
@@ -639,7 +589,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
   }
 
   const done = (ctx, key, parts = null) => { ctx.sentKeys.add(key); if (parts) ctx.sentParts[key] = parts; };
-  /** A bot this send made on My Cloud: its fields go whatever My Cloud's defaults are, until they are recorded, and it
+  /** A bot this send made on the server: its fields go whatever the server's defaults are, until they are recorded, and it
    * counts as sent before, so one removed there before then stays removed. */
   function markCreated(ctx, key) {
     const kept = entry(ctx.origin);
@@ -681,7 +631,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       const body = botPatch(bot, [part], ctx.cloudBots);
       if (!Object.keys(body).length) continue;
       const one = await ctx.session.call("PATCH", `/api/bots/${bot.id}`, body);
-      if (!one.ok) refused[part] = refusal(one, "My Cloud refused this setting.");
+      if (!one.ok) refused[part] = refusal(one, "The server refused this setting.");
     }
     return refused;
   }
@@ -693,14 +643,13 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     if (!bytes) return "The picture could not be read on this computer.";
     const uploaded = await ctx.session.upload("/api/attachments", bytes, PICTURE_TYPES[name[2]]);
     const stored = typeof uploaded.body?.path === "string" ? uploaded.body.path.replaceAll("\\", "/").split("/").pop() : null;
-    if (!uploaded.ok || !stored) return refusal(uploaded, "My Cloud could not store the picture.");
+    if (!uploaded.ok || !stored) return refusal(uploaded, "The server could not store the picture.");
     const set = await ctx.session.call("PATCH", `/api/bots/${bot.id}`, { avatarUrl: `/api/attachments/${stored}` });
-    return set.ok ? null : refusal(set, "My Cloud could not use the picture.");
+    return set.ok ? null : refusal(set, "The server could not use the picture.");
   }
 
   /** A move keeps both of two different bots of one name: the one arriving is named after this computer. */
   async function arrivingName(ctx, bot) {
-    if (team) return team.name;
     if (!ctx.move || !ctx.computer) return bot.name;
     ctx.cloudNames ??= ctx.session.call("GET", "/api/bots?messages=0")
       .then((listed) => (Array.isArray(listed.body?.bots) ? listed.body.bots : []).filter(record), () => []);
@@ -713,9 +662,8 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     const bot = (await localBots(ctx)).get(row.id);
     if (!bot) throw new CloudSendError("gone", "This bot is no longer on this computer.");
     const model = record(bot.modelSelection) ? pick(bot.modelSelection, ["instanceId", "model", "effort", "variant"]) : null;
-    // A bot that moves into a team gets a main chat of the team's own there; its chats with the person arrive as theirs.
-    const base = { id: bot.id, ...(team ? {} : { threadId: bot.threadId }), name: await arrivingName(ctx, bot), useDefaults: false };
-    // Kept before asking: a send cut short while My Cloud makes the bot still knows the bot is its own (settleCreating).
+    const base = { id: bot.id, threadId: bot.threadId, name: await arrivingName(ctx, bot), useDefaults: false };
+    // Kept before asking: a send cut short while the server makes the bot still knows the bot is its own (settleCreating).
     entry(ctx.origin).creating[row.key] = true;
     persist();
     let created = await ctx.session.call("POST", "/api/bots", { ...base, ...(model ? { modelSelection: model, requireAvailableModel: true } : {}) });
@@ -724,7 +672,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       created = await ctx.session.call("POST", "/api/bots", base);
       modelKept = false;
     }
-    if (!created.ok) throw new CloudSendError("refused", refusal(created, "My Cloud could not add this bot."));
+    if (!created.ok) throw new CloudSendError("refused", refusal(created, "The server could not add this bot."));
     ctx.cloudBots.add(bot.id);
     markCreated(ctx, row.key);
     const parts = Object.keys(BOT_PARTS).filter((part) => part !== "name" && (part !== "model" || modelKept));
@@ -763,7 +711,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     if (entry(ctx.origin).created[row.key] && !ctx.move) await sendMemory(ctx, bot.id).catch(() => ctx.result.notes.push({ kind: "memory", bot: bot.name }));
   }
 
-  /** The bot's own skill, by its SKILL.md: My Cloud's copy is replaced when the text changed here. */
+  /** The bot's own skill, by its SKILL.md: The server's copy is replaced when the text changed here. */
   async function putSkill(ctx, botId, name, replace) {
     const skill = (await localSkills(ctx, botId)).get(name);
     if (!skill) throw new CloudSendError("gone", "This skill is no longer on this computer.");
@@ -779,15 +727,15 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       const listed = await ctx.session.call("GET", `/api/bots/${botId}/skills`);
       const own = await ctx.session.call("GET", `/api/bots/${botId}/skills/${name}`);
       const entry = Array.isArray(listed.body?.skills) ? listed.body.skills.find((candidate) => candidate?.name === name) : null;
-      if (!own.ok || typeof own.body?.text !== "string" || !entry) throw new CloudSendError("refused", refusal(own, "My Cloud's copy of this skill could not be read, so it was left as it is."));
+      if (!own.ok || typeof own.body?.text !== "string" || !entry) throw new CloudSendError("refused", refusal(own, "The server's copy of this skill could not be read, so it was left as it is."));
       previous = { entry, text: own.body.text };
       const removed = await ctx.session.call("DELETE", `/api/bots/${botId}/skills/${name}`);
-      if (!removed.ok) throw new CloudSendError("refused", refusal(removed, "My Cloud could not replace this skill."));
+      if (!removed.ok) throw new CloudSendError("refused", refusal(removed, "The server could not replace this skill."));
     }
     const added = await install(skill, text.text);
     if (added.ok) return;
     if (previous) await install(previous.entry, previous.text).catch(() => null);
-    throw new CloudSendError("refused", refusal(added, "My Cloud could not add this skill."));
+    throw new CloudSendError("refused", refusal(added, "The server could not add this skill."));
   }
 
   async function sendSkill(ctx, row) {
@@ -796,9 +744,9 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     if (there && parts.length === 1 && parts[0] === "on") {
       const skill = (await localSkills(ctx, row.bot)).get(row.id);
       const set = await ctx.session.call("PATCH", `/api/bots/${row.bot}/skills/${row.id}`, { enabled: skill?.enabled === true });
-      if (!set.ok) throw new CloudSendError("refused", refusal(set, "My Cloud could not switch this skill."));
+      if (!set.ok) throw new CloudSendError("refused", refusal(set, "The server could not switch this skill."));
     } else {
-      if (!ctx.cloudBots.has(row.bot)) throw new CloudSendError("no_bot", "Its bot is not on My Cloud.");
+      if (!ctx.cloudBots.has(row.bot)) throw new CloudSendError("no_bot", "Its bot is not on the server.");
       await putSkill(ctx, row.bot, row.id, Boolean(there));
     }
     done(ctx, row.key, there && parts.length === 1 && parts[0] === "on" ? parts : null);
@@ -813,7 +761,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       const doc = await localJson(`/api/bots/${botId}/memory/file?path=${encodeURIComponent(path)}`);
       if (!doc?.exists || typeof doc.text !== "string" || !doc.text.trim()) continue;
       const put = await ctx.session.call("PUT", `/api/bots/${botId}/memory/file`, { path, text: doc.text });
-      if (!put.ok) throw new CloudSendError("refused", refusal(put, "My Cloud could not save a memory note."));
+      if (!put.ok) throw new CloudSendError("refused", refusal(put, "The server could not save a memory note."));
     }
   }
 
@@ -830,7 +778,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       body = { language: config.language };
     } else return;
     const saved = await ctx.session.call("PATCH", "/api/config", body);
-    if (!saved.ok) throw new CloudSendError("refused", refusal(saved, "My Cloud could not save this setting."));
+    if (!saved.ok) throw new CloudSendError("refused", refusal(saved, "The server could not save this setting."));
     done(ctx, row.key, parts);
     ctx.result.settings.push(row.label);
   }
@@ -842,7 +790,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     const kept = botsOnCloud(login.bots, ctx.cloudBots);
     const saved = await ctx.session.call("POST", "/api/logins", { site: login.site, username: login.username, password: login.password,
       ...(login.totp ? { totp: login.totp } : {}), bots: kept, exactHost: login.exactHost === true });
-    if (!saved.ok) throw new CloudSendError("refused", refusal(saved, "My Cloud could not save the login."));
+    if (!saved.ok) throw new CloudSendError("refused", refusal(saved, "The server could not save the login."));
     if (Array.isArray(login.bots) && kept.length < login.bots.length) ctx.result.notes.push({ kind: "narrowed", login: row.label });
     done(ctx, row.key);
     ctx.result.logins++;
@@ -860,7 +808,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     for (const [vault, bots] of Object.entries(onePassword.grants ?? {})) {
       if (!VAULT_ID.test(vault)) continue;
       const granted = await ctx.session.call("PATCH", `/api/logins/1password/vaults/${encodeURIComponent(vault)}`, { bots: botsOnCloud(bots, ctx.cloudBots) });
-      if (!granted.ok && granted.status !== 404) throw new CloudSendError("refused", refusal(granted, "My Cloud connected 1Password but could not keep its vaults to the same bots."));
+      if (!granted.ok && granted.status !== 404) throw new CloudSendError("refused", refusal(granted, "The server connected 1Password but could not keep its vaults to the same bots."));
     }
     done(ctx, row.key);
     ctx.result.onePassword = true;
@@ -868,34 +816,34 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
 
   /**
    * What did not arrive of what a move carried, from both sides' own answers, over one owner session that counts as
-   * someone using My Cloud: `gaps`, the manifests compared (cloud-send-check.mjs); `chats`, each conversation's rows, its
-   * owner's lines and its visible path; `attachments`, the stored ones My Cloud lacks; `secrets`, each credential by its
-   * fingerprint. Left out: what was removed on My Cloud, and a 1Password token 1Password itself refused. `ok` when
+   * someone using the server: `gaps`, the manifests compared (cloud-send-check.mjs); `chats`, each conversation's rows, its
+   * owner's lines and its visible path; `attachments`, the stored ones the server lacks; `secrets`, each credential by its
+   * fingerprint. Left out: what was removed on the server, and a 1Password token 1Password itself refused. `ok` when
    * nothing is missing.
    */
   async function check() {
     const origin = cloud.origin();
-    if (!origin) throw new CloudSendError("no_cloud", "This computer has no My Cloud yet.");
+    if (!origin) throw new CloudSendError("no_cloud", "This computer has no the server yet.");
     const kept = entry(origin);
-    const session = await cloud.open({ move: true }).catch((error) => { throw new CloudSendError("session", sentence(error?.message) ?? "This app could not sign in to My Cloud. Try again.", { cause: error }); });
+    const session = await cloud.open({ move: true }).catch((error) => { throw new CloudSendError("session", sentence(error?.message) ?? "This app could not sign in to the server. Try again.", { cause: error }); });
     try {
       await assertTakesMove(session);
-      const here = await localJson(scoped("/api/cloud-send/manifest"));
-      const answer = await session.call("GET", scoped("/api/cloud-send/manifest"));
-      if (!answer.ok) throw new CloudSendError("unreachable", refusal(answer, "My Cloud did not answer. Try again."));
+      const here = await localJson("/api/cloud-send/manifest");
+      const answer = await session.call("GET", "/api/cloud-send/manifest");
+      if (!answer.ok) throw new CloudSendError("unreachable", refusal(answer, "The server did not answer. Try again."));
       const removed = new Set([...Object.entries(kept.off).filter(([, why]) => why === "removed").map(([key]) => key),
         ...Object.entries(kept.chats).filter(([, cursor]) => cursor === "removed").map(([threadId]) => threadId),
         ...roomsRemovedThere(here, answer.body, kept.chats)]);
       const refused = new Set((kept.whole?.result.failed ?? []).filter((failure) => failure.final === true).map((failure) => failure.key));
       const gaps = manifestGaps(here, answer.body, { sent: kept.sent, removed, skip: refused });
-      if (!gaps) throw new CloudSendError("unreachable", "My Cloud did not say what it has. Try again.");
+      if (!gaps) throw new CloudSendError("unreachable", "The server did not say what it has. Try again.");
       const bots = new Set((here.items ?? []).filter((item) => item.kind === "bot" && !removed.has(item.key) && !refused.has(item.key)).map((item) => item.id));
       const going = roomsThatGo(here, bots);
       const threads = (here.conversations ?? []).filter((head) => !removed.has(head.threadId)
         && (head.room ? going.has(head.room) && !removed.has(`room:${head.room}`) : bots.has(head.bot))).map((head) => head.threadId);
       const chats = await checkChats({ localJson, session, threads });
       const attachments = await missingAttachments(session, Array.isArray(here.attachments) ? here.attachments : []);
-      const secrets = team ? { equal: [], differs: [], missing: [] } : await checkSecrets({ handoff, session, skip: new Set([...removed, ...refused]) });
+      const secrets = await checkSecrets({ handoff, session, skip: new Set([...removed, ...refused]) });
       return { ok: checkPassed({ gaps, chats, attachments, secrets }), gaps, chats, attachments, secrets };
     } finally {
       try { await session.close(); } catch {}
@@ -904,22 +852,8 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
 
   return {
     snapshot,
-    compare,
     send,
     check,
-    /** The per-item switch. Turning on something removed on My Cloud forgets that it was sent, so it goes again. */
-    setItem(key, on) {
-      const origin = cloud.origin();
-      if (!origin || typeof key !== "string") return publish();
-      const kept = entry(origin);
-      if (on) {
-        if (kept.off[key] === "removed") delete kept.sent[key];
-        delete kept.off[key];
-      } else kept.off[key] = "you";
-      persist();
-      if (view.local && view.theirs) view = { ...view, plan: plan(origin, view.local, view.theirs) };
-      return publish();
-    },
     dismiss(signature) {
       const origin = cloud.origin();
       if (origin && typeof signature === "string") { entry(origin).dismissed = signature.slice(0, 20_000); persist(); }
@@ -929,13 +863,6 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     switches() {
       const origin = cloud.origin();
       return origin ? { ...entry(origin).on } : {};
-    },
-    /** For the native menu: what is waiting, from the last comparison, without asking anyone. */
-    waiting() {
-      const plan = view.plan;
-      if (!plan || view.cloud !== "ready") return null;
-      const rows = pendingRows(plan);
-      return { bots: rows.filter((row) => row.kind === "bot" && row.state === "only-here").length, total: rows.length };
     },
   };
 }

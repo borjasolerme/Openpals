@@ -24,7 +24,7 @@ test("a pairing link keeps its code in the hash; a code anywhere else is refused
 });
 
 test("self-hosted pairing supports custom HTTPS and Cloudflare names without Tailscale", () => {
-  for (const origin of ["https://bots.example.com", "https://example.trycloudflare.com", "https://c-example.openmausbot.com"]) {
+  for (const origin of ["https://bots.example.com", "https://example.trycloudflare.com", "https://bots.example.net"]) {
     const link = `${origin}/pair#code=ABCD-EFGH-JKLM`;
     assert.deepEqual(env.parsePairingLink(link), {
       origin, code: "ABCD-EFGH-JKLM", url: link,
@@ -141,81 +141,10 @@ test("native workspace choices use saved IDs and connect opens settings without 
   assert.equal(state.activeId, "cloud");
 });
 
-test("Add a Cloud… sits just under the saved servers only where main offers it, and My Cloud's line can say Always on", () => {
-  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://omb-u-1.fly.dev" }, { id: "office", name: "Office", origin: "https://office.example" }], activeId: "local" };
-  const calls = [];
-  const base = { onSwitch: (id) => calls.push(["switch", id]), onConnect: () => calls.push(["settings"]), onForget: () => {} };
-  const plain = env.workspaceMenuTemplate(state, base);
-  assert.equal(plain.some(item => item.id === "workspace-add-cloud"), false);
-  assert.deepEqual(plain.filter(item => item.sublabel).map(item => item.sublabel), ["omb-u-1.fly.dev", "office.example"]);
-  const items = env.workspaceMenuTemplate(state, { ...base, onAddCloud: () => calls.push(["add-cloud"]), sublabels: { cloud: "Free trial until 15 Oct" } });
-  assert.deepEqual(items.map(item => item.id ?? item.type), ["workspace-local", "workspace-cloud", "workspace-office", "workspace-add-cloud", "separator", "workspace-connect"]);
-  const add = items.find(item => item.id === "workspace-add-cloud");
-  assert.deepEqual([add.label, add.sublabel, add.type], ["Add a Cloud…", "Keeps your bots running 24/7", undefined]);
-  add.click();
-  assert.deepEqual(items.find(item => item.id === "workspace-cloud").sublabel, "Free trial until 15 Oct");
-  assert.deepEqual(items.find(item => item.id === "workspace-office").sublabel, "office.example");
-  assert.deepEqual(calls, [["add-cloud"]]);
-});
-
-test("with My Cloud, the switcher says first which side has which bots, and under My Cloud what is not on it yet, with Send", async () => {
-  const state = { environments: [{ id: "cloud", name: "My Cloud", origin: "https://omb-u-1.fly.dev" }], activeId: "cloud" };
-  const clicked = [];
-  const send = { waiting: { bots: 2, total: 2 }, onSend: () => clicked.push("send"), onOpen: () => clicked.push("open") };
-  const options = await env.placesMenuOptions({ cloud: state.environments[0], home: true, platform: "win32", send,
-    localBots: async () => ({ bots: [{ name: "Ember" }] }) });
-  const items = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, sublabels: { cloud: "Always on" }, ...options });
-  assert.deepEqual(items.map((item) => item.id ?? item.type), ["workspace-places", "separator", "workspace-local", "workspace-cloud", "workspace-copy-to-cloud", "separator", "workspace-connect", "workspace-forget"]);
-  const places = items.find((item) => item.id === "workspace-places");
-  assert.deepEqual([places.label, places.enabled], ["Your bots live on My Cloud. This computer has its own: Ember.", false]);
-  // Windows and Linux menus show no sublabels: My Cloud's status joins its name rather than vanishing.
-  assert.equal(items.find((item) => item.id === "workspace-cloud").label, "My Cloud · Always on");
-  const line = items.find((item) => item.id === "workspace-copy-to-cloud");
-  assert.equal(line.label, "2 bots not on My Cloud · Send");
-  line.click();
-  assert.deepEqual(clicked, ["send"]);
-  const mac = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, sublabels: { cloud: "Always on" },
-    ...await env.placesMenuOptions({ cloud: state.environments[0], platform: "darwin", send: { ...send, waiting: { bots: 0, total: 0 } }, localBots: async () => ({ bots: [] }) }) });
-  assert.equal(mac.find((item) => item.id === "workspace-cloud").label, "My Cloud");
-  assert.equal(mac.find((item) => item.id === "workspace-cloud").sublabel, "Always on");
-  assert.equal(mac.find((item) => item.id === "workspace-places").label, "This computer has no bots of its own yet. My Cloud has its own.");
-  const open = mac.find((item) => item.id === "workspace-copy-to-cloud");
-  assert.equal(open.label, "This computer and My Cloud…");
-  open.click();
-  assert.deepEqual(clicked, ["send", "open"]);
-});
-
-test("someone who has not moved hears their bots live on this computer, even with My Cloud open in the window", async () => {
-  // Seen in the real app on Oct 22: moves not on yet, My Cloud opened from the switcher, and it said "Your bots live on My Cloud".
-  const options = await env.placesMenuOptions({ cloud: { id: "cloud", name: "My Cloud" }, platform: "linux", localBots: async () => ({ bots: [{ name: "Scout" }, { name: "Quill" }] }) });
-  assert.equal(options.places, "These bots live on this computer: Scout and Quill. My Cloud has its own.");
-  const moved = await env.placesMenuOptions({ cloud: { id: "cloud", name: "My Cloud" }, home: true, platform: "linux", localBots: async () => ({ bots: [{ name: "Scout" }] }) });
-  assert.equal(moved.places, "Your bots live on My Cloud. This computer has its own: Scout.");
-});
-
-test("the send line counts bots first, then everything else, and is absent when nothing waits", () => {
-  assert.equal(env.sendLine({ waiting: { bots: 1, total: 1 } }), "1 bot not on My Cloud · Send");
-  assert.equal(env.sendLine({ cloudName: "Studio Cloud", waiting: { bots: 1, total: 4 } }), "1 bot and 3 more not on Studio Cloud · Send");
-  assert.equal(env.sendLine({ waiting: { bots: 0, total: 1 } }), "1 change not on My Cloud · Send");
-  assert.equal(env.sendLine({ waiting: { bots: 0, total: 3 } }), "3 changes not on My Cloud · Send");
-  assert.equal(env.sendLine({ waiting: null }), null);
-});
-
-test("the places line names this computer's bots briefly, says nothing when its server does not answer, and is absent without a Cloud", async () => {
-  assert.equal(env.placesLine({ onCloud: true, localBots: ["Ember", "Juno"] }), "Your bots live on My Cloud. This computer has its own: Ember and Juno.");
-  assert.equal(env.placesLine({ onCloud: true, localBots: ["Ember", "Juno", "Kit", "Lark"] }), "Your bots live on My Cloud. This computer has its own: Ember, Juno and 2 more.");
-  assert.equal(env.placesLine({ onCloud: false, cloudName: "Studio Cloud", localBots: ["Ember"] }), "These bots live on this computer: Ember. Studio Cloud has its own.");
-  assert.equal(env.placesLine({ onCloud: true, localBots: [] }), "Your bots live on My Cloud. This computer has none of its own.");
-  const quiet = await env.placesMenuOptions({ cloud: { id: "cloud", name: "My Cloud" }, home: true, platform: "win32", send: { waiting: null, onSend() {}, onOpen() {} }, localBots: async () => { throw new Error("timeout"); } });
-  assert.equal("places" in quiet, false);
-  assert.ok(quiet.copyToCloud);
-  assert.deepEqual(await env.placesMenuOptions({ cloud: null, platform: "win32", localBots: async () => ({ bots: [] }) }), { foldSublabels: true });
-});
-
 test("native window identity distinguishes hosted HTML, companion data, and the local workspace", () => {
   const state = { environments: [{ id: "old", name: "Old team", origin: "https://old.example" }], activeId: "old" };
   assert.equal(env.workspaceWindowTitle(state), "Openpals — Hosted: Old team (old.example)");
-  assert.equal(env.workspaceWindowTitle(state, { serverName: "Office", endpoint: "https://c-office.openmausbot.com" }), "Openpals — Connected to: Office (c-office.openmausbot.com)");
+  assert.equal(env.workspaceWindowTitle(state, { serverName: "Office", endpoint: "http://office.example-tailnet.ts.net:8810" }), "Openpals — Connected to: Office (office.example-tailnet.ts.net:8810)");
   assert.equal(env.workspaceWindowTitle(env.withActive(state, "local")), "Openpals");
 });
 
@@ -393,91 +322,16 @@ test("parseEnvironments dedups local dirs on the same normalized key", () => {
   ]).length, 2);
 });
 
-test("once My Cloud is home the switcher lists whole places only: My Cloud first, then each saved server, never this computer", () => {
-  const home = "https://omb-t-1.fly.dev";
-  const state = { environments: [{ id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }, { id: "c", kind: "remote", name: "My Cloud", origin: home },
-    { id: "l", kind: "local", name: "Lab", dataDir: "/lab" }], activeId: "c" };
-  const switched = [], forgot = [];
-  const items = env.workspaceMenuTemplate(state, { onSwitch: (id) => switched.push(id), onConnect() {}, onForget: (id) => forgot.push(id), onAddCloud() {}, places: "x", copyToCloud: { label: "Send" }, homeOrigin: home });
-  assert.deepEqual(items.map((item) => [item.label, item.checked]), [["My Cloud", true], ["Office", false]]);
-  items[1].click();
-  assert.deepEqual(switched, ["o"]);
-  const away = env.workspaceMenuTemplate({ ...state, activeId: "o" }, { onSwitch() {}, onConnect() {}, onForget: (id) => forgot.push(id), homeOrigin: home });
-  assert.deepEqual(away.map((item) => item.label ?? item.type), ["My Cloud", "Office", "separator", "Forget “Office”…"]);
-  away.at(-1).click();
-  assert.deepEqual(forgot, ["o"]);
-  assert.equal(env.otherPlaces(state, home), 1);
-  assert.equal(env.otherPlaces({ ...state, environments: state.environments.filter((entry) => entry.id !== "o") }, home), 0, "My Cloud alone: no switcher");
-  assert.equal(env.workspaceWindowTitle(state, null, home), "Openpals — My Cloud", "with another place besides, the window names the one it shows");
-  assert.equal(env.workspaceWindowTitle({ ...state, environments: state.environments.filter((entry) => entry.id !== "o") }, null, home), "Openpals", "the window onto home alone is simply the app");
-  assert.equal(env.workspaceWindowTitle({ ...state, activeId: "o" }, null, home), "Openpals — Hosted: Office (office.example.test)");
-});
 
-const TEAM = "https://omb-u-acme.fly.dev";
-const acme = (extra = {}) => ({ id: "team-acme", name: "Acme", role: "admin", machine: { status: "ready", origin: TEAM }, ...extra });
-
-test("the switcher lists My Cloud first, then each team from the session with this person's role, then saved servers; a team has no Forget", () => {
-  const home = "https://omb-t-1.fly.dev";
-  const state = { environments: [{ id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }, { id: "t", kind: "remote", name: "Acme", origin: TEAM, team: { id: "team-acme", role: "owner" } },
-    { id: "c", kind: "remote", name: "My Cloud", origin: home, home: true }], activeId: "t" };
-  const items = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, homeOrigin: home });
-  assert.deepEqual(items.map((item) => [item.label, item.sublabel, item.checked]), [["My Cloud", "omb-t-1.fly.dev", false], ["Acme", "Super admin", true], ["Office", "office.example.test", false]]);
-  assert.deepEqual(env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {}, homeOrigin: home, foldSublabels: true }).map((item) => item.label), ["My Cloud", "Acme · Super admin", "Office"]);
-  for (const [role, label] of [["owner", "Super admin"], ["admin", "Admin"], ["member", "User"], ["other", "User"]]) assert.equal(env.teamRoleLabel(role), label, role);
-  assert.equal(env.workspaceWindowTitle(state, null, home), "Openpals — Acme");
-  assert.deepEqual(env.workspaceSummary(state), { local: false, name: "Acme", origin: TEAM, role: "Super admin" });
-  // Before the move (or a Team Owner, whose home is this computer): This computer, then each team with its role (no Forget), then servers as saved.
-  const before = env.workspaceMenuTemplate(state, { onSwitch() {}, onConnect() {}, onForget() {} });
-  assert.deepEqual(before.filter((item) => item.type === "radio").map((item) => [item.label, item.sublabel]), [["This computer", undefined], ["Acme", "Super admin"], ["Office", "office.example.test"], ["My Cloud", "omb-t-1.fly.dev"]]);
-  assert.equal(before.some((item) => item.id === "workspace-forget"), false, "a team is the Admin's to remove");
-  assert.equal(env.otherPlaces(state, home), 2);
-  const serialized = env.parseEnvironments(env.serializeEnvironments(state));
-  assert.deepEqual(serialized.environments.find((entry) => entry.id === "t").team, { id: "team-acme", role: "owner" }, "a team entry survives the file");
-  assert.equal(env.parseEnvironments({ version: 2, environments: [{ id: "x", kind: "remote", name: "X", origin: TEAM, team: { id: "team-acme", role: "god" } }], activeId: "x" }).environments[0].team, undefined, "an unknown role is no team");
-  assert.equal(env.parseEnvironments({ version: 2, environments: [{ id: "x", kind: "remote", name: "X", origin: TEAM, home: true, team: { id: "team-acme", role: "admin" } }], activeId: "x" }).environments[0].team, undefined, "My Cloud's entry is never a team's");
-});
-
-test("the session's teams become saved places, named and roled as the Admin says; one it no longer lists is gone, with its name, and the window falls back to My Cloud", () => {
-  const home = "https://omb-t-1.fly.dev";
-  let ids = 0;
-  const makeId = () => `id-${++ids}`;
-  const base = { environments: [{ id: "c", kind: "remote", name: "My Cloud", origin: home, home: true }, { id: "o", kind: "remote", name: "Office", origin: "https://office.example.test" }], activeId: "c" };
-  const joined = env.reconcileTeams(base, [acme(), { id: "team-none", name: "No machine yet", role: "member", machine: null }, { id: "bad", name: "", role: "member", machine: { status: "ready", origin: "https://x.example" } }], makeId, home);
-  assert.deepEqual(joined.left, []);
-  assert.deepEqual(joined.state.environments.map((entry) => [entry.name, entry.team ?? null]), [["My Cloud", null], ["Office", null], ["Acme", { id: "team-acme", role: "admin" }]], "only a team with a Cloud to open is a place; a malformed one is left out");
-  assert.equal(joined.state.activeId, "c");
-  assert.equal(env.reconcileTeams(joined.state, [acme()], makeId, home).state, joined.state, "nothing changed: the same state");
-  const renamed = env.reconcileTeams(joined.state, [acme({ name: " Acme  Inc ", role: "owner" })], makeId, home).state;
-  assert.deepEqual(renamed.environments.at(-1), { id: "id-1", kind: "remote", origin: TEAM, name: "Acme Inc", team: { id: "team-acme", role: "owner" } }, "the name and role follow the Admin");
-  const showing = { ...joined.state, activeId: "id-1" };
-  const removed = env.reconcileTeams(showing, [], makeId, home);
-  assert.deepEqual(removed.left, ["Acme"]);
-  assert.deepEqual(removed.state.environments.map((entry) => entry.id), ["c", "o"]);
-  assert.equal(removed.state.activeId, "c", "the window shown Acme: My Cloud again");
-  assert.equal(env.reconcileTeams({ ...showing, environments: showing.environments.filter((entry) => entry.id !== "c") }, [], makeId, home).state.activeId, env.LOCAL_ID, "without My Cloud: this computer");
-  assert.equal(env.reconcileTeams(showing, null, makeId, home).state, showing, "no word from the Admin changes nothing");
-  const saved = { environments: [{ id: "s", kind: "remote", name: "Acme (saved by hand)", origin: TEAM }], activeId: "s" };
-  assert.deepEqual(env.reconcileTeams(saved, [acme()], makeId, home).state.environments, [{ id: "s", kind: "remote", name: "Acme", origin: TEAM, team: { id: "team-acme", role: "admin" } }], "a server saved by hand at the team's address becomes the team's entry");
-});
-
-test("with My Cloud as home, the menu still folds its status line into the name where menus show no sublabels", async () => {
-  const state = { activeId: "c", environments: [{ id: "c", kind: "remote", name: "My Cloud", origin: "https://me.example" }] };
-  for (const [platform, folded] of [["linux", true], ["win32", true], ["darwin", false]]) {
-    const options = await env.placesMenuOptions({ homeOrigin: "https://me.example", cloud: state.environments[0], platform, localBots: async () => { throw new Error("home lists no local bots"); } });
-    const [item] = env.workspaceMenuTemplate(state, { onSwitch() {}, sublabels: { c: "Always on" }, ...options });
-    assert.equal(item.label, folded ? "My Cloud · Always on" : "My Cloud", platform);
-  }
-});
-
-test("a Cloud or team joining the list leaves this computer's page the active place, as the window still shows it", () => {
-  const HOME = "https://home.example.test";
-  const saved = { environments: [{ id: "h", kind: "remote", name: "My Cloud", origin: HOME, home: true }], activeId: "local" };
-  const teams = env.reconcileTeams(saved, [{ id: "team-a", role: "member", name: "Acme", machine: { origin: "https://acme.example.test" } }], () => "t", HOME);
-  assert.equal(teams.state.environments.length, 2);
-  assert.equal(teams.state.activeId, "local");
-  const clouds = env.reconcileOwnClouds(saved, [{ id: "c2", role: "owner", name: "Second", origin: "https://second.example.test" }], () => "c", HOME);
-  assert.equal(clouds.environments.length, 2);
-  assert.equal(clouds.activeId, "local");
-  const gone = env.reconcileTeams({ environments: [{ id: "t", kind: "remote", name: "Acme", origin: "https://acme.example.test", team: { id: "team-a", role: "member" } }, saved.environments[0]], activeId: "t" }, [], () => "x", HOME);
-  assert.equal(gone.state.activeId, "h", "a place on screen that's gone still falls back to My Cloud");
+test("a saved list from an app that knew Clouds and teams still loads: those places are servers like any other", () => {
+  const parsed = env.parseEnvironments(JSON.stringify({ version: 2, activeId: "home", environments: [
+    { id: "home", kind: "remote", name: "My Cloud", origin: "https://omb-u-1.fly.dev", home: true, color: "blue" },
+    { id: "acme", kind: "remote", name: "Acme", origin: "https://omb-t-acme.fly.dev", team: { id: "t-acme", role: "owner" } },
+    { id: "a", kind: "remote", name: "Client A", origin: "https://omb-c-a.fly.dev", cloud: { id: "c-a", role: "owner" } },
+  ] }));
+  assert.deepEqual(parsed, { activeId: "home", environments: [
+    { id: "home", kind: "remote", name: "My Cloud", origin: "https://omb-u-1.fly.dev", color: "blue" },
+    { id: "acme", kind: "remote", name: "Acme", origin: "https://omb-t-acme.fly.dev" },
+    { id: "a", kind: "remote", name: "Client A", origin: "https://omb-c-a.fly.dev" },
+  ] });
 });

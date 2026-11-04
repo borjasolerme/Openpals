@@ -22,7 +22,6 @@ vi.mock("./DesktopCapabilities", async (importOriginal) => {
     },
   };
 });
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const stored = new Map<string, string>();
 const storage = {
@@ -97,7 +96,7 @@ const room = {
   bulletin: "", unread: false, createdAt: 1, messages: [],
 } as unknown as Group;
 const noKey = { configured: false, voice: "marin", readTypedReplies: true, idleMinutes: 5 };
-const CLOUD = { cloudHome: true, tts: { configured: true, ready: true, voice: "preset" }, live: noKey } as AppState["config"];
+const CLOUD = { tts: { configured: true, ready: true, voice: "preset" }, live: noKey } as AppState["config"];
 const SERVER = { tts: { configured: true, ready: true, voice: "preset" }, live: noKey } as AppState["config"];
 const THIS_COMPUTER = { tts: { configured: true, ready: true, voice: "voice-1" }, live: noKey } as AppState["config"];
 const KEY_NEEDED = "Live calls use your own OpenAI key. Add it in Settings → API keys.";

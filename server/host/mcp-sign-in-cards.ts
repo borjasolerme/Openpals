@@ -11,10 +11,9 @@ import type { AppConfig } from "../config.ts";
 import { mcpSignInCardDescription, mcpSignInCardText } from "../connector-card-text.ts";
 import { cardOwner, McpOAuthError, McpSignInError, mcpCallbackOrigin, type McpOAuthManager, type McpSignInBrowser, type McpSignInPhase } from "../mcp-oauth.ts";
 import { isRemoteMcpServer, parseStoredMcpServer, type StoredRemoteMcpServer } from "../mcp-registry.ts";
-import { personKey } from "../person-key.ts";
 import { isLoopbackHost, isProxied, provesSameOrigin, requestOrigin, type RequestAuth } from "../request-auth.ts";
 import { serverLine, type ServerLineKey } from "../server-lines.ts";
-import { appLabel } from "../team-connections.ts";
+import { appLabel } from "../app-event-catalog.ts";
 import { runsElsewhere } from "./mcp-config.ts";
 
 interface CardStore {
@@ -28,12 +27,6 @@ export interface McpSignInCardDeps {
   cfg(): Pick<AppConfig, "mcpServers">;
   /** The sign-ins every bot uses. */
   mcpOAuth: McpOAuthManager;
-  /** A Team Cloud's servers each person signs in to themselves; none off a team. */
-  personal(): readonly string[];
-  /** The member a chat's turns act for, whose own sign-in they mount; null off a team or in a chat others read. */
-  turnPerson(threadId: string): string | null;
-  oauthFor(person: string): McpOAuthManager;
-  personName(person: string): string;
   /** The https addresses this home is reached at; unset ones are skipped. */
   publicOrigins(): ReadonlyArray<string | null | undefined>;
   language(threadId: string): string | undefined;
@@ -92,13 +85,6 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
     if (card) store.patchMessage(threadId, id, { connector: { ...card.connector, ...connector } });
   };
 
-  /** Whose sign-in a card makes: for a personal server the turn's person's own, else the one every bot uses. Null: a
-   * personal server in a chat that is nobody's alone. */
-  const signer = (name: string, threadId: string): McpOAuthManager | null => {
-    if (!deps.personal().includes(name)) return deps.mcpOAuth;
-    const person = deps.turnPerson(threadId);
-    return person ? deps.oauthFor(person) : null;
-  };
 
   function current(name: string): StoredRemoteMcpServer | Unreachable {
     const raw = deps.cfg().mcpServers?.[name];
@@ -118,19 +104,16 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
 
   function cancel(name: string, threadId: string, id: string): void {
     try {
-      signer(name, threadId)?.cancelFlow(name, cardOwner(threadId, id));
+      deps.mcpOAuth.cancelFlow(name, cardOwner(threadId, id));
     } catch (error) {
       if (!(error instanceof McpSignInError)) throw error;
     }
   }
 
-  /** A shared server's sign-in becomes every bot's, so it takes an admin, as Settings does. A personal one is the turn's
-   * person's own sign-in, so only they may make it. Null: this asker may; else the sentence the card shows them. */
-  function mayAuthorize(auth: RequestAuth, name: string, label: string, threadId: string, language: string | undefined): string | null {
-    if (!deps.personal().includes(name)) return auth.scopes.includes("admin") ? null : serverLine(language, "server.mcp.signIn.adminOnly", { label });
-    const person = deps.turnPerson(threadId);
-    if (person && auth.kind === "session" && personKey(auth.session) === person) return null;
-    return person ? serverLine(language, "server.mcp.signIn.onlyPerson", { name: deps.personName(person) }) : serverLine(language, "server.mcp.signIn.onlyOwner");
+  /** A server's sign-in becomes every bot's, so it takes an admin, as Settings does. Null: this asker may; else the
+   * sentence the card shows them. */
+  function mayAuthorize(auth: RequestAuth, label: string, language: string | undefined): string | null {
+    return auth.scopes.includes("admin") ? null : serverLine(language, "server.mcp.signIn.adminOnly", { label });
   }
 
   /** Where the person's browser comes back after the provider's page: this computer's loopback listener, or this home's
@@ -149,7 +132,7 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
     const { slug: name, label } = card.connector;
     const language = deps.language(threadId);
     if (card.connector.dismissed) return { status: 409, body: { error: "This sign-in request was set aside. Ask the bot again." } };
-    const denied = mayAuthorize(auth, name, label, threadId, language);
+    const denied = mayAuthorize(auth, label, language);
     if (denied) return { status: 409, body: { error: denied } };
     const server = current(name);
     if ("reason" in server) return unreachable(threadId, card, server);
@@ -158,7 +141,7 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
     // Paste-back needs the address bar of the browser that signed in, which only Settings asks for. A browser elsewhere
     // needs this home's https address, and a pre-registered app always comes back to a fixed loopback port.
     if (browser.remote && (!browser.origin || server.oauth)) return { status: 409, body: { error: serverLine(language, "server.mcp.signIn.inSettings") } };
-    const manager = signer(name, threadId)!;
+    const manager = deps.mcpOAuth;
     const owner = cardOwner(threadId, card.id);
     if (browser.remote && manager.waiting(name, owner)?.loopback) cancel(name, threadId, card.id);
     let started;
@@ -210,10 +193,10 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
   function status(threadId: string, card: McpCard): Reply {
     const name = card.connector.slug;
     const server = current(name);
-    const connected = !("reason" in server) && signer(name, threadId)?.authState(name, server.url) === "signed-in";
+    const connected = !("reason" in server) && deps.mcpOAuth.authState(name, server.url) === "signed-in";
     if (connected) signedIn(threadId, card.id);
     // A card can say "authorizing" with no sign-in behind it: the server restarted while it waited.
-    if (!connected && card.connector.status === "authorizing" && !signer(name, threadId)?.waiting(name, cardOwner(threadId, card.id))) {
+    if (!connected && card.connector.status === "authorizing" && !deps.mcpOAuth.waiting(name, cardOwner(threadId, card.id))) {
       patch(threadId, card.id, { status: "required", error: serverLine(deps.language(threadId), "server.mcp.signIn.expired") });
     }
     const pending = !connected && find(threadId, card.id)?.connector.status === "authorizing";
@@ -232,9 +215,6 @@ export function createMcpSignInCards(deps: McpSignInCardDeps) {
     /** Shows the person a Sign in card for a server the bot can't use until they sign in. An earlier open card this bot
      * showed for the same server is set aside, so the chat shows one. */
     request(at: { bot: { name: string }; threadId: string; from?: Message["from"] }, name: string, server: StoredRemoteMcpServer): { posted: true } | Refusal {
-      if (!signer(name, at.threadId)) {
-        return { status: 409, error: `${name} is each person's own, and this chat isn't one person's alone, so nobody can sign in to it here. Each person signs in to their own on their team's page in MausBot Cloud.` };
-      }
       for (const old of store.messagesFor(at.threadId)) {
         if (!isMcpSignInCard(old) || old.connector.slug !== name || old.from?.botId !== at.from?.botId) continue;
         if (old.connector.dismissed || old.connector.stopped || old.connector.status === "connected") continue;

@@ -19,41 +19,24 @@ const state: CompanionState = {
 const noop = () => {};
 const controller = (over: Partial<PhoneSetupController>): PhoneSetupController => ({
   state,
-  account: null,
   phase: "qr",
-  email: "",
-  code: "",
-  codeSent: false,
+  route: "local",
   busy: false,
-  accountBusy: false,
   error: null,
-  accountError: null,
   pairingLink: "openmausbot://pair?address=192.168.1.34%3A8810",
   secondsLeft: 120,
   address: "192.168.1.34",
   pairingPort: 8810,
-  addressText: "192.168.1.34:8810",
-  hostedReady: false,
-  localFallback: true,
-  tailscaleFallback: false,
   tailscaleAvailable: false,
   pairingExpired: false,
-  setupTimedOut: false,
-  setEmail: noop,
-  setCode: noop,
-  changeEmail: noop,
   start: noop,
   useLocal: noop,
   useTailscale: noop,
   refreshTailscale: noop,
-  requestCode: noop,
-  verifyCode: noop,
-  retryAccount: noop,
   cancel: noop,
   refreshCode: noop,
   finish: noop,
   act: async () => {},
-  accountAct: async () => {},
   ...over,
 });
 
@@ -70,9 +53,9 @@ describe("the Wi-Fi pairing panel on a Windows Public network", () => {
     expect(html).toContain("Network &amp; internet → Wi-Fi and set the network profile type to Private.");
   });
 
-  it("says nothing for a hosted QR, a Private network or an expired code", () => {
+  it("says nothing for a Tailscale QR, a Private network or an expired code", () => {
     for (const over of [
-      { localFallback: false },
+      { route: "tailscale" as const },
       { state: { ...state, publicNetwork: undefined } },
       { pairingExpired: true },
     ]) {

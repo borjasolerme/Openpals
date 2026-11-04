@@ -8,7 +8,7 @@ export declare const MAX_CHUNK: number;
 export declare const MAX_STREAMS: number;
 export declare const OPEN_MS: number;
 
-/** A stream My Cloud asked for: joined to the browser's own connection once the computer has connected it. */
+/** A stream the server asked for: joined to the browser's own connection once the computer has connected it. */
 export interface LinkStream { join(socket: Duplex, early?: readonly Buffer[]): void; cancel(): void }
 export type LinkOpened = LinkStream | { refused: string } | { failed: string } | { gone: true };
 export interface LinkMux {

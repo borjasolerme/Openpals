@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import type { CloudSwatch } from "../../electron/cloud-list.mjs";
 import type { RailPlace, RailState } from "../../electron/cloud-rail.mjs";
-import type { PlaceColorOutcome } from "../../electron/place-look.mjs";
-import type { CloudRemoveOutcome } from "../../electron/cloud-account.mjs";
+import type { PlaceColorOutcome, PlaceSwatch } from "../../electron/place-look.mjs";
 import { ipcErrorText } from "@/lib/cloud-send";
 import { t } from "@/lib/i18n";
 
-const NONE: RailState = { places: [], add: { cloud: false, link: false, address: false } };
+const NONE: RailState = { places: [], add: { link: false, address: false } };
 let current: RailState = NONE;
 let started = false;
 const listeners = new Set<(state: RailState) => void>();
@@ -34,8 +32,8 @@ function start() {
   void refreshPlaces();
 }
 
-/** The rail's places as main lists them for this page: none in a browser, on an older app, on a server's own page, or with
- * fewer than two places. */
+/** The rail's places as main lists them for this page: none in a browser, on a server's own page, or with fewer than two
+ * places. */
 export function usePlaces(): RailState {
   const [state, setState] = useState<RailState>(current);
   useEffect(() => {
@@ -48,23 +46,21 @@ export function usePlaces(): RailState {
   return state;
 }
 
-/** A place's colour, chosen in its menu on the window's rail: main saves it (on the Admin for a Cloud) whatever that
- * place's server runs, and the circle shows it once the list is read again. */
-export async function recolorPlace(id: string, swatch: CloudSwatch | null): Promise<PlaceColorOutcome> {
+/** A place's colour, chosen in its menu on the window's rail: main saves it whatever that place's server runs, and the
+ * circle shows it once the list is read again. */
+export async function recolorPlace(id: string, swatch: PlaceSwatch | null): Promise<PlaceColorOutcome | "failed"> {
   const answer = await bridge()?.recolor?.(id, swatch).catch(() => null);
   if (!answer) return "failed";
   if (answer.outcome === "saved") void refreshPlaces();
   return answer.outcome;
 }
 
-/** Remove from list, from a circle's menu once the person said yes: main takes that Cloud off their list on the Admin, and
- * the circle goes with main's next list. An older app (no such channel) answers `unsupported`. */
-export async function removePlace(id: string): Promise<CloudRemoveOutcome> {
-  const remove = bridge()?.remove;
-  if (!remove) return "unsupported";
-  const answer = await remove(id).catch(() => null);
+/** Remove from list, from a circle's menu once the person said yes: main forgets that server on this computer, and the
+ * circle goes with main's next list. */
+export async function removePlace(id: string): Promise<"removed" | "failed"> {
+  const answer = await bridge()?.remove?.(id).catch(() => null);
   if (!answer) return "failed";
-  if (answer.outcome === "removed" || answer.outcome === "gone") void refreshPlaces();
+  if (answer.outcome === "removed") void refreshPlaces();
   return answer.outcome;
 }
 

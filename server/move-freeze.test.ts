@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createMoveFreeze, ENDED_REFUSAL, HOME_SCREEN, MOVED_REFUSAL, movedRefusal, RAIL_PAGE, switchAutomationsOff, type MoveAutomations } from "./move-freeze.ts";
+import { createMoveFreeze, HOME_SCREEN, MOVED_REFUSAL, movedRefusal, RAIL_PAGE, switchAutomationsOff, type MoveAutomations } from "./move-freeze.ts";
 import type { MoveWait } from "./move-waits.ts";
 import { createMoveFreezeRoutes } from "./routes/move-freeze.ts";
 import { PASS } from "./routes/table.ts";
@@ -41,7 +41,7 @@ describe("this computer's copy, frozen at the move", () => {
     expect(after.log, "a frozen server never starts a schedule at launch").toEqual([]);
     expect(() => relaunched.assertTurns()).toThrow(MOVED_REFUSAL);
 
-    expect(relaunched.unfreeze()).toBe(true);
+    relaunched.unfreeze();
     expect(after.log).toEqual(["start"]);
     expect(existsSync(join(dir, "moved.json"))).toBe(false);
     expect(() => relaunched.assertTurns()).not.toThrow();
@@ -73,18 +73,6 @@ describe("this computer's copy, frozen at the move", () => {
     expect(createMoveFreeze({ dataDir: dir }).cloud(), "after a restart too").toBe("https://omb-t-1.fly.dev");
     freeze.unfreeze();
     expect([freeze.screen("/"), freeze.cloud()]).toEqual([null, null]);
-    expect(createMoveFreeze({ dataDir: dataDir(), exportOnly: true }).screen("/"), "an ended Cloud's own page is never this computer's screen").toBeNull();
-  });
-
-  it("a Cloud that ended, open only for its owner's export, is frozen from the start and never lifted", () => {
-    const freeze = createMoveFreeze({ dataDir: dataDir(), exportOnly: true });
-    const routines = schedule();
-    freeze.hold(routines.start, routines.stop);
-    expect(routines.log).toEqual([]);
-    expect(freeze.unfreeze()).toBe(false);
-    expect(freeze.frozen()).toBe(true);
-    expect(freeze.refuses("POST", "/api/bots/b1/messages")).toBe(ENDED_REFUSAL);
-    expect(freeze.refuses("POST", "/api/desktop/shared-computer-control"), "an ended Cloud runs no bots, so no screen lease").toBe(ENDED_REFUSAL);
   });
 });
 
@@ -163,7 +151,7 @@ describe("/api/move/freeze", () => {
     expect(await ask(route, "POST", "/api/bots/b1/messages")).toEqual({ status: 409, body: { error: "This bot lives on Garage server now.", code: "moved" } });
     const relaunched = createMoveFreeze({ dataDir: dir });
     expect([relaunched.place(), relaunched.refusal()]).toEqual(["Garage server", movedRefusal("Garage server")]);
-    expect(relaunched.unfreeze()).toBe(true);
+    relaunched.unfreeze();
     expect([relaunched.place(), movedRefusal(null)]).toEqual([null, MOVED_REFUSAL]);
     expect(await ask(route, "POST", undefined, { cloud: "https://garage.example.test", place: "x".repeat(121) }), "a name past 120 characters").toMatchObject({ status: 400 });
   });
@@ -198,6 +186,5 @@ describe("POST /api/move/forget", () => {
     expect(readdirSync(dir).sort()).toEqual(["environment-id", "moved.json", "sync", "tools"]);
     expect(restarted).toBe(1);
     expect(createMoveFreeze({ dataDir: dir }).frozen(), "it starts again frozen").toBe(true);
-    expect(createMoveFreeze({ dataDir: dir, exportOnly: true }).forget(), "a Cloud never deletes itself").toBe(false);
   });
 });

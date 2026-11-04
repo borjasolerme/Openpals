@@ -47,7 +47,7 @@ function harness({ packaged = true, appleSpeech = true, remote = false, register
   const guard = kind => (channel, handler) => { h.guards.set(channel, kind); return handler; };
   h.talk = installTalk({
     ipcMain: { handle: (channel, handler) => h.handlers.set(channel, handler) },
-    localOnly: guard("localOnly"), localOrHome: guard("localOrHome"), BrowserWindow: FakeBrowserWindow, appleSpeech,
+    localOnly: guard("localOnly"), BrowserWindow: FakeBrowserWindow, appleSpeech,
     speech: {
       start: (target, options) => { h.started.push([target, options]); },
       stop: failing("stop", owner => { h.stopped.push(owner); }),
@@ -84,30 +84,28 @@ test("every list of the app's windows leaves the talk box out", () => {
 });
 
 test("main hands the talk wiring its speech sinks, this computer's own server and window, and closes it first on quit", () => {
-  assert.match(main, /const talk = installTalk\(\{ ipcMain, localOnly, localOrHome, BrowserWindow, appleSpeech: nativeActions\.appleSpeech,\s*speech: \{ start: startSpeech, stop: stopSpeech, finish: finishSpeech, busy: speechBusy \},/);
+  assert.match(main, /const talk = installTalk\(\{ ipcMain, localOnly, BrowserWindow, appleSpeech: nativeActions\.appleSpeech,\s*speech: \{ start: startSpeech, stop: stopSpeech, finish: finishSpeech, busy: speechBusy \},/);
   assert.match(main, /packaged: app\.isPackaged, devUrl: DEV_URL, nativeImage, iconPath: APP_ICON, openLink: queueChatLink, reveal: revealForLink, log: slog \}\);/);
-  assert.match(main, /talk\.start\(\{ globalShortcut, screen, prefs: desktopPrefs, remote: \(\) => Boolean\(desktopRemoteAccess\), away: \(\) => homeWindow\.current\(\)\.kind !== "computer", starting: \(\) => !serverReady, localRequest: localServerRequest, dataDir: \(\) => runningDataDir \}\);/);
+  assert.match(main, /talk\.start\(\{ globalShortcut, screen, prefs: desktopPrefs, remote: \(\) => Boolean\(desktopRemoteAccess\), away: \(\) => ownHome\.away\(\), starting: \(\) => !serverReady, localRequest: localServerRequest, dataDir: \(\) => runningDataDir \}\);/);
   assert.match(main, /app\.on\("before-quit", \(e\) => \{\s*talk\.close\(\);/);
   assert.doesNotMatch(main, /ipcMain\.handle\("(?:speech|talk-shortcut|call):/);
 });
 
 test("main tells the talk wiring when home changes and which skin the app painted", () => {
-  assert.match(main, /const homeWindow = createHomeWindow\(\{[^]*?rehomed: \(\) => talk\.homeChanged\(\),[^]*?\}\);\ninstallHomeWindowIpc/);
+  assert.match(main, /ownHome = installOwnHome\(\{[^]*?onChange: \(\) => \{[^}]*talk\.homeChanged\(\); \} \}\);/);
   assert.match(main, /ipcMain\.handle\("desktop:skin", \(event, skin\) => \{\s*if \(!isKnownSkin\(skin\)\) return false;\s*if \(chromeRail\.owns\(event\)\) return true;\s*try \{\s*talk\.skin\(skin\);/);
 });
 
-test("the talk bridge keys stay off other servers' pages; a call can be reported from My Cloud's page", () => {
+test("the talk bridge keys stay off other servers' pages", () => {
   const list = name => preload.match(new RegExp(`const ${name} = (?:new Set\\()?\\[([^\\]]*)\\]`))[1];
   assert.doesNotMatch(list("REMOTE_SAFE"), /talkShortcut|callActive/);
-  assert.match(list("HOME_PAGE"), /"callActive"/);
-  assert.doesNotMatch(list("HOME_PAGE"), /talkShortcut/);
 });
 
-test("every microphone channel answers only this computer's page; a call can be reported from My Cloud's page too", () => {
+test("every microphone channel answers only this computer's page", () => {
   const { guards, handlers } = harness();
   assert.deepEqual(Object.fromEntries(guards), {
     "speech:start": "localOnly", "speech:stop": "localOnly", "speech:finish": "localOnly",
-    "talk-shortcut:state": "localOnly", "talk-shortcut:set": "localOnly", "call:active": "localOrHome",
+    "talk-shortcut:state": "localOnly", "talk-shortcut:set": "localOnly", "call:active": "localOnly",
   });
   assert.deepEqual([...handlers.keys()], [...guards.keys()]);
 });
@@ -245,7 +243,7 @@ test("clicking the box opens its chat by a link with both ids escaped, or else j
   h.talk.close();
 });
 
-test("while home is My Cloud or this computer's copy is frozen the shortcut is unavailable and the key free; home here again takes it back", () => {
+test("while home is a server of the person's own or this computer's copy is frozen the shortcut is unavailable and the key free; home here again takes it back", () => {
   const h = harness();
   h.away = true;
   h.start();

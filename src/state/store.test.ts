@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   api,
   ApiError,
-  CLOUD_LINK_SETTINGS,
   configStatusFromFrame,
   currentTaskBot,
   desktopApprovalBridge,
@@ -341,21 +340,6 @@ describe("keyboard shortcuts dialog state", () => {
     const closed = reducer(opened, { type: "toggleShortcuts" });
     expect(closed.shortcutsOpen).toBe(false);
     expect(closed.botSettingsSection).toBe("soul");
-  });
-});
-
-describe("Settings opened by the Cloud link", () => {
-  it("marks only the link's own opening, counts each link, and clears on any other Settings navigation", () => {
-    expect(initialState.appSettingsCloudLink).toBe(0);
-    const link = CLOUD_LINK_SETTINGS;
-    const opened = reducer(initialState, link);
-    expect(opened).toMatchObject({ appSettingsOpen: true, appSettingsSection: "cloudAccount", appSettingsCloudLink: 1 });
-    expect(reducer(opened, link).appSettingsCloudLink).toBe(2);
-    expect(reducer(opened, { type: "toggleAppSettings", open: true, section: "cloudAccount" }).appSettingsCloudLink).toBe(0);
-    expect(reducer(opened, { type: "toggleAppSettings", open: true, section: "general" }).appSettingsCloudLink).toBe(0);
-    expect(reducer(opened, { type: "toggleAppSettings", open: false })).toMatchObject({ appSettingsOpen: false, appSettingsCloudLink: 0 });
-    expect(reducer(opened, { type: "toggleAppSettings" }).appSettingsCloudLink).toBe(0);
-    expect(reducer(initialState, { ...link, open: false }).appSettingsCloudLink).toBe(0);
   });
 });
 
@@ -2290,14 +2274,14 @@ describe("bot settings section", () => {
   it.each(["identity", "model"] as const)("opens a bot's %s settings without leaving the team map or reading its conversations", (section) => {
     const state = {
       ...initialState,
-      activeView: "files" as const,
+      activeView: "web-panel" as const,
       selectedId: "room",
       bots: [{ ...bot, unread: true }],
       groups: [{ id: "room", unread: true } as Group],
     };
     const next = reducer(state, { type: "toggleSettings", botId: bot.id, section });
     expect(next.selectedId).toBe(bot.id);
-    expect(next.activeView).toBe("files");
+    expect(next.activeView).toBe("web-panel");
     expect(next.settingsOpen).toBe(true);
     expect(next.botSettingsSection).toBe(section);
     expect(next.botSettingsExpandAccordion).toBe(true);
@@ -2309,7 +2293,7 @@ describe("bot settings section", () => {
     const other = { ...bot, id: "other-bot" };
     const state = {
       ...initialState,
-      activeView: "files" as const,
+      activeView: "web-panel" as const,
       selectedId: bot.id,
       bots: [bot, other],
       settingsOpen: true,
@@ -2318,7 +2302,7 @@ describe("bot settings section", () => {
     };
     const next = reducer(state, { type: "toggleSettings", botId: other.id });
     expect(next.selectedId).toBe(other.id);
-    expect(next.activeView).toBe("files");
+    expect(next.activeView).toBe("web-panel");
     expect(next.settingsOpen).toBe(true);
     expect(next.botSettingsSection).toBe("soul");
     expect(next.botSettingsExpandAccordion).toBe(false);
@@ -2335,7 +2319,7 @@ describe("bot settings section", () => {
   it.each(["missing-bot", "hidden-bot", "room"])("ignores unavailable settings target %s", (botId) => {
     const state = {
       ...initialState,
-      activeView: "files" as const,
+      activeView: "web-panel" as const,
       selectedId: bot.id,
       bots: [bot, { ...bot, id: "hidden-bot", hidden: true }],
       groups: [{ id: "room" } as Group],
@@ -2467,26 +2451,16 @@ describe("activity panel", () => {
     expect(next.computerOpen).toBe(true);
   });
 
-  it("switching to routines or Files closes the activity panel", () => {
+  it("switching to routines or a web panel closes the activity panel", () => {
     const open = { ...initialState, activityOpen: true };
     expect(reducer(open, { type: "showRoutines" }).activityOpen).toBe(false);
-    expect(reducer(open, { type: "showFiles" }).activityOpen).toBe(false);
+    expect(reducer(open, { type: "showWebPanel", id: "panel-1" }).activityOpen).toBe(false);
   });
 
-  it("opens Files as its own page, carrying the folders it should offer to share only when asked", () => {
-    const open = { ...initialState, activityOpen: true, appSettingsOpen: true, settingsOpen: true };
-    const suggested = reducer(open, { type: "showFiles", suggest: ["/Users/ada/site"] });
-    expect(suggested).toMatchObject({ activeView: "files", filesSuggest: ["/Users/ada/site"], activityOpen: false, appSettingsOpen: false, settingsOpen: false });
-    expect(reducer(suggested, { type: "showFiles" })).toMatchObject({ activeView: "files", filesSuggest: null });
-    expect(reducer(suggested, { type: "showFiles", suggest: [] }).filesSuggest).toBeNull();
-    expect(reducer(suggested, { type: "showWebPanel", id: "panel-1" })).toMatchObject({ activeView: "web-panel", filesSuggest: null });
-  });
-
-  it("a pinned web panel replaces the main view like Files, and chat comes back", () => {
+  it("a pinned web panel replaces the main view, and chat comes back", () => {
     const open = { ...initialState, activityOpen: true, computerOpen: true, settingsOpen: true };
     const panel = reducer(open, { type: "showWebPanel", id: "panel-1" });
     expect(panel).toMatchObject({ activeView: "web-panel", webPanelId: "panel-1", activityOpen: false, computerOpen: false, settingsOpen: false });
-    expect(reducer(panel, { type: "showFiles" })).toMatchObject({ activeView: "files", webPanelId: "panel-1" });
     expect(reducer(panel, { type: "showChat" }).activeView).toBe("chat");
   });
 });
@@ -2505,17 +2479,6 @@ describe("live config frames", () => {
     const automaticRecovery = { enabled: true, backup: { instanceId: "backup", model: "fixture-model" } };
     expect(configStatusFromFrame({ ...baseFrame, automaticRecovery }).automaticRecovery).toEqual(automaticRecovery);
     expect(configStatusFromFrame({ ...baseFrame, automaticRecovery: { enabled: false } }).automaticRecovery).toEqual({ enabled: false });
-  });
-
-  it("keeps a Team Cloud's team through live config refreshes, so its people stay in the @ list", () => {
-    const team = { id: "team-acme", name: "Acme", cloudPage: "https://cloud.example.test/cloud" };
-    expect(configStatusFromFrame({ ...baseFrame, team }).team).toEqual(team);
-    expect(configStatusFromFrame(baseFrame)).not.toHaveProperty("team");
-  });
-
-  it("keeps an OMB Cloud home's flag through live config refreshes, and adds none elsewhere", () => {
-    expect(configStatusFromFrame({ ...baseFrame, cloudHome: true }).cloudHome).toBe(true);
-    expect(configStatusFromFrame(baseFrame)).not.toHaveProperty("cloudHome");
   });
 
   it("preserves edition, budgets and billing through configStatusFromFrame", () => {
@@ -2554,13 +2517,6 @@ describe("live config frames", () => {
       openaiCompat: { configured: true, url: "http://127.0.0.1:1/v1" },
       fleet: { available: true },
     });
-  });
-
-  it("carries the organisation's read-only desktop policy through a config frame", () => {
-    const managedPolicy = { organizationName: "Fixture Agency", version: 2, companyModelsOnly: true, allowedEngines: ["codex"],
-      mcp: { allowCustom: false, allowlist: ["github"] }, computers: { thisComputer: false, localVm: true, box: true, vps: true }, remoteAccess: false };
-    expect(configStatusFromFrame({ ...baseFrame, managedPolicy }).managedPolicy).toEqual(managedPolicy);
-    expect(configStatusFromFrame({ ...baseFrame, managedPolicy: null }).managedPolicy).toBeNull();
   });
 
   it("keeps edition, budgets and billing in state.config after a config SSE frame lands", () => {

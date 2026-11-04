@@ -8,7 +8,6 @@ import { finalizeBrowserCleanupMutation, requireBrowserCleanupAcknowledged } fro
 import type { BrowserLive } from "../browser-live.ts";
 import type { BrowserRuntime } from "../browser-runtime.ts";
 import { boatAccountResourceChangeError, vpsAliasResourceChangeError } from "../cloud-backend.ts";
-import { CLOUD_PERSONAL_REFUSAL } from "../cloud-owner.ts";
 import * as composio from "../composio.ts";
 import {
   browserProfilePartitionTarget,
@@ -27,9 +26,8 @@ import {
 } from "../config.ts";
 import type { InstanceConfigMap, ModelSelection } from "../contracts.ts";
 import type { RequestAuth } from "../request-auth.ts";
-import { DECIDER_KEY_REJECTED, deciderIncludedHere, deciderPatchKey, deciderSavePatch, deciderSharedKeyUsable, type Decider } from "../decider/index.ts";
+import { DECIDER_KEY_REJECTED, deciderPatchKey, deciderSavePatch, deciderSharedKeyUsable, type Decider } from "../decider/index.ts";
 import type { ProviderRegistry } from "../harness/registry.ts";
-import { HOSTED_PROVIDER_SETTINGS_ERROR } from "../hosted-models.ts";
 import { forgetKey } from "../key-rejections.ts";
 import type { ComputerIdleTimer } from "../computer-idle.ts";
 import { PROVIDER_KEY_KINDS } from "../provider-key-check.ts";
@@ -69,8 +67,6 @@ export interface ConfigRouteDeps {
   decider: Pick<Decider, "testKey">;
   sharedComputers: Pick<SharedComputers, "close">;
   sharedComputerControl: Pick<SharedComputerControl, "close">;
-  hostedModels: boolean;
-  cloudHome: boolean;
   lendingEnabled(): boolean;
   providerConfigs(): InstanceConfigMap;
   localVmIdleMs(): number;
@@ -85,14 +81,10 @@ export interface ConfigRouteDeps {
   providerOperationConflict(provider: RemoteComputerProvider): string | null;
   perBotLocalVmCountForModeChange(): Promise<number | null>;
   checkedModelSelection(raw: unknown, current?: { selection: ModelSelection; busy: boolean }, requireAvailableModel?: boolean): ModelSelectionCheck;
-  policyModelRefusal(instance: { instanceId: string; driverKind: string }): string | undefined;
   browserSessionSpec(binaryPath: string, session: string, profile: string | undefined): { command: string; env: Record<string, string> };
   configStatus(): ConfigStatus;
-  /** What this caller is shown: a client sees configured-or-not only; on a Team Cloud the profile is the caller's own. */
+  /** What this caller is shown: a client sees configured-or-not only. */
   configForAccess(status: ConfigStatus, auth: RequestAuth): unknown;
-  /** A Team Cloud only: Settings → Profile saves the signed-in person's own profile, never the server's. False: nobody
-   * signed in to save it for. */
-  ownProfile?(auth: RequestAuth, profile: { name?: string; avatarUrl?: string; aboutMe?: string }): boolean;
   resyncOpenCodeProviderKeys(): void;
   revokeEngineCapabilities(engines: ReadonlySet<string>): void;
   reloadProviders(before: Record<string, unknown>): Promise<void>;
@@ -105,11 +97,11 @@ export interface ConfigRouteDeps {
 export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
   const {
     store, cfg, registry, sessions, browserCleanup, browserLive, browserRuntime, usedBrowserSessions, decider,
-    closeBrowser, browserEngineSwitched, sharedComputers, sharedComputerControl, hostedModels, cloudHome: CLOUD_HOME, lendingEnabled, providerConfigs,
+    closeBrowser, browserEngineSwitched, sharedComputers, sharedComputerControl, lendingEnabled, providerConfigs,
     localVmIdleMs, localVmIdles, localVmActiveThreads, localVmLifecycleBusy, localVmImageBusy, localVmModeChangeBusy,
     providerConfigBusy, computerProviderConfigTransitions, managedBoatOwners, providerOperationConflict,
-    perBotLocalVmCountForModeChange, checkedModelSelection, policyModelRefusal, browserSessionSpec, configStatus,
-    configForAccess, resyncOpenCodeProviderKeys, revokeEngineCapabilities, reloadProviders, broadcast, drainQueuedSends, ownProfile, postiz,
+    perBotLocalVmCountForModeChange, checkedModelSelection, browserSessionSpec, configStatus,
+    configForAccess, resyncOpenCodeProviderKeys, revokeEngineCapabilities, reloadProviders, broadcast, drainQueuedSends, postiz,
   } = deps;
   return async ({ req, res, url, path, method, auth, json, readBody }) => {
     // API keys are never echoed back: booleans only.
@@ -118,21 +110,7 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
     }
     if ((method === "PUT" || method === "PATCH") && path === "/api/config") {
       const body = await readBody(req);
-      if (hostedModels && ["instances", "anthropic", "openai", "openrouter", "openaiCompat", "xai", "mistral", "cerebras", "groq", "greenference", "meta", "opencodeGo"].some(key => Object.hasOwn(body, key))) return json(res, 403, { error: HOSTED_PROVIDER_SETTINGS_ERROR });
       const patch = parseConfigPatch(body);
-      if (patch.profile && ownProfile) {
-        // The address is the verified claim's; a profile names no other.
-        const { email: _email, ...own } = patch.profile;
-        if (!ownProfile(auth, own)) return json(res, 403, { error: "Sign in to this team to have a profile." });
-        delete patch.profile;
-        if (!Object.keys(patch).length) {
-          broadcast({ kind: "config", ...configStatus() });
-          return json(res, 200, configForAccess(configStatus(), auth));
-        }
-      }
-      if (CLOUD_HOME && (patch.signIn?.admins?.length || patch.signIn?.members?.length)) {
-        return json(res, 403, { error: CLOUD_PERSONAL_REFUSAL, code: "cloud_personal" });
-      }
       if (patch.newBotDefaults) {
         if (patch.newBotDefaults.profile.modelSelection) {
           const checked = checkedModelSelection(patch.newBotDefaults.profile.modelSelection);
@@ -144,22 +122,16 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
           if ("error" in parsed || parsed.name !== skill.name) return json(res, 400, { error: "Skill name does not match its contents" });
         }
       }
-      if (hostedModels && patch.defaultModelSelection) {
-        const checked = checkedModelSelection(patch.defaultModelSelection);
-        if (!checked.ok) return json(res, checked.status, { error: checked.error });
-      }
       if (patch.automaticRecovery?.enabled) {
         const checked = checkedModelSelection(patch.automaticRecovery.backup, undefined, true);
         if (!checked.ok) return json(res, checked.status, { error: checked.error });
         const target = registry.get(checked.selection.instanceId)!;
         if (!target.enabled) return json(res, 400, { error: "Enable the backup engine before selecting it for recovery." });
-        const refusal = policyModelRefusal(target);
-        if (refusal) return json(res, 403, { error: refusal, code: "managed_policy" });
         patch.automaticRecovery.backup = checked.selection;
       }
       if (!Object.keys(patch).length) return json(res, 400, { error: "nothing to save" });
       if (patch.decider) {
-        const planned = deciderSavePatch(patch.decider, cfg.decider, { included: deciderIncludedHere(), shared: deciderSharedKeyUsable(cfg) });
+        const planned = deciderSavePatch(patch.decider, cfg.decider, { shared: deciderSharedKeyUsable(cfg) });
         if (!planned.ok) return json(res, 400, { error: planned.error });
         patch.decider = planned.patch;
       }

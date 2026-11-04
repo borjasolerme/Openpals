@@ -37,7 +37,6 @@ describe("pageMessage", () => {
   it("keeps whole the rows whose output is the reply itself", () => {
     const long = "r".repeat(6_000);
     const rows: Array<Partial<Message>> = [
-      { relay: { kind: "told", email: "bob@example.com", name: "Bob" } },
       { roomRequest: { id: "q1", phase: "result" } },
       { comm: { groupId: "g1", withBotId: "b2", withName: "Ada", withColor: "blue" } },
       { threadRef: { botId: "b1", threadId: "th2", title: "Side job" } },

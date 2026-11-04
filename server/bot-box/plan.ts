@@ -6,8 +6,6 @@
 //     /opt (the bots' browser) and the server's own code folder, so the engine CLIs and the proxies they start run;
 //   - its HOME read-write (the engine's own login and settings live there), with the server's data folder replaced by an
 //     empty private folder, so messages.db, config.json, logins, other bots' folders and the server's sockets are not there;
-//     on a Team Cloud that HOME is the audience's engine home instead (server/engine-homes), with only the team's engine
-//     sign-ins bound into it, so no other audience's transcripts are there;
 //   - put back inside that empty folder: this turn's working folder, the bot's own folder (workspaces/<bot>) and what the
 //     caller names (the turn's permission socket, a read-only file the command line points at); and, read-only, the
 //     bot's own SOUL.md (bots/<bot>/SOUL.md, which it may read but never write) and the engines OpenMausBot installed
@@ -66,10 +64,6 @@ export interface BoxRequest {
   net?: BoxNet;
   /** The bot whose own folder (workspaces/<bot>) is put back; derived from a task-workspace cwd when absent. */
   botId?: string;
-  /** A Team Cloud audience's engine home, bound read-write in place of the server's HOME, none of which the box then has. */
-  home?: string;
-  /** Files bound read-write over their names in `home`: the team's engine sign-ins. */
-  shared?: ReadonlyArray<{ source: string; target: string }>;
 }
 
 export interface BoxPlan {
@@ -145,19 +139,16 @@ export function planBox(setup: BoxSetup, request: BoxRequest): BoxPlan {
     if (!writable.includes(path)) writable.push(path);
   };
   // HOME first; the data folder is replaced by an empty one right after, so the lines below put back only what is named.
-  // An engine home lives in the data folder, so it goes back after that.
-  const ownHome = request.home ? resolve(request.home) : null;
-  if (!ownHome) rw(home);
+  rw(home);
   const dataInsideHome = under(dataDir, home);
   if (!mutate.has("bind-data")) {
     if (dataInsideHome) mounts.push({ kind: "tmpfs", target: dataDir });
   } else {
     rw(dataDir);
   }
-  if (ownHome) rw(ownHome);
   const dataHidden = !mutate.has("bind-data");
   /** A path is already readable and writable through an earlier line (and not hidden by the data folder's tmpfs). */
-  const covered = (path: string) => (ownHome !== null && under(path, ownHome)) || (writable.some((root) => under(path, root)) && !(dataHidden && under(path, dataDir)));
+  const covered = (path: string) => (writable.some((root) => under(path, root)) && !(dataHidden && under(path, dataDir)));
 
   const cwd = request.cwd ? resolve(request.cwd) : null;
   const ids = cwd ? taskWorkspaceIds(cwd, dataDir) : null;
@@ -177,11 +168,6 @@ export function planBox(setup: BoxSetup, request: BoxRequest): BoxPlan {
     if (value && isAbsolute(value) && !covered(resolve(value)) && !PRIVATE_INSIDE.some((base) => under(resolve(value), base))) rw(resolve(value));
   }
   for (const path of request.rw ?? []) if (!covered(resolve(path))) rw(resolve(path));
-  if (ownHome) {
-    for (const file of request.shared ?? []) {
-      if (under(resolve(file.target), ownHome)) mounts.push({ kind: "bind", source: resolve(file.source), target: resolve(file.target), optional: true });
-    }
-  }
   // After every read-write line, so none of them can make an engine another conversation also runs writable.
   for (const root of setup.engineRoots) {
     const engines = resolve(root);

@@ -4,7 +4,7 @@ export const docsContentRoute = '/llms.mdx/docs';
 export const appName = 'OpenMausBot Docs';
 
 export const gitConfig = {
-  user: 'milind-soni',
-  repo: 'OpenMausBot',
+  user: 'borjasolerme',
+  repo: 'Openpals',
   branch: 'main',
 };

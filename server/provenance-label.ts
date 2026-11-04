@@ -37,12 +37,7 @@ export function fromNoteWith(who: string, what: string, authority: Authority, se
   return `${note.slice(0, -1)} — ${noteField(sentence, SENTENCE_MAX)}]`;
 }
 
-export const ROLE_WORDS: Record<string, string> = { owner: "Super admin", admin: "Admin" };
-
-export const personWho = (name: string, role?: string): string => {
-  const word = role ? ROLE_WORDS[role] : undefined;
-  return `${name} (person${word ? `, ${word}` : ""})`;
-};
+export const personWho = (name: string): string => `${name} (person)`;
 export const relayedWho = (name: string | undefined): string => `${name?.trim() || "someone"} (person, relayed by another app)`;
 export const botWho = (name: string): string => `@${name} (bot)`;
 export const API_WHO = "an app, through the API";
@@ -54,11 +49,10 @@ export const appEventWho = (app: string, event?: string): string => `${app}${eve
 export type ProvenanceLine = Partial<Pick<Message, "role" | "kind" | "relayed" | "via" | "sender" | "peerAsk" | "aside" | "reaction">>;
 
 /** What a chat's person lines need: `shared` when more than one person can write in the chat, so each person's line is
- * named; `role` the team role of a line's sender, if any. */
+ * named. */
 export interface LineLabels {
   shared: boolean;
   name(line: Pick<Message, "sender">): string;
-  role?(line: Pick<Message, "sender">): string | undefined;
 }
 
 export const PRIVATE_CHAT: LineLabels = { shared: false, name: (line) => line.sender?.name ?? "" };
@@ -70,7 +64,7 @@ export function lineNote(line: ProvenanceLine, labels: LineLabels): string | und
   const what = line.reaction ? "reaction" : "message";
   if (line.relayed) return fromNote(relayedWho(labels.name(line)), what, AUTHORITY.info);
   if (line.via === "api") return fromNote(API_WHO, what, AUTHORITY.info);
-  if (labels.shared) return fromNote(personWho(labels.name(line) || "someone", labels.role?.(line)), what, AUTHORITY.own);
+  if (labels.shared) return fromNote(personWho(labels.name(line) || "someone"), what, AUTHORITY.own);
   return undefined;
 }
 

@@ -49,7 +49,6 @@ function world(options: { inboxThread?: string; live?: string[] } = {}) {
     node: (id) => nodes.get(id),
     delegatorOf: (threadId) => (threadId === "work" ? { threadId: "inbox", botId: "scout" } : undefined),
     notify: (notification) => { if (notification) notified.push(notification); },
-    copiedInto: (inboxThreadId) => inboxThreadId === options.inboxThread,
     live: (_threadId, requestId) => (options.live ?? []).includes(requestId),
     answerCard: vi.fn(async (input) => {
       if (refuse) return { ok: false as const, ...refuse };
@@ -97,14 +96,6 @@ describe("a teammate's NEEDS INPUT question", () => {
     w.cards.park(w.node(), QUESTION);
     expect(w.rows("work")).toHaveLength(1);
     expect(w.rows("work")[0]).toMatchObject({ kind: "options", text: QUESTION, card: { requestId: "needs-input-as_1-1" } });
-  });
-
-  it("leaves the person's inbox to the card's copy: no chip there", () => {
-    const w = world({ inboxThread: "inbox" });
-    w.say("work", `Checked.\nNEEDS INPUT: ${QUESTION}`);
-    w.cards.park(w.node(), QUESTION);
-    expect(w.rows("inbox")).toEqual([]);
-    expect(w.notified.map((notification) => notification.kind)).toEqual(["question"]);
   });
 
   it("shows it once across a restart, and still once when the restart came before the first showing", () => {
@@ -348,19 +339,6 @@ describe("a typed line answers a question card", () => {
     w.refuse({ status: 403, error: "This question is Ben's to answer." });
     expect(await w.cards.typed(AUTH, "work", "Yes", undefined, {})).toEqual({ status: 403, error: "This question is Ben's to answer." });
     expect(w.rows("work").filter((row) => row.role === "user")).toEqual([]);
-  });
-});
-
-describe("the chip in the conversation that handed the work on", () => {
-  const asker = { id: "ledger", name: "Ledger", color: "teal" } as BotRecord;
-
-  it("says the work waits on the person, unless that conversation is the person's inbox, which has the card", () => {
-    const desk = world();
-    desk.cards.showWaitingOnPersonChip("work", "req-1", asker, "answer");
-    expect(desk.rows("inbox").map((row) => row.tool?.name)).toEqual(["Waiting on your answer in @Ledger"]);
-    const team = world({ inboxThread: "inbox" });
-    team.cards.showWaitingOnPersonChip("work", "req-1", asker, "answer");
-    expect(team.rows("inbox")).toEqual([]);
   });
 });
 

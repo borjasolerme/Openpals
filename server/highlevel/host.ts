@@ -25,8 +25,8 @@ export interface HighLevelHost {
   integration(bot: HighLevelBot, mint: () => string, harnessUrl: string): { command: string; args: string[]; env: Record<string, string> } | null;
   prompt(bot: HighLevelBot): string;
   handle(body: unknown, capability: { botId: string; threadId: string }, assertActive: () => void): Promise<HighLevelToolsList | HighLevelToolResult>;
-  /** The HIGHLEVEL_* names for the per-bot tool grants picker (/api/connectors/tools); null when the integration is unavailable. */
-  toolListing(): { highlevel: Array<{ name: string; description: string }> } | null;
+  /** The HIGHLEVEL_* names for the per-bot tool grants picker (/api/connectors/tools). */
+  toolListing(): { highlevel: Array<{ name: string; description: string }> };
   /** Merges {highlevel:{connected}} into the Cloud health connectors report, only while a HighLevel connection is saved
    * (signed in, or needing sign-in again): a HighLevel never set up is not listed. */
   health(base: Promise<Record<string, { connected: boolean; pending?: boolean }>> | null): Promise<Record<string, { connected: boolean; pending?: boolean }>> | null;
@@ -51,7 +51,7 @@ export function createHighLevelHost(deps: HighLevelHostDeps): HighLevelHost {
       };
     },
     prompt: (bot) => highlevelSystemPrompt(bot),
-    toolListing: () => (service.status().state === "unavailable" ? null : { highlevel: HIGHLEVEL_TOOLS.map(({ name, description }) => ({ name, description })) }),
+    toolListing: () => ({ highlevel: HIGHLEVEL_TOOLS.map(({ name, description }) => ({ name, description })) }),
     async handle(body, capability, assertActive) {
       return highlevelRpc(body as { method?: unknown; params?: unknown }, {
         client: service.client,

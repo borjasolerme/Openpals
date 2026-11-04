@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import { botAvatarUrlSchema } from "../../shared/bot-avatar.ts";
 import { readAttachment } from "../attachments.ts";
-import { arrivedRoute, automationsOffRoute, homeRoute } from "../cloud-send-arrived.ts";
+import { arrivedRoute, homeRoute } from "../cloud-send-arrived.ts";
 import { moveFilesRoute } from "../cloud-send-files.ts";
 import { automatedBot, moveBotParts, moveItems, moveKindsRoute, type MoveKindsDeps } from "../cloud-send-kinds.ts";
 import { cloudSendManifest } from "../cloud-send-manifest.ts";
@@ -32,8 +32,6 @@ export interface CloudSendRouteDeps extends Pick<CloudSendSources, "appVersion" 
   config(): Pick<AppConfig, "profile" | "language">;
   lineLanguage?: LineLanguage;
   chats?: CloudSendChatsDeps;
-  /** This server is the person's own Cloud: it answers what a move asks of the Cloud it moves to. */
-  cloudHome?: boolean;
   /** A server of one person's own: it answers that person's session (`ownHome(auth)`) as a Cloud home answers its owner. */
   ownHome?(auth: RequestAuth): boolean;
   /** This server's connections (cloud-connections.ts), by id. */
@@ -74,7 +72,7 @@ export function createCloudSendRoutes(deps: CloudSendRouteDeps): RouteHandler {
   return async (ctx) => {
     const { req, res, path, method, url, json, readBody } = ctx;
     if (path !== "/api/cloud-send" && !path.startsWith("/api/cloud-send/")) return PASS;
-    const home = deps.cloudHome === true || deps.ownHome?.(ctx.auth) === true;
+    const home = deps.ownHome?.(ctx.auth) === true;
     const scoped = deps.scope?.(ctx.auth) ?? null;
     if (deps.refusal && !scoped) { req.resume(); return json(res, 403, { error: deps.refusal }); }
     // A move of one bot into a team reads that bot only, on both sides.
@@ -84,8 +82,7 @@ export function createCloudSendRoutes(deps: CloudSendRouteDeps): RouteHandler {
     if (move && await moveMemoryRoute({ ...move, bot: (id) => move.store.bot(id) ?? undefined }, ctx)) return;
     if (move && await moveFilesRoute({ dataDir: move.dataDir, bots: () => (bot ? move.store.bots.filter((entry) => entry.id === bot) : move.store.bots), owner: move.owner }, ctx)) return;
     if (move && home && await arrivedRoute({ dataDir: move.dataDir, store: move.store, webhooks: move.webhooks, owner: move.owner, lineLanguage: deps.lineLanguage ?? (() => deps.config().language) }, ctx)) return;
-    if (move && deps.cloudHome && deps.automations && await automationsOffRoute({ automations: deps.automations, owner: move.owner }, ctx)) return;
-    if (move && !deps.cloudHome && await homeRoute({ dataDir: move.dataDir, store: move.store, webhooks: move.webhooks }, ctx)) return;
+    if (move && await homeRoute({ dataDir: move.dataDir, store: move.store, webhooks: move.webhooks }, ctx)) return;
     if (path === "/api/cloud-send/manifest") {
       if (method !== "GET") return json(res, 405, { error: "method not allowed" });
       if (!deps.chats) return json(res, 404, { error: "not found" });

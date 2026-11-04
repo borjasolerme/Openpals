@@ -37,13 +37,12 @@ neither bridge.
 
 ## When it is on
 
-`server/bot-box/detect.ts`: on by default on a Cloud home (`OMB_CLOUD_ROLE=home` or `team`), off everywhere else
-unless `OMB_BOT_BOX=1`; `OMB_BOT_BOX=0` turns it off. It is never on without a working unprivileged bubblewrap: if the
+`server/bot-box/detect.ts`: off unless `OMB_BOT_BOX=1`. It is never on without a working unprivileged bubblewrap: if the
 kernel refuses user namespaces or the image has no `bwrap`, the box reports `off` with the reason, and the Admin shows
-it. The cloud-home image installs `bubblewrap` and `socat` (the in-box bridges; without socat a bundled Node bridge does
-the same).
+it. Install `bubblewrap` and `socat` on the server (the in-box bridges; without socat a bundled Node bridge does the
+same).
 
-Cost on Fly (measured, T0 build notes): about 5 ms and 3 MB per box, plus one socat per bridge.
+Cost (measured, T0 build notes): about 5 ms and 3 MB per box, plus one socat per bridge.
 
 ## The self-check and the report
 

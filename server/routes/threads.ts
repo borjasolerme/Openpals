@@ -1,4 +1,4 @@
-import { basename, join } from "node:path";
+import { join } from "node:path";
 
 import type { WireBot, WireGroup } from "../../shared/wire.ts";
 import {
@@ -55,13 +55,8 @@ export interface ThreadRouteDeps {
   botComputerControlSnapshot(botId: string): ReturnType<ComputerControl["snapshot"]>;
   messageFileRootsForThread(senderId: string, threadId: string): string[];
   viewerFor(auth: RequestAuth): Viewer;
-  /** A room's unread mark as this person has read it (a Team Cloud); the room as it is anywhere else. */
-  groupFor?(auth: RequestAuth, group: WireGroup): WireGroup;
   visibleTo(viewer: Viewer): VisibleSet;
   /** A Team Cloud: gives a member their own MausBot once, before their first list of bots. */
-  memberDefaultBot?(email: string): unknown;
-  /** Who uploaded each file: only its uploader discards it, and only while nothing uses it. */
-  uploads: { note(auth: RequestAuth, name: string): void; owns(auth: RequestAuth, name: string): boolean };
   attachmentInUse(name: string): boolean;
   /** The stored files a Settings clear must leave (pictures, banner, routine and calendar-call files), null until those load; absent on a Team Cloud, which has no clear. */
   keptAttachments?(): ReadonlySet<string> | null;
@@ -77,8 +72,6 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
   const jobs = createJobRoutes({ store, coordinator: deps.coordinator, groupThreadIsWorking: deps.groupThreadIsWorking, viewerFor, visibleTo, sessions });
   const handle = async ({ req, res, url, path, method, auth, json, readBody }: RouteContext): Promise<unknown> => {
     let m: RegExpMatchArray | null = null;
-    const member = auth.kind === "session" && auth.session.membershipAuthority === "team" ? auth.session.email : undefined;
-    if (member && method === "GET" && path === "/api/bots") deps.memberDefaultBot?.(member);
     const visible = visibleTo(viewerFor(auth));
     const workspaceAccess = deps.workspaceAccess();
     const desktopMutationToken = deps.desktopMutationToken();
@@ -102,7 +95,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
         sections: visible.sections(store.sections),
         groups: store.groups.filter((g) => visible.group(g.id)).map((g) => {
           const group = publicGroupState(g);
-          const room = { ...(deps.groupFor?.(auth, group) ?? group), ...messagePage(g.threadId, limit) };
+          const room = { ...group, ...messagePage(g.threadId, limit) };
           return visible.everything || !visible.member ? room : memberGroup(room);
         }),
         computerControl: Object.fromEntries(
@@ -336,7 +329,6 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
         });
         req.on("error", (e) => fail(400, e instanceof Error ? e.message : String(e)));
       });
-      deps.uploads.note(auth, basename(saved.path));
       return json(res, 201, saved);
     }
 
@@ -373,8 +365,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
         // Returning must not destroy the socket: the caller still sends the 4xx when the byte count crosses the limit.
         const chunks = req.iterator({ destroyOnReturn: false }) as AsyncIterable<Buffer>;
         const saved = await saveFile(chunks, name, rawType ?? "", { uploadId, expectedBytes: declaredLength });
-        deps.uploads.note(auth, basename(saved.path));
-        return json(res, 201, saved);
+          return json(res, 201, saved);
       } catch (error) {
         req.resume();
         throw error;
@@ -396,7 +387,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
     m = path.match(/^\/api\/attachments\/([\w.-]+)$/);
     if (m && method === "DELETE") {
       const name = m[1]!;
-      if (!UPLOADED_NAME.test(name) || !deps.uploads.owns(auth, name)) return json(res, 404, { error: "no such attachment" });
+      if (!UPLOADED_NAME.test(name)) return json(res, 404, { error: "no such attachment" });
       if (deps.attachmentInUse(name)) return json(res, 409, { error: "This file is already in a message, so it stays." });
       deleteAttachment(join(ATTACHMENTS_DIR, name));
       return json(res, 200, { ok: true });

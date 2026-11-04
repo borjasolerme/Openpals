@@ -10,7 +10,6 @@ import { connectorStatusMemory, preloadConnectedApps, rememberConnectorStatus } 
 import { reserveConnectionPage, reusableConnectionUrl, type PendingAuthorization } from "@/lib/connector-oauth";
 import { mcpSignInLink } from "@/lib/mcp-sign-in";
 import { pollConnector } from "@/lib/connector-poll";
-import { connectorConnect } from "@/lib/product-events";
 import { managedConnectorUnavailableReason } from "../../shared/connector-availability";
 import { connectorServiceAccess, isConnectorToolGrantShape } from "@/lib/connector-grants";
 import {
@@ -330,9 +329,8 @@ export function PluginsPanel() {
 
   const startPolling = (slug: string, before: ConnectorStatus | undefined) => {
     polls.current.get(slug)?.();
-    const stop = pollConnector(before, () => refreshStatus([slug]).then((services) => services[slug]), (result) => {
+    const stop = pollConnector(before, () => refreshStatus([slug]).then((services) => services[slug]), () => {
       if (polls.current.get(slug) === stop) polls.current.delete(slug);
-      connectorConnect(slug, result);
     });
     polls.current.set(slug, stop);
   };
@@ -761,8 +759,7 @@ export function PluginsPanel() {
     const reconnect = pending ? undefined : accountToReconnect(serviceStatus);
     const addingAccount = aliasSlug === card.slug && !included;
     const busy = busySlug === card.slug;
-    const policy = state.config?.managedPolicy, unavailableReason = policy?.apps && !policy.apps.allowAll && !policy.apps.allowlist.includes(card.slug) ? t("policy.managedBy", { organization: policy.organizationName })
-      : managedConnectorUnavailableReason(mode, card.slug) ? t("connectors.selfHostOnlyReason") : null;
+    const unavailableReason = managedConnectorUnavailableReason(mode, card.slug) ? t("connectors.selfHostOnlyReason") : null;
     const usedBy = connected || included ? botsUsingService(state.bots, state.instances, card.slug) : [];
     const description = unavailableReason ?? (
       pending

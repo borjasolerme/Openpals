@@ -1,11 +1,9 @@
 // On Windows, Antigravity's runtime unpacks 0.34-1.26 GB at each start and leaves it behind when stopped by force.
 // The system temp folder is searched only when the person asks (other apps start the same runtime). Answers carry sizes and counts, never paths.
 import type { LeftoverRemoval, LeftoverScan } from "../drivers/antigravity-temp.ts";
-import { HOSTED_PROVIDER_SETTINGS_ERROR } from "../hosted-models.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 
 export interface AntigravityLeftoverRouteDeps {
-  hosted: boolean;
   isAntigravity(instanceId: string): boolean;
   find(): Promise<LeftoverScan>;
   remove(): Promise<LeftoverRemoval>;
@@ -21,7 +19,6 @@ export function createAntigravityLeftoverRoutes(deps: AntigravityLeftoverRouteDe
     if (!match) return PASS;
     const removing = Boolean(match[2]);
     if (method !== (removing ? "POST" : "GET")) return PASS;
-    if (deps.hosted) return json(res, 403, { error: HOSTED_PROVIDER_SETTINGS_ERROR });
     if (removing) {
       // JSON-only, so a hostile page cannot send it as a simple request.
       if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {

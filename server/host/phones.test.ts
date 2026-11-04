@@ -36,10 +36,9 @@ function world(overrides: Partial<PhonesDeps> = {}) {
   const lines: Array<{ id: string; role: string; sendId?: string; sender?: { id: string } }> = [];
   const requests = new Map<string, { messageId?: string; automation?: unknown; origin?: { kind: string } }>();
   const phones = createPhones({
-    dataDir: dir, shared: false, cloudHome: false, cloudOwnerKey: null, loopbackTrust: "owner", sharedMembership: () => false,
+    dataDir: dir, shared: false, loopbackTrust: "owner", sharedMembership: () => false,
     store: { messagesFor: () => lines, bot: () => chief, groupByThread: () => undefined, appendMessage: () => {} } as unknown as PhonesDeps["store"],
-    sessions: { list: () => [], isLive: () => true, onSessionRevoked: () => () => {} }, routines: () => null, ownerOrAdmin: (auth) => auth.scopes.includes("admin"), cloudOwnerSession: () => false,
-    cloudLendingRefusal: () => null,
+    sessions: { list: () => [], isLive: () => true, onSessionRevoked: () => () => {} }, routines: () => null, ownerOrAdmin: (auth) => auth.scopes.includes("admin"), 
     cloudLendingTurn: () => ({ thread: lines, request: { ...requests.get(THREAD), generations: new Set([TURN.generation]) }, generation: TURN.generation, starters: [], reportsFromOthers: false,
       ownerPerson: () => true, cardAnswerer: () => undefined, routineRun: () => null }) as unknown as CloudLendingTurn,
     originIsUser: () => true, request: (threadId) => requests.get(threadId), nudge: () => {}, mint: () => "turn-token",
@@ -133,14 +132,5 @@ describe("whose phones", () => {
       expect(phones.previewParts(chief, true)).toEqual([]);
       expect(phones.promptParts(chief, { mounted: false, offered: true, turn: TURN, place: "computer" })).toEqual([{ id: "device", label: "Phone", text: "" }]);
     }
-  });
-
-  it("on a Cloud home only the owner's session holds a phone, and only a turn the lent Mac would allow reaches it", () => {
-    let refusal: string | null = null;
-    const { phones } = world({ cloudHome: true, cloudOwnerKey: "owner", cloudOwnerSession: (auth) => auth.kind === "session" && auth.session.id === PHONE_SESSION.id, cloudLendingRefusal: () => refusal });
-    expect(phones.turnOwner(TURN)).toBe("owner");
-    refusal = "someone-else";
-    expect(phones.turnOwner(TURN)).toBeNull();
-    expect(phones.integration(chief, TURN)).toBeNull();
   });
 });

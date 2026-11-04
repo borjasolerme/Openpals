@@ -38,7 +38,6 @@ export interface RoomDispatchInput {
   botId: string;
   claimId: string;
   instance: RoomSessionEngine;
-  guestConfined: boolean;
   reset: boolean;
   hooks: boolean;
   context?(): { tokens?: number; window?: number; compactAt?: number } | undefined;
@@ -276,7 +275,7 @@ export function createRoomSessions(deps: RoomSessionsDeps): RoomSessions {
     speakers.set(instance.instanceId, { botId, at });
 
     const idleMs = roomSessionIdleMs(instance.driverKind);
-    if (idleMs === undefined || instance.adapter.capabilities.strictResume !== true || !input.hooks || input.guestConfined) {
+    if (idleMs === undefined || instance.adapter.capabilities.strictResume !== true || !input.hooks) {
       drop(threadId, botId);
       const untracked = traces.get(threadId)?.get(botId);
       if (untracked) untracked.ended = undefined;

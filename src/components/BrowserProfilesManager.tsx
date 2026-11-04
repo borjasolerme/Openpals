@@ -6,7 +6,6 @@ import { isOwnerOrAdmin, readSessionState } from "@/lib/session";
 import { t } from "@/lib/i18n";
 import { SignedInSites } from "./SignedInSites";
 import { Select } from "./Select";
-import { browserScope } from "@/lib/team-browser";
 
 /** Security: the server owns session routing and erasure; this UI never handles cookies or partitions. */
 export function BrowserProfilesManager({ bot, onProfileChanged, disabled = false }: {
@@ -181,7 +180,7 @@ export function BrowserProfilesManager({ bot, onProfileChanged, disabled = false
             {!myChrome && <p className="text-[11px] leading-relaxed text-ink-secondary">{t("settings.profiles.myChromeShare")}</p>}
           </>
             : (selected === "" || selectedProfile) && (
-              <SignedInSites key={`${currentBot.id}:${selected}`} target={{ bot: currentBot.id }} scope={browserScope(state.config?.team, bot?.threadId)} sharedBy={selected ? usersOf(selected) : [currentBot.name]} disabled={locked} />
+              <SignedInSites key={`${currentBot.id}:${selected}`} target={{ bot: currentBot.id }} sharedBy={selected ? usersOf(selected) : [currentBot.name]} disabled={locked} />
             )}
         </div>
       )}

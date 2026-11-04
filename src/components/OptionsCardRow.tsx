@@ -7,7 +7,6 @@ import { OptionCard, shouldHideOnboardingCard } from "./OptionCard";
 import { QuestionCard } from "./QuestionCard";
 import { isQuestionCard } from "@/lib/question-card";
 import type { Asker } from "./AskCard";
-import { AskingLine } from "./TeamOwner";
 
 /**
  * Called, not mounted: a quiz that dropped out must come back as null so the transcript draws no row and no day
@@ -25,7 +24,7 @@ export function optionsCardRow({ message: m, transcript, botId, botName, botColo
   botName: string;
   botColor?: Bot["color"];
   threadId: string;
-  /** The bot that asks: this conversation's, or for an inbox's copy the one that asked where it came from. */
+  /** The bot that asks. */
   asker?: Asker;
 }): ReactNode {
   // MausBot's follow-up is drawn under its intro (HelperIntro), never as a row of its own.
@@ -41,10 +40,8 @@ export function optionsCardRow({ message: m, transcript, botId, botName, botColo
     <OptionCard botId={botId} threadId={threadId} message={m} />
   );
   if (!card) return null;
-  const waiting = Boolean(m.card?.requestId && (isQuestionCard(m.card) || m.card.tool) && !m.card.answered && !m.card.dismissed && !m.inbox);
   return (
     <MessageBoundary fallbackText={m.card?.subtitle || m.card?.title || ""}>
-      {waiting && <AskingLine botId={botId} threadId={threadId} />}
       {card}
     </MessageBoundary>
   );

@@ -1,14 +1,13 @@
-// The one-time move to My Cloud in the account area at the bottom of the sidebar, never as a strip over the page: a
-// short segment in the account's name, a line by the account (above it in Simple, under the name in Advanced), a dot
-// on the avatar, and the move's own row at the top of the account menu. In the desktop app only, never in a browser.
+// The one-time move to a server of the person's own in the account area at the bottom of the sidebar, never as a strip
+// over the page: a short segment in the account's name, a line by the account (above it in Simple, under the name in
+// Advanced), a dot on the avatar, and the move's own row at the top of the account menu. In the desktop app only.
 import { useSyncExternalStore } from "react";
-import { CloudAlert, CloudCheck, CloudUpload, Loader2, RefreshCw, Smartphone, X } from "lucide-react";
+import { CloudAlert, CloudUpload, Loader2, RefreshCw } from "lucide-react";
 import type { CloudSendPageBridge } from "../../electron/cloud-send.mjs";
-import { MOVE_LINE } from "../../electron/cloud-send-parts.mjs";
 import { ipcErrorText, moveLine } from "@/lib/cloud-send";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { useCloudSendNotice } from "./CloudSendStrip";
+import { useCloudSendNotice } from "./move-notice";
 import type { SidebarMenuItem } from "./SidebarPopoverMenu";
 
 export type AccountMoveLine = NonNullable<ReturnType<typeof moveLine>>;
@@ -16,15 +15,16 @@ export type AccountMoveKind = AccountMoveLine["kind"];
 
 const pageBridge = () => (!window.ogb?.remoteClient?.active ? window.ogb?.cloudSendPage : undefined);
 
-/** The account's words for the move: it needs the person once it has failed for a day, goes quietly meanwhile, and
- * says nothing once done (its menu row says what arrived). `place`: the server of their own it goes to, else My Cloud. */
+/** The account's words for the move: it needs the person once it has failed for a day, and goes quietly meanwhile.
+ * `place`: the server of their own it goes to. */
 export function accountMoveWords(kind: AccountMoveKind | null, place?: string): string | null {
-  if (kind === "failed") return place ? t("sidebar.account.moveNeedsYouNamed", { place }) : t("sidebar.account.moveNeedsYou");
-  if (kind === "sending") return place ? t("sidebar.account.movingNamed", { place }) : t("sidebar.account.moving");
+  if (!place) return null;
+  if (kind === "failed") return t("sidebar.account.moveNeedsYouNamed", { place });
+  if (kind === "sending") return t("sidebar.account.movingNamed", { place });
   return null;
 }
 
-const failingPlain = (place?: string) => (place ? t("cloudSend.move.failingPlainNamed", { place }) : t("cloudSend.move.failingPlain"));
+const failingPlain = (place: string) => t("cloudSend.move.failingPlainNamed", { place });
 
 /** Why a failing move failed: main's words when Try again went unanswered, else the move's own reason. */
 function failingWhy(line: AccountMoveLine, unanswered: string | null): string {
@@ -33,36 +33,27 @@ function failingWhy(line: AccountMoveLine, unanswered: string | null): string {
 }
 
 /** The move's rows at the top of the account menu, each the size of every other row there. Failed: Try again, with why
- * in its tooltip and a spinner while it runs. On its way: one row, the progress in its tooltip. Done: what arrived, the
- * phone to pair, and Got it, which closes it for good. A row that does not retry opens My Cloud in Settings. */
-export function moveMenuItems(line: AccountMoveLine | null, { retrying = false, unanswered = null, onOpen, onRetry, onPairPhone, onClose }: {
+ * in its tooltip and a spinner while it runs. On its way: one row, the progress in its tooltip. A row that does not retry
+ * opens the servers in Settings. */
+export function moveMenuItems(line: AccountMoveLine | null, { retrying = false, unanswered = null, onOpen, onRetry }: {
   retrying?: boolean;
   unanswered?: string | null;
   onOpen: () => void;
   onRetry: () => void;
-  onPairPhone?: () => void;
-  onClose: () => void;
 }): SidebarMenuItem[] {
   if (!line) return [];
-  if (line.kind === "failed") {
-    const title = failingWhy(line, unanswered);
-    if (!line.retry) return [{ key: "cloud-move", label: accountMoveWords("failed", line.place)!, title, icon: <CloudAlert size={16} className="text-warning" />, onSelect: onOpen }];
-    return [{
-      key: "cloud-move",
-      label: line.place ? t("sidebar.account.moveRetryNamed", { place: line.place }) : t("sidebar.account.moveRetry"),
-      title,
-      icon: retrying ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} className="text-warning" />,
-      disabled: retrying,
-      keepOpen: true,
-      onSelect: onRetry,
-    }];
-  }
   if (line.kind === "sending") return [{ key: "cloud-move", label: accountMoveWords("sending", line.place)!, title: line.text, icon: <Loader2 size={16} className="animate-spin" />, onSelect: onOpen }];
-  return [
-    { key: "cloud-move", label: line.text, ...(line.extra.length ? { note: line.extra.join(" ") } : {}), wrap: true, icon: <CloudCheck size={16} />, onSelect: onOpen },
-    ...(line.phone && onPairPhone ? [{ key: "cloud-move-phone", label: t("cloudSend.move.phone"), icon: <Smartphone size={16} />, onSelect: onPairPhone }] : []),
-    { key: "cloud-move-close", label: t("sidebar.account.moveDismiss"), icon: <X size={16} />, onSelect: onClose },
-  ];
+  const title = failingWhy(line, unanswered);
+  if (!line.retry) return [{ key: "cloud-move", label: accountMoveWords("failed", line.place)!, title, icon: <CloudAlert size={16} className="text-warning" />, onSelect: onOpen }];
+  return [{
+    key: "cloud-move",
+    label: t("sidebar.account.moveRetryNamed", { place: line.place }),
+    title,
+    icon: retrying ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} className="text-warning" />,
+    disabled: retrying,
+    keepOpen: true,
+    onSelect: onRetry,
+  }];
 }
 
 type RetryState = { retrying: boolean; unanswered: string | null };
@@ -90,12 +81,12 @@ function retryOf(bridge: CloudSendPageBridge | undefined) {
   return store;
 }
 
-function useMove(cloudHome: boolean) {
+function useMove() {
   const bridge = pageBridge();
   const [notice, setNotice] = useCloudSendNotice(bridge);
   const store = retryOf(bridge);
   const { retrying, unanswered } = useSyncExternalStore(store.subscribe, store.get, store.get);
-  const line = bridge && notice?.move ? moveLine(notice.move, cloudHome ? "cloud" : "local") : null;
+  const line = bridge && notice?.move ? moveLine(notice.move) : null;
   if (!bridge || !notice || !line) return null;
   const retry = () => {
     if (store.get().retrying) return;
@@ -103,20 +94,19 @@ function useMove(cloudHome: boolean) {
     void (bridge.moveRetry?.() ?? Promise.resolve(notice)).then((next) => { setNotice(next); store.set(IDLE); })
       .catch((cause: unknown) => { store.set({ retrying: false, unanswered: ipcErrorText(cause) ?? failingPlain(line.place) }); });
   };
-  const close = () => { void bridge.dismiss(MOVE_LINE).then(setNotice).catch(() => {}); };
-  return { line, retrying, unanswered, retry, close };
+  return { line, retrying, unanswered, retry };
 }
 
 /** The move as the account menu shows it: its kind and its rows, with the move's own Try again and close. */
-export function useAccountMove(cloudHome: boolean, { onOpen, onPairPhone }: { onOpen: () => void; onPairPhone?: () => void }): {
+export function useAccountMove({ onOpen }: { onOpen: () => void }): {
   kind: AccountMoveKind | null;
   items: SidebarMenuItem[];
   place?: string;
 } {
-  const move = useMove(cloudHome);
+  const move = useMove();
   if (!move) return { kind: null, items: [] };
-  const { line, retrying, unanswered, retry, close } = move;
-  return { kind: line.kind, items: moveMenuItems(line, { retrying, unanswered, onOpen, onRetry: retry, onPairPhone, onClose: close }), ...(line.place ? { place: line.place } : {}) };
+  const { line, retrying, unanswered, retry } = move;
+  return { kind: line.kind, items: moveMenuItems(line, { retrying, unanswered, onOpen, onRetry: retry }), place: line.place };
 }
 
 /** The line's Try again: what it runs, whether it is running, and why the move failed. */
@@ -127,11 +117,11 @@ export interface AccountMoveRetry {
 }
 
 /** The move as Simple's line above the account shows it: its kind, and Try again while the failing move allows one. */
-export function useAccountMoveLine(cloudHome: boolean): { kind: AccountMoveKind | null; retry: AccountMoveRetry | null; place?: string } {
-  const move = useMove(cloudHome);
+export function useAccountMoveLine(): { kind: AccountMoveKind | null; retry: AccountMoveRetry | null; place?: string } {
+  const move = useMove();
   if (!move) return { kind: null, retry: null };
   const { line, retrying, unanswered, retry } = move;
-  return { kind: line.kind, retry: line.kind === "failed" && line.retry ? { onRetry: retry, retrying, why: failingWhy(line, unanswered) } : null, ...(line.place ? { place: line.place } : {}) };
+  return { kind: line.kind, retry: line.kind === "failed" && line.retry ? { onRetry: retry, retrying, why: failingWhy(line, unanswered) } : null, place: line.place };
 }
 
 /** The account's line for the move: amber while it needs the person, quiet while it goes, nothing otherwise. With
@@ -154,7 +144,7 @@ export function AccountMoveStatus({ kind, place, retry = null, onOpen, className
         <button
           type="button"
           data-move-retry
-          aria-label={place ? t("sidebar.account.moveRetryNameNamed", { place }) : t("sidebar.account.moveRetryName")}
+          aria-label={t("sidebar.account.moveRetryNameNamed", { place: place ?? "" })}
           aria-busy={retry.retrying || undefined}
           aria-disabled={retry.retrying || undefined}
           title={retry.why}

@@ -34,12 +34,12 @@ describe("what a move asks of a server", () => {
     return answered!;
   };
   const stored = { id: "l1", site: "example.test", hosts: ["accounts.example.test"], exactHost: false, username: "alice", password: PASSWORD, updatedAt: 5 };
-  const withLogins = (cloudHome: boolean) => createCloudSendRoutes({
+  const withLogins = (home: boolean) => createCloudSendRoutes({
     appVersion: "0.1.120",
     bots: () => [{ id: "bot-00000001", threadId: "thread-0001", name: "Yuki", soul: "Be brief." } as never, { id: "bot-00000002", threadId: "thread-0002", name: "Kit", soul: "Plan." } as never],
     messagesTail: () => ({ messages: [], hasMore: false }), skills: () => [],
     logins: { changes: () => [stored], get: (id) => (id === "l1" ? stored as never : null), onePasswordConnectedAt: () => null, onePasswordGrants: () => ({}), onePasswordToken: () => null },
-    config: () => ({}), cloudHome, connectionFingerprints: () => ({ "key:openrouter": "f".repeat(64) }),
+    config: () => ({}), ownHome: () => home, connectionFingerprints: () => ({ "key:openrouter": "f".repeat(64) }),
   });
 
   it("one item's comparison, with its skills, to record it as soon as it went", async () => {

@@ -1,5 +1,5 @@
 // What the menu-bar or taskbar icon and this app's own prompt say when this computer's apps and screen can't be lent to
-// the person's own Clouds, from computer control's state.
+// the person's home server, from computer control's state.
 
 /** Why apps and screen aren't available, as one plain sentence without a full stop; null when they are. */
 export function screenLine(status, device) {
@@ -29,7 +29,7 @@ const WANTS = {
   terminal: device => `run commands on this ${device}`,
 };
 
-/** Why a bot's ask can't be met here now, from the reason its Cloud gives. */
+/** Why a bot's ask can't be met here now, from the reason its server gives. */
 function askReason(reason, device) {
   if (reason === "paused") return `Using this ${device} is paused.`;
   if (reason === "terminal-off") return `Running commands isn't turned on for this ${device}.`;

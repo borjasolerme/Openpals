@@ -1,17 +1,16 @@
-// The OpenMausBot relay (accounts.openmausbot.com) holds HighLevel's client secret; this server only ever sees
-// tokens. Contract: spec §9 (start → authorizationUrl, claim once → tokens, refresh → new pair).
+// An OAuth relay the operator runs holds HighLevel's client secret; this server only ever sees tokens. There is none by
+// default: without OMB_HIGHLEVEL_RELAY_URL HighLevel connects with a Private Integration token only.
+// Contract: start → authorizationUrl, claim once → tokens, refresh → new pair.
 import { z } from "zod";
 
-export const HIGHLEVEL_RELAY_URL_DEFAULT = "https://accounts.openmausbot.com";
 export const HIGHLEVEL_RELAY_ENV = "OMB_HIGHLEVEL_RELAY_URL";
 const RELAY_TIMEOUT_MS = 20_000;
 const MAX_RELAY_BYTES = 64_000;
 
-/** The relay URL, or null when the integration is switched off (`OMB_HIGHLEVEL_RELAY_URL=off`) or misconfigured. */
+/** The operator's relay URL, or null when none is set (the default), it is switched off, or it is misconfigured. */
 export function highlevelRelayUrl(env: NodeJS.ProcessEnv = process.env): string | null {
   const raw = env[HIGHLEVEL_RELAY_ENV]?.trim();
-  if (raw === undefined || raw === "") return HIGHLEVEL_RELAY_URL_DEFAULT;
-  if (/^(off|none|0|false)$/iu.test(raw)) return null;
+  if (raw === undefined || raw === "" || /^(off|none|0|false)$/iu.test(raw)) return null;
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" && !(url.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(url.hostname))) return null;

@@ -2,7 +2,7 @@
 
 Run the harness server on an always-on Linux box (a VPS, a home server, a
 Mac mini in a closet) and pair browsers, the desktop app, or phones with it.
-The npm CLI supports a managed public tunnel, Tailscale, or your own proxy.
+The npm CLI supports Tailscale, your own domain, or your own proxy.
 
 > **Security first:** by default a self-hosted server trusts loopback as its
 > owner — any process that can reach `127.0.0.1:8799` has full control,
@@ -10,13 +10,12 @@ The npm CLI supports a managed public tunnel, Tailscale, or your own proxy.
 > this machine it signs in once (see [A browser signs in](#a-browser-signs-in)).
 > **Never expose that port directly and never bind it to a public interface.** Reach it through an SSH tunnel, a
 > private network you trust, or an authenticated remote path below. Requests
-> through the managed tunnel or a correctly configured proxy require a paired
-> session. If several people use one server, read
+> through a correctly configured proxy require a paired session. If several people use one server, read
 > [Loopback trust](#loopback-trust-owner-or-service) below.
 
 Step by step, for a server you do not have yet: [Deploy OpenMausBot on a
-VPS](deploy-vps.md) walks through the three ways in (public address, own
-domain, Tailscale), signing engines in, pairing, keeping it running,
+VPS](deploy-vps.md) walks through the two ways in (own domain,
+Tailscale), signing engines in, pairing, keeping it running,
 updating and backups. This page is the reference behind it.
 
 ## What works headless (and what doesn't)
@@ -82,30 +81,6 @@ is present. Three ways to make the server reachable from elsewhere:
   own certificate and the link uses this machine's MagicDNS name, so only
   devices on your tailnet can reach it. Needs Tailscale signed in and HTTPS
   certificates enabled for the tailnet (admin console → DNS).
-- **A public address, no domain, no proxy, no open port:**
-
-  ```sh
-  npx openmausbot login          # once: an emailed code signs this machine in
-  npx openmausbot serve --tunnel
-  ```
-
-  `login` reserves an address like `https://c-….openmausbot.com` for this
-  machine; `serve --tunnel` connects it through a Cloudflare tunnel (the same
-  one the desktop app uses for its companion) and prints the pairing link at
-  that address. The first run downloads `cloudflared` (pinned version and
-  digest) into the data dir. Only traffic through the tunnel reaches the
-  server, and it still has to pair: the tunnel lands on a separate listener
-  the server treats as "through a proxy", never as the owner. That listener
-  also gzips JSON replies of 1 KB or more when the client accepts gzip, since
-  the hop to Cloudflare runs on this machine's upload uncompressed; the
-  loopback port never compresses. `npx openmausbot logout` releases the
-  address. The account credentials live in
-  `~/.openmausbot/tunnel-account.json` (mode 0600).
-  Starting it from a fleet or a container, where nobody can type an emailed
-  code? Set `OMB_INSTALLATION_CREDENTIAL` to the installation credential the
-  fleet issued and skip `login`: the address and connector token are fetched
-  at every start and nothing is written to disk. A rejected credential stops
-  the start with a clear message rather than serving locally.
 - **Your own domain, still one command:**
 
   ```sh
@@ -281,7 +256,7 @@ OMB_DATA_DIR="$HOME/.openmausbot" OMB_PORT=8799 \
 For something durable, let the CLI write the service for you:
 
 ```sh
-npx openmausbot service install --domain maus.example.com   # or --tunnel, --tailscale, or nothing
+npx openmausbot service install --domain maus.example.com   # or --tailscale, or nothing
 ```
 
 It renders a systemd unit (Linux) or a launchd agent (macOS) that runs the
@@ -336,7 +311,7 @@ Like `opencode` in a terminal, it reads provider keys from its environment
 (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`,
 `KIMI_API_KEY`, `MOONSHOT_API_KEY`, `MINIMAX_API_KEY`) and offers those
 providers' models, billed to that key. It does so only where the server's
-environment is one person's own: never on MausBot Cloud, a hosted team
+environment is one person's own: never on a hosted team
 workspace, an organisation-managed desktop, or a server whose sign-in list
 lets other people in (users, more than one admin, or a whole domain).
 Providers added with `opencode auth login` work everywhere.
@@ -465,7 +440,7 @@ computer stops for good, the rest goes, both sides are checked, and the server
 switches on what was on here, so no routine ever runs twice. The account area
 says how it goes, and after a day of failing it says the move needs you, with
 Try again. Afterwards the server is what the window opens, and this computer
-works for it by itself as it does for My Cloud: no access dialog, only the
+works for it by itself: no access dialog, only the
 menu bar's item with Pause.
 
 Until then, a bot that asks for a teammate living in your other place says where
@@ -556,7 +531,7 @@ server at all.
 For development, `pnpm dev:server` sets `OMB_DEV_TRUST_LOCAL_BROWSER=1`, so a
 browser on Vite's dev page (`pnpm dev`) is the owner as before. The server
 honours it only when it runs from source with owner trust, logs a warning, and
-ignores it in a build, the desktop app, a hosted workspace and MausBot Cloud.
+ignores it in a build, the desktop app and a hosted workspace.
 Run `OMB_DEV_TRUST_LOCAL_BROWSER=0 pnpm dev:server` to try the sign-in.
 
 ### Loopback trust: owner or service
@@ -591,8 +566,7 @@ Set `OMB_LOOPBACK_TRUST=service` on a self-hosted server people share (with
 an email sign-in list, say), or `OMB_LOOPBACK_TRUST=owner` to opt a hosted
 workspace back into the old behaviour (the log then warns). Any other value
 means `service`. The desktop app ignores the setting: its local changes
-already need the app's own per-launch capability. MausBot Cloud ignores
-it too and is always `service` (docs/cloud-pro.md).
+already need the app's own per-launch capability.
 
 With `service` on a self-hosted server:
 
@@ -624,58 +598,19 @@ have Full access. Files the server's user owns (`config.json`, the engine's
 environment) are also still readable from a bot's shell; that needs a
 second user for engines, a separate change.
 
-## Sign in with your email
+## People on a shared server
 
-A pairing code is fine for the owner's own devices. For a workspace other
-people use every day, let them sign in with an emailed code instead: set an
-allow-list, and `/pair` on your server offers "Sign in with your email" first.
+Openpals has no email sign-in. A device signs in with a pairing code: `openmausbot pair` gives it full access,
+`openmausbot pair --client` chat and approvals only. Sessions show in `openmausbot sessions` and are revoked the same way.
 
-```sh
-OMB_SIGNIN_EMAILS="her@yourcompany.com, @yourcompany.com"   # full access
-OMB_SIGNIN_MEMBER_EMAILS="freelancer@example.com"          # chat and approvals only
-```
+The sign-in allow-list (`OMB_SIGNIN_EMAILS`, `OMB_SIGNIN_MEMBER_EMAILS`, `signIn.admins` / `signIn.members` in
+`config.json`, or `npx openmausbot access add|remove|list`) is still read: a list that names users marks the server as
+shared by several people, which narrows who may answer a card (below).
 
-Signed in as an admin? Settings → Remote access → **Who can sign in with an
-email** edits the same list in the browser, no command line needed. With the
-npm package, the same thing from the command line, with the server running
-or not, no restart needed:
-
-```sh
-npx openmausbot access add her@yourcompany.com
-npx openmausbot access add freelancer@example.com --chat-only
-npx openmausbot access list
-```
-
-An entry is an address or `@domain` (everyone at that domain). Admins get
-the same access as a pairing code from `openmausbot serve`; users get the
-chat-only scope, the same as `openmausbot pair --client`. The same lists live
-in `config.json` under `signIn.admins` and `signIn.members` and can be changed
-through the settings API without a restart; the environment variables win
-when set, which is how a container or a service unit is bootstrapped.
-
-The code itself comes from `accounts.openmausbot.com`, the OpenMausBot
-account service, so your server needs no email credentials. Your server asks
-it to send the code, checks the answer, and then issues its own session
-cookie: the browser only ever talks to your server, and who is welcome is
-decided only by your allow-list. Wrong codes count against the same lockout
-as pairing codes. Sessions from a sign-in show the email in
-`openmausbot sessions` and can be revoked the same way.
-
-### Inviting people
-
-**Settings → People** lists who may sign in, their role, when they were last
-seen, and what each person spent this month. **Invite** adds an address (or
-`@company.com` for everyone there) and shows a link like
-`https://your.host/pair?email=name%40company.com`: it opens the sign-in page
-with the address filled in, and the one-time code still goes to that address.
-Roles change with one click; removing someone stops new sign-ins.
-
-On a hosted workspace whose members your organization's Admin manages
-(`OMB_ADMIN_MEMBERSHIP=portal`), this list decides nothing, so Settings →
-People shows, read-only, who has signed in and what they spent, with a
-**Manage people in Admin** link to that workspace in Admin → People. Remote
-access there lists signed-in devices and offers no pairing codes, since a
-hosted workspace refuses them.
+On a hosted workspace whose members your organization's Admin manages (`OMB_ADMIN_MEMBERSHIP=portal`), people sign in
+through that Admin, so Settings → People shows, read-only, who has signed in and what they spent, with a **Manage people
+in Admin** link. Remote access there lists signed-in devices and offers no pairing codes, since a hosted workspace refuses
+them.
 
 ### Who may answer a card
 
@@ -1268,7 +1203,7 @@ settings do not change it.
 
 For the npm service, [install the chosen new version](deploy-vps.md#update)
 as the service user while the server is stopped, then start it again.
-For a foreground invocation, `npx --yes openmausbot@X.Y.Z serve --tunnel`
+For a foreground invocation, `npx --yes openmausbot@X.Y.Z serve`
 selects a particular published release; replace `X.Y.Z` with that version.
 
 ```sh

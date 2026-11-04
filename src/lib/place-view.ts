@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import type { CloudAccountState } from "../../electron/cloud-account.mjs";
 import { activeLocale, t } from "@/lib/i18n";
-import { cloudPlanView } from "@/lib/cloud-plan";
 import { engineSignedOut } from "@/lib/failed-turn";
 import { browserAvailable, builtInBrowserEnabled, type FeatureFlagConfig } from "@/lib/feature-flags";
 import { writeComputerPanelView } from "@/lib/computer-panel-view";
@@ -20,13 +17,11 @@ export const placeTranslate: PlaceTranslate = (key, params) => t(key as LocaleKe
 
 export interface PlaceSeat {
   server: ServerKind;
-  plan: boolean;
   role: "admin" | "user";
   mode: "simple" | "advanced";
 }
 
-export function serverKind(config: Pick<ConfigStatus, "cloudHome"> | null | undefined, platform: DesktopCapabilities["host"]["platform"]): ServerKind {
-  if (config?.cloudHome) return "my-cloud";
+export function serverKind(platform: DesktopCapabilities["host"]["platform"]): ServerKind {
   return platform === "darwin" ? "mac" : platform === "win32" ? "pc" : "linux";
 }
 
@@ -57,8 +52,7 @@ export function placeFacts(input: {
     place: input.place,
     server: seat.server,
     bot: bot.name,
-    plan: seat.plan,
-    boat: config?.box?.configured ? (config.box.included ? "included" : "own-key") : "none",
+    boat: config?.box?.configured ? "own-key" : "none",
     backend: bot.cloudBackend === "vps" ? "vps" : "box",
     engine: engineFacts(instance, bot.modelSelection.model),
     toolsAllowComputer: canUseMcpServer(bot.toolScope, "computer"),
@@ -76,12 +70,11 @@ export function placeViewFor(facts: PlaceFacts): PlaceView {
 }
 
 export function placeRowViewFor(row: PlaceRow, seat: PlaceSeat, worksOnLabel?: string): PlaceView {
-  const read = row.state === "cc-needs-key" && seat.plan && seat.server !== "my-cloud" ? { ...row, state: "cc-on-my-cloud" as const } : row;
-  return placeRowView(read, { server: seat.server, role: seat.role, mode: seat.mode, worksOnLabel, translate: placeTranslate, locale: activeLocale() });
+  return placeRowView(row, { server: seat.server, role: seat.role, mode: seat.mode, worksOnLabel, translate: placeTranslate, locale: activeLocale() });
 }
 
 export function placeBlocked(view: PlaceView): boolean {
-  return view.state === "cc-cannot" || view.state === "cc-on-my-cloud" || view.state === "browser-off" || view.state === "browser-cannot"
+  return view.state === "cc-cannot" || view.state === "browser-off" || view.state === "browser-cannot"
     || view.state === "vm-cannot" || view.state === "local-unavailable";
 }
 
@@ -90,24 +83,10 @@ export function placeHasIssue(view: PlaceView): boolean {
     || view.state === "cc-unavailable";
 }
 
-export function useCloudPlanPaid(): boolean {
-  const bridge = typeof window === "undefined" || window.ogb?.remoteClient?.active ? undefined : window.ogb?.cloudAccount;
-  const [account, setAccount] = useState<CloudAccountState | null>(null);
-  useEffect(() => {
-    if (!bridge) return;
-    let active = true, updated = false;
-    const unsubscribe = bridge.onState((next) => { updated = true; if (active) setAccount(next); });
-    void bridge.state().then((next) => { if (active && !updated) setAccount(next); }).catch(() => {});
-    return () => { active = false; unsubscribe(); };
-  }, [bridge]);
-  return Boolean(bridge) && cloudPlanView(account).kind === "paid";
-}
-
-export function usePlaceSeat(config: Pick<ConfigStatus, "cloudHome"> | null | undefined, platform: DesktopCapabilities["host"]["platform"]): PlaceSeat {
-  const plan = useCloudPlanPaid();
+export function usePlaceSeat(platform: DesktopCapabilities["host"]["platform"]): PlaceSeat {
   const ownerOrAdmin = useOwnerOrAdmin();
   const advanced = useAdvancedMode();
-  return { server: serverKind(config, platform), plan, role: ownerOrAdmin === false ? "user" : "admin", mode: advanced ? "advanced" : "simple" };
+  return { server: serverKind(platform), role: ownerOrAdmin === false ? "user" : "admin", mode: advanced ? "advanced" : "simple" };
 }
 
 export function openPlaceAction(
@@ -115,7 +94,7 @@ export function openPlaceAction(
   target: { botId: string; threadId?: string; place?: Place },
   dispatch: (action: Action) => void,
 ): boolean {
-  const appSettings = (section: "engines" | "computer" | "cloudAccount") =>
+  const appSettings = (section: "engines" | "computer") =>
     dispatch({ type: "toggleAppSettings", open: true, section });
   switch (id) {
     case "choose-model": openBotSettings(dispatch, "model", { botId: target.botId }); return true;
@@ -128,19 +107,6 @@ export function openPlaceAction(
       window.sessionStorage?.setItem("openmausbot.settings.section", "computer");
       appSettings("computer");
       return true;
-    case "see-plan": {
-      const desktop = window.ogb?.remoteClient?.active ? undefined : window.ogb?.cloudAccount;
-      if (desktop) { void desktop.openDashboard().catch(() => {}); return true; }
-      if (window.ogb?.cloudPlan) { void window.ogb.cloudPlan.manage().catch(() => {}); return true; }
-      appSettings("cloudAccount");
-      return true;
-    }
-    case "open-my-cloud": {
-      const desktop = window.ogb?.remoteClient?.active ? undefined : window.ogb?.cloudAccount;
-      if (desktop) void desktop.connectHome().catch(() => {});
-      else appSettings("cloudAccount");
-      return true;
-    }
     case "clear-pin":
       if (!target.threadId) return false;
       dispatch({ type: "updateTask", botId: target.botId, threadId: target.threadId, patch: { surface: null } });

@@ -4,7 +4,6 @@ import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 import type { RuntimeEvent } from "./contracts.ts";
-import { EngineMemory } from "./engine-memory.ts";
 import type { Message } from "./store.ts";
 import { TurnStops, stoppedTurnOutcome } from "./turn-outcome.ts";
 import { stallLimitMs, TurnWatchdog, type WatchedTurn } from "./turn-watchdog.ts";
@@ -207,7 +206,7 @@ describe("TurnWatchdog", () => {
 
 // The harness's stall handler (index.ts), run without starting a server.
 describe("the stall handler", () => {
-  function load(engineMemory = new EngineMemory({ enabled: false }), env: Record<string, string> = {}) {
+  function load(env: Record<string, string> = {}) {
     const source = readFileSync(new URL("./index.ts", import.meta.url), "utf8");
     const from = source.indexOf("\nconst TURN_STALL_MS"), to = source.indexOf("\nwatchdog.start();");
     if (from < 0 || to <= from) throw new Error("Stall handler section moved");
@@ -233,7 +232,6 @@ describe("the stall handler", () => {
       settleDirectFollowup: (generation: string | undefined, outcome: { text: string }) => settled.push({ generation, text: outcome.text }),
       finalizeDelegationWatch: (_threadId: string, _ok: boolean, _reply: string, why: string) => delegations.push(why),
       setTimeout: () => ({ unref() {} }),
-      engineMemory,
     });
     vm.runInContext(code, context, { filename: "index.ts (stall handler fixture)" });
     return { context, settled, delegations };
@@ -255,21 +253,11 @@ describe("the stall handler", () => {
 
   it("never lets the environment switch the watchdog off", () => {
     for (const endless of ["Infinity", "1e309", "-Infinity"]) {
-      const { context } = load(undefined, { OMB_TURN_STALL_MS: endless, OMB_TOOL_STALL_MS: endless });
+      const { context } = load({ OMB_TURN_STALL_MS: endless, OMB_TOOL_STALL_MS: endless });
       expect(context.watchdog.options).toMatchObject({ stallMs: 20 * 60_000, toolStallMs: 2 * 60 * 60_000 });
     }
-    const { context } = load(undefined, { OMB_TURN_STALL_MS: "3900000", OMB_TOOL_STALL_MS: "1e309" });
+    const { context } = load({ OMB_TURN_STALL_MS: "3900000", OMB_TOOL_STALL_MS: "1e309" });
     expect(context.watchdog.options).toMatchObject({ stallMs: 3_900_000, toolStallMs: 2 * 60 * 60_000 });
-  });
-
-  it("says when the Cloud ran out of memory while the stalled turn ran", () => {
-    const memory = new EngineMemory({ enabled: true, read: () => ({ totalBytes: 4 * 1024 ** 3, availableBytes: 0, swapFreeBytes: 0, oomKills: 0, fullStall10: 60 }),
-      groups: () => new Map(), log: () => {} });
-    memory.turnStarted("t1");
-    memory.tick();
-    const { context, settled } = load(memory);
-    context.watchdog.options.onStall({ threadId: "t1", botId: "eli" }, 20 * 60_000);
-    expect(settled[0]!.text).toMatch(/^No activity for 20 minutes — the turn was stopped\. This Cloud ran out of memory while 1 task ran at once \(not a problem with the AI provider\)\. Before it stopped/);
   });
 
   it("gives a stopped turn's own end the cause the harness noted before interrupting it", () => {
