@@ -33,6 +33,7 @@ import {
   CHANNELS_SECTION_ID,
   PINNED_SECTION_ID,
   TOOLS_SECTION_ID,
+  activeBotsFirst,
   partitionSidebarBots,
   partitionSidebarGroups,
   sidebarSectionLabel,
@@ -769,10 +770,15 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
   const parts = partitionSidebarBots(matchingBots, { universalPins, welcoming: useWelcomingBot() });
-  const { primary, chief, pinnedBots, bots } = simpleDesk ? withPrimaryTile(parts, defaultBotIn(state.bots)?.id) : { ...parts, primary: null };
+  const saved = simpleDesk ? withPrimaryTile(parts, defaultBotIn(state.bots)?.id) : { ...parts, primary: null };
+  // Shown order only: drag and Alt+Up/Down keep working on the saved order, so a reorder never stores this one.
+  const { primary, chief, pinnedBots, bots } = { ...saved, ...activeBotsFirst(saved, (bot) => {
+    const { waiting, working } = sidebarBotStatus(bot, state.pendingQueued);
+    return waiting || working;
+  }) };
   const { botChats, rooms } = partitionSidebarGroups(visibleGroups);
 
-  const drops = botDrag.arrange({ enabled: sections.interactive && !phone, list: bots, bots: state.bots });
+  const drops = botDrag.arrange({ enabled: sections.interactive && !phone, list: saved.bots, bots: state.bots });
   const naturalSectionIds = [
     ...(pinnedBots.length > 0 && !universalPins && !simpleDesk ? [PINNED_SECTION_ID] : []),
     ...(rooms.length > 0 ? [CHANNELS_SECTION_ID] : []),
