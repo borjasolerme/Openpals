@@ -1841,7 +1841,7 @@ async function interruptDirectThread(botId: string, threadId: string, cause?: st
     if (requestOwner.messageId) store.patchMessage(threadId, requestOwner.messageId, { requestCancelled: true });
   }
   stopParkedCards(threadId);
-  noteTeammatesLeftRunning(threadId, coordinator.stopAwaitingDirect(threadId, cause));
+  coordinator.stopAwaitingDirect(threadId, cause);
   const owner = botForThread(botId, threadId);
   const generation = directTurnGenerationByThread.get(threadId);
   cancelDirectTurnDispatch(botId, threadId);
@@ -2379,7 +2379,7 @@ const { outsideDrivenThread } = outsideLineage;
 const { ownerTurn, roomTurnStarted, roomTurnEnded } = createOwnerTurns({
   store, directRequest: (threadId) => directRequestOwners.get(threadId), threadStarter: (threadId) => threadStarters.get(threadId),
   cardAnswerer: inFlightCardAnswerer, activeRoutineRun: activeRoutineRunForThread, ownerStartedRun: (runId) => ownerStartedRoutineRuns.has(runId), routineRunIsOwners });
-const { stopThreadForPerson, stopOnTypedCommand, restartForPerson, noteTeammatesLeftRunning } = createPersonStop({
+const { stopThreadForPerson, stopOnTypedCommand, restartForPerson } = createPersonStop({
   store, routines: () => routines, handoffs: () => handoffs, interruptDirectThread, clearUnattended,
   stopGoal: (threadId) => oneOnOneGoals.stop(threadId), markStopped: (threadId) => personStops.stop(threadId, liveTurns.running(threadId), directTurnDispatchClaims.has(threadId)), working: (botId, threadId) => threadBusy(botId, threadId) || coordinator.activeDirect(threadId), asking: (threadId) => coordinator.awaitingAnswer(threadId) || Boolean(openPersonCard(threadId)), language: threadLanguage,
 });
@@ -3330,7 +3330,7 @@ function noteQueuedBehindPerson(node: HandoffView): void {
 function runRoomNode(node: HandoffView, group: GroupRecord, bot: BotRecord, signal: AbortSignal, parent: HandoffView | undefined,
   turn: (operation: GroupTurnOperation, result: GroupTurnOrchestration["result"], coordination: NonNullable<GroupTurnOrchestration["coordination"]>) => Promise<unknown>,
 ): Promise<HostTurnResult> {
-  const operation = beginGroupTurnOperation(group.id, node.threadId, [bot.id]);
+  const operation = Object.assign(beginGroupTurnOperation(group.id, node.threadId, [bot.id]), { speaking: false });
   return new Promise<HostTurnResult>(resolve => {
     let done = false;
     const finish = (outcome: HostTurnResult) => {
@@ -3338,7 +3338,7 @@ function runRoomNode(node: HandoffView, group: GroupRecord, bot: BotRecord, sign
       done = true; resolve(outcome);
     };
     const result: GroupTurnOrchestration["result"] = {};
-    const abort = () => { operation.cancelled = true; operation.cancellation.abort(); };
+    const abort = () => { operation.cancelled = true; operation.cancellation.abort(); if (operation.speaking) void runningTurnInstance(bot, node.threadId)?.adapter.interruptTurn(node.threadId).catch(() => {}); };
     signal.addEventListener("abort", abort, { once: true });
     if (signal.aborted) abort();
     const run = (groupQueues.get(node.threadId) ?? Promise.resolve()).catch(() => {}).then(async () => {
@@ -3347,7 +3347,7 @@ function runRoomNode(node: HandoffView, group: GroupRecord, bot: BotRecord, sign
       if (problem) throw new Error(problem);
       const available = await waitForChatRoomMember(operation, node.threadId, bot);
       if (available !== "run") { result.outcome = "cancelled"; return; }
-      await turn(operation, result, { id: node.id, settle: finish });
+      operation.speaking = true; await turn(operation, result, { id: node.id, settle: finish });
     });
     const tracked = run.finally(() => {
       signal.removeEventListener("abort", abort);
@@ -3970,7 +3970,7 @@ function cancelGroupTurnOperations(
   if (outcome.byHarness) coordinator.cancelRoom(groupId, threadId, outcome.detail, "failed");
   else {
     stopParkedCards(threadId);
-    noteTeammatesLeftRunning(threadId, coordinator.stopAwaitingDirect(threadId));
+    coordinator.stopAwaitingDirect(threadId);
     coordinator.cancelRoom(groupId, threadId);
   }
   roomMemberLock.releaseThread(threadId);
@@ -8221,7 +8221,7 @@ routines = new RoutineManager({
     cancelDirectTurnDispatch(botId, threadId);
     revokeInternalCapabilitiesForThread(threadId);
     stopParkedCards(threadId);
-    noteTeammatesLeftRunning(threadId, coordinator.stopAwaitingDirect(threadId));
+    coordinator.stopAwaitingDirect(threadId);
     try {
       await runningTurnInstance(bot, threadId)?.adapter.interruptTurn(threadId);
     } finally {
