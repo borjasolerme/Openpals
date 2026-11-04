@@ -562,6 +562,7 @@ import { createPersonReplies } from "./person-replies.ts";
 import { personKey, relayedPersonKey } from "./person-key.ts";
 
 import { createShareAnswer } from "./host/share-answer.ts";
+import { selfThreadRefusal } from "./host/self-threads.ts";
 import { createCardRequester, linePersonKey } from "./host/thread-person.ts";
 import { createThreadRoutes } from "./routes/threads.ts";
 import { createWebhookRoutes } from "./routes/webhooks.ts";
@@ -13188,7 +13189,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         }
         const sourceTitle = owner.group ? owner.group.name : (store.taskByThread(from.id, fromThreadId)?.title ?? "");
         const picked = body.modelSelection === undefined ? null : checkedModelSelection(body.modelSelection, undefined, true); const refused = !picked ? null : target.id !== from.id ? "model_selection is only for threads on yourself" : !picked.ok ? picked.error : validateModelProposal(picked.selection, from); if (refused) return json(res, 400, { error: refused });
-        if (target.id === from.id) {
+        if (target.id === from.id) { const selfRefused = selfThreadRefusal({ handoff: Boolean(internalCapability.roomHandoffId), requestLine: store.activePath(fromThreadId).findLast((line) => line.role === "user" && line.kind === "text") }); if (selfRefused) return json(res, 409, { error: selfRefused });
           const inherited = picked?.ok ? { modelSelection: picked.selection, approvalMode: undefined } : parentThreadModel(from.id, fromThreadId);
           const task = store.createTask(from.id, title, false, projectId, { botId: from.id, name: from.name, at: Date.now() }, inherited.approvalMode, inherited.modelSelection);
           if (!task) return json(res, 500, { error: "couldn't create that thread" });
