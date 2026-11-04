@@ -8,7 +8,7 @@ export const LANDING_MS = 640;
 export const FLIGHT_MS = 700;
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 const GLIDE = "cubic-bezier(0.3, 0.7, 0.4, 1)";
-/** The sidebar's bot rows and department headings, by a key that survives the re-render. */
+/** The sidebar's bot rows and section headings, by a key that survives the re-render. */
 function rowsNow(root: ParentNode): Map<string, HTMLElement> {
   const rows = new Map<string, HTMLElement>();
   for (const row of root.querySelectorAll<HTMLElement>("[data-sidebar-bot-row], [data-section]")) {

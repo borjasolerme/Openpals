@@ -119,7 +119,7 @@ describe("openChatLink", () => {
     for (const link of ["openmausbot://thread/missing?bot=nobody", "openmausbot://thread/x/extra", "openmausbot://bots/scout", "not a link"]) {
       expect(opened(link)).toEqual({ ok: false, actions: [{ type: "notice", notice: { kind: "thread-gone", botName: null } }] });
     }
-    expect(opened("openmausbot://bot/nobody", { ...state, activeView: "team-map" })).toEqual({ ok: false, actions: [
+    expect(opened("openmausbot://bot/nobody", { ...state, activeView: "files" })).toEqual({ ok: false, actions: [
       { type: "select", id: "other" },
       { type: "notice", notice: { kind: "bot-gone", botName: null } },
     ] });

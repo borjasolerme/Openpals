@@ -4,17 +4,15 @@ A department (the sidebar's bot group; `section` in the data and API) is a named
 never limits which bots work together: every bot reaches every other bot, and a department only decides which Chief is in
 charge ([Chief authority](team-access.md)). Group chats are
 conversations, and Templates is the catalog that creates new teams and bots.
-The sidebar and Team map use the same persisted team list. Existing bot and
+Existing bot and
 group-chat labels migrate automatically; clearing a team's shared instructions
 or moving its last bot does not remove the team.
 
 Run the isolated lifecycle checks:
 
 ```sh
-pnpm exec vitest run server/team-lifecycle.e2e.test.ts server/section-context.test.ts server/store.test.ts src/lib/team-map.test.ts --maxWorkers=2
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-lifecycle-ui.e2e.test.ts scripts/testing/team-template-ui.e2e.test.ts --maxWorkers=1
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-canvas-ui.e2e.test.ts --maxWorkers=1
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-computers-ui.e2e.test.ts --maxWorkers=1
+pnpm exec vitest run server/team-lifecycle.e2e.test.ts server/section-context.test.ts server/store.test.ts --maxWorkers=2
+OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-template-ui.e2e.test.ts --maxWorkers=1
 pnpm exec vitest run scripts/testing/team-computers-fixture.test.ts
 pnpm exec vitest run server/index.test.ts -t "creates team computers|shares one team computer" --maxWorkers=1
 ```
@@ -90,31 +88,6 @@ machine causes a clear failure, never an automatic paid replacement. These
 checks prove server routing and ownership, not actual Boat provisioning or
 remote desktop operation.
 
-The separate `team-computers-ui` test uses a real OMB server and renderer with
-an owned loopback HTTP Boat provider. It creates a named machine through **Add →
-Boat computer**, verifies opening the shelf never provisions a machine, cancels
-and confirms a pointer drop, explicitly unassigns before moving to another team,
-and preserves bot settings and the computer registry across a browser reload.
-It also checks an Auto bot's **Computer** panel names the shared team machine
-without offering a second private computer, then takes/releases human control,
-sleeps the machine, and retries a simulated rate-limit error using the same
-durable resource ID. No provider deletion is made. Evidence and a screenshot
-are retained beside the fixture log as `*.team-computers.json` and
-`*.team-computers.png`. Accessible clicks and confirmation keys are real browser
-input; pointer events and native-select change events are injected in this test.
-
-For a separately driven computer-use preview, run:
-
-```sh
-node --experimental-strip-types scripts/testing/team-computers-preview.ts
-```
-
-The printed `previewUrl` is disposable. `boatFixtureApi` exposes a fixture-only
-`GET /__fixture` receipt of provider calls; `POST /__fixture` with
-`{"refuseCreate":true}` enables the simulated 429 response, and false clears it.
-The launch hook accepts only a literal `http://127.0.0.1:PORT` and installs a
-fixed fake token. It cannot inherit a real Boat token or use a remote provider.
-Ctrl-C stops the owned renderer/server and local provider. Guest bootstrap
 commands are acknowledged by the stand-in but never execute.
 
 On 2026-09-13, a separate native computer-use pass against this preview created

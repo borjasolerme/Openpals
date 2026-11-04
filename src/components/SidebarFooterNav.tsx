@@ -1,4 +1,4 @@
-import { FolderOpen, Globe, Puzzle, UsersRound, Zap } from "lucide-react";
+import { FolderOpen, Globe, Puzzle, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useAppTriggers } from "@/lib/app-triggers";
@@ -155,17 +155,6 @@ export function SidebarFooterNav({
     <>
       {automationsRow}
       {appsRow}
-      {(advanced || iconsOnly) && (
-        <NavRow
-          id="team-map"
-          label={t("sidebar.nav.teamMap")}
-          tourId="team-tools"
-          iconsOnly={iconsOnly || toolbar}
-          active={state.activeView === "team-map"}
-          icon={(active) => <UsersRound size={iconSize} className={tone(active)} />}
-          onClick={() => dispatch({ type: "showTeamMap" })}
-        />
-      )}
       {filesRow}
       {advanced && webPanels.map((panel) => (
         <NavRow

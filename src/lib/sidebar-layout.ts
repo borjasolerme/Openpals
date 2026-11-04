@@ -2,15 +2,12 @@ import type { GroupGoalRunCardData } from "../../shared/group-goal-run";
 import type { ConnectorCardData } from "../../shared/connector-card";
 import type { DefaultBotFields } from "../../shared/default-bot";
 import { hiddenFromSidebar } from "./default-bot";
-import { BOT_SECTIONS_ENABLED } from "./local-customizations";
 
 export const PINNED_SECTION_ID = "builtin:pinned";
 export const CHANNELS_SECTION_ID = "builtin:channels";
 export const BOT_CHATS_SECTION_ID = "builtin:bot-chats";
 export const BOTS_SECTION_ID = "builtin:bots";
 export const TOOLS_SECTION_ID = "builtin:tools";
-
-const USER_SECTION_PREFIX = "section:";
 
 export type SidebarSectionId = string;
 export type SectionDropPlace = "before" | "after";
@@ -30,14 +27,12 @@ const GOAL_RUN_PREVIEW_LABEL = {
 export type SidebarBot = DefaultBotFields & {
   id: string;
   chiefOfStaff?: boolean;
-  section?: string;
   pinned?: boolean;
   hidden?: boolean;
 };
 
 export type SidebarGroup = {
   id: string;
-  section?: string;
   dm?: boolean;
 };
 
@@ -45,21 +40,12 @@ function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
-export function userSectionId(name: string): SidebarSectionId {
-  return `${USER_SECTION_PREFIX}${name}`;
-}
-
-export function userSectionName(id: SidebarSectionId): string | null {
-  if (!id.startsWith(USER_SECTION_PREFIX)) return null;
-  return id.slice(USER_SECTION_PREFIX.length);
-}
-
 export function sidebarSectionLabel(id: SidebarSectionId): string {
   if (id === PINNED_SECTION_ID) return "Pinned";
   if (id === CHANNELS_SECTION_ID) return "Group chats";
   if (id === BOT_CHATS_SECTION_ID) return "Bot threads";
   if (id === BOTS_SECTION_ID) return "Bots";
-  return userSectionName(id) ?? id;
+  return id;
 }
 
 export function sidebarGoalRunPreview(run: GroupGoalRunCardData): string {
@@ -96,45 +82,33 @@ export function sidebarSectionCollapsed(
   return sidebarLayoutInteractive(density, query) && collapsedIds.includes(id);
 }
 
-const inSection = (bot: SidebarBot) => BOT_SECTIONS_ENABLED && Boolean(bot.section);
-
 export function partitionSidebarBots<T extends SidebarBot>(
   bots: T[],
   options?: { universalPins?: boolean; viewerEmail?: string | null; welcoming?: string | null },
 ) {
   const universalPins = options?.universalPins === true;
   const visible = bots.filter((bot) => !bot.hidden && !hiddenFromSidebar(bot, options?.viewerEmail) && bot.id !== options?.welcoming);
-  // The pin flag is the server's, the same on every client. Only the main Chief keeps its own top slot when pins are
-  // not universal (a device's layout choice); a pinned Chief of a group is listed with the other pinned bots.
-  const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff || inSection(bot)));
+  // The pin flag is the server's, the same on every client. The Chief keeps its own top slot when pins are not
+  // universal (a device's layout choice).
+  const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff));
   const pinnedIds = new Set(pinnedBots.map((bot) => bot.id));
-  const unsectionedChief = visible.find((bot) => bot.chiefOfStaff && !inSection(bot) && !pinnedIds.has(bot.id)) ?? null;
-  const sectionChiefs = visible.filter((bot) => bot.chiefOfStaff && inSection(bot) && !pinnedIds.has(bot.id));
-  const sectionedBots = visible.filter(
-    (bot) => !bot.chiefOfStaff && inSection(bot) && !pinnedIds.has(bot.id),
-  );
-  const unsectionedBots = visible.filter(
-    (bot) => !bot.chiefOfStaff && !inSection(bot) && !pinnedIds.has(bot.id),
-  );
-  return { unsectionedChief, pinnedBots, sectionChiefs, sectionedBots, unsectionedBots };
+  const chief = visible.find((bot) => bot.chiefOfStaff && !pinnedIds.has(bot.id)) ?? null;
+  const rest = visible.filter((bot) => !pinnedIds.has(bot.id) && bot.id !== chief?.id);
+  return { chief, pinnedBots, bots: rest };
 }
 
 export function withPrimaryTile<T extends SidebarBot>(parts: ReturnType<typeof partitionSidebarBots<T>>, defaultBotId: string | undefined) {
-  const primary = parts.unsectionedChief
-    ?? parts.pinnedBots.find((bot) => bot.chiefOfStaff && !inSection(bot))
-    ?? [...parts.pinnedBots, ...parts.unsectionedBots].find((bot) => bot.id === defaultBotId)
+  const primary = parts.chief
+    ?? parts.pinnedBots.find((bot) => bot.chiefOfStaff)
+    ?? [...parts.pinnedBots, ...parts.bots].find((bot) => bot.id === defaultBotId)
     ?? null;
   if (!primary) return { ...parts, primary };
   const others = (bots: T[]) => bots.filter((bot) => bot.id !== primary.id);
-  return { ...parts, primary, unsectionedChief: null, pinnedBots: others(parts.pinnedBots), unsectionedBots: others(parts.unsectionedBots) };
+  return { ...parts, primary, chief: null, pinnedBots: others(parts.pinnedBots), bots: others(parts.bots) };
 }
 
 export function partitionSidebarGroups<T extends SidebarGroup>(groups: T[]) {
-  const botChats = groups.filter((group) => Boolean(group.dm));
-  const rooms = groups.filter((group) => !group.dm);
-  const sectionedRooms = rooms.filter((group) => Boolean(group.section));
-  const unsectionedRooms = rooms.filter((group) => !group.section);
-  return { botChats, sectionedRooms, unsectionedRooms };
+  return { botChats: groups.filter((group) => Boolean(group.dm)), rooms: groups.filter((group) => !group.dm) };
 }
 
 export function orderedSidebarSections(

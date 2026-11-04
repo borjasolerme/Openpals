@@ -29,13 +29,12 @@ afterEach(() => vi.unstubAllGlobals());
 
 const render = (bot: Bot) => renderToStaticMarkup(createElement(BotContextMenu, {
   menu: { botId: bot.id, x: 10, y: 10 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
-  onMoveToSection: vi.fn(),
 }));
 
 describe("a team bot's actions for a session without the admin scope", () => {
   it("offers nothing it would refuse and says why the crown is greyed", () => {
     const html = render(scout);
-    for (const refused of [">Archive</button>", ">Delete</button>", "Duplicate", "Move to department", "Delete all threads"]) expect(html).not.toContain(refused);
+    for (const refused of [">Archive</button>", ">Delete</button>", "Duplicate", "Delete all threads"]) expect(html).not.toContain(refused);
     expect(html).toContain('title="Only an admin of this installation can choose the Chief of Staff."');
     expect(html).not.toContain("Choose Claude or an ACP model provider first");
   });
@@ -45,16 +44,17 @@ describe("a team bot's actions for a session without the admin scope", () => {
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*title="Only an admin of this installation can choose the Chief of Staff\."[^>]*>.*Remove Chief of Staff/);
   });
 
-  it("leaves Archive, Delete and Move to department out of the simple menu", () => {
+  it("leaves Archive and Delete out of the simple menu", () => {
     fixture.advanced = false;
     const html = render(scout);
-    for (const refused of [">Archive</button>", ">Delete</button>", "Move to department"]) expect(html).not.toContain(refused);
+    for (const refused of [">Archive</button>", ">Delete</button>"]) expect(html).not.toContain(refused);
   });
 
   it("keeps every action for an admin", () => {
     fixture.admin = true;
     const html = render(scout);
-    for (const offered of [">Archive</button>", ">Delete</button>", "Duplicate", "Move to department"]) expect(html).toContain(offered);
+    for (const offered of [">Archive</button>", ">Delete</button>", "Duplicate"]) expect(html).toContain(offered);
+    expect(html).not.toContain("Move to department");
     expect(html).toContain("Choose Claude or an ACP model provider first");
   });
 });

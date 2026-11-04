@@ -290,7 +290,7 @@ describe("profileMenuItems", () => {
 
 describe("Simple mode's account menu", () => {
   const noop = () => {};
-  const tools = toolMenuItems({ activeView: "routines", automationsNeedYou: true, onAutomations: noop, onTeamMap: noop });
+  const tools = toolMenuItems({ activeView: "routines", automationsNeedYou: true, onAutomations: noop });
   const place = (patch: Partial<Parameters<typeof placeMenuItems>[0]> = {}) => ({
     bridge: { state: async () => ({ local: true, name: "This computer" }), menu: async () => {} },
     current: { local: true, name: "This computer" },
@@ -314,11 +314,11 @@ describe("Simple mode's account menu", () => {
     return all;
   }, []);
 
-  it("leads with usage, the phone app, support and Settings, then Automations and Team map, then where this window is and Cloud", () => {
+  it("leads with usage, the phone app, support and Settings, then Automations, then where this window is and Cloud", () => {
     const items = build();
     expect(groups(items)).toEqual([
       ["usage", "phone-app", "support", "settings"],
-      ["automations", "team-map"],
+      ["automations"],
       ["place", "switch-place", "account"],
     ]);
     expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).toEqual(["help", "feedback", "shortcuts", "about"]);
@@ -337,13 +337,13 @@ describe("Simple mode's account menu", () => {
     expect(items[0]!.chevron).toBeUndefined();
   });
 
-  it("adds Files once My Cloud's files are ready and Archived bots while there are any, after Team map", () => {
+  it("adds Files once My Cloud's files are ready and Archived bots while there are any, after Automations", () => {
     const open = vi.fn();
-    const items = toolMenuItems({ activeView: "files", automationsNeedYou: false, onAutomations: noop, onTeamMap: noop, onFiles: noop, archived: { count: 3, open } });
-    expect(items.map((item) => [item.key, item.active, item.value])).toEqual([["automations", false, undefined], ["team-map", false, undefined], ["files", true, undefined], ["archived", undefined, "3"]]);
-    items[3]!.onSelect();
+    const items = toolMenuItems({ activeView: "files", automationsNeedYou: false, onAutomations: noop, onFiles: noop, archived: { count: 3, open } });
+    expect(items.map((item) => [item.key, item.active, item.value])).toEqual([["automations", false, undefined], ["files", true, undefined], ["archived", undefined, "3"]]);
+    items[2]!.onSelect();
     expect(open).toHaveBeenCalledOnce();
-    expect(toolMenuItems({ activeView: "chat", automationsNeedYou: false, onAutomations: noop, onTeamMap: noop, archived: { count: 0, open } }).map((item) => item.key)).toEqual(["automations", "team-map"]);
+    expect(toolMenuItems({ activeView: "chat", automationsNeedYou: false, onAutomations: noop, archived: { count: 0, open } }).map((item) => item.key)).toEqual(["automations"]);
   });
 
   it("names the account button after the person and whatever its dot is raised for", () => {
@@ -375,7 +375,7 @@ describe("Simple mode's account menu", () => {
     expect(groups(build({ move }))).toEqual([
       ["cloud-move"],
       ["usage", "phone-app", "support", "settings"],
-      ["automations", "team-map"],
+      ["automations"],
       ["place", "switch-place", "account"],
     ]);
     expect(groups(build({ move: [] }))[0]).toEqual(["usage", "phone-app", "support", "settings"]);
@@ -408,8 +408,8 @@ describe("Simple mode's account menu", () => {
     expect(renderToStaticMarkup(createElement(InitialsAvatar, { initials: "AL", size: 50 }))).toContain("font-size:19px");
   });
 
-  it("marks Automations open and needing attention, and Team map plain", () => {
-    expect(tools.map((item) => [item.key, item.active, item.attention])).toEqual([["automations", true, true], ["team-map", false, undefined]]);
+  it("marks Automations open and needing attention", () => {
+    expect(tools.map((item) => [item.key, item.active, item.attention])).toEqual([["automations", true, true]]);
   });
 
   it("ticks the current place and switches through the same native menu as the server pill", () => {

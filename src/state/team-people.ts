@@ -57,8 +57,8 @@ export function ownerOf(bot: { createdBy?: string; reportsTo?: string }, team: P
   return team?.people.find((person) => person.email === email) ?? { email, name: nameFromEmail(email), role: "member" };
 }
 
-/** The person every bot in a department reports to, when they all report to one person. */
-export function departmentOwner(bots: ReadonlyArray<{ createdBy?: string; reportsTo?: string }>, team: TeamPeople | null): TeamPerson | null {
+/** The person every one of these bots reports to, when they all report to one person. */
+export function sharedOwner(bots: ReadonlyArray<{ createdBy?: string; reportsTo?: string }>, team: TeamPeople | null): TeamPerson | null {
   if (!team || bots.length === 0) return null;
   const owners = bots.map((bot) => ownerOf(bot, team));
   const first = owners[0];

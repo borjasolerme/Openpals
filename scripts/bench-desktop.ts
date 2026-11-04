@@ -604,7 +604,7 @@ async function main() {
       const firstOpen: Record<string, Record<string, number>> = {};
       for (const [condition, { cpu, latencyMs }] of Object.entries(conditions)) {
         firstOpen[condition] = {};
-        for (const name of ["SettingsModal", "PluginsPanel", "ComputerPanel", "BotSettingsDialog", "TriggersPage", "TeamMapPage"]) {
+        for (const name of ["SettingsModal", "PluginsPanel", "ComputerPanel", "BotSettingsDialog", "TriggersPage"]) {
           const file = assets.find((asset) => asset.startsWith(`${name}-`) && asset.endsWith(".js"));
           if (!file) continue;
           const open = await chrome.newPage({ storage: STORAGE });

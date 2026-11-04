@@ -1,7 +1,7 @@
 import type { NewBotDefaults } from "../../shared/new-bot-defaults";
 import { api, type Action, type Bot, type ModelSelection } from "@/state/store";
 import { teamChats } from "@/state/team-chats";
-import { currentTeamPeople, departmentOwner, type TeamPeople } from "@/state/team-people";
+import { currentTeamPeople, sharedOwner, type TeamPeople } from "@/state/team-people";
 import { openBot } from "@/state/thread-navigation";
 import type { BotSource } from "./analytics-allowlist";
 import { BotCreationDraft } from "./bot-creation-draft";
@@ -27,12 +27,10 @@ export function freeName(name: string, bots: ReadonlyArray<Pick<Bot, "name">>): 
   for (let next = 2; ; next++) if (!taken.has(`${name} ${next}`.toLowerCase())) return `${name} ${next}`;
 }
 
-/** Who a new team bot reports to: the person chosen, else whoever every bot of its department reports to, else this
- * person. */
-export function reportsToFor(chosen: string | null, section: string | undefined, bots: readonly Bot[], team: TeamPeople): string | null {
+/** Who a new team bot reports to: the person chosen, else whoever every bot reports to, else this person. */
+export function reportsToFor(chosen: string | null, bots: readonly Bot[], team: TeamPeople): string | null {
   if (chosen) return chosen;
-  const department = bots.filter((bot) => !bot.hidden && (bot.section?.trim() || "") === (section?.trim() || ""));
-  return departmentOwner(department, team)?.email ?? team.me?.email ?? null;
+  return sharedOwner(bots.filter((bot) => !bot.hidden), team)?.email ?? team.me?.email ?? null;
 }
 
 /** A bot just made joins the sidebar and, unless the caller keeps its own place, its chat opens: on a team's Cloud the
@@ -47,18 +45,17 @@ export function announceNewBot(dispatch: (action: Action) => void, bot: Bot, war
 
 /** A paired device may not read the host's New bot defaults: the host applies them to an empty request. Auto on this
  * computer needs the person's own OK, so a bot whose defaults ask for it starts on Ask. */
-async function createNewBot(section: string | undefined, bots: readonly Bot[], team: TeamPeople | null, request: typeof api) {
+async function createNewBot(bots: readonly Bot[], team: TeamPeople | null, request: typeof api) {
   if (typeof window !== "undefined" && window.ogb?.remoteClient?.active) {
-    const { bot } = await request<{ bot: Bot }>("/api/bots", { method: "POST", body: JSON.stringify(section === undefined ? {} : { section }) });
+    const { bot } = await request<{ bot: Bot }>("/api/bots", { method: "POST", body: "{}" });
     return { bot, warnings: [] as string[], startsOnAsk: false };
   }
   const template = startingTemplate(await request<BotDefaultsAnswer>("/api/bot-defaults"), true);
   template.profile.name = freeName(template.profile.name!, bots);
-  if (section !== undefined) template.profile.section = section;
   const draft = new BotCreationDraft(template, () => {}, request);
   const startsOnAsk = draft.bot.approvalMode === "auto" && draft.bot.computer === "local";
   if (startsOnAsk) draft.patch({ approvalMode: "ask" });
-  const reportsTo = team ? reportsToFor(null, draft.bot.section, bots, team) ?? undefined : undefined;
+  const reportsTo = team ? reportsToFor(null, bots, team) ?? undefined : undefined;
   try {
     return { ...await createConfiguredBot(draft, request, undefined, undefined, undefined, reportsTo), startsOnAsk };
   } finally {
@@ -71,7 +68,7 @@ export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bo
   request: typeof api = api): Promise<void> {
   let made: Awaited<ReturnType<typeof createNewBot>>;
   try {
-    made = await createNewBot(action.section, bots, currentTeamPeople(), request);
+    made = await createNewBot(bots, currentTeamPeople(), request);
   } catch (cause) {
     const message = t("newBot.failed", { error: cause instanceof Error ? cause.message : String(cause) });
     if (action.onError) action.onError(message);

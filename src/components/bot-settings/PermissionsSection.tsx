@@ -13,7 +13,6 @@ import { ApprovalModeSelector } from "../ApprovalModeSelector";
 import { CommandAllowlistDialog } from "../CommandAllowlistDialog";
 import { LocalComputerAutoWarning } from "../LocalComputerAutoWarning";
 import { Switch } from "../SettingsPrimitives";
-import { ManagedTeamsSettings } from "./ManagedTeamsSettings";
 import { ProposalStatus } from "./ProposalStatus";
 import type { useBotSettingsDerived } from "./useBotSettingsDerived";
 import { useBotEditor } from "./BotEditorContext";
@@ -95,13 +94,6 @@ export function PermissionsSection({
                   : t("permissions.chief.make", { section: displaySectionName })}
         </div>
         <ProposalStatus bot={bot} kind="chief" />
-        {bot.chiefOfStaff && <ManagedTeamsSettings
-          key={bot.id + JSON.stringify(bot.managedSections ?? [])}
-          name={bot.name} ownTeam={bot.section?.trim() || ""}
-          teams={["", ...(state.sections ?? []), ...[...state.bots, ...state.groups].map(member => member.section?.trim() || "")]}
-          allowed={bot.managedSections ?? []}
-          onSave={managedSections => patch({ managedSections, acknowledgePeerScope: true })}
-        />}
         {bot.chiefOfStaff && <ProposalStatus bot={bot} kind="owner" />}
       </div>}
 

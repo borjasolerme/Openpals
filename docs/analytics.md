@@ -86,7 +86,6 @@ use their own Boat key, and how many bots run on cloud computers, without sendin
 | `bots_local_vm`, `bots_this_computer`, `bots_browser`, `bots_off`, `bots_auto` | count | Bots set to work on a Local VM, on this computer, in the browser only, nowhere, or left on Auto |
 | `rooms` | count | Rooms |
 | `bot_channels` | count | Channels bots opened with each other |
-| `teams` | count | Teams |
 | `routines`, `routines_enabled` | count | Routines, and how many are on; left out while routines are not loaded |
 | `routines_cloud`, `routines_room_goal` | count | Routines that run on a cloud computer, and routines that pursue a room goal |
 | `routines_once`, `routines_daily`, `routines_interval`, `routines_cron` | count | Routines by schedule type |

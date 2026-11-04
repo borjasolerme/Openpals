@@ -47,15 +47,6 @@ describe("t", () => {
     }
   });
 
-  it("keeps new department lifecycle labels available in partial packs, with interpolated names and counts", () => {
-    setLocale("de");
-    expect(t("team.create")).toBe("Create department");
-    expect(t("team.moveTo", { name: "Research" })).toBe("Move bots to Research");
-    expect(t("team.moveMany", { count: 2 })).toBe("Move 2 bots");
-    expect(t("team.deleteTitle", { name: "Research" })).toBe("Delete Research department?");
-    expect(t("team.instructionsTitle", { name: "Research" })).toBe("Research shared instructions");
-  });
-
   it("setLocale reports the locale that actually took effect", () => {
     expect(setLocale("de-AT")).toBe("de");
     expect(t("engines.local")).toBe("Lokal");

@@ -7,7 +7,7 @@ import { setTeamPeople, type TeamPeople } from "@/state/team-people";
 
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({}) }));
 
-import { BotListItem, botRowProps, TeamMenuItems } from "./Sidebar";
+import { BotListItem, botRowProps } from "./Sidebar";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 import { MentionMenu, teammateChoices } from "./MentionMenu";
 import { AskingLine, NeedsYouButton, NeedsYouTitle, PersonFace } from "./TeamOwner";
@@ -50,12 +50,6 @@ describe("who looks after a team bot, in the sidebar", () => {
     const header = renderToStaticMarkup(createElement(SidebarSectionHeader, { name: "Product A", collapsed: false, reorderable: false, dragging: false, line: true }));
     expect(header).not.toContain("data-department-lead");
     expect(header).not.toContain("→");
-  });
-
-  it("offers Set owner for all bots in a department's menu only when the caller passes it", () => {
-    const items = (onSetOwner?: () => void) => renderToStaticMarkup(createElement(TeamMenuItems, { onAddBots: vi.fn(), onRename: vi.fn(), onShare: vi.fn(), onDelete: vi.fn(), onSetOwner }));
-    expect(items(vi.fn())).toContain("Set who looks after all bots…");
-    expect(items()).not.toContain("Set who looks after all bots…");
   });
 });
 

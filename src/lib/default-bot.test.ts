@@ -14,7 +14,7 @@ describe("MausBot in the sidebar", () => {
       bot("bea-maus", { defaultBot: { person: "bea@example.com" } }),
       bot("writer"),
     ];
-    const shown = (viewerEmail: string | null) => partitionSidebarBots(bots, { viewerEmail }).unsectionedBots.map((entry) => entry.id);
+    const shown = (viewerEmail: string | null) => partitionSidebarBots(bots, { viewerEmail }).bots.map((entry) => entry.id);
     expect(shown("ada@example.com")).toEqual(["maus", "ada-maus", "writer"]);
     expect(shown(null)).toEqual(["maus", "writer"]);
     bots[0] = bot("maus", { defaultBot: {}, sidebarHidden: true });
@@ -38,8 +38,8 @@ describe("MausBot's identity is its mark, never its name", () => {
   it("keeps finding a renamed MausBot for the Settings switch and the sidebar, and keeps it out of the list while its welcome is open", () => {
     const bots = [bot("writer"), { ...bot("maus", { defaultBot: {} }), name: "Jarvis" }];
     expect(myDefaultBot(bots, null)?.id).toBe("maus");
-    expect(partitionSidebarBots(bots, { viewerEmail: null }).unsectionedBots.map((entry) => entry.id)).toEqual(["writer", "maus"]);
-    expect(partitionSidebarBots(bots, { viewerEmail: null, welcoming: "maus" }).unsectionedBots.map((entry) => entry.id)).toEqual(["writer"]);
+    expect(partitionSidebarBots(bots, { viewerEmail: null }).bots.map((entry) => entry.id)).toEqual(["writer", "maus"]);
+    expect(partitionSidebarBots(bots, { viewerEmail: null, welcoming: "maus" }).bots.map((entry) => entry.id)).toEqual(["writer"]);
   });
 });
 

@@ -38,7 +38,6 @@ import {
   toggleCollapsedSection,
   usePinnedCircleOrder,
 } from "./sidebar-preferences";
-import { userSectionId } from "./sidebar-layout";
 
 describe("sidebar density preferences", () => {
   it("keeps the column of avatars the sidebar was dragged to; every other value, an older app's included, opens it", () => {
@@ -143,7 +142,7 @@ describe("sidebar section preferences", () => {
   });
 
   it("persists raw section ids with lone surrogates and max-length emoji names", () => {
-    const ids = [userSectionId("\ud800"), userSectionId("🧠".repeat(30))];
+    const ids = ["section:\ud800", `section:${"🧠".repeat(30)}`];
     const values = new Map<string, string>();
     const storage = {
       getItem: (key: string) => values.get(key) ?? null,

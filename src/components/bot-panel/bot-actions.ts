@@ -5,7 +5,6 @@ import { useCopyFeedback } from "@/lib/copy-text";
 import { botUnreadThreadIds, markBotRead } from "@/lib/mark-read";
 import { api, useStore, type Bot } from "@/state/store";
 import { announceArchiveNotice, archiveBotWithNotice } from "../bot-archive";
-import { moveBotsToSection } from "../bot-sections";
 import { currentArchivableBot, type BotConfirmKind } from "../Sidebar";
 
 export function useBotActions(bot: Bot) {
@@ -70,10 +69,6 @@ export function useBotActions(bot: Bot) {
     else dispatch({ type: "deleteBot", botId: bot.id });
   };
 
-  const moveToTeam = (section: string) => {
-    if ((bot.section?.trim() ?? "") !== section) moveBotsToSection(dispatch, [bot.id], section);
-  };
-
   return {
     togglePin,
     duplicate,
@@ -91,6 +86,5 @@ export function useBotActions(bot: Bot) {
     cancelConfirm: () => setConfirm(null),
     confirmed,
     deleting: state.deletingBots[bot.id] === true,
-    moveToTeam,
   };
 }

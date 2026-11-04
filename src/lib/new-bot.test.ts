@@ -73,24 +73,24 @@ describe("New bot", () => {
     expect(sent.map((action) => action.type)).toEqual(["botAdded"]);
   });
 
-  it("on a team, makes it in this place, reporting to the department's person or else to its creator, in their own chat", async () => {
+  it("on a team, makes it in this place, reporting to whoever every bot reports to or else to its creator, in their own chat", async () => {
     setTeamPeople(team);
     setTeamChats({ teamId: "acme", member: true, opened: [] });
-    const sales = [{ id: "closer", name: "Closer", section: "Sales", reportsTo: BOB.email }] as Bot[];
-    const inSales = server();
-    const sent = await newBot(inSales.request, { section: "Sales" }, sales);
-    expect(inSales.created()).toMatchObject({ section: "Sales", reportsTo: BOB.email });
+    const closers = [{ id: "closer", name: "Closer", reportsTo: BOB.email }] as Bot[];
+    const shared = server();
+    const sent = await newBot(shared.request, {}, closers);
+    expect(shared.created()).toMatchObject({ reportsTo: BOB.email });
     expect(sent[0]).toMatchObject({ type: "botAdded", preserveSelection: false });
     expect(fixture.openBot).toHaveBeenCalledWith(expect.any(Function), expect.objectContaining({ id: "created" }));
-    const general = server();
-    await newBot(general.request, {}, sales);
-    expect(general.created()).toMatchObject({ reportsTo: ME.email });
+    const mixed = server();
+    await newBot(mixed.request, {}, [...closers, { id: "mine", name: "Mine", reportsTo: ME.email } as Bot]);
+    expect(mixed.created()).toMatchObject({ reportsTo: ME.email });
   });
 
-  it("keeps a department dialog where it is", async () => {
+  it("keeps the caller where it is when it asks to", async () => {
     setTeamChats({ teamId: "acme", member: true, opened: [] });
     const onCreated = vi.fn();
-    const sent = await newBot(server().request, { section: "Sales", preserveSelection: true, onCreated });
+    const sent = await newBot(server().request, { preserveSelection: true, onCreated });
     expect(sent).toEqual([expect.objectContaining({ type: "botAdded", preserveSelection: true })]);
     expect(fixture.openBot).not.toHaveBeenCalled();
     expect(onCreated).toHaveBeenCalledWith(expect.objectContaining({ id: "created" }));
@@ -118,8 +118,8 @@ describe("New bot", () => {
   it("from a paired device, sends one request and leaves the defaults to the host", async () => {
     vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
     const { calls, request } = server();
-    const sent = await newBot(request, { section: "Sales" });
-    expect(calls).toEqual([{ method: "POST", path: "/api/bots", body: { section: "Sales" } }]);
+    const sent = await newBot(request);
+    expect(calls).toEqual([{ method: "POST", path: "/api/bots", body: {} }]);
     expect(sent.map((action) => action.type)).toEqual(["botAdded"]);
   });
 });

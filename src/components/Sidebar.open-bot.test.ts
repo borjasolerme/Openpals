@@ -83,7 +83,7 @@ describe("opening a bot from the sidebar's menus", () => {
   it("opens another bot behind Edit profile as its row does, and keeps the bot on screen where it is", () => {
     fixture.state = { ...initialState, bots: [left("scout"), left("atlas")], selectedId: "scout", activeView: "chat" };
     const menu = (botId: string) => render(() => BotContextMenu({
-      menu: { botId, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(),
+      menu: { botId, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
     })).find((node) => node.props.role === "menuitem" && label(node) === "Edit Profile")!;
     menu("atlas").props.onClick!();
     expect(actions()).toEqual([opened("atlas"), { type: "toggleSettings", open: true }]);

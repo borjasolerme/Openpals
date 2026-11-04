@@ -42,7 +42,6 @@ vi.mock("./DesktopCapabilities", () => ({
 vi.mock("react-dom", async (original) => ({ ...await original<object>(), createPortal: (children: unknown) => children }));
 import { GroupView, RoomToolChip } from "./GroupView";
 import { RunRow } from "./UsageSection";
-import { TeamMapPage } from "./TeamMapPage";
 import { BotInstructionsDialog } from "./BotInstructionsDialog";
 const render = (component: Parameters<typeof renderToStaticMarkup>[0]) => {
   vi.stubGlobal("window", { ogb: undefined });
@@ -71,9 +70,6 @@ describe("uploaded bot identity portraits", () => {
   it("renders uploaded empty-room portraits as well as member headers", () => {
     const html = render(createElement(GroupView, { group: { ...avatarGroup, messages: [] } }));
     expect(html.match(/<img src="\/api\/attachments\/fixture-0.png"/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
-  });
-  it("renders the uploaded portrait in the team map", () => {
-    expect(render(createElement(TeamMapPage))).toContain('<img src="/api/attachments/fixture-0.png"');
   });
   it("renders the uploaded portraits of every bot a usage run brought in", () => {
     const root = { id: "thread-atlas~t1", title: "Plan the launch", source: "person" as const, startedAt: fixtureAt, endedAt: fixtureAt + 5_000,

@@ -118,7 +118,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
       if (defaultsMode) await api("/api/config", { method: "PATCH", body: JSON.stringify({ newBotDefaults: await preparedBotTemplate(draft) }) });
       else {
         const { bot, warnings } = await createConfiguredBot(draft, undefined, undefined, undefined, visibility?.ok ? visibility.visibility : undefined,
-          team ? reportsToFor(chosenOwner, draft.bot.section, parent.state.bots, team) ?? undefined : undefined);
+          team ? reportsToFor(chosenOwner, parent.state.bots, team) ?? undefined : undefined);
         announceNewBot(parent.dispatch, bot, warnings, { source: draft.preset ? "preset" : draft.role ? "template" : "blank", role: draft.role });
         try { await onCreated?.(bot); }
         catch (cause) { parent.dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }); }
@@ -192,7 +192,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
           {ready && <fieldset disabled={saving} className="min-w-0">
             <BotEditorStore value={scopedStore}><BotEditorContext.Provider value={{ request: draft.request, draft: true, uploadAvatar: draft.uploadAvatar }}>
               <DraftSection active={active} draft={draft} defaultsMode={defaultsMode}
-                owner={team && !defaultsMode ? { value: reportsToFor(chosenOwner, bot.section, parent.state.bots, team), choose: setChosenOwner } : undefined} />
+                owner={team && !defaultsMode ? { value: reportsToFor(chosenOwner, parent.state.bots, team), choose: setChosenOwner } : undefined} />
             </BotEditorContext.Provider></BotEditorStore>
           </fieldset>}
         </div>
@@ -223,18 +223,12 @@ function SharedInTeam({ team }: { team: string }) {
 function DraftSection({ active, draft, defaultsMode, owner }: { active: Section; draft: BotCreationDraft; defaultsMode: boolean;
   owner?: { value: string | null; choose(email: string): void } }) {
   const bot = draft.bot;
-  const { state } = useStore();
   const team = useTeamPeople();
   const derived = useBotSettingsDerived(bot);
   if (active === "Identity") return <div className="space-y-4">
     <StartingRole draft={draft} defaultsMode={defaultsMode} />
     <IdentitySection bot={bot} patch={derived.patch} activeState={derived.activeState} mascotMotion={null}
       namePlaceholder={defaultsMode ? t("newBot.randomName") : undefined} />
-    <label className="block text-[13px] text-ink-secondary">{t("newBot.team")}
-      <Select size="lg" className="mt-1.5 w-full" value={bot.section ?? ""} onChange={event => draft.patch({ section: event.target.value })}>
-        <option value="">{t("teamSettings.general")}</option>{[...new Set([...(state.sections ?? []), ...state.bots.map(bot => bot.section ?? "")])].filter(Boolean).map(name => <option key={name}>{name}</option>)}
-      </Select>
-    </label>
     {owner && team && <label className="block text-[13px] text-ink-secondary" data-new-bot-reports-to>{t("lookedAfter.newBot")}
       <Select size="lg" className="mt-1.5 w-full" value={owner.value ?? ""} onChange={event => owner.choose(event.target.value)}>
         {team.people.map(person => <option key={person.email} value={person.email}>{person.you ? t("owner.you", { name: person.name }) : person.name}</option>)}

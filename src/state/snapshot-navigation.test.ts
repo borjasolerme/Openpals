@@ -56,8 +56,9 @@ const applySnapshot = async (threadId = "a", taskIds = ["a", "b"]) => {
   const incomingBot = bot(threadId, "snapshot"), incomingRoom = room(threadId, "snapshot");
   incomingBot.tasks = incomingBot.tasks?.filter(task => taskIds.includes(task.threadId));
   incomingRoom.tasks = incomingRoom.tasks?.filter(task => taskIds.includes(task.threadId.slice(5)));
-  snapshot.resolve(json({ bots: [incomingBot], groups: [incomingRoom], sections: ["resynced"] }));
-  await vi.waitFor(() => expect(state.sections).toEqual(["resynced"]));
+  // The computer-control map is replaced whole by a snapshot, so a key only it carries says it has landed.
+  snapshot.resolve(json({ bots: [incomingBot], groups: [incomingRoom], computerControl: { resynced: {} } }));
+  await vi.waitFor(() => expect(state.computerControl).toHaveProperty("resynced"));
 };
 const switchBot = async (threadId: string) => {
   flushSync(() => dispatch({ type: "switchTask", botId: "bot", threadId }));

@@ -16,7 +16,6 @@ import {
   Settings as SettingsIcon,
   Smartphone,
   UserRound,
-  UsersRound,
   Zap,
 } from "lucide-react";
 
@@ -145,18 +144,16 @@ export function phoneMenuItems({
   ];
 }
 
-export function toolMenuItems({ activeView, automationsNeedYou, onAutomations, onTeamMap, onFiles, archived }: {
+export function toolMenuItems({ activeView, automationsNeedYou, onAutomations, onFiles, archived }: {
   activeView: string;
   automationsNeedYou: boolean;
   onAutomations: () => void;
-  onTeamMap: () => void;
   /** set once My Cloud's files are ready to open */
   onFiles?: () => void;
   archived?: ArchivedBots;
 }): SidebarMenuItem[] {
   return [
     { key: "automations", label: t("sidebar.nav.automations"), icon: <Zap size={16} />, active: activeView === "routines", attention: automationsNeedYou, onSelect: onAutomations },
-    { key: "team-map", label: t("sidebar.nav.teamMap"), icon: <UsersRound size={16} />, active: activeView === "team-map", onSelect: onTeamMap },
     ...(onFiles ? [{ key: "files", label: t("sidebar.nav.files"), icon: <FolderOpen size={16} />, active: activeView === "files", onSelect: onFiles }] : []),
     ...(archived?.count ? [{ key: "archived", label: t("sidebar.archived.title"), icon: <Archive size={16} />, value: String(archived.count), onSelect: archived.open }] : []),
   ];
@@ -406,7 +403,6 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
         activeView: state.activeView,
         automationsNeedYou: account.automationsNeedYou,
         onAutomations: () => dispatch({ type: "showRoutines", view: "list" }),
-        onTeamMap: () => dispatch({ type: "showTeamMap" }),
         onFiles: filesReady ? () => dispatch({ type: "showFiles" }) : undefined,
         archived: account.archived,
       }),

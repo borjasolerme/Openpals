@@ -24,7 +24,6 @@ export interface UsageInput {
   instances: readonly InstanceInfo[];
   bots: ReadonlyArray<Pick<Bot, "computer" | "cloudBackend" | "hidden">>;
   groups: ReadonlyArray<Pick<Group, "dm">>;
-  sections?: readonly string[];
   /** null while the routine list is not loaded. */
   routines: ReadonlyArray<Pick<Routine, "enabled" | "runOn" | "target" | "schedule">> | null;
   /** null while webhooks are not loaded. */
@@ -128,7 +127,6 @@ export function buildUsageSnapshot(input: UsageInput): EventProps {
     bots_auto: place(undefined),
     rooms: tally(groups, (group) => group.dm !== true),
     bot_channels: tally(groups, (group) => group.dm === true),
-    teams: input.sections?.length ?? 0,
     ...routineCounts(input.routines),
     webhooks: count(input.webhooks),
     engines: [...new Set(ready.map((instance) => engineForDriver(instance.driverKind)))].sort(),
@@ -191,7 +189,7 @@ export interface UsageSources {
   remoteClient: boolean;
 }
 
-export type SnapshotState = Pick<AppState, "config" | "instances" | "bots" | "groups" | "sections" | "routines" | "routinesLoadState" | "webhooks" | "webhookIngress">;
+export type SnapshotState = Pick<AppState, "config" | "instances" | "bots" | "groups" | "routines" | "routinesLoadState" | "webhooks" | "webhookIngress">;
 
 /** Null when the source fails or does not answer in time. */
 function settle<T>(work: () => Promise<T>): Promise<T | null> {
@@ -242,7 +240,6 @@ export async function sendDailySnapshot(state: SnapshotState, sources: UsageSour
       instances: state.instances,
       bots: state.bots,
       groups: state.groups,
-      sections: state.sections,
       routines: state.routinesLoadState === "ready" ? state.routines : null,
       webhooks: state.webhookIngress ? state.webhooks.length : null,
       apps,

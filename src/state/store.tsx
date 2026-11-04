@@ -554,7 +554,6 @@ export interface ModelVariantSession {
 export interface AppState {
   bots: Bot[];
   groups: Group[];
-  sections?: string[];
   instances: InstanceInfo[];
   modelVariantSessions: Record<string, ModelVariantSession>;
   config: ConfigStatus | null;
@@ -562,7 +561,7 @@ export interface AppState {
   liveCallVersion: number;
   liveCallLookupSeq: number;
   selectedId: string;
-  activeView: "chat" | "team-map" | "routines" | "files" | "web-panel";
+  activeView: "chat" | "routines" | "files" | "web-panel";
   /** Folders a finished move left on this computer, for Files to offer sharing. */
   filesSuggest: string[] | null; webPanelId?: string;
   routines: Routine[];
@@ -631,7 +630,6 @@ export type Action =
       type: "hydrate";
       bots: Bot[];
       groups: Group[];
-      sections?: string[];
       computerControl: Record<string, ComputerControlState>;
       botQueuedMessages?: AppState["pendingQueued"];
       preserveNavigation?: boolean;
@@ -640,11 +638,9 @@ export type Action =
       resumeId?: string;
     }
   | { type: "botQueues"; queues: AppState["pendingQueued"] }
-  | { type: "sections"; sections: string[] }
   | { type: "botsOrdered"; botIds: string[] }
-  | { type: "sectionDeleted"; section: string; sections: string[] }
   | { type: "showRoutines"; section?: "schedule" | "logs"; view?: "calendar" | "list"; botId?: string; routineId?: string; runStatus?: RoutineRunStatusFilter }
-  | { type: "showTeamMap" } | { type: "showWebPanel"; id: string }
+  | { type: "showWebPanel"; id: string }
   | { type: "showFiles"; suggest?: string[] }
   | { type: "showChat" }
   | { type: "routinesHydrated"; routines: Routine[]; runs: RoutineRun[]; since?: number }
@@ -674,7 +670,7 @@ export type Action =
       heldAtStart: readonly Message[];
     }
   | { type: "groupDeleted"; groupId: string }
-  | { type: "createGroup"; memberIds: string[]; name?: string; section?: string }
+  | { type: "createGroup"; memberIds: string[]; name?: string }
   | {
       type: "sendGroup";
       groupId: string;
@@ -747,7 +743,7 @@ export type Action =
   | { type: "switchTask"; botId: string; threadId: string; whole?: true }
   | { type: "switchTaskFailed"; botId: string; threadId: string }
   | { type: "taskSwitched"; bot: Bot }
-  | { type: "newBot"; section?: string; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void }
+  | { type: "newBot"; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void }
   | { type: "botCreationPending"; on: boolean }
   | { type: "updateTask"; botId: string; threadId: string; patch: TaskUpdatePatch }
   | { type: "botAdded"; bot: Bot; preserveSelection?: boolean }
@@ -910,7 +906,6 @@ export function reducer(state: AppState, action: Action): AppState {
           if (merged.description === null) merged.description = undefined;
           return keepGroupNavigation(previous, merged, action.preserveNavigation === true && navigatedSince(previous, action.navigationSince, state.transcriptGeneration), action.taskIdsAtStart);
         }),
-        sections: action.sections ?? [],
         computerControl: action.computerControl,
         selectedId,
         hydrated: true as const,
@@ -949,14 +944,6 @@ export function reducer(state: AppState, action: Action): AppState {
         groups: state.groups.map((group) => (group.threadId === action.threadId ? prepend(group) : group)),
       };
     }
-    case "sectionDeleted":
-      return {
-        ...state, sections: action.sections,
-        bots: state.bots.map(bot => bot.section === action.section ? { ...bot, section: undefined } : bot),
-        groups: state.groups.map(group => group.section === action.section ? { ...group, section: undefined } : group),
-      };
-    case "sections":
-      return { ...state, sections: action.sections };
     case "botsOrdered": {
       // The server's fleet order (PUT /api/bots/order): a stable partial reorder, so the sidebar shows what a phone just did.
       const bots = reorderStable(state.bots, action.botIds);
@@ -979,11 +966,10 @@ export function reducer(state: AppState, action: Action): AppState {
       };
     case "showChat":
       return state.activeView === "chat" ? state : { ...state, activeView: "chat" };
-    case "showTeamMap":
     case "showFiles": case "showWebPanel":
       return {
         ...state,
-        activeView: action.type === "showFiles" ? "files" : action.type === "showWebPanel" ? "web-panel" : "team-map",
+        activeView: action.type === "showFiles" ? "files" : "web-panel",
         filesSuggest: action.type === "showFiles" && action.suggest?.length ? action.suggest : null, webPanelId: action.type === "showWebPanel" ? action.id : state.webPanelId,
         settingsOpen: false, computerOpen: false, inspectorOpen: false, activityOpen: false, appSettingsOpen: false, pluginsOpen: false,
       };
@@ -1833,7 +1819,6 @@ export const initialState: AppState = {
   transcriptGeneration: {},
   bots: [],
   groups: [],
-  sections: [],
   instances: [],
   config: null,
   liveCall: null,
@@ -2231,7 +2216,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
     const wrapped: React.Dispatch<Action> = (action) => {
-      if (["select", "newTask", "switchTask", "newGroupTask", "switchGroupTask", "showChat", "showRoutines", "showTeamMap", "showFiles", "showWebPanel"].includes(action.type)) selectionRevision.current++;
+      if (["select", "newTask", "switchTask", "newGroupTask", "switchGroupTask", "showChat", "showRoutines", "showFiles", "showWebPanel"].includes(action.type)) selectionRevision.current++;
       // Pin before any await or optimistic state change.
       action = pinBotThreadAction(action, stateRef.current.bots);
       if (action.type === "taskSwitched") action = { ...action, bot: withTaskWrites(action.bot) as Bot };
@@ -2651,7 +2636,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             body: JSON.stringify({
               memberIds: action.memberIds,
               name: action.name,
-              section: action.section,
               ...(window.ogb?.remoteClient?.active
                 ? { setup: { bulletin: "", defaultResponder: { kind: "mentions" } } }
                 : {}),
@@ -2953,13 +2937,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {});
       const chat = () =>
-        api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then(({ bots, groups, sections, computerControl, botQueuedMessages }) => {
+        api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then(({ bots, groups, computerControl, botQueuedMessages }) => {
           if (!alive) return;
           rawDispatch({
             type: "hydrate",
             bots,
             groups: groups ?? [],
-            sections: sections ?? [],
             computerControl: computerControl ?? {},
             botQueuedMessages,
             preserveNavigation: selectionRevision.current !== navigationAtStart,
@@ -3020,9 +3003,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         bumpPeripheralVersion("webhooks");
       }
       switch (frame.kind) {
-        case "sections":
-          rawDispatch({ type: "sections", sections: frame.sections });
-          break;
         case "bots.order":
           rawDispatch({ type: "botsOrdered", botIds: frame.botIds });
           break;

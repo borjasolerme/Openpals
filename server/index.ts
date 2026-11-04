@@ -227,7 +227,7 @@ import { createOneOnOneGoals } from "./host/one-on-one-goals.ts";
 
 import { BUILT_IN_DRIVERS } from "./drivers/builtIn.ts";
 import { openCodeProviderKeysAllowed, setOpenCodeProviderKeyPolicy } from "./drivers/acp/opencode-go.ts";
-import { readMessageText, recallMessages, recentMessages, closeMessageSearch, closeMessageDb, chatFollowups, cancelledChatFollowup, settleChatFollowups, threadsReferencing, logNotification, lastRowAt } from "./message-db.ts";
+import { readMessageText, recallMessages, recentMessages, closeMessageSearch, closeMessageDb, chatFollowups, cancelledChatFollowup, settleChatFollowups, threadsReferencing, logNotification } from "./message-db.ts";
 import { briefCrossingLabel, claimRecallCrossings, recallCrossingLabel } from "./recall-disclosure.ts";
 import { parseSince, parseUntil, recentWork, recentWorkPrompt, turnOutcomeLine } from "./recent-work.ts";
 import { chiefEscalationsEnabled, NEEDS_INPUT_GATE, peerApprovalGate, RAISED_GATE } from "./escalations.ts";
@@ -14802,36 +14802,6 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         return json(res, 200, { messageIds, ...(authConfigNote ? { authConfigNote } : {}) });
       }
       return json(res, 404, { error: "unknown internal endpoint" });
-    }
-
-    // Prompts and replies never leave their transcripts: this projection carries only ids, relationships, labels and timestamps.
-    if (method === "GET" && path === "/api/team-map") {
-      const mapped = new Set(store.bots.filter((bot) => !bot.hidden && visible.bot(bot.id)).map((bot) => bot.id));
-      const collaborations = store.groups
-        .filter(
-          (group) =>
-            group.dm === true &&
-            group.memberIds.length === 2 &&
-            group.memberIds.every((botId) => mapped.has(botId)),
-        )
-        .map((group) => ({
-          groupId: group.id,
-          botIds: [group.memberIds[0], group.memberIds[1]] as [string, string],
-          lastAt: lastRowAt(group.threadId) ?? group.createdAt,
-        }))
-        .sort((a, b) => b.lastAt - a.lastAt);
-      const handoffs = coordinator.liveEdges()
-        .filter((edge) =>
-          mapped.has(edge.sourceBotId)
-          && mapped.has(edge.targetBotId)
-          && (!edge.groupId || visible.group(edge.groupId)));
-      const links = (state: "queued" | "running") =>
-        handoffs.flatMap(({ state: edgeState, ...link }) => edgeState === state ? [link] : []);
-      return json(res, 200, {
-        collaborations,
-        queued: links("queued"),
-        running: links("running"),
-      });
     }
 
     if (path === "/api/routines" && method === "GET") {

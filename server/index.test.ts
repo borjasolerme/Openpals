@@ -1803,21 +1803,6 @@ describe("harness HTTP API", () => {
     expect(body.bots[0].messages.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("projects privacy-safe live team-map metadata", async () => {
-    const response = await api("GET", "/api/team-map");
-    expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ collaborations: expect.any(Array), queued: [], running: [] });
-    for (const collaboration of response.body.collaborations) {
-      expect(collaboration).toEqual({
-        groupId: expect.any(String),
-        botIds: [expect.any(String), expect.any(String)],
-        lastAt: expect.any(Number),
-      });
-    }
-    expect(JSON.stringify(response.body)).not.toContain("messages");
-    expect(JSON.stringify(response.body)).not.toContain("prompt");
-  });
-
   it("rejects non-object bot and channel create bodies without writing records", async () => {
     const before = await api("GET", "/api/bots?messages=0");
     for (const path of ["/api/bots", "/api/groups"]) {

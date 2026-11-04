@@ -51,7 +51,6 @@ afterEach(() => { vi.unstubAllGlobals(); setTeamPeople(null); });
 function render(x = 990, y = 795) {
   return renderToStaticMarkup(createElement(BotContextMenu, {
     menu: { botId: bot.id, x, y }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
-    onMoveToSection: vi.fn(),
   }));
 }
 /**
@@ -113,7 +112,7 @@ describe("bot actions menu viewport placement", () => {
   it("keeps Advanced's flat list of bot actions, drawn on the shared menu sheet", () => {
     fixture.advanced = true;
     const html = render();
-    for (const key of ["sidebar.bot.pin", "sidebar.bot.makeChief", "sidebar.bot.moveToSection", "sidebar.bot.markUnread", "sidebar.bot.editProfile", "sidebar.bot.duplicate", "sidebar.copyConversationId", "sidebar.bot.archive", "common.delete"] as const) {
+    for (const key of ["sidebar.bot.pin", "sidebar.bot.makeChief", "sidebar.bot.markUnread", "sidebar.bot.editProfile", "sidebar.bot.duplicate", "sidebar.copyConversationId", "sidebar.bot.archive", "common.delete"] as const) {
       expect(html, key).toContain(t(key));
     }
     expect(html).not.toContain(t("sidebar.bot.more"));

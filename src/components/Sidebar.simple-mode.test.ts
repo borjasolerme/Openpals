@@ -355,7 +355,7 @@ describe("bot-first sidebar", () => {
     for (const advanced of [false, true]) {
       fixture.advanced = advanced;
       const markup = renderToStaticMarkup(createElement(BotContextMenu, {
-        menu: { botId: bot.id, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(),
+        menu: { botId: bot.id, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
       }));
       for (const gone of ["New thread", "New folder", "View threads", "Set as main thread", "Delete all threads", "Delete all conversations"]) expect(markup, gone).not.toContain(gone);
       expect(markup).toContain(advanced ? "Edit Profile" : "More");
@@ -368,7 +368,7 @@ describe("bot-first sidebar", () => {
     // Called inside a render so its hooks run and the returned tree carries the items' handlers.
     function Capture() {
       tree = BotContextMenu({
-        menu: { botId: bot.id, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(),
+        menu: { botId: bot.id, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
       });
       return tree;
     }

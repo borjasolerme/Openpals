@@ -1,7 +1,7 @@
 import { OrganizationIdentity } from "./OrganizationIdentity";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Dispatch } from "react";
 import { createPortal } from "react-dom";
-import { Archive, Bot as BotIcon, Check, ChevronRight, ClipboardCopy, Crown, FolderPlus, Library, Loader2, MessageSquarePlus, MoreHorizontal, Pencil, Phone, Pin, Plus, Search, TextQuote, Trash2, Users, X } from "lucide-react";
+import { Archive, Bot as BotIcon, Check, ChevronRight, ClipboardCopy, Crown, Library, Loader2, MessageSquarePlus, MoreHorizontal, Pencil, Phone, Pin, Plus, Search, TextQuote, Trash2, Users, X } from "lucide-react";
 import { api, useStore, formatTime, visibleMessages, botOpensTo, openBot, openThread, type Action, type AppState, type Bot, type Group, type InstanceInfo, type Message } from "@/state/store";
 import { SidebarWorkingStep } from "./SidebarWorkingStep";
 
@@ -22,14 +22,11 @@ import { StackedMauses } from "./StackedMauses";
 import { nextRename } from "@/lib/rename";
 import { useDesktopCapabilities, windowFramed } from "./DesktopCapabilities";
 import { MIN_QUERY, SearchResults } from "./SearchResults";
-import { ShareTeamDialog, TeamLibraryPanel } from "./lazy-screens";
+import { TeamLibraryPanel } from "./lazy-screens";
 import { SidebarNewChatPanel } from "./SidebarNewChatPanel";
 import { openCommandPalette } from "./CommandPalette";
-import { TeamSettingsDialog } from "./TeamSettingsDialog";
-import { TeamDialog } from "./TeamDialog";
 import { RenameTitle } from "./RenameTitle";
 import { GroupThreadList } from "./SidebarGroupThreadList";
-import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { setSidebarDensity, useSidebarDensity, usePinnedCircles, useUniversalPins, type SidebarDensity } from "@/lib/sidebar-preferences";
 import {
   BOT_CHATS_SECTION_ID,
@@ -40,15 +37,11 @@ import {
   partitionSidebarBots,
   partitionSidebarGroups,
   sidebarSectionLabel,
-  userSectionId,
-  userSectionName,
   withPrimaryTile,
 } from "@/lib/sidebar-layout";
-import { BOT_SECTIONS_ENABLED } from "@/lib/local-customizations";
 import { stepKey, type BotDropPlace } from "@/lib/sidebar-bot-drop";
 import { BotDropLine, botRowDropClass, useSidebarBotDrag, type BotRowDrag } from "./SidebarBotDrag";
 import { useSidebarSections } from "./SidebarSections";
-import { departmentNames, moveBotsToSection } from "./bot-sections";
 import { sidebarSectionAttention } from "@/lib/sidebar-attention";
 import { botListItemPointerIntent } from "@/lib/sidebar-selection";
 import { SidebarFooter } from "./SidebarFooter";
@@ -60,12 +53,9 @@ import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
 import { DesktopWorkspaceSwitcher, endCloudHowTo } from "./DesktopWorkspaceSwitcher"; import { PlaceTint } from "./PlaceTint"; import { ChromeRailToggle } from "./ChromeRailToggle";
 import { useCloudOwner } from "./CloudOwner";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
-import { NeedsYouButton, OwnerPickerHost, pickOwnerOf } from "./TeamOwner"; import { SidebarPeople } from "./SidebarPeople";
-import { showWhoReportsToWhom, TeamMenuItems } from "./SidebarTeamMenu";
+import { NeedsYouButton, OwnerPickerHost } from "./TeamOwner"; import { SidebarPeople } from "./SidebarPeople";
 import { MENU_ITEM, MENU_SHEET, navigateMenu } from "./menu-recipe";
 import { ELEVATED_CONTROL } from "./elevated";
-import { useTeamPeople } from "@/state/team-people";
-export { TeamMenuItems };
 import { SidebarResizeHandle, useSidebarWidth } from "./SidebarResizeHandle";
 import { PHONE_TOP_BUTTON, SIMPLE_CORNER_BUTTON, SIMPLE_ROW_FOCUS, SIMPLE_TOP_BUTTON, SidebarSearchPill, SidebarSearchToggle } from "./SidebarSimpleTop";
 import { isSidebarToggle } from "@/lib/keyboard-shortcuts";
@@ -88,7 +78,6 @@ import { PinnedBotRoster } from "./PinnedCircles";
 import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
 import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel"; import { MovedBotRows } from "./MoveToTeam";
 import { NewRoomPanel } from "./SidebarNewRoomPanel";
-import { SectionPicker } from "./SidebarSectionPicker";
 
 export { ArchivedBotRow, ArchivedBotsPanel, archivedDeleteAllCopy, botConfirmCopy, type BotConfirmKind } from "./ArchivedBotsPanel";
 import { roomDeleteCopy } from "./room-delete-copy"; export { roomDeleteCopy };
@@ -209,12 +198,10 @@ export function GroupListItem({
 function RoomContextMenu({
   menu,
   onClose,
-  onMoveToSection,
   onDelete,
 }: {
   menu: { groupId: string; x: number; y: number } | null;
   onClose: () => void;
-  onMoveToSection: (groupId: string) => void;
   onDelete: (groupId: string) => void;
 }) {
   const motion = useHeldMenuMotion(menu);
@@ -381,19 +368,6 @@ function RoomContextMenu({
         >
           <TextQuote size={16} className="text-ink-secondary" />
           {t("sidebar.room.setDescription")}
-        </button>
-      )}
-      {!remoteClient && !isBotChat && (
-        <button
-          role="menuitem"
-          onClick={() => {
-            onClose();
-            onMoveToSection(group.id);
-          }}
-          className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
-        >
-          <FolderPlus size={16} className="text-ink-secondary" />
-          {t("sidebar.section.moveToContext")}
         </button>
       )}
       <button
@@ -628,7 +602,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
 
   return (
     <>
-    <div className={cn("group relative", railTile && "mx-auto w-[54px]", botRowDropClass(drop, dragging))} data-bot-drop={drop ?? undefined} {...(drag && !renaming ? drag.row(bot.id) : {})}
+    <div className={cn("group relative", railTile && "mx-auto w-[54px]", botRowDropClass(dragging))} data-bot-drop={drop ?? undefined} {...(drag && !renaming ? drag.row(bot.id) : {})}
       title={railTile ? botTooltip(bot, instances) : iconOnly ? [bot.name, bot.title?.trim()].filter(Boolean).join(" · ") : undefined}><BotDropLine place={drop} />
       {/* Keep this wrapper mounted: replacing it remounts RenameTitle and leaves the row stuck in rename mode. */}
       <div
@@ -684,7 +658,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   collapseToIcons?: boolean;
 }) {
   const { state, dispatch } = useStore();
-  const teamPeople = useTeamPeople();
   const cloudOwner = useCloudOwner(state.config?.cloudHome === true);
   const endHowTo = useCallback(() => endCloudHowTo(dispatch), [dispatch]);
   const remoteClient = window.ogb?.remoteClient?.active === true;
@@ -696,29 +669,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const cancelConfirm = useCallback(() => setConfirm(null), []);
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [renameRequest, setRenameRequest] = useState<{ botId: string; nonce: number } | null>(null);
-  const [sectionPicker, setSectionPicker] = useState<MenuState | null>(null);
-  const [newTeam, setNewTeam] = useState(false);
-  const [teamMenu, setTeamMenu] = useState<{ name: string; x: number; y: number } | null>(null);
-  const [teamSettings, setTeamSettings] = useState<string | null>(null);
-  const teamSettingsAllowed = useOwnerOrAdmin();
-  const teamMotion = useHeldMenuMotion(teamMenu);
-  const teamMenuReturn = useRef<HTMLElement | null>(null);
-  const closeTeamMenu = () => {
-    (teamMenuReturn.current?.isConnected ? teamMenuReturn.current : sidebarRef.current)?.focus();
-    setTeamMenu(null);
-  };
-  const openTeamMenu = (name: string, x: number, y: number, returnTo: HTMLElement) => {
-    teamMenuReturn.current = returnTo;
-    setTeamMenu({ name, x: Math.max(8, Math.min(x, window.innerWidth - 266)), y: Math.max(8, Math.min(y, window.innerHeight - 190)) });
-  };
-  const [deletingTeam, setDeletingTeam] = useState<string | null>(null);
-  const [teamDeletePending, setTeamDeletePending] = useState(false);
-  const teamDeleteRunning = useRef(false);
-  const [moveToTeam, setMoveToTeam] = useState<string | null>(null);
-  const [renameTeam, setRenameTeam] = useState<string | null>(null);
-  const [shareTeam, setShareTeam] = useState<string | null>(null);
   const [roomMenu, setRoomMenu] = useState<{ groupId: string; x: number; y: number } | null>(null);
-  const [roomSectionPicker, setRoomSectionPicker] = useState<{ groupId: string; x: number; y: number } | null>(null);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const deletingRoom = deletingRoomId ? state.groups.find((g) => g.id === deletingRoomId) : undefined;
   const [plusOpen, setPlusOpen] = useState(false);
@@ -834,9 +785,8 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     : undefined;
 
   const q = query.trim().toLowerCase();
-  const sections = useSidebarSections({ simple, rail, density, query: q, label: sectionLabel, sidebarRef });
-  const botDrag = useSidebarBotDrag({ dispatch, announce: sections.announce, onNamed: sections.focusHeader, onRenamed: sections.renamed,
-    onError: (text) => setTeamFeedback({ error: true, text }), onCancelled: () => sidebarRef.current?.focus() });
+  const sections = useSidebarSections({ simple, rail, density, query: q, label: sectionLabel });
+  const botDrag = useSidebarBotDrag({ dispatch, announce: sections.announce });
 
   const matchingBots = state.bots
     .filter((b) => !b.hidden)
@@ -849,34 +799,16 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
   const viewerEmail = useViewerEmail();
-  const parts = partitionSidebarBots(botDrag.preview(matchingBots), { universalPins, viewerEmail, welcoming: useWelcomingBot() });
-  const {
-    primary,
-    unsectionedChief,
-    pinnedBots,
-    sectionChiefs,
-    sectionedBots,
-    unsectionedBots,
-  } = simpleDesk ? withPrimaryTile(parts, myDefaultBot(state.bots, viewerEmail)?.id) : { ...parts, primary: null };
-  const { botChats, sectionedRooms, unsectionedRooms } = partitionSidebarGroups(visibleGroups);
+  const parts = partitionSidebarBots(matchingBots, { universalPins, viewerEmail, welcoming: useWelcomingBot() });
+  const { primary, chief, pinnedBots, bots } = simpleDesk ? withPrimaryTile(parts, myDefaultBot(state.bots, viewerEmail)?.id) : { ...parts, primary: null };
+  const { botChats, rooms } = partitionSidebarGroups(visibleGroups);
 
-  const sectionNames: string[] = BOT_SECTIONS_ENABLED ? [...(state.sections ?? []).filter((name) => !q || name.toLowerCase().includes(q.toLowerCase())), ...botDrag.pending] : [];
-  for (const bot of sectionedBots) {
-    if (!sectionNames.includes(bot.section!)) sectionNames.push(bot.section!);
-  }
-  for (const bot of sectionChiefs) {
-    if (!sectionNames.includes(bot.section!)) sectionNames.push(bot.section!);
-  }
-  for (const group of sectionedRooms) {
-    if (!sectionNames.includes(group.section!)) sectionNames.push(group.section!);
-  }
-  const drops = botDrag.arrange({ enabled: sections.interactive && !phone, main: unsectionedBots, sectioned: sectionedBots, departments: sectionNames, bots: state.bots, taken: departmentNames(state) });
+  const drops = botDrag.arrange({ enabled: sections.interactive && !phone, list: bots, bots: state.bots });
   const naturalSectionIds = [
     ...(pinnedBots.length > 0 && !universalPins && !simpleDesk ? [PINNED_SECTION_ID] : []),
-    ...(unsectionedRooms.length > 0 ? [CHANNELS_SECTION_ID] : []),
+    ...(rooms.length > 0 ? [CHANNELS_SECTION_ID] : []),
     ...(botChats.length > 0 ? [BOT_CHATS_SECTION_ID] : []),
-    ...(unsectionedBots.length > 0 || drops.slot ? [BOTS_SECTION_ID] : []),
-    ...sectionNames.map(userSectionId),
+    ...(bots.length > 0 ? [BOTS_SECTION_ID] : []),
   ];
   const layout = sections.arrange(naturalSectionIds);
   const sectionIds = layout.sectionIds;
@@ -944,13 +876,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             <Users size={16} className="text-ink-secondary" />
             {t("sidebar.newChannel.title")}
           </button>
-          {advanced && !remoteClient && teamSettingsAllowed !== false && <button
-            onClick={() => { setPlusOpen(false); setNewTeam(true); }}
-            role="menuitem"
-            className={plusItem}
-          >
-            <FolderPlus size={16} className="text-ink-secondary" /> {t("team.create")}
-          </button>}
           {!remoteClient && <>
           <button
             onClick={() => { setPlusOpen(false); setTeamLibraryOpen(true); }}
@@ -1106,43 +1031,22 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
           )}
           {!q && <NeedsYouButton compact={rail} />}{!q && <SidebarPeople compact={rail} />}
-          {unsectionedChief && (phone ? (
-            <PhoneHero bot={unsectionedChief} selected={botRow(unsectionedChief).selected} onOpen={() => openBot(dispatch, unsectionedChief)} onMenu={setMenu} />
+          {chief && (phone ? (
+            <PhoneHero bot={chief} selected={botRow(chief).selected} onOpen={() => openBot(dispatch, chief)} onMenu={setMenu} />
           ) : (
             <div className="mb-1.5">
-              <BotListItem {...botRow(unsectionedChief)} />
+              <BotListItem {...botRow(chief)} />
             </div>
           ))}
           {sectionIds.map((id, index) => {
-            const sectionName = userSectionName(id);
-            const sectionChiefItems = sectionName
-              ? sectionChiefs.filter((bot) => bot.section === sectionName)
-              : [];
-            const sectionGroupItems =
-              id === CHANNELS_SECTION_ID
-                ? unsectionedRooms
-                : id === BOT_CHATS_SECTION_ID
-                  ? botChats
-                  : sectionName
-                    ? sectionedRooms.filter((group) => group.section === sectionName)
-                    : [];
-            const sectionBotItems =
-              id === PINNED_SECTION_ID
-                ? pinnedBots
-                : id === BOTS_SECTION_ID
-                  ? unsectionedBots
-                  : sectionName
-                    ? sectionedBots.filter((bot) => bot.section === sectionName)
-                    : [];
+            const sectionGroupItems = id === CHANNELS_SECTION_ID ? rooms : id === BOT_CHATS_SECTION_ID ? botChats : [];
+            const sectionBotItems = id === PINNED_SECTION_ID ? pinnedBots : id === BOTS_SECTION_ID ? bots : [];
             const headless = simple && id === BOTS_SECTION_ID && index === 0;
             const collapsed = !headless && sectionCollapsed(id);
-            const queued = collapsed ? [...sectionChiefItems, ...sectionBotItems].flatMap((bot) =>
+            const queued = collapsed ? sectionBotItems.flatMap((bot) =>
               sidebarBotActivityTasks(bot, state.pendingQueued).filter((task) => task.queued).map((task) => `${bot.name}: ${task.title}`)) : [];
             const attention = collapsed
-              ? sidebarSectionAttention(
-                  [...sectionChiefItems, ...sectionBotItems],
-                  sectionGroupItems,
-                )
+              ? sidebarSectionAttention(sectionBotItems, sectionGroupItems)
               : undefined;
             return (
               <div
@@ -1161,21 +1065,11 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                   <SidebarSectionHeader
                     name={sectionLabel(id)}
                     line={simple}
-                    count={simple ? sectionChiefItems.length + sectionBotItems.length + sectionGroupItems.length : undefined}
-                    onMenu={simple && !remoteClient && sectionName ? (button) => {
-                      const rect = button.getBoundingClientRect();
-                      openTeamMenu(sectionName, rect.right - 256, rect.bottom + 4, button);
-                    } : undefined}
-                    menuOpen={teamMenu !== null && teamMenu.name === sectionName}
-                    onContextMenu={!remoteClient && layoutInteractive && sectionName ? (event) => {
-                      event.preventDefault();
-                      openTeamMenu(sectionName, event.clientX, event.clientY, event.currentTarget.querySelector<HTMLElement>("button") ?? event.currentTarget);
-                    } : undefined}
+                    count={simple ? sectionBotItems.length + sectionGroupItems.length : undefined}
                     collapsed={collapsed}
                     attention={attention}
                     onToggle={layoutInteractive ? () => toggleSection(id) : undefined}
-                    {...layout.header(id)} naming={drops.naming(sectionName)} dropInto={drops.into(sectionName)}
-                    onDelete={!simple && !remoteClient && sectionName ? () => setDeletingTeam(sectionName) : undefined}
+                    {...layout.header(id)}
                   />
                 )}
                 {collapsed && queued.length > 0 && <button type="button" onClick={() => toggleSection(id)}
@@ -1183,8 +1077,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                   className="mx-3 mb-1 inline-flex h-7 items-center self-start rounded-full bg-raised/50 px-3 text-[13px] font-medium leading-4 text-ink-secondary hover:text-ink">{t("task.queued")} · {queued.length}</button>}
                 {!collapsed && (
                   <>
-                    {id === BOTS_SECTION_ID && drops.slot}
-                    {sectionChiefItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
                     {sectionGroupItems.map((group) => (
                       <GroupListItem
                         key={group.id}
@@ -1203,12 +1095,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                         listItem={BotListItem}
                       />
                     ) : sectionBotItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
-                    {!remoteClient && sectionName && layoutInteractive && !drops.naming(sectionName) && (!simple || sectionChiefItems.length + sectionGroupItems.length + sectionBotItems.length === 0) && (
-                      <button onClick={() => setMoveToTeam(sectionName)} aria-label={t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBotsIn" : "team.addBotsTo", { name: sectionName })}
-                        className="mx-3 my-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink">
-                        <Plus size={13} /> {t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBots" : "team.addBots")}
-                      </button>
-                    )}
                   </>
                 )}
                 {layout.dropLine(id, "after")}
@@ -1241,65 +1127,15 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           onClose={() => setMenu(null)}
           onArchive={requestArchive}
           onDelete={(bot) => setConfirm({ kind: "delete", bot })}
-          onMoveToSection={(botId) => {
-            if (!menu) return;
-            setSectionPicker({ botId, x: menu.x, y: menu.y });
-          }}
           onRename={(botId) => setRenameRequest((current) => ({ botId, nonce: (current?.nonce ?? 0) + 1 }))}
-          onNewSection={density === "icons" ? undefined : (botId) => botDrag.startNew([botId])}
         />
       <ConfirmDialog {...botConfirmProps(confirm, state.bots, { archive: (bot) => { setConfirm(null); void archiveBot(bot); }, remove: (bot) => { setConfirm(null); dispatch({ type: "deleteBot", botId: bot.id }); },
         archiveInstead: (chief) => { setConfirm(null); void archiveBotWithNotice(chief, { bots: state.bots, selectedId: state.selectedId, dispatch, notify: setTeamFeedback }); } })}
         onCancel={cancelConfirm} returnFocusRef={sidebarRef} />
       <OwnerPickerHost />
-      {newTeam && <TeamDialog onClose={() => setNewTeam(false)} />}
-      {renameTeam && <TeamDialog section={renameTeam} rename onRenamed={sections.renamed} onClose={() => setRenameTeam(null)} />}
-      {teamMotion.shown && teamMotion.value && createPortal(<div className={cn("fixed inset-0 z-40", teamMotion.closing && "pointer-events-none")} onMouseDown={closeTeamMenu}>
-        <div role="menu" aria-label={teamMotion.value.name} style={{ left: teamMotion.value.x, top: teamMotion.value.y }}
-          className={cn("absolute w-[256px] text-ink", MENU_SHEET, teamMotion.className)} {...teamMotion.exitProps}
-          onMouseDown={event => event.stopPropagation()} onKeyDown={event => {
-            if (event.key === "Escape" || event.key === "Tab") { event.preventDefault(); event.stopPropagation(); closeTeamMenu(); return; }
-            navigateMenu(event);
-          }}>
-          <TeamMenuItems
-            department={teamMotion.value!.name} onRead={closeTeamMenu} onAddBots={() => { closeTeamMenu(); setMoveToTeam(teamMotion.value!.name); }}
-            onRename={() => { closeTeamMenu(); (advanced ? setRenameTeam : botDrag.startRename)(teamMotion.value!.name); }}
-            onShare={() => { closeTeamMenu(); setShareTeam(teamMotion.value!.name); }}
-            onDelete={() => { closeTeamMenu(); setDeletingTeam(teamMotion.value!.name); }}
-            onSetForAll={teamSettingsAllowed === true ? () => { closeTeamMenu(); setTeamSettings(teamMotion.value!.name); } : undefined}
-            onSetOwner={teamPeople?.admin ? () => { closeTeamMenu(); pickOwnerOf(state.bots.filter((bot) => !bot.hidden && (bot.section?.trim() || "") === teamMotion.value!.name), teamPeople, teamMotion.value!); } : undefined} onSeeReports={teamPeople ? () => { closeTeamMenu(); showWhoReportsToWhom(dispatch); } : undefined}
-          />
-        </div>
-      </div>, document.body)}
-      <ConfirmDialog open={deletingTeam !== null} title={t("team.deleteTitle", { name: deletingTeam ?? "" })}
-        body={t(advanced ? "team.deleteKeepBotsDescription" : "team.deleteKeepBotsSimple")} confirmLabel={t("team.delete")} returnFocusRef={sidebarRef}
-        pending={teamDeletePending}
-        onCancel={() => { if (!teamDeleteRunning.current) setDeletingTeam(null); }} onConfirm={() => {
-          const name = deletingTeam;
-          if (!name || teamDeleteRunning.current) return;
-          teamDeleteRunning.current = true;
-          setTeamDeletePending(true);
-          void api(`/api/sidebar-sections?section=${encodeURIComponent(name)}`, { method: "DELETE" })
-            .then(({ sections }) => { dispatch({ type: "sectionDeleted", section: name, sections }); setDeletingTeam(null); })
-            .catch(cause => setTeamFeedback({ error: true, text: cause instanceof Error ? cause.message : String(cause) }))
-            .finally(() => { teamDeleteRunning.current = false; setTeamDeletePending(false); });
-        }} />
-      {moveToTeam && <TeamDialog section={moveToTeam} onClose={() => setMoveToTeam(null)} />}
-      {shareTeam !== null && <ShareTeamDialog team={shareTeam} onClose={() => setShareTeam(null)} />}
-      {teamSettings !== null && <TeamSettingsDialog team={teamSettings} onClose={() => setTeamSettings(null)} />}
-      <SectionPicker
-          current={sectionPicker ? state.bots.find((b) => b.id === sectionPicker.botId)?.section : undefined}
-          anchor={sectionPicker}
-          onClose={() => setSectionPicker(null)}
-          onAssign={(section) => { if (sectionPicker) moveBotsToSection(dispatch, [sectionPicker.botId], section); }}
-        />
       <RoomContextMenu
           menu={roomMenu}
           onClose={() => setRoomMenu(null)}
-          onMoveToSection={(groupId) => {
-            if (!roomMenu) return;
-            setRoomSectionPicker({ groupId, x: roomMenu.x, y: roomMenu.y });
-          }}
           onDelete={(groupId) => {
             sidebarRef.current?.focus();
             setDeletingRoomId(groupId);
@@ -1318,15 +1154,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           if (groupId) dispatch({ type: "deleteGroup", groupId });
         }}
       />
-      <SectionPicker
-          current={roomSectionPicker ? state.groups.find((g) => g.id === roomSectionPicker.groupId)?.section : undefined}
-          anchor={roomSectionPicker}
-          onClose={() => setRoomSectionPicker(null)}
-          onAssign={(section) => {
-            if (!roomSectionPicker) return;
-            dispatch({ type: "patchGroup", groupId: roomSectionPicker.groupId, patch: { section } });
-          }}
-        />
       {newRoom && <NewRoomPanel onClose={() => setNewRoom(false)} />}
       {/* Portaled: below md the sidebar's translate makes it the containing block for fixed children. */}
       {newChatOpen && createPortal(

@@ -29,7 +29,7 @@ const onRename = vi.fn();
 const dispatch = (action: Action) => { state = reducer(state, action); draw(); };
 const draw = () => flushSync(() => root.render(createElement(BotEditorStore, {
   value: { state, dispatch, flushBotPatches: async () => null, refreshInstances: async () => {}, refreshModels: async () => {} },
-  children: createElement(BotContextMenu, { menu, onClose, onArchive: vi.fn(), onDelete: vi.fn(), onMoveToSection: vi.fn(), onRename }),
+  children: createElement(BotContextMenu, { menu, onClose, onArchive: vi.fn(), onDelete: vi.fn(), onRename }),
 })));
 const button = (label = "Mark all conversations as read") => [...document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find((node) => node.textContent === label)!;
 const response = (threadId: string) => {
@@ -130,13 +130,13 @@ describe("Simple mode's bot menu", () => {
   const point = (target: Element, y: number) => target.dispatchEvent(new MouseEvent("pointerover", { bubbles: true, clientX: 60, clientY: y }));
   beforeEach(() => { mode.advanced = false; });
 
-  it("leads with Pin, Move and Mark as read, then Rename, then Copy conversation ID and More, and ends with Archive and Delete", () => {
+  it("leads with Pin and Mark as read, then Rename, then Copy conversation ID and More, and ends with Archive and Delete", () => {
     draw();
     expect([...sheet().querySelectorAll("button")].map((node) => node.textContent)).toEqual([
-      "Pin", "Move to department", "Mark as read", "Rename", "Copy conversation ID", "More", "Archive", "Delete",
+      "Pin", "Mark as read", "Rename", "Copy conversation ID", "More", "Archive", "Delete",
     ]);
     expect([...sheet().children].map((node) => node.getAttribute("role") === "separator" ? "|" : node.textContent)).toEqual([
-      "Pin", "Move to department", "Mark as read", "|", "Rename", "|", "Copy conversation ID", "More", "|", "Archive", "Delete",
+      "Pin", "Mark as read", "|", "Rename", "|", "Copy conversation ID", "More", "|", "Archive", "Delete",
     ]);
     flushSync(() => button("Rename").click());
     expect(onRename).toHaveBeenCalledWith(bot.id);

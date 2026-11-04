@@ -1,5 +1,5 @@
-import { ChevronDown, ChevronRight, GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
+import type { DragEvent, KeyboardEvent } from "react";
 
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
@@ -7,7 +7,6 @@ import {
   sidebarAttentionLabel,
   type SidebarSectionAttention,
 } from "@/lib/sidebar-attention";
-import type { SectionNaming } from "./SidebarBotDrag";
 
 export function SidebarSectionHeader({
   name,
@@ -20,14 +19,8 @@ export function SidebarSectionHeader({
   onDragStart,
   onDragEnd,
   onMove,
-  onDelete,
-  onContextMenu,
   line = false,
-  onMenu,
-  menuOpen = false,
   count,
-  naming,
-  dropInto = false,
 }: {
   name: string;
   collapsed: boolean;
@@ -39,19 +32,11 @@ export function SidebarSectionHeader({
   onDragStart?: (event: DragEvent<HTMLElement>) => void;
   onDragEnd?: () => void;
   onMove?: (direction: -1 | 1) => void;
-  onDelete?: () => void;
-  onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
   line?: boolean;
-  onMenu?: (button: HTMLButtonElement) => void;
-  menuOpen?: boolean;
   /** How many rows the section holds, shown at rest where the chevron shows on hover (Simple). */
   count?: number;
-  /** A name field in place of the name, for a department being made or renamed. */
-  naming?: SectionNaming;
-  /** A dragged bot would go into this department. */
-  dropInto?: boolean;
 }) {
-  const reorderable = canReorder && !naming;
+  const reorderable = canReorder;
   const Chevron = collapsed ? ChevronRight : ChevronDown;
   const attentionLabel = attention ? sidebarAttentionLabel(attention) : "";
   const onHeaderKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -72,8 +57,6 @@ export function SidebarSectionHeader({
       ? t("sidebar.section.expand", { name })
       : t("sidebar.section.collapse", { name });
 
-  const dropMark = dropInto ? "bg-accent/10 outline outline-2 -outline-offset-2 outline-accent/70" : undefined;
-
   if (line) {
     const tail = (
       <span aria-hidden="true" className="relative flex size-4 shrink-0 items-center justify-center">
@@ -85,15 +68,12 @@ export function SidebarSectionHeader({
       <div
         data-section={name}
         data-sidebar-section-line=""
-        data-section-drop={dropInto ? "" : undefined}
-        tabIndex={onContextMenu ? -1 : undefined}
-        onContextMenu={naming ? undefined : onContextMenu}
         draggable={reorderable || undefined}
         onDragStart={reorderable ? onDragStart : undefined}
         onDragEnd={reorderable ? onDragEnd : undefined}
-        className={cn("group/section flex h-[30px] items-center gap-1.5 rounded-[6px] px-2 pb-1.5 pt-2 hover:bg-raised/50", reorderable && "cursor-grab", dragging && "opacity-40", naming && "py-0.5", dropMark)}
+        className={cn("group/section flex h-[30px] items-center gap-1.5 rounded-[6px] px-2 pb-1.5 pt-2 hover:bg-raised/50", reorderable && "cursor-grab", dragging && "opacity-40")}
       >
-        {naming ? <SectionNameField {...naming} /> : onToggle ? (
+        {onToggle ? (
           <button
             type="button"
             onClick={onToggle}
@@ -114,26 +94,13 @@ export function SidebarSectionHeader({
             {tail}
           </div>
         )}
-        {onMenu && !naming && (
-          <button
-            type="button"
-            aria-label={t("team.actions", { name })}
-            title={t("team.actions", { name })}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={(event) => onMenu(event.currentTarget)}
-            className="flex h-[18px] w-[22px] shrink-0 items-center justify-center rounded-[5px] text-ink-tertiary opacity-0 transition-opacity hover:bg-raised hover:text-ink focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-focus group-hover/section:opacity-100 group-focus-within/section:opacity-100 aria-expanded:bg-raised aria-expanded:text-ink aria-expanded:opacity-100 touch:opacity-100"
-          >
-            <MoreHorizontal size={15} aria-hidden="true" />
-          </button>
-        )}
       </div>
     );
   }
 
   return (
-    <div className={cn("flex items-center gap-1 rounded-md px-2 pb-1", dropMark)} data-section={name} data-section-drop={dropInto ? "" : undefined} tabIndex={onContextMenu ? -1 : undefined} onContextMenu={naming ? undefined : onContextMenu}>
-      {naming ? <SectionNameField {...naming} /> : onToggle ? (
+    <div className="flex items-center gap-1 rounded-md px-2 pb-1" data-section={name}>
+      {onToggle ? (
         <button
           type="button"
           onClick={onToggle}
@@ -157,17 +124,6 @@ export function SidebarSectionHeader({
           {attentionLabel && <span className="sr-only">{attentionLabel}</span>}
         </div>
       )}
-      {onDelete && !naming && (
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={t("sidebar.section.deleteAria", { name })}
-          title={t("sidebar.section.deleteAria", { name })}
-          className="flex size-6 shrink-0 items-center justify-center rounded text-ink-secondary hover:bg-danger/10 hover:text-danger"
-        >
-          <Trash2 size={13} aria-hidden="true" />
-        </button>
-      )}
       {reorderable && (
         <span
           aria-hidden="true"
@@ -184,45 +140,6 @@ export function SidebarSectionHeader({
         </span>
       )}
     </div>
-  );
-}
-
-function SectionNameField({ value, label, onCommit, onCancel }: SectionNaming) {
-  const [draft, setDraft] = useState(value);
-  const field = useRef<HTMLInputElement>(null);
-  const settled = useRef(false);
-  // A menu that just closed hands focus back to its opener after this field mounts.
-  useEffect(() => {
-    field.current?.focus();
-    field.current?.select();
-  }, []);
-  const settle = (save: boolean) => {
-    if (settled.current) return;
-    settled.current = true;
-    if (save) onCommit(draft);
-    else onCancel();
-  };
-  return (
-    <input
-      ref={field}
-      data-section-name-field=""
-      value={draft}
-      maxLength={60}
-      aria-label={label}
-      onChange={(event) => setDraft(event.target.value)}
-      onBlur={() => settle(true)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-          event.preventDefault();
-          settle(true);
-        } else if (event.key === "Escape") {
-          event.preventDefault();
-          event.stopPropagation();
-          settle(false);
-        }
-      }}
-      className="h-6 min-w-0 flex-1 rounded-md bg-ink/[0.05] px-1.5 text-[13px] leading-[18px] text-ink outline-none ring-1 ring-accent/60"
-    />
   );
 }
 

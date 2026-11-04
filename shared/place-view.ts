@@ -27,7 +27,7 @@ export type PlaceSource = "works-on" | "pin" | "auto-pin" | "routine" | "room";
  * stored row, one sentence a phone can read. */
 export const PLACE_ACTIONS = [
   "choose-model", "open-tools", "sign-in", "start", "wake", "watch", "see-plan", "manage-computers",
-  "try-again", "open-my-cloud", "add-boat-key", "turn-on-browser", "open-team-map", "open-vm-settings",
+  "try-again", "open-my-cloud", "add-boat-key", "turn-on-browser", "open-vm-settings",
   "clear-pin", "change-routine", "open-computer-panel",
 ] as const;
 export type PlaceActionId = (typeof PLACE_ACTIONS)[number];
@@ -216,7 +216,6 @@ export const PLACE_WORDS: Record<PlaceActionId, string> = {
   "open-my-cloud": "Open My Cloud from the menu at the top of the sidebar.",
   "add-boat-key": "Connect your Boat account in Settings → API keys.",
   "turn-on-browser": "Turn on the built-in browser in the Screen panel.",
-  "open-team-map": "Open Team map to manage it.",
   "open-vm-settings": "Check it in Settings → Bot desktops.",
   "clear-pin": "Clear this conversation's place in the composer to continue.",
   "change-routine": "Change where this routine runs.",
@@ -236,7 +235,7 @@ export const english: PlaceTranslate = (key, params) => fill(PLACE_EN[key], para
 /** Each state's key segment, short and line keys, and own action. */
 const STATE: Record<PlaceState, { key: string; action: PlaceActionId | null }> = {
   auto: { key: "auto", action: null },
-  "auto-team": { key: "autoTeam", action: "open-team-map" },
+  "auto-team": { key: "autoTeam", action: null },
   "cc-cannot": { key: "ccCannot", action: "choose-model" },
   "cc-tools-off": { key: "ccToolsOff", action: "open-tools" },
   "cc-sign-in": { key: "ccSignIn", action: "sign-in" },
@@ -274,7 +273,7 @@ const PASSING: ReadonlySet<PlaceState> = new Set(["cc-unavailable", "cc-no-start
  * them, so the line ends "Ask an Admin to change it." instead. */
 const ADMIN_ONLY: ReadonlySet<PlaceActionId> = new Set([
   "choose-model", "open-tools", "sign-in", "see-plan", "manage-computers", "open-my-cloud",
-  "add-boat-key", "turn-on-browser", "open-team-map", "open-vm-settings", "change-routine",
+  "add-boat-key", "turn-on-browser", "open-vm-settings", "change-routine",
 ]);
 /** Starting or waking a computer early: a User's own message does it, so
  * there is nothing to ask anyone for. */
@@ -293,7 +292,6 @@ const ACTION_KEY: Record<PlaceActionId, PlaceKey> = {
   "open-my-cloud": "place.action.openMyCloud",
   "add-boat-key": "place.action.addBoatKey",
   "turn-on-browser": "place.action.turnOnBrowser",
-  "open-team-map": "place.action.openTeamMap",
   "open-vm-settings": "place.action.openVmSettings",
   "clear-pin": "place.action.clearPin",
   "change-routine": "place.action.changeRoutine",

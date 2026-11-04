@@ -87,17 +87,17 @@ describe("lazyScreen", () => {
     const warnings = vi.spyOn(console, "warn").mockImplementation(() => {});
     const reload = vi.spyOn(window.location, "reload").mockImplementation(() => {});
     const load = vi.fn((): Loaded => Promise.reject(new TypeError("Failed to fetch dynamically imported module")));
-    const Screen = lazyScreen("TeamMapPage", load);
+    const Screen = lazyScreen("FilesView", load);
     await expect(Screen.preload()).rejects.toThrow(TypeError);
-    render(createElement("main", null, "chat", createElement(Screen, { text: "Team map" })));
+    render(createElement("main", null, "chat", createElement(Screen, { text: "Files" })));
     await settle();
     expect(document.querySelector("main")!.outerHTML).toBe("<main>chat</main>");
     const notice = document.querySelector<HTMLElement>('[role="alert"]');
     expect(notice?.textContent).toContain("couldn’t load");
-    expect(document.body.textContent).not.toContain("Team map");
+    expect(document.body.textContent).not.toContain("Files");
     expect(errors).not.toHaveBeenCalled();
     expect(warnings).toHaveBeenCalledTimes(2);
-    expect(String(warnings.mock.calls[0]![0])).toContain("TeamMapPage");
+    expect(String(warnings.mock.calls[0]![0])).toContain("FilesView");
     expect(reload).not.toHaveBeenCalled();
     notice!.querySelector("button")!.click();
     expect(reload).toHaveBeenCalledTimes(1);
@@ -155,7 +155,7 @@ describe("preloadScreens", () => {
   it("a page on this machine fetches nothing ahead: each screen loads when it opens", () => {
     vi.useFakeTimers();
     const preloads = stubPreloads();
-    expect(preloads.length).toBe(20);
+    expect(preloads.length).toBe(19);
     for (const host of ["127.0.0.1", "localhost", "[::1]"]) preloadScreens(host);
     vi.runAllTimers();
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
@@ -263,7 +263,7 @@ describe("launch bundle", () => {
     const deferred = [
       "ActivityPanel", "BotSettingsDialog", "CloudAddDialog", "ComputerPanel", "InspectorPanel", "KeyboardShortcutsModal",
       "LocalVmWorkspace", "NewBotDialog", "PhoneAppDialog", "PhoneSetupFlow", "PluginsPanel", "RemoteAgentSettingsPanel", "remote-desktop-panel", "RoutineCalendarPage",
-      "RoutinesPage", "SettingsModal", "ShareTeamDialog", "TeamLibraryPanel", "TeamMapPage", "TriggersPage", "WebhookTrigger", "room-panel/RoomPanel",
+      "RoutinesPage", "SettingsModal", "ShareTeamDialog", "TeamLibraryPanel", "TriggersPage", "WebhookTrigger", "room-panel/RoomPanel",
     ].map((name) => `components/${name}.tsx`);
     expect(deferred.filter((file) => reached.has(file))).toEqual([]);
     expect(reached.has("lib/team-import.ts"), "the team library brings the YAML parser in").toBe(false);

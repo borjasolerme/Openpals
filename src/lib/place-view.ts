@@ -128,7 +128,6 @@ export function openPlaceAction(
       window.sessionStorage?.setItem("openmausbot.settings.section", "computer");
       appSettings("computer");
       return true;
-    case "open-team-map": dispatch({ type: "showTeamMap" }); return true;
     case "see-plan": {
       const desktop = window.ogb?.remoteClient?.active ? undefined : window.ogb?.cloudAccount;
       if (desktop) { void desktop.openDashboard().catch(() => {}); return true; }

@@ -22,17 +22,7 @@ Run these checks against disposable fixtures only:
 ```sh
 pnpm exec vitest run server/peer-roster.test.ts server/peer-roster-owners.test.ts server/chief-of-staff.test.ts server/runtime-coordinator.test.ts server/bot-overview.test.ts src/components/bot-settings/PermissionsSection.test.ts --maxWorkers=2
 pnpm exec vitest run server/peer-allowlist.e2e.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/cloud-team-open-reach.e2e.test.ts --maxWorkers=2
-OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-access-ui.e2e.test.ts --maxWorkers=1
 ```
-
-The real settings UI check creates Clive in Office and three separate
-departments. It selects Engineering, Research and a persisted empty
-department, proves nothing changed before Save, then checks the saved grants
-and revokes Engineering. Renaming the empty department updates the open
-selector and revokes its old grant; a recreated name appears unselected. The
-screenshot and before/after JSON are retained beside the fixture's server log
-(`.team-access.png` and `.team-access.json`). The launcher removes only its own
-disposable data.
 
 The server checks prove a bot asking a bot in another department directly on a
 desktop and on a Team Cloud (from a member's private chat, with the answer

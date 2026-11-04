@@ -6,7 +6,7 @@ import { Bell, Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { api, useStore, openThread, type Bot } from "@/state/store";
-import { askingWhom, departmentOwner, ownerChanged, ownerOf, pictureOf, refreshNeedsYou, useTeamPeople, type TeamPeople, type TeamPerson } from "@/state/team-people";
+import { askingWhom, ownerChanged, ownerOf, pictureOf, refreshNeedsYou, useTeamPeople, type TeamPeople, type TeamPerson } from "@/state/team-people";
 import type { NeedsYouItem } from "../../shared/today";
 import { useHeldMenuMotion } from "./MenuMotion";
 import { MENU_HEADING, MENU_SHEET } from "./menu-recipe";
@@ -14,7 +14,7 @@ import { MENU_HEADING, MENU_SHEET } from "./menu-recipe";
 export type OwnerPickerTarget = { botIds: string[]; title: string; current: string | null; x: number; y: number };
 
 const hosts: Array<(target: OwnerPickerTarget) => void> = [];
-/** Opens the picker of the host mounted last, from a bot row, a bot's menu, a department's or the Team map. */
+/** Opens the picker of the host mounted last, from a bot row or a bot's menu. */
 export function requestOwnerPick(target: OwnerPickerTarget): void {
   hosts.at(-1)?.(target);
 }
@@ -45,7 +45,7 @@ export function PersonFace({ person, size = 18 }: { person: TeamPerson; size?: n
     className={cn("inline-flex shrink-0 items-center justify-center rounded-full font-semibold leading-none text-white", hueOf(person.email))}>{initial(person)}</span>;
 }
 
-/** Changes who looks after one bot, or every bot of a department. */
+/** Changes who looks after a bot. */
 export function OwnerPicker({ target, onClose }: { target: OwnerPickerTarget | null; onClose: () => void }) {
   const { dispatch } = useStore();
   const team = useTeamPeople();
@@ -111,12 +111,9 @@ export function ownerMenuLabel(bot: Bot, team: TeamPeople): string {
   return owner ? t("lookedAfter.menu", { name: owner.name }) : t("lookedAfter.menuNone");
 }
 
-/** Opens the picker for one bot, or for every bot of a department ("Set owner for all bots…"). */
-export function pickOwnerOf(bots: readonly Bot[], team: TeamPeople, at: { x: number; y: number; name?: string }): void {
-  if (!bots.length) return;
-  const title = bots.length === 1 && at.name === undefined ? t("lookedAfter.pickTitle") : t("lookedAfter.setForAllTitle", { name: at.name ?? "" });
-  const current = bots.length === 1 ? ownerOf(bots[0]!, team)?.email ?? null : departmentOwner(bots, team)?.email ?? null;
-  requestOwnerPick({ botIds: bots.map((bot) => bot.id), title, current, x: at.x, y: at.y });
+/** Opens the picker for one bot. */
+export function pickOwnerOf(bot: Bot, team: TeamPeople, at: { x: number; y: number }): void {
+  requestOwnerPick({ botIds: [bot.id], title: t("lookedAfter.pickTitle"), current: ownerOf(bot, team)?.email ?? null, x: at.x, y: at.y });
 }
 
 /** A tag or passed message is done once its person opens it, even in a shared chat someone else already read. */

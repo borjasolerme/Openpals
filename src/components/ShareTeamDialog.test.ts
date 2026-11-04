@@ -12,7 +12,6 @@ import { saveShareFile, SHARE_VIEW_START, shareRefused, tickedSkills, type Share
 import { teamImportPreview } from "@/lib/team-import";
 import { ApiError } from "@/state/store";
 import { ShareSkillChoices, ShareTeamContents } from "./ShareTeamDialog";
-import { TeamMenuItems } from "./Sidebar";
 import { shareableTeamList, TeamImportDetails } from "./TeamLibraryPanel";
 import { packageSummary, parsePackageDocument } from "../../shared/package-format";
 
@@ -25,17 +24,11 @@ afterEach(() => {
 });
 
 describe("Share team", () => {
-  it("is in every named team's menu", () => {
-    const markup = renderToStaticMarkup(createElement(TeamMenuItems, { onAddBots: vi.fn(), onRename: vi.fn(), onShare: vi.fn(), onDelete: vi.fn() }));
-    expect(text(markup)).toMatch(/Add bots .*Rename department .*Share department… .*Delete department/);
-    expect(markup.match(/role="menuitem"/g)).toHaveLength(4);
-  });
-
-  it("lists shareable teams, named teams first and General last, never empty ones", () => {
-    expect(shareableTeamList(["Sales desk", "Empty", "Support"], [
-      { section: "Support" }, { section: " Sales desk " }, { section: "Sales desk" }, { section: "Sales desk", hidden: true }, {}, { section: "Unlisted" },
+  it("lists shareable teams by the section older bots stored, General last, never empty ones", () => {
+    expect(shareableTeamList([
+      { section: "Support" }, { section: " Sales desk " }, { section: "Sales desk" }, { section: "Sales desk", hidden: true }, {},
     ])).toEqual([
-      { name: "Sales desk", bots: 2 }, { name: "Support", bots: 1 }, { name: "Unlisted", bots: 1 }, { name: "", bots: 1 },
+      { name: "Support", bots: 1 }, { name: "Sales desk", bots: 2 }, { name: "", bots: 1 },
     ]);
   });
 

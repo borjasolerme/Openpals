@@ -64,15 +64,14 @@ async function openExternal(url: string): Promise<void> {
   if (opened) opened.opener = null;
 }
 
-export function shareableTeamList(sections: readonly string[], bots: ReadonlyArray<Pick<Bot, "section" | "hidden">>): Array<{ name: string; bots: number }> {
+export function shareableTeamList(bots: ReadonlyArray<Pick<Bot, "section" | "hidden">>): Array<{ name: string; bots: number }> {
   const counts = new Map<string, number>();
   for (const bot of bots) {
     if (bot.hidden) continue;
     const team = bot.section?.trim() ?? "";
     counts.set(team, (counts.get(team) ?? 0) + 1);
   }
-  const order = [...new Set([...sections.map((section) => section.trim()).filter(Boolean), ...counts.keys()])]
-    .filter((name) => name !== "");
+  const order = [...counts.keys()].filter((name) => name !== "");
   return [...order, ""].flatMap((name) => (counts.get(name) ? [{ name, bots: counts.get(name)! }] : []));
 }
 
@@ -132,7 +131,7 @@ export function TeamLibraryPanel({
   const scoutRequest = useRef(0);
 
   const currentBotCount = state.bots.filter((bot) => !bot.hidden).length;
-  const shareableTeams = shareableTeamList(state.sections ?? [], state.bots);
+  const shareableTeams = shareableTeamList(state.bots);
   const takenNames = new Set(state.bots.map((bot) => bot.name.trim().toLowerCase()));
   const importedNames = pending?.members.map((member) => takeImportName(member.name, takenNames)) ?? [];
 
