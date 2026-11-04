@@ -73,7 +73,7 @@ async function setup(options: { origins?: string[]; lifetimeMs?: number } = {}) 
     composio: { configured: () => false } as never,
   });
   const cards = createMcpSignInCards({
-    store, cfg: () => cfg, mcpOAuth,
+    store, cfg: () => cfg, mcpOAuth, followCard: () => {},
     publicOrigins: () => options.origins ?? [],
     language: () => undefined,
     answer: (_threadId, messageId, text) => {

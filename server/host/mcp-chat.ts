@@ -30,6 +30,7 @@ export interface McpChatDeps {
   mcpConfig(): McpConfig;
   threadLanguage(threadId: string): string | undefined;
   answerCardNode(threadId: string, messageId: string, text: string): boolean;
+  followCard(threadId: string, from: string, to: string): void;
   fullAccessForSource(botId: string, threadId: string): boolean;
   liveTurnByThread: ReadonlyMap<string, string>;
   broadcast(payload: Record<string, unknown>): void;
@@ -54,6 +55,7 @@ export function createMcpChat(deps: McpChatDeps) {
     publicOrigins: deps.publicOrigins,
     language: threadLanguage,
     answer: answerCardNode,
+    followCard: deps.followCard,
     threadVisible: deps.threadVisible,
     changed: () => broadcast({ kind: "mcp.changed" }),
   });

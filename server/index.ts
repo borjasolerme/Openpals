@@ -21,7 +21,7 @@ import { allowedScopes, parseAllowList } from "./sign-in-allow-list.ts"; import 
 
 import { STATUS_REPLY_TIMEOUT_MS } from "./runtime/status-reply.ts"; import { createCoordinator, type ComposedTurn, type CoordinateBotsCall, type Coordinator, type HandoffOpener, type HandoffOptions, type HandoffView, type HostTurnResult } from "./coordinator.ts";
 import { queuedBehindPersonText, UnansweredApprovals } from "./waiting-on-person.ts";
-import { askToolName, createAskCards } from "./host/ask-cards.ts"; import { createQuestionRouting } from "./host/question-routing.ts"; import { workThreadFor } from "./host/work-thread.ts"; import { closedByStop, resumableCards as cardsWaitedOn } from "./host/resumable-cards.ts"; import { createMcpChat } from "./host/mcp-chat.ts"; import { isCardOwnerLive, isMcpSignInCard } from "./host/mcp-sign-in-cards.ts";
+import { askToolName, createAskCards } from "./host/ask-cards.ts"; import { createQuestionRouting } from "./host/question-routing.ts"; import { workThreadFor } from "./host/work-thread.ts"; import { anyCardLive, closedByStop, resumableCards as cardsWaitedOn } from "./host/resumable-cards.ts"; import { createMcpChat } from "./host/mcp-chat.ts"; import { isCardOwnerLive, isMcpSignInCard } from "./host/mcp-sign-in-cards.ts";
 import { assertRequestTarget, guardedRequestPath, requestConflict, requestNeedsInput } from "./guarded-requests.ts";
 import { botAvatarUrlFromStoredPath } from "../shared/bot-avatar.ts";
 import { BOT_PROFILE_LIMITS } from "../shared/bot-profile.ts";
@@ -1581,7 +1581,7 @@ function hostTurnResult(node: HandoffView | undefined, generation: string, outco
   if (!node) return outcome;
   const result: DirectTurnOutcome = { ...outcome, evidence: { ...outcome.evidence, ...turnEvidence(turnRows(node)) } };
   if (outcome.ok && !node.groupId) signInSettle.verified(node.botId, node.threadId, node.startedAt ?? node.createdAt);
-  const cards = resumableCards(node.threadId, node.startedAt ?? node.createdAt, node.groupId ? node.botId : undefined);
+  const cards = resumableCards(node.threadId, node.startedAt ?? node.createdAt, node.groupId ? node.botId : undefined).filter((card) => !coordinator.active().some((other) => other.id !== node.id && other.threadId === node.threadId && other.status === "waiting" && other.cards?.includes(card.id)));
   if (result.stalled) stopCards(node.threadId, new Set(cards.map((card) => card.id)));
   if (node.goalRunId) return result;
   if (seat) {
@@ -8639,7 +8639,7 @@ async function resolveAndSendTeamSetup(res: ServerResponse, args: { botId: strin
 }
 
 const { mcpRequests, mcpSignInCards, mcpServerDeps, resolveAndSendMcp, mcpServerResponse } = createMcpChat({ store, cfg, mcpOAuth, mcpServersHost,
-  secretCards: () => secretCards, mcpConfig: () => mcpConfig, threadLanguage, answerCardNode, fullAccessForSource, liveTurnByThread, broadcast,
+  secretCards: () => secretCards, mcpConfig: () => mcpConfig, threadLanguage, answerCardNode, followCard: (threadId, from, to) => coordinator.followCard(threadId, from, to), fullAccessForSource, liveTurnByThread, broadcast,
   publicOrigins: () => [hostedWorkspaceConfiguration()?.tenant.origin, savedCustomDomain(), FALLBACK_PUBLIC_URL], threadVisible: (auth, threadId) => visibleTo(viewerFor(auth)).thread(threadId) });
 const routineTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 function sendRoutineResolution(
@@ -8889,7 +8889,7 @@ handoffTicks.start({ pace: () => enginesRead || parkedNodesToReconcile.size > 0 
 } });
 
 function reconcileParkedRoots(): void {
-  for (const node of coordinator.active()) reconcileParkedNode(node);
+  for (const node of coordinator.active()) if (!reconcileParkedNode(node) && node.status === "waiting" && node.cards?.length && !anyCardLive(store, node.threadId, node.cards)) coordinator.releaseParked(node.id, "The card it waited on was replaced or closed");
 }
 const MAX_GROUP_HOPS = 1;
 
@@ -10830,7 +10830,7 @@ function claimPhoneSecretBotDeletion(botId: string): (() => void) | null {
   };
 }
 
-const secretCards = createSecretCards({ store, cfg, botLogins, phoneSecrets, phoneSecretSubmissions, connectorThread, answerCardNode, threadLanguage, dataDir: DATA_DIR, turnVm: (threadId) => localVmThreadTargets.get(threadId)?.key });
+const secretCards = createSecretCards({ store, cfg, botLogins, phoneSecrets, phoneSecretSubmissions, connectorThread, answerCardNode, followCard: (threadId, from, to) => coordinator.followCard(threadId, from, to), threadLanguage, dataDir: DATA_DIR, turnVm: (threadId) => localVmThreadTargets.get(threadId)?.key });
 ROUTES.push(createSecretCardRoutes({ cards: secretCards, phoneSecretSubmissions, threadVisible: (auth, threadId) => visibleTo(viewerFor(auth)).thread(threadId), answerContext: (auth, _botId, threadId) => ({ shared: sharedMembership(), owner: threadStarters.get(threadId) ?? null, person: auth.kind === "session" ? personKey(auth.session) : null }) }));
 
 // By design OpenMausBot never receives a website password: the person signs in where the bot works, and the bot uses that session.
@@ -10865,7 +10865,7 @@ function requestSignIn(from: BotRecord, threadId: string, rawSite: unknown, rawR
   });
   for (const prior of store.activePath(threadId)) {
     if (prior.id === message.id || !prior.signIn || !isPendingSignInRequest(prior, target.site, from.id, Boolean(owner.group))) continue;
-    store.patchMessage(threadId, prior.id, { signIn: { ...prior.signIn, superseded: true } });
+    store.patchMessage(threadId, prior.id, { signIn: { ...prior.signIn, superseded: true } }); coordinator.followCard(threadId, prior.id, message.id);
     computerControl.settleHelp(prior.id);
   }
   computerControl.requestHelp(from.id, `sign in to ${target.site}`,
