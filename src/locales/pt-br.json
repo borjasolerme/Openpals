@@ -64,6 +64,8 @@
   "table.noResults": "Nenhuma linha corresponde. Tente outra busca.",
   "table.empty": "Esta tabela não tem linhas de dados.",
   "table.preview": "Prévia da tabela: {name}",
+  "html.openInBrowser": "Abrir {name} no navegador",
+  "html.openFailed": "Não foi possível abrir esta página no navegador.",
   "table.loading": "Abrindo a tabela…",
   "table.tooLarge": "Este arquivo é grande demais para a prévia no app (10 MB, 100.000 linhas, 200 colunas ou 500.000 células). Baixe o original para ver tudo.",
   "table.invalid": "Não foi possível ler este CSV/TSV como tabela. Confira as aspas e o número de colunas, ou baixe o original.",

@@ -66,6 +66,7 @@
   "openAtLogin.set",
   "openAtLogin.state",
   "openExternal",
+  "openHtmlInBrowser",
   "openInstallTerminal",
   "openLogsFolder",
   "permOpenSettings",

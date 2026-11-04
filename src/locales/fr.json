@@ -22,6 +22,8 @@
   "postiz.error.notPostiz": "{host} n’a pas répondu comme Postiz. Vérifiez l’adresse. Celle de Postiz Cloud est https://api.postiz.com.",
   "postiz.error.address": "Vérifiez l’adresse : elle commence par https:// et ne contient ni clé ni mot de passe.",
   "postiz.error.testFailed": "Connecté, mais les outils de Postiz n’ont pas pu être chargés : {reason} Connectez-vous à nouveau.",
+  "html.openInBrowser": "Ouvrir {name} dans votre navigateur",
+  "html.openFailed": "Impossible d'ouvrir cette page dans votre navigateur.",
   "apps.category.social": "Réseaux sociaux",
   "notice.dismiss": "Masquer définitivement",
   "notice.notNow": "Pas maintenant",

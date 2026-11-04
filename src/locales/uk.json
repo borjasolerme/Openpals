@@ -22,6 +22,8 @@
   "postiz.error.notPostiz": "{host} відповів не як Postiz. Перевірте адресу. Адреса Postiz Cloud: https://api.postiz.com.",
   "postiz.error.address": "Перевірте адресу: вона починається з https:// і не містить ключа чи пароля.",
   "postiz.error.testFailed": "Вхід виконано, але інструменти Postiz не завантажилися: {reason} Підключіть знову.",
+  "html.openInBrowser": "Відкрити {name} у браузері",
+  "html.openFailed": "Не вдалося відкрити цю сторінку в браузері.",
   "apps.category.social": "Соцмережі",
   "notice.dismiss": "Приховати назавжди",
   "notice.notNow": "Не зараз",

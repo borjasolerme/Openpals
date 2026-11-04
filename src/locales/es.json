@@ -65,6 +65,8 @@
   "table.noResults": "No hay filas que coincidan. Prueba con otra búsqueda.",
   "table.empty": "Esta tabla no tiene filas de datos.",
   "table.preview": "Vista previa de la tabla: {name}",
+  "html.openInBrowser": "Abrir {name} en tu navegador",
+  "html.openFailed": "No se pudo abrir esta página en tu navegador.",
   "table.loading": "Abriendo la tabla…",
   "table.tooLarge": "Este archivo es demasiado grande para la vista previa en la app (10 MB, 100 000 filas, 200 columnas o 500 000 celdas). Descarga el original para verlo completo.",
   "table.invalid": "Este CSV/TSV no se pudo leer como tabla. Revisa sus comillas y el número de columnas, o descarga el original.",

@@ -22,6 +22,8 @@
   "postiz.error.notPostiz": "{host} ने Postiz की तरह जवाब नहीं दिया। पता जाँचें। Postiz Cloud का पता https://api.postiz.com है।",
   "postiz.error.address": "पता जाँचें: यह https:// से शुरू होता है और इसमें कोई कुंजी या पासवर्ड नहीं होता।",
   "postiz.error.testFailed": "साइन इन हो गया, पर Postiz के टूल लोड नहीं हो सके: {reason} कृपया फिर से कनेक्ट करें।",
+  "html.openInBrowser": "{name} को अपने ब्राउज़र में खोलें",
+  "html.openFailed": "यह पेज आपके ब्राउज़र में नहीं खुल सका।",
   "apps.category.social": "सोशल",
   "notice.dismiss": "हमेशा के लिए हटाएँ",
   "notice.notNow": "अभी नहीं",

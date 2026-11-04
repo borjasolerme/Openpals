@@ -49,6 +49,8 @@
   "table.noResults": "Eşleşen satır yok. Farklı bir arama deneyin.",
   "table.empty": "Bu tabloda veri satırı yok.",
   "table.preview": "Tabloyu önizle: {name}",
+  "html.openInBrowser": "{name} dosyasını tarayıcınızda açın",
+  "html.openFailed": "Bu sayfa tarayıcınızda açılamadı.",
   "table.loading": "Tablo açılıyor…",
   "table.tooLarge": "Bu dosya uygulama içi önizleme için çok büyük (10 MB, 100.000 satır, 200 sütun veya 500.000 hücre). Tamamını görmek için orijinalini indirin.",
   "table.invalid": "Bu CSV/TSV dosyası tablo olarak okunamadı. Tırnak işaretlerini ve sütun sayılarını kontrol edin veya orijinalini indirin.",

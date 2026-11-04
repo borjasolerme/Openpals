@@ -94,6 +94,8 @@
   "html.rendered": "페이지 보기",
   "html.reload": "새로고침",
   "html.frameTitle": "{name} 미리보기",
+  "html.openInBrowser": "브라우저에서 {name} 열기",
+  "html.openFailed": "이 페이지를 브라우저에서 열 수 없습니다.",
   "table.loading": "표 여는 중…",
   "table.tooLarge": "앱에서 미리 보기에는 파일이 너무 커요(10MB, 10만 행, 200열 또는 50만 셀). 전체를 보려면 원본을 다운로드하세요.",
   "table.invalid": "이 CSV/TSV를 표로 읽지 못했어요. 따옴표와 열 개수를 확인하거나 원본을 다운로드하세요.",

@@ -72,6 +72,8 @@
   "html.rendered": "Pokaż stronę",
   "html.reload": "Odśwież",
   "html.frameTitle": "Podgląd: {name}",
+  "html.openInBrowser": "Otwórz {name} w przeglądarce",
+  "html.openFailed": "Nie udało się otworzyć tej strony w przeglądarce.",
   "table.loading": "Otwieranie tabeli…",
   "table.tooLarge": "Ten plik jest zbyt duży do podglądu w aplikacji (10 MB, 100 000 wierszy, 200 kolumn lub 500 000 komórek). Pobierz oryginał, aby zobaczyć całość.",
   "table.invalid": "Nie udało się odczytać tego pliku CSV/TSV jako tabeli. Sprawdź cudzysłowy i liczbę kolumn albo pobierz oryginał.",

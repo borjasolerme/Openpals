@@ -48,6 +48,8 @@
   "table.noResults": "找不到符合條件的資料列。請嘗試其他搜尋條件。",
   "table.empty": "這個表格沒有資料。",
   "table.preview": "預覽表格：{name}",
+  "html.openInBrowser": "在瀏覽器中開啟 {name}",
+  "html.openFailed": "無法在瀏覽器中開啟此頁面。",
   "table.loading": "正在開啟表格…",
   "table.tooLarge": "這個檔案太大，無法在應用程式內預覽（10 MB、100,000 列、200 欄或 500,000 個儲存格）。請下載原始檔案以檢視完整內容。",
   "table.invalid": "無法將這個 CSV/TSV 讀取為表格。請檢查其引號與欄數，或下載原始檔案。",

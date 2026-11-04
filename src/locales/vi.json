@@ -49,6 +49,8 @@
   "table.noResults": "Không có hàng nào khớp. Hãy thử tìm kiếm khác.",
   "table.empty": "Bảng này không có hàng dữ liệu nào.",
   "table.preview": "Xem trước bảng: {name}",
+  "html.openInBrowser": "Mở {name} trong trình duyệt",
+  "html.openFailed": "Không thể mở trang này trong trình duyệt.",
   "table.loading": "Đang mở bảng…",
   "table.tooLarge": "Tệp này quá lớn để xem trước trong ứng dụng (10 MB, 100.000 hàng, 200 cột hoặc 500.000 ô). Tải xuống tệp gốc để xem toàn bộ.",
   "table.invalid": "Không thể đọc tệp CSV/TSV này dưới dạng bảng. Hãy kiểm tra dấu ngoặc kép và số lượng cột của tệp, hoặc tải xuống tệp gốc.",

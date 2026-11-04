@@ -94,6 +94,8 @@
   "html.rendered": "查看页面",
   "html.reload": "重新加载",
   "html.frameTitle": "{name} 的预览",
+  "html.openInBrowser": "在浏览器中打开 {name}",
+  "html.openFailed": "无法在浏览器中打开此页面。",
   "table.loading": "正在打开表格…",
   "table.tooLarge": "这个文件太大，无法在应用内预览（上限为 10 MB、100,000 行、200 列或 500,000 个单元格）。请下载原文件查看完整内容。",
   "table.invalid": "无法将这个 CSV/TSV 读取为表格。请检查引号和列数，或下载原文件。",
