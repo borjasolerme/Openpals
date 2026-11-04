@@ -7,8 +7,9 @@ import { ATTACHMENTS_DIR, FILE_MAX_BYTES, IMAGE_MAX_BYTES } from "./attachments.
 import type { TurnImageInput, TurnVideoInput } from "./contracts.ts";
 import { decodeAttachmentAttribute } from "./message-file.ts";
 
-export const TURN_IMAGE_MAX_COUNT = 4;
-export const TURN_IMAGE_MAX_BYTES = TURN_IMAGE_MAX_COUNT * IMAGE_MAX_BYTES;
+export const TURN_IMAGE_MAX_COUNT = 10;
+/** Total image bytes one turn may carry: the 40 MB it was when a turn took four images, so engine requests don't grow. */
+export const TURN_IMAGE_MAX_BYTES = 4 * IMAGE_MAX_BYTES;
 // A video is sampled into several frames before it reaches a model, so only one is admitted per turn.
 export const TURN_VIDEO_MAX_COUNT = 1;
 export const TURN_VIDEO_MAX_BYTES = FILE_MAX_BYTES;

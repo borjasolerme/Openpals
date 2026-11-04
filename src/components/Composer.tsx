@@ -52,6 +52,7 @@ import {
   composerShouldRefocus,
   composerTakesFocusOnOpen,
   imageAttachmentFromFile,
+  imageBytesLeft,
   imageSlotsLeft,
   imagesThatFit,
   replyTargetTakesFocus,
@@ -508,6 +509,7 @@ export function Composer({
         getPath: pathForFile,
         uploadImage,
         imageSlots: imageSlotsLeft(attachments),
+        imageBytes: imageBytesLeft(attachments),
       });
       if (added.length) addAttachments(added);
       if (notice) setAttachmentNotice(notice);
@@ -628,7 +630,7 @@ export function Composer({
         dispatch({ type: "error", message: t("composer.error.clipboardImage") });
         return;
       }
-      const kept = imagesThatFit(imageFiles, imageSlotsLeft(attachments), setAttachmentNotice);
+      const kept = imagesThatFit(imageFiles, imageSlotsLeft(attachments), setAttachmentNotice, imageBytesLeft(attachments));
       changeDraftAttachmentPending(draftId, true);
       void (async () => {
         try {
