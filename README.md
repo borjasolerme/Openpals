@@ -17,8 +17,12 @@ like a messaging app.
 - **One chat per bot.** No thread lists, conversation switching or separate routine run pages: routine results
   and bot replies arrive in the bot's single chat.
 - **A flat list of bots.** No departments or sidebar sections.
+- **No hosted cloud, plans or upstream services.** No MausBot Cloud, billing, promos, telemetry or built-in
+  auto-updater. Everything runs on machines you control, with your own keys.
+- **A guided first run.** Choose where your bots live (this computer or an always-on server), sign in to your AI,
+  bring your bots over from Grok Bot, and connect your apps through Composio (project or personal key).
 
-The simplification is in progress. Removed features are deleted from the code, not hidden.
+Removed features are deleted from the code, not hidden.
 
 ## Run it
 
@@ -35,9 +39,15 @@ pnpm dev:server    # server → 127.0.0.1:8799
 pnpm dev           # app → http://127.0.0.1:5199
 ```
 
-On an always-on server, follow [docs/deploy-vps.md](docs/deploy-vps.md): run the server as a service, give it an
-HTTPS address, and pair your devices with a one-time code. Package the desktop app with `pnpm package:mac` or
-`pnpm package:linux`.
+On an always-on server (a [Boat](https://boat.dev) machine or any Ubuntu/Debian VPS) with an HTTPS address that
+reaches port 8799, one command installs Openpals as a service and prints a pairing link to paste into the app:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh | bash -s -- --public-url https://your-address
+```
+
+The app's first run walks you through this step by step. For HTTPS options (Caddy, Tailscale) see
+[docs/deploy-vps.md](docs/deploy-vps.md). Package the desktop app with `pnpm package:mac` or `pnpm package:linux`.
 
 ## Credits
 
