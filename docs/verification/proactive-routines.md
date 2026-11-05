@@ -73,8 +73,6 @@ Expected:
 - MausBot hidden from the sidebar gets the brief card, its notification, the
   first-open answer and the add-a-key card; today's earlier card stays in the
   Chief's chat.
-- On a Team Cloud there is no watch and nothing is handed over, and a member's
-  MausBot is never the proactive bot, so its briefing routine reads nothing.
 - A move to My Cloud leaves an untouched MausBot behind while its watch is
   exactly as the server made it, and carries MausBot with the watch once the
   person changed it, even when nobody opened MausBot. A send that carries no
@@ -101,10 +99,10 @@ cap, busy bots, and Run now. The others:
 
 ## Looking at it in the real renderer
 
-1. Start the fixture from a script that starts the fake connected-apps service
-   and calls `launchVerificationServer` with `OMB_COMPOSIO_BROKER_URL` and
-   `OMB_COMPOSIO_BROKER_TOKEN` set to it (the launcher passes a loopback
-   `http://127.0.0.1:PORT` through). Drive it as the end-to-end test does:
+1. Start the fixture from a script that starts the fake Composio project
+   (`server/testing/fake-connected-apps.ts`) and calls `launchVerificationServer`
+   with its `env` (the launcher passes a loopback `http://127.0.0.1:PORT/`
+   project and its key through). Drive it as the end-to-end test does:
    `POST /api/presence/active`, then `POST /api/routines/<watch>/run`.
 2. Serve the renderer against it:
    `OMB_PORT=<fixture port> pnpm exec vite --port 19872 --strictPort`.

@@ -1,6 +1,5 @@
-// Real server and connected-apps bridge, a fake Claude CLI that starts the connection as a model does, and a loopback connection service.
+// Real server and connected-apps bridge, a fake Claude CLI that starts the connection as a model does, and a loopback Composio project.
 import { spawn, type ChildProcess } from "node:child_process";
-import { createServer, type Server } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -8,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { freePortBlock } from "./testing/ports.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
+import { startFakeConnectedApps, type FakeConnectedApps } from "./testing/fake-connected-apps.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 
@@ -18,8 +18,7 @@ describe("/setup connects an app through a Connect card, against the real server
   let output = "";
   let child: ChildProcess | null = null;
   let base = "";
-  let broker: Server;
-  let brokerUrl = "";
+  let apps: FakeConnectedApps | undefined;
 
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(base + path, {
@@ -57,14 +56,9 @@ describe("/setup connects an app through a Connect card, against the real server
     data = join(home, "data");
     dump = join(home, "fake-claude-dump.json");
     mkdirSync(data);
-    // The managed connection service is present but knows no accounts, so Gmail is not connected.
-    broker = createServer((req, res) => {
-      req.resume();
-      res.writeHead(404, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "fixture knows no accounts" }));
-    });
-    await new Promise<void>(resolve => broker.listen(0, "127.0.0.1", resolve));
-    brokerUrl = `http://127.0.0.1:${(broker.address() as { port: number }).port}/broker`;
+    // The person's Composio project has no accounts, so Gmail is not connected.
+    apps = await startFakeConnectedApps();
+    apps.connected = {};
     writeFileSync(join(data, "config.json"), JSON.stringify({
       instances: { claude: {
         driver: "claudeAgent", config: { cli: join(ROOT, "server/testing/fake-claude-cli.ts") },
@@ -81,7 +75,7 @@ describe("/setup connects an app through a Connect card, against the real server
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
         TEMP: home, TMP: home, TMPDIR: home, OMB_TEST_SEALED_PATH: "1",
         OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_USER_DATA: join(home, "user-data"),
-        OMB_COMPOSIO_BROKER_URL: brokerUrl, OMB_COMPOSIO_BROKER_TOKEN: "c".repeat(64),
+        ...apps.env,
       }, stdio: ["ignore", "pipe", "pipe"],
     });
     child = proc;
@@ -94,7 +88,7 @@ describe("/setup connects an app through a Connect card, against the real server
   }, 60_000);
   afterAll(async () => {
     if (child) await waitForExit(child, { signal: "SIGTERM" });
-    if (broker) await new Promise<void>(resolve => broker.close(() => resolve()));
+    await apps?.close();
     if (home) await removeTempDir(home);
   });
 

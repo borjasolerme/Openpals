@@ -3,7 +3,6 @@
 // allowance per bot; at Full access they run. A read-and-draft routine run never
 // reaches them: the relay refuses every send there. Shared by the harness (which
 // enforces it) and the app.
-import { isConnectedAppsServer } from "./own-apps.ts";
 
 export type OutboundPolicy = {
   /** ask: every outbound call waits for a tap. allow: up to dailyCap a day. */
@@ -64,7 +63,7 @@ function actionTokens(name: string): string[] {
   if (name.startsWith("mcp__")) {
     const [, server = "", ...rest] = name.split("__");
     action = rest.join("_");
-    if (isConnectedAppsServer(server)) return actionTokens(action);
+    if (server === "composio") return actionTokens(action);
   } else if (/^[A-Z][A-Z0-9]*_[A-Z0-9_]+$/.test(name)) {
     action = name.slice(name.indexOf("_") + 1);
   }

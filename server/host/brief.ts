@@ -36,8 +36,6 @@ const DISMISSED_MS = 14 * DAY;
 const MAX_ROWS = 60;
 /** A watch run still sorting the night's mail at the morning time gets this long before the brief goes without it. */
 const MORNING_WAIT_MIN = 20;
-/** A sleeping Cloud wakes this early, so the watch reads the night's mail before the brief. */
-export const MORNING_WAKE_EARLY_MS = 10 * MINUTE;
 /** The morning line counts what was done since the person was last here, at most this far back. */
 const OVERNIGHT_MS = 16 * HOUR;
 /** Here this recently, the person saw it happen: the morning line is left out. */
@@ -72,7 +70,7 @@ export interface BriefDeps {
   store: Pick<Store, "bots" | "bot" | "tasks" | "taskByThread" | "messagesFor" | "activePath" | "appendMessage" | "patchMessage" | "patchTask" | "groupByThread">;
   dataDir: string;
   now?: () => number;
-  /** A hosted team workspace or a Team Cloud: the people there are not one person, so there is no brief. */
+  /** A hosted team workspace: the people there are not one person, so there is no brief. */
   hosted: boolean;
   /** The proactive bot's briefing routine is on; with it paused or deleted there is no brief. */
   watching(): boolean;
@@ -82,7 +80,7 @@ export interface BriefDeps {
   runs(): RoutineRun[];
   needsYou(): NeedsYouItem[];
   engineName(instanceId: string): string;
-  /** The computer's own zone; undefined on a Cloud home, whose zone of record comes from the person's device. */
+  /** The computer's own zone, until an app reports the person's. */
   hostTimeZone(): string | undefined;
   /** The server's configured language, for a brief no app has opened with a language yet. */
   language(): string | undefined;
@@ -116,16 +114,6 @@ function localMinutes(ms: number, zone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(ms));
   const part = (type: "hour" | "minute") => Number(parts.find((entry) => entry.type === type)?.value ?? 0);
   return part("hour") * 60 + part("minute");
-}
-/** The instant near `guess` whose local clock reads `minutes`, so a day with a clock change still lands on the time. */
-function atLocalMinutes(guess: number, minutes: number, zone: string): number {
-  let at = guess;
-  for (let step = 0; step < 2; step += 1) {
-    const off = ((minutes - localMinutes(at, zone) + 720 + 1440) % 1440) - 720;
-    if (!off) break;
-    at += off * MINUTE;
-  }
-  return at;
 }
 
 export interface PresenceAnswer {
@@ -217,13 +205,6 @@ export function createBrief(deps: BriefDeps) {
     return state.important.filter((row) => !dismissed.has(row.messageId) && at - row.judgedAt <= IMPORTANT_DAYS_MS);
   }
 
-  /** The page a run published, from its live card in the run's chat: the brief opens the page itself, not a prompt. */
-  function publishedPage(run: RoutineRun): string | undefined {
-    if (!run.threadId) return undefined;
-    const from = run.startedAt ?? run.createdAt, to = run.finishedAt ?? Number.POSITIVE_INFINITY;
-    return deps.store.messagesFor(run.threadId).findLast((row) => row.publishedPage?.state === "live" && row.at >= from && row.at <= to)?.publishedPage?.url;
-  }
-
   function routineRows(since: number, w: BriefWords): { needs: NeedRow[]; done: BriefRow[] } {
     const needs: NeedRow[] = [], done: BriefRow[] = [];
     const latest = new Map<string, RoutineRun>();
@@ -239,8 +220,7 @@ export function createBrief(deps: BriefDeps) {
       if (!bot || bot.hidden) continue;
       const open = run.threadId && deps.store.taskByThread(run.botId, run.threadId) ? { botId: run.botId, threadId: run.threadId } : undefined;
       const name = oneLine(run.routineName, 80);
-      const page = run.status === "completed" && open ? publishedPage(run) : undefined;
-      if (run.status === "completed") done.push({ text: name, note: clip(firstSentence(run.output ?? "") || w.finished, 140), ...(open ? { open } : {}), ...(page ? { page } : {}) });
+      if (run.status === "completed") done.push({ text: name, note: clip(firstSentence(run.output ?? "") || w.finished, 140), ...(open ? { open } : {}) });
       else needs.push({ key: `routine:${name}:${run.status}`, text: run.status === "missed" ? w.missed(name) : w.failed(name), note: clip(oneLine(run.error ?? "", 140) || w.didNotFinish, 140), ...(open ? { open } : {}) });
     }
     return { needs, done };
@@ -257,7 +237,6 @@ export function createBrief(deps: BriefDeps) {
         case "connection": return row(item.app, w.reconnecting(item.app), clip(item.text, 140));
         case "place": return row("", w.unreachable, w.chooseAnother);
         case "question": { const bot = deps.store.bot(item.botId)?.name; return row(bot ?? "", w.asked(bot ?? w.aBot), clip(item.text, 140)); }
-        case "message": return row(item.from, w.asked(item.from), clip(item.text, 140));
       }
     });
   }
@@ -508,16 +487,6 @@ export function createBrief(deps: BriefDeps) {
     save();
   }
 
-  /** When a sleeping Cloud must be up for the next morning brief, or null with no morning time. */
-  function nextWakeAt(): number | null {
-    const clock = deps.morning?.at(), zone = validZone(timeZone());
-    if (!clock || !zone || deps.hosted || !deps.watching()) return null;
-    const due = clockMinutesOf(clock);
-    const todayAt = atLocalMinutes(dayStart() + due * MINUTE, due, zone);
-    const next = state.morningOn === today() || now() >= todayAt + MORNING_WAIT_MIN * MINUTE ? atLocalMinutes(todayAt + DAY, due, zone) : todayAt;
-    return next - MORNING_WAKE_EARLY_MS;
-  }
-
   const briefRow = (threadId: string, messageId: string): boolean => {
     const card = state.card;
     return card !== undefined && card.threadId === threadId && card.messageId === messageId;
@@ -563,7 +532,6 @@ export function createBrief(deps: BriefDeps) {
       if (deps.morning?.at() && state.morningOn !== today()) void morning().catch((error: unknown) => console.warn("brief: the morning brief was not posted", error));
       if (dirty) void render({ create: false, notify: false });
     },
-    nextWakeAt,
     /** The language the person's app shows, else the one set in Settings. */
     language: (): string | undefined => state.language ?? deps.language(),
     card: (): WidgetRoot | undefined => {

@@ -12,6 +12,7 @@ const library = await import("./skill-library.ts");
 const skills = await import("./skills.ts");
 const migration = await import("./skills-library-migration.ts");
 const { workspaceDir } = await import("./workspace.ts");
+const { DATA_DIR } = await import("./config.ts");
 
 const SKILL = (name: string, body = "Do the thing.") =>
   `---\nname: ${name}\ndescription: Reviews a PR the way this team reviews PRs.\n---\n\n# ${name}\n\n${body}\n`;
@@ -153,10 +154,15 @@ describe("skills library migration", () => {
     expect(reportB.assignments[botB]).toBeUndefined();
   });
 
-  it("maps organization stamps onto library entries so org installs become a source", () => {
+  it("carries an organization stamp saved on a bot's skill onto its library entry", () => {
     const content = SKILL("org-playbook");
     const stamp = { installId: "a".repeat(32), key: "org-playbook", release: "2.0.1", r: "b".repeat(64), w: "c".repeat(64) };
-    skills.installOrgSkill(botA, "org:acme/sales-skills@2.0.1", content, stamp);
+    skills.installSkill(botA, "org:acme/sales-skills@2.0.1", [{ path: "SKILL.md", content }]);
+    skills.setSkillEnabled(botA, "org-playbook", true);
+    const manifestFile = join(DATA_DIR, "skill-state", botA, "skills.json");
+    const manifest = JSON.parse(readFileSync(manifestFile, "utf8"));
+    manifest["org-playbook"].package = stamp;
+    writeFileSync(manifestFile, JSON.stringify(manifest));
     migration.migrateBotSkillsToLibrary(botA);
 
     const entry = library.readSkillLibraryIndex()["org-playbook"]!;

@@ -9,7 +9,7 @@ export function readThreadNotifications(threadId: string, broadcast: (payload: R
   if (ids.length) broadcast({ kind: "notifications.read", threadId, ids });
 }
 
-/** `shown`: on a Team Cloud another person's private chat's notifications are theirs alone, an admin's list included. */
+/** `shown`: a conversation this session may not see keeps its notifications from it, an admin's list included. */
 export function createNotificationRoutes(deps = {
   recent: recentNotificationLog,
   markRead: markNotificationLogRead,

@@ -125,17 +125,6 @@ describe("a saved key", () => {
   });
 });
 
-describe("a key the connected-apps service stands in for", () => {
-  it("says it is included and offers the person's own key only on request", () => {
-    fixture.config = { composio: { configured: false, mode: "managed" } };
-    const html = render({ id: "composio" });
-    expect(html).toContain("Included with your Cloud plan");
-    expect(html).toContain("Use your own key");
-    expect(html).not.toContain("<input");
-    expect(html).not.toContain("data-key-remove");
-  });
-});
-
 describe("a row that uses another row's key", () => {
   it("shows the OpenAI key under its own name in Voice and calls, without a second Remove", () => {
     fixture.config = { openai: { configured: true, last4: "a1b2" } };

@@ -111,8 +111,7 @@ all bots in this team…**, to move a bot and every one of its threads at once.
 OpenMausBot adds no review card of its own at any level: a bot's profile,
 working folder, model, skill, team setup and team memory changes apply at
 once and leave a one-line receipt with Undo, so the bot continues in the same
-turn. Routine requests keep their own rule until Triggers v2 replaces them,
-and on My Cloud a turn a guest or a webhook drove still waits for the owner. Invalid input, unavailable services, or failed
+turn. Routine requests keep their own rule until Triggers v2 replaces them. Invalid input, unavailable services, or failed
 writes return errors, not a request to approve again. An expired native
 permission request is not turned into another Allow/Deny card.
 

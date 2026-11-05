@@ -56,10 +56,10 @@ export interface ThreadRouteDeps {
   messageFileRootsForThread(senderId: string, threadId: string): string[];
   viewerFor(auth: RequestAuth): Viewer;
   visibleTo(viewer: Viewer): VisibleSet;
-  /** A Team Cloud: gives a member their own MausBot once, before their first list of bots. */
   attachmentInUse(name: string): boolean;
-  /** The stored files a Settings clear must leave (pictures, banner, routine and calendar-call files), null until those load; absent on a Team Cloud, which has no clear. */
-  keptAttachments?(): ReadonlySet<string> | null;
+  /** The stored files a Settings clear must leave (pictures, banner, routine and calendar-call files), null until those
+   * load. */
+  keptAttachments(): ReadonlySet<string> | null;
 }
 
 export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
@@ -87,7 +87,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
       return json(res, 200, {
         bots: shownBots.map((bot) => {
           const wired = wireBot(bot);
-          // Narrowed first: on a Team Cloud the selected conversation may be someone else's, and its words never go out.
+          // Narrowed first: the selected conversation may be one this session may not see, and its words never go out.
           const shown = memberBot({ ...wired, tasks: wired.tasks ?? [] }, visible);
           return { ...shown, ...(typeof shown.threadId === "string" ? messagePage(shown.threadId, limit) : { messages: [], hasMore: false, activeLeafId: null }) };
         }),
@@ -101,7 +101,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
         computerControl: Object.fromEntries(
           shownBots.map((bot) => {
             const snapshot = botComputerControlSnapshot(bot.id);
-            // A plea from someone else's private chat (a Team Cloud) names its site and reason: held is all that is shared.
+            // A plea from a conversation this session may not see names its site and reason: held is all that is shared.
             if (snapshot.help && visible.hides(snapshot.help.threadId)) return [bot.id, { held: snapshot.held, helpReason: null }];
             return [bot.id, { held: snapshot.held, helpReason: snapshot.helpReason, ...(snapshot.help ? { help: snapshot.help } : {}) }];
           }),
@@ -373,7 +373,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
     }
 
     // Not under /api/attachments/: that GET is open to clients. This path keeps the default admin scope.
-    if (path === "/api/attachment-storage" && deps.keptAttachments) {
+    if (path === "/api/attachment-storage") {
       if (method === "GET") return json(res, 200, attachmentStorageUsage());
       if (method === "POST") {
         // Until routines load their files are unknown, and a clear could take them.

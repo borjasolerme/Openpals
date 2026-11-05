@@ -23,6 +23,7 @@ import {
 import type { BotLogins } from "../bot-logins.ts";
 import type { BotRecord, GroupRecord, Message, Store } from "../store.ts";
 import { serverLine } from "../server-lines.ts";
+import { workspaceDir } from "../workspace.ts";
 
 export const phoneSecretEnvelopeSchema = z.object({
   version: z.literal(PHONE_SECRET_PROTOCOL_VERSION),
@@ -44,9 +45,6 @@ export interface SecretCardsDeps {
   connectorThread(botId: string, threadId: string): { bot: BotRecord; group: GroupRecord | undefined } | null;
   answerCardNode(threadId: string, messageId: string, text: string): boolean;
   dataDir: string;
-  /** Admin manages this server's models: an AI provider key cannot be saved here. */
-  /** The bot's own folder a turn in this conversation writes to (on a Team Cloud, the member's or room's layer). */
-  layerFolder(botId: string, threadId: string): string;
   /** The Local VM (its target key) this conversation's turn holds right now, if any. */
   turnVm(threadId: string): string | undefined;
   /** The language a line in this conversation is written in for its person (server/server-lines.ts). */
@@ -145,7 +143,7 @@ export function createSecretCards(deps: SecretCardsDeps) {
     const secret = message.secret!;
     const owner = { botId, threadId };
     if (secret.delivery === "file") {
-      const home = (secret.vm ? vmFileHome(botId, secret.vm) : null) ?? { host: deps.layerFolder(botId, threadId), shown: deps.layerFolder(botId, threadId) };
+      const home = (secret.vm ? vmFileHome(botId, secret.vm) : null) ?? { host: workspaceDir(botId), shown: workspaceDir(botId) };
       vault.saveFile(owner, message.id, value, home);
     } else {
       vault.saveRef(owner, message.id, secret.label, value);

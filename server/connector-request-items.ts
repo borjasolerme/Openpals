@@ -1,4 +1,4 @@
-import { AUTH_CONFIG_ID } from "../shared/connector-availability.ts";
+import { AUTH_CONFIG_ID } from "../shared/auth-config-id.ts";
 import { inputError } from "./composio-project.ts";
 import { normalizeAccountAlias } from "./composio.ts";
 

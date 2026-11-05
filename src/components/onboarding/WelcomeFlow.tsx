@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
-import { chiefStepFits, myDefaultBot, setChiefStepOpen, useViewerEmail } from "@/lib/default-bot";
+import { chiefStepFits, defaultBotIn, setChiefStepOpen } from "@/lib/default-bot";
 import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, type BeatId } from "@/lib/onboarding";
 import { clearWelcomeDraft, readWelcomeDraft, saveWelcomeDraft } from "@/lib/welcome-draft";
 import { api, useStore } from "@/state/store";
@@ -61,7 +61,7 @@ export function WelcomeFlow({
   hosted?: boolean;
 }) {
   const { state, dispatch } = useStore();
-  const maus = myDefaultBot(state.bots, useViewerEmail());
+  const maus = defaultBotIn(state.bots);
   // A first run keeps its screen in this browser, so a reload resumes it; a replay starts over. A hosted place's
   // browser may hold another person's draft.
   const keepsDraft = !replay && !embedded && !hosted;

@@ -3,8 +3,7 @@ import { AlertTriangle, Loader2, MonitorX } from "lucide-react";
 import { useDesktopCapabilities } from "./DesktopCapabilities";
 import { t } from "@/lib/i18n";
 
-/** On a PC whose screen control isn't running: that bots, and the person's Cloud's bots, can't use its apps and screen,
- * why, and the one fix. */
+/** On a PC whose screen control isn't running: that bots can't use its apps and screen, why, and the one fix. */
 export function WindowsLocalControl() {
   const { capabilities } = useDesktopCapabilities();
   const [pending, setPending] = useState(false);

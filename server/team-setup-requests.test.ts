@@ -595,13 +595,6 @@ describe("MausBot's Chief-level team setup", () => {
     }
   });
 
-  it("refuses a Team Cloud User's MausBot, which holds no more than its member", () => {
-    const h = harness();
-    const maus = h.bot("Maus", { defaultBot: { person: "user@example.com" } });
-    expect(() => h.service.propose({ botId: maus.id, threadId: maus.threadId, plan: plan([specialist("Scout", "Work")]) }))
-      .toThrow(/Only an active Chief of Staff can propose team setup/);
-  });
-
   it("never lets a Chief delete MausBot", () => {
     const h = harness();
     const maus = h.bot("Maus", { defaultBot: {} });

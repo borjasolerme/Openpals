@@ -32,7 +32,7 @@ export const MOVE_BOT_PARTS = Object.freeze({
 export const PICTURE_PART = "picture";
 export const SETTINGS = Object.freeze(["profile", "language"]);
 /** What only a move carries, each by its own id: automations go last, after the chats, and arrive switched off. */
-export const AUTOMATION_KINDS = Object.freeze(["routine", "call", "webhook", "app-event"]);
+export const AUTOMATION_KINDS = Object.freeze(["routine", "call", "webhook"]);
 export const MOVE_KINDS = Object.freeze([...AUTOMATION_KINDS, "imported-skill", "library-skill"]);
 export const KINDS = Object.freeze(["bot", "skill", "login", "1password", "setting", ...MOVE_KINDS]);
 /** A part a server has no value for. */
@@ -50,12 +50,12 @@ export const itemKey = Object.freeze({
   login: (site, username, exactHost) => `login:${site}|${String(username).toLowerCase()}${exactHost ? `|${exactHost}` : ""}`,
   onePassword: () => "1password",
   setting: (name) => `setting:${name}`,
-  /** A move's kinds: `routine`, `call`, `webhook`, `app-event` by id, `imported-skill` and `library-skill` by name. */
+  /** A move's kinds: `routine`, `call`, `webhook` by id, `imported-skill` and `library-skill` by name. */
   moved: (kind, id) => `${kind}:${id}`,
 });
 
 const record = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
-const KEY = /^(?:bot:[\w-]{1,128}|skill:[\w-]{1,128}:[a-z0-9-]{1,64}|login:[^|\s]{1,253}\|[^\n]{0,512}|1password|setting:[a-z]{1,40}|(?:routine|call|webhook|app-event):[\w-]{1,128}|(?:imported|library)-skill:[a-z0-9-]{1,64})$/u;
+const KEY = /^(?:bot:[\w-]{1,128}|skill:[\w-]{1,128}:[a-z0-9-]{1,64}|login:[^|\s]{1,253}\|[^\n]{0,512}|1password|setting:[a-z]{1,40}|(?:routine|call|webhook):[\w-]{1,128}|(?:imported|library)-skill:[a-z0-9-]{1,64})$/u;
 const PART = /^[a-z]{1,20}$/u;
 const HASH = /^[\w:.-]{1,80}$/u;
 

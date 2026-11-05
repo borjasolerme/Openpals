@@ -145,7 +145,7 @@ describe("what an export may never bring", () => {
     expect(document.package.publisher).toBeUndefined();
     expect(document.package.agents[0]!.approval).toBeUndefined();
     expect(document.package.routines!.every((routine) => routine.enabledAfterInstall === false)).toBe(true);
-    expect(() => parsePackageDocument(document, { trust: "file" })).not.toThrow();
+    expect(() => parsePackageDocument(document)).not.toThrow();
   });
 });
 

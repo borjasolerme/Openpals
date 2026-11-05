@@ -20,17 +20,14 @@ words naming that setting.
 Run these checks against disposable fixtures only:
 
 ```sh
-pnpm exec vitest run server/peer-roster.test.ts server/peer-roster-owners.test.ts server/chief-of-staff.test.ts server/runtime-coordinator.test.ts server/bot-overview.test.ts src/components/bot-settings/PermissionsSection.test.ts --maxWorkers=2
-pnpm exec vitest run server/peer-allowlist.e2e.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/cloud-team-open-reach.e2e.test.ts --maxWorkers=2
+pnpm exec vitest run server/peer-roster.test.ts server/chief-of-staff.test.ts server/runtime-coordinator.test.ts server/bot-overview.test.ts src/components/bot-settings/PermissionsSection.test.ts --maxWorkers=2
+pnpm exec vitest run server/peer-allowlist.e2e.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts --maxWorkers=2
 ```
 
-The server checks prove a bot asking a bot in another department directly on a
-desktop and on a Team Cloud (from a member's private chat, with the answer
-coming back there and the work staying private to that member), a room mixing
-departments, an explicit peers list still narrowing reach and withholding a
-result when it cuts a teammate off mid-task, no specialist authority
-inheritance, demotion revoking a Chief's grants, and a Team Cloud Chief keeping
-authority over exactly its person's bots. An active bot cannot give itself new
+The server checks prove a bot asking a bot in another department directly, a
+room mixing departments, an explicit peers list still narrowing reach and
+withholding a result when it cuts a teammate off mid-task, no specialist
+authority inheritance and demotion revoking a Chief's grants. An active bot cannot give itself new
 department authority through an unpaired loopback request, even with a forged
 Origin header; a paired owner or packaged desktop is required.
 

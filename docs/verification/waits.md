@@ -7,7 +7,7 @@ code checks it on a timer, and no model runs until it fires. See the
 ## Automated checks
 
 ```sh
-pnpm exec vitest run server/wait-probes.test.ts server/waits.test.ts server/wait-host.test.ts server/routes/waits.test.ts server/drivers/agents-wait-tools.test.ts server/bot-moves.test.ts server/move-freeze.test.ts server/waits.e2e.test.ts src/components/ApprovalCard.test.ts
+pnpm exec vitest run server/wait-probes.test.ts server/waits.test.ts server/wait-host.test.ts server/routes/waits.test.ts server/drivers/agents-wait-tools.test.ts server/move-freeze.test.ts server/waits.e2e.test.ts src/components/ApprovalCard.test.ts
 ```
 
 ## In a fixture
@@ -53,7 +53,7 @@ Expected:
 - The last `messages` still shows one fired line.
 
 **What it does not prove:** the desktop card's Cancel button and its ended lines (the
-card test and the e2e undo call cover them), phones, a Cloud home, a real page on the
+card test and the e2e undo call cover them), phones, a real page on the
 internet, and what a real model does with the follow-up (the fake engine replies
 `hello from fake claude` regardless of the prompt).
 

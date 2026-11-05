@@ -91,8 +91,7 @@ default and dropped when lending is turned off; Chrome then travels over the
 device link, to the DevTools port the computer finds itself, and only the
 person's own conversations and routines use it. My Chrome works only on a
 personal Cloud home: on a Team Cloud and on self-hosted servers profiles stay
-built-in. Details: [the browser engine plan, step 5](plans/browser-engine.md)
-and [MausBot Cloud](cloud-pro.md#your-chrome).
+built-in. Details: [the browser engine plan, step 5](plans/browser-engine.md).
 
 ## What a bot's browser can reach
 
@@ -106,14 +105,14 @@ loopback traffic through it too (`--proxy-bypass-list=<-loopback>`), and
 WebRTC sends no UDP around it. If the gate is not running, the browser
 connects nowhere.
 
-| Destination | Desktop | Self-hosted server | MausBot Cloud |
-|---|---|---|---|
-| Public internet | yes | yes | yes |
-| OpenMausBot's own ports (loopback and this machine's addresses) | no | no | no |
-| Other ports on this computer | yes, by `localhost` or an address, not by a public name | only servers a bot's own processes opened (Linux), or allowed below; with "Open sites on this server" on, yes, by `localhost`, an address or a name that points at this server's own addresses, not a public name that points at loopback | only servers a bot's own processes opened |
-| Local network: 10/8, 172.16/12, 192.168/16, 100.64/10, fc00::/7 | yes, unless `browserEngine.egress.localNetwork` is `false` | only what `browserEngine.egress.allow` lists, or all of it with "Open sites on this server" on | no |
-| Link-local and cloud metadata (169.254/16, fe80::/10, `fd00:ec2::254`, 100.100.100.200) | no | no | no |
-| 0/8, 198.18/15, multicast | no | no | no |
+| Destination | Desktop | Self-hosted server |
+|---|---|---|
+| Public internet | yes | yes |
+| OpenMausBot's own ports (loopback and this machine's addresses) | no | no |
+| Other ports on this computer | yes, by `localhost` or an address, not by a public name | only servers a bot's own processes opened (Linux), or allowed below; with "Open sites on this server" on, yes, by `localhost`, an address or a name that points at this server's own addresses, not a public name that points at loopback |
+| Local network: 10/8, 172.16/12, 192.168/16, 100.64/10, fc00::/7 | yes, unless `browserEngine.egress.localNetwork` is `false` | only what `browserEngine.egress.allow` lists, or all of it with "Open sites on this server" on |
+| Link-local and cloud metadata (169.254/16, fe80::/10, `fd00:ec2::254`, 100.100.100.200) | no | no |
+| 0/8, 198.18/15, multicast | no | no |
 
 OpenMausBot's own ports are the server's and its webhook receiver's, the
 desktop client relay, the companion and its control page and gateway, the Vite
@@ -135,8 +134,7 @@ A self-hosted server opens more with `config.json`:
 
 Each entry is an address or CIDR range with an optional `:port` (IPv6 in
 brackets for a port: `[fd12::1]:443`). OpenMausBot's own ports, metadata and
-link-local addresses stay closed whatever it lists, and MausBot Cloud ignores
-it.
+link-local addresses stay closed whatever it lists.
 
 Settings > Computer > "Open sites on this server" (`browserEngine.egress.localNetwork: true`, off by default and
 shown only to the server's owner or an admin) opens this server's own sites and its local network without listing
@@ -182,7 +180,7 @@ same rules hold on the desktop, a server and Cloud:
   read from `/proc`, so an image without `ps` works the same.
 - **Unused browsers close.** A browser nothing has used for
   `browserEngine.idleTimeoutMinutes` in `config.json` (1 to 60; 10 when
-  unset, 3 on a MausBot Cloud home, whose 4 GB fits few browsers) is closed: no bot call (a tool listing counts, and so do a call
+  unset) is closed: no bot call (a tool listing counts, and so do a call
   waiting behind another, its page-health reads and recorded step, and
   fill_login's typing; a preview frame only holds off a close while it is
   taken), no turn that has used it and is still running, and no person
@@ -199,12 +197,9 @@ same rules hold on the desktop, a server and Cloud:
 - **Leftovers are swept.** A crash or a kill closes nothing, so the server
   sweeps when it starts, every minute, and at shutdown. It closes only this
   data dir's browsers: each bot's own, each built-in profile's, and its
-  temporary browsers, whose names carry a tag of the data dir. On a MausBot
-  Cloud home, whose HOME is the server's alone, it also closes the browser
-  of any bot that no longer exists (a `bot-` session), within a minute.
+  temporary browsers, whose names carry a tag of the data dir.
   Deleting a bot or profile closes its browser and erases its saved
-  sign-ins with the agent-browser OpenMausBot installed, or on a Cloud home
-  the image's own; an agent-browser found only on PATH elsewhere just has
+  sign-ins with the agent-browser OpenMausBot installed; an agent-browser found only on PATH elsewhere just has
   the running browser closed, since a wrapper there could fail the erase
   for good. A Chrome whose
   daemon was killed under it (by the OOM killer, by hand) can never be used
@@ -229,8 +224,7 @@ docker, kubepods or lxc in `/proc/1/cgroup`. A runtime that shows none of
 these (a Kubernetes pod on cgroup v2, for one) needs `/dev/shm` room of its
 own (on Kubernetes, an `emptyDir` with `medium: Memory`). The image does
 not set `AGENT_BROWSER_ARGS`: OpenMausBot hands its browsers a curated
-environment that would not carry it. On Fly Machines (the Cloud home) Fly's
-own init runs as PID 1.
+environment that would not carry it.
 
 ## Video recording
 

@@ -1,7 +1,6 @@
 import type { GroupGoalRunCardData } from "../../shared/group-goal-run";
 import type { ConnectorCardData } from "../../shared/connector-card";
 import type { DefaultBotFields } from "../../shared/default-bot";
-import { hiddenFromSidebar } from "./default-bot";
 
 export const PINNED_SECTION_ID = "builtin:pinned";
 export const CHANNELS_SECTION_ID = "builtin:channels";
@@ -84,10 +83,10 @@ export function sidebarSectionCollapsed(
 
 export function partitionSidebarBots<T extends SidebarBot>(
   bots: T[],
-  options?: { universalPins?: boolean; viewerEmail?: string | null; welcoming?: string | null },
+  options?: { universalPins?: boolean; welcoming?: string | null },
 ) {
   const universalPins = options?.universalPins === true;
-  const visible = bots.filter((bot) => !bot.hidden && !hiddenFromSidebar(bot, options?.viewerEmail) && bot.id !== options?.welcoming);
+  const visible = bots.filter((bot) => !bot.hidden && !bot.sidebarHidden && bot.id !== options?.welcoming);
   // The pin flag is the server's, the same on every client. The Chief keeps its own top slot when pins are not
   // universal (a device's layout choice).
   const pinnedBots = visible.filter((bot) => Boolean(bot.pinned) && (universalPins || !bot.chiefOfStaff));

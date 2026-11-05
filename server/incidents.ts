@@ -1,7 +1,6 @@
 import type { WireMessage as Message } from "../shared/wire.ts";
 import { withoutDeliveredNote } from "./peer-provenance.ts";
 import { AUTHORITY, fromNoteWith, HARNESS_WHO } from "./provenance-label.ts";
-import { botOwner } from "../shared/bot-owner.ts";
 import { hasTeamAuthority } from "./peer-roster.ts";
 import { serverLine, type ServerLineKey } from "./server-lines.ts";
 
@@ -13,8 +12,6 @@ export interface IncidentBot {
   section?: string;
   chiefOfStaff?: boolean;
   managedSections?: string[];
-  createdBy?: string;
-  reportsTo?: string;
   hidden?: boolean;
 }
 
@@ -38,12 +35,8 @@ const sectionKey = (section?: string): string => section?.trim() || "";
 export function chiefForBot<T extends IncidentBot>(bots: readonly T[], bot: IncidentBot): T | null {
   if (bot.chiefOfStaff) return null;
   const chiefs = bots.filter((candidate) => candidate.chiefOfStaff && !candidate.hidden && candidate.id !== bot.id);
-  // A bot someone owns on a Team Cloud has their Chief or none; the department's Chief is not its person's.
-  const owner = botOwner(bot);
-  if (owner) return chiefs.find((chief) => botOwner(chief) === owner) ?? null;
-  const unowned = chiefs.filter((chief) => !botOwner(chief));
-  return unowned.find((chief) => sectionKey(chief.section) === sectionKey(bot.section))
-    ?? unowned.find((chief) => hasTeamAuthority(chief, bot.section))
+  return chiefs.find((chief) => sectionKey(chief.section) === sectionKey(bot.section))
+    ?? chiefs.find((chief) => hasTeamAuthority(chief, bot.section))
     ?? null;
 }
 

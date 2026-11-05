@@ -72,7 +72,7 @@ export interface ModelCatalogOptions {
   log?: (message: string) => void;
 }
 
-/** Our cache, under providers/ so backups and Move to Cloud leave it out. */
+/** Our cache, under providers/ so backups and moves leave it out. */
 export function modelCatalogCachePath(dataDir: string): string {
   return join(dataDir, "providers", "model-providers", "models-dev.json");
 }

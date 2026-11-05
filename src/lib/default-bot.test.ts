@@ -1,45 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { chiefChoices, chiefFor, chiefStepFits, createChiefPatch, hiddenFromSidebar, INTRO_CHIPS, introChips, myDefaultBot, setupSteps, someoneElsesDefaultBot } from "./default-bot";
+import { chiefChoices, chiefFor, chiefStepFits, createChiefPatch, defaultBotIn, INTRO_CHIPS, introChips, setupSteps } from "./default-bot";
 import { partitionSidebarBots } from "./sidebar-layout";
 import type { DefaultBotFields } from "../../shared/default-bot";
 
 const bot = (id: string, fields: DefaultBotFields = {}): DefaultBotFields & { id: string } => ({ id, ...fields });
 
 describe("MausBot in the sidebar", () => {
-  it("leaves out a MausBot whose Show switch is off, and on a Team Cloud other people's, but keeps the viewer's own", () => {
-    const bots = [
-      bot("maus", { defaultBot: {} }),
-      bot("ada-maus", { defaultBot: { person: "ada@example.com" } }),
-      bot("bea-maus", { defaultBot: { person: "bea@example.com" } }),
-      bot("writer"),
-    ];
-    const shown = (viewerEmail: string | null) => partitionSidebarBots(bots, { viewerEmail }).bots.map((entry) => entry.id);
-    expect(shown("ada@example.com")).toEqual(["maus", "ada-maus", "writer"]);
-    expect(shown(null)).toEqual(["maus", "writer"]);
+  it("leaves out a MausBot whose Show switch is off", () => {
+    const bots = [bot("maus", { defaultBot: {} }), bot("writer")];
+    const shown = () => partitionSidebarBots(bots).bots.map((entry) => entry.id);
+    expect(shown()).toEqual(["maus", "writer"]);
     bots[0] = bot("maus", { defaultBot: {}, sidebarHidden: true });
-    expect(shown(null)).toEqual(["writer"]);
-    expect(hiddenFromSidebar(bots[0]!, null)).toBe(true);
-    expect(someoneElsesDefaultBot(bots[2]!, "ADA@example.com".toLowerCase())).toBe(true);
-  });
-
-  it("finds the viewer's own MausBot: their own on a team, the place's otherwise, none until the viewer is known", () => {
-    const team = [bot("ada-maus", { defaultBot: { person: "ada@example.com" } }), bot("writer")];
-    expect(myDefaultBot(team, undefined)).toBeUndefined();
-    expect(myDefaultBot(team, "ada@example.com")?.id).toBe("ada-maus");
-    expect(myDefaultBot(team, "bea@example.com")).toBeUndefined();
-    const place = [bot("writer"), bot("maus", { defaultBot: {} })];
-    expect(myDefaultBot(place, null)?.id).toBe("maus");
-    expect(myDefaultBot(place, "owner@example.com")?.id).toBe("maus");
+    expect(shown()).toEqual(["writer"]);
   });
 });
 
 describe("MausBot's identity is its mark, never its name", () => {
   it("keeps finding a renamed MausBot for the Settings switch and the sidebar, and keeps it out of the list while its welcome is open", () => {
     const bots = [bot("writer"), { ...bot("maus", { defaultBot: {} }), name: "Jarvis" }];
-    expect(myDefaultBot(bots, null)?.id).toBe("maus");
-    expect(partitionSidebarBots(bots, { viewerEmail: null }).bots.map((entry) => entry.id)).toEqual(["writer", "maus"]);
-    expect(partitionSidebarBots(bots, { viewerEmail: null, welcoming: "maus" }).bots.map((entry) => entry.id)).toEqual(["writer"]);
+    expect(defaultBotIn(bots)?.id).toBe("maus");
+    expect(partitionSidebarBots(bots).bots.map((entry) => entry.id)).toEqual(["writer", "maus"]);
+    expect(partitionSidebarBots(bots, { welcoming: "maus" }).bots.map((entry) => entry.id)).toEqual(["writer"]);
   });
 });
 
@@ -89,7 +71,7 @@ describe("the first run's Chief step", () => {
 });
 
 describe("who becomes the Chief of Staff on the first run", () => {
-  type Candidate = { id: string; defaultBot?: { person?: string }; chiefOfStaff?: boolean; section?: string; hidden?: boolean };
+  type Candidate = { id: string; defaultBot?: DefaultBotFields["defaultBot"]; chiefOfStaff?: boolean; section?: string; hidden?: boolean; sidebarHidden?: boolean };
   const maus: Candidate = { id: "maus", defaultBot: {}, chiefOfStaff: true };
   const research: Candidate = { id: "research" };
 
@@ -100,10 +82,10 @@ describe("who becomes the Chief of Staff on the first run", () => {
     expect(chiefFor([{ ...maus, chiefOfStaff: false }, { id: "old", chiefOfStaff: true, hidden: true }], maus)).toBeUndefined();
   });
 
-  it("offers the person's own bots there to choose from, never MausBot, a hidden bot or someone else's", () => {
-    const bots: Candidate[] = [maus, research, { id: "sales", section: "Sales" }, { id: "gone", hidden: true }, { id: "ada-maus", defaultBot: { person: "ada@example.com" } }];
-    expect(chiefChoices(bots, maus, null).map((bot) => bot.id)).toEqual(["research"]);
-    expect(chiefChoices([maus], maus, null)).toEqual([]);
+  it("offers the bots there to choose from, never MausBot, a hidden bot or one left out of the sidebar", () => {
+    const bots: Candidate[] = [maus, research, { id: "sales", section: "Sales" }, { id: "gone", hidden: true }, { id: "tucked", sidebarHidden: true }];
+    expect(chiefChoices(bots, maus).map((bot) => bot.id)).toEqual(["research"]);
+    expect(chiefChoices([maus], maus)).toEqual([]);
   });
 
   it("Create makes MausBot the Chief only where there is none, and never takes the role from a Chief someone has", () => {

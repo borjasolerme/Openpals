@@ -85,10 +85,8 @@ export function createBrowserHost(deps: BrowserHostDeps) {
     idleMs,
     log: (line) => console.warn(line),
   });
-  // A tool call the egress gate refuses never reaches the browser. My Chrome is the person's own, outside the gate.
   const browserRuntime = new RuntimeRouter(agentBrowserRuntime, chromeEngine, {
-    refusal: (_session, spec, params) => (attachesToChrome(spec.env) ? null : browserEgress.callRefusal(params)),
-    annotate: passkeyAnnotation(DESKTOP_MANAGED ? "desktop" : "server"),
+    annotate: passkeyAnnotation(),
   });
   const browserLive = new LiveRouter(agentBrowserLive, chromeEngine);
   const usedBrowserSessions = new Map<string, Spec>();

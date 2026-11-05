@@ -134,7 +134,7 @@ function sharedTeamPreview(document: PackageDocument, manifest: unknown): Pendin
 
 function libraryPreview(document: PackageDocument, manifest: unknown): PendingTeamImport {
   const pkg = document.package;
-  if (!pkg.presets?.length) throw new Error("This file has no bots or preset bots to add. Its skills can be added from your organization's shelf.");
+  if (!pkg.presets?.length) throw new Error("This file has no bots or preset bots to add.");
   return {
     manifest,
     kind: "package",

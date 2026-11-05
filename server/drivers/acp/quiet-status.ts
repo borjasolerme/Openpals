@@ -250,7 +250,7 @@ const realProc: ProcReader = { read: (path) => readFileSync(path, "utf8"), list:
 /** Clock ticks per second in /proc/<pid>/stat: USER_HZ, 100 on every Linux this runs on. */
 const PROC_TICKS = 100;
 
-/** Linux from /proc alone, so an image without procps or lsof (a Cloud home's) still says what a quiet engine does, as
+/** Linux from /proc alone, so an image without procps or lsof (the Docker image's) still says what a quiet engine does, as
  * ps and lsof do elsewhere: CPU is the tree's utime and stime; connections are its established TCP sockets, read in each
  * network namespace the tree lives in (a boxed engine has its own). */
 export function sampleLinuxProc(root: number, since?: number, proc: ProcReader = realProc): ProcessSample {

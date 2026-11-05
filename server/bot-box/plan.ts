@@ -56,12 +56,10 @@ export interface BoxRequest {
   /** Names of `env` this process keeps although the allow-list or the workspace-credential deny would drop them: the keys
    * the person saved for this engine. Never a never-list or `OMB_` name. */
   allowEnv?: readonly string[];
-  /** More read-write paths: a permission socket, a browser profile. */
+  /** More read-write paths: a permission socket. */
   rw?: readonly string[];
   /** More read-only paths. */
   ro?: readonly string[];
-  /** `shared`: the host's network (a browser, which already goes through its own gate). Default `isolated`. */
-  net?: BoxNet;
   /** The bot whose own folder (workspaces/<bot>) is put back; derived from a task-workspace cwd when absent. */
   botId?: string;
 }
@@ -112,7 +110,7 @@ const PRIVATE_INSIDE = ["/tmp", "/var/tmp", "/run", "/dev", "/proc"];
 export function planBox(setup: BoxSetup, request: BoxRequest): BoxPlan {
   const mutate = setup.mutate ?? new Set<BoxMutation>();
   const dataDir = resolve(setup.dataDir), home = resolve(setup.home);
-  const net: BoxNet = mutate.has("share-net") ? "shared" : request.net ?? "isolated";
+  const net: BoxNet = mutate.has("share-net") ? "shared" : "isolated";
   const mounts: Mount[] = [
     { kind: "ro", source: "/usr", target: "/usr" },
     { kind: "symlink", link: "/bin", target: "usr/bin" },

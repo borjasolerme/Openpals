@@ -146,7 +146,7 @@ off. It keeps the notes in shape without the bot having to decide to:
   A room fewer people can see than the bot never feeds it (the same rule as
   the recent-work brief), checked again when the batch is captured, as are
   the switch and the bot's membership. Bot-to-bot channels, room hand-offs,
-  goal runs and, on a Cloud home, every room are left out.
+  and goal runs are left out.
   Turns still waiting when the app quits or restarts through its normal
   shutdown are kept as their ids (never their text) in
   `memory-capture-pending.json`, at most 50 chats, and read back from the
@@ -304,10 +304,8 @@ app") is `memory_update` with `action: "prefer"` and the preference as one line
 of at most 300 characters. It goes once into the About me of the person whose
 own words began the work, as a learned line, and every bot reads it there, so
 no bot has to be told it and nothing fans out to each bot
-(`server/host/person-preference.ts`). On a Team Cloud that is the person the
-turn acts for: their own chat, a group chat line of theirs, or work handed on
-from it, and nobody's once another person's words joined. Elsewhere it is the
-one person, when their own message began the work. A routine, a webhook, an
+(`server/host/person-preference.ts`): the one person, when their own message
+began the work. A routine, a webhook, an
 outside app or a bot's own work saves no one's preference. A Chief of Staff
 saves such a preference itself instead of sending it to each bot.
 
@@ -435,11 +433,6 @@ free form, or one you rewrite by hand, works the same.
 
 All of them need the owner (admin) session, like the other bot-settings routes.
 
-On a Team Cloud each person also reaches what a bot remembers about them, their own layer of its memory
-(`workspaces/<bot>--member-<person>`, see [team-cloud.md](team-cloud.md)), from any session:
-`GET /api/bots/:id/memory/mine` is its overview, and `GET`, `PUT` and `DELETE /api/bots/:id/memory/mine/file` read,
-save and remove one of its files as above. Nobody reaches another person's layer. The bot panel's **What it
-remembers** shows these notes on a team.
 
 ## Shared team memory integrity
 

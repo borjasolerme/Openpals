@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { activeRoutinesContext, ACTIVE_ROUTINES_MAX_CHARS, ACTIVE_ROUTINES_MAX_COUNT } from "./active-routines-context.ts";
-import { mayRead, memberAudience } from "./audience.ts";
 import type { Routine } from "./routines.ts";
 import { buildSystemPrompt } from "./system-prompt.ts";
 
@@ -39,15 +38,12 @@ describe("activeRoutinesContext", () => {
     expect(ids).toEqual(["temporary", "new-interval", "old-interval", "standing"]);
   });
 
-  it("includes enabled app and webhook monitors but leaves model-free posts and room deliveries alone", () => {
+  it("includes enabled webhook monitors but leaves model-free posts and room deliveries alone", () => {
     const text = context([], {
-      appTriggers: [routine("app"), routine("off", { enabled: false }), routine("other", { botId: "other" })],
-      webhooks: [routine("hook"), { ...routine("post"), delivery: "post" }, { ...routine("room-hook"), groupId: "room" }],
+      webhooks: [routine("hook"), routine("off", { enabled: false }), routine("other", { botId: "other" }), { ...routine("post"), delivery: "post" }, { ...routine("room-hook"), groupId: "room" }],
     });
-    expect(text).toContain('"schedule":"app_event"');
     expect(text).toContain('"schedule":"webhook"');
     for (const id of ["off", "other", "post", "room-hook"]) expect(text).not.toContain(`"id":"${id}"`);
-    expect(context([], { appTriggers: [routine("private", { sourceThreadId: "bob" })], webhooks: [routine("unknown")], include: () => false })).toBe("");
   });
 
   it("caps count, each preview and the whole part even with escaped text", () => {
@@ -62,23 +58,6 @@ describe("activeRoutinesContext", () => {
     expect(records[0].id).toBe("id-29");
     expect(records[0].instructions.length).toBeLessThanOrEqual(500);
     expect(context(Array.from({ length: 30 }, (_, i) => routine(String(i)))).match(/"id":/g)).toHaveLength(ACTIVE_ROUTINES_MAX_COUNT);
-  });
-
-  it("uses the conversation audience for source and results and refuses missing provenance when scoped", () => {
-    const alice = memberAudience("alice");
-    const audiences = new Map([["alice", alice], ["bob", memberAudience("bob")], ["team", "team" as const]]);
-    const include = (id: string) => audiences.has(id) && mayRead(audiences.get(id)!, alice);
-    const title = (id: string) => `Title ${id}`;
-    const text = context([
-      routine("own", { sourceThreadId: "alice" }), routine("shared", { sourceThreadId: "team" }),
-      routine("private", { sourceThreadId: "bob" }), routine("missing"),
-      routine("gone", { sourceThreadId: "deleted" }), routine("private-results", { sourceThreadId: "team", resultsThreadId: "bob" }),
-    ], { include, title });
-    expect(text).toContain('"id":"own"');
-    expect(text).toContain('"id":"shared"');
-    for (const id of ["private", "missing", "gone", "private-results"]) expect(text).not.toContain(`"id":"${id}"`);
-    expect(text).not.toContain("Title bob");
-    expect(context([routine("hidden", { sourceThreadId: "bob" })], { include })).toBe("");
   });
 
   it("redacts before truncating and keeps changing routines outside the stable prompt", () => {

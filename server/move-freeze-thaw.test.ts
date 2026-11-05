@@ -15,7 +15,7 @@ const HOUR = 3_600_000;
 
 /**
  * A computer's copy frozen at the move, with real schedulers held by the freeze and spies on what they start: a routine
- * that runs at every start, one due now, a scheduled call due now, a webhook and an app event, all on.
+ * that runs at every start, one due now, a scheduled call due now, and a webhook, all on.
  */
 function frozenCopy() {
   const dir = mkdtempSync(join(tmpdir(), "omb-thaw-"));
@@ -33,14 +33,13 @@ function frozenCopy() {
   const paused = routines.create({ name: "Paused", prompt: "Wait.", botId: "b1", enabled: false, schedule: { type: "daily", time: "10:00", weekdays: [1] } });
   const call = calls.create({ name: "Sync", botIds: ["b1"], schedule: { type: "once", at: clock + 30 * 60_000 }, durationMinutes: 120 });
   const webhook = webhooks.create({ name: "Orders", prompt: "File it.", botId: "b1" }).webhook;
-  const appEvents = { switched: [] as Array<[string, unknown]>, list: () => [{ id: "e1", enabled: true }], update: async (id: string, patch: unknown) => { appEvents.switched.push([id, patch]); return null; } };
   const freeze = createMoveFreeze({ dataDir: dir });
   freeze.freeze("https://omb-t-1.fly.dev");
   freeze.hold(() => routines.start(), () => routines.stop());
   freeze.hold(() => calls.start(), () => calls.stop());
   // Frozen past both times: the morning routine and the call are due the moment the schedulers start.
   clock += 75 * 60_000;
-  const automations = { routines: () => routines, calls: () => calls, webhooks: () => webhooks, appEvents: () => appEvents, waits: () => null } as unknown as MoveAutomations;
+  const automations = { routines: () => routines, calls: () => calls, webhooks: () => webhooks, waits: () => null } as unknown as MoveAutomations;
   const route = createMoveFreezeRoutes({ freeze, busy: () => null, restart() {}, automationsOff: () => switchAutomationsOff(automations) });
   const lift = async (body: unknown) => {
     let answered: { status: number; body: any } | undefined;
@@ -51,7 +50,7 @@ function frozenCopy() {
   /** Whatever the schedulers would start now has started. */
   const settle = async () => { for (let pass = 0; pass < 3; pass++) { await routines.tick(); await calls.tick(); await new Promise((resolve) => setTimeout(resolve, 20)); } };
   const close = () => { routines.close(); calls.stop(); };
-  return { freeze, routines, calls, webhooks, appEvents, turns, kickoffs, lift, settle, close, ids: { startup: startup.id, morning: morning.id, paused: paused.id, call: call.id, webhook: webhook.id } };
+  return { freeze, routines, calls, webhooks, turns, kickoffs, lift, settle, close, ids: { startup: startup.id, morning: morning.id, paused: paused.id, call: call.id, webhook: webhook.id } };
 }
 
 it("lifted while another computer is home now, every automation is switched off first, so none of them runs; lifted as it was, what is due runs at once", async () => {
@@ -61,7 +60,6 @@ it("lifted while another computer is home now, every automation is switched off 
     await asItWas.settle();
     expect(asItWas.turns.map((prompt) => prompt.split("\n").at(-1)).sort(), "the scheduler spies see the runs a thaw starts").toEqual(["Report.", "Say hello."]);
     expect(asItWas.kickoffs).toEqual(["Sync"]);
-    expect(asItWas.appEvents.switched).toEqual([]);
   } finally { asItWas.close(); }
   const copy = frozenCopy();
   try {
@@ -74,7 +72,6 @@ it("lifted while another computer is home now, every automation is switched off 
     expect(copy.routines.listRuns()).toEqual([]);
     expect(copy.calls.list().map((call) => call.nextRunAt)).toEqual([null]);
     expect(copy.webhooks.list().map((webhook) => webhook.enabled)).toEqual([false]);
-    expect(copy.appEvents.switched).toEqual([["e1", { enabled: false }]]);
     // Each stays where the person can switch it on by hand.
     expect(copy.routines.update(copy.ids.morning, { enabled: true })?.enabled).toBe(true);
     expect(copy.calls.update(copy.ids.call, {}).nextRunAt).not.toBeNull();

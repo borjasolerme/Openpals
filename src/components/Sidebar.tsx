@@ -71,7 +71,7 @@ import { LiveCallPill, liveBadgeFor } from "./LiveCallPill";
 import { ShortcutHint } from "./ShortcutHint";
 import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { myDefaultBot, useViewerEmail, useWelcomingBot } from "@/lib/default-bot";
+import { defaultBotIn, useWelcomingBot } from "@/lib/default-bot";
 import { PinnedBotRoster } from "./PinnedCircles";
 import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
 import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel";
@@ -794,9 +794,8 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         botPreview(b, visibleMessages(b), state.instances, advanced).toLowerCase().includes(q),
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
-  const viewerEmail = useViewerEmail();
-  const parts = partitionSidebarBots(matchingBots, { universalPins, viewerEmail, welcoming: useWelcomingBot() });
-  const { primary, chief, pinnedBots, bots } = simpleDesk ? withPrimaryTile(parts, myDefaultBot(state.bots, viewerEmail)?.id) : { ...parts, primary: null };
+  const parts = partitionSidebarBots(matchingBots, { universalPins, welcoming: useWelcomingBot() });
+  const { primary, chief, pinnedBots, bots } = simpleDesk ? withPrimaryTile(parts, defaultBotIn(state.bots)?.id) : { ...parts, primary: null };
   const { botChats, rooms } = partitionSidebarGroups(visibleGroups);
 
   const drops = botDrag.arrange({ enabled: sections.interactive && !phone, list: bots, bots: state.bots });
@@ -810,7 +809,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const sectionIds = layout.sectionIds;
   const tiles = simpleDesk && (primary !== null || pinnedBots.length > 0);
   const { interactive: layoutInteractive, collapsed: sectionCollapsed, toggle: toggleSection } = sections;
-  const archivedBots = state.bots.filter((bot) => bot.hidden && !bot.movedTo);
+  const archivedBots = state.bots.filter((bot) => bot.hidden);
   const archivedEntry = remoteClient ? undefined : { count: archivedBots.length, open: () => setArchivedBotsOpen(true) };
   const pendingBotUndo = teamFeedback?.restoreBot;
   const botRow = (bot: Bot) => botRowProps(state, dispatch, bot, { density, onMenu: setMenu, renameRequest: renameRequest?.botId === bot.id ? renameRequest.nonce : 0, ...drops.row(bot.id) });

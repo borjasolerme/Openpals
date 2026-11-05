@@ -61,12 +61,9 @@ export interface TaskRouteDeps {
   revokeInternalCapabilitiesForThread(threadId: string): void;
   stagedSkillCleanupsForThread(threadId: string): Array<{ botId: string; stagedId: string }>;
   rejectDeletedThreadSkillStages(cleanups: Array<{ botId: string; stagedId: string }>): void;
-  /** A person opened this conversation (a Team Cloud's Needs you lines for them there are done). */
-  threadRead?(auth: RequestAuth, threadId: string): void;
 }
 
-/** `deleteTasks`: the same deletion for the server's own use (a person leaving a Team Cloud, host/team-member-left.ts). */
-export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler & { deleteTasks(botId: string, threadIds: string[]): ReturnType<TaskRouteDeps["store"]["deleteTasks"]> } {
+export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler {
   const {
     store, coordinator, handoffs, skillReview, threadStarters, phoneSecretSubmissions, titleRegenerations,
     directTurnGenerationByThread, actorKey, sharedWorkspaceFullAccessEnabled,
@@ -101,7 +98,7 @@ export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler & { deleteTa
     }
     return result;
   };
-  return Object.assign(async ({ req, res, url, path, method, auth, json, readBody }: Parameters<RouteHandler>[0]) => {
+  return async ({ req, res, url, path, method, auth, json, readBody }) => {
     let m: RegExpMatchArray | null = null;
 
     // Folders never own settings, transcripts or working directories; the "project" wire names stay.
@@ -220,7 +217,6 @@ export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler & { deleteTa
       const switched = store.switchTask(bot.id, m[2]);
       if (!switched) return json(res, 404, { error: "no such task" });
       sawThread(m[2]);
-      deps.threadRead?.(auth, m[2]);
       readThreadNotifications(m[2], broadcast, auth);
       const wiredSwitch = wireBot(switched);
       const switchedSettings = { ...wiredSwitch, tasks: wiredSwitch.tasks ?? [] };
@@ -403,5 +399,5 @@ export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler & { deleteTa
       }
     }
     return PASS;
-  }, { deleteTasks });
+  };
 }

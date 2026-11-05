@@ -15,7 +15,7 @@ function storage(): Storage | undefined {
   }
 }
 
-// Storage is per origin: this computer's page on each of its ports, My Cloud, a team and a saved server each have
+// Storage is per origin: this computer's page on each of its ports and each paired server have
 // their own, so in the desktop app the choice lives in the app.
 const desktop = () => globalThis.window?.ogb?.desktopLanguage;
 

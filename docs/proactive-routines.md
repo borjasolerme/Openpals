@@ -6,8 +6,7 @@ or Cloud that can reach connected apps, and it is built from four upgrades every
 routine can use, plus the helper models for the inbox.
 The bot that is proactive is the one `proactiveOwner` names
 (`server/host/proactive-owner.ts`): the place's MausBot, shown in the sidebar or
-not, and the main Chief only where there is no MausBot. A Team Cloud member's
-MausBot is never the one. There is no second bot and no separate watcher: the
+not, and the main Chief only where there is no MausBot. There is no second bot and no separate watcher: the
 routine engine (`server/routines.ts`) runs it like any other routine, on the
 desktop, headless and on a Cloud.
 
@@ -143,15 +142,8 @@ there is no brief at all. Its row says
   replays into a turn only as records. Dismiss works only for the owner or an
   admin, only on the brief, checks thread ownership before reading a widget, and
   starts no turn. Recent dismissals go into the next triage as records.
-- A hosted team workspace or Team Cloud gets no watch and no brief. Presence is
+- A hosted team workspace gets no watch and no brief. Presence is
   recorded for the owner only.
-- A personal Cloud that began with its first hour (`server/host/first-hour.ts`)
-  also has a morning time, 8:00 in the person's zone: the day's brief is posted
-  or refreshed then and pushed, with its first line saying what was done since
-  the person was last here (emails sorted, reply drafts written, meetings
-  prepared, from `value.json`), and only what was. A watch run still sorting
-  the night's mail gets 20 minutes first, and a sleeping Cloud is woken at 7:50
-  for it (`nextWakeAt`). The very first morning push says it is the first brief.
 - An install that can't reach connected apps gets no watch, and so no brief,
   until it can. It checks once a minute, since a Cloud's access arrives after
   start. A scripted test install without the fake connected-apps service

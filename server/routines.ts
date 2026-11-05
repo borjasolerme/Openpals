@@ -6,7 +6,7 @@ import { DATA_DIR } from "./config.ts";
 import type { RuntimeEvent } from "./contracts.ts";
 import { OwnedFile } from "./atomic.ts"; import { saveSoon } from "./save-batch.ts";
 import { redactSecretsInText } from "./redact.ts";
-import { activeRunsOf, nextDueOf, schedulerDueOf, wakeHoldOf } from "./routine-due.ts";
+import { schedulerDueOf, wakeHoldOf } from "./routine-due.ts";
 import { startDueTimer, type DueTimer } from "./due-timer.ts";
 import type { GroupGoalRunStatus } from "../shared/group-goal-run.ts";
 import type { RoutineRequestOperation } from "../shared/routine-request.ts";
@@ -115,8 +115,8 @@ export interface RoutineRun {
   /** Time spent waiting on the person's answers, which the run limit does not count. */
   waitedMs?: number;
   triggerSource?: RoutineRunTrigger;
-  /** "app": a connected-app event started it; "wait": a wait's follow-up did (its triggerSource stays "webhook", an outside event). */
-  eventSource?: "app" | "wait";
+  /** "wait": a wait's follow-up started it (its triggerSource stays "webhook", an outside event). */
+  eventSource?: "wait";
   webhookId?: string;
   deliveryId?: string;
   sourceThreadId?: string;
@@ -267,8 +267,6 @@ export interface RoutineManagerOptions {
   /** Work this thread handed to another bot is still open, so its wait is not only on the person. */
   handedOffWorkLive?: (threadId: string) => boolean;
   launchId?: string;
-  /** A Cloud home woken from a sleep it was stopped for (server/cloud-power.ts): not a startup, so no "run on startup". */
-  skipStartupRuns?: boolean;
   checks?: RoutineChecks;
 }
 
@@ -419,9 +417,6 @@ export class RoutineManager {
   }
 
   wakeHold(horizonMs = WAKE_HORIZON_MS) { return wakeHoldOf(this.routines, this.runs, this.now(), horizonMs); }
-  /** A Cloud home's sleep check (server/routine-due.ts). */
-  hasActiveRuns(): boolean { return activeRunsOf(this.runs, this.now()); }
-  nextDueAt(): number | null { return nextDueOf(this.routines, this.runs, this.now()); }
 
   listRuns(from?: number, to?: number): RoutineRun[] {
     return this.runs
@@ -750,7 +745,7 @@ export class RoutineManager {
 
   enqueueWebhook(input: {
     webhookId: string; webhookName: string; prompt: string; botId: string; runOn: RoutineRunOn; deliveryId: string; receivedAt: number;
-    eventSource?: "app" | "wait";
+    eventSource?: "wait";
     /** Where the run reports, instead of the event's own results chat. */
     resultsThreadId?: string;
   }): { id: string } {
@@ -770,21 +765,7 @@ export class RoutineManager {
     return cloneRun(run);
   }
 
-  /** Adds an outside event to its trigger's run that has not started yet, so a burst becomes one run. Null when there
-   *  is no such run or `merge` declines (the run is full). */
-  mergeIntoQueuedRun(webhookId: string, deliveryId: string, merge: (prompt: string) => string | null): { id: string } | null {
-    this.assertWritable();
-    const existing = this.webhookRunReceipt(webhookId, deliveryId);
-    if (existing) return existing;
-    const run = this.runs.findLast((candidate) => candidate.webhookId === webhookId && candidate.status === "queued" && !candidate.threadId);
-    const merged = run?.prompt === undefined ? null : merge(run.prompt);
-    if (!run || merged === null) return null;
-    const before = run.prompt;
-    this.commitEvent(run, deliveryId, () => { run.prompt = merged; }, () => { run.prompt = before; });
-    return { id: run.id };
-  }
-
-  private commitEvent(run: RoutineRun, deliveryId: string, apply: () => void, revert?: () => void): void {
+  private commitEvent(run: RoutineRun, deliveryId: string, apply: () => void): void {
     const previousReceipts = this.webhookRunReceipts;
     const receipts = previousReceipts.filter((receipt) => receipt.acceptedAt >= this.now() - EVENT_RETRY_WINDOW_MS);
     // Never evict a promised retry identity to admit fresh work.
@@ -798,7 +779,6 @@ export class RoutineManager {
       // Keep the live run objects tick() may be awaiting, not cloned snapshots.
       this.runs = previousRuns;
       this.webhookRunReceipts = previousReceipts;
-      revert?.();
       throw error;
     }
     this.emitRun(run);
@@ -957,7 +937,6 @@ export class RoutineManager {
   }
 
   private queueStartupRuns(): boolean {
-    if (this.options.skipStartupRuns) return true;
     const launchId = this.options.launchId;
     if (launchId !== undefined && launchId === this.startupLaunchId) return true;
     const now = this.now();

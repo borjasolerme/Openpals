@@ -248,7 +248,7 @@ const __APP_VERSION__: string;
        * status is deliberately absent — macOS 15+ caches it per-process,
        * so it lies for the whole session after a grant. `pageMic`: whether
        * this app lets the asking page use the microphone (this computer's
-       * page always; a server's page only on the person's own Cloud).
+       * page always; a server's page once the person allowed it there).
        * Absent in older builds of the shell. */
       permStatus(): Promise<{ mic: string; pageMic?: "allowed" | "refused" }>;
       /** Triggers the macOS microphone prompt; resolves true when granted. */
@@ -288,8 +288,7 @@ const __APP_VERSION__: string;
       onChatLink?(cb: (link: string) => void): () => void;
       /** The desktop shell's app-menu Preferences… item was activated; open
        * app Settings. Every server's page in the window receives it, and the
-       * bridge is absent in the browser. "cloud" is the
-       * openmausbot://cloud link (Settings → OMB Cloud, opened by the link). */
+       * bridge is absent in the browser. */
       onOpenAppSettings?(cb: () => void): () => void;
       /** Updates the native Dock/taskbar unread indicator. */
       setUnreadCount?(count: number): void;

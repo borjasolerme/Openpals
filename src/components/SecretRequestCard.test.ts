@@ -143,7 +143,7 @@ describe("SecretRequestCard key analytics", () => {
   });
 
   // Even with the desktop bridge, the 1Password token goes to this server's Logins (which checks it with 1Password),
-  // never the bridge's settings-file store: on My Cloud no bridge exists, and the Cloud's Logins is where bots read it.
+  // never the bridge's settings-file store: a paired server has no bridge, and its Logins is where bots read it.
   it("saves a 1Password token through Logins, never the settings bridge, then resumes the bot", async () => {
     const setCredential = vi.fn();
     vi.stubGlobal("window", { ogb: { setCredential } });

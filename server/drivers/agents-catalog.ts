@@ -110,21 +110,6 @@ const TRIGGER_FIELDS_SCHEMA = {
     items: { type: "string", maxLength: 200 },
     description: "Only for when=webhook: optional event names to accept (from the caller's event-type header, e.g. push). Omit to accept every call.",
   },
-  filter: {
-    type: "object",
-    additionalProperties: false,
-    properties: {
-      from: { type: "string", maxLength: 200 },
-      subject_contains: { type: "string", maxLength: 200 },
-      label: { type: "string", maxLength: 200 },
-      contains: { type: "string", maxLength: 200 },
-    },
-    description: "app_event only: plain words, all must match. Gmail filters at the source.",
-  },
-  event_config: {
-    type: "object",
-    description: "app_event only: settings from trigger_info action=events config_fields.",
-  },
   run_on: {
     type: "string",
     // "box" is Boat's historical run_on destination id (agents wire contract).
@@ -157,8 +142,8 @@ const TRIGGER_FIELDS_SCHEMA = {
   },
 } as const;
 
-const CHIEF_PROFILE_TARGET = " A Chief of Staff may pass for_bot_id (from list_bots) for a requested change to another bot in its section.";
-const APPLIES_OUTCOME = " Read the result: it applies immediately at every access level, and the person sees it with an Undo where possible. If applied, continue the work without another confirmation. Only a pending result (a Cloud conversation its owner did not drive) means ending the turn to wait for the owner. Never claim success without an applied result; report failures honestly. This does not elevate another bot's execution permissions.";
+const CHIEF_PROFILE_TARGET = " A Chief of Staff may pass for_bot_id (from list_bots) for a requested change to another bot on its team.";
+const APPLIES_OUTCOME = " Read the result: it applies immediately at every access level, and the person sees it with an Undo where possible. If applied, continue the work without another confirmation. Only a pending result (a conversation its owner did not drive) means ending the turn to wait for the owner. Never claim success without an applied result; report failures honestly. This does not elevate another bot's execution permissions.";
 
 const START_THREAD_SELF_ID = "Leave out, or use your own bot ID. For teammates use coordinate_bots.";
 
@@ -213,7 +198,7 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "list_room_targets",
-    description: "Discover actual Openpals teammates you can reach, in every department, and rooms. Works in a normal bot conversation too; no room is required. Returns bot and room IDs, roles and working folders, never other conversations' history. Use these bots, not native coding helpers with similar names, when the user asks their team to work together.",
+    description: "Discover actual Openpals teammates you can reach, and rooms. Works in a normal bot conversation too; no room is required. Returns bot and room IDs, roles and working folders, never other conversations' history. Use these bots, not native coding helpers with similar names, when the user asks their team to work together.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
   },
   {
@@ -251,7 +236,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "list_bots",
     description:
-      "List every other bot (agent) you can contact, in every department, with its department, model and current status. Call this to discover exact teammate IDs before assigning work or asking advice with coordinate_bots.",
+      "List every other bot (agent) you can contact, with its model and current status. Call this to discover exact teammate IDs before assigning work or asking advice with coordinate_bots.",
     inputSchema: { type: "object", properties: {} },
   },
   USAGE_LIMITS_TOOL_DEFINITION,
@@ -357,7 +342,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "create_bot",
     description:
-      "Chief of Staff only: add a specialist to your section now; the person can undo it. instructions become its soul. Omit modelSelection for the workspace default, or use exact IDs from list_team_setup. It starts with your connected apps, at the default access level. Assign work with coordinate_bots. At most four per turn.",
+      "Chief of Staff only: add a specialist to your team now; the person can undo it. instructions become its soul. Omit modelSelection for the workspace default, or use exact IDs from list_team_setup. It starts with your connected apps, at the default access level. Assign work with coordinate_bots. At most four per turn.",
     inputSchema: {
       type: "object",
       properties: {
@@ -426,7 +411,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "manage_room",
     description:
-      "Chiefs only, for rooms in your own department. create a room (was create_room) when the user asks for one (at most four per turn), with active bots from list_bots in any department; you are included automatically as the default responder, and it creates no turns or messages. For a room from list_rooms: rename it, change its bulletin, add, remove or set members, with any bots you can reach (keep yourself as a member), or open a new thread in it (new_thread, at most four per turn), which becomes the room's current thread. Busy rooms, pending approvals and team-goal leads are protected. Moving rooms or bots between departments stays with the user; coordinate_bots reaches bots outside a room directly. Follow the tool result under the effective access level; if the change is refused, report the blocker, or ask the user to make the room change, without trying another route.",
+      "Chiefs only, for rooms you belong to. create a room (was create_room) when the user asks for one (at most four per turn), with active bots from list_bots; you are included automatically as the default responder, and it creates no turns or messages. For a room from list_rooms: rename it, change its bulletin, add, remove or set members, with any bots you can reach (keep yourself as a member), or open a new thread in it (new_thread, at most four per turn), which becomes the room's current thread. Busy rooms, pending approvals and team-goal leads are protected. coordinate_bots reaches bots outside a room directly. Follow the tool result under the effective access level; if the change is refused, report the blocker, or ask the user to make the room change, without trying another route.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -597,17 +582,15 @@ const TOOL_DEFINITIONS = [
   {
     name: "trigger_info",
     description:
-      "Read this bot's triggers (was list_triggers / list_trigger_events). list: its routines (schedules), app events and webhooks: ids, when they fire, on or paused, next run or last fire, problems, and the computer's authoritative current time and timezone; trigger_id gives one trigger with its last 10 fires, and with include_address a webhook's private address, to paste into the setup of the app that sends to it. Before reporting completion, inspect related monitors and verify enabled=false and nextRunAt=null after stopping them with trigger. events: before a when=app_event trigger, the connected apps you may use, with their accounts and events, and popular apps not connected yet.",
+      "Read this bot's triggers (was list_triggers). list: its routines (schedules) and webhooks: ids, when they fire, on or paused, next run or last fire, problems, and the computer's authoritative current time and timezone; trigger_id gives one trigger with its last 10 fires, and with include_address a webhook's private address, to paste into the setup of the app that sends to it. Before reporting completion, inspect related monitors and verify enabled=false and nextRunAt=null after stopping them with trigger.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
       properties: {
-        action: { type: "string", enum: ["list", "events"] },
+        action: { type: "string", enum: ["list"] },
         trigger_id: { type: "string", description: "list: one trigger's details and recent fires." },
         include_address: { type: "boolean", description: "list, with a webhook's trigger_id: also its private address. For the bot that owns it, or a Chief of Staff." },
-        for_bot_id: { type: "string", description: "list: ANOTHER bot's triggers in your section, from list_bots." },
-        app: { type: "string", description: "events: optional app slug, e.g. gmail." },
-        search: { type: "string", description: "events: optional words in event names." },
+        for_bot_id: { type: "string", description: "list: ANOTHER bot's triggers, from list_bots; only a bot you may manage." },
       },
       required: ["action"],
     },
@@ -615,7 +598,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "trigger",
     description:
-      "Set up or change work that happens on its own (was create_trigger / manage_trigger): when <something happens>, a bot does <instructions>. create in this turn whenever the person describes recurring or event-based work (\"every morning send me…\", \"whenever I get an email from…\", \"when another app calls…\"); never ask for confirmation first. when=schedule runs on a time rule, cron included (call trigger_info first for relative dates: it has the authoritative time and timezone); when=app_event runs when something happens in a connected app (trigger_info action=events first; prefer it to a schedule that keeps checking); when=webhook gives an address another app sends to: the result carries its private address, so you can paste it into that app's setup yourself (never anywhere else). when=limit_reset runs when an AI's usage limit resets (\"run this when my limit resets\", or to finish work your own limit stopped). To the person these are automations: write name and instructions as they would say them. Something to do once, now, is not a trigger. update (only the fields to change), pause, resume and run_now (an app event or webhook gets a test event) act on one of the bot's routines, app events or webhooks, by its trigger_id from trigger_info. Before reporting a task finished, inspect related automations with trigger_info; pause a temporary monitor whose goal is met, then read its state back. Keep standing automations; delete_trigger deletes one only at the person's explicit request. Each applies at once; the person sees it with Edit, Pause and Undo. for_bot_id: a trigger of ANOTHER bot in your section, which keeps that bot's engine and permissions.",
+      "Set up or change work that happens on its own (was create_trigger / manage_trigger): when <something happens>, a bot does <instructions>. create in this turn whenever the person describes recurring or event-based work (\"every morning send me…\", \"each Friday check…\", \"when another app calls…\"); never ask for confirmation first. when=schedule runs on a time rule, cron included (call trigger_info first for relative dates: it has the authoritative time and timezone); when=webhook gives an address another app sends to: the result carries its private address, so you can paste it into that app's setup yourself (never anywhere else). when=limit_reset runs when an AI's usage limit resets (\"run this when my limit resets\", or to finish work your own limit stopped). To the person these are automations: write name and instructions as they would say them. Something to do once, now, is not a trigger. update (only the fields to change), pause, resume and run_now (a webhook gets a test event) act on one of the bot's routines or webhooks, by its trigger_id from trigger_info. Before reporting a task finished, inspect related automations with trigger_info; pause a temporary monitor whose goal is met, then read its state back. Keep standing automations; delete_trigger deletes one only at the person's explicit request. Each applies at once; the person sees it with Edit, Pause and Undo. for_bot_id: a trigger of ANOTHER bot you may manage, which keeps that bot's engine and permissions.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -624,13 +607,10 @@ const TOOL_DEFINITIONS = [
         trigger_id: { type: "string", description: "Not for create: the id from trigger_info." },
         when: {
           type: "string",
-          enum: ["schedule", "app_event", "webhook", "limit_reset"],
-          description: "create: schedule = on a time rule (give schedule); app_event = something happens in a connected app (give app and event); webhook = when another app calls a link; limit_reset = when an AI engine's usage limit resets.",
+          enum: ["schedule", "webhook", "limit_reset"],
+          description: "create: schedule = on a time rule (give schedule); webhook = when another app calls a link; limit_reset = when an AI engine's usage limit resets.",
         },
         ...TRIGGER_FIELDS_SCHEMA,
-        app: { type: "string", description: "app_event: app slug from trigger_info action=events." },
-        event: { type: "string", description: "app_event: event slug from trigger_info action=events." },
-        account: { type: "string", description: "app_event: account id or alias, only when the app has several." },
         engine: { type: "string", description: "limit_reset: the engine id whose limit to wait for, e.g. claude or codex. Omit for your own engine." },
         repeat: { type: "string", enum: ["once", "every_reset"], description: "limit_reset: once (default) or every_reset." },
         for_bot_id: { type: "string", description: "Only for ANOTHER bot's trigger: that bot's id, from list_bots." },
@@ -641,7 +621,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "delete_trigger",
     description:
-      "Delete a trigger for good, only when the person asks (was manage_trigger delete); to stop it for now, pause it with trigger. It applies at once, with an Undo. for_bot_id: ANOTHER bot's trigger in your section.",
+      "Delete a trigger for good, only when the person asks (was manage_trigger delete); to stop it for now, pause it with trigger. It applies at once, with an Undo. for_bot_id: ANOTHER bot's trigger, one you may manage.",
     inputSchema: {
       type: "object",
       additionalProperties: false,
@@ -681,7 +661,7 @@ const TOOL_DEFINITIONS = [
         reason: { type: "string", minLength: 1, maxLength: 500, description: "One sentence the user will see explaining why." },
         for_bot_id: {
           type: "string",
-          description: "Chief of Staff only: the id of another bot in your section whose profile this changes. Omit to change your own.",
+          description: "Chief of Staff only: the id of another bot on your team whose profile this changes. Omit to change your own.",
         },
       },
       required: ["reason"],
@@ -710,7 +690,7 @@ const TOOL_DEFINITIONS = [
         reason: { type: "string", minLength: 1, maxLength: 500, description: "One sentence the user will see explaining why." },
         for_bot_id: {
           type: "string",
-          description: "Chief of Staff only: the id of another bot in your section whose default model this changes. Omit to change your own.",
+          description: "Chief of Staff only: the id of another bot on your team whose default model this changes. Omit to change your own.",
         },
       },
       required: ["model_selection", "reason"],

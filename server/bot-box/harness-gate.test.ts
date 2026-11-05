@@ -18,8 +18,7 @@ function call(socketPath: string, method: string, path: string, body?: string, h
   });
 }
 
-// The box runs only on a Linux Cloud home (detect.ts says "not-linux" anywhere else): its harness gate listens on a
-// unix socket, which Windows refuses at a file path (EACCES).
+// The box runs only on Linux: its harness gate listens on a unix socket, which Windows refuses at a file path (EACCES).
 const linuxBox = describe.skipIf(process.platform === "win32");
 
 linuxBox("the harness gate", () => {

@@ -24,7 +24,6 @@ import { RoutinesSection } from "./bot-settings/RoutinesSection";
 import { routineRunLabel, routineRunTone } from "@/lib/routine-display";
 import { AndroidDevicePanel, useAndroidUsbDevices } from "./AndroidDevicePanel";
 import { BrowserPanel } from "./BrowserPanel";
-import { usePanelPage, type PanelPage } from "@/lib/page-open";
 const DataPanel = lazy(() => import("./data/DataPanel").then((module) => ({ default: module.DataPanel })));
 const loadLiveDesktop = () => import("./LiveDesktop").then((module) => ({ default: module.LiveDesktop }));
 const LiveDesktop = lazy(loadLiveDesktop);
@@ -328,9 +327,6 @@ export function ComputerPanel({
 
   const requestedSignIn = state.signInFocus?.botId === bot.id ? state.signInFocus : undefined;
   const [signInRequest, setSignInRequest] = useState<{ url: string; site: string; nonce: number }>();
-  // A published page's Open (usePageOpener): this bot's browser shows, with the page in a new tab.
-  const [pageRequest, setPageRequest] = useState<PanelPage>();
-  usePanelPage(bot.id, (page) => { selectPanelView("browser"); setPageRequest(page); });
   useEffect(() => {
     if (!requestedSignIn || requestedSignIn.consumed) return;
     const view = requestedSignIn.place === "browser" ? "browser" : "computer";
@@ -1264,7 +1260,7 @@ export function ComputerPanel({
         <div {...tabPanelProps("browser")} className={cn("flex min-h-0 flex-1 flex-col px-4 pb-4", TAB_PANEL_FOCUS)}>
           {browserSwitchRow}
           {signInHelp?.place === "browser" && <div className="-mt-1 mb-3">{signInBanner()}</div>}
-          <BrowserPanel bot={bot} signIn={signInRequest} page={pageRequest} />
+          <BrowserPanel bot={bot} signIn={signInRequest} />
           {errorText && (
             <div role="alert" className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">
               {errorText}

@@ -61,8 +61,6 @@ export interface LimitTakeoverDeps {
   record(failover: LimitFailover): void;
   /** OMB_QUOTA_SWITCH: off, nothing carries on by itself. */
   enabled?(): boolean;
-  /** Where the AIs run, for the sign-out notice: "on the Cloud", "on this computer". */
-  where?: string;
   /** The AI's status, as last read, says it is signed out. */
   signedOutNow?(instanceId: string): boolean;
   /** A sign-out was first noticed: what the app shows of that AI's sign-in is read again. */
@@ -205,7 +203,7 @@ export function createLimitTakeover(deps: LimitTakeoverDeps) {
     const signOut = scope === "signed-out";
     if (!notices.first(bot.id, limitedKey(from, scope), signOut ? now() + SIGNED_OUT_STRETCH_MS : facts.resetsAt)) return null;
     const backup = facts.backup ? { backup: label(facts.backup, from) } : {};
-    const text = signOut ? signedOutNoticeText({ engine: refusedName(from, scope), bot: bot.name, where: deps.where ?? "on this computer", ...backup })
+    const text = signOut ? signedOutNoticeText({ engine: refusedName(from, scope), bot: bot.name, where: "on this computer", ...backup })
       : limitNoticeText({ engine: refusedName(from, scope), bot: bot.name, ...(facts.resetsAt ? { resetsAt: facts.resetsAt } : {}), ...(scope === "credits" ? { credits: true } : {}), ...backup });
     deps.tell(bot, text);
     return text;

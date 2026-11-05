@@ -29,7 +29,7 @@ function start(options: { team?: boolean; frozen?: boolean } = {}) {
   const reads: string[] = [];
   let routines: RoutineManager | null = null;
   const proactive = createProactive({
-    store, cfg: {} as AppConfig, dataDir: DATA_DIR, team: options.team ?? false, frozen: () => options.frozen ?? false, routines: () => routines, cloud: false,
+    store, cfg: {} as AppConfig, dataDir: DATA_DIR, team: options.team ?? false, frozen: () => options.frozen ?? false, routines: () => routines,
     composio: {
       configured: () => true,
       connectedServices: async () => ({ gmail: { connected: true }, googlecalendar: { connected: true } }),
@@ -201,7 +201,7 @@ describe("MausBot keeps an eye on the day", () => {
     expect(idle.briefing().map((routine) => routine.botId)).toEqual([maus.id]);
   });
 
-  it("hands nothing over on a computer whose bots moved to My Cloud", () => {
+  it("hands nothing over on a computer whose bots moved to another server", () => {
     const { first, clive } = existingInstall();
     ensureDefaultBot(first.store, { dataDir: DATA_DIR });
     const frozen = start({ frozen: true });
@@ -232,37 +232,29 @@ describe("MausBot keeps an eye on the day", () => {
     expect(watch.id).toBe(moved.id);
   });
 
-  it("on a Team Cloud: no watch, nothing handed over, and a member's MausBot never reads the shared inbox", async () => {
+  it("on a hosted team workspace: no watch and nothing handed over", async () => {
     const first = start({ team: true });
-    first.store.seedIfEmpty({ defaultBot: false });
+    first.store.seedIfEmpty();
     const chief = first.store.bots.find((bot) => bot.chiefOfStaff)!;
-    const member = ensureDefaultBot(first.store, { dataDir: DATA_DIR, person: "ada@example.test", team: "Acme" })!;
     expect(proactiveOwner(first.store)?.id).toBe(chief.id);
     expect(first.proactive.ensureWatch()).toBeNull();
     expect(first.briefing()).toEqual([]);
     const restored = first.routines.create({ name: WATCH_NAME, prompt: "Watch.", botId: chief.id, enabled: true, checks: ["mail"], deliver: "brief",
       schedule: { type: "interval", everyMinutes: 15, anchorAt: Date.now() + 60_000 } });
-    const own = first.routines.create({ name: "Ada's watch", prompt: "Watch.", botId: member.id, enabled: true, checks: ["mail", "calendar"], deliver: "brief",
-      schedule: { type: "interval", everyMinutes: 15, anchorAt: Date.now() + 60_000 } });
     expect(first.proactive.ensureWatch()).toBeNull();
     expect(first.routines.listRoutines().find((routine) => routine.id === restored.id)?.botId).toBe(chief.id);
-    expect(await first.proactive.checks.check(own, { manual: true })).toEqual({});
     expect(await first.proactive.checks.check(restored, { manual: true })).toEqual({});
-    // Off a team too, a member's MausBot is never the proactive bot.
-    const untagged = start();
-    expect(proactiveOwner(untagged.store)?.id).toBe(chief.id);
-    expect(await untagged.proactive.checks.check(own, { manual: true })).toEqual({});
-    expect([...first.reads, ...untagged.reads]).toEqual([]);
+    expect(first.reads).toEqual([]);
   });
 
-  it("moves to My Cloud with MausBot, untouched as it looks, once the person changed the watch, and is the only watch on there", async () => {
+  it("moves to another server with MausBot, untouched as it looks, once the person changed the watch, and is the only watch on there", async () => {
     // This computer: the watch was handed to a MausBot nobody has opened yet.
     const { first, clive, watch } = existingInstall();
     const maus = ensureDefaultBot(first.store, { dataDir: DATA_DIR })!;
     const here = start();
     here.proactive.ensureWatch();
     const deps = (place: ReturnType<typeof start>): MoveKindsDeps => ({ dataDir: DATA_DIR, store: place.store, routines: () => place.routines, calls: () => null, webhooks: () => null,
-      appEvents: () => null, claudeCodeSkills: () => [], instanceExists: () => true, owner: () => OWNER, ownRoutine: () => {} } as unknown as MoveKindsDeps);
+      claudeCodeSkills: () => [], instanceExists: () => true, owner: () => OWNER, ownRoutine: () => {} } as unknown as MoveKindsDeps);
     const sources = (withRoutines: boolean): CloudSendSources => ({
       appVersion: "0.0.0", bots: () => here.store.bots, skills: () => [], picture: () => null, logins: () => [], onePassword: () => null, settings: () => ({}),
       greetingOnly: (threadId, name) => {
@@ -284,7 +276,7 @@ describe("MausBot keeps an eye on the day", () => {
     const mausFields = pick(here.store.bot(maus.id)!), cliveFields = pick(here.store.bot(clive.id)!);
     const routine = kindRecord(deps(here), "routine", watch.id)!;
 
-    // My Cloud: its own MausBot and its own watch, then this computer's bots, then its automations, as a move sends them.
+    // The other server: its own MausBot and its own watch, then this computer's bots, then its automations, as a move sends them.
     closeMessageDb();
     rmSync(DATA_DIR, { recursive: true, force: true });
     const cloud = start();

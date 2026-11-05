@@ -11,10 +11,9 @@ import type { BotBodyId } from "./bot-body.ts";
 import type { ReplyStyle } from "./reply-style.ts";
 import type { CredentialTargetId, CUSTOM_SECRET_TARGET, SecretDelivery } from "./credential-request.ts";
 import type { TeamSetupRequest } from "./team-setup.ts"; import type { DefaultBotFields, HelperIntroField } from "./default-bot.ts";
-import type { SetupCardFields } from "./setup-card.ts"; import type { BotAccessFields } from "./bot-access.ts";
+import type { SetupCardFields } from "./setup-card.ts";
 import type { RoutineRequestCardData } from "./routine-request.ts"; import type { SavedStepsMark } from "./saved-steps.ts";
 import type { WebhookRequestCardData } from "./webhook-request.ts"; import type { WaitCardField, WaitLineField } from "./wait-request.ts";
-import type { AppEventAttempt, AppTrigger, AppTriggerRequestCardData, AppTriggerService } from "./app-triggers.ts";
 import type { ProfileRequestCardData } from "./profile-request.ts";
 import type { PlaceRow } from "./place-view.ts";
 import type { ModelRequestCardData } from "./model-request.ts";
@@ -29,7 +28,6 @@ import type { RuntimeEvent } from "./runtime-events.ts";
 import type { NotificationLogEntry } from "./notification.ts";
 import type { Routine, RoutineRun } from "./routines.ts";
 import type { WebhookAttempt, WebhookTrigger } from "./webhooks.ts";
-import type { PublishedPageCard } from "./published-page.ts";
 import type { LiveCallRecord, LiveCallState } from "./live-call-wire.ts";
 export type { LiveCallRecord, LiveCallState, LiveCallStatus, LiveClient, LiveEndReason, LiveKeySource, LiveSettings } from "./live-call-wire.ts";
 
@@ -119,12 +117,6 @@ export interface TaskUsage {
 /** Accounting for the currently displayed room thread, across all speakers. */
 export interface GroupThreadUsage extends TaskUsage {
   lastSpeaker?: { botId: string; name: string };
-}
-
-export interface BotMovedTo {
-  team: { id: string; name: string };
-  state: "moving" | "moved";
-  at: number;
 }
 
 /** One task = one conversation with its own context, thread and provider
@@ -232,9 +224,7 @@ export interface InstalledPackageMetadata {
   name: string;
   release: string;
   requiredApps: Array<{ slug: string; label: string; reason: string; optional?: boolean }>;
-  /** Absent means "file". */
-  source?: "file" | "org";
-  /** file: a random id per import; org: derived from the organization and package. */
+  /** A random id per import. */
   installId?: string;
   /** This bot's key in the package, so a re-export keeps its identity. */
   agentKey?: string;
@@ -242,12 +232,6 @@ export interface InstalledPackageMetadata {
   presetKey?: string;
   /** What the package suggested. Never applied: imported bots start at the default level. */
   suggestedApproval?: "ask" | "auto";
-  /** org only */
-  publisher?: { organizationId: string; slug: string; name: string };
-  /** org only: "<publisher slug>/<package id>" */
-  ref?: string;
-  /** org only: the release bytes that were applied */
-  sha256?: string;
 }
 
 /** One service's connector tool grant: `"*"` widens to every tool on the
@@ -266,7 +250,7 @@ export const helperModelAllowed = (bot: { helperModel?: unknown }): boolean => b
 
 /** A bot as a client may see it. avatarUrl is always present (null when the
  * bot has none). */
-export interface WireBot extends DefaultBotFields, BotAccessFields {
+export interface WireBot extends DefaultBotFields {
   waitingForTeammates?: boolean;
   id: string;
   /** The task selected in the UI; running turns keep their own thread id. */
@@ -346,9 +330,6 @@ export interface WireBot extends DefaultBotFields, BotAccessFields {
   rewound?: boolean;
   pinned?: boolean;
   hidden?: boolean;
-  /** On My Cloud, a bot its person moved into one of their teams: `moving` while it goes (no turns, its routines off),
-   * `moved` once it lives there (archived here, shown as a line that opens the team). */
-  movedTo?: BotMovedTo;
   /** Optional labeled divider used to organize this bot in the sidebar. */
   section?: string;
   /** the one message pinned to the top of this bot's active thread */
@@ -357,11 +338,6 @@ export interface WireBot extends DefaultBotFields, BotAccessFields {
   chiefOfStaff?: boolean;
   /** Owner-selected additional teams this Chief may coordinate. */
   managedSections?: string[];
-  /** Team Cloud only: the lowercased email of the member who created the bot (or moved it in). */
-  createdBy?: string;
-  /** Team Cloud only: the lowercased email of the member the bot reports to, whose inbox its questions, approvals,
-   * failures and routine results reach. Absent: it reports to `createdBy`. */
-  reportsTo?: string;
   /** Pause for human approval before this bot talks to a peer. */
   approvePeerComms?: boolean;
   /** Bot ids this bot is allowed to contact. */
@@ -601,8 +577,6 @@ export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLine
   /** A "Sent to" row for work addressed into a room the bot `name` isn't in, so it went to the bot directly. `room`
    * names that room when this row is not in it. Clients say it in their own words; `tool.name` is the English. */
   sentDirectly?: { name: string; room?: string };
-  /** A page the bot published to a public link (publish_page), or why it couldn't. `text` carries the link too. */
-  publishedPage?: PublishedPageCard;
   /** A published Data result, linked to its bot's main viewer. */
   dataResult?: { botId: string; cardId: string; title: string; kind: "table" | "chart" | "text"; sql?: string };
   /** user messages: the Data result the person was viewing when they sent
@@ -692,8 +666,6 @@ export interface OptionCardData extends WaitCardField {
   routineRequest?: RoutineRequestCardData;
   /** A webhook trigger a bot made or changed from chat. */
   webhookRequest?: WebhookRequestCardData;
-  /** An app-event automation a bot made or changed from chat. */
-  appTriggerRequest?: AppTriggerRequestCardData;
   /** A durable profile-change proposal (propose_profile). */
   profileRequest?: ProfileRequestCardData;
   /** A durable default-model proposal (propose_model). */
@@ -961,10 +933,6 @@ export type ServerFrame =
   | { kind: "webhook"; webhook: WebhookTrigger }
   | { kind: "webhook.attempt"; attempt: WebhookAttempt }
   | { kind: "webhook.deleted"; webhookId: string }
-  | { kind: "app-trigger"; botId: string; trigger: AppTrigger }
-  | { kind: "app-trigger.attempt"; botId: string; attempt: AppEventAttempt }
-  | { kind: "app-trigger.deleted"; triggerId: string }
-  | { kind: "app-trigger.service"; service: AppTriggerService }
   | { kind: "runtime"; event: RuntimeEvent }
   /** An MCP server was added, changed or removed: a list of them is stale. */
   | { kind: "mcp.changed" }

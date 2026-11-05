@@ -60,9 +60,9 @@ describe("Claude: a tool call's input as it streams", () => {
 
   it("names any other tool by its own name and ignores text and thinking blocks", () => {
     const session = {};
-    const [report] = claudeMessage([{ id: "toolu_pub", name: "mcp__agents__publish_page", json: ["{}"] }])
+    const [report] = claudeMessage([{ id: "toolu_pub", name: "mcp__agents__attach_file", json: ["{}"] }])
       .map((event) => claudeToolDraft(session, event)).filter((value) => value !== null);
-    expect(report).toMatchObject({ activity: "tool", tool: "mcp__agents__publish_page" });
+    expect(report).toMatchObject({ activity: "tool", tool: "mcp__agents__attach_file" });
     expect(claudeToolDraft(session, { type: "content_block_start", index: 0, content_block: { type: "thinking", thinking: "" } })).toBeNull();
     expect(claudeToolDraft(session, { type: "content_block_delta", index: 0, delta: { type: "thinking_delta", thinking: "hmm" } })).toBeNull();
   });

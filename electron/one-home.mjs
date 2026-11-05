@@ -3,7 +3,7 @@
 //
 //   copy    everything goes while this computer stays home and fully usable
 //   wait    until a quiet moment: no work under way here (server/move-waits.ts), and nobody typing for 30 s
-//   freeze  this computer's server stops (server/move-freeze.ts): no turns, schedules, webhooks or app events
+//   freeze  this computer's server stops (server/move-freeze.ts): no turns, schedules or webhooks
 //   final   the same pass again, for what changed since, with the sign-ins that refresh themselves
 //   check   what arrived, against what is here; anything missing goes again, three passes at most
 //   switch  the server switches on what was on here, and keeps which computer its bots came from
@@ -34,7 +34,7 @@ const PHASES = new Set(["copy", "wait", "freeze", "final", "check", "switch", "d
 const FROZEN = new Set(["freeze", "final", "check"]);
 /** The phases in which home is the server: this computer's phone link stays off. */
 const AWAY = new Set(["switch", "done"]);
-const AUTOMATION = /^(routine|call|webhook|app-event):([\w-]{1,128})$/u;
+const AUTOMATION = /^(routine|call|webhook):([\w-]{1,128})$/u;
 
 /** At most this many ids of a kind in the log line. */
 const LOGGED_IDS = 10;
@@ -78,8 +78,7 @@ export function switchOn(key) {
   if (kind === "routine") return { method: "PATCH", route: `/api/routines/${id}`, body: { enabled: true } };
   // A call is on when it has a next time: saving it again works that out from its schedule.
   if (kind === "call") return { method: "PATCH", route: `/api/calendar-calls/${id}`, body: {} };
-  if (kind === "webhook") return { method: "PATCH", route: `/api/webhooks/${id}`, body: { enabled: true } };
-  return { method: "PATCH", route: `/api/app-triggers/${id}`, body: { enabled: true } };
+  return { method: "PATCH", route: `/api/webhooks/${id}`, body: { enabled: true } };
 }
 
 /** Each automation a manifest lists, by key, and whether it is on. */

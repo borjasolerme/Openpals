@@ -53,7 +53,6 @@ const {
   attachmentsMaxBytes,
   clearAttachments,
   keptAttachmentNames,
-  offerAttachmentClear,
   cleanupStaleAttachmentPartials,
   deleteAttachment,
   extensionForFileMime,
@@ -685,18 +684,6 @@ describe("clearing attachments from Settings", () => {
     expect(existsSync(fresh.path)).toBe(true);
     expect(attachmentStorageUsage()).toEqual({ usedBytes: "avatar".length + "fresh".length, maxBytes: ATTACHMENTS_MAX_BYTES });
     expect(() => saveImage(Buffer.from("x".repeat(100)), "image/png")).not.toThrow();
-  });
-
-  it("does not point a Team Cloud, which has no clear, to Settings", () => {
-    const full = saveImage(Buffer.from("x"), "image/png");
-    truncateSync(full.path, ATTACHMENTS_MAX_BYTES);
-    __resetAttachmentAccountingForTests();
-    offerAttachmentClear(false);
-    try {
-      expect(() => saveImage(Buffer.from("y"), "image/png")).toThrow(/^attachments storage is full \(512 MB limit\)$/);
-    } finally {
-      offerAttachmentClear(true);
-    }
   });
 
   it("counts files it could not remove instead of hiding them", () => {

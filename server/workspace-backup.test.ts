@@ -55,7 +55,6 @@ function fixture(root: string): DatabaseSync {
   json(join(root, "webhooks.json"), { version: 1, webhooks: [{ id: "hook", endpointId: "endpoint", enabled: true, secretHash: "a".repeat(64), sealedSecret: "sealed-webhook-secret" }], deliveries: [{ id: "delivery" }],
     deleted: [{ at: 1, webhook: { id: "gone", endpointId: "gone-endpoint", secretHash: "c".repeat(64), sealedSecret: "sealed-deleted-secret" } }] });
   json(join(root, "calendar-calls.json"), { version: 1, calls: [{ id: "call", nextRunAt: 100 }] });
-  json(join(root, "app-triggers.json"), { version: 1, pollerId: "poller-source-0001", cursor: 4, triggers: [{ id: "trigger", botId: "bot", enabled: true }], attempts: [], deleted: [] });
   json(join(root, "delegations.json"), { thread: [{ id: "pending" }] });
   const runtime = openRuntimeStore(join(root, "runtime.db"));
   try {
@@ -64,7 +63,6 @@ function fixture(root: string): DatabaseSync {
   } finally { runtime.close(); }
   json(join(root, "delegation-receipts.json"), [{ id: "receipt" }]);
   json(join(root, "sessions.json"), { identity: "source-session" });
-  json(join(root, "cloud-owner.json"), { identity: "source-owner-record" });
   writeFileSync(join(root, "environment-id"), "source-environment");
   mkdirSync(join(root, "tools"));
   writeFileSync(join(root, "tools", "downloaded"), "reinstallable");
@@ -115,7 +113,7 @@ function caseSensitiveTempFolder(): boolean {
 afterEach(() => { for (const root of scratch.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
 describe("encrypted full workspace backups", () => {
-  it("leaves waits out of backups and Cloud sends", () => expect(omittedFromWorkspaceBackup("waits.json")).toBe(true));
+  it("leaves waits out of backups", () => expect(omittedFromWorkspaceBackup("waits.json")).toBe(true));
 
   it("carries no waits, and a restore ends the waits already here, keeping them in the safety copy", async () => {
     const source = directory();
@@ -137,19 +135,6 @@ describe("encrypted full workspace backups", () => {
     expect(readFileSync(join(target, "notes.md"), "utf8")).toBe("kept");
     expect(existsSync(join(target, "waits.json"))).toBe(false);
     expect(readFileSync(join(result.safetyCopyPath!, "data", "waits.json"), "utf8")).toBe(here);
-  });
-
-  it("leaves Sync with My Cloud's own records out of a backup", async () => {
-    const source = directory();
-    mkdirSync(join(source, "sync", "trash"), { recursive: true });
-    writeFileSync(join(source, "sync", "folders.json"), "[]");
-    writeFileSync(join(source, "notes.md"), "kept");
-    const exported = await createWorkspaceBackup(source, { password: PASSWORD });
-    const target = directory();
-    const staged = await stageWorkspaceBackup(target, exported.path, { password: PASSWORD });
-    const manifest = readJson(join(target, ".backups", staged.id, "staged", "manifest.json"));
-    expect(manifest.entries.some((entry: { path: string }) => entry.path === "sync" || entry.path.startsWith("sync/"))).toBe(false);
-    expect(manifest.entries.some((entry: { path: string }) => entry.path === "notes.md")).toBe(true);
   });
 
   it("round-trips WAL conversations, binary files, drafts and IDs; preserves destination identity and connections", async () => {
@@ -177,7 +162,6 @@ describe("encrypted full workspace backups", () => {
       json(join(target, "config.json"), { ...connections, language: "en" });
       json(join(target, "bots.json"), [{ id: "old" }]);
       json(join(target, "sessions.json"), { identity: "target-session" });
-      json(join(target, "cloud-owner.json"), { identity: "target-owner-record" });
       const targetComputers = { version: 1, environmentId: "target-environment", computers: [{ id: "target-computer", name: "Destination desktop", section: null }] };
       json(join(target, "team-computers.json"), targetComputers);
       writeFileSync(join(target, "environment-id"), "target-environment");
@@ -192,7 +176,6 @@ describe("encrypted full workspace backups", () => {
       expect(existsSync(join(data, "team-computers.json"))).toBe(false);
       expect(existsSync(join(data, "bots.json"))).toBe(true);
       expect(existsSync(join(data, "runtime.db"))).toBe(true);
-      expect(existsSync(join(data, "cloud-owner.json"))).toBe(false);
       expect(readJson(join(data, "config.json"))).toEqual({ language: "ja" });
       expect(readJson(join(data, "webhooks.json")).webhooks[0]).not.toHaveProperty("secretHash");
       expect(readFileSync(join(data, "webhooks.json"), "utf8")).not.toContain("sealed-");
@@ -208,7 +191,6 @@ describe("encrypted full workspace backups", () => {
       expect(readJson(join(target, "config.json"))).toEqual({ ...connections, language: "ja" });
       expect(readFileSync(join(target, "task-workspaces", "bot", "thread", "binary.bin"))).toEqual(Buffer.alloc(2 * 1024 * 1024, 0xa5));
       expect(readJson(join(target, "sessions.json"))).toEqual({ identity: "target-session" });
-      expect(readJson(join(target, "cloud-owner.json"))).toEqual({ identity: "target-owner-record" });
       expect(readJson(join(target, "team-computers.json"))).toEqual(targetComputers);
       expect(readFileSync(join(target, "environment-id"), "utf8")).toBe("target-environment");
       expect(readFileSync(join(target, "openmausbot-server.lease"), "utf8")).toBe("live-lease");
@@ -240,7 +222,6 @@ describe("encrypted full workspace backups", () => {
       expect(readJson(join(target, "webhooks.json")).webhooks[0].secretHash).toMatch(/^[a-f0-9]{64}$/);
       expect(readJson(join(target, "webhooks.json")).webhooks[0].secretHash).not.toBe("a".repeat(64));
       expect(readJson(join(target, "calendar-calls.json")).calls[0].nextRunAt).toBeNull();
-      expect(readJson(join(target, "app-triggers.json")).triggers).toEqual([{ id: "trigger", botId: "bot", enabled: false }]);
       expect(readJson(join(target, "delegations.json"))).toEqual({});
       expect(existsSync(join(target, "runtime.db-wal"))).toBe(false);
       const restoredRuntime = new DatabaseSync(join(target, "runtime.db"), { readOnly: true });
@@ -280,7 +261,7 @@ describe("encrypted full workspace backups", () => {
     } finally { db.close(); }
   });
 
-  // A Windows PC moves to a Linux Cloud; restored on Windows, its paths are this computer's own and are kept.
+  // A Windows PC's backup restored on Linux; restored on Windows, its paths are this computer's own and are kept.
   it.skipIf(process.platform === "win32")("brings a Windows computer's data folder over wherever it is written, and clears and lists the folders and files left on that PC", async () => {
     const source = directory();
     const windows = "C:\\Users\\Ada\\.openmausbot", site = "C:\\Users\\Ada\\Projects\\site";
@@ -370,7 +351,7 @@ describe("encrypted full workspace backups", () => {
       "vm-home/.browser-profiles/chrome/Cookies", "vm-homes/abc/.browser-profiles/chromium/Cookies",
       "tmp/omb-mcp-123/mcp.json", ".tmp/secret",
       "logins.json.enc", "logins-key", "logins.json.enc.123.05a7b3e0-1234.tmp",
-      "highlevel.json.enc", "highlevel-key", "connected-apps-installation.json", "webhook-key",
+      "highlevel.json.enc", "highlevel-key", "webhook-key",
     ];
     for (const root of [source, target]) {
       for (const path of authPaths) {
@@ -422,14 +403,11 @@ describe("encrypted full workspace backups", () => {
     }
   });
 
-  it("leaves the bot box's live sockets and filter out, so a Cloud home with the box on can still be backed up and brought home", async () => {
-    // Seen in the real app on Oct 22: a Cloud that ended could not bring its chats home, because its export stopped at
-    // "Cannot back up special or live runtime file: box/broker.sock" (the T0 credential broker's socket).
+  it("leaves the bot box's live sockets and filter out, so a server with the box on can still be backed up", async () => {
     const source = directory();
     mkdirSync(join(source, "box"), { mode: 0o700 });
     writeFileSync(join(source, "box", "seccomp.bpf"), Buffer.from([0x20, 0, 0, 0]), { mode: 0o600 });
-    // The live socket is the Linux box's (a Cloud home): Windows refuses a unix socket at a file path, so there the
-    // folder holds only the filter, and must still be left out.
+    // Windows refuses a unix socket at a file path, so there the folder holds only the filter, and must still be left out.
     const broker = process.platform === "win32" ? null : createNetServer();
     if (broker) await new Promise<void>((resolve) => broker.listen(join(source, "box", "broker.sock"), resolve));
     try {
@@ -443,23 +421,15 @@ describe("encrypted full workspace backups", () => {
     } finally { if (broker) await new Promise<void>((resolve) => broker.close(() => resolve())); }
   });
 
-  it("leaves the Organization library's downloaded catalog and release files out, and keeps what the runtime added", async () => {
-    const source = directory(), library = join(source, "org-library"), sha = "b".repeat(64);
-    mkdirSync(join(library, "blobs"), { recursive: true, mode: 0o700 });
-    json(join(library, "state.json"), { version: 1, source: null, appliedDigest: null, installs: {} });
-    json(join(library, "presets.json"), { version: 1, presets: [] });
-    writeFileSync(join(library, "catalog.json"), "ORGANIZATION_CATALOG_BYTES", { mode: 0o600 });
-    writeFileSync(join(library, `catalog.json.${"0".repeat(8)}-0000-4000-8000-${"0".repeat(12)}.tmp`), "ORGANIZATION_CATALOG_BYTES", { mode: 0o600 });
-    writeFileSync(join(library, "blobs", `${sha}.json`), "ORGANIZATION_RELEASE_BYTES", { mode: 0o600 });
+  it("backs up the imported presets", async () => {
+    const source = directory();
+    mkdirSync(join(source, "org-library"), { mode: 0o700 });
+    json(join(source, "org-library", "presets.json"), { version: 1, presets: [] });
     const exported = await createWorkspaceBackup(source, { password: PASSWORD });
     const staged = await stageWorkspaceBackup(source, exported.path, { password: PASSWORD });
     const staging = join(source, ".backups", staged.id, "staged");
     const paths: string[] = readJson(join(staging, "manifest.json")).entries.map((entry: { path: string }) => entry.path);
-    expect(paths.filter((path) => path.startsWith("org-library"))).toEqual(["org-library", "org-library/presets.json", "org-library/state.json"]);
-    expect(existsSync(join(staging, "data", "org-library", "blobs"))).toBe(false);
-    for (const path of paths) {
-      if (statSync(join(staging, "data", path)).isFile()) expect(readFileSync(join(staging, "data", path), "utf8")).not.toMatch(/ORGANIZATION_(?:CATALOG|RELEASE)_BYTES/);
-    }
+    expect(paths.filter((path) => path.startsWith("org-library"))).toEqual(["org-library", "org-library/presets.json"]);
   });
 
   it("leaves the destination's session open-marker in place, so a crash before a restore still ends account sign-ins", async () => {

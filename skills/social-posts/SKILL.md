@@ -46,10 +46,8 @@ Pick by what the post has:
 | Images on disk | Make a folder: the template as `index.html`, the images beside it, named in `src` (`"src": "photo.jpg"`). Show it with `path`. png, jpg, gif, webp, avif and svg work. The folder holds at most 5 MB and 200 files, and `index.html` at most 256 KB, so shrink big images first. |
 | An image on the web | Download it into the folder first. The chat blocks images from other sites, and the card says so. |
 | A video on disk | Put it in the folder and name it: `{ "video": "clip.mp4", "poster": "frame.jpg" }`. It plays and seeks in the chat, at any size: mp4 (H.264), webm or mov. It plays from the folder and isn't copied, so keep the file there unchanged. If it is moved, edited or deleted, the card falls back to the poster until you show the page again. Always add a poster. |
-| A public link | `publish_page` leaves video out and says so, and the public page shows the poster with a play mark. The chat card keeps playing the video. |
 
 Call `show_html` with `title` and the `path`, or the `html`. To change a preview, call it again with the page's `app_id`.
-When the person shares it, `publish_page` publishes the same folder; only do that when they ask.
 
 ## Carousels without images
 

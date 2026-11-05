@@ -6,11 +6,10 @@ export interface CatalogProfile {
   skillAuthoring: boolean;
   sharedComputers: boolean;
   voiceNotes: boolean;
-  /** A treg key or a Cloud plan's research credential is held and this bot's research switch is on: x_search is mounted.
-   * Absent means off. */
+  /** A treg key is held and this bot's research switch is on: x_search is mounted. Absent means off. */
   xResearch?: boolean;
-  /** As xResearch, and research works for that credential (the person's treg key, or a plan whose relay has research
-   * on): research_search, research_endpoint and research_call are mounted too. Absent means off. */
+  /** As xResearch, and research works for that key: research_search, research_endpoint and research_call are mounted
+   * too. Absent means off. */
   research?: boolean;
   memoryEnabled?: boolean;
   /** The section's Chief of Staff; the server refuses Chief-only tools to every other bot. */

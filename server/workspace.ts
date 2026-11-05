@@ -1,5 +1,5 @@
 // Per-bot workspaces (~/.openmausbot/workspaces/<botId>/) that double as file-based memory.
-import { closeSync, constants, existsSync, fstatSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { writeFileAtomic } from "./atomic.ts";
@@ -92,40 +92,8 @@ export function botSettingsFile(bot: { id: string; cwd?: string }): string {
   return join(bot.cwd ?? workspaceDir(bot.id), ".claude", "settings.json");
 }
 
-/** On a Cloud home memory is read only from regular files, never through a link. */
-let regularMemoryFilesOnly = false;
-export function readMemoryOnlyFromRegularFiles(): void {
-  regularMemoryFilesOnly = true;
-}
-
 export function readMemoryText(path: string): string {
-  if (!regularMemoryFilesOnly) return readFileSync(path, "utf8");
-  // O_NOFOLLOW refuses a link at open; Windows has none (and follows links), so the entry is checked first too.
-  if (!lstatSync(path).isFile()) throw Object.assign(new Error(`not a regular file: ${path}`), { code: "EINVAL" });
-  const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
-  try {
-    if (!fstatSync(fd).isFile()) throw Object.assign(new Error(`not a regular file: ${path}`), { code: "EINVAL" });
-    return readFileSync(fd, "utf8");
-  } finally {
-    closeSync(fd);
-  }
-}
-
-function memoryFolderEntries(dir: string): string[] {
-  if (regularMemoryFilesOnly && !lstatSync(dir).isDirectory()) return [];
-  return readdirSync(dir);
-}
-
-function regularFile(path: string): boolean {
-  try {
-    return lstatSync(path).isFile();
-  } catch {
-    return false;
-  }
-}
-
-function memoryEntryStat(path: string) {
-  return regularMemoryFilesOnly ? lstatSync(path) : statSync(path);
+  return readFileSync(path, "utf8");
 }
 
 export function workspaceLocationsPrompt(botId: string, cwd: string | undefined, botCwd?: string, opts: { attachFile?: boolean } = {}): string {
@@ -215,7 +183,7 @@ export function memoryFilesOnDisk(botId: string): Array<{ path: string; mtimeMs:
   ];
   return names.flatMap((relativePath) => {
     try {
-      const stat = memoryEntryStat(join(dir, relativePath));
+      const stat = statSync(join(dir, relativePath));
       return stat.isFile() ? [{ path: relativePath, mtimeMs: stat.mtimeMs, bytes: stat.size }] : [];
     } catch {
       return [];
@@ -475,7 +443,7 @@ export function writeMemoryLog(botId: string, name: string, text: string): void 
 export function listMemoryLogs(botId: string): string[] {
   try {
     const dir = join(workspaceDir(botId), "memory", MEMORY_LOG_DIR);
-    return memoryFolderEntries(dir).filter((name) => LOG_FILE_NAME.test(name) && (!regularMemoryFilesOnly || regularFile(join(dir, name)))).sort();
+    return readdirSync(dir).filter((name) => LOG_FILE_NAME.test(name)).sort();
   } catch {
     return [];
   }
@@ -500,7 +468,7 @@ export function isMemoryTopicName(name: string): boolean {
 export function listMemoryTopics(botId: string): Array<{ name: string; bytes: number }> {
   let entries: string[];
   try {
-    entries = memoryFolderEntries(join(workspaceDir(botId), "memory"));
+    entries = readdirSync(join(workspaceDir(botId), "memory"));
   } catch {
     return [];
   }
@@ -508,7 +476,7 @@ export function listMemoryTopics(botId: string): Array<{ name: string; bytes: nu
     .filter(isMemoryTopicName)
     .flatMap((name) => {
       try {
-        const stat = memoryEntryStat(join(workspaceDir(botId), "memory", name));
+        const stat = statSync(join(workspaceDir(botId), "memory", name));
         return stat.isFile() ? [{ name, bytes: stat.size }] : [];
       } catch {
         return [];

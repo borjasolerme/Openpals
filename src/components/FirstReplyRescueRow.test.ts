@@ -156,8 +156,8 @@ describe("a notice that signing in fixes", () => {
   const notice = (name: string, setup?: true): Message => ({ id: "m-2", at: AT, role: "bot", kind: "activity", tool: { name, ok: true, ...(setup ? { setup } : {}) } } as Message);
 
   it("offers Sign in, which opens the AI settings; other notices offer nothing", () => {
-    render(notice("notice: Claude is signed out on the Cloud. Sign in again in Settings → AI to keep using it.", true));
-    expect(host.textContent).toContain("Claude is signed out on the Cloud. Sign in again in Settings → AI to keep using it.");
+    render(notice("notice: Claude is signed out on this server. Sign in again in Settings → AI to keep using it.", true));
+    expect(host.textContent).toContain("Claude is signed out on this server. Sign in again in Settings → AI to keep using it.");
     act(() => button("Sign in")!.click());
     expect(dispatch).toHaveBeenCalledWith({ type: "toggleAppSettings", open: true, section: "engines" });
     render(notice("notice: continuing on Codex while Claude is signed out"));

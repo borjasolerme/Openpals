@@ -58,7 +58,6 @@ describe("createLiveSession", () => {
     await createLiveSession({ key: "k", sdp: OFFER, bot: BOT, history: [], fetchImpl });
     const [computer] = fetchImpl.mock.calls.map(([, init]) => JSON.parse(String(init?.body)).session.instructions as string);
     expect(computer).toContain("runs in Openpals on the user's own computer.");
-    expect(computer).not.toContain("My Cloud");
   });
 
   it("falls back to the default voice and omits empty history", async () => {

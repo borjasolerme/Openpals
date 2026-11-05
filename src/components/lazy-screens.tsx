@@ -98,8 +98,8 @@ const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 const REMOTE_PRELOAD_AFTER_MS = 5_000;
 
 // On this machine a first open costs 8-28 ms, and fetching every screen during launch held the first paint back by a
-// quarter, so a local page fetches each when it opens. Over a network a first open takes up to a second, so a Cloud page
-// still fetches them, once launch is over and one per idle moment.
+// quarter, so a local page fetches each when it opens. Over a network a first open takes up to a second, so a remote
+// server's page still fetches them, once launch is over and one per idle moment.
 export function preloadScreens(hostname = location.hostname): () => void {
   if (LOCAL_HOSTS.has(hostname)) return () => {};
   let stopped = false;

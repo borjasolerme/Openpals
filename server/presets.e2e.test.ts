@@ -5,13 +5,13 @@ import { expect, it } from "vitest";
 import { launchVerificationServer } from "../scripts/control-omb.ts";
 import { parsePackageDocument } from "../shared/package-format.ts";
 import { NO_PRESETS_MESSAGE } from "./package-import.ts";
-import { ORG_PRESET_REMOVE_MESSAGE, PRESET_UNAVAILABLE_MESSAGE } from "./presets.ts";
+import { PRESET_UNAVAILABLE_MESSAGE } from "./presets.ts";
 
 const FIXTURES = join(import.meta.dirname, "..", "shared", "package-fixtures");
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 const skill = (name: string) => `---\nname: ${name}\ndescription: ${name} steps.\n---\n\n# ${name}\n`;
 
-it("shares New bot defaults as a preset, imports it, and creates bots from file and organization presets", async () => {
+it("shares New bot defaults as a preset, imports it, and creates bots from it and from a preset an organization once added", async () => {
   const fixture = await launchVerificationServer();
   console.log(JSON.stringify({ fixture: fixture.info }));
   const url = fixture.info.url;
@@ -63,15 +63,14 @@ it("shares New bot defaults as a preset, imports it, and creates bots from file 
     expect(withPreset.document.package.presets[0]).not.toHaveProperty("seed");
     expect(lead.name).toBe("Morgan");
 
-    const imported = await call("POST", "/api/teams/import", { ...saved.document, trust: "org", org: { installId: "x" } });
+    const imported = await call("POST", "/api/teams/import", saved.document);
     expect(imported.status).toBe(201);
     expect(imported.body).toMatchObject({ name: "Support agent", section: "", bots: [], groups: [], routines: [], offeredSkills: ["follow-up"],
       presets: [{ id: expect.any(String), key: "new-bot-defaults", name: "Support agent" }] });
     const fileId = imported.body.presets[0].id as string;
     const listed = (await ok("GET", "/api/bot-presets")).presets;
-    expect(listed).toEqual([expect.objectContaining({ id: fileId, source: "file", name: "Support agent", packageName: "Support agent", release: "1.0.0",
-      skillsEnabled: false, skills: [{ name: "follow-up", description: "follow-up steps." }], notes: ["MEMORY.md", "memory/tone.md"] })]);
-    expect(listed[0]).not.toHaveProperty("publisherName");
+    expect(listed).toEqual([expect.objectContaining({ id: fileId, name: "Support agent", packageName: "Support agent", release: "1.0.0",
+      skills: [{ name: "follow-up", description: "follow-up steps." }], notes: ["MEMORY.md", "memory/tone.md"] })]);
 
     const fromFile = await ok("POST", "/api/bots", { name: "Sky", title: "Support", useDefaults: false, preset: fileId });
     const fromFileSkills = (await ok("GET", `/api/bots/${fromFile.bot.id}/skills`)).skills;
@@ -79,7 +78,7 @@ it("shares New bot defaults as a preset, imports it, and creates bots from file 
     expect((await ok("GET", `/api/bots/${fromFile.bot.id}/memory/file?path=${encodeURIComponent("memory/tone.md")}`)).text).toBe("Warm.\n");
     const bots = (await ok("GET", "/api/bots")).bots as Array<{ id: string; installedPackage?: Record<string, unknown>; approvalMode?: string }>;
     const created = bots.find((bot) => bot.id === fromFile.bot.id)!;
-    expect(created.installedPackage).toMatchObject({ id: "support-agent", source: "file", presetKey: "new-bot-defaults" });
+    expect(created.installedPackage).toMatchObject({ id: "support-agent", presetKey: "new-bot-defaults" });
     expect(created.approvalMode).toBe("full");
     const withDefaults = await ok("POST", "/api/bots", { name: "Sky 3", preset: fileId });
     expect((await ok("GET", `/api/bots/${withDefaults.bot.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: false })]);
@@ -90,12 +89,11 @@ it("shares New bot defaults as a preset, imports it, and creates bots from file 
     stored.presets.push(orgRow);
     stored.content[orgRow.installId] = stored.content[stored.presets[0].installId];
     writeFileSync(presetsFile, JSON.stringify(stored));
-    expect((await ok("GET", "/api/bot-presets")).presets.map((entry: { source: string; publisherName?: string }) => [entry.source, entry.publisherName]))
-      .toEqual([["org", "Acme Partners"], ["file", undefined]]);
+    const withOrgRow = (await ok("GET", "/api/bot-presets")).presets;
+    expect(withOrgRow.map((entry: { id: string }) => entry.id).sort()).toEqual([fileId, "org-preset-1"].sort());
+    expect(JSON.stringify(withOrgRow)).not.toMatch(/Acme|"source"|"publisher/);
     const fromOrg = await ok("POST", "/api/bots", { name: "Sky 2", useDefaults: false, preset: "org-preset-1" });
-    expect((await ok("GET", `/api/bots/${fromOrg.bot.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: true, source: "org:acme/support-agent@1.0.0" })]);
-    writeFileSync(join(fixture.info.dataDir, "org-library", "state.json"), JSON.stringify({ version: 1, installs: { [orgRow.installId]: { status: "withdrawn" } } }));
-    expect((await ok("GET", "/api/bot-presets")).presets.map((entry: { source: string }) => entry.source)).toEqual(["org", "file"]);
+    expect((await ok("GET", `/api/bots/${fromOrg.bot.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: false })]);
 
     const before = (await ok("GET", "/api/bots")).bots.length;
     expect(await call("POST", "/api/bots", { name: "Nobody", preset: "missing" })).toEqual({ status: 404, body: { error: PRESET_UNAVAILABLE_MESSAGE } });
@@ -105,10 +103,10 @@ it("shares New bot defaults as a preset, imports it, and creates bots from file 
     expect(await call("POST", "/api/teams/import", skillsOnly)).toEqual({ status: 400, body: { error: NO_PRESETS_MESSAGE, code: "no_bots" } });
     expect((await ok("GET", "/api/bots")).bots.length).toBe(before);
 
-    expect(await call("DELETE", "/api/bot-presets/org-preset-1")).toEqual({ status: 409, body: { error: ORG_PRESET_REMOVE_MESSAGE } });
+    expect(await ok("DELETE", "/api/bot-presets/org-preset-1")).toEqual({ ok: true });
     expect(await ok("DELETE", `/api/bot-presets/${fileId}`)).toEqual({ ok: true });
     expect((await call("DELETE", `/api/bot-presets/${fileId}`)).status).toBe(404);
-    expect((await ok("GET", "/api/bot-presets")).presets.map((entry: { id: string }) => entry.id)).toEqual(["org-preset-1"]);
+    expect((await ok("GET", "/api/bot-presets")).presets).toEqual([]);
   } finally {
     await fixture.close();
   }

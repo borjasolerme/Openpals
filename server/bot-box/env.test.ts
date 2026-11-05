@@ -20,8 +20,8 @@ describe("the box's environment allow-list", () => {
   });
 
   it("a denied name loses even against an allowing prefix, and the never-list beats everything", () => {
-    expect(boxEnvironmentAllows("OMB_COMPOSIO_BROKER_TOKEN")).toBe(true);
-    expect(boxEnvironmentAllows("OMB_COMPOSIO_BROKER_TOKEN", new Set(["OMB_COMPOSIO_BROKER_TOKEN"]))).toBe(false);
+    expect(boxEnvironmentAllows("OMB_EXAMPLE_TOKEN")).toBe(true);
+    expect(boxEnvironmentAllows("OMB_EXAMPLE_TOKEN", new Set(["OMB_EXAMPLE_TOKEN"]))).toBe(false);
     for (const name of BOX_ENV_NEVER) expect(boxEnvironmentAllows(name), name).toBe(false);
     expect(boxEnvironmentAllows("OMB_CLOUD_ANYTHING")).toBe(false);
     expect(boxEnvironmentAllows("OMB_CLOUDFLARED_PATH")).toBe(true);
@@ -33,9 +33,9 @@ describe("the box's environment allow-list", () => {
   });
 
   it("keeps the keys one spawn vouches for, under any name, past the allow-list and the deny, never past the never-list or OMB_", () => {
-    const deny = new Set(["OPENCODE_API_KEY", "OMB_COMPOSIO_BROKER_TOKEN"]);
-    const allow = new Set(["NANO_GPT_API_KEY", "OPENCODE_API_KEY", "OMB_LICENSE_KEY", "OMB_CLOUD_AI_TOKEN", "OMB_COMPOSIO_BROKER_TOKEN"]);
-    const env = { NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o", OMB_LICENSE_KEY: "l", OMB_CLOUD_AI_TOKEN: "c", OMB_COMPOSIO_BROKER_TOKEN: "b", DEEPSEEK_API_KEY: "d" };
+    const deny = new Set(["OPENCODE_API_KEY", "OMB_EXAMPLE_TOKEN"]);
+    const allow = new Set(["NANO_GPT_API_KEY", "OPENCODE_API_KEY", "OMB_LICENSE_KEY", "OMB_CLOUD_AI_TOKEN", "OMB_EXAMPLE_TOKEN"]);
+    const env = { NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o", OMB_LICENSE_KEY: "l", OMB_CLOUD_AI_TOKEN: "c", OMB_EXAMPLE_TOKEN: "b", DEEPSEEK_API_KEY: "d" };
     expect(boxEnvironment(env, deny, allow)).toEqual({ NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o" });
     expect(boxEnvironment(env, deny)).toEqual({});
   });

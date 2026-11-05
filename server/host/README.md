@@ -21,7 +21,7 @@
    function index.ts registers at the same point it used to live.
 5. **Late-bound singletons are constructor order, not hoisting.** A `let` that
    index.ts assigned far from its declaration (`routines`, `calendarCalls`,
-   `orgLibrary`, `workspaceAccess`…) becomes a small getter in deps
+   `workspaceAccess`…) becomes a small getter in deps
    (`deps.routines()`), never a reference to a hoisted name.
 6. **Tests follow the code.** A test that sliced index.ts by source text
    (`readFileSync(... index.ts)` + markers) either imports the new module

@@ -4,7 +4,6 @@
 //   POST /api/limit-resets/continue     {botId, threadId}: the stopped turn's "Continue when your limit resets"
 //   POST /api/limit-resets/after-reset  {routineId, engine}: move only that automation's next run past the reset
 import { AFTER_RESET_MS, type LimitResetSchedule } from "../../shared/limit-reset.ts";
-import type { RequestAuth } from "../request-auth.ts";
 import type { LimitResetClock } from "../limit-resets.ts";
 import type { RoutineRequestService } from "../routine-requests.ts";
 import type { Routine, RoutineManager } from "../routines.ts";
@@ -20,8 +19,6 @@ export interface LimitResetRouteDeps {
   /** The engine this conversation runs on now. */
   threadEngine(botId: string, threadId: string): string | undefined;
   engineName(engine: string): string;
-  /** The automation the button made, for whoever's it is (a Cloud home's authors). */
-  created?(routineId: string, auth: RequestAuth): void;
 }
 
 const MAX_TITLE = 60;
@@ -41,7 +38,7 @@ function waitingIn(routines: readonly Routine[], botId: string, threadId: string
 const text = (value: unknown, max: number) => typeof value === "string" && value.trim() && value.length <= max ? value.trim() : null;
 
 export function createLimitResetRoutes(deps: LimitResetRouteDeps): RouteHandler {
-  return async ({ req, res, url, path, method, auth, json, readBody }) => {
+  return async ({ req, res, url, path, method, json, readBody }) => {
     if (path === "/api/limit-resets" && method === "GET") {
       res.setHeader("cache-control", "no-store");
       const fresh = deps.clock.ensureFresh();
@@ -66,7 +63,6 @@ export function createLimitResetRoutes(deps: LimitResetRouteDeps): RouteHandler 
         } } });
         const routineId = submitted.result?.resultId;
         const routine = routineId ? deps.routines.listRoutines().find((candidate) => candidate.id === routineId) : undefined;
-        if (routine) deps.created?.(routine.id, auth);
         return json(res, 201, { routine, messageId: submitted.messageId });
       } catch (error) {
         const status = (error as { status?: unknown }).status;

@@ -116,7 +116,7 @@ export function engineFacts({ setup, stalled, limitResetsAt, limit, partial }: R
   return { setup, stalled, limitResetsAt, limit, partial };
 }
 
-/** Host-local, with its zone: on a Cloud home the host's zone need not be the reader's. */
+/** Host-local, with its zone: on a self-hosted server the host's zone need not be the reader's. */
 function when(at: number): string {
   const timeZone = hostTimeZone();
   try {

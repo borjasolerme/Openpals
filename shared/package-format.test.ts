@@ -50,7 +50,7 @@ describe("package fixtures", () => {
       expect({ code: error.code, message: error.message }).toEqual(expected.error);
       return;
     }
-    const document = parsePackageDocument(fixture(name), { trust: "file" });
+    const document = parsePackageDocument(fixture(name));
     const actual = {
       sha256: sha256(canonicalJson(document)),
       keys: packageKeys(document),
@@ -110,11 +110,10 @@ describe("package v2 reader", () => {
     expect(text).not.toContain("value-that-must-not-travel");
   });
 
-  it("drops a publisher the file claims unless the caller is the organization channel", () => {
+  it("drops a publisher the file claims", () => {
     const input = fixture("full-team.v2.json");
-    expect(parsePackageDocument(input).package.publisher).toBeUndefined();
-    expect(parsePackageDocument(input, { trust: "file" }).package.publisher).toBeUndefined();
-    expect(parsePackageDocument(input, { trust: "org" }).package.publisher).toEqual(input.package.publisher);
+    expect(input.package.publisher).toBeDefined();
+    expect(parsePackageDocument(input).package).not.toHaveProperty("publisher");
   });
 
   it("accepts exactly 4 MiB of canonical bytes and refuses one byte more", () => {
@@ -240,9 +239,8 @@ describe("canonical form", () => {
 
 describe("files for older apps", () => {
   it("writes a v1 team that the v1 reader accepts", () => {
-    const result = downgradeToV1(parsePackageDocument(fixture("full-team.v2.json"), { trust: "org" }));
+    const result = downgradeToV1(parsePackageDocument(fixture("full-team.v2.json")));
     if ("error" in result) throw new Error(result.error);
-    expect(result.dropped).toContain("package.publisher");
     const v1 = parsePackageV1(result.document);
     expect(v1.package.chiefOfStaff).toBe("lead");
     expect(v1.package.routines).toEqual([expect.objectContaining({ key: "daily-digest", enabledAfterInstall: false })]);

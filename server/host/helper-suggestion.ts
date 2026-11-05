@@ -1,6 +1,6 @@
 // The one setup suggestion to add a helper-model key: on a desktop or free install with Gmail connected and no decision
 // model, the proactive bot posts ONE short card in its chat ("Want me to sort your email for free?") with Add key, which
-// opens Settings → Decision and extraction on the device, and Not now. Never on Cloud, where the keys come with the plan.
+// opens Settings → Decision and extraction on the device, and Not now. Never on a hosted team workspace.
 // Not now is kept and the card never comes back, until the person connects another inbox: then at most once more. A
 // card left unanswered is never posted again. It is a suggestion, not an approval: nothing waits on it.
 import { readFileSync } from "node:fs";
@@ -28,8 +28,8 @@ type SuggestionState = z.infer<typeof stateSchema>;
 export interface HelperSuggestionDeps {
   store: Pick<Store, "appendMessage" | "patchMessage" | "messagesFor" | "patchTask">;
   dataDir: string;
-  /** A Cloud home, a hosted team workspace or a Team Cloud: never suggested there. */
-  cloud: boolean;
+  /** A hosted team workspace: never suggested there. */
+  hosted: boolean;
   /** A decision model is set up and on, or the person switched the helper models off: nothing to suggest. */
   settled(): boolean;
   owner(): BotRecord | null;
@@ -66,7 +66,7 @@ export function createHelperSuggestion(deps: HelperSuggestionDeps) {
   return {
     /** After a check of the proactive routine: Gmail is connected (as `inbox`, its address once read). Posts the card when due. */
     consider(input: { gmailConnected: boolean; inbox?: string }): { posted: string } | null {
-      if (deps.cloud || !input.gmailConnected || deps.settled()) return null;
+      if (deps.hosted || !input.gmailConnected || deps.settled()) return null;
       const inbox = input.inbox?.trim().toLowerCase() || undefined;
       if (!due(inbox)) return null;
       const bot = deps.owner();

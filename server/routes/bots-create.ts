@@ -8,10 +8,10 @@ import type { ModelSelection } from "../contracts.ts";
 import { MAX_MCP_SERVERS, mcpServerNameError } from "../mcp-registry.ts";
 import { journalMemoryWrite } from "../memory-journal.ts";
 import { resolveBotCreationDefaults } from "../new-bot-defaults.ts";
-import { PRESET_UNAVAILABLE_MESSAGE, applyPresetToBot, presetOffered, type PresetStore } from "../presets.ts";
+import { PRESET_UNAVAILABLE_MESSAGE, applyPresetToBot, type PresetStore } from "../presets.ts";
 import { adminOnlyBotSetting, clientBotPatchViolation } from "../request-auth.ts";
 import type { RoutineManager } from "../routines.ts";
-import { installOrgSkill, installSkill, parseSkillMd, setSkillEnabled } from "../skills.ts";
+import { installSkill, parseSkillMd, setSkillEnabled } from "../skills.ts";
 import type { BotRecord, Store } from "../store.ts";
 import { writeMemoryFile, writeMemoryTopic } from "../workspace.ts";
 import { PASS, type RouteHandler } from "./table.ts";
@@ -93,8 +93,7 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       if (body.preset !== undefined && (typeof body.preset !== "string" || !/^[\w-]{1,64}$/.test(body.preset))) {
         return json(res, 400, { error: "preset must be a preset id from New bot" });
       }
-      const resolvedPreset = typeof body.preset === "string" ? presetStore.resolve(body.preset) : null;
-      const preset = resolvedPreset && presetOffered(resolvedPreset.row, new Map()) ? resolvedPreset : null;
+      const preset = typeof body.preset === "string" ? presetStore.resolve(body.preset) : null;
       if (body.preset !== undefined && !preset) return json(res, 404, { error: PRESET_UNAVAILABLE_MESSAGE });
       body = { ...body, ...settings, name: settings.name };
       // Custom comes only through the desktop's private channel.
@@ -190,7 +189,7 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
         if (preset) {
           applyPresetToBot(bot.id, preset, {
             store,
-            skills: { install: installSkill, setEnabled: setSkillEnabled, installOrg: installOrgSkill },
+            skills: { install: installSkill },
             memory: { writeIndex: writeMemoryFile, writeTopic: writeMemoryTopic },
           });
         }

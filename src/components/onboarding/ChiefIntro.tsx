@@ -3,7 +3,7 @@ import { Crown } from "lucide-react";
 import { BotAvatar, MausAvatar } from "@/components/Avatar";
 import { usePrefersReducedMotion } from "@/components/mascot-clock";
 import { cn } from "@/lib/cn";
-import { chiefChoices, chiefFor, createChiefPatch, DEFAULT_BOT_NAME, myDefaultBot, setWelcomingBot, stageIntro, useViewerEmail } from "@/lib/default-bot";
+import { chiefChoices, chiefFor, createChiefPatch, DEFAULT_BOT_NAME, defaultBotIn, setWelcomingBot, stageIntro } from "@/lib/default-bot";
 import { t } from "@/lib/i18n";
 import { FLIGHT_MS, landInSidebar } from "@/lib/mausbot-landing";
 import { useStore, type Bot } from "@/state/store";
@@ -36,10 +36,9 @@ function canLead(bot: Bot, instances: ReturnType<typeof useStore>["state"]["inst
 export function ChiefIntro({ replay, onDone, onLeave }: { replay: boolean; onDone: (botId: string | null) => void; onLeave?: () => void }) {
   const { state, dispatch } = useStore();
   const reduced = usePrefersReducedMotion();
-  const viewer = useViewerEmail();
-  const maus = myDefaultBot(state.bots, viewer);
+  const maus = defaultBotIn(state.bots);
   const chief = chiefFor(state.bots, maus);
-  const choices = chiefChoices(state.bots, maus, viewer);
+  const choices = chiefChoices(state.bots, maus);
   const [choosing, setChoosing] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);

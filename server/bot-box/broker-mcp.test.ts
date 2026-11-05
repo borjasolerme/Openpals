@@ -20,8 +20,8 @@ const custom = {
 describe("remote MCP servers through the broker", () => {
   let dir: string, credentials: CredentialBroker;
   afterEach(async () => { await credentials?.close(); if (dir) rmSync(dir, { recursive: true, force: true }); forgetBrokeredMcp(); });
-  // The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on a Linux Cloud home
-  // (detect.ts says "not-linux" anywhere else), so Windows gets "off" below.
+  // The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on Linux,
+  // so Windows gets "off" below.
   const withBroker = it.skipIf(process.platform === "win32");
   const broker = async (): Promise<BoxBroker> => {
     dir = mkdtempSync(join(tmpdir(), "omb-bmcp-"));

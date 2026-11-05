@@ -44,7 +44,6 @@ export interface McpRequestOptions {
     appendMessage(threadId: string, message: { role: "bot"; kind: "options"; card: OptionCardData; from?: RequestFrom }): { id: string };
     patchMessage(threadId: string, messageId: string, patch: { card: OptionCardData }): unknown;
   };
-  /** Allow on a Team Cloud also needs a workspace admin. */
   apply(request: McpChangeRequest, fields?: McpUpdateFields): Promise<McpApplied>;
   /** Hands the decision to the turn parked on this card; false when none took it. */
   answer(threadId: string, messageId: string, text: string): boolean;

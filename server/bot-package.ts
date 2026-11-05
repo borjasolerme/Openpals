@@ -25,7 +25,6 @@ export {
   redactPackageSecrets,
   upgradeV1,
   type PackageDocument,
-  type PackageTrust,
 } from "../shared/package-format.ts";
 
 export const BOT_PACKAGE_MAX_SKILLS = PACKAGE_V1_MAX_SKILLS;

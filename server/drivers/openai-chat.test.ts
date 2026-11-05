@@ -883,7 +883,7 @@ describe("createOpenAIChatRuntime HTTP error text", () => {
     expect(calls).toBe(1);
   });
 
-  it("keeps an OpenAI-compatible endpoint's 402 line raw: it names no provider, and the Cloud trial credit reads it", async () => {
+  it("keeps an OpenAI-compatible endpoint's 402 line raw: it names no provider", async () => {
     const events = await runTurn(() => new Response(JSON.stringify({ error: { message: "Insufficient credits", code: "trial_credit_used_up" } }), { status: 402 }));
     expect(events.find((event) => event.type === "runtime.error")).toMatchObject({ message: "upstream HTTP 402: Insufficient credits (trial_credit_used_up)" });
   });

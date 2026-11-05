@@ -1883,65 +1883,6 @@ body {
   animation-duration: 0.28s;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
-/* Cloud setup (CloudEngineSignIn, CloudSetup) shares the welcome flow's
-   rare, first-time motion. A step's details open on grid rows, the one
-   height animation allowed because an accordion has no transform
-   equivalent. A finished step's check lands with a small overshoot, then
-   its tick draws in. */
-.step-open {
-  display: grid;
-  animation: step-open 0.3s cubic-bezier(0.23, 1, 0.32, 1) both;
-}
-.step-open > * {
-  min-height: 0;
-  overflow: clip;
-  overflow-clip-margin: 10px;
-}
-@keyframes step-open {
-  from { grid-template-rows: 0fr; opacity: 0; }
-  to { grid-template-rows: 1fr; opacity: 1; }
-}
-.check-in { animation: check-in 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
-@keyframes check-in {
-  0% { transform: scale(0.85); opacity: 0; }
-  60% { transform: scale(1.08); opacity: 1; }
-  100% { transform: none; opacity: 1; }
-}
-@media (prefers-reduced-motion: no-preference) {
-  :root:not([data-reduced-motion="true"]) .check-in path {
-    stroke-dasharray: 24;
-    stroke-dashoffset: 24;
-    animation: check-draw 0.3s 0.14s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  }
-}
-@keyframes check-draw {
-  to { stroke-dashoffset: 0; }
-}
-/* Cloud intent (CloudIntent.tsx): the first-job box, the job waiting above
-   the sign-in, and the chat's composer are one element across each change,
-   so the box rises into the sign-in and then settles into the composer. The
-   composer takes the name only while that hand-off runs. */
-html[data-cloud-intent-morph] [data-tour="composer"] { view-transition-name: cloud-intent; }
-::view-transition-group(cloud-intent) {
-  animation-duration: 0.5s;
-  animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
-}
-/* Cloud setup progress: each segment fills left to right on clip-path, so
-   its rounded ends stay round. A segment that fills (on arrival, or when a
-   step finishes) waits for the step's check to land, and on arrival each
-   waits for the one before it. Emptying is the transition, and is quick. */
-.progress-fill {
-  clip-path: inset(0 100% 0 0 round 999px);
-  transition: clip-path 0.2s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.3s ease;
-}
-.progress-fill[data-filled] {
-  clip-path: inset(0 0 0 0 round 999px);
-  animation: progress-fill 0.55s cubic-bezier(0.23, 1, 0.32, 1) backwards;
-  animation-delay: calc(0.2s + var(--i, 0) * 0.09s);
-}
-@keyframes progress-fill {
-  from { clip-path: inset(0 100% 0 0 round 999px); }
-}
 /* "Thinking…" label sheen while the model reasons. The band crosses the phrase while the brighter copy inside it
    crosses back, so the letters hold still and only the light moves. It moves by transform, in a dozen steps, and
    rests between sweeps: a smooth sweep (or a background-position one) draws the whole page every display frame for
@@ -3054,51 +2995,6 @@ button:disabled.bg-danger {
 .user-bubble-colored *::selection {
   background-color: var(--bubble-selection, color-mix(in srgb, #000000 35%, var(--color-bubble-user)));
   color: var(--bubble-selection-ink, #ffffff);
-}
-
-/* The night skin: a deep night sky in the dark skins and an indigo dusk in the light ones. light-dark() picks by
-   the color-scheme of the element that paints it. One star twinkles, the z's drift and now and then a star shoots, each
-   slowly; the z's need transform-box to grow around their own centre. */
-:root {
-  --cloud-night-from: light-dark(#2c3274, #0e1230);
-  --cloud-night-mid: light-dark(#373b84, #151a45);
-  --cloud-night-to: light-dark(#7a68ae, #252c69);
-  --cloud-night-glow: light-dark(#f2a9c2, #6d5fd0);
-  --cloud-night-ink: #ffffff;
-  --cloud-night-ink-quiet: light-dark(#ffffffd6, #ffffffc4);
-  --cloud-night-star: light-dark(#ffffff, #fff7dd);
-  --cloud-night-laptop: light-dark(#eceef7, #c4c9de);
-  --cloud-night-laptop-edge: light-dark(#a9aecb, #7c84a8);
-  --cloud-night-z: light-dark(#ffffffe0, #dfe3ffcc);
-  --cloud-night-paper: light-dark(#f7eedb, #efe4c6);
-  --cloud-night-carve: light-dark(#d6c7a2, #c9bb95);
-  --cloud-night-far: light-dark(#5a4e9c, #1f2560);
-  --cloud-night-near: light-dark(#463f8c, #161b4b);
-}
-.cloud-night {
-  color-scheme: var(--code-color-scheme);
-  color: var(--cloud-night-ink);
-  background:
-    radial-gradient(55% 110% at 90% 115%, color-mix(in srgb, var(--cloud-night-glow) 20%, transparent), transparent 70%),
-    linear-gradient(100deg, var(--cloud-night-from) 0%, var(--cloud-night-mid) 55%, var(--cloud-night-to) 100%);
-  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.08);
-}
-.cloud-night-twinkle { animation: cloud-night-twinkle 9s ease-in-out infinite; }
-.cloud-night-z { transform-box: fill-box; transform-origin: center; animation: cloud-night-z 7s linear infinite; }
-.cloud-night-z:nth-child(2) { animation-delay: -2.4s; }
-.cloud-night-z:nth-child(3) { animation-delay: -4.8s; }
-.cloud-night-shoot { opacity: 0; animation: cloud-night-shoot 19s ease-in infinite; }
-.cloud-night[data-paused] * { animation-play-state: paused; }
-@keyframes cloud-night-twinkle { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
-@keyframes cloud-night-z {
-  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
-  15%, 70% { opacity: 1; }
-  100% { opacity: 0; transform: translate(14px, -22px) scale(1.05); }
-}
-@keyframes cloud-night-shoot {
-  0%, 90% { opacity: 0; transform: translate(0, 0); }
-  92% { opacity: 0.9; }
-  100% { opacity: 0; transform: translate(120px, 36px); }
 }
 
 /* Trace waterfall: AI steps lavender, tools pale teal, errors red, each mixed into the skin's card so every skin keeps its contrast. */

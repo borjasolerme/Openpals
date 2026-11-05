@@ -24,8 +24,6 @@ export interface AboutMeDeps {
   /** Clients are told after the learned facts are recorded, so a reload sees both. */
   changed(): void;
   today(): string;
-  /** A Team Cloud keeps one About me per person, found from the memory layer of their conversation. */
-  person?: (layer: string, plan: Plan) => number;
 }
 
 export type AboutMe = ReturnType<typeof createAboutMe>;
@@ -43,7 +41,6 @@ export function createAboutMe(deps: AboutMeDeps) {
   return {
     learn(from: { botId: string; botName: string }, texts: readonly string[]): number {
       const { plan, facts } = learnPlan(from, texts);
-      if (deps.person) return deps.person(from.botId, plan);
       const planned = plan(deps.read());
       if (!planned) return 0;
       deps.write(planned.next);
@@ -51,18 +48,14 @@ export function createAboutMe(deps: AboutMeDeps) {
       deps.changed();
       return planned.count;
     },
-    /** The facts removed from the About me of the person whose conversation `layer` is. */
-    forget(layer: string, mentions: (text: string) => boolean): string[] {
+    /** The facts removed from the person's About me. */
+    forget(mentions: (text: string) => boolean): string[] {
       let removed: string[] = [];
       const plan: Plan = (current) => {
         const kept = withoutMentionedLines(current, mentions);
         removed = kept.removed;
         return kept.removed.length ? { next: kept.text, count: kept.removed.length } : null;
       };
-      if (deps.person) {
-        deps.person(layer, plan);
-        return removed;
-      }
       const planned = plan(deps.read());
       if (!planned) return [];
       deps.write(planned.next);

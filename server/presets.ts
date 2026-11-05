@@ -8,9 +8,7 @@ import { writeFileAtomic } from "./atomic.ts";
 import { DATA_DIR } from "./config.ts";
 import type { NewBotDefaults } from "./new-bot-defaults.ts";
 import type { ExportablePackageSkill, TeamExportSkip } from "./package-export.ts";
-import type { OrgImportContext } from "./package-import.ts";
-import { pair } from "./package-parts.ts";
-import type { SkillListing, SkillPackageStamp } from "./skills.ts";
+import type { SkillListing } from "./skills.ts";
 import type { InstalledPackageMetadata, Store } from "./store.ts";
 import {
   AGENT_MAX_SKILLS,
@@ -35,22 +33,14 @@ export const PUBLISHED_LIBRARY_FILE = join(DATA_DIR, "published-library.json");
 export const MAX_STORED_PRESETS = 200;
 export const DEFAULTS_PRESET_KEY = "new-bot-defaults";
 export const PRESET_UNAVAILABLE_MESSAGE = "That preset is no longer available. Choose another starting role.";
-export const ORG_PRESET_REMOVE_MESSAGE = "Presets from your organization are managed in Admin.";
-
-export type PresetSource = "file" | "org";
 
 const text = (max: number) => z.string().max(max);
 const storedPresetSchema = z.object({
   id: z.string().regex(/^[\w-]{1,64}$/),
-  source: z.enum(["file", "org"]),
   installId: text(100).min(1),
   packageId: text(80).min(1),
   packageName: text(100).min(1),
   release: text(30).min(1),
-  publisherName: text(100).optional(),
-  publisher: z.object({ organizationId: text(200), slug: text(40), name: text(100) }).optional(),
-  ref: text(120).optional(),
-  sha256: text(64).optional(),
   key: text(64).min(1),
   name: text(100).min(1),
   description: text(300).optional(),
@@ -109,7 +99,7 @@ function resolveRow(row: StoredPreset, content: InstallContent | undefined): Res
         tagline: row.packageName,
         summary: row.packageName,
         category: "Presets",
-        author: { name: row.publisherName ?? row.packageName },
+        author: { name: row.packageName },
         license: "Unspecified",
         outcomes: [row.name],
         setupMinutes: 1,
@@ -118,7 +108,7 @@ function resolveRow(row: StoredPreset, content: InstallContent | undefined): Res
         ...(skills.length ? { skills: { version: 1, entries: skills } } : {}),
         ...(playbooks.length ? { playbooks } : {}),
       },
-    }, { trust: "file" });
+    });
   } catch {
     return null;
   }
@@ -126,14 +116,8 @@ function resolveRow(row: StoredPreset, content: InstallContent | undefined): Res
   return { row, preset: pkg.presets![0]!, skills: pkg.skills?.entries ?? [], playbooks: pkg.playbooks ?? [] };
 }
 
-export interface PresetInstallContext {
-  source: PresetSource;
-  installId: string;
-  org?: OrgImportContext;
-}
-
 export interface PresetRegistry {
-  register(document: PackageDocument, context: PresetInstallContext): {
+  register(document: PackageDocument, installId: string): {
     added: Array<{ id: string; key: string; name: string }>;
     existing: Array<{ id: string; key: string; name: string }>;
     skipped: Array<{ part: string; reason: "too_many_presets" }>;
@@ -144,7 +128,7 @@ export interface PresetRegistry {
 export interface PresetStore extends PresetRegistry {
   list(): StoredPreset[];
   resolve(id: string): ResolvedPreset | null;
-  removeFilePreset(id: string): "removed" | "not_found" | "organization";
+  removeFilePreset(id: string): "removed" | "not_found";
 }
 
 export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
@@ -175,7 +159,7 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
     writeFileAtomic(file, JSON.stringify({ version: 1, presets: state.presets, content }, null, 2), { mode: 0o600 });
   };
   const sameFilePreset = (row: StoredPreset, candidate: StoredPreset, state: PresetFile, content: InstallContent) =>
-    row.source === "file" && candidate.source === "file" && row.packageId === candidate.packageId && row.release === candidate.release && row.key === candidate.key &&
+    row.packageId === candidate.packageId && row.release === candidate.release && row.key === candidate.key &&
     canonicalJson(storedPresetObject(row)) === canonicalJson(storedPresetObject(candidate)) &&
     canonicalJson(usedContent(row, state.content[row.installId])) === canonicalJson(usedContent(candidate, content));
 
@@ -186,14 +170,13 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
       const row = state.presets.find((candidate) => candidate.id === id);
       return row ? resolveRow(row, state.content[row.installId]) : null;
     },
-    register(document, context) {
+    register(document, installId) {
       const pkg = document.package;
       const presets = pkg.presets ?? [];
       const added: Array<{ id: string; key: string; name: string }> = [];
       const existing: Array<{ id: string; key: string; name: string }> = [];
       const skipped: Array<{ part: string; reason: "too_many_presets" }> = [];
-      const org = context.source === "org" ? context.org : undefined;
-      if (!presets.length && !org) return { added, existing, skipped };
+      if (!presets.length) return { added, existing, skipped };
       const state = load();
       const used = new Set(presets.flatMap((preset) => preset.skills ?? []));
       const usedPlaybooks = new Set(presets.flatMap((preset) => preset.playbooks ?? []));
@@ -201,23 +184,13 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
         skills: (pkg.skills?.entries ?? []).filter((skill) => used.has(skill.name)),
         playbooks: (pkg.playbooks ?? []).filter((playbook) => usedPlaybooks.has(playbook.key)),
       };
-      const ownRow = (row: StoredPreset) => row.source === "org" && row.installId === context.installId;
-      let refreshed = false;
-      if (org) {
-        const keys = new Set(presets.map((preset) => preset.key));
-        const kept = state.presets.filter((row) => !ownRow(row) || keys.has(row.key));
-        refreshed = kept.length !== state.presets.length;
-        state.presets = kept;
-      }
       for (const preset of presets) {
         const row: StoredPreset = {
           id: randomUUID(),
-          source: context.source,
-          installId: context.installId,
+          installId,
           packageId: pkg.id,
           packageName: pkg.name,
           release: pkg.release,
-          ...(org ? { publisherName: org.publisher.name, publisher: { ...org.publisher }, ref: org.ref, sha256: org.sha256 } : {}),
           key: preset.key,
           name: preset.name,
           ...(preset.description !== undefined ? { description: preset.description } : {}),
@@ -227,14 +200,6 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
           ...(preset.seed ? { seed: structuredClone(preset.seed) } : {}),
           addedAt: Date.now(),
         };
-        const own = org ? state.presets.findIndex((candidate) => ownRow(candidate) && candidate.key === preset.key) : -1;
-        if (own >= 0) {
-          const previous = state.presets[own]!;
-          state.presets[own] = { ...row, id: previous.id, addedAt: previous.addedAt };
-          existing.push({ id: previous.id, key: row.key, name: row.name });
-          refreshed = true;
-          continue;
-        }
         const same = state.presets.find((candidate) => sameFilePreset(candidate, row, state, content));
         if (same) {
           existing.push({ id: same.id, key: same.key, name: same.name });
@@ -247,8 +212,8 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
         state.presets.push(row);
         added.push({ id: row.id, key: row.key, name: row.name });
       }
-      if (added.length || refreshed) {
-        state.content[context.installId] = content;
+      if (added.length) {
+        state.content[installId] = content;
         save(state);
       }
       return { added, existing, skipped };
@@ -265,7 +230,6 @@ export function createPresetStore(file: string = PRESETS_FILE): PresetStore {
       const state = load();
       const row = state.presets.find((candidate) => candidate.id === id);
       if (!row) return "not_found";
-      if (row.source !== "file") return "organization";
       save({ ...state, presets: state.presets.filter((candidate) => candidate.id !== id) });
       return "removed";
     },
@@ -281,66 +245,46 @@ function usedContent(row: StoredPreset, content: InstallContent | undefined): In
   };
 }
 
-export type OrgInstallStatus = "installed" | "withdrawn" | "removed";
-
-export function presetOffered(row: StoredPreset, statuses: ReadonlyMap<string, OrgInstallStatus>): boolean {
-  if (row.source !== "org") return true;
-  const status = statuses.get(row.installId);
-  return status !== "withdrawn" && status !== "removed";
-}
-
 export interface WireBotPreset {
   id: string;
-  source: PresetSource;
   key: string;
   name: string;
   description?: string;
   packageName: string;
   release: string;
-  publisherName?: string;
   bot: PackagePreset["bot"];
   skills: Array<{ name: string; description: string }>;
-  skillsEnabled: boolean;
   playbooks: string[];
   notes: string[];
 }
 
-export function listBotPresets(store: Pick<PresetStore, "list" | "resolve">, statuses: ReadonlyMap<string, OrgInstallStatus>): WireBotPreset[] {
+export function listBotPresets(store: Pick<PresetStore, "list" | "resolve">): WireBotPreset[] {
   const wire: Array<WireBotPreset & { addedAt: number }> = [];
   for (const row of store.list()) {
-    if (!presetOffered(row, statuses)) continue;
     const resolved = store.resolve(row.id);
     if (!resolved) continue;
     const { preset } = resolved;
     wire.push({
       id: row.id,
-      source: row.source,
       key: preset.key,
       name: preset.name,
       ...(preset.description ? { description: preset.description } : {}),
       packageName: row.packageName,
       release: row.release,
-      ...(row.source === "org" && row.publisherName ? { publisherName: row.publisherName } : {}),
       bot: preset.bot,
       skills: resolved.skills.map((skill) => ({ name: skill.name, description: skill.description })),
-      skillsEnabled: row.source === "org",
       playbooks: resolved.playbooks.map((playbook) => playbook.name),
       notes: Object.keys(preset.seed?.memory ?? {}),
       addedAt: row.addedAt,
     });
   }
-  const org = wire.filter((preset) => preset.source === "org")
-    .sort((a, b) => (a.publisherName ?? "").localeCompare(b.publisherName ?? "") || a.name.localeCompare(b.name));
-  const files = wire.filter((preset) => preset.source === "file").sort((a, b) => b.addedAt - a.addedAt);
-  return [...org, ...files].map(({ addedAt: _addedAt, ...preset }) => preset);
+  return wire.sort((a, b) => b.addedAt - a.addedAt).map(({ addedAt: _addedAt, ...preset }) => preset);
 }
 
 export interface PresetApplyDeps {
   store: Pick<Store, "patchBot">;
   skills: {
     install(botId: string, source: string, files: Array<{ path: string; content: string }>): SkillListing | { error: string };
-    setEnabled(botId: string, name: string, enabled: boolean): SkillListing | { error: string };
-    installOrg(botId: string, source: string, skillMd: string, stamp: SkillPackageStamp): SkillListing | { error: string };
   };
   memory: {
     writeIndex(botId: string, text: string): void;
@@ -348,12 +292,8 @@ export interface PresetApplyDeps {
   };
 }
 
-const ORG_INSTALL_ID = /^[a-f0-9]{32}$/;
-
 export function applyPresetToBot(botId: string, resolved: ResolvedPreset, deps: PresetApplyDeps): { skills: string[]; notes: number } {
   const { row, preset } = resolved;
-  const org = row.source === "org";
-  const stamped = org && Boolean(row.ref) && ORG_INSTALL_ID.test(row.installId);
   const playbooks = (preset.playbooks ?? []).flatMap((key) => {
     const playbook = resolved.playbooks.find((candidate) => candidate.key === key);
     return playbook ? [{ ...playbook, triggers: [...playbook.triggers] }] : [];
@@ -363,32 +303,16 @@ export function applyPresetToBot(botId: string, resolved: ResolvedPreset, deps: 
     name: row.packageName,
     release: row.release,
     requiredApps: [],
-    source: row.source,
     installId: row.installId,
     presetKey: row.key,
-    ...(org && row.publisher ? { publisher: { ...row.publisher } } : {}),
-    ...(org && row.ref ? { ref: row.ref } : {}),
-    ...(org && row.sha256 ? { sha256: row.sha256 } : {}),
   };
   deps.store.patchBot(botId, { installedPackage: installed, ...(playbooks.length ? { playbooks } : {}) });
   const skills: string[] = [];
   for (const name of preset.skills ?? []) {
     const skill = resolved.skills.find((candidate) => candidate.name === name);
     if (!skill) throw new Error(`The preset's skill "${name}" is unavailable`);
-    // The organization channel names its own source; a file's is display only.
-    const source = org && row.ref ? `org:${row.ref}@${row.release}` : skill.source ?? `package:${row.packageId}`;
-    if (stamped) {
-      const stamp: SkillPackageStamp = { installId: row.installId, key: skill.name, release: row.release, ...pair(skill.instructions, skill.instructions), via: "preset" };
-      const added = deps.skills.installOrg(botId, source, skill.instructions, stamp);
-      if ("error" in added) throw new Error(`The preset's skill "${name}" could not be added: ${added.error}`);
-    } else {
-      const added = deps.skills.install(botId, source, [{ path: "SKILL.md", content: skill.instructions }]);
-      if ("error" in added) throw new Error(`The preset's skill "${name}" could not be added: ${added.error}`);
-      if (org) {
-        const enabled = deps.skills.setEnabled(botId, name, true);
-        if ("error" in enabled) throw new Error(`The preset's skill "${name}" could not be switched on: ${enabled.error}`);
-      }
-    }
+    const added = deps.skills.install(botId, skill.source ?? `package:${row.packageId}`, [{ path: "SKILL.md", content: skill.instructions }]);
+    if ("error" in added) throw new Error(`The preset's skill "${name}" could not be added: ${added.error}`);
     skills.push(name);
   }
   let notes = 0;

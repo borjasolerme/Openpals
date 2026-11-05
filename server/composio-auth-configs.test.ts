@@ -10,7 +10,6 @@ import {
   prepareConnectionAuthConfigs,
   prepareProjectSession,
   relayMcp,
-  setManagedBrokerAccess,
 } from "./composio.ts";
 import { forgetProjectAuthConfigs } from "./composio-project.ts";
 
@@ -69,15 +68,6 @@ beforeAll(async () => {
     const apiKey = String(req.headers["x-api-key"] ?? "");
     calls.push({ method: req.method ?? "GET", path: url.pathname, apiKey, body });
 
-    if (url.pathname.startsWith("/broker/")) {
-      if (req.method === "POST" && url.pathname === "/broker/v1/connectors/xero/authorize") {
-        return json(res, 502, { error: NO_MANAGED_AUTH("xero") });
-      }
-      if (req.method === "POST" && url.pathname === "/broker/v1/mcp") {
-        return json(res, 200, toolResult(body.id, { successful: false, error: NO_MANAGED_AUTH("xero") }, true));
-      }
-      return json(res, 404, { error: "unknown broker route" });
-    }
     const mcp = url.pathname.match(/^\/mcp\/([\w-]+)$/);
     if (mcp && req.method === "POST") {
       const session = sessions.get(mcp[1]!);
@@ -156,7 +146,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  setManagedBrokerAccess(null);
 });
 
 const existingSession = (auth_configs: Record<string, string> = {}) => {
@@ -417,27 +406,5 @@ describe("custom auth configs made in the Composio dashboard", () => {
     });
     const reply = await callTool(cfg, "XERO_LIST_INVOICES");
     expect(reply.result.content[1]!.text).toMatch(/^Openpals note: Openpals could not turn on Tool Router for your xero auth config/);
-  });
-});
-
-describe("Openpals' managed connected apps", () => {
-  const managed = {} as AppConfig;
-  const plainLine = "xero needs your own OAuth app. Add your Composio project key in Settings → API keys; Openpals then "
-    + "uses your xero auth config from that project. Connect again.";
-
-  it("answers a toolkit that needs the person's own OAuth app with one plain line instead of Composio's error", async () => {
-    setManagedBrokerAccess({ url: `${origin}/broker`, token: "c".repeat(64) });
-    await expect(authorizeService(managed, "xero")).rejects.toMatchObject({ status: 409, message: plainLine });
-
-    const before = calls.length;
-    await expect(prepareConnectionAuthConfigs(managed, [{ slug: "xero", authConfigId: "ac_xero_newest" }]))
-      .rejects.toMatchObject({ status: 409, message: plainLine });
-    await expect(prepareConnectionAuthConfigs(managed, [{ slug: "xero" }])).resolves.toBeUndefined();
-    expect(calls.slice(before)).toEqual([]);
-
-    const reply = await callTool(managed, "XERO_LIST_INVOICES");
-    expect(reply.result.content[1]!.text).toContain("Openpals' built-in connected apps cannot use. Tell the person: add their own Composio project key in Settings → API keys");
-    expect(reply.result.content[1]!.text).toContain("Openpals then picks that auth config up on its own");
-    expect(calls.slice(before).some((call) => call.path.startsWith("/api/"))).toBe(false);
   });
 });

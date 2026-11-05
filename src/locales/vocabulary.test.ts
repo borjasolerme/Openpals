@@ -64,7 +64,6 @@ const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = 
   { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },
   { file: "electron/open-at-login.mjs", snippet: "X-OpenMausBot-Lending", why: "the marker that finds autostart entries already written" },
   { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },
-  { file: "server/decider/relay.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
   { file: "server/extractor/contract.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
   { file: "server/browser-engine-release.ts", snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its Windows browser engine release" },
 ];

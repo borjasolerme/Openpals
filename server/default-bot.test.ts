@@ -1,4 +1,3 @@
-import { canManage, canReach } from "./peer-roster.ts";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -13,7 +12,7 @@ import { Store, type BotRecord } from "./store.ts";
 import { createBrief } from "./host/brief.ts";
 
 const selection = (): ModelSelection => ({ instanceId: "claude", model: "claude-sonnet-5" });
-const placeMausBots = (store: Store) => store.bots.filter((bot) => bot.defaultBot && !bot.defaultBot.person);
+const placeMausBots = (store: Store) => store.bots.filter((bot) => bot.defaultBot);
 const intros = (store: Store, bot: BotRecord) => (bot.tasks ?? []).flatMap((task) => store.messagesFor(task.threadId)).filter((message) => message.helperIntro);
 const boot = (store: Store) => ensureDefaultBot(store, { dataDir: DATA_DIR });
 /** Who the daily brief comes from, as the server picks it. */
@@ -42,16 +41,6 @@ describe("MausBot, every person's helper", () => {
     const maus = placeMausBots(again)[0]!;
     expect(maus).toMatchObject({ name: "Pal", color: "chrome", chiefOfStaff: true, defaultBot: {} });
     expect(intros(again, maus)).toHaveLength(1);
-  });
-
-  it("leaves a Team Cloud member's MausBot uncrowned: it reaches no bot everyone sees, so a crown would promise work it can't hand on", () => {
-    const store = new Store(selection);
-    store.seedIfEmpty({ defaultBot: false });
-    const own = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "ada@acme.test", team: "Acme" })!;
-    expect(own.chiefOfStaff).toBeFalsy();
-    const fox = store.createBot({ name: "Fox", reportsTo: "ada@acme.test" } as never);
-    expect(canReach(own, fox)).toBe(false);
-    expect(canManage(own, fox)).toBe(false);
   });
 
   it("gives an existing install without one a MausBot once on update, beside its Chief, which stays exactly as it was", () => {
@@ -217,26 +206,9 @@ describe("MausBot, every person's helper", () => {
     expect(placeMausBots(store).map((bot) => bot.id)).toEqual([first.id]);
   });
 
-  it("gives each Team Cloud member their own private MausBot, and the team no MausBot of its own", () => {
-    const store = new Store(selection);
-    store.seedIfEmpty({ defaultBot: false });
-    expect(store.bots).toHaveLength(1);
-    expect(store.bots[0]).toMatchObject({ chiefOfStaff: true });
-    expect(store.bots[0]?.defaultBot).toBeUndefined();
-    const ada = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "Ada@Example.com", team: "Acme" })!;
-    const bea = ensureDefaultBot(store, { dataDir: DATA_DIR, person: "bea@example.com", team: "Acme" })!;
-    expect(ensureDefaultBot(store, { dataDir: DATA_DIR, person: "ada@example.com", team: "Acme" })?.id).toBe(ada.id);
-    expect(ada).toMatchObject({ name: "Pal", defaultBot: { person: "ada@example.com" }, visibility: { people: ["ada@example.com"] } });
-    expect(bea).toMatchObject({ defaultBot: { person: "bea@example.com" }, visibility: { people: ["bea@example.com"] } });
-    expect(ada.chiefOfStaff).toBeFalsy();
-    expect(intros(store, ada)[0]?.text).toContain("On Acme, I'm here for you and look after your own bots.");
-    expect(intros(store, ada)[0]?.text).not.toContain("keep an eye on your day");
-    expect(store.bots).toHaveLength(3);
-  });
-
   describe("moves", () => {
     const OWNER = { person: "p_owner0000000000000000", name: "Amit" };
-    const deps = (store: Store): MoveKindsDeps => ({ dataDir: DATA_DIR, store, routines: () => null, calls: () => null, webhooks: () => null, appEvents: () => null,
+    const deps = (store: Store): MoveKindsDeps => ({ dataDir: DATA_DIR, store, routines: () => null, calls: () => null, webhooks: () => null,
       claudeCodeSkills: () => [], instanceExists: () => true, owner: () => OWNER, ownRoutine: () => {} } as unknown as MoveKindsDeps);
     async function arrive(store: Store, id: string, record: Record<string, unknown>) {
       let status = 0;
@@ -247,7 +219,7 @@ describe("MausBot, every person's helper", () => {
     }
     const fields = (bot: Record<string, unknown>) => Object.fromEntries(MOVE_BOT_FIELDS.map((name) => [name, bot[name] ?? null]));
 
-    it("leaves My Cloud exactly one MausBot when this computer's arrives: My Cloud's unused one is archived, whatever order the Chief comes in", async () => {
+    it("leaves exactly one MausBot when another computer's arrives: the unused one here is archived, whatever order the Chief comes in", async () => {
       const cloud = new Store(selection);
       cloud.seedIfEmpty();
       boot(cloud);
@@ -266,7 +238,7 @@ describe("MausBot, every person's helper", () => {
       expect(placeMausBots(cloud).map((bot) => bot.id)).toEqual([arrivingMaus.id]);
     });
 
-    it("still makes one MausBot on My Cloud when this computer's arrives renamed and with its own picture", async () => {
+    it("still leaves one MausBot when another computer's arrives renamed and with its own picture", async () => {
       const cloud = new Store(selection);
       cloud.seedIfEmpty();
       boot(cloud);
@@ -279,7 +251,7 @@ describe("MausBot, every person's helper", () => {
       expect(cloud.bot(starter.id)?.defaultBot).toBeUndefined();
     });
 
-    it("keeps a My Cloud MausBot someone already used as an ordinary bot", async () => {
+    it("keeps a MausBot here that someone already used as an ordinary bot", async () => {
       const cloud = new Store(selection);
       const theirs = boot(cloud)!;
       cloud.appendMessage(theirs.threadId, { role: "user", kind: "text", text: "Hi" });
@@ -289,7 +261,7 @@ describe("MausBot, every person's helper", () => {
       expect(cloud.bot(theirs.id)?.hidden).toBeFalsy();
     });
 
-    it("comes home to exactly the one MausBot My Cloud had, and makes none", () => {
+    it("restored from a backup, has exactly the one MausBot the backup had, and makes none", () => {
       const cloud = new Store(selection);
       cloud.seedIfEmpty();
       const mausOnCloud = boot(cloud)!;

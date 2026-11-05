@@ -89,18 +89,15 @@ describe("who may", () => {
   it("is MausBot alone, and on a personal install", () => {
     const pip = { id: "pip", name: "Pip" } as BotRecord;
     const chief = { id: "chief", name: "Chief", chiefOfStaff: true } as BotRecord;
-    const team = { id: "ada", name: "MausBot", defaultBot: { person: "ada@example.com" } } as BotRecord;
-    const { host, rows } = setup([entry("a", "done")], [MAUS, pip, chief, team]);
+    const { host, rows } = setup([entry("a", "done")], [MAUS, pip, chief]);
     for (const id of ["pip", "chief", "missing"]) {
       expect(listUnread(host, id)).toEqual({ ok: false, error: "Only Pal reads notifications in chat." });
       expect(markRead(host, id, ["a"])).toMatchObject({ ok: false });
     }
-    expect(listUnread(host, "ada")).toEqual({ ok: false, error: "Only Pal reads notifications in chat." });
-    expect(markRead(host, "ada", ["a"])).toMatchObject({ ok: false });
     expect(rows[0]!.read).toBe(false);
   });
 
-  it("refuses on any shared workspace, even for a MausBot with no person", () => {
+  it("refuses on any shared workspace", () => {
     const { host, rows } = setup([entry("a", "done")], [MAUS], true);
     expect(listUnread(host, "maus")).toMatchObject({ ok: false, error: expect.stringContaining("read in the app") });
     expect(markRead(host, "maus", ["a"])).toMatchObject({ ok: false });

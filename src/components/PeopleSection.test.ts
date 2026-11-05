@@ -2,12 +2,15 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { readMembership } from "../lib/membership";
-import { inviteLink, lastSeenLabel, mergePeople, PeopleTable, peopleFromSessions, PortalPeople, type Person } from "./PeopleSection";
+import { lastSeenLabel, mergePeople, PeopleTable, peopleFromSessions, PortalPeople, withEntry, withoutEntry, type Person } from "./PeopleSection";
 
 describe("people helpers", () => {
-  it("builds an invite link that opens the sign-in page with the address filled in", () => {
-    expect(inviteLink("https://acme.agentada.cc/", "Bob@Acme.test")).toBe("https://acme.agentada.cc/pair?email=Bob%40Acme.test");
-    expect(inviteLink("https://acme.agentada.cc", "@acme.test")).toBe("https://acme.agentada.cc/pair");
+  it("moves an entry between the lists instead of duplicating it, and removes from both", () => {
+    const start = { admins: ["a@x.com"], members: ["b@x.com"] };
+    expect(withEntry(start, "b@x.com", "admin")).toEqual({ admins: ["a@x.com", "b@x.com"], members: [] });
+    expect(withEntry(start, "a@x.com", "member")).toEqual({ admins: [], members: ["b@x.com", "a@x.com"] });
+    expect(withEntry(start, "@y.com", "member")).toEqual({ admins: ["a@x.com"], members: ["b@x.com", "@y.com"] });
+    expect(withoutEntry(start, "a@x.com")).toEqual({ admins: [], members: ["b@x.com"] });
   });
 
   it("joins the sign-in list with devices and this month's usage, by address", () => {
@@ -27,7 +30,7 @@ describe("people helpers", () => {
     ]);
     const estimated = mergePeople({ admins: ["ada@example.test"], members: [] }, [], [{ key: "user:ada@example.test", turns: 2, costUsd: 1.5, estimatedUsd: 0.5 }]);
     expect(estimated[0]).toMatchObject({ costUsd: 1.5, estimated: true });
-    expect(renderToStaticMarkup(createElement(PeopleTable, { people: estimated, busy: false, onRole() {}, onRemove() {}, onLink() {} }))).toContain("~$1.50");
+    expect(renderToStaticMarkup(createElement(PeopleTable, { people: estimated, busy: false, onRole() {}, onRemove() {} }))).toContain("~$1.50");
     expect(lastSeenLabel(null)).toBe("Never");
     expect(lastSeenLabel(Date.now() - 60_000)).toBe("Today");
     expect(lastSeenLabel(Date.parse("2026-09-01T12:00:00Z"), Date.parse("2026-09-10T12:00:00Z"))).toBe("2026-09-01");
@@ -42,7 +45,7 @@ describe("people table", () => {
   const noop = () => {};
 
   it("shows role chips, devices, spend, and the actions that fit each row", () => {
-    const html = renderToStaticMarkup(createElement(PeopleTable, { people, busy: false, onRole: noop, onRemove: noop, onLink: noop }));
+    const html = renderToStaticMarkup(createElement(PeopleTable, { people, busy: false, onRole: noop, onRemove: noop }));
     expect(html).toContain("ada@example.test");
     expect(html).toContain("Admin");
     expect(html).toContain("2 device(s)");
@@ -52,11 +55,10 @@ describe("people table", () => {
     expect(html).toContain(">Make user<");
     expect(html).toContain(">Make admin<");
     expect(html).toContain(">Remove<");
-    expect(html).toContain('aria-label="Invite link"');
   });
 
   it("says so when nobody is on the list", () => {
-    expect(renderToStaticMarkup(createElement(PeopleTable, { people: [], busy: false, onRole: noop, onRemove: noop, onLink: noop }))).toContain("Nobody yet");
+    expect(renderToStaticMarkup(createElement(PeopleTable, { people: [], busy: false, onRole: noop, onRemove: noop }))).toContain("Nobody yet");
   });
 });
 

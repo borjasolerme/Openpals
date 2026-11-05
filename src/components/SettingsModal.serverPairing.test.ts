@@ -5,7 +5,7 @@ import type { AppSettingsSection } from "@/state/store";
 import { SettingsModal } from "./SettingsModal";
 
 // These pin the card as always offered; the server decides who may act.
-const fixture = vi.hoisted(() => ({ section: "companion" as AppSettingsSection, config: undefined as { cloudHome?: boolean } | undefined, phonePairing: 0 }));
+const fixture = vi.hoisted(() => ({ section: "companion" as AppSettingsSection, config: undefined as object | undefined, phonePairing: 0 }));
 // Pinned to Advanced: these cover the Advanced rail; Simple has its own suite.
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => true, setAdvancedMode: () => {} }));
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: {} }) }));
@@ -18,7 +18,7 @@ vi.mock("@/state/store", async (importOriginal) => ({
 vi.mock("./RemoteComputerSection", () => ({ RemoteComputerSection: () => null }));
 vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: () => null }));
 vi.mock("./CompanionSection", () => ({ CompanionSection: ({ focusRequest }: { focusRequest?: number }) => `COMPANION_SECTION focus=${focusRequest ?? 0}` }));
-vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: ({ cloudHome, focusRequest }: { cloudHome?: boolean; focusRequest?: number }) => `SERVER_PAIRING_CARD_MARKER${cloudHome ? " cloud" : ""} focus=${focusRequest ?? 0}` }));
+vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: ({ focusRequest }: { focusRequest?: number }) => `SERVER_PAIRING_CARD_MARKER focus=${focusRequest ?? 0}` }));
 
 beforeEach(() => {
   vi.clearAllMocks();

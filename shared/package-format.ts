@@ -32,7 +32,6 @@ const BOTMRR_MARKDOWN_MAX_BYTES = 1_000_000;
 
 export const NEWER_PACKAGE_MESSAGE = "This file was made by a newer Openpals. Update the app, then import it again.";
 
-export type PackageTrust = "file" | "org";
 export type PackageFormatErrorCode = "not_a_package" | "unsupported_version" | "newer_version" | "invalid" | "too_large";
 
 export class PackageFormatError extends Error {
@@ -259,7 +258,6 @@ const semver = z.string({ error: "must be text" }).regex(/^(0|[1-9]\d{0,5})\.(0|
   message: "must be a version like 1.2.3",
 });
 const slug = requiredText(80).regex(/^[a-z0-9][a-z0-9-]*$/, { message: "must be a lowercase slug" });
-const orgSlug = z.string({ error: "must be text" }).regex(/^[a-z][a-z0-9-]{1,30}$/, { message: "must be an organization's short name" });
 /** The MCP server name rule, with room left for a "-NN" suffix on import. */
 const connKey = z.string({ error: "must be text" }).regex(/^[a-z][a-z0-9_-]{0,27}$/, {
   message: "must be 1-28 lowercase letters, numbers, - or _, starting with a letter",
@@ -443,8 +441,6 @@ export const packageDocumentSchema = z.object({
     tags: z.array(requiredText(80)).max(30).optional(),
     outcomes: z.array(requiredText(240)).min(1).max(12),
     setupMinutes: z.number().int().min(1).max(240),
-    /** Stamped by Admin only; a file never chooses it (trust "file" drops it). */
-    publisher: z.object({ organization: orgSlug, name: requiredText(100) }).optional(),
     requirements: requirementsSchema,
     team: z.object({
       name: requiredText(60),
@@ -751,10 +747,8 @@ export function upgradeV1(document: PackageDocumentV1): PackageDocument {
 }
 
 /** Accepts v1 (object or BotMRR Markdown string) and v2 (object). Always
- * returns v2. trust "file" (the default) deletes package.publisher: only
- * Admin may stamp who published a release. */
-export function parsePackageDocument(value: unknown, options: { trust?: PackageTrust } = {}): PackageDocument {
-  const trust = options.trust ?? "file";
+ * returns v2. */
+export function parsePackageDocument(value: unknown): PackageDocument {
   let document: PackageDocument;
   if (typeof value === "string") {
     document = upgradeV1(parsePackageV1(value));
@@ -774,7 +768,6 @@ export function parsePackageDocument(value: unknown, options: { trust?: PackageT
     if (packageBytes(value) > PACKAGE_MAX_BYTES) throw tooLarge();
     document = version === PACKAGE_V1_VERSION ? upgradeV1(parsePackageV1(value)) : validateV2(value);
   }
-  if (trust === "file") delete document.package.publisher;
   if (packageBytes(document) > PACKAGE_MAX_BYTES) throw tooLarge();
   return document;
 }
@@ -797,7 +790,6 @@ export function downgradeToV1(document: PackageDocument):
   if (outOfRange) return { error: `Older versions of Openpals accept run limits from 5 to 240 minutes (${outOfRange.key} has ${outOfRange.timeoutMinutes}).` };
 
   const dropped: string[] = [];
-  if (pkg.publisher) dropped.push("package.publisher");
   if (pkg.notes !== undefined) dropped.push("package.notes");
   if (pkg.team.name !== pkg.name.slice(0, 60).trim()) dropped.push("team.name");
   if (pkg.team.brief !== undefined) dropped.push("team.brief");
@@ -824,7 +816,7 @@ export function downgradeToV1(document: PackageDocument):
     return [{ ...kept, enabledAfterInstall: false as const }];
   });
   const {
-    team, publisher: _publisher, notes: _notes, presets: _presets, connections: _connections,
+    team, notes: _notes, presets: _presets, connections: _connections,
     skills: _skills, agents: _agents, routines: _routines, ...rest
   } = pkg;
   // Older apps know no Auto room: spell one as its lead, as exports do.

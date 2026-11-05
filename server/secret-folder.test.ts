@@ -1,5 +1,5 @@
 // Every reader of a bot's workspace files leaves its private secret files alone: backups, moves to another server,
-// chat links and folders, attach_file, publish_page and the extract helper, and browser uploads.
+// chat links and folders, attach_file, show_html of a folder and the extract helper, and browser uploads.
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -50,7 +50,7 @@ describe("a bot's private secret files", () => {
     await opened.handle.close();
   });
 
-  it("are never published, read by the extract helper, or uploaded to a page", async () => {
+  it("are never shown as a page, read by the extract helper, or uploaded to a page", async () => {
     await expect(readPageBundle(secret, [workspace])).rejects.toMatchObject({ status: 403, message: SECRET_FILE_REFUSAL });
     await expect(botFileSource(secret, async () => ({ roots: [workspace], vmWorkspace: null }))).rejects.toMatchObject({ status: 403 });
     expect(uploadableFiles([secret], [workspace])).toEqual({ error: SECRET_FILE_REFUSAL });

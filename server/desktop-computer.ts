@@ -2,7 +2,7 @@
 // that by handing the driver connection to that one child over Electron's private utility-process port, which only the
 // app's main process can write to and which plain Node never has. No file, environment variable or HTTP route supplies
 // it, so a second OpenMausBot server on the same computer (a copy run from source, a demo, a test) never finds this
-// computer, even with the app's own record of its driver in reach. A Mac shared with My Cloud goes through lending, not here.
+// computer, even with the app's own record of its driver in reach.
 import { THIS_COMPUTER_NOT_READY } from "../shared/your-computer.ts";
 import { cuaUnavailableReason, decodeCuaConnection, type LocalComputerConnection } from "./local-computer.ts";
 

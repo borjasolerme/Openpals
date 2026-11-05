@@ -1,6 +1,6 @@
-// A bot's question from inside a real box, where one can run: Linux with an unprivileged bubblewrap (a Cloud home, the Fly
-// test machine). The question tool's helper (permission-proxy.ts) runs in the box with the engine and reaches the broker
-// through the socket the driver puts back. Elsewhere the suite says so and skips, like the box's own self-check.
+// A bot's question from inside a real box, where one can run: Linux with an unprivileged bubblewrap. The question
+// tool's helper (permission-proxy.ts) runs in the box with the engine and reaches the broker through the socket the
+// driver puts back. Elsewhere the suite says so and skips, like the box's own self-check.
 import { spawn } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

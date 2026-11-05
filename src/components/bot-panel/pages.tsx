@@ -4,7 +4,7 @@ import { FolderOpen, Plus } from "lucide-react";
 import { appSwitchPatch } from "@/lib/bot-app-access";
 import { skillsLibraryEnabled } from "@/lib/feature-flags";
 import { t } from "@/lib/i18n";
-import { deleteMemoryDoc, MEMORY_INDEX, saveMemoryDoc, type MemoryDoc } from "@/lib/memory";
+import { saveMemoryDoc, type MemoryDoc } from "@/lib/memory";
 import { openExternalLink } from "@/lib/app-links";
 import type { Routine } from "@/lib/routines";
 import { shortPath } from "@/lib/short-path";
@@ -21,7 +21,7 @@ import { RoutineList } from "../routines/RoutineList";
 import { BrowserLogins } from "./browser-logins";
 import { useOpenComputer, WherePage } from "./ComputerTab";
 import { SettingsPage } from "./SettingsPage";
-import { panelMemoryNotes, withMemoryNote, withoutMemoryNote, type PanelMemoryNote } from "./memory-notes";
+import { memoryNotes, withMemoryNote, withoutMemoryNote } from "./memory-notes";
 import type { SimplePageId } from "./page-registry";
 import { BotSwitch, buttonCls, Card, LinkRow, NoteRow, RadioRow, rowCls, SwitchRow, TextRow, TrashButton } from "./rows";
 import { useMemoryDoc } from "./use-memory-doc";
@@ -126,16 +126,16 @@ export function RoutinesPage({ bot, derived }: PageContext) {
   );
 }
 
-/** MEMORY.md's bullets, and on a Team Cloud the person's own notes. Every write goes through the memory file route with
- * the hash it was read at, so a note the bot added meanwhile is never lost: a conflict re-reads and asks again. */
+/** MEMORY.md's bullets. Every write goes through the memory file route with the hash it was read at, so a note the bot
+ * added meanwhile is never lost: a conflict re-reads and asks again. */
 export function MemoryPage({ bot }: PageContext) {
   const memory = useMemoryDoc(bot);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const memoryOn = bot.memoryEnabled !== false;
-  const notes = memory.docs ? panelMemoryNotes(memory.docs) : null;
-  const index = memory.docs?.find((doc) => doc.path === MEMORY_INDEX) ?? null;
+  const index = memory.doc;
+  const notes = index ? memoryNotes(index.text) : null;
 
   const change = async (save: () => Promise<boolean>) => {
     if (saving) return false;
@@ -160,15 +160,8 @@ export function MemoryPage({ bot }: PageContext) {
     setError(t("memory.conflict.title", { name: bot.name }));
     return false;
   });
-  const forget = (note: PanelMemoryNote) => {
-    const doc = memory.docs?.find((candidate) => candidate.path === note.path);
-    if (!doc) return;
-    if (note.line !== null) void write(doc, withoutMemoryNote(doc.text, note.line));
-    else void change(async () => {
-      await deleteMemoryDoc(bot.id, doc.path);
-      await memory.reload();
-      return true;
-    });
+  const forget = (line: number) => {
+    if (index) void write(index, withoutMemoryNote(index.text, line));
   };
   const add = async () => {
     if (!index || !draft.trim()) return;
@@ -187,9 +180,9 @@ export function MemoryPage({ bot }: PageContext) {
         ) : notes.length === 0 ? (
           <NoteRow>{t("botPanel.memory.empty")}</NoteRow>
         ) : notes.map((note) => (
-          <div key={`${note.path}:${note.line}:${note.text}`} data-memory-note={note.line ?? note.path} className={rowCls}>
+          <div key={`${note.line}:${note.text}`} data-memory-note={note.line} className={rowCls}>
             <div className="min-w-0 flex-1 text-[13px] leading-[1.45] text-ink">{note.text}</div>
-            <TrashButton label={t("botPanel.memory.forget")} disabled={saving} onClick={() => forget(note)} />
+            <TrashButton label={t("botPanel.memory.forget")} disabled={saving} onClick={() => forget(note.line)} />
           </div>
         ))}
         {error && <NoteRow tone="warn">{error}</NoteRow>}

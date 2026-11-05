@@ -24,9 +24,8 @@ bot routine plus a group chat goal. It then checks:
   secret, header value, other team's bot, model or thread id;
 - after renaming the team and a bot, the next save keeps the package id and
   every key and suggests `1.0.1`;
-- importing the file with `?trust=org` and a body claiming `trust`, `org` and
-  a publisher still imports it as a file: skills off, routines paused, no
-  publisher stamp, the slot created as `crm-2` (switched off, empty header
+- importing the file: skills off, routines paused, no publisher stamp, the
+  slot created as `crm-2` (switched off, empty header
   value) and bound only to the new bot, the brief, notes, Chief, picture and
   group chat default responder restored;
 - a library-only package adds its preset to New bot and no bot
@@ -55,8 +54,8 @@ pnpm exec vitest run shared/package-format.test.ts server/package-export.test.ts
 
 - `shared/package-format.test.ts` parses every file in
   `shared/package-fixtures/` to the sha256, keys, summary, secret findings and
-  v1 downgrade recorded in `manifest.json` (Admin reads the same files), and
-  covers the 4 MiB boundary, stripped authority fields, the publisher rule,
+  v1 downgrade recorded in `manifest.json`, and covers the 4 MiB boundary,
+  stripped authority fields, a claimed publisher dropped,
   each refusal sentence, redaction and the canonical form.
 - `server/package-export.test.ts` covers team scoping, starter-note caps,
   redaction, picture and connection skips, key stability across renames,
@@ -72,9 +71,8 @@ pnpm exec vitest run shared/package-format.test.ts server/package-export.test.ts
   `path%20with%20spaces`, localhost).
 - `server/package-import.test.ts` imports into a real store, routine manager,
   skill store and memory in a throwaway home: every part, repeat imports,
-  MCP policy refusal, full rollback when the last step fails, the library
-  refusal, run-limit adjustment, and the organization path (skills on,
-  provenance stamps, "already added", refused mismatches).
+  full rollback when the last step fails, the library refusal and run-limit
+  adjustment.
 
 ## Renderer
 
@@ -115,9 +113,9 @@ library refusal and organization idempotency removed, the route honouring a
 `trust` field, a dry run recording keys, the rename hook removed, the preview
 hiding connections, and the Share team menu item missing.
 
-Not production qualification: no real organization, Admin upload, native
-save dialog or packaged app was involved, and the organization channel
-(`trust: "org"`) was exercised only through the importer function.
+Not production qualification: no native save dialog or packaged app was
+involved. (The organization channel these runs also checked is gone in
+Openpals.)
 
 ## 2026-09-24 (review fixes): what was actually run
 
@@ -136,8 +134,8 @@ skill the team no longer has; an address keeping its query values, key-shaped
 path segments or sign-in part; a changed address not reported; addresses not
 listed before Save; and starter notes off by default.
 
-Not production qualification: no real hosted MCP server, organization, Admin
-upload or packaged app was involved. The key-shaped segment rule is a
+Not production qualification: no real hosted MCP server or packaged app was
+involved. The key-shaped segment rule is a
 heuristic (long, letters and digits mixed) and can also replace a harmless
 id; the dialog shows the address it will write.
 

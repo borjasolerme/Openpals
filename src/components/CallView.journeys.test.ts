@@ -45,7 +45,7 @@ const { desktopCapabilities } = createRequire(import.meta.url)("../../electron/c
 };
 const PRELOAD = readFileSync(join(process.cwd(), "electron", "preload.cjs"), "utf8");
 const LOCAL_ORIGIN = "http://127.0.0.1:8799";
-const CLOUD_ORIGIN = "https://omb-t-0123456789ab.fly.dev";
+const SERVER_ORIGIN = "https://garage.example.com";
 
 type Bridge = NonNullable<Window["ogb"]>;
 type Platform = "darwin" | "win32" | "linux";
@@ -54,11 +54,11 @@ let pageMic: "allowed" | "refused" | undefined;
 let liveKey: string;
 let microphone: "allowed" | "refused";
 
-function desktopApp(platform: Platform, page: "this-computer" | "my-cloud"): { bridge: Bridge; desktop: Desktop } {
+function desktopApp(platform: Platform, page: "this-computer" | "server"): { bridge: Bridge; desktop: Desktop } {
   let bridge: Bridge | undefined;
   runInNewContext(PRELOAD, {
     process: { platform, argv: [`--omb-local-origin=${LOCAL_ORIGIN}`] },
-    location: { origin: page === "this-computer" ? LOCAL_ORIGIN : CLOUD_ORIGIN },
+    location: { origin: page === "this-computer" ? LOCAL_ORIGIN : SERVER_ORIGIN },
     TextEncoder,
     localStorage: { getItem: () => null },
     require: () => ({
@@ -67,7 +67,7 @@ function desktopApp(platform: Platform, page: "this-computer" | "my-cloud"): { b
       ipcRenderer: { on() {}, removeListener() {}, send() {}, invoke: async (channel: string, ...args: unknown[]) => answer(channel, args) },
     }),
   });
-  const capabilities = desktopCapabilities({ platform, remote: page === "my-cloud", env: {}, homeDir: "/Users/ada" });
+  const capabilities = desktopCapabilities({ platform, remote: page === "server", env: {}, homeDir: "/Users/ada" });
   return { bridge: bridge!, desktop: { capabilities, ready: true } };
 }
 async function answer(channel: string, args: unknown[]): Promise<unknown> {
@@ -96,7 +96,6 @@ const room = {
   bulletin: "", unread: false, createdAt: 1, messages: [],
 } as unknown as Group;
 const noKey = { configured: false, voice: "marin", readTypedReplies: true, idleMinutes: 5 };
-const CLOUD = { tts: { configured: true, ready: true, voice: "preset" }, live: noKey } as AppState["config"];
 const SERVER = { tts: { configured: true, ready: true, voice: "preset" }, live: noKey } as AppState["config"];
 const THIS_COMPUTER = { tts: { configured: true, ready: true, voice: "voice-1" }, live: noKey } as AppState["config"];
 const KEY_NEEDED = "Live calls use your own OpenAI key. Add it in Settings → API keys.";
@@ -237,24 +236,24 @@ afterEach(() => {
 });
 
 describe("calling a bot off the Mac", () => {
-  it("in a browser on the person's Cloud, the first visit's call button is a Live call that points to API keys, then calls once a key is saved", async () => {
+  it("in a browser on the person's server, the first visit's call button is a Live call that points to API keys, then calls once a key is saved", async () => {
     expect(callMode()).toBe("turns");
-    chat(CLOUD);
+    chat(SERVER);
     await firstLiveCall();
     expect(requests.filter((request) => request.method !== "GET").map(({ path, method }) => `${method} ${path}`))
       .toEqual(["POST /api/live/session", "POST /api/live/session"]);
   });
 
-  it("on My Cloud in the Mac app, the call is Live, and Take turns says it works on This computer", async () => {
-    open(desktopApp("darwin", "my-cloud"));
-    chat(CLOUD);
+  it("on a paired server in the Mac app, the call is Live, and Take turns says it works on This computer", async () => {
+    open(desktopApp("darwin", "server"));
+    chat(SERVER);
     expectTurnsDisabled("Calls where you take turns work with bots on this Mac. They listen with your Mac's own speech recognition, which only bots on this Mac can use.");
     await firstLiveCall();
   });
 
-  it.each(["win32", "linux"] as const)("on My Cloud in the %s app, the call is Live, and Take turns says it needs the Mac app", async (platform) => {
-    open(desktopApp(platform, "my-cloud"));
-    chat(CLOUD);
+  it.each(["win32", "linux"] as const)("on a paired server in the %s app, the call is Live, and Take turns says it needs the Mac app", async (platform) => {
+    open(desktopApp(platform, "server"));
+    chat(SERVER);
     expectTurnsDisabled("Calls where you take turns need the Mac app");
     await firstLiveCall();
   });
@@ -267,13 +266,13 @@ describe("calling a bot off the Mac", () => {
   });
 
   it.each([
-    ["My Cloud in a Mac app that doesn't say", "darwin", CLOUD, undefined],
-    ["My Cloud in a Windows app that refused it", "win32", CLOUD, "refused"],
-    ["another server in the Linux app", "linux", SERVER, "refused"],
+    ["a server in a Mac app that doesn't say", "darwin", SERVER, undefined],
+    ["a server in a Windows app that refused it", "win32", SERVER, "refused"],
+    ["a server in the Linux app", "linux", SERVER, "refused"],
   ] as const)("on %s, a refused microphone says so with Open in browser, and no key is asked for", async (_where, platform, config, answer) => {
     microphone = "refused";
     pageMic = answer;
-    open(desktopApp(platform, "my-cloud"));
+    open(desktopApp(platform, "server"));
     chat(config);
     press(callButton());
     await vi.waitFor(() => expect(text()).toContain(APP_REFUSED));
@@ -318,12 +317,12 @@ describe("calling a bot off the Mac", () => {
   });
 
   it("shows a room's call button only where taking turns can run: the Mac app's own page", () => {
-    roomHeader(CLOUD);
+    roomHeader(SERVER);
     expect(callButton()).toBeNull();
     for (const platform of ["darwin", "win32", "linux"] as const) {
-      open(desktopApp(platform, "my-cloud"));
-      roomHeader(CLOUD);
-      expect(callButton(), `${platform} on My Cloud`).toBeNull();
+      open(desktopApp(platform, "server"));
+      roomHeader(SERVER);
+      expect(callButton(), `${platform} on a paired server`).toBeNull();
     }
     for (const platform of ["win32", "linux"] as const) {
       open(desktopApp(platform, "this-computer"));

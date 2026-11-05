@@ -15,7 +15,6 @@ describe("a line its owner wrote on the computer it came from", () => {
     const routine = composeExecutionPrompt({ id: "routine-id", name: "Morning brief", trigger: "schedule", runOn: "maus" }, "Read my inbox.", []);
     const byHand = composeExecutionPrompt({ id: "routine-id", name: "Morning brief", trigger: "manual", runOn: "maus" }, "Read my inbox.", []);
     const hook = composeExecutionPrompt({ id: "routine-id", name: "Inbox", trigger: "webhook", runOn: "maus" }, "[USER-CONFIGURED WEBHOOK INSTRUCTIONS]\nHandle it.\n[/USER-CONFIGURED WEBHOOK INSTRUCTIONS]\n\n[UNTRUSTED WEBHOOK EVENT DATA]\n{}\n[/UNTRUSTED WEBHOOK EVENT DATA]", []);
-    const event = "[USER-CONFIGURED TRIGGER INSTRUCTIONS]\nDraft a reply.\n[/USER-CONFIGURED TRIGGER INSTRUCTIONS]\n[UNTRUSTED APP EVENT DATA]\n{}\n[/UNTRUSTED APP EVENT DATA]";
     for (const other of [
       line({ sender: { name: "Guest", id: "p_guest" } }),
       line({ peerAsk: { botId: "chief", name: "Chief" } }),
@@ -24,7 +23,7 @@ describe("a line its owner wrote on the computer it came from", () => {
       line({ via: "api" as never }),
       line({ role: "bot" }),
       line({ role: "bot", webhookPost: true }),
-      line({ text: routine }), line({ text: byHand }), line({ text: hook }), line({ text: event }),
+      line({ text: routine }), line({ text: byHand }), line({ text: hook }),
     ]) expect(ownersOwnLine(other), JSON.stringify(other).slice(0, 120)).toBe(false);
   });
 

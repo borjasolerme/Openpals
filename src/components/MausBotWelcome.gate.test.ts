@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-// When MausBot's first-launch card may open: like the Cloud Pro popup and the product-updates question, never over the
+// When MausBot's first-launch card may open: like the notices popup and the product-updates question, never over the
 // first chat before a reply, never in the launch the welcome finished, never while the app tour runs, and never in the
 // same launch as those two.
 import { act, createElement } from "react";
@@ -13,7 +13,6 @@ const f = vi.hoisted(() => ({ state: {} as Record<string, unknown>, welcoming: v
 vi.mock("@/state/store", async (original) => ({ ...(await original<typeof import("@/state/store")>()), useStore: () => ({ state: f.state, dispatch: f.dispatch }) }));
 vi.mock("@/lib/default-bot", async (original) => ({
   ...(await original<typeof import("@/lib/default-bot")>()),
-  useViewerEmail: () => null,
   setWelcomingBot: (id: string | null) => f.welcoming(id),
 }));
 vi.mock("./MausBotCustomize", () => ({ MausBotCustomize: () => null }));
@@ -49,7 +48,7 @@ it("opens once the welcome is done and a bot has answered, though the app tour w
   expect(opened()).toBe(true);
 });
 
-it("claims the launch when it opens, so the Cloud Pro popup and the updates question wait for a later one", async () => {
+it("claims the launch when it opens, so the notices popup and the updates question wait for a later one", async () => {
   await show();
   expect(launchDialogShown()).toBe("mausbot");
 });
@@ -80,7 +79,7 @@ it("waits for a launch after the one whose welcome finished", async () => {
   expect(opened(), "the next launch").toBe(true);
 });
 
-it("never opens in a launch where the Cloud Pro popup or the updates question already opened", async () => {
+it("never opens in a launch where the notices popup or the updates question already opened", async () => {
   markLaunchDialog("notices");
   await show();
   expect(opened()).toBe(false);

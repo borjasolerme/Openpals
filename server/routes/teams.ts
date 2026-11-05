@@ -36,8 +36,8 @@ import { PASS, type RouteHandler } from "./table.ts";
 export interface TeamRouteDeps {
   store: Store;
   cfg: Pick<AppConfig, "mcpServers">;
-  /** The exporting person's name, as a package's author: the server's profile's, or on a Team Cloud the person's own. */
-  authorName(auth: RequestAuth): string | undefined;
+  /** The server's profile name, as a package's author. */
+  authorName(): string | undefined;
   routines(): RoutineManager | null;
   broadcast(payload: Record<string, unknown>): void;
   publicBot(bot: BotRecord): WireBot;
@@ -52,7 +52,7 @@ export interface TeamRouteDeps {
   collectTeamSkills(bots: readonly BotRecord[], selection: unknown):
     | { ok: true; all: boolean; skillsByBot: Map<string, ExportablePackageSkill[]>; skipped: TeamExportSkip[]; available: string[] }
     | { ok: false; error: string; available: string[] };
-  /** On a Team Cloud: false for someone else's private chat, which a team backup never carries. */
+  /** False for a conversation this session may not see, which a team backup never carries. */
   threadShown?(auth: RequestAuth): (threadId: string) => boolean;
 }
 
@@ -66,7 +66,7 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
     const routines = deps.routines();
     if (method === "POST" && path === "/api/teams/export") {
       const body = await readBody(req, 8 * 1024 * 1024);
-      const profileName = deps.authorName(auth);
+      const profileName = deps.authorName();
       if (body.format === "package" && body.version === 2 && body.kind === "library") {
         const optional = (value: unknown) => (typeof value === "string" ? value : undefined);
         const built = defaultsPresetFor(body, body.includeMemory === true);
@@ -287,11 +287,10 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
           return json(res, 400, { error: error instanceof Error ? error.message : "Backup could not be imported" });
         }
       }
-      // Read as a FILE: it cannot claim a publisher, its skills and routines arrive off; only the org library imports with trust "org".
       let packageDocument: PackageDocument | null = null;
       let manifest: ReturnType<typeof parseTeamManifest> | null = null;
       try {
-        if (isBotPackage(body)) packageDocument = parsePackageDocument(body, { trust: "file" });
+        if (isBotPackage(body)) packageDocument = parsePackageDocument(body);
         else manifest = parseTeamManifest(body);
       } catch (error) {
         return json(res, 400, { error: error instanceof Error ? error.message : "Invalid bot package" });
@@ -305,11 +304,9 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
       };
       let imported: PackageImportResult;
       try {
-        const result = packageDocument
-          ? importPackageDocument(packageDocument, { ...options, trust: "file" }, deps)
+        imported = packageDocument
+          ? importPackageDocument(packageDocument, options, deps)
           : importTeamManifest(manifest!, options, deps);
-        if (result.alreadyAdded) return json(res, 200, result);
-        imported = result;
       } catch (error) {
         if (error instanceof PackageImportError) return json(res, error.status, { error: error.message, code: error.code });
         throw error;

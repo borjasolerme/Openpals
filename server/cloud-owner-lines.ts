@@ -2,7 +2,6 @@
 // owner wrote there name nobody, and on a Cloud home a conversation with a line that names nobody can never use the lent
 // Mac or feed memory (cloud-lending.ts), so each such line, and each card answered there, is stamped as the owner's.
 import type { CardAnswerer, WireMessage as Message } from "../shared/wire.ts";
-import { BLOCK_OPEN as APP_EVENT_DATA } from "./app-events.ts";
 import { answeredByPerson } from "./cloud-lending.ts";
 import { routinePrompt } from "./routine-execution.ts";
 import { WEBHOOK_EVENT_DATA } from "./webhooks.ts";
@@ -16,7 +15,7 @@ export interface CloudOwner { person: string; name: string }
 export function ownersOwnLine(row: Message): boolean {
   if (row.role !== "user" || row.sender || row.peerAsk || row.aside || row.relayed || row.via === "api") return false;
   const text = typeof row.text === "string" ? row.text : "";
-  return !routinePrompt(text) && !text.includes(WEBHOOK_EVENT_DATA) && !text.includes(APP_EVENT_DATA);
+  return !routinePrompt(text) && !text.includes(WEBHOOK_EVENT_DATA);
 }
 
 /** Security invariant: a card counts as the owner's only when the owner answered it in that computer's own window. */

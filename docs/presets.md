@@ -7,11 +7,9 @@ name, title, description, standing instructions and look, and when you press
 **Create bot** it also brings the preset's skills, playbooks and starter
 notes. You can change every field before creating the bot.
 
-Presets come from a shared file (a team file or a preset file someone sent
-you) or from your organization's shelf (**Templates → From {Organization}**,
-see [org-library.md](org-library.md)). In that review's **Starting role** list,
-your organization's presets come first under **From {Organization}**, then
-**Imported presets**, then the built-in roles.
+Presets come only from files: a team file or a preset file someone sent you.
+In that review's **Starting role** list, **Imported presets** come first
+(newest first), then the built-in roles.
 
 ## What a preset holds
 
@@ -31,34 +29,20 @@ a preset can never widen what a bot may do. Every stored preset is read
 through the same package parser as every import, so a hand-edited preset
 still says only what a file may.
 
-## Where it came from decides the skills
+## Skills start switched off
 
-- **From a file:** the preset's skills are added **switched off**, like every
-  skill in a shared file. Switch them on in the bot's Skills settings after
-  reading them.
-- **From your organization:** the skills are added **switched on**, because
-  your organization's Admin published them. Each also carries the install's
-  skill stamp (contract §3.2: the install, the skill's name, the release, and
-  the `SKILL.md` hashes as released and as written), marked `via: "preset"`,
-  so a later automatic update can tell your own edits from the publisher's
-  changes. The bot is still yours, not part of the package: it never keeps
-  the package added, so a team you deleted can be added again.
+A preset's skills are added **switched off**, like every skill in a shared
+file; the review says so before you create the bot. Switch them on in the
+bot's Skills settings after reading them. A preset's skills and starter notes
+win over your New bot defaults' own skill or note of the same name. The bot
+records where it came from (`installedPackage` with `presetKey`). The bot is
+yours, not part of the package: it never keeps the package added, so a team
+you deleted can be added again.
 
-The review says which applies before you create the bot. A preset's
-skills and starter notes win over your New bot defaults' own skill or note of
-the same name. The bot records where it came from (`installedPackage` with
-`presetKey`).
-
-A preset from an organization release that was withdrawn, or from a team you
-deleted, is no longer offered, and a bot already made from a withdrawn one
-has that release's skills switched off (once; switching them back on is
-yours). Which presets are offered follows the organization library's own
-state (`OrgLibrary.installStatuses()` in `server/org-library.ts`), not a
-separate read of `state.json`, so the review and the shelf never disagree. With
-no organization there are no installs and nothing is hidden. Adding the same organization package again, for example a
-team you deleted, refreshes its presets in place rather than adding copies. Organization presets are
-managed in Admin; an imported preset can be removed with **Remove from New
-bot** under the Starting role list (no confirmation step).
+An imported preset can be removed with **Remove from New bot** under the
+Starting role list (no confirmation step). Presets an older version saved
+from an organization's release are kept and treated like imported ones: their
+skills are added switched off and they can be removed the same way.
 
 ## Sharing presets
 
@@ -86,11 +70,11 @@ sentence. Adding the same file twice offers its presets once.
 
 ## Where presets are kept
 
-`org-library/presets.json` in the data folder: one row per preset (where it
-came from, which install it belongs to, the package name and version, and the
-preset exactly as the file carried it), plus the skill and playbook
-definitions those presets use, so a bot can be made from a preset after the
-file or the organization's release is gone. What this installation last
+`org-library/presets.json` in the data folder (the folder keeps its old
+name): one row per preset (which import it belongs to, the package name and
+version, and the preset exactly as the file carried it), plus the skill and
+playbook definitions those presets use, so a bot can be made from a preset
+after the file is gone. What this installation last
 shared as a preset file (its package id and version) is kept in
 `published-library.json`, so the next share suggests the next version.
 
@@ -98,11 +82,10 @@ shared as a preset file (its package id and version) is kept in
 
 All admin scope.
 
-- `GET /api/bot-presets` → `{presets: [{id, source: "file"|"org", key, name,
-  description?, packageName, release, publisherName?, bot, skills: [{name,
-  description}], skillsEnabled, playbooks, notes}]}`.
-- `DELETE /api/bot-presets/:id` removes an imported preset; an organization's
-  answers `409`.
+- `GET /api/bot-presets` → `{presets: [{id, key, name, description?,
+  packageName, release, bot, skills: [{name, description}], playbooks,
+  notes}]}`, newest first.
+- `DELETE /api/bot-presets/:id` removes a preset.
 - `POST /api/bots` with `preset: "<id>"` adds the preset's playbooks, skills
   and starter notes to the new bot and stamps it. Name, look and instructions
   are the request's own fields, as for any bot.
@@ -113,8 +96,5 @@ All admin scope.
   `dryRun` as for a team).
 - `POST /api/teams/import` adds a preset file's presets and answers
   `{presets: [{id, key, name}], offeredSkills, bots: [], section: ""}`.
-  `POST /api/org-library/add` answers with the same `presets` list, and the
-  install's entry in `org-library/state.json` records them under `presets`
-  (`{<key>: {presetId, r}}`, `r` the release-side hash of contract §1.6).
 
 See [verification/presets.md](verification/presets.md) for how this is tested.

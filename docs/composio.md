@@ -15,35 +15,11 @@ The Connected tab lists every account separately. **Disconnect** revokes only th
 
 The desktop app validates the key before saving it. The key is encrypted using Electron's operating-system-backed `safeStorage`; the local JSON configuration stores only the non-secret Composio user and Session identifiers.
 
-## App events
-
-An app-event automation runs a bot when something happens in a connected app: a new Gmail message, a Slack
-message in a channel, a HubSpot deal changing stage. It uses Composio triggers through the managed service, on
-the desktop, a headless server and a Cloud alike:
-
-1. `trigger` (`action: "create"`, `when: "app_event"`) or the editor saves the automation in `app-triggers.json` in the data
-   folder and creates its trigger on the service (`POST /v1/triggers`), which checks that the connected account
-   belongs to this installation. A Gmail filter (from, subject, label, words) becomes Gmail's own search, so
-   other mail never arrives; other apps match the filter as events arrive.
-2. Composio posts each event, signed, to the service, which queues it per installation for up to 7 days.
-3. The server long-polls the queue (`GET /v1/events`, 25 seconds at a time) while it has an automation switched
-   on. Each event becomes a routine run, with the event fenced as untrusted data. A burst shares runs: at most 3
-   waiting runs per automation, up to 20 events each. The cursor that acknowledges events moves only after the
-   run is saved, and a redelivered event is recognised by its id, so each event runs once.
-4. The server compares its automations with the service at start and every 15 minutes (hourly while all are
-   paused) and fixes any difference by itself: a lost copy is made again, an unwanted one is removed, on/off is
-   matched. An expired connection shows as **Needs you** with **Reconnect**.
-
-| | Desktop | Paid Cloud |
-| --- | --- | --- |
-| Events kept per day (UTC) | 500 | 2,000 |
-
-A Cloud counts as paid once its server presents the Admin's signed grant (`OMB_CLOUD_CONNECTED_APPS_GRANT`).
-Events over the limit are not run; the automation shows how many were skipped today and why.
-
-Gmail and other polled apps are checked every 15 minutes, the minimum for Composio-managed sign-ins. A server
-that uses its own Composio project key cannot watch apps yet: `trigger_info` (`action: "events"`) and the editor say so, and a
-schedule that checks the app, or a webhook, does the job instead.
+Connected apps need this key: there is no built-in or managed connection
+service, so with no key saved (and no `COMPOSIO_API_KEY`) connected apps are
+not set up and bots get no connected-app tools. App-event automations
+are gone too; to act on something in an app, use a schedule that checks it, or
+a webhook the app calls.
 
 ## Scoped key permissions
 
@@ -74,8 +50,6 @@ Sessions created by older OpenMausBot versions are upgraded in place by creating
 Yes. Gmail, Google Calendar, Google Drive, and the other Google toolkits can each hold multiple labeled authorizations, and Slack can hold multiple labeled workspace/account authorizations. Accounts are scoped to the OpenMausBot installation's stable Composio user and appear by alias and connected-account ID in **Connected apps**.
 
 If a provider or restricted Composio project policy prevents another authorization, the safe fallback is a separate OpenMausBot installation/configuration with its own Composio user. Re-authorizing the same single-account Session is not a safe workaround: it can change which grant is selected. Do not share raw provider tokens or place them in bot prompts.
-
-The hosted/managed connected-apps broker exposes the same account-aware response shape and account-specific removal routes as the self-hosted project-key mode; it does not send broker or provider credentials to the renderer.
 
 ## Permissions the default connection does not ask for
 
@@ -128,8 +102,7 @@ example an `INITIATED` sign-in that was abandoned, or a `FAILED` or `EXPIRED`
 one) revokes and deletes that account, then links a new one under the same
 label; a label an active account holds is still refused with 409. The
 five-usable-account limit remains; the account being replaced does not count
-toward it. Managed installations need the updated broker as well as the
-updated app; this is not a client-side bypass.
+toward it.
 
 In **Connected apps**, only an `ACTIVE` account shows the app as connected. An
 app whose accounts all stopped working shows **Reconnect**, which removes the
@@ -165,7 +138,7 @@ GET /api/connectors/connected
 }
 ```
 
-This operation cursor-paginates both the Session toolkit state and the user's connected accounts directly. It merges no-auth toolkits and the Session-selected account with the full multi-account inventory, without deriving service slugs from marketplace cards, so account visibility is independent of catalog ordering and pagination. If a scoped project key can read the Session but cannot list raw connected accounts, the response safely falls back to the Session-selected and no-auth toolkit inventory rather than making those services appear disconnected. The managed broker provides the same behavior and response at `GET /v1/connectors/connected`; the local server adds the normal `configured: false` empty response when no connection service is configured. Responses expose only connected-account IDs, user-supplied aliases, and lifecycle status—never project keys, broker tokens, provider tokens, or write-only authorization fields.
+This operation cursor-paginates both the Session toolkit state and the user's connected accounts directly. It merges no-auth toolkits and the Session-selected account with the full multi-account inventory, without deriving service slugs from marketplace cards, so account visibility is independent of catalog ordering and pagination. If a scoped project key can read the Session but cannot list raw connected accounts, the response safely falls back to the Session-selected and no-auth toolkit inventory rather than making those services appear disconnected. The server answers the normal `configured: false` empty response when no Composio project key is configured. Responses expose only connected-account IDs, user-supplied aliases, and lifecycle status—never project keys, provider tokens, or write-only authorization fields.
 
 The existing scoped `GET /api/connectors?services=gmail,slack` operation remains available for lightweight post-OAuth polling and backward compatibility.
 
@@ -183,7 +156,7 @@ A bot with no grant record at all keeps the legacy behavior: every tool on every
 
 **Imported bots land with no grants.** Shareable packages and team imports never carry grants — an imported bot starts with connected apps off, and any grants it later gets are chosen by the importing workspace. Grants also never appear in exports; only the workspace's own private team backup keeps them.
 
-**A Chief's new bots start with the Chief's apps.** A bot a Chief of Staff creates (`create_bot`, or a team setup) starts with a copy of the Chief's own connected apps, tools, read or write levels and MCP servers at that moment, never more, and the workspace's default access level. It has the Chief's owner and exactly the Chief's audience; on a Team Cloud, an app each person connects still works only for the person whose own request the work is, with their own connection. A bot a person creates keeps the defaults above.
+**A Chief's new bots start with the Chief's apps.** A bot a Chief of Staff creates (`create_bot`, or a team setup) starts with a copy of the Chief's own connected apps, tools, read or write levels and MCP servers at that moment, never more, and the workspace's default access level. It has the Chief's owner and exactly the Chief's audience. A bot a person creates keeps the defaults above.
 
 **Gmail and Google Calendar by name.** Besides Composio's search-and-run tools, a bot with Gmail or Google Calendar connected and granted gets plain tools for the common reads and writes, the same on every engine: `gmail.search_emails`, `gmail.read_email`, `gmail.read_email_thread`, `gmail.create_draft`, `gmail.send_email`, `googlecalendar.list_events` and `googlecalendar.list_calendars` (writes only where the bot may write). Claude Code finds them by those names (`select:gmail.search_emails`); other engines show them as `gmail_search_emails` behind their own prefix. Each one runs its Composio tool through the multi-execute tool, so its grant, read or write level and approval rules are that tool's. A routine written on one engine keeps working when its bot moves to another.
 

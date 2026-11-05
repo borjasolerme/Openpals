@@ -805,7 +805,7 @@ describe("Group Local VM ownership on the real isolated server", () => {
     }
   });
 
-  it("runs a channel speaker's own Cloud destination on its own engine with its Boat, waking it first", async () => {
+  it("runs a channel speaker's own cloud computer on its own engine with its Boat, waking it first", async () => {
     const { bots, group } = await room();
     try {
       await api("PUT", "/api/config", { box: { token: "box_fixture" } });

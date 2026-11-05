@@ -297,7 +297,7 @@ it("a thread a webhook's run opens has no phone; one the owner's turn opens does
 
 it("a conversation an outside event's run reported into loses the phone", async () => {
   await settle();
-  // Off a Cloud home an outside event's run reports into the bot's main chat (the one the person asked in last): here a
+  // An outside event's run reports into the bot's main chat (the one the person asked in last): here a
   // new conversation of the owner's, which has the phone until then.
   const main = (await api("POST", `/api/bots/${chief.id}/tasks`, { title: "Leads" })).body.task.threadId as string;
   const before = await turn({ id: chief.id, threadId: main }, "Anything new today?");

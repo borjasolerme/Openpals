@@ -3,8 +3,8 @@
 import type { CloudLendingTurn } from "../cloud-lending.ts";
 import type { RoutineRun } from "../routines.ts";
 import type { Store } from "../store.ts";
-import type { RoomRun } from "./acting-person.ts";
 
+type RoomRun = { requestMessageId?: string; cancelled: boolean };
 type Turn = { botId: string; threadId: string; generation: string };
 
 export interface CloudLendingTurnsDeps {
@@ -59,7 +59,5 @@ export function createCloudLendingTurns(deps: CloudLendingTurnsDeps) {
     roomTurnStarted(generation: string, run: RoomRun): void { roomTurnOperations.set(generation, run); },
     /** The run ended: none of its turn generations act for anyone any more. */
     roomTurnEnded(run: RoomRun): void { for (const [generation, owner] of roomTurnOperations) if (owner === run) roomTurnOperations.delete(generation); },
-    /** The run a room member turn generation belongs to, while it lasts (server/host/acting-person.ts reads whom it acts for). */
-    roomRun: (generation: string): RoomRun | undefined => roomTurnOperations.get(generation),
   };
 }

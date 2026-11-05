@@ -11,7 +11,7 @@ import { brokeredServer, brokerPath, type BrokerPath } from "./broker-probe.ts";
 
 const HEADERS = { Authorization: "Bearer team-orders", "CF-Access-Client-Id": "5c1d0e9a.access", "CF-Access-Client-Secret": "0f9e8d7c6b5a4938271605" };
 
-// The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on a Linux Cloud home.
+// The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on Linux.
 describe.skipIf(process.platform === "win32")("testing a URL server the way a boxed turn reaches it", () => {
   let dir = "", credentials: CredentialBroker | undefined, server: FakeHttpMcp | undefined;
   afterEach(async () => {

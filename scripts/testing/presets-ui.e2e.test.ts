@@ -21,7 +21,7 @@ describe("Preset bots in the real renderer", () => {
   let child: ChildProcess | undefined;
   afterAll(async () => { await waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }); });
 
-  (enabled ? it : it.skip)("shares New bot defaults as a preset file, adds it back, and makes bots from file and organization presets in a ready-made bot's review", async () => {
+  (enabled ? it : it.skip)("shares New bot defaults as a preset file, adds it back, and makes bots from it and from a preset an organization once added in a ready-made bot's review", async () => {
     let stdout = "";
     let stderr = "";
     let info: { ui: string; url: string; botId: string; dataDir: string; logPath: string };
@@ -95,7 +95,6 @@ describe("Preset bots in the real renderer", () => {
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Preset bots added to New bot: 1");
     const [filePreset] = (await api("/api/bot-presets")).presets as Array<{ id: string }>;
 
-    // An organization preset, as the organization library stores one.
     const presetsFile = join(info!.dataDir, "org-library", "presets.json");
     const stored = JSON.parse(readFileSync(presetsFile, "utf8"));
     const orgRow = { ...stored.presets[0], id: "org-preset-1", source: "org", installId: "0123456789abcdef0123456789abcdef", publisherName: "Acme Partners",
@@ -127,7 +126,7 @@ describe("Preset bots in the real renderer", () => {
       await click("Add Scout, Researcher");
       await expect.poll(async () => (await ui("eval", "--js", "[...document.querySelectorAll('[role=dialog] button')].find(button => button.textContent.trim() === 'Create bot')?.disabled")).result, { timeout: 20_000 }).toBe(false);
       await expect.poll(() => evaluate("[...document.querySelectorAll('[role=dialog] select optgroup')].map(group => group.label).join(' | ')"), { timeout: 10_000 })
-        .toBe("From Acme Partners | Imported presets | Built-in roles");
+        .toBe("Imported presets | Built-in roles");
       // Native select popups do not take routed keys reliably in headless
       // Chrome; the real select's change handler runs without the OS popup.
       await evaluate(`(() => { const select = [...document.querySelectorAll('[role=dialog] select')].find(item => item.querySelector('optgroup')); select.value = ${JSON.stringify(value)}; select.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
@@ -138,12 +137,13 @@ describe("Preset bots in the real renderer", () => {
       return (await bots()).find((bot) => !before.some((old) => old.id === bot.id))!;
     };
     const fromFile = await create(`preset:${filePreset!.id}`, "Skills, added switched off: follow-up", "new-bot-file");
-    expect(fromFile).toMatchObject({ name: expect.stringMatching(/^Sky/), installedPackage: { source: "file", presetKey: "new-bot-defaults" } });
+    expect(fromFile).toMatchObject({ name: expect.stringMatching(/^Sky/), installedPackage: { presetKey: "new-bot-defaults" } });
     expect((await api(`/api/bots/${fromFile.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: false })]);
     expect((await api(`/api/bots/${fromFile.id}/memory/file?path=MEMORY.md`)).text).toBe("- Customers first.\n");
-    const fromOrg = await create("preset:org-preset-1", "Skills, added switched on: follow-up", "new-bot-org");
-    expect(fromOrg.installedPackage).toMatchObject({ source: "org", presetKey: "new-bot-defaults", ref: "acme/sky" });
-    expect((await api(`/api/bots/${fromOrg.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: true })]);
+    const fromOrg = await create("preset:org-preset-1", "Skills, added switched off: follow-up", "new-bot-org");
+    expect(fromOrg.installedPackage).toMatchObject({ presetKey: "new-bot-defaults" });
+    expect(fromOrg.installedPackage).not.toHaveProperty("ref");
+    expect((await api(`/api/bots/${fromOrg.id}/skills`)).skills).toEqual([expect.objectContaining({ name: "follow-up", enabled: false })]);
     process.stdout.write(`${JSON.stringify({ fixture: info!, savedFile: true, presetsInNewBot: 2 })}\n`);
   }, launchTimeout + 180_000);
 });

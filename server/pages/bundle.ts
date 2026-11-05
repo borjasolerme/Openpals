@@ -2,10 +2,17 @@
 // realpath containment, symlinks out of the folder are skipped, and hidden files and folders (.git, .env) never go.
 import { lstat, readdir, readFile, realpath, stat } from "node:fs/promises";
 import { basename, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { PAGE_FILE_EXTENSIONS, PAGE_MAX_BYTES, PAGE_MAX_FILES } from "../../shared/published-page.ts";
 import { guestWorkspaceToHost } from "../bot-attachment.ts";
 import { VM_WORKSPACE_GUEST } from "../container-computer.ts";
 import { inSecretFolder, SECRET_FILE_REFUSAL } from "../secret-folder.ts";
+
+/** What a page's files may be: the rest of the folder stays out of the page. */
+const PAGE_FILE_EXTENSIONS: ReadonlySet<string> = new Set([
+  "html", "htm", "css", "js", "mjs", "json", "txt", "csv", "md", "parquet", "arrow",
+  "svg", "png", "jpg", "jpeg", "gif", "webp", "avif", "ico", "woff", "woff2", "ttf", "otf",
+]);
+const PAGE_MAX_BYTES = 5 * 1024 * 1024;
+const PAGE_MAX_FILES = 200;
 
 export interface PageFile {
   path: string;
@@ -22,13 +29,13 @@ export interface PageVideo {
   mtimeNs: string;
 }
 export interface PageBundle {
-  /** The file or folder published, canonical: the same source publishes to the same link again. */
+  /** The file or folder shown, canonical. */
   source: string;
   files: PageFile[];
   bytes: number;
   /** Files left out because a page can't serve them. */
   skipped: string[];
-  /** Only when asked for, by path in the folder: the pages Worker refuses video, so a published page leaves it out. */
+  /** Only when asked for, by path in the folder. */
   videos?: Record<string, PageVideo>;
 }
 
@@ -66,7 +73,7 @@ async function canonicalRoots(roots: readonly string[]): Promise<string[]> {
 /** The file or folder at `requested` (absolute, or relative to one of `roots`) and the root holding it. */
 async function locate(requested: string, roots: readonly string[]): Promise<{ target: string; root: string }> {
   const trimmed = requested.trim();
-  if (!trimmed) throw new PageBundleError("path is required: the .html file or the folder to publish.");
+  if (!trimmed) throw new PageBundleError("path is required: the .html file or the folder to show.");
   const allowed = await canonicalRoots(roots);
   const candidates = isAbsolute(trimmed) ? [resolve(trimmed)] : allowed.map((root) => resolve(root, trimmed));
   let outside = false;
@@ -82,7 +89,7 @@ async function locate(requested: string, roots: readonly string[]): Promise<{ ta
     if (root) return { target, root };
     outside = true;
   }
-  if (outside) throw new PageBundleError("Only files in your working folder can be published. Save the page there first.", 403);
+  if (outside) throw new PageBundleError("Only files in your working folder can be shown. Save the page there first.", 403);
   throw new PageBundleError(`Nothing was found at ${trimmed}. Save the page in your working folder and pass its exact path.`, 404);
 }
 
@@ -91,17 +98,17 @@ export async function pageSource(requested: string, roots: readonly string[]): P
   return (await locate(requested, roots)).target;
 }
 
-/** The page at `requested`: one .html file (published as index.html), or a folder with index.html at its top. */
+/** The page at `requested`: one .html file (its index.html), or a folder with index.html at its top. */
 export async function readPageBundle(requested: string, roots: readonly string[], limits = { bytes: PAGE_MAX_BYTES, files: PAGE_MAX_FILES }, options: { videos?: boolean } = {}): Promise<PageBundle> {
   const { target, root } = await locate(requested, roots);
   const info = await stat(target);
   if (info.isFile()) {
-    if (!isHtml(target)) throw new PageBundleError("A single file must be an .html page. For anything else, publish a folder with an index.html.");
+    if (!isHtml(target)) throw new PageBundleError("A single file must be an .html page. For anything else, show a folder with an index.html.");
     if (info.size > limits.bytes) throw new PageBundleError(`The page is ${info.size} bytes; a page can be at most ${limits.bytes}.`, 413);
     const data = await readFile(target);
     return { source: target, files: [{ path: "index.html", data }], bytes: data.byteLength, skipped: [] };
   }
-  if (!info.isDirectory()) throw new PageBundleError("Publish an .html file or a folder.");
+  if (!info.isDirectory()) throw new PageBundleError("Show an .html file or a folder.");
   const files: PageFile[] = [], skipped: string[] = [], videos: Record<string, PageVideo> = {};
   let bytes = 0;
   const walk = async (folder: string, depth: number): Promise<void> => {
@@ -119,13 +126,13 @@ export async function readPageBundle(requested: string, roots: readonly string[]
       }
       if (!entry.isFile()) continue;
       if (options.videos && isVideo(name) && SEGMENT.test(name) && !name.endsWith(".")) {
-        if (files.length + Object.keys(videos).length >= limits.files) throw new PageBundleError(`The folder has more than ${limits.files} files a page can hold. Publish a smaller folder.`, 413);
+        if (files.length + Object.keys(videos).length >= limits.files) throw new PageBundleError(`The folder has more than ${limits.files} files a page can hold. Show a smaller folder.`, 413);
         const identity = await stat(real, { bigint: true });
         videos[path] = { file: real, bytes: Number(identity.size), dev: String(identity.dev), ino: String(identity.ino), mtimeNs: String(identity.mtimeNs) };
         continue;
       }
       if (!servable(name) || !SEGMENT.test(name) || name.endsWith(".")) { skipped.push(path); continue; }
-      if (files.length >= limits.files) throw new PageBundleError(`The folder has more than ${limits.files} files a page can hold. Publish a smaller folder.`, 413);
+      if (files.length >= limits.files) throw new PageBundleError(`The folder has more than ${limits.files} files a page can hold. Show a smaller folder.`, 413);
       bytes += entry.size;
       if (bytes > limits.bytes) throw new PageBundleError(`The folder's files come to more than ${limits.bytes} bytes, a page's limit. Make the images smaller or leave some out.`, 413);
       files.push({ path, data: await readFile(real) });
@@ -133,7 +140,7 @@ export async function readPageBundle(requested: string, roots: readonly string[]
   };
   await walk(target, 0);
   if (!files.some((file) => file.path === "index.html")) {
-    throw new PageBundleError(`${basename(target)} has no index.html at its top. Name the main page index.html, then publish again.`);
+    throw new PageBundleError(`${basename(target)} has no index.html at its top. Name the main page index.html, then show it again.`);
   }
   return { source: target, files, bytes, skipped, ...(options.videos ? { videos } : {}) };
 }

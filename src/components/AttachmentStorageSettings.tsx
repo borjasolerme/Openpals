@@ -11,8 +11,8 @@ interface Cleared extends Usage { removed: number; freedBytes: number; failed: n
 /** Whole MB, or KB below one MB so a small store or a small clear never reads as "0 MB". */
 const size = (bytes: number) => bytes === 0 || bytes >= 1024 * 1024 ? `${Math.round(bytes / (1024 * 1024))} MB` : `${Math.ceil(bytes / 1024)} KB`;
 
-/** Settings → General: how full the attachments store is, and a clear for when it is. Absent where the server has none
- * (a Team Cloud, or a session that is not the owner's). */
+/** Settings → General: how full the attachments store is, and a clear for when it is. Absent for a session without
+ * admin rights. */
 export function AttachmentStorageSettings() {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [confirming, setConfirming] = useState(false);

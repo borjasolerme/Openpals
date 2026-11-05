@@ -47,7 +47,7 @@ suite("a passkey step in the bots' browser on real Chrome", () => {
     fx.page("/passkey-enrollment", SIGN_IN(`<h1>Sign in faster with a passkey</h1><button>Not now</button>${ASKS(CREATE)}`));
     real = await startService();
     const agentBrowser = { agentRpc: () => Promise.reject(new Error("agent-browser is not part of this suite")) } as unknown as BrowserRuntime;
-    router = new RuntimeRouter(agentBrowser, { service: real.service } as unknown as ChromeEngine, { annotate: passkeyAnnotation("cloud") });
+    router = new RuntimeRouter(agentBrowser, { service: real.service } as unknown as ChromeEngine, { annotate: passkeyAnnotation() });
   }, hostTimeout(240_000));
 
   afterAll(async () => {
@@ -71,10 +71,10 @@ suite("a passkey step in the bots' browser on real Chrome", () => {
     const bot = browser();
     const opened = said(await bot.call("agent_browser_open", { url: at("/v3/signin/challenge/pk/presend") }));
     expect(opened).toContain("Complete sign-in using your passkey");
-    expect(opened.endsWith(passkeyNotice("google", "cloud"))).toBe(true);
+    expect(opened.endsWith(passkeyNotice("google"))).toBe(true);
     expect(await ended(bot)).toBe("Something went wrong: NotAllowedError");
     expect(Number(await bot.read("document.querySelector('#state').dataset.after"))).toBeLessThan(2_000);
-    expect(said(await bot.call("agent_browser_snapshot")).endsWith(passkeyNotice("google", "cloud"))).toBe(true);
+    expect(said(await bot.call("agent_browser_snapshot")).endsWith(passkeyNotice("google"))).toBe(true);
   }, hostTimeout(60_000));
 
   it("ends a security key request the same way, and Try another way works there", async () => {
@@ -88,17 +88,17 @@ suite("a passkey step in the bots' browser on real Chrome", () => {
     const bot = browser();
     const identifier = said(await bot.call("agent_browser_open", { url: at("/v3/signin/identifier") }));
     expect(identifier).toContain("Sign in with a passkey");
-    expect(identifier).not.toContain(passkeyNotice("google", "cloud"));
+    expect(identifier).not.toContain(passkeyNotice("google"));
     await bot.call("agent_browser_fill", { selector: "#email", text: "person@example.test" });
     await bot.call("agent_browser_click", { selector: "button" });
-    expect(said(await bot.call("agent_browser_snapshot"))).toContain(passkeyNotice("google", "cloud"));
+    expect(said(await bot.call("agent_browser_snapshot"))).toContain(passkeyNotice("google"));
     expect(await ended(bot)).toBe("Something went wrong: NotAllowedError");
     const another = said(await bot.call("agent_browser_click", { selector: "text=Try another way" }));
     expect(another).toContain("/v3/signin/challenge/selection");
-    expect(another).not.toContain(passkeyNotice("google", "cloud"));
+    expect(another).not.toContain(passkeyNotice("google"));
     const choices = said(await bot.call("agent_browser_snapshot"));
     expect(choices).toContain("Enter your password");
-    expect(choices).not.toContain(passkeyNotice("google", "cloud"));
+    expect(choices).not.toContain(passkeyNotice("google"));
     expect(said(await bot.call("agent_browser_click", { selector: "text=Get a verification code" }))).toContain("/v3/signin/challenge/ipp/collect");
     await bot.call("agent_browser_fill", { selector: "#code", text: "123456" });
     const done = said(await bot.call("agent_browser_click", { selector: "button" }));

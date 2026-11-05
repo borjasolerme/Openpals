@@ -241,14 +241,14 @@ test("a move names at most 200 of the conversations the server held a request, n
   assert.deepEqual(refused.result.failed.map((failure) => [failure.key, failure.error]), [["chats", "The server said: the store is busy"]]);
 });
 
-test("a move sends what only it carries last, after the chats and their settings, switched off there; an app event only in the final pass, which this computer then lets go of", async () => {
+test("a move sends what only it carries last, after the chats and their settings, switched off there", async () => {
   const kind = (key, kindName, parts) => ({ key, kind: kindName, label: key, id: key.split(":")[1], bot: "ember", parts });
   const conversations = [{ bot: "ember", threadId: "a", last: 1, lastId: "a-1", busy: false, settings: { snoozedUntil: 5 } }];
   const put = [];
-  const move = sides({ here: [bot("ember", { soul: "s" }), kind("routine:r1", "routine", { def: "d1", runs: "x" }), kind("app-event:e1", "app-event", { def: "d2" }),
+  const move = sides({ here: [bot("ember", { soul: "s" }), kind("routine:r1", "routine", { def: "d1", runs: "x" }),
     { key: "imported-skill:tidy", kind: "imported-skill", label: "tidy", id: "tidy", parts: { files: "f" } }], there: [bot("ember", { soul: "s" })], bots: { ember: { soul: "s" } }, conversations,
   onCall: (method, route, body, cloud) => {
-    if (method === "PUT" && route === "/api/cloud-send/kind") { put.push(body.key); cloud.set(body.key, { key: body.key, kind: body.key.split(":")[0], label: body.key, id: body.key.split(":")[1], parts: body.key === "routine:r1" ? { def: "d1", runs: "x" } : body.key === "app-event:e1" ? { def: "d2" } : { files: "f" } }); return reply(200, { v: 1, ok: true }); }
+    if (method === "PUT" && route === "/api/cloud-send/kind") { put.push(body.key); cloud.set(body.key, { key: body.key, kind: body.key.split(":")[0], label: body.key, id: body.key.split(":")[1], parts: body.key === "routine:r1" ? { def: "d1", runs: "x" } : { files: "f" } }); return reply(200, { v: 1, ok: true }); }
     if (method === "GET" && route === "/api/cloud-send/chats") return reply(200, { v: 1, conversations: [{ threadId: "a", settings: {} }] });
     if (method === "POST" && route === "/api/cloud-send/chats/settings") return reply(200, { v: 1, changed: body.conversations.length });
     return null;
@@ -256,7 +256,7 @@ test("a move sends what only it carries last, after the chats and their settings
   const send = createCloudSend(move.deps);
   const first = await send.send({ reason: "move" });
   assert.deepEqual(first.result.failed, []);
-  assert.deepEqual(put, ["imported-skill:tidy", "routine:r1"], "an app event waits for the final pass");
+  assert.deepEqual(put, ["imported-skill:tidy", "routine:r1"]);
   assert.deepEqual(send.switches(), { "routine:r1": true });
   const at = (call) => move.calls.indexOf(call);
   assert.ok(at("PUT /api/cloud-send/kind") > -1 && move.calls.lastIndexOf("PUT /api/cloud-send/kind") > at("POST /api/cloud-send/chats"), "the routine went after the chats");
@@ -264,14 +264,7 @@ test("a move sends what only it carries last, after the chats and their settings
   assert.ok(at("PUT /api/cloud-send/kind") < at("POST /api/cloud-send/chats"), "a skill goes before the chats");
   assert.equal(first.result.conversationSettings, 1);
   assert.equal(first.result.moved, 2);
-  assert.ok(!move.calls.some((call) => call.startsWith("HERE ")), "this computer lets go of nothing yet");
-
-  const final = await send.send({ reason: "move", final: true });
-  assert.deepEqual(final.result.failed, []);
-  assert.deepEqual(put.slice(2), ["app-event:e1"]);
-  assert.ok(move.calls.includes(`HERE DELETE /api/cloud-send/kind?key=${encodeURIComponent("app-event:e1")}`));
-  assert.equal(final.result.moved, 1);
-  assert.deepEqual(move.deps.store.value.clouds[CLOUD].on, { "routine:r1": true, "app-event:e1": false }, "what was on here is kept for the switch, after this computer let go");
+  assert.deepEqual(move.deps.store.value.clouds[CLOUD].on, { "routine:r1": true }, "what was on here is kept for the switch");
 });
 
 test("what a move carries last is never taken for removed on the server, so a routine changed here before the final pass still goes", async () => {

@@ -26,14 +26,12 @@ import {
   type MemoryFileInfo,
   type MemoryJournalRow,
   type MemoryOverview,
-  type LendingReview,
-  markMemoryReviewed,
 } from "@/lib/memory";
 import { localizedRelativeTime } from "@/lib/relative-time";
 import { shortPath } from "@/lib/short-path";
 import { activeLocale, t } from "@/lib/i18n";
 import { roomMemoryCaptureEnabled } from "@/lib/feature-flags";
-import { api, ApiError, useStore, type Bot, type ConfigStatus } from "@/state/store";
+import { api, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { Switch } from "../SettingsPrimitives";
 import { useDesktopCapabilities } from "../DesktopCapabilities";
 import { inputCls } from "./field";
@@ -82,27 +80,6 @@ function localizedJournalSummary(row: MemoryJournalRow, botName: string): string
   return t("memory.journal.rewrote", { who, lines: lines(Math.max(row.added, row.removed)), topic });
 }
 
-export function LendingReviewNotice({ changed, stale, busy, onReviewed }: { changed: readonly string[]; stale: boolean; busy: boolean; onReviewed: () => void }) {
-  return (
-    <div role="status" className="rounded-xl border border-danger/40 bg-card p-4">
-      <p className="text-[13px] leading-relaxed text-ink">{t(stale ? "memory.lendingReviewStale" : "memory.lendingReview")}</p>
-      {changed.length > 0 && (
-        <>
-          <p className="mt-2 text-[12px] text-ink-secondary">{t("memory.lendingReviewChanged")}</p>
-          <ul className="mt-1 space-y-0.5">
-            {changed.map((file) => (
-              <li key={file} className="break-all font-mono text-[12px] text-ink">{file}</li>
-            ))}
-          </ul>
-        </>
-      )}
-      <button type="button" className={cn(buttonCls, "mt-3")} disabled={busy} onClick={onReviewed}>
-        {t("memory.lendingReviewed")}
-      </button>
-    </div>
-  );
-}
-
 export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; active?: boolean; onToggle: (enabled: boolean) => void }) {
   const { capabilities } = useDesktopCapabilities();
   const [overview, setOverview] = useState<MemoryOverview | null>(null);
@@ -117,9 +94,6 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
   const [newTopic, setNewTopic] = useState("");
   const [upkeep, setUpkeep] = useState<UpkeepStatus | null>(null);
   const [tidying, setTidying] = useState(false);
-  const [lendingReview, setLendingReview] = useState<LendingReview | null>(null);
-  const [lendingReviewStale, setLendingReviewStale] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const { state, dispatch } = useStore();
   const learnFromRooms = roomMemoryCaptureEnabled(state.config);
   const [roomsSaving, setRoomsSaving] = useState(false);
@@ -132,7 +106,6 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
       fetchUpkeepStatus(bot.id).catch(() => null),
     ]);
     setOverview(nextOverview);
-    setLendingReview(nextOverview.lendingReview ?? null);
     setJournal(nextJournal);
     setUpkeep(nextUpkeep);
     if (openPath) {
@@ -319,27 +292,6 @@ export function MemorySection({ bot, active = true, onToggle }: { bot: Bot; acti
           </div>
         )}
       </div>
-
-      {lendingReview && (
-        <LendingReviewNotice
-          changed={lendingReview.changed}
-          stale={lendingReviewStale}
-          busy={reviewing}
-          onReviewed={() => {
-            setReviewing(true);
-            markMemoryReviewed(bot.id, lendingReview.token)
-              .then(() => { setLendingReview(null); setLendingReviewStale(false); })
-              .catch((e: unknown) => {
-                if (e instanceof ApiError && e.status === 409) {
-                  setLendingReviewStale(true);
-                  return refresh();
-                }
-                setError(errorText(e));
-              })
-              .finally(() => setReviewing(false));
-          }}
-        />
-      )}
 
       {overview && <MemoryGauge index={overview.index} />}
 

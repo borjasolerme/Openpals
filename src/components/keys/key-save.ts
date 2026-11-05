@@ -4,8 +4,7 @@ import { t } from "@/lib/i18n";
 import { keyEntry, type KeyId, type KeyTarget, type TestableProvider } from "./key-catalog";
 
 /** Saves one credential where this app keeps it ("" removes it): the desktop's encrypted store when the key has a slot
- * there, so Remove also clears the stored copy its boot migration made, else the server's own config, which on a Cloud
- * home stays outside every bot's box. */
+ * there, so Remove also clears the stored copy its boot migration made, else the server's own config. */
 export function saveKey(target: KeyTarget, value: string, firstKey: boolean): Promise<ConfigStatus> {
   return window.ogb?.setCredential && target.slot
     ? window.ogb.setCredential(target.slot, value)

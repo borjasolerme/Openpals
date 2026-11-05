@@ -15,7 +15,7 @@ export interface WaitHostDeps {
   now?: () => number;
 }
 
-/** The chat a wait's follow-up run works in: the one it was asked in, never on a Cloud home or in a room. */
+/** The chat a wait's follow-up run works in: the one it was asked in, never a room. */
 export function waitRunChat(
   run: Pick<RoutineRun, "botId" | "resultsThreadId">,
   directChat: (botId: string, threadId: string) => boolean,

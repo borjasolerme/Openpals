@@ -71,9 +71,9 @@ smoke as an authenticated connection to a customer's server.
 In a desktop build with this feature, choose the server dropdown above the
 sidebar search → **Connect to a server…**, or open **Settings →
 Servers**. Enter the server's HTTPS address or full pairing link and an
-optional name. Confirm the host in the native dialog, then complete pairing or
-email sign-in on that server. To generate an owner link without the CLI's
-phone wizard, run `npx openmausbot pair --label "My desktop"` on the server.
+optional name. Confirm the host in the native dialog, then complete pairing on
+that server. To generate an owner link without the CLI's phone wizard, run
+`pnpm pair --label "My desktop"` in the server's Openpals checkout.
 Treat this link as a secret. Existing limited-access links retain their limits.
 
 Select **This computer** or a saved hosted workspace to switch. Each origin

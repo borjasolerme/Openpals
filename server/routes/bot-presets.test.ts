@@ -40,16 +40,13 @@ async function serve() {
 
 describe("/api/bot-presets through the route table", () => {
 
-  it("removes an imported preset, refuses an organization's, and leaves other paths to the next handler", async () => {
+  it("removes an imported preset and leaves other paths to the next handler", async () => {
     const { base, presets } = await serve();
-    const file = presets.register(library(), { source: "file", installId: "file-1" }).added[0]!.id;
-    const org = presets.register(library(), { source: "org", installId: "org-1", org: { adminOrigin: "a", organizationId: "o", packageId: "p", ref: "acme/sales-skills",
-      sha256: "a".repeat(64), installId: "org-1", publisher: { organizationId: "x", slug: "acme", name: "Acme" } } }).added[0]!.id;
+    const file = presets.register(library(), "file-1").added[0]!.id;
     const remove = async (id: string) => { const response = await fetch(`${base}/api/bot-presets/${id}`, { method: "DELETE" }); return [response.status, await response.json()]; };
-    expect(await remove(org)).toEqual([409, { error: "Presets from your organization are managed in Admin." }]);
     expect(await remove(file)).toEqual([200, { ok: true }]);
     expect(await remove(file)).toEqual([404, { error: "That preset is no longer available. Choose another starting role." }]);
-    expect(presets.list().map((row) => row.id)).toEqual([org]);
+    expect(presets.list()).toEqual([]);
     expect(await (await fetch(`${base}/api/bot-presets`, { method: "POST" })).json()).toEqual({ from: "inline routes" });
     expect(await (await fetch(`${base}/api/bot-presets/x/y`, { method: "DELETE" })).json()).toEqual({ from: "inline routes" });
   });

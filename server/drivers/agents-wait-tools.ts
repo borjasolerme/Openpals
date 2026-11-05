@@ -16,8 +16,8 @@ export async function callWaitTool(name: string, args: Json, context: ToolCallCo
 export const WAIT_TOOL_DEFINITIONS = [
   {
     name: "wait_until",
-    // Short on purpose: it rides every turn. Its result says when the condition already holds, when this computer cannot
-    // check files or programs, and when My Cloud's sleep can delay the message.
+    // Short on purpose: it rides every turn. Its result says when the condition already holds and when this computer
+    // cannot check files or programs.
     description:
       `Tell the person in this chat when something happens. No AI runs while you wait, only plain code checks. Ends after hours (default ${WAIT_HOURS.default}, 1-${WAIT_HOURS.max}).`,
     inputSchema: {

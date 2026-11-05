@@ -1,7 +1,6 @@
-// The agents catalog's X and research tools (through treg) and the internal route behind each. Every call is paid, from
-// the person's own treg balance or their Cloud plan's allowance, so a bot is shown x_search only when a treg key or a
-// plan credential is held and its research switch is on, and the research tools only when research also works for that
-// credential (a plan's relay can have X without research); each route checks again before it spends.
+// The agents catalog's X and research tools (through treg) and the internal route behind each. Every call is paid from
+// the person's own treg balance, so a bot is shown x_search and the research tools only when a treg key is held and its
+// research switch is on; each route checks again before it spends.
 import { agentsCallMember } from "../../shared/agents-tool-names.ts";
 import type { ToolCallContext, ToolCallResult } from "./agents-call.ts";
 import type { Json } from "./agents-client.ts";
@@ -37,7 +36,7 @@ export const RESEARCH_TOOL_DEFINITIONS = [
   {
     name: "x_search",
     description:
-      "Read X (Twitter) without an X account (was also x_user_posts / x_post / x_profile). Every call is paid (the user's treg balance or Cloud plan) and read-only: you cannot post, like or reply. search (the default) finds posts; write one well-filtered query instead of many broad ones. The query takes X operators: from:handle, to:handle, \"exact phrase\", since:YYYY-MM-DD, until:YYYY-MM-DD, min_faves:N, -filter:replies, lang:en, OR. Bare words are all required, so use a short phrase or OR between alternatives. user_posts reads an account's recent posts, newest first. Both return compact posts (link, author, time, text, likes, reposts, replies, quotes, views) and newestId: to monitor X, for example in a routine, keep newestId and pass it back as sinceId next time to get only newer posts. post reads one post, and with replies the first page of up to 20 replies to it. profile looks up an account: name, bio, followers, following, post count and verified status.",
+      "Read X (Twitter) without an X account (was also x_user_posts / x_post / x_profile). Every call is paid from the user's treg balance and read-only: you cannot post, like or reply. search (the default) finds posts; write one well-filtered query instead of many broad ones. The query takes X operators: from:handle, to:handle, \"exact phrase\", since:YYYY-MM-DD, until:YYYY-MM-DD, min_faves:N, -filter:replies, lang:en, OR. Bare words are all required, so use a short phrase or OR between alternatives. user_posts reads an account's recent posts, newest first. Both return compact posts (link, author, time, text, likes, reposts, replies, quotes, views) and newestId: to monitor X, for example in a routine, keep newestId and pass it back as sinceId next time to get only newer posts. post reads one post, and with replies the first page of up to 20 replies to it. profile looks up an account: name, bio, followers, following, post count and verified status.",
     inputSchema: {
       type: "object",
       additionalProperties: false,

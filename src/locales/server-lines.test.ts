@@ -334,10 +334,6 @@ const ALLOWED: ReadonlyArray<{ file: string; snippet: string; why: string }> = [
 /** Lines written before this guard, by area: a file and the line's words (" … " where a value goes). Only shrinks. */
 const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, snippet: string]>>> = {
   "runs and routines": [
-    ["server/app-trigger-requests.ts", "When an email arrives in Gmail …"],
-    ["server/app-trigger-requests.ts", "When “ … ” happens in  …  …"],
-    ["server/app-trigger-requests.ts", "(it checks every 15 minutes)"],
-    ["server/app-trigger-requests.ts", "reviews the event"],
     ["server/routine-requests.ts", "Each time  … 's usage limit resets"],
     ["server/routine-requests.ts", "When  … 's usage limit resets"],
     ["server/routine-requests.ts", "Every  …  minutes, cadence starting at confirmation; first run is the"],

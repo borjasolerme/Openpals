@@ -17,12 +17,6 @@ export function authConfigUseLine(toolkit: string, choice: AuthConfigChoice): st
   return `${toolkit} connects with the person's own Composio auth config ${choice.id}${which}.`;
 }
 
-const MANAGED_NOTE = (toolkit: string) =>
-  `Openpals note: ${toolkit} has no Composio-managed sign-in, so it needs the person's own OAuth app, which `
-  + "Openpals' built-in connected apps cannot use. Tell the person: add their own Composio project key in "
-  + `Settings → API keys (the project that has their ${toolkit} auth config); Openpals then picks that auth config up `
-  + `on its own, and they connect ${toolkit} again. Do not retry this call.`;
-
 function selfHostedNote(toolkit: string, ready: ToolkitSession | Error): string {
   if (ready instanceof Error) return `Openpals note: ${ready.message} Tell the person this. Do not retry this call.`;
   if (ready.choice) {
@@ -37,18 +31,16 @@ function selfHostedNote(toolkit: string, ready: ToolkitSession | Error): string 
     + `it on its own, and they connect ${toolkit} again. Do not retry this call.`;
 }
 
-/** Adds a plain note to a tool result that failed with Composio's no-managed-auth error. With the person's own project
- * (`ready`), the note follows readying that toolkit's auth config, so the next connection uses it. */
+/** Adds a plain note to a tool result that failed with Composio's no-managed-auth error. The note follows readying that
+ * toolkit's auth config (`ready`), so the next connection uses it. */
 export async function withNoManagedAuthNote(
   bytes: Uint8Array,
   contentType: string,
   toolkit: string,
-  ready: (() => Promise<ToolkitSession>) | null,
+  ready: () => Promise<ToolkitSession>,
 ): Promise<Uint8Array> {
   const probe = withFailedCallHint(bytes, contentType, NO_MANAGED_AUTH, () => "", []);
   if (probe === bytes) return bytes;
-  const note = ready
-    ? selfHostedNote(toolkit, await ready().catch((error: unknown) => error instanceof Error ? error : new Error(String(error))))
-    : MANAGED_NOTE(toolkit);
+  const note = selfHostedNote(toolkit, await ready().catch((error: unknown) => error instanceof Error ? error : new Error(String(error))));
   return withFailedCallHint(bytes, contentType, NO_MANAGED_AUTH, () => note, []);
 }

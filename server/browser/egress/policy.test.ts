@@ -1,7 +1,7 @@
 import { BlockList } from "node:net";
 import { describe, expect, it } from "vitest";
 
-import { addressClass, allowList, browserEgressConfigSchema, namesThisMachine, parseAllowEntry, refusalFor, type EgressHost, type EgressRules } from "./policy.ts";
+import { addressClass, allowList, browserEgressConfigSchema, namesThisMachine, parseAllowEntry, refusalFor, type EgressRules } from "./policy.ts";
 
 // A public address this machine holds, and its LAN address.
 const own = new BlockList();
@@ -10,7 +10,7 @@ own.addAddress("192.168.1.5", "ipv4");
 // The address a fake-IP proxy (Clash, Surge) gives its own TUN interface.
 own.addAddress("198.18.0.1", "ipv4");
 
-const rules = (host: EgressHost, over: Partial<EgressRules> = {}): EgressRules => ({
+const rules = (host: EgressRules["host"], over: Partial<EgressRules> = {}): EgressRules => ({
   host,
   ownPort: (port) => port === 8799,
   botPort: async (port) => port === 3000,
@@ -20,7 +20,7 @@ const rules = (host: EgressHost, over: Partial<EgressRules> = {}): EgressRules =
   ...over,
 });
 
-const decide = (host: EgressHost, target: string, addresses: string[], over: Partial<EgressRules> = {}) => {
+const decide = (host: EgressRules["host"], target: string, addresses: string[], over: Partial<EgressRules> = {}) => {
   const [name, port] = target.split(/:(?=\d+$)/);
   return refusalFor({ host: name!, port: Number(port) }, addresses.map((address) => ({ address })), rules(host, over), own);
 };
@@ -71,15 +71,15 @@ describe("address classes", () => {
   });
 });
 
-describe("what each host lets a bot's browser reach", () => {
+describe("what each host lets a bot's browser, or its box's shell, reach", () => {
   it("lets every host reach the public internet", async () => {
-    for (const host of ["desktop", "server", "cloud"] as const) {
+    for (const host of ["desktop", "server", "box"] as const) {
       expect(await decide(host, "example.com:443", ["93.184.215.14", "2606:2800:21f:cb07:6820:80da:af6b:8b2c"])).toBeNull();
     }
   });
 
   it("never reaches Openpals' own ports, on loopback or on this machine's own addresses", async () => {
-    for (const host of ["desktop", "server", "cloud"] as const) {
+    for (const host of ["desktop", "server", "box"] as const) {
       for (const [target, address] of [["127.0.0.1:8799", "127.0.0.1"], ["localhost:8799", "::1"], ["::ffff:7f00:1:8799", "::ffff:7f00:1"], ["192.168.1.5:8799", "192.168.1.5"], ["198.51.100.7:8799", "198.51.100.7"]]) {
         expect(await decide(host, target!, [address!], { allowed: () => true, botPort: async () => true }), `${host} ${target}`).toBe("omb");
       }
@@ -87,7 +87,7 @@ describe("what each host lets a bot's browser reach", () => {
   });
 
   it("never reaches cloud metadata, link-local or reserved addresses, whatever the allow-list says", async () => {
-    for (const host of ["desktop", "server", "cloud"] as const) {
+    for (const host of ["desktop", "server", "box"] as const) {
       const open = { allowed: () => true, localNetwork: true };
       expect(await decide(host, "169.254.169.254:80", ["169.254.169.254"], open)).toBe("metadata");
       expect(await decide(host, "metadata.google.internal:80", ["169.254.169.254"], open)).toBe("metadata");
@@ -114,7 +114,7 @@ describe("what each host lets a bot's browser reach", () => {
     expect(await decide("desktop", "nas.local:443", ["192.168.1.20"], { localNetwork: false })).toBe("local-network");
   });
 
-  it("lets the desktop reach a proxy's fake-IP answers (198.18.0.0/15) like the local network; servers and Cloud keep refusing them", async () => {
+  it("lets the desktop reach a proxy's fake-IP answers (198.18.0.0/15) like the local network; servers and the box keep refusing them", async () => {
     // Clash, Surge and similar proxies in TUN + fake-IP mode answer every name with an address in 198.18.0.0/15.
     expect(await decide("desktop", "example.com:443", ["198.18.0.7"])).toBeNull();
     expect(await decide("desktop", "github.com:443", ["198.19.255.254", "::ffff:198.18.1.2"])).toBeNull();
@@ -124,7 +124,7 @@ describe("what each host lets a bot's browser reach", () => {
     expect(await decide("desktop", "198.18.0.1:8080", ["198.18.0.1"])).toBeNull();
     // The proxy may route a fake-IP answer to this computer, so OpenMausBot's own ports stay closed through it.
     expect(await decide("desktop", "example.com:8799", ["198.18.0.7"])).toBe("omb");
-    for (const host of ["server", "cloud"] as const) {
+    for (const host of ["server", "box"] as const) {
       expect(await decide(host, "example.com:443", ["198.18.0.7"], { allowed: () => true }), host).toBe("reserved");
     }
   });
@@ -133,8 +133,8 @@ describe("what each host lets a bot's browser reach", () => {
     expect(await decide("server", "localhost:3000", ["127.0.0.1"])).toBeNull();
     expect(await decide("server", "localhost:3001", ["127.0.0.1"])).toBe("this-computer");
     expect(await decide("server", "127.0.0.1:9000", ["127.0.0.1"], { allowed: (address, port) => address === "127.0.0.1" && port === 9000 })).toBeNull();
-    expect(await decide("cloud", "localhost:3000", ["127.0.0.1"])).toBeNull();
-    expect(await decide("cloud", "localhost:9000", ["127.0.0.1"], { allowed: () => true })).toBe("this-computer");
+    expect(await decide("box", "localhost:3000", ["127.0.0.1"])).toBeNull();
+    expect(await decide("box", "localhost:9000", ["127.0.0.1"], { allowed: () => true })).toBe("this-computer");
   });
 
   it("lets a server's owner open this server's own sites and its local network, but never Openpals or metadata", async () => {
@@ -150,19 +150,19 @@ describe("what each host lets a bot's browser reach", () => {
     const off = { localNetwork: false };
     expect(await decide("server", "app.example:443", ["198.51.100.7"], off)).toBe("this-computer");
     expect(await decide("server", "nas:443", ["10.0.0.20"], off)).toBe("local-network");
-    expect(await decide("cloud", "app.example:443", ["198.51.100.7"], on)).toBe("this-computer");
+    expect(await decide("box", "app.example:443", ["198.51.100.7"], on)).toBe("this-computer");
   });
 
-  it("keeps a server off the local network unless an admin allowed it, and Cloud off it always", async () => {
+  it("keeps a server off the local network unless an admin allowed it, and the box off it always", async () => {
     expect(await decide("server", "nas:443", ["10.0.0.20"])).toBe("local-network");
     expect(await decide("server", "nas:443", ["10.0.0.20"], { allowed: (address) => address === "10.0.0.20" })).toBeNull();
     for (const address of ["10.0.0.20", "172.20.0.2", "192.168.0.10", "100.64.1.1", "fdaa:0:1::3", "fd12::1"]) {
-      expect(await decide("cloud", `peer:443`, [address], { allowed: () => true, localNetwork: true }), address).toBe("local-network");
+      expect(await decide("box", `peer:443`, [address], { allowed: () => true, localNetwork: true }), address).toBe("local-network");
     }
   });
 
   it("refuses when any address a name resolves to is refused", async () => {
-    expect(await decide("cloud", "mixed.example:443", ["93.184.215.14", "10.0.0.1"])).toBe("local-network");
+    expect(await decide("box", "mixed.example:443", ["93.184.215.14", "10.0.0.1"])).toBe("local-network");
   });
 });
 

@@ -27,8 +27,6 @@ export interface McpRpcAnswer {
 export interface ChatAppRouteDeps {
   store: Pick<Store, "bot" | "botByThread" | "groupByThread" | "messagesFor" | "patchMessage" | "taskByThread">;
   apps: ChatApps;
-  /** On a Cloud home, a guest changes only conversations it started. */
-  threadRefusal?(auth: RequestAuth, threadId: string): string | null;
   mcpRpc?(request: McpRpcRequest): Promise<McpRpcAnswer>;
 }
 
@@ -72,8 +70,6 @@ export function createChatAppRoutes(deps: ChatAppRouteDeps): RouteHandler {
     const bot = store.bot(botId);
     if (!bot) return json(res, 404, { error: "no such bot" });
     if (!store.taskByThread(bot.id, threadId)) return json(res, 404, { error: "no such conversation" });
-    const refused = deps.threadRefusal?.(auth, threadId);
-    if (refused) return json(res, 403, { error: refused });
     const row = appRow(store, threadId, messageId);
     if (!row || (row.from && row.from.botId !== bot.id)) return json(res, 404, { error: "That app is not in this conversation." });
 

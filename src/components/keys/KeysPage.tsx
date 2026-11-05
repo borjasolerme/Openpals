@@ -109,7 +109,7 @@ function landOn(page: HTMLElement | null, request: KeyFocusRequest, section: Key
   const scroller = scrollParent(row);
   if (scroller) scrollWithin(scroller, row, request.row ? "center" : "start", 16);
   if (!request.row) return true;
-  row.querySelector<HTMLElement>("[data-key-input], [data-key-replace], [data-key-own], [data-key-open], input, button")?.focus({ preventScroll: true });
+  row.querySelector<HTMLElement>("[data-key-input], [data-key-replace], [data-key-open], input, button")?.focus({ preventScroll: true });
   row.setAttribute("data-key-highlight", "");
   window.setTimeout(() => row.removeAttribute("data-key-highlight"), HIGHLIGHT_MS);
   return true;

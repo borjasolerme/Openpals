@@ -1,12 +1,12 @@
 // The internal calls behind the agents server's decide and extract tools. Runs inside index.ts's /api/internal/ block,
 // after the capability bearer is checked; the bot is the capability's, never a body field. A file is read only from the
-// bot's own folders, by the same rules as a published page. The answer is the models' typed values, never a vendor body.
+// bot's own folders, by the same rules as a folder page. The answer is the models' typed values, never a vendor body.
 import type { ServerResponse } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname } from "node:path";
 
 import type { Decider } from "../decider/index.ts";
-import { relayAccepts } from "../decider/relay.ts";
+import { botDecideAccepts } from "../decider/bot-decide.ts";
 import type { DeciderAnswer, DeciderFailure, DeciderProvider, DeciderQuestion } from "../decider/types.ts";
 import { EXTRACT_LIMITS, extractRequestProblem } from "../extractor/contract.ts";
 import type { Extractor } from "../extractor/index.ts";
@@ -120,7 +120,7 @@ export function createHelperToolRoutes(deps: HelperToolDeps) {
       const questions = botQuestions(body.questions);
       if (typeof questions === "string") return void ctx.json(ctx.res, 400, { error: questions });
       const state = typeof body.state === "string" ? body.state : "";
-      if (!relayAccepts("botDecide", state, questions)) return void ctx.json(ctx.res, 400, { error: HELPER_MESSAGES.decideShape });
+      if (!botDecideAccepts(state, questions)) return void ctx.json(ctx.res, 400, { error: HELPER_MESSAGES.decideShape });
       const result = await deps.decider.ask("botDecide", state, questions, { careful: true, timeoutMs: HELPER_TOOL_TIMEOUT_MS });
       if (!result.ok) {
         const off = result.reason === "disabled" || result.reason === "no_key";

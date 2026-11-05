@@ -1,5 +1,5 @@
 // POST /api/bots/:id/helper-followup: MausBot's follow-up after its first look around, written once under its intro as
-// a real bot message, by MausBot's own person only.
+// a real bot message, by an admin only.
 import { readFileSync, rmSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -28,9 +28,9 @@ afterEach(async () => {
   await Promise.all(servers.splice(0).map((server) => new Promise((done) => server.close(done))));
 });
 
-async function fixture(person?: string) {
+async function fixture() {
   const store = new Store(() => sonnet);
-  const maus = createDefaultBot(store, person ? { person } : {});
+  const maus = createDefaultBot(store);
   const routines = [{ botId: maus.id, enabled: true }, { botId: maus.id, enabled: false }, { botId: "elsewhere", enabled: true }];
   const deps = { store, routines: () => ({ listRoutines: () => routines }) } as unknown as BotMessageRouteDeps;
   const routes = [createBotMessageRoutes(deps)];
@@ -76,15 +76,12 @@ describe("MausBot's follow-up", () => {
     expect(store.messagesFor(maus.threadId)).toHaveLength(2);
   });
 
-  it("is MausBot's own person's only: never a bot's shell, nor another member on a Team Cloud", async () => {
+  it("is an admin's only: never a bot's shell, nor a member", async () => {
     const place = await fixture();
     expect((await place.post({ ai: "own" }, BOT_SHELL)).status).toBe(403);
     expect((await place.post({ ai: "own" }, session("someone@example.com"))).status).toBe(403);
     expect(place.store.messagesFor(place.maus.threadId)).toHaveLength(1);
-
-    const team = await fixture("ada@example.com");
-    expect((await team.post({ ai: "own" }, session("bob@example.com", true))).status, "not even an admin").toBe(403);
-    expect((await team.post({ ai: "own" }, session("Ada@Example.com"))).status).toBe(201);
+    expect((await place.post({ ai: "own" }, session("ada@example.com", true))).status).toBe(201);
   });
 
   it("refuses another bot, a conversation without the intro, and a body it cannot read", async () => {

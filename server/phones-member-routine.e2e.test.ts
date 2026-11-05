@@ -1,4 +1,4 @@
-// Off a Cloud home a client-scope device (the front desk's iPad) may write, edit and run routines on the Chief, but no
+// A client-scope device (the front desk's iPad) may write, edit and run routines on the Chief, but no
 // such routine reaches the owner's phone: its run mounts no device server, a device call made in that run is refused
 // before any job is queued, so the phone never hears of it, and the desk editing the owner's own routine takes the phone
 // away from that routine until the owner rewrites it. Where sign-in lets several people in, the desktop offers no phone.

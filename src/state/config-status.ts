@@ -40,7 +40,7 @@ export interface ConfigStatus {
   fleet?: { available: boolean };
   budgets?: { monthlyUsd?: number; warnAtPercent?: number };
   billing?: { currency?: string; prices?: Record<string, { inputPerMillion: number; outputPerMillion: number; cachedInputPerMillion?: number }> };
-  composio: SavedKey & { mode?: "managed" | "self-hosted" | "unavailable" };
+  composio: SavedKey;
   box: SavedKey;
   vps: { configured: boolean; sshAlias: string };
   rooms: { turnTimeoutMinutes: number };
@@ -49,7 +49,6 @@ export interface ConfigStatus {
   mcp?: { callTimeoutMinutes: number };
   /** Workspace defaults for new bots; absent effort = no level is sent. */
   newBots?: { effort?: EffortLevel };
-  /** This Cloud is on the Starter plan, as the Admin last said; absent or false otherwise. */
   threads?: { maxConcurrentPerBot: number; eventLogMaxBytes?: number; eventLogRetentionDays?: number };
   automaticRecovery?: { enabled: boolean; backup?: ModelSelection };
   /** Prompt-cache keep-warm for idle Claude threads. Absent from older servers. */
@@ -139,10 +138,6 @@ export interface BrowserEngineSummary {
   /** Whether a browser profile can use "My Chrome", the person's own running
    * Chrome: only where the bots run on their computer (the desktop app). */
   myChrome?: boolean;
-  /** On My Cloud, the computer that lends its Chrome. */
-  myChromeOn?: { name: string; device: "PC" | "Mac" | "computer"; online: boolean };
-  /** On My Cloud with no computer lending Chrome: it can be lent from the desktop app. */
-  myChromeLendable?: true;
   /** browserEngine.engine: "chrome" when the bots' browsers run on OpenMausBot's own Chrome driver. */
   engine?: "agent-browser" | "chrome";
   /** Self-hosted servers only: whether bots' browsers may open this server's own sites and its local network

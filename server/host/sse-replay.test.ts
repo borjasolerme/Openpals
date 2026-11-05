@@ -58,10 +58,10 @@ describe("ReplayBuffer", () => {
     expect(replayed(buffer, 0)).toEqual([1]);
   });
 
-  it("keeps a power frame's slot, never the frame: a stream resuming from before it gets the rest, with no gap", () => {
+  it("keeps a screen frame's slot, never the frame: a stream resuming from before it gets the rest, with no gap", () => {
     const buffer = new ReplayBuffer();
     buffer.push(frame(1));
-    buffer.push(frame(2, 10, "power"));
+    buffer.push(frame(2, 10, "screen"));
     buffer.push(frame(3));
     expect(replayed(buffer, 1)).toEqual([3]);
     expect(buffer.covers(1, 3)).toBe(true);

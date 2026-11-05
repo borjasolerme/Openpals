@@ -216,7 +216,6 @@ export const storedUndoSchema = z.object({
   schedule: storedScheduleSchema.optional(),
   appliedUpdatedAt: z.number().int().nonnegative().optional(),
   before: storedSnapshotSchema.optional(),
-  ownersBefore: z.boolean().optional(),
 }).strict();
 export const routineRequestCardDataSchema = z.object({
   version: z.literal(1),

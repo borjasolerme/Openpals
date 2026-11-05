@@ -22,7 +22,7 @@ import {
 import { PASS } from "./table.ts";
 
 export interface XResearchDeps {
-  /** The person's own treg key, else the plan's relay credential (researchCredential), read per request. */
+  /** The person's own treg key (researchCredential), read per request. */
   credential: () => ServiceCredential | null;
   /** The bot's research switch: on unless switched off. */
   botEnabled: (botId: string) => boolean;

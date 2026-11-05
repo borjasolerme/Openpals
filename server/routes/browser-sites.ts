@@ -1,5 +1,4 @@
 // GET ?profile=<id> or ?bot=<id>; POST /api/browser-sites/sign-out {profile | bot, site?} signs out of one site, or every site without `site`.
-// On a Team Cloud `threadId` names the conversation whose browser is meant (a member's, a group chat's); none is the team's.
 import type { BrowserSitesTarget, SignedInSites } from "../browser-sites.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 

@@ -19,9 +19,7 @@ export interface RecentWorkStore {
   taskByThread(botId: string, threadId: string): TaskRecord | undefined;
 }
 
-/** `privateThread`: on a Team Cloud, whether a conversation is one person's alone; elsewhere every 1:1 chat is private. */
-export function botThreads(store: RecentWorkStore, bot: Pick<BotRecord, "id" | "threadId" | "tasks">, userName: string,
-  privateThread: (threadId: string) => boolean = () => true): BotThread[] {
+export function botThreads(store: RecentWorkStore, bot: Pick<BotRecord, "id" | "threadId" | "tasks">, userName: string): BotThread[] {
   const out: BotThread[] = [];
   const seen = new Set<string>();
   const add = (thread: BotThread) => {
@@ -30,8 +28,8 @@ export function botThreads(store: RecentWorkStore, bot: Pick<BotRecord, "id" | "
     out.push(thread);
   };
   const direct = `1:1 with ${userName}`;
-  add({ threadId: bot.threadId, where: direct, title: store.taskByThread(bot.id, bot.threadId)?.title ?? null, private: privateThread(bot.threadId) });
-  for (const task of bot.tasks ?? []) if (!task.routineRunId) add({ threadId: task.threadId, where: direct, title: task.title, private: privateThread(task.threadId) });
+  add({ threadId: bot.threadId, where: direct, title: store.taskByThread(bot.id, bot.threadId)?.title ?? null, private: true });
+  for (const task of bot.tasks ?? []) if (!task.routineRunId) add({ threadId: task.threadId, where: direct, title: task.title, private: true });
   for (const group of store.groups) {
     if (!group.memberIds.includes(bot.id)) continue;
     const where = `room ${JSON.stringify(group.name)}`;
@@ -72,9 +70,9 @@ export function recentWorkLines(threads: readonly BotThread[], latest: readonly 
 export function recentWork(
   store: RecentWorkStore,
   bot: Pick<BotRecord, "id" | "threadId" | "tasks">,
-  opts: { userName: string; currentThreadId?: string; now?: number; windowMs?: number; include?: (threadId: string) => boolean; privateThread?: (threadId: string) => boolean },
+  opts: { userName: string; currentThreadId?: string; now?: number; windowMs?: number },
 ): RecentWorkLine[] {
-  const threads = botThreads(store, bot, opts.userName, opts.privateThread).filter((thread) => thread.threadId !== opts.currentThreadId && (!opts.include || opts.include(thread.threadId)));
+  const threads = botThreads(store, bot, opts.userName).filter((thread) => thread.threadId !== opts.currentThreadId);
   if (!threads.length) return [];
   const since = (opts.now ?? Date.now()) - (opts.windowMs ?? RECENT_WORK_WINDOW_MS);
   return recentWorkLines(threads, latestSaidByBot(threads.map((thread) => thread.threadId), bot.id, since, RECENT_WORK_MAX_LINES));

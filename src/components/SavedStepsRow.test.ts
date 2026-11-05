@@ -35,7 +35,7 @@ describe("the saved-steps setting", () => {
     expect(view.html).toContain('aria-checked="true"');
   });
 
-  it("draws nothing where the server cannot run saved steps (Windows, a Cloud home) or does not say", () => {
+  it("draws nothing where the server cannot run saved steps (not a Mac) or does not say", () => {
     fixture.config = { features: { savedStepsHere: false } };
     expect(render().html).toBe("");
     fixture.config = {};

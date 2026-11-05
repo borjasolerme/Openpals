@@ -1,6 +1,6 @@
 import { mcpSignInLink } from "./mcp-sign-in";
 
-/** GET /api/highlevel: one HighLevel connection per installation (desktop and Cloud home alike). */
+/** GET /api/highlevel: one HighLevel connection per installation. */
 export type HighLevelState = "unavailable" | "signed-out" | "connecting" | "connected" | "needs-sign-in";
 
 export interface HighLevelFlow {

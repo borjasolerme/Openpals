@@ -16,7 +16,6 @@ import {
   requiresAccountAlias,
   type ConnectorStatus,
 } from "@/lib/connector-status";
-import { managedConnectorUnavailableReason } from "../../shared/connector-availability";
 import type { Bot, InstanceInfo } from "@/state/store";
 
 // Narrow fixtures: the helper reads four fields, so the casts keep the test about the rule.
@@ -112,10 +111,6 @@ describe("connected-app status races", () => {
         hasAccounts, failed: false,
       })).toBe("Continue");
     }
-  });
-  it("does not render a dead Twitter connect action for managed installs", () => {
-    expect(managedConnectorUnavailableReason("managed", "twitter")).toMatch(/self-hosted/i);
-    expect(managedConnectorUnavailableReason("self-hosted", "twitter")).toBeNull();
   });
   it("does not let an older not_connected response erase a newer OAuth attempt", async () => {
     const generations = new Map([["gmail", 0]]);
@@ -305,33 +300,13 @@ describe("an answer the server was not sure about", () => {
 describe("connected apps setup notice", () => {
   const base = { configured: false, stale: false, remoteClient: false };
 
-  it("tells a fresh install what to do instead of reporting an outage", () => {
-    expect(connectorSetupNotice({ ...base, setup: "needs-setup" })).toEqual({
-      key: "connectors.setupNeeded",
-      tone: "info",
-    });
-    expect(connectorSetupNotice({ ...base, setup: "needs-setup", remoteClient: true })).toEqual({
-      key: "connectors.setupNeededRemote",
-      tone: "info",
-    });
-  });
-
-  it("still warns when the managed service really is unavailable", () => {
-    expect(connectorSetupNotice({ ...base, setup: "service-unavailable" })).toEqual({
-      key: "connectors.notConfigured",
-      tone: "warning",
-    });
-  });
-
-  it("keeps the warning for an older host that does not say why", () => {
-    expect(connectorSetupNotice({ ...base, setup: undefined })).toEqual({
-      key: "connectors.notConfigured",
-      tone: "warning",
-    });
+  it("tells a fresh install what to do", () => {
+    expect(connectorSetupNotice(base)).toBe("connectors.setupNeeded");
+    expect(connectorSetupNotice({ ...base, remoteClient: true })).toBe("connectors.setupNeededRemote");
   });
 
   it("says nothing when apps work or the stale banner already explains", () => {
-    expect(connectorSetupNotice({ ...base, configured: true, setup: "ready" })).toBeNull();
-    expect(connectorSetupNotice({ ...base, stale: true, setup: "needs-setup" })).toBeNull();
+    expect(connectorSetupNotice({ ...base, configured: true })).toBeNull();
+    expect(connectorSetupNotice({ ...base, stale: true })).toBeNull();
   });
 });

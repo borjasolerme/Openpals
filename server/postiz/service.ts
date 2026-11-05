@@ -1,5 +1,5 @@
 // The Postiz connection as the Apps card and Settings → API keys see it. It is one `postiz` MCP server entry, so the
-// MCP gate, each bot's server selection and a Team Cloud's scopes treat it like any other.
+// MCP gate and each bot's server selection treat it like any other.
 // Security: a key is checked before it is saved and only ever sent to the address it was saved for; no answer carries a
 // key or a token.
 import { POSTIZ_SERVER, type PostizStatus } from "../../shared/postiz.ts";
@@ -169,8 +169,8 @@ export function createPostiz(deps: PostizDeps) {
       if (how === "old-key" || (how === "key" && patch.postiz.key !== undefined)) write(null);
     },
 
-    /** Signs out and removes the entry, with every person's own sign-in and key for it. The key itself is removed by
-     * the save that stores it (the desktop's encrypted store, or this server's config). */
+    /** Signs out and removes the entry. The key itself is removed by the save that stores it (the desktop's encrypted
+     * store, or this server's config). */
     async disconnect(): Promise<{ ok: true; status: PostizStatus } | ({ ok: false } & PostizRefusal)> {
       if (deps.mcpConfigBusy.get()) return { ok: false, status: 409, code: "busy", error: "MCP servers are being updated. Try again in a moment." };
       const how = method();

@@ -18,23 +18,15 @@ const priority = ({ schedule }: { schedule: { type: string; endsAt?: number } })
 export function activeRoutinesContext(input: {
   botId: string;
   routines: readonly Routine[];
-  appTriggers?: readonly EventMonitor[];
   webhooks?: readonly (EventMonitor & { delivery?: string; groupId?: string })[];
-  include?: (threadId: string) => boolean;
   title?: (threadId: string) => string | null | undefined;
 }): string {
   const candidates = [
     ...input.routines.filter(routine => routine.target === "bot"),
-    ...(input.appTriggers ?? []).map(trigger => ({ ...trigger, schedule: { type: "app_event" }, nextRunAt: null })),
     ...(input.webhooks ?? []).filter(trigger => trigger.delivery !== "post" && !trigger.groupId)
       .map(trigger => ({ ...trigger, schedule: { type: "webhook" }, nextRunAt: null })),
   ];
-  const eligible = candidates.filter(routine => {
-    if (!routine.enabled || routine.botId !== input.botId) return false;
-    // Scoped turns need known, readable provenance; results may have a narrower audience too.
-    return !input.include || Boolean(routine.sourceThreadId && input.include(routine.sourceThreadId) &&
-      (!routine.resultsThreadId || input.include(routine.resultsThreadId)));
-  }).sort((a, b) => priority(a) - priority(b) || b.createdAt - a.createdAt || a.id.localeCompare(b.id));
+  const eligible = candidates.filter(routine => routine.enabled && routine.botId === input.botId).sort((a, b) => priority(a) - priority(b) || b.createdAt - a.createdAt || a.id.localeCompare(b.id));
   let text = INTRO;
   let count = 0;
   for (const routine of eligible) {

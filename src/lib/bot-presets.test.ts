@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, persistBotUpdate, type Bot } from "@/state/store";
 import { BotCreationDraft, EMPTY_BOT_DEFAULTS } from "./bot-creation-draft";
-import { chosenPreset, presetDraftPatch, presetGroups, presetPictureFile, presetSummaryLines, type BotPreset } from "./bot-presets";
+import { chosenPreset, presetDraftPatch, presetPictureFile, presetSummaryLines, type BotPreset } from "./bot-presets";
 import { createConfiguredBot } from "./create-configured-bot";
 import { describePart, describeSkip, shareRequestBody } from "./team-share";
 import { parsePackageDocument } from "../../shared/package-format";
@@ -11,9 +11,9 @@ const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwA
 
 function preset(overrides: Partial<BotPreset> = {}): BotPreset {
   return {
-    id: "p1", source: "file", key: "support", name: "Support agent", description: "Kind and precise.", packageName: "Sales skills", release: "2.0.1",
+    id: "p1", key: "support", name: "Support agent", description: "Kind and precise.", packageName: "Sales skills", release: "2.0.1",
     bot: { name: "Sky", title: "Support", soul: "Be kind.\n", appearance: { color: "blue", mascotExpression: "happy", avatar: { mime: "image/png", data: PNG, crop: "rounded" } } },
-    skills: [{ name: "objection-handling", description: "Answer common objections." }], skillsEnabled: false,
+    skills: [{ name: "objection-handling", description: "Answer common objections." }],
     playbooks: ["Qualify a lead"], notes: ["MEMORY.md"],
     ...overrides,
   };
@@ -22,18 +22,6 @@ function preset(overrides: Partial<BotPreset> = {}): BotPreset {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("presets in New bot", () => {
-  it("lists organization presets under their publisher, then imported ones", () => {
-    const groups = presetGroups([
-      preset({ id: "o1", source: "org", publisherName: "Acme Partners", name: "Closer" }),
-      preset({ id: "o2", source: "org", publisherName: "Acme Partners", name: "Opener" }),
-      preset({ id: "f1" }),
-    ]);
-    expect(groups.map((group) => [group.label, group.presets.map((entry) => entry.id)])).toEqual([
-      ["From Acme Partners", ["o1", "o2"]],
-      ["Imported presets", ["f1"]],
-    ]);
-  });
-
   it("fills only the name, words and look: never a model, computer, approval or connected apps", () => {
     const patch = presetDraftPatch(preset());
     expect(patch).toEqual({ name: "Sky", title: "Support", description: "", soul: "Be kind.\n", color: "blue", mascotExpression: "happy" });
@@ -50,13 +38,10 @@ describe("presets in New bot", () => {
     expect(presetPictureFile(preset({ bot: { name: "Sky" } }))).toBeNull();
   });
 
-  it("says where a preset came from and what it adds, switched on only from the organization", () => {
+  it("says where a preset came from and what it adds", () => {
     expect(presetSummaryLines(preset())).toEqual([
       "From Sales skills 2.0.1", "Kind and precise.", "Skills, added switched off: objection-handling",
       "Starter notes: MEMORY.md", "Playbooks: Qualify a lead", "The model, where it works, approval level and connected apps stay as set here.",
-    ]);
-    expect(presetSummaryLines(preset({ source: "org", publisherName: "Acme Partners", skillsEnabled: true })).slice(0, 3)).toEqual([
-      "From Sales skills 2.0.1 · Acme Partners", "Kind and precise.", "Skills, added switched on: objection-handling",
     ]);
   });
 

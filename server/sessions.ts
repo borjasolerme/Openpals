@@ -48,9 +48,6 @@ const sessionSchema = z.object({
   email: z.string().max(320).optional(),
   /** `portal`: set only by the internal verified-portal issuance path. Never by email or pairing input. */
   membershipAuthority: z.literal("portal").optional(),
-  /** A browser sign-in (PairingCode `browser`): accepted only as its browser's cookie, never as a bearer token. */
-  cookieOnly: z.literal(true).optional(),
-  owner: z.string().max(254).optional(),
 });
 
 /** A session another kind of server signed (a team's, by its own authority) is never one of this server's. */
@@ -71,7 +68,6 @@ export interface PublicSession {
   lastSeenAt: number;
   expiresAt: number;
   email?: string;
-  owner?: string;
 }
 
 export interface PairingCode {
@@ -82,9 +78,6 @@ export interface PairingCode {
   label: string;
   createdAt: number;
   expiresAt: number;
-  /** Only a browser sign-in redeems it, only by its credential, and a browser sign-in redeems no other window. */
-  browser?: true;
-  owner?: string;
 }
 
 export interface PublicPairing {
@@ -159,7 +152,6 @@ function publicSession(record: SessionRecord): PublicSession {
     expiresAt: record.expiresAt,
   };
   if (record.email) view.email = record.email;
-  if (record.owner) view.owner = record.owner;
   return view;
 }
 
@@ -180,7 +172,7 @@ export class SessionRegistry {
   private pairings: PairingCode[] = [];
   private tickets = new Map<string, { sessionId: string; expiresAt: number }>();
   private failures = new Map<string, { count: number; windowStart: number; lockedUntil: number }>();
-  private replays: Array<{ codeHash: string; attemptId: string; browser: boolean; result: ExchangeResult; expiresAt: number }> = [];
+  private replays: Array<{ codeHash: string; attemptId: string; result: ExchangeResult; expiresAt: number }> = [];
   private readonly onRevoked = new Set<(sessionId: string) => void>();
   private readonly onIssued = new Set<(session: Pick<SessionRecord, "id" | "scopes" | "email" | "membershipAuthority">) => void>();
   private lastSeenWrites = new Map<string, number>();
@@ -284,7 +276,7 @@ export class SessionRegistry {
   }
 
   /** From now on nothing without admin scope is opened, redeemed, issued or accepted; the caller revokes stored sessions. */
-  openPairing(input: { scopes?: Scope[]; label?: string; ttlMs?: number; browser?: boolean; owner?: string } = {}): { id: string; code: string; credential: string; expiresAt: number } {
+  openPairing(input: { scopes?: Scope[]; label?: string; ttlMs?: number } = {}): { id: string; code: string; credential: string; expiresAt: number } {
     this.prune();
     const now = this.now();
     const code = generatePairingCode();
@@ -298,7 +290,6 @@ export class SessionRegistry {
       label: (input.label ?? "").trim().slice(0, 80),
       createdAt: now,
       expiresAt: now + (input.ttlMs ?? PAIRING_CODE_TTL_MS),
-      ...(input.browser ? { browser: true as const, ...(input.owner ? { owner: input.owner } : {}) } : {}),
     };
     this.pairings.push(pairing);
     return { id: pairing.id, code, credential, expiresAt: pairing.expiresAt };
@@ -307,15 +298,6 @@ export class SessionRegistry {
   openPairings(): PublicPairing[] {
     this.prune();
     return this.pairings.map((p) => ({ id: p.id, label: p.label, scopes: [...p.scopes], createdAt: p.createdAt, expiresAt: p.expiresAt }));
-  }
-
-  /** Only a browser sign-in's 256-bit credential matches, so this consumes nothing and counts toward no lockout. */
-  previewBrowserSignIn(credential: string): { owner: string | null; expiresAt: number } | null {
-    this.prune();
-    if (!isPairingCredential(credential)) return null;
-    const presented = sha256(credential);
-    const pairing = this.pairings.find((p) => p.browser === true && sameDigest(p.credentialHash, presented));
-    return pairing ? { owner: pairing.owner ?? null, expiresAt: pairing.expiresAt } : null;
   }
 
   cancelPairing(id: string): boolean {
@@ -353,24 +335,22 @@ export class SessionRegistry {
     this.failures.set(source, entry);
   }
 
-  exchange(input: { code: string; label: string; source: string; fallbackLabel?: string; attemptId?: string; browser?: boolean }): ExchangeResult {
+  exchange(input: { code: string; label: string; source: string; fallbackLabel?: string; attemptId?: string }): ExchangeResult {
     this.prune();
     const now = this.now();
     // Hashed as presented: normalizePairingCode folds 0 to O and 1 to I, which would merge distinct secrets.
     const presented = isPairingCredential(input.code)
       ? sha256(input.code)
       : sha256(normalizePairingCode(input.code));
-    const browser = input.browser === true;
     const attemptId = typeof input.attemptId === "string" && /^[\w-]{8,64}$/.test(input.attemptId) ? input.attemptId : null;
-    const replay = attemptId ? this.replays.find((r) => r.attemptId === attemptId && r.browser === browser && sameDigest(r.codeHash, presented)) : undefined;
+    const replay = attemptId ? this.replays.find((r) => r.attemptId === attemptId && sameDigest(r.codeHash, presented)) : undefined;
     if (replay) return replay.result;
     const lock = this.lockState(input.source);
     if (lock.locked) {
       const seconds = Math.ceil(lock.retryAfterMs / 1000);
       return { ok: false, status: 429, error: `too many failed pairing attempts from your address; try again in ${seconds}s` };
     }
-    const index = this.pairings.findIndex((p) => (p.browser === true) === browser &&
-      (sameDigest(p.credentialHash, presented) || (!p.browser && sameDigest(p.codeHash, presented))));
+    const index = this.pairings.findIndex((p) => sameDigest(p.credentialHash, presented) || sameDigest(p.codeHash, presented));
     if (index < 0) {
       this.recordFailure(input.source);
       return { ok: false, status: 401, error: "pairing code is wrong or has expired; create a new one on the server" };
@@ -386,14 +366,13 @@ export class SessionRegistry {
       createdAt: now,
       lastSeenAt: now,
       expiresAt: now + Math.min(SESSION_TTL_MS, SESSION_MAX_AGE_MS),
-      ...(pairing.browser ? { cookieOnly: true as const, ...(pairing.owner ? { owner: pairing.owner } : {}) } : {}),
     };
     this.sessions.push(record);
     this.lastSeenWrites.set(record.id, now);
     this.persist();
     for (const listener of this.onIssued) listener(record);
     const result: ExchangeResult = { ok: true, token, session: publicSession(record) };
-    if (attemptId) this.replays.push({ codeHash: presented, attemptId, browser, result, expiresAt: now + EXCHANGE_REPLAY_MS });
+    if (attemptId) this.replays.push({ codeHash: presented, attemptId, result, expiresAt: now + EXCHANGE_REPLAY_MS });
     return result;
   }
 

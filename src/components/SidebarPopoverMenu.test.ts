@@ -13,13 +13,13 @@ const render = (items: Parameters<typeof SidebarPopoverMenu>[0]["items"]) =>
 
 it("draws an item's second line (where it connects) and third line (a note) under its label", () => {
   const html = render([
-    { key: "cloud", label: "Connect your phone", subtitle: "to your Cloud (always on)", onSelect: () => {} },
-    { key: "here", label: "Connect your phone", subtitle: "to this computer", note: "Your Cloud shows here once it is ready.", onSelect: () => {} },
+    { key: "server", label: "Connect your phone", subtitle: "to Garage server (always on)", onSelect: () => {} },
+    { key: "here", label: "Connect your phone", subtitle: "to this computer", note: "Garage server shows here once it is paired.", onSelect: () => {} },
     { key: "plain", label: "Settings", onSelect: () => {} },
   ]);
-  expect(html).toMatch(/Connect your phone<\/span><span[^>]*>to your Cloud \(always on\)<\/span>/);
-  expect(html).toMatch(/to this computer<\/span><span[^>]*>Your Cloud shows here once it is ready\.<\/span>/);
-  expect(html.indexOf("to your Cloud (always on)")).toBeLessThan(html.indexOf("to this computer"));
+  expect(html).toMatch(/Connect your phone<\/span><span[^>]*>to Garage server \(always on\)<\/span>/);
+  expect(html).toMatch(/to this computer<\/span><span[^>]*>Garage server shows here once it is paired\.<\/span>/);
+  expect(html.indexOf("to Garage server (always on)")).toBeLessThan(html.indexOf("to this computer"));
   expect(html).toContain('<span class="flex-1 truncate">Settings</span>');
 });
 
@@ -48,14 +48,14 @@ it("lets a sentence wrap instead of cutting it short, with its icon on the first
 
 it("puts what a one-line row leaves out in its tooltip, drawn the same as every other row", () => {
   const html = render([
-    { key: "cloud-move", label: "Try My Cloud move again", title: "My Cloud did not answer.", icon: "!", keepOpen: true, onSelect: () => {} },
+    { key: "server-move", label: "Try the move to Garage server again", title: "Garage server did not answer.", icon: "!", keepOpen: true, onSelect: () => {} },
     { key: "settings", label: "Settings", icon: "!", onSelect: () => {} },
   ]);
   const row = (key: string) => html.match(new RegExp(`<button[^>]*data-menu-key="${key}"[^>]*>.*?</button>`))?.[0] ?? "";
-  expect(row("cloud-move")).toContain('title="My Cloud did not answer."');
+  expect(row("server-move")).toContain('title="Garage server did not answer."');
   expect(row("settings")).not.toContain("title=");
   const look = (key: string) => row(key).match(/ class="([^"]*)"/)?.[1];
   expect(look("settings")).toMatch(/\bitems-center\b/);
-  expect(look("cloud-move")).toBe(look("settings"));
-  expect(row("cloud-move")).toContain('<span class="flex-1 truncate">Try My Cloud move again</span>');
+  expect(look("server-move")).toBe(look("settings"));
+  expect(row("server-move")).toContain('<span class="flex-1 truncate">Try the move to Garage server again</span>');
 });

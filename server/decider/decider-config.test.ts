@@ -28,9 +28,9 @@ describe("decider config", () => {
     expect(changedInstanceIds(instanceConfigs({}), instanceConfigs({ decider }))).toEqual([]);
   });
 
-  it("engines never inherit the key, nor Cloud Pro's included token", () => {
+  it("engines never inherit the key", () => {
     const childEnv: Record<string, string | undefined> = {
-      OMB_JEV_API_KEY: KEY, OMB_OPENROUTER_DECIDER_KEY: OR_KEY, OMB_CLOUD_DECIDER_TOKEN: "omb_decide_included", PATH: "/usr/bin",
+      OMB_JEV_API_KEY: KEY, OMB_OPENROUTER_DECIDER_KEY: OR_KEY, PATH: "/usr/bin",
     };
     stripWorkspaceCredentialEnv(childEnv);
     expect(childEnv).toEqual({ PATH: "/usr/bin" });

@@ -10,7 +10,7 @@ import { PASS, type RouteContext, type RouteHandler } from "./table.ts";
 
 /** Whose a conversation is, for who may type a secret into its card. */
 export interface SecretAnswerContext {
-  /** Other people sign in here too (a Team Cloud, or a server with members). */
+  /** Other people sign in here too (a server with members). */
   shared: boolean;
   /** The person the conversation belongs to, when it names one. */
   owner: string | null;

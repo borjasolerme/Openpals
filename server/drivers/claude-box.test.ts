@@ -1,7 +1,6 @@
-// A Claude turn where the bot box is on (every Cloud home): the engine and the helpers it starts see only what the box puts
+// A Claude turn where the bot box is on (OMB_BOT_BOX=1): the engine and the helpers it starts see only what the box puts
 // back, and the data folder is empty in there. The question tool's helper reaches the broker through a socket the driver
-// makes in the data folder, and the hook helper reads its bearer from a file there, so the box must put both back. Off a
-// Cloud the box is off and nothing changes.
+// makes in the data folder, and the hook helper reads its bearer from a file there, so the box must put both back.
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -54,7 +53,7 @@ describe("a Claude turn in the bot box", () => {
     for (const dir of dirs.splice(0)) await removeTempDir(dir);
   });
 
-  // The box's gates listen on unix sockets, which Windows refuses at a file path; the box runs only on a Linux Cloud home.
+  // The box's gates listen on unix sockets, which Windows refuses at a file path; the box runs only on Linux.
   it.skipIf(process.platform === "win32")("puts the turn's permission socket in the box, so the bot's question reaches the person", async () => {
     ensureDirs();
     chmodSync(FAKE_CLI, 0o755);
@@ -70,7 +69,7 @@ describe("a Claude turn in the bot box", () => {
       detect: () => ({ box: "bwrap", reason: null, tools: { bwrap: fakeBwrap, socat: "/usr/bin/true" } }),
     });
     const wrap = vi.spyOn(botBox, "wrap");
-    // A Cloud has no TMPDIR; here it holds the test's home, and the box puts back the folder TMPDIR names.
+    // A server may have no TMPDIR; here it holds the test's home, and the box puts back the folder TMPDIR names.
     delete process.env.TMPDIR;
     const dump = join(scratch, "dump.json");
     process.env.FAKE_CLAUDE_DUMP = dump;
@@ -89,7 +88,7 @@ describe("a Claude turn in the bot box", () => {
     const boxed = wrap.mock.results.map((result) => result.value as WrappedSpawn | null).find((spawned) => spawned?.plan.botId === "bot-a");
     expect(boxed, "the engine ran in the box").toBeTruthy();
     const socket = JSON.parse(readFileSync(dump, "utf8")).mcpConfig.mcpServers.ogb.args[1] as string;
-    expect(visibleInBox(boxed!.plan, join(DATA_DIR, "messages.db")), "the data folder is empty in the box, as on a Cloud").toBe("none");
+    expect(visibleInBox(boxed!.plan, join(DATA_DIR, "messages.db")), "the data folder is empty in the box").toBe("none");
     expect(visibleInBox(boxed!.plan, socket), "the question tool's socket is in the box").toBe("rw");
   }, 60_000);
 

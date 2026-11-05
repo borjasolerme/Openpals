@@ -120,7 +120,7 @@ export function parseSendState(value) {
         creating: record(entry.creating) ? Object.fromEntries(Object.entries(entry.creating).filter(([key, on]) => key.startsWith("bot:") && on === true)) : {},
         release: Array.isArray(entry.release) ? entry.release.filter((held) => record(held) && typeof held.id === "string" && typeof held.digest === "string").slice(0, 200) : [],
         files: record(entry.files) ? Object.fromEntries(Object.entries(entry.files).filter(([path, sha]) => typeof sha === "string" && /^[a-f0-9]{64}$/u.test(sha) && path.length <= 4096)) : {},
-        on: record(entry.on) ? Object.fromEntries(Object.entries(entry.on).filter(([key, on]) => /^(?:routine|call|webhook|app-event):[\w-]{1,128}$/u.test(key) && typeof on === "boolean")) : {},
+        on: record(entry.on) ? Object.fromEntries(Object.entries(entry.on).filter(([key, on]) => /^(?:routine|call|webhook):[\w-]{1,128}$/u.test(key) && typeof on === "boolean")) : {},
       };
     }
   }
@@ -182,8 +182,7 @@ const movedResult = () => ({ moved: 0, memory: 0, files: { sent: 0, kept: 0 }, c
  *   now?: () => number,
  *   engineWaitMs?: number,
  * }} deps `open({ move: true })`: the move's session. `engineWaitMs`: how long a move waits for the server to run the
- * engines whose keys it just took. `local(route, { method })`: a change on this computer's server (an app event the
- * server now collects).
+ * engines whose keys it just took.
  */
 export function createCloudSend({ local, cloud, handoff, store, onChange = () => {}, now = Date.now, engineWaitMs }) {
   let saved = parseSendState(safeRead(store));
@@ -232,13 +231,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
     if (!response.ok) return null;
     return new Uint8Array(await response.arrayBuffer());
   }
-  async function localSend(method, route) {
-    if (!LOCAL_ROUTE.test(route) || method !== "DELETE") throw new CloudSendError("invalid", "Unsupported local request.");
-    const response = await local(route, { method });
-    await response.body?.cancel();
-    return { ok: response.ok, status: response.status };
-  }
-  const kinds = createMoveKinds({ localJson, localBytes, localSend, entry, persist, refusal,
+  const kinds = createMoveKinds({ localJson, localBytes, entry, persist, refusal,
     progress: (value) => { progress = value; publish(); } });
 
   /** `everything`: a move's plan, which goes past what the person once kept here. A bot a send made on the server whose
@@ -327,8 +320,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
 
   /** Every item that waits, and then the chats, over the move's session, always signed out; what the server holds after.
    * The apps and keys go first, so the bots that follow find their engines; then the skills only a move carries, the
-   * bots, their memory and files, the chats with each conversation's settings, and last the automations, switched off. An
-   * app event goes only in the final pass, when this computer lets go of it. */
+   * bots, their memory and files, the chats with each conversation's settings, and last the automations, switched off. */
   async function sendItems(origin, mine, result, job) {
     const move = true;
     const summaryRoute = "/api/cloud-send?move=1";
@@ -342,7 +334,7 @@ export function createCloudSend({ local, cloud, handoff, store, onChange = () =>
       const computer = await moveConnections(origin, session, result, job.final);
       settleCreating(origin, theirs);
       const planned = plan(origin, mine, theirs, [], { everything: true });
-      const rows = pendingRows(planned).filter((row) => row.kind !== "app-event" || job.final);
+      const rows = pendingRows(planned);
       const total = rows.length;
       progress = total ? { done: 0, total } : null;
       publish();

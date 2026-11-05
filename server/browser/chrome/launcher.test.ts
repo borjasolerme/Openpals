@@ -160,18 +160,6 @@ describe("the Chrome launcher", () => {
     expect(calibrate).toHaveBeenCalledTimes(2);
   });
 
-  it("moves the next browser to the time zone the owner's app gives the server later, as the server's own clock moves", async () => {
-    const machine = mac({ env: { TZ: "UTC" } });
-    const chrome = launcher(machine);
-    await chrome.ready(headless(chrome.path));
-    expect(readFileSync(chrome.path, "utf8")).toContain("TZ='UTC'");
-    (machine.env as NodeJS.ProcessEnv).TZ = "Asia/Jerusalem";
-    expect(chrome.env()).toEqual({ AGENT_BROWSER_EXECUTABLE_PATH: chrome.path, AGENT_BROWSER_HIDE_SCROLLBARS: "0" });
-    const script = readFileSync(chrome.path, "utf8");
-    expect(script).toContain("TZ='Asia/Jerusalem'");
-    expect(script).toContain(`'--user-agent=${identity("155").userAgent}'`);
-  });
-
   it("starts the launcher once before any bot needs it, with the person's own home on a Mac whatever HOME the server has", async () => {
     const machine = mac();
     const checkLauncher = vi.fn(async () => {});
@@ -194,7 +182,7 @@ describe("the Chrome launcher", () => {
     const root = mkdtempSync(join(tmpdir(), "omb-launcher-check-"));
     folders.push(root);
     const slow = join(root, "slow.sh"), failing = join(root, "failing.sh");
-    // A Cloud machine just after a restart: the launcher starts but answers late.
+    // A machine just after a restart: the launcher starts but answers late.
     writeFileSync(slow, "#!/bin/sh\nexec sleep 5\n", { mode: 0o755 });
     writeFileSync(failing, "#!/bin/sh\nexit 3\n", { mode: 0o755 });
     await expect(runsLauncher(slow, process.env, 200)).resolves.toBeUndefined();

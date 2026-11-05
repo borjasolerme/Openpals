@@ -9,7 +9,7 @@ Accepted handoffs survive a failed source provider turn; explicit Stop,
 deleted conversations and revoked routes keep their existing cancellation
 behavior. This does not remove task capacity limits.
 
-A restart (quit, update, Cloud rollout or crash) never ends a job silently.
+A restart (quit, update or crash) never ends a job silently.
 At the next start (the runtime's restart policy, `server/runtime/runtime.ts` `open()`, docs/runtime-contract.md §5):
 
 - A teammate turn the restart cut runs again once, in place: the same request
@@ -268,11 +268,10 @@ A room's members can come from any department, a Chief that manages none of
 them included: they list each other with `list_room_targets` and hand each
 other work with `coordinate_bots` like any room. A bot's own peers list still
 narrows what it can address, and a revoked peer is refused before queued work
-starts. On a Team Cloud, nothing from a member's private chat is handed into a
-room or posted in one.
+starts.
 
 ```sh
-pnpm exec vitest run server/peer-roster.test.ts server/post-to-room.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/runtime-coordinator.test.ts server/peer-allowlist.e2e.test.ts server/cloud-team-open-reach.e2e.test.ts
+pnpm exec vitest run server/peer-roster.test.ts server/post-to-room.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/runtime-coordinator.test.ts server/peer-allowlist.e2e.test.ts
 ```
 
 The coordination suites use `launchVerificationServer`, `control-omb`, and the
@@ -293,8 +292,8 @@ does not change, so nobody new reads the room and the bot's turn gets only the
 brief. The sender's conversation shows "Sent to <bot> directly: it isn't in
 this room." (naming the room when sent from elsewhere), linking to that thread,
 the receipt says so, and the reply resumes the sender as any direct hand-off's
-does. A Team Cloud private chat and a room whose setup is unfinished keep their
-refusals, and a member who left a room's job thread still stops. Nothing asks
+does. A room whose setup is unfinished keeps its
+refusal, and a member who left a room's job thread still stops. Nothing asks
 the person to add the bot; `manage_room` stays limited to rooms in the Chief's
 own department.
 
@@ -418,8 +417,8 @@ preview/server processes afterward; retain evidence without credentials.
 ## Limits and safety
 
 Peer lists and peer approvals still apply; departments never limit who works with whom.
-Every turn — a chat, a room, a routine run, a webhook run, a goal run, a Cloud
-guest's turn, a standing external runtime — hands teammate work on with the
+Every turn — a chat, a room, a routine run, a webhook run, a goal run, a
+standing external runtime — hands teammate work on with the
 one `coordinate_bots` tool (work, a question with `consult`, a one-way notice
 with `reply: "none"`, a fresh thread with `thread: "new"`) and reads it with
 `assignment_status` (docs/runtime-contract.md §9). Any turn can still use

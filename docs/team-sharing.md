@@ -1,9 +1,7 @@
 # Sharing a whole department
 
 The sidebar groups bots into departments. **Share department…** saves one department as a single file (`<team>-<version>.openmaus.json`).
-Someone else adds it in **Templates → Import**, or an organization uploads it
-in Admin → Packages and its desktops add it from **Templates → From
-{Organization}** ([org-library.md](org-library.md)). Open it from the department's menu in the sidebar (right-click
+Someone else adds it in **Templates → Import**. Open it from the department's menu in the sidebar (right-click
 the department name), or from **Templates → Share**.
 
 ## What goes in the file
@@ -59,8 +57,7 @@ that run a command on this computer are left out, as are routine attachments.
 Text can still contain a secret someone typed into it. Before the file is
 written, every text part is checked with the same detectors the app uses for
 its logs. Anything that looks like a key or password is replaced with a
-marker, and the dialog lists which parts were changed. The Admin upload runs
-the same check again and refuses a file that still contains one.
+marker, and the dialog lists which parts were changed.
 
 The dialog shows, before you save, exactly what the file holds (counted by the
 server from the same export), and afterwards what was removed or left out.
@@ -89,9 +86,9 @@ you already have.
 - Skills arrive **switched off**; routines arrive **paused**.
 - Each connection becomes a new MCP server that is **switched off** with
   empty values, named after the connection (`crm`, or `crm-2` when `crm` is
-  already taken, so it can never pick up credentials you already have). Your
-  organization's MCP policy still applies; a refused connection is listed and
-  the rest of the team is added. Finish connections in **Plugins → MCP
+  already taken, so it can never pick up credentials you already have). A
+  connection that cannot be added is listed and the rest of the team is
+  added. Finish connections in **Plugins → MCP
   servers**.
 - Starter notes are written once, through the normal memory writer.
 - Preset bots in a file appear in **New bot** under **Imported presets**; a
@@ -99,8 +96,7 @@ you already have.
   ([presets.md](presets.md)).
 - A preset file (skills and presets, no bots) adds its presets to New bot and
   nothing else. A file with only skills has nothing to add here and is
-  refused with a pointer to the organization shelf (**Templates → From
-  {Organization}**, see [org-library.md](org-library.md)).
+  refused ("This file has no bots or preset bots to add.").
 
 If any step fails, everything the import created is removed again.
 
@@ -127,8 +123,8 @@ Everyone who can add a bot also sees a popup once, after the welcome on a new
 install and at the next launch otherwise: the two marks, **Let's start**, which
 opens this dialog, and **Not now**. It goes first in the queue of once-only
 notices (`GROK_MOVE_NOTICE`) and may interrupt a first chat, though not a turn, a
-dialog or a call. It reads nothing on this computer. It stays away from a Team
-Cloud, a hosted member, a branded build and a desktop an organization runs.
+dialog or a call. It reads nothing on this computer. It stays away from a
+remote viewer, someone who cannot add a bot and a branded build.
 
 | In Grok Bot | Here |
 | --- | --- |
@@ -154,7 +150,7 @@ The earlier `openmaus.grok/1` export still reads.
 
 After the button is pressed, and on the computer running OpenMausBot only, the
 desktop app reads through `GET /api/setup-import/grok` (its own window only, never
-a paired device, a browser, a bot's shell, a Cloud or a hosted server) those
+a paired device, a browser, a bot's shell or a hosted server) those
 Downloads files and one slice of the Grok Bot app's UI cache in
 `<user data>/sand-client-persistence/`: `roster.last-roster`, for the names of the
 Bots on this computer. Nothing else in that folder is opened, nor `~/.grokbot`.
@@ -169,10 +165,9 @@ popup in `src/components/GrokMovePopup.tsx`.
 ## The file format
 
 `openmaus.package` version 2, defined in `shared/package-format.ts`, the one
-module the app, the import preview and Admin all validate with. It still
-reads version 1 files (JSON and the BotMRR Markdown playbook). Older apps
-refuse version 2 files with their existing "not supported" message; Admin can
-produce a version 1 download for them. A file is at most 4 MB. Example files
+module the app and the import preview both validate with. It still reads
+version 1 files (JSON and the BotMRR Markdown playbook). Older apps refuse
+version 2 files with their existing "not supported" message. A file is at most 4 MB. Example files
 and their expected hashes live in `shared/package-fixtures/`.
 
 The HTTP route is `POST /api/teams/export` with

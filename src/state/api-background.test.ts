@@ -37,7 +37,7 @@ describe("api() and background requests", () => {
     const page = hiddenPage();
     vi.stubGlobal("document", page);
     const controller = new AbortController();
-    const mine = api("/api/team-map", { background: true, signal: controller.signal });
+    const mine = api("/api/bots", { background: true, signal: controller.signal });
     controller.abort();
     await expect(mine).rejects.toMatchObject({ name: "AbortError" });
     page.show();

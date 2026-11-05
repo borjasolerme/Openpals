@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { audienceWithin, intersectAudience, narrowestAudience, frameForMember, memberBody, memberBot, memberFramePayload, noteSeen, parseVisibility, bodyThreadIds, pathSubject, requestThreadIds, roomFeeds, routineVisible, sameAudience, webhookVisible, SEES_EVERYTHING, storedVisibility, viewerSees, VisibleSet, type FrameContext, type StreamSeen, type Viewer } from "./bot-visibility.ts";
+import { audienceWithin, intersectAudience, narrowestAudience, frameForMember, memberBody, memberBot, memberFramePayload, noteSeen, parseVisibility, bodyThreadIds, pathSubject, roomFeeds, routineVisible, sameAudience, webhookVisible, SEES_EVERYTHING, storedVisibility, viewerSees, VisibleSet, type FrameContext, type StreamSeen, type Viewer } from "./bot-visibility.ts";
 
 const ADA: Viewer = { kind: "member", email: "ada@example.test" };
 const BOB: Viewer = { kind: "member", email: "bob@example.test" };
@@ -294,12 +294,7 @@ describe("live frames for a member", () => {
 });
 
 describe("the conversations a request names", () => {
-  it("finds every conversation a request names: a task in the path, the query and the body", () => {
-    expect(requestThreadIds("/api/bots/pub/tasks/t-pub-2", new URLSearchParams())).toEqual(["t-pub-2"]);
-    expect(requestThreadIds("/api/bots/pub/tasks/t-pub-2/title", new URLSearchParams("threadId=t-x"))).toEqual(["t-pub-2", "t-x"]);
-    expect(requestThreadIds("/api/groups/g/tasks/t-g", new URLSearchParams())).toEqual(["t-g"]);
-    expect(requestThreadIds("/api/bots/pub/browser/live", new URLSearchParams("threadId=t-pub-2"))).toEqual(["t-pub-2"]);
-    expect(requestThreadIds("/api/bots/pub", new URLSearchParams())).toEqual([]);
+  it("finds every conversation a request body names", () => {
     expect(bodyThreadIds({ threadId: "a", resultsThreadId: "b", threadIds: ["c", 1], envelope: { threadId: "d" }, text: "threadId" })).toEqual(["a", "b", "c", "d"]);
     expect(bodyThreadIds({ deep: { deeper: { threadId: "x" } } })).toEqual([]);
     expect(bodyThreadIds([{ threadId: "x" }])).toEqual([]);

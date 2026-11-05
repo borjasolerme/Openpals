@@ -1,6 +1,6 @@
-import { chmodSync, closeSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, closeSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { BotBox, BoxRunner, BOX_EGRESS_PORT, flyApiPrivate, procHidepid, writeSeccompFile } from "./box.ts";
@@ -50,13 +50,6 @@ describe("BoxRunner.wrap", () => {
       NO_PROXY: "127.0.0.1,localhost,::1,[::1]", no_proxy: "127.0.0.1,localhost,::1,[::1]",
     });
     expect(wrapped.plan.botId).toBe("b1");
-  });
-
-  it("a shared-network box gets no proxy and no bridge", () => {
-    const runner = new BoxRunner({ bwrap: "/usr/bin/bwrap", bridge, setup, denyEnv: new Set() });
-    const wrapped = runner.wrap({ command: "/opt/chrome", args: ["--headless"], env: { PATH: "/usr/bin" }, net: "shared" });
-    expect(wrapped.env).toEqual({ PATH: "/usr/bin" });
-    expect(wrapped.args.slice(wrapped.args.indexOf("--") + 1)).toEqual(["/opt/chrome", "--headless"]);
   });
 
   it("the env-all mutation hands over the whole environment (so the self-check can prove the allow-list)", () => {
@@ -120,8 +113,8 @@ describe("BotBox", () => {
     expect(existsSync(join(dirs[0]!, "box"))).toBe(false);
   });
 
-  // On, the box's gates listen on unix sockets, which Windows refuses at a file path; the box runs only on a Linux Cloud
-  // home (detect.ts says "not-linux" anywhere else), and "off" above is what Windows gets.
+  // On, the box's gates listen on unix sockets, which Windows refuses at a file path; the box runs only on Linux, and
+  // "off" above is what Windows gets.
   it.skipIf(process.platform === "win32")("on: opens the two gates under the data folder, wraps every spawn and counts them", async () => {
     const box = new BotBox();
     boxes.push(box);
@@ -156,42 +149,6 @@ describe("BotBox", () => {
     expect(box.report().checks).toEqual({ passed: 20, total: 21, failed: ["egress-public-allowed"], at: 1 });
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatch(/^bot box: on \(bubblewrap, node bridges, credential broker, seccomp (on|unsupported here)\)$/);
-  });
-});
-
-describe("the box a bot's Chrome runs in", () => {
-  const boxes: BotBox[] = [];
-  const dirs: string[] = [];
-  afterEach(async () => {
-    for (const box of boxes.splice(0)) await box.stop();
-    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
-  });
-  const temp = () => { const dir = mkdtempSync(join(tmpdir(), "omb-box-")); dirs.push(dir); return dir; };
-
-  it("is no box off a Cloud home, which is what Windows gets", () => {
-    expect(new BotBox().browserBox(9, []), "no box off a Cloud home").toBeNull();
-  });
-
-  // On, the box's gates listen on unix sockets, which Windows refuses at a file path; the box runs only on a Linux Cloud
-  // home (detect.ts says "not-linux" anywhere else).
-  it.skipIf(process.platform === "win32")("has the host's network and the read-only paths asked for, and none of HOME or the data folder", async () => {
-    const box = new BotBox();
-    boxes.push(box);
-    const dataDir = join(temp(), "home", ".openmausbot"), home = dirname(dataDir);
-    mkdirSync(dataDir, { recursive: true });
-    await box.start({ dataDir, home, port: 8799, denyEnv: new Set(), env: {}, log: () => {}, detect: () => ({ box: "bwrap", reason: null, tools: { bwrap: "/usr/bin/bwrap", socat: null } }) });
-    const uploads = join(dataDir, "browser-uploads");
-    const browser = box.browserBox(9, [uploads])!;
-    expect(browser.bwrap).toBe("/usr/bin/bwrap");
-    const bind = (target: string) => browser.options.some((arg, i) => arg === "--bind" && browser.options[i + 2] === target);
-    expect(bind(home), "HOME is not the browser's").toBe(false);
-    expect(browser.options.join(" ")).not.toContain(`--tmpfs ${dataDir}`);
-    expect(browser.options.join(" "), "the engines are the turns' only").not.toContain(join(dataDir, "tools"));
-    expect(browser.options).not.toContain("--unshare-net");
-    expect(browser.options).toEqual(expect.arrayContaining(["--unshare-user", "--unshare-pid", "--die-with-parent"]));
-    expect(browser.options.join(" ")).toContain(`${uploads} ${uploads}`);
-    expect(browser.options.slice(browser.options.indexOf(uploads) - 1)[0]).toMatch(/^--ro-bind/u);
-    if (browser.seccomp) expect(browser.options.join(" ")).toContain("--seccomp 9");
   });
 });
 
@@ -237,21 +194,3 @@ describe("spawnCli goes through the box", () => {
   });
 });
 
-describe("BoxRunner.lend", () => {
-  // A plan over the Linux box's POSIX paths, which Windows' path module would join with backslashes.
-  it.skipIf(process.platform === "win32")("puts a conversation's lent folders (a memory layer) back read-write in its boxes only, until they are taken back", () => {
-    const dataDir = "/data/.openmausbot";
-    const setup = { dataDir, home: "/data", codeRoots: ["/app"], engineRoots: [], bridges: [{ name: "egress", port: BOX_EGRESS_PORT, socket: `${dataDir}/box/egress.sock` }, { name: "harness", port: 8799, socket: `${dataDir}/box/harness.sock` }] };
-    const runner = new BoxRunner({ bwrap: "/usr/bin/bwrap", bridge, setup, denyEnv: new Set() });
-    const layer = join(dataDir, "workspaces", "bot-a--member-p_ada");
-    const request = { command: "/usr/bin/x", args: [], cwd: join(dataDir, "task-workspaces", "bot-a", "thread-1"), env: { PATH: "/usr/bin", HOME: "/data" } };
-    expect(runner.wrap(request).plan.writable).not.toContain(layer);
-    runner.lend("bot-a", "thread-1", [layer]);
-    expect(runner.wrap(request).plan.writable).toContain(layer);
-    // Another conversation of the same bot never gets it.
-    expect(runner.wrap({ ...request, cwd: join(dataDir, "task-workspaces", "bot-a", "thread-2") }).plan.writable).not.toContain(layer);
-    runner.lend("bot-a", "thread-1", []);
-    expect(runner.wrap(request).plan.writable).not.toContain(layer);
-    expect(runner.lentTo("bot-a", "thread-1")).toEqual([]);
-  });
-});

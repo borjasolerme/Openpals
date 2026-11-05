@@ -2639,20 +2639,15 @@ describe("soul", () => {
     for (const field of ["composio", "connectorTools", "connectorScopes", "mcpServers"]) expect(mine).not.toHaveProperty(field);
   });
 
-  it("on a Team Cloud, gives a member's Chief's apps only to the bot it makes for that member", () => {
+  it("gives a restricted Chief's apps to the bot it makes, which only the Chief's people see", () => {
     const store = new Store(selection);
     const ada = "ada@acme.test";
-    const chief = store.createBot({ name: "Ada's MausBot", section: "Sales", createdBy: ada, visibility: { people: [ada] } });
+    const chief = store.createBot({ name: "Ada's Chief", section: "Sales", visibility: { people: [ada] } });
     store.patchBot(chief.id, { chiefOfStaff: true, connectorTools: { gmail: { tools: "*" }, slack: { tools: ["SLACK_SEND_MESSAGE"] } },
       connectorScopes: { apps: { gmail: "write", slack: "read" } } });
     const helper = createdBy(store, chief, "ada-helper");
-    expect(helper).toMatchObject({ createdBy: ada, visibility: { people: [ada] } });
+    expect(helper).toMatchObject({ visibility: { people: [ada] } });
     expect(grantsOf(helper)).toEqual(grantsOf(chief));
-    const shared = store.createBot({ name: "Team Chief", section: "Ops" });
-    store.patchBot(shared.id, { chiefOfStaff: true, connectorScopes: { apps: { slack: "write" } } });
-    const teamHelper = createdBy(store, shared, "team-helper");
-    expect(teamHelper.createdBy, "a bot nobody owns makes bots nobody owns").toBeUndefined();
-    expect(grantsOf(teamHelper)).toEqual({ connectorScopes: { apps: { slack: "write" } } });
   });
 
   it("deleteBot removes the bot folder with the workspace", () => {

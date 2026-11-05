@@ -8,40 +8,37 @@ const PASSKEY_PAGE = 'heading "Google"\nheading "Verifying it’s you"\ntext "Co
 const texts = (result: unknown) => (result as { content: Array<{ text: string }> }).content.map((part) => part.text);
 
 describe("the passkey notice a bot gets", () => {
-  it("orders what works: connected apps, another way with a code, then the lent PC on My Cloud only", () => {
-    const cloud = passkeyNotice("google", "cloud");
-    const works = cloud.slice(cloud.indexOf("What works, best first"));
+  it("orders what works: connected apps first, then another way with a code", () => {
+    const notice = passkeyNotice("google");
+    const works = notice.slice(notice.indexOf("What works, best first"));
     expect(works.indexOf("connected apps")).toBeLessThan(works.indexOf("Try another way"));
-    expect(cloud).toContain("COMPOSIO_MANAGE_CONNECTIONS");
-    expect(cloud).toContain("request_sign_in");
-    expect(cloud).toContain("do not retry, wait, or press Continue or Try again");
-    expect(cloud).toContain("this Google account wants a passkey");
-    expect(cloud.indexOf("Choose \"Try another way\" on this page")).toBeLessThan(cloud.indexOf("connected apps"));
-    expect(cloud).toContain("take a snapshot to see them), or use the person's own computer's browser");
-    expect(cloud).toContain("list_shared_computers");
-    expect(passkeyNotice("google", "desktop")).not.toContain("list_shared_computers");
-    expect(passkeyNotice("google", "server")).not.toContain("My Cloud");
-    expect(passkeyNotice("microsoft", "cloud")).toContain("\"Other ways to sign in\"");
+    expect(notice).toContain("COMPOSIO_MANAGE_CONNECTIONS");
+    expect(notice).toContain("request_sign_in");
+    expect(notice).toContain("do not retry, wait, or press Continue or Try again");
+    expect(notice).toContain("this Google account wants a passkey");
+    expect(notice.indexOf("Choose \"Try another way\" on this page")).toBeLessThan(notice.indexOf("connected apps"));
+    expect(notice).toContain("take a snapshot to see them), or use the person's own computer's browser");
+    expect(passkeyNotice("microsoft")).toContain("\"Other ways to sign in\"");
   });
 
   it("is added to an answer that shows a passkey step, and nowhere else", () => {
-    expect(texts(withPasskeyNotice(page(PASSKEY_PAGE), "cloud"))).toEqual([PASSKEY_PAGE, passkeyNotice("google", "cloud")]);
+    expect(texts(withPasskeyNotice(page(PASSKEY_PAGE)))).toEqual([PASSKEY_PAGE, passkeyNotice("google")]);
     const password = page('heading "Google"\nheading "Welcome"\ntextbox "Enter your password"');
-    expect(withPasskeyNotice(password, "cloud")).toBe(password);
-    expect(withPasskeyNotice({ isError: true }, "cloud")).toEqual({ isError: true });
+    expect(withPasskeyNotice(password)).toBe(password);
+    expect(withPasskeyNotice({ isError: true })).toEqual({ isError: true });
   });
 });
 
 describe("the runtime router annotates tool answers from either engine", () => {
-  const annotate = passkeyAnnotation("cloud");
+  const annotate = passkeyAnnotation();
   const old = { agentRpc: vi.fn(async () => page(PASSKEY_PAGE)) } as unknown as BrowserRuntime;
   const chrome = { service: { agentRpc: vi.fn(async () => page(PASSKEY_PAGE)) } } as unknown as ChromeEngine;
   const router = new RuntimeRouter(old, chrome, { annotate });
   const call = { name: "agent_browser_snapshot", arguments: {} };
 
   it("on agent-browser and on the Chrome engine, for calls but not the tool list", async () => {
-    expect(texts(await router.agentRpc("s1", { command: "agent-browser", args: [], env: {} }, "tools/call", call)).at(-1)).toBe(passkeyNotice("google", "cloud"));
-    expect(texts(await router.agentRpc("s2", { command: CHROME_ENGINE, args: ["bot:b"], env: {} }, "tools/call", call)).at(-1)).toBe(passkeyNotice("google", "cloud"));
+    expect(texts(await router.agentRpc("s1", { command: "agent-browser", args: [], env: {} }, "tools/call", call)).at(-1)).toBe(passkeyNotice("google"));
+    expect(texts(await router.agentRpc("s2", { command: CHROME_ENGINE, args: ["bot:b"], env: {} }, "tools/call", call)).at(-1)).toBe(passkeyNotice("google"));
     expect(texts(await router.agentRpc("s1", { command: "agent-browser", args: [], env: {} }, "tools/list", {}))).toEqual([PASSKEY_PAGE]);
   });
 

@@ -126,7 +126,7 @@ function desktopApp(saved: string | null = null) {
   };
 }
 
-/** A page with its own storage, as each origin has: this computer's, a team's, My Cloud's. */
+/** A page with its own storage, as each origin has: this computer's, a paired server's. */
 async function openPage(app: ReturnType<typeof desktopApp>, stored: string | null = null) {
   vi.resetModules();
   local = memoryStorage();
@@ -146,21 +146,21 @@ describe("app language in the desktop app", () => {
     expect(thisComputer.preference.languageChoice()).toBe("en");
     expect(app.saved()).toBe("en");
 
-    const team = await openPage(app);
-    expect(team.storage.getItem("omb-language"), "the team's page has its own storage").toBeNull();
-    expect(team.preference.languageChoice()).toBe("en");
-    expect(team.preference.effectiveLanguage(team.preference.useLanguageChoice(), "de")).toBe("en");
+    const server = await openPage(app);
+    expect(server.storage.getItem("omb-language"), "the server's page has its own storage").toBeNull();
+    expect(server.preference.languageChoice()).toBe("en");
+    expect(server.preference.effectiveLanguage(server.preference.useLanguageChoice(), "de")).toBe("en");
 
-    team.preference.setLanguageChoice("");
-    const myCloud = await openPage(app, "ja");
-    expect(myCloud.preference.languageChoice(), "System, picked on the team's page").toBe("");
-    expect(myCloud.preference.effectiveLanguage(myCloud.preference.languageChoice(), "de")).toBe("");
+    server.preference.setLanguageChoice("");
+    const workspace = await openPage(app, "ja");
+    expect(workspace.preference.languageChoice(), "System, picked on the server's page").toBe("");
+    expect(workspace.preference.effectiveLanguage(workspace.preference.languageChoice(), "de")).toBe("");
   });
 
   it("follows a pick made on another page while this one is open", async () => {
     const app = desktopApp("de");
-    const team = await openPage(app);
-    team.preference.useLanguageChoice();
+    const server = await openPage(app);
+    server.preference.useLanguageChoice();
     const listener = vi.fn();
     const unsubscribe = hook.subscribe!(listener);
     expect(hook.snapshot!()).toBe("de");

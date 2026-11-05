@@ -530,7 +530,7 @@ export function grokMovePlan(bot: GrokBot, options: { timeZone?: string; takenSe
   };
   let document: PackageDocument;
   try {
-    document = parsePackageDocument(draft, { trust: "file" });
+    document = parsePackageDocument(draft);
   } catch {
     throw new GrokImportError("unusable");
   }

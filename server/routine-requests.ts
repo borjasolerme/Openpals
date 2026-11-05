@@ -170,7 +170,6 @@ export type UndoRoutineRequestResult =
       action: RoutineRequestOperation["action"];
       routineId: string;
       restoredId?: string;
-      ownersBefore?: boolean;
     };
 
 export class RoutineRequestError extends Error {
@@ -1187,7 +1186,6 @@ export class RoutineRequestService {
       action: operation.action,
       routineId,
       ...(restoredId ? { restoredId } : {}),
-      ...(undo?.ownersBefore !== undefined ? { ownersBefore: undo.ownersBefore } : {}),
     };
   }
 

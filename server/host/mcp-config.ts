@@ -19,12 +19,8 @@ export interface McpConfigDeps {
   persistMcpServers(next: Record<string, unknown>): void;
   savedCustomDomain(): string | null;
   appCatalog?: Pick<ChatAppsMcp, "probeOptions" | "serverChanged" | "forgetServer"> & Partial<Pick<ChatAppsMcp, "hasApps">>;
-  /** A Team Cloud: each member's own key and sign-in for a removed server go with it. */
-  forgetPeople?(name: string): void;
   /** Whether each command server starts for each bot: checked again when one is added, changed or turned on. */
   health?: { changed(name: string): void };
-  /** A server was added or removed on purpose: a Cloud home's routines wait while every connection is gone. */
-  connectionsChanged?(change: "added" | "removed"): void;
   /** How bots' turns reach a URL server here: through the broker where turns are boxed (null: directly). */
   botsPath?(): BrokerPath | null;
   /** How Test starts a command server when no bot asks: as the turns of its bot, or of any bot (server/mcp-probe.ts `asBot`). */
@@ -76,7 +72,7 @@ const MAX_CONCURRENT_MCP_PROBES = 2;
 export const MCP_CONFIG_BUSY = "MCP servers are already being updated.";
 
 export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpConfig {
-  const { cfg, mcpOAuth, mcpConfigBusy, mcpServerResponse, persistMcpServers, appCatalog, forgetPeople, health } = deps;
+  const { cfg, mcpOAuth, mcpConfigBusy, mcpServerResponse, persistMcpServers, appCatalog, health } = deps;
   let mcpProbesInFlight = 0;
 
   const held = async <T,>(run: () => T | Promise<T>): Promise<T | McpConfigRefusal> => {
@@ -123,7 +119,6 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       persistMcpServers({ ...current, [name]: server });
       appCatalog?.serverChanged(name);
       health?.changed(name);
-      deps.connectionsChanged?.("added");
       return saved(201);
     }),
     addMany: (read) => held(async () => {
@@ -140,7 +135,6 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
         return { status: 400, error: `You can add at most ${MAX_MCP_SERVERS} MCP servers.` };
       }
       persistMcpServers({ ...current, ...servers });
-      deps.connectionsChanged?.("added");
       return announced({ status: 201, body: { ...mcpServerResponse(), added: names } });
     }),
     replace: (name, server) => write(() => {
@@ -185,9 +179,7 @@ export function createMcpConfig(deps: McpConfigDeps & { changed(): void }): McpC
       delete next[name];
       persistMcpServers(next);
       mcpOAuth.forget(name);
-      forgetPeople?.(name);
       appCatalog?.forgetServer(name);
-      deps.connectionsChanged?.("removed");
       return saved(200);
     }),
     test: async (name, { signal, asBot }) => {

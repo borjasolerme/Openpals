@@ -30,7 +30,6 @@ type Bot = { id: string; mcpServers?: string[] };
 
 async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]; listed?: Record<string, Record<string, unknown>>; probeAs?: (server: { bot?: string }) => { id?: string; cwd?: string } } = {}) {
   const cfg: Pick<AppConfig, "mcpServers"> = { mcpServers: {} };
-  const changes: string[] = [];
   let busy = false;
   const mcpOAuth = new McpOAuthManager({ file: join(DATA_DIR, "mcp-route-oauth.json") });
   const mcpServerResponse = () => ({ servers: listMcpServers(cfg.mcpServers).map((server) => ({ ...server, ...options.listed?.[server.name] })) });
@@ -42,7 +41,6 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
     mcpServerResponse,
     persistMcpServers: (next) => { cfg.mcpServers = next; },
     savedCustomDomain: () => null,
-    connectionsChanged: (change) => { changes.push(change); },
     changed: () => {},
     ...(options.botsPath ? { botsPath: options.botsPath } : {}),
     ...(options.probeAs ? { probeAs: options.probeAs } : {}),
@@ -67,19 +65,8 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
   const post = (path: string, body: unknown) => fetch(`${base}${path}`, {
     method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
   });
-  return { cfg, post, changes, base, get: () => fetch(`${base}/api/mcp/servers`), remove: (name: string) => fetch(`${base}/api/mcp/servers/${name}`, { method: "DELETE" }) };
+  return { cfg, post, base, get: () => fetch(`${base}/api/mcp/servers`) };
 }
-
-it("says when a server is added, imported or removed on purpose", async () => {
-  const { post, remove, changes } = await serve();
-  const added = await post("/api/mcp/servers", { name: "warehouse", url: "https://data.example.com/mcp", headers: { Authorization: "" } });
-  expect(added.status, await added.clone().text()).toBe(201);
-  const imported = await post("/api/mcp/servers/import", { json: JSON.stringify({ mcpServers: { nightwatch: { type: "http", url: "https://nightwatch.example.com/mcp" } } }) });
-  expect(imported.status, await imported.clone().text()).toBe(201);
-  expect((await remove("warehouse")).status).toBe(200);
-  expect((await remove("missing")).status).toBe(404);
-  expect(changes).toEqual(["added", "added", "removed"]);
-});
 
 it.each(["create", "import"])("keeps a blank header and a filled one as given on %s", async (action) => {
   const { cfg, post } = await serve();
@@ -164,7 +151,7 @@ describe("a bot's MCP servers, as a phone reads them", () => {
   });
 });
 
-// The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on a Linux Cloud home.
+// The broker listens on a unix socket, which Windows refuses at a file path; the box runs only on Linux.
 describe.skipIf(process.platform === "win32")("Test, where bots reach URL servers through the credential broker", () => {
   const HEADERS = { Authorization: "Bearer team-orders", "CF-Access-Client-Id": "5c1d0e9a.access", "CF-Access-Client-Secret": "0f9e8d7c6b5a4938271605" };
   let dir = "", broker: CredentialBroker | undefined, mcp: FakeHttpMcp | undefined;

@@ -5,7 +5,7 @@ import { engineReady } from "@/components/EngineLibrary";
 import { usePrefersReducedMotion } from "@/components/mascot-clock";
 import { brand, productName } from "@/lib/brand";
 import { cn } from "@/lib/cn";
-import { DEFAULT_BOT_NAME, myDefaultBot, useViewerEmail } from "@/lib/default-bot";
+import { DEFAULT_BOT_NAME, defaultBotIn } from "@/lib/default-bot";
 import { activeLocale, t } from "@/lib/i18n";
 import { aiChoices, aiWorks } from "@/lib/onboarding";
 import { useStore } from "@/state/store";
@@ -58,7 +58,7 @@ function DemoComposer({ reduced, onTyping }: { reduced: boolean; onTyping: (typi
 export function MeetScreen({ hosted, onNext }: { hosted: boolean; onNext: () => void }) {
   const { state } = useStore();
   const reduced = usePrefersReducedMotion();
-  const maus = myDefaultBot(state.bots, useViewerEmail());
+  const maus = defaultBotIn(state.bots);
   // An AI counts once it answered a test message (or cannot be sent one); OpenCode's free model never does.
   const tested = useWelcomeAi(state.instances, !hosted);
   const ready = aiWorks(tested);

@@ -60,34 +60,31 @@ export function withOrgBlocks(catalog: ModelCatalog, blocked: ReadonlySet<string
 
 type AccountEnv = Record<string, string | undefined>;
 
-/** Keeps the catalog in step with the account config. `environments` names every place the CLI may have written it: on a
- * Team Cloud each audience's engine home holds its own copy of the same organization's answer, and the newest speaks. */
+/** Keeps the catalog in step with the account config the CLI writes in `env`. */
 export function createOrgModelBlocks(
-  environments: () => AccountEnv[],
+  env: AccountEnv,
   apply: (blocked: ReadonlySet<string>) => void,
   read: (path: string) => Promise<string> = (path) => readFile(path, "utf8"),
 ) {
   let lastRead = "";
   return {
     async refresh(force = false): Promise<void> {
-      let newest: { path: string; mtimeMs: number; size: number } | null = null;
-      for (const env of environments()) {
-        if (CLOUD_BACKEND_ENV.some((key) => env[key])) return apply(new Set());
-        for (const path of claudeAccountFiles(env)) {
-          const found = await stat(path).catch(() => null);
-          if (!found?.isFile() || found.size === 0) continue;
-          if (!newest || found.mtimeMs > newest.mtimeMs) newest = { path, mtimeMs: found.mtimeMs, size: found.size };
-          break;
-        }
+      if (CLOUD_BACKEND_ENV.some((key) => env[key])) return apply(new Set());
+      let file: { path: string; mtimeMs: number; size: number } | null = null;
+      for (const path of claudeAccountFiles(env)) {
+        const found = await stat(path).catch(() => null);
+        if (!found?.isFile() || found.size === 0) continue;
+        file = { path, mtimeMs: found.mtimeMs, size: found.size };
+        break;
       }
-      const version = newest ? `${newest.path}:${newest.mtimeMs}` : "none";
+      const version = file ? `${file.path}:${file.mtimeMs}` : "none";
       if (!force && version === lastRead) return;
-      if (!newest || newest.size > ACCOUNT_FILE_MAX_BYTES) {
+      if (!file || file.size > ACCOUNT_FILE_MAX_BYTES) {
         lastRead = version;
         return apply(new Set());
       }
       // Windows refuses a read while the CLI is renaming this file into place: what was known stands until a read succeeds.
-      const text = await read(newest.path).catch(() => null);
+      const text = await read(file.path).catch(() => null);
       if (text === null) return;
       lastRead = version;
       apply(parseOrgBlockedModels(text));

@@ -1,7 +1,6 @@
 import { Globe, Puzzle, Zap } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { useAppTriggers } from "@/lib/app-triggers";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useAdvancedMode } from "@/lib/interface-mode";
@@ -83,11 +82,10 @@ export function SidebarAppsButton() {
   );
 }
 
-/** An unseen failed run, or an app trigger in trouble. */
+/** An unseen failed run. */
 export function useAutomationsNeedYou(): boolean {
   const { state } = useStore();
-  const appTriggers = useAppTriggers();
-  return state.routineRuns.some((run) => isRoutineProblemRun(run) && !run.seenAt) || appTriggers.triggers.some((trigger) => trigger.enabled && trigger.problem);
+  return state.routineRuns.some((run) => isRoutineProblemRun(run) && !run.seenAt);
 }
 
 export function SidebarBottomButtons() {

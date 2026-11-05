@@ -7,8 +7,6 @@
 //   checks handed it, to that thread's sender, once;
 // - what those reads return reaches it only as records;
 // - no browser, computer, phone or other tools are mounted, and nothing it says is captured into memory.
-// A new Cloud's first look is the Chief's own turn in its chat: through the relay it too may only read Gmail and Google
-// Calendar and write a few reply drafts, so nothing it reads can make it send, accept or delete anything.
 import { connectorCallsIn, isReadOnlyTool, KNOWN_READ_SLUGS } from "../shared/outbound.ts";
 import type { RuntimeEvent } from "../shared/runtime-events.ts";
 import type { ProviderAdapter } from "./contracts.ts";
@@ -62,8 +60,6 @@ export interface ReadAndDraftDeps {
   /** The run holding these checked items may draft a reply in this thread, to this address. */
   mayDraft(checkKey: string, threadId: string, to: string | undefined): boolean;
   drafted(checkKey: string, threadId: string): void;
-  /** A first look running in this conversation: what it may draft. */
-  look?(threadId: string): { draft(reply: DraftReply): boolean } | null;
   /** Drafts a confined conversation was let write, by its bot. */
   wroteDrafts?(botId: string, count: number): void;
 }
@@ -152,17 +148,16 @@ export function createReadAndDraft(deps: ReadAndDraftDeps) {
   /** True when the frame was refused; an allowed draft is counted, so a retry of the run never writes it twice. */
   function refusesConnectorCall(bot: Pick<Bot, "id" | "name">, threadId: string, frame: unknown): boolean {
     const run = runOf(threadId);
-    const looking = run ? null : deps.look?.(threadId) ?? null;
-    if (!run && !looking) return false;
+    if (!run) return false;
     const drafts: DraftReply[] = [];
     const refused = refusedConnectorCall(frame, (reply) => {
       if (drafts.some((one) => one.threadId === reply.threadId)) return false;
-      const ok = run ? run.checkKey !== undefined && deps.mayDraft(run.checkKey, reply.threadId, reply.to) : looking!.draft(reply);
+      const ok = run.checkKey !== undefined && deps.mayDraft(run.checkKey, reply.threadId, reply.to);
       if (ok) drafts.push(reply);
       return ok;
     });
     if (refused !== null) return refuse(bot, threadId, refused);
-    if (run) for (const reply of drafts) deps.drafted(run.checkKey!, reply.threadId);
+    for (const reply of drafts) deps.drafted(run.checkKey!, reply.threadId);
     if (drafts.length) deps.wroteDrafts?.(bot.id, drafts.length);
     return false;
   }

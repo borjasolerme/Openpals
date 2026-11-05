@@ -1,7 +1,7 @@
 {
   "id": "social-posts",
   "name": "Social Post Previews",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Show how a social post will look on Instagram, LinkedIn, X, Threads, Facebook, TikTok, Reels and Shorts.",
   "defaultEnabled": true,
   "triggerTerms": [

@@ -7,8 +7,16 @@ computer or one somewhere else, and it is built for scripts, CI and other
 agents: every command can print one JSON document, and the exit code says how
 things went.
 
+Openpals has no npm package. Run the command from a clone of its source; a
+small wrapper on your PATH makes it `openmausbot`:
+
 ```sh
-npm install -g openmausbot            # or use npx openmausbot …
+git clone https://github.com/borjasolerme/Openpals.git ~/Openpals
+(cd ~/Openpals && ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile)
+mkdir -p ~/.local/bin && printf '#!/bin/sh\nexec node --experimental-strip-types "$HOME/Openpals/server/openmausbot.ts" "$@"\n' > ~/.local/bin/openmausbot && chmod +x ~/.local/bin/openmausbot
+```
+
+```sh
 openmausbot serve --no-pair &         # a workspace with no screen (or use your desktop app)
 openmausbot engine set claude --key-env ANTHROPIC_API_KEY
 openmausbot team apply launch-room.yaml
@@ -402,7 +410,13 @@ an engine that can limit built-in tools.
 
 ```yaml
 # .github/workflows/rehearse.yml (a sketch)
-- run: npm install -g openmausbot @anthropic-ai/claude-code
+- run: |
+    git clone --depth 1 https://github.com/borjasolerme/Openpals.git "$RUNNER_TEMP/openpals"
+    (cd "$RUNNER_TEMP/openpals" && ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile)
+    mkdir -p "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+    printf '#!/bin/sh\nexec node --experimental-strip-types "%s/server/openmausbot.ts" "$@"\n' "$RUNNER_TEMP/openpals" > "$HOME/.local/bin/openmausbot"
+    chmod +x "$HOME/.local/bin/openmausbot"
+    npm install -g @anthropic-ai/claude-code
 - run: openmausbot serve --no-pair --data-dir "$RUNNER_TEMP/omb" &
   env: { OMB_ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}" }   # the workspace's Claude key from the start
 - run: openmausbot doctor --wait 2m          # the server answers and an engine is ready

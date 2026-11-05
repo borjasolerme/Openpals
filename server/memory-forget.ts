@@ -73,15 +73,13 @@ export function ownersOwnAsk(path: ReadonlyArray<{ role: string; kind?: string; 
 }
 
 export type BotMemoryResult = MemoryUpdateResult | { ok: true; forgotten: string[]; aboutMe: string[] }
-  | { ok: true; preference: "saved" | "known"; person?: string };
+  | { ok: true; preference: "saved" | "known" };
 
 /** The longest preference one line of About me holds: one standing wish, not instructions. */
 export const PREFERENCE_CHARS = 300;
 
 /** Where a preference saved in this turn goes: the About me of the person whose own words began this work. */
 export interface PreferenceTarget {
-  /** Their name on a Team Cloud, for the bot's words; none for the one person of a desktop or My Cloud. */
-  person?: string;
   /** Adds the line; 0 when it was there already or the person removed it before. */
   save(text: string): number;
 }
@@ -104,7 +102,7 @@ export function botMemoryUpdate(
     }
     // Said again now, it holds again, even after the person had it forgotten.
     clearForgotten(text);
-    return { ok: true, preference: opts.prefer.save(text) > 0 ? "saved" : "known", ...(opts.prefer.person ? { person: opts.prefer.person } : {}) };
+    return { ok: true, preference: opts.prefer.save(text) > 0 ? "saved" : "known" };
   }
   if (body.action === "forget") {
     const passage = typeof body.oldText === "string" ? body.oldText : "";
@@ -112,7 +110,7 @@ export function botMemoryUpdate(
     if (!mentions) return { ok: false, code: "invalid", error: "forget needs old_text: a few words that name what to forget, at least three letters." };
     const forgotten = forgetInNotes(layer, mentions);
     if (!opts.aboutMe) return { ok: true, forgotten, aboutMe: [] };
-    const aboutMe = opts.aboutMe.forget(layer, mentions);
+    const aboutMe = opts.aboutMe.forget(mentions);
     rememberForgotten(passage, mentions);
     return { ok: true, forgotten, aboutMe };
   }

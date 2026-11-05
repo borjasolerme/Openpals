@@ -196,12 +196,6 @@ export function keptAttachmentNames(urls: ReadonlyArray<string | null | undefine
   return kept;
 }
 
-let clearOffered = true;
-/** A Team Cloud has no Settings clear, so its full-store error must not point there. */
-export function offerAttachmentClear(offered: boolean): void {
-  clearOffered = offered;
-}
-
 /** A file this new may still be on its way into a message or a turn, so a clear leaves it. */
 export const ATTACHMENT_CLEAR_MIN_AGE_MS = 10 * 60 * 1000;
 
@@ -272,7 +266,7 @@ class AttachmentReservation {
     if (available < required) {
       throw statusError(
         507,
-        `attachments storage is full (${formatStoreLimit(ATTACHMENTS_MAX_BYTES)} limit)${clearOffered ? ". Clear old attachments in Settings → General." : ""}`,
+        `attachments storage is full (${formatStoreLimit(ATTACHMENTS_MAX_BYTES)} limit). Clear old attachments in Settings → General.`,
       );
     }
     const granted = Math.min(preferred, available);

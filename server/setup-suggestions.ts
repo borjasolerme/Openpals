@@ -4,7 +4,7 @@
 // letter key always picks a job the person could read. Without anything to go on the fixed answers (initial-greeting.ts)
 // show; when no one can write them, the card keeps what it shows.
 import { redactSecretsInText } from "../shared/redact.ts";
-import { appLabel } from "./app-event-catalog.ts";
+import { appLabel } from "./app-label.ts";
 import type { AppConfig } from "./config.ts";
 import type { ProviderAdapter } from "./contracts.ts";
 import { hasSetupChoices, setupChoices } from "./initial-greeting.ts";
@@ -371,7 +371,7 @@ export function suggestionBasis(bot: BotRecord, place: { bots: readonly BotRecor
     ...(bot.section ? { department: bot.section } : {}),
     ...(aboutMe ? { aboutMe } : {}),
     otherJobs: place.shared ? [] : place.bots
-      .filter((other) => other.id !== bot.id && !other.hidden && !other.movedTo && !other.defaultBot && !other.chiefOfStaff)
+      .filter((other) => other.id !== bot.id && !other.hidden && !other.defaultBot && !other.chiefOfStaff)
       .map((other) => other.title?.trim() || other.description?.split("\n")[0]?.trim() || "").filter(Boolean),
     language, languageCode: place.languageCode, canBrowse: place.canBrowse,
   };
@@ -390,8 +390,8 @@ export interface SetupSuggestionsHost extends Pick<SetupSuggestionsDeps, "within
   engine(bot: BotRecord): EngineCapabilities | undefined;
   /** The built-in browser is on here. */
   browserOn(): boolean;
-  /** The connected-apps broker: set up or not, the connection it uses, and what is connected. */
-  apps: { configured(): boolean; mode(): string; connected(): Promise<Record<string, { connected: boolean }>> };
+  /** Connected apps: set up or not, and what is connected. */
+  apps: { configured(): boolean; connected(): Promise<Record<string, { connected: boolean }>> };
 }
 
 const APPS_FRESH_MS = 10 * 60_000;
@@ -399,15 +399,14 @@ const APPS_FRESH_MS = 10 * 60_000;
 /** createSetupSuggestions on this server's settings, people and connected apps. The apps are read at most every ten
  * minutes, and a card waits for a read on its way for at most 700 ms. */
 export function setupSuggestionsFor(host: SetupSuggestionsHost) {
-  let read: { key: string; at: number; slugs: string[] } | null = null;
+  let read: { at: number; slugs: string[] } | null = null;
   let reading: Promise<string[]> | null = null;
   const slugs = (): { known: string[] } | { known: string[]; later: Promise<string[]> } => {
-    const key = host.apps.mode();
-    if (read && read.key === key && Date.now() - read.at < APPS_FRESH_MS) return { known: read.slugs };
+    if (read && Date.now() - read.at < APPS_FRESH_MS) return { known: read.slugs };
     reading ??= host.apps.connected()
       .then((services) => {
         const found = Object.entries(services).filter(([, state]) => state.connected).map(([slug]) => slug).sort();
-        read = { key, at: Date.now(), slugs: found };
+        read = { at: Date.now(), slugs: found };
         return found;
       })
       .catch(() => [] as string[])

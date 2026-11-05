@@ -1,13 +1,13 @@
-# Deploy OpenMausBot on a VPS
+# Deploy Openpals on a VPS
 
-From a blank Linux server to OpenMausBot running on it around the clock, reachable from your laptop, the desktop app and your phone, with your bots working while every laptop is closed. It assumes nothing beyond being able to open a terminal and paste commands. About twenty minutes, most of it waiting.
+From a blank Linux server to Openpals running on it around the clock, reachable from your laptop, the desktop app and your phone, with your bots working while every laptop is closed. It assumes nothing beyond being able to open a terminal and paste commands. About twenty minutes, most of it waiting.
 
 Two ways to make the server reachable are covered. Pick one; the rest of the guide is the same.
 
 | | You need | Who can reach it | Best for |
 |---|---|---|---|
-| **B. Your own domain** (Docker + Caddy) | a domain name, ports 80/443 | anyone with a pairing code, over HTTPS | a permanent address you own |
-| **C. Your Tailscale network** (`serve --tailscale`) | Tailscale on the server and your devices | only your tailnet | the most private; nothing public at all |
+| **A. Your own domain** (Docker + Caddy) | a domain name, ports 80/443 | anyone with a pairing code, over HTTPS | a permanent address you own |
+| **B. Your Tailscale network** (`serve --tailscale`) | Tailscale on the server and your devices | only your tailnet | the most private; nothing public at all |
 
 Whichever you pick, the login is the same: you **pair** each device once with a short code and it stays signed in. A session lasts 30 days; using it with half that or less left renews it to a full 30, up to 180 days from pairing (`OMB_SESSION_TTL_DAYS` and `OMB_SESSION_MAX_DAYS` change both numbers). There is no password.
 
@@ -20,13 +20,14 @@ Needs the desktop app instead: dictation and controlling the server's own deskto
 ## Before you start
 
 1. **A server.** Any Linux VPS: Ubuntu 22.04 or 24.04, 2 CPUs and 4 GB of RAM is plenty. You need `sudo` or root. Hetzner, DigitalOcean, Lightsail, a Mac mini in a cupboard: all fine.
-2. **Node 24 or newer** for paths A and C (`node --version`). On Ubuntu:
+2. **Node 24 or newer and git** for path B (`node --version`). On Ubuntu:
 
    ```sh
-   curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt-get install -y nodejs
+   curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt-get install -y nodejs git
    ```
 
-   Path B uses Docker instead and needs no Node on the host.
+   Path A uses Docker instead and needs no Node on the host. Openpals has no
+   npm package: both paths run it from a clone of its source.
 3. **Your engine accounts.** Bots run on the same engine CLIs you use on your laptop, with your subscriptions. You sign them in on the server once, the same way.
 
 Connect to the server for everything below:
@@ -35,7 +36,7 @@ Connect to the server for everything below:
 ssh root@YOUR_SERVER_IP
 ```
 
-For paths A and C, use the same unprivileged Linux account for setup and the
+For path B, use the same unprivileged Linux account for setup and the
 running service. The examples below use `maus` with home `/home/maus`. From an
 administrator shell, create it if it does not already exist, then switch to it:
 
@@ -45,11 +46,11 @@ sudo -iu maus
 ```
 
 The login shell also changes into `/home/maus`; run setup there, not from `/root`.
-Run the `npx` commands and engine sign-ins below in this account. Keep a separate
+Run the Openpals commands and engine sign-ins below in this account. Keep a separate
 administrator shell for system packages and systemd. If you already signed in as
 root, sign in again as `maus`; those accounts have different homes and credentials.
 
-## Path B: your own domain, with Docker
+## Path A: your own domain, with Docker
 
 One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 
@@ -64,52 +65,75 @@ One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 3. **Get the deploy files and set the name:**
 
    ```sh
-   git clone https://github.com/borjasolerme/Openpals && cd Openpals/deploy
+   git clone https://github.com/borjasolerme/Openpals.git && cd Openpals/deploy
    cp .env.example .env
    nano .env                # DOMAIN=maus.example.com ; ENGINES=@anthropic-ai/claude-code @openai/codex
    ```
 
    `ENGINES` lists the engine CLIs baked into your image, separated by spaces. Change it later and rebuild if you add one.
 
-4. **Start it:**
+4. **Build and start it:**
 
    ```sh
-   docker compose pull omb && docker compose up -d
+   docker compose up -d --build
    docker compose ps        # omb "healthy", caddy "running"
    ```
 
+   `--build` builds the image from the clone, with the engines from `ENGINES`.
+   Do not use `docker compose pull`: there is no prebuilt Openpals image.
+
    Caddy requests the certificate on its own; give it a minute. Then `https://maus.example.com` shows a page asking for a pairing code. That is correct: nothing works until you pair.
 
-In this path, every `npx openmausbot …` command below is run inside the container instead:
+In this path, every `node --experimental-strip-types server/openmausbot.ts …`
+command below is run inside the container as `node dist-server/openmausbot.js …`
+instead, from `Openpals/deploy`:
 
 ```sh
 docker compose exec omb node dist-server/openmausbot.js pair --label "My MacBook"
 ```
 
-## Path C: only your Tailscale network
+## Path B: only your Tailscale network
 
-From the administrator shell, install Tailscale on the server and sign in (`curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up`). Enable HTTPS certificates for your tailnet once in the admin console (DNS → HTTPS Certificates), then run this from the `maus` shell:
+From the administrator shell, install Tailscale on the server and sign in (`curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up`). Enable HTTPS certificates for your tailnet once in the admin console (DNS → HTTPS Certificates).
+
+Then, from the `maus` shell, get Openpals, build its web UI and start it:
 
 ```sh
-npx openmausbot serve --tailscale
+git clone https://github.com/borjasolerme/Openpals.git && cd Openpals
+ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile
+corepack pnpm exec vite build
+node --experimental-strip-types server/openmausbot.ts serve --tailscale
 ```
+
+- `corepack` comes with Node 24 and runs the pnpm version the project pins; say
+  yes if it asks to download it.
+- `ELECTRON_SKIP_BINARY_DOWNLOAD=1` skips the desktop app's Electron download,
+  which a server never runs.
+- `vite build` writes the web UI to `dist/`, which `serve` finds and serves
+  itself. Without it the API runs but a browser gets no page.
+- `serve` runs the server from its TypeScript source; Node 24 strips the types.
+  `corepack pnpm omb serve --tailscale` is the same command.
+
+Every `node --experimental-strip-types server/openmausbot.ts …` command below
+runs from `~/Openpals` in the `maus` shell.
 
 Tailscale terminates HTTPS with its own certificate and the pairing link uses the server's MagicDNS name (`https://maus.tail1234.ts.net`). Only devices on your tailnet can reach it, which is a very good property for a server that can run tools.
 
 ## Give the bots a browser (optional)
 
-Bots can browse on a server. Docker (path B) ships the engine and Chrome in
-the image. For paths A and C, install Linux system libraries once from the
+Bots can browse on a server. Docker (path A) ships the engine and Chrome in
+the image. For path B, install Linux system libraries once from the
 administrator shell:
 
 ```sh
-sudo -H npx --yes openmausbot browser install --with-deps
+sudo -H node --experimental-strip-types /home/maus/Openpals/server/openmausbot.ts browser install --with-deps
 ```
 
-Then install the browser in the service account's home, from the `maus` shell:
+Then install the browser in the service account's home, from the `maus` shell
+in `~/Openpals`:
 
 ```sh
-npx --yes openmausbot browser install
+node --experimental-strip-types server/openmausbot.ts browser install
 ```
 
 The administrator's browser download is in a different home; it does not install
@@ -123,7 +147,7 @@ gets its own isolated session whose logins persist across restarts.
 
 ## Install and sign the engines in
 
-The npm OpenMausBot package does not install model engine CLIs. For paths A and C,
+Openpals does not install model engine CLIs. For path B,
 install the engine you use in the service account, then sign it in. For example,
 from the `maus` shell, for Claude:
 
@@ -135,11 +159,11 @@ claude
 
 For Codex, use `@openai/codex` as the npm package and run `codex login --device-auth`
 to sign in from a headless server. Complete the CLI's account flow in your browser. Repeat only for the
-engines you use. For path B, run the installed CLI inside the container, for
+engines you use. For path A, run the installed CLI inside the container, for
 example `docker compose exec omb claude`.
 
 Engine logins belong to the service user's home (for example `~/.codex` and
-`~/.claude`), separately from OpenMausBot's `~/.openmausbot`. Keep that home when
+`~/.claude`), separately from Openpals' own `~/.openmausbot`. Keep that home when
 restarting or upgrading. The systemd example below includes `~/.local/bin` in PATH.
 
 ## Pair your first device
@@ -147,7 +171,7 @@ restarting or upgrading. The systemd example below includes `~/.local/bin` in PA
 `serve` already printed a pairing link and QR code when it started. For another device later:
 
 ```sh
-npx openmausbot pair --label "Kitchen iPad"
+node --experimental-strip-types server/openmausbot.ts pair --label "Kitchen iPad"
 ```
 
 ```
@@ -167,36 +191,29 @@ Worth knowing: a code works **once** and expires after **five minutes**; the lin
 Every paired device is a session:
 
 ```sh
-npx openmausbot sessions              # id, device, scope, last seen, expires
-npx openmausbot sessions revoke ID    # signs that device out and closes its stream at once
-npx openmausbot status                # what the server says about itself
+node --experimental-strip-types server/openmausbot.ts sessions             # id, device, scope, last seen, expires
+node --experimental-strip-types server/openmausbot.ts sessions revoke ID   # signs that device out and closes its stream at once
+node --experimental-strip-types server/openmausbot.ts status               # what the server says about itself
 ```
 
 ## Keep it running
 
-`npx openmausbot serve` is a plain foreground process. For systemd (paths A and C),
-install a chosen release first, from the `maus` shell. Replace `X.Y.Z` with the
-published version you want to run:
-
-```sh
-npm install --global --prefix "$HOME/.local" openmausbot@X.Y.Z
-```
-
-Stop the foreground server with Ctrl-C before enabling the service. From the
+`serve` is a plain foreground process. For systemd (path B), stop the
+foreground server with Ctrl-C before enabling the service. From the
 administrator shell, save this as `/etc/systemd/system/openmausbot.service`:
 
 ```ini
 # /etc/systemd/system/openmausbot.service
 [Unit]
-Description=OpenMausBot server
+Description=Openpals server
 After=network-online.target
 
 [Service]
 User=maus
-WorkingDirectory=/home/maus
+WorkingDirectory=/home/maus/Openpals
 Environment=HOME=/home/maus
 Environment=PATH=/home/maus/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/maus/.local/bin/openmausbot serve --tailscale --no-pair
+ExecStart=/usr/bin/node --experimental-strip-types /home/maus/Openpals/server/openmausbot.ts serve --tailscale --no-pair
 Restart=always
 RestartSec=5
 
@@ -209,27 +226,27 @@ sudo systemctl daemon-reload && sudo systemctl enable --now openmausbot
 journalctl -u openmausbot -f            # the server's log
 ```
 
-This is path C. `--no-pair` skips printing a code at every restart; mint one with `npx openmausbot pair` when you need it. Docker (path B) restarts on its own (`restart: unless-stopped`).
+This is path B. `--no-pair` skips printing a code at every restart; mint one with `node --experimental-strip-types server/openmausbot.ts pair` when you need it. Docker (path A) restarts on its own (`restart: unless-stopped`).
 
-Adjust the account, home, and PATH if yours differ; Node 24 must be available on
-that PATH. The service runs the installed CLI directly, so a restart uses the
-same release without an npm install prompt or an implicit upgrade.
+Adjust the account, home, checkout and PATH if yours differ. `/usr/bin/node` is
+where the NodeSource package puts Node 24; `command -v node` prints yours. The
+service runs the checkout as it is, so a restart never updates it.
 
 ## Update
 
-- **Paths A and C with the service above:** choose the new published version,
-  then run these commands from the administrator shell, replacing `X.Y.Z`:
+- **Path B with the service above:** from the administrator shell, stop the
+  service, update the checkout and rebuild the web UI as `maus`, then start it:
 
   ```sh
   sudo systemctl stop openmausbot
-  sudo -iu maus npm install --global --prefix /home/maus/.local openmausbot@X.Y.Z
+  sudo -iu maus sh -c 'cd ~/Openpals && git pull --ff-only && ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile && corepack pnpm exec vite build'
   sudo systemctl start openmausbot
   ```
 
-  Check that installation succeeded before starting. A service restart by itself
-  does not update the installed package. For foreground `npx` usage, specify the
-  desired release as `npx --yes openmausbot@X.Y.Z serve --tailscale`.
-- **Path B:** `cd OpenMausBot/deploy && docker compose pull omb && docker compose up -d`.
+  Check that each step succeeded before starting. To run a chosen version
+  instead of the newest, `git checkout` its tag or commit in place of
+  `git pull --ff-only`. A service restart by itself does not update anything.
+- **Path A:** `cd Openpals && git pull --ff-only && cd deploy && docker compose up -d --build`.
 
 Routines and queued work survive a restart. A teammate turn running at that moment runs again once at the next start, told to check what it already did, and the bot that asked for it is told. A person's own turn and a running routine are not run again: the conversation says it was interrupted. Update between runs where you can.
 
@@ -240,7 +257,7 @@ process, or `sudo systemctl stop openmausbot` from the administrator shell for
 the service above. Stop any engine processes and managed desktops still writing
 files you intend to back up.
 
-For path C, this backs up application state (bots, chats, routines and paired
+For path B, this backs up application state (bots, chats, routines and paired
 sessions). Run it from the service account's shell:
 
 ```sh
@@ -255,8 +272,8 @@ A full backup also needs your engine credential/configuration paths, such as
 any configured home/data-directory overrides, and workspaces outside the app
 directory. These are not included in the command above.
 
-For path B, the whole `/data` volume includes the container's CLI homes. From
-`OpenMausBot/deploy`, stop the app before archiving; `deploy_data` is the default
+For path A, the whole `/data` volume includes the container's CLI homes. From
+`Openpals/deploy`, stop the app before archiving; `deploy_data` is the default
 volume name, so use your actual volume name if you changed the Compose project:
 
 ```sh
@@ -277,13 +294,13 @@ Read this before putting anything else in front of the server.
 
 - The server only ever listens on loopback (`127.0.0.1:8799`). Never publish that port yourself. Caddy and Tailscale each reach it from the same machine.
 - A request that arrives through a proxy is treated as remote and needs a session, whatever headers it carries. A proxy of your own (nginx, Traefik, Cloudflare Tunnel) must forward the real `Host` and add `X-Forwarded-For` and `X-Forwarded-Proto`, must not buffer the event stream, and must **not** rewrite `Host` to `127.0.0.1`.
-- Pairing is the login. Want a second wall in front of it? Path B's `Caddyfile` has a commented `basic_auth` block for a shared password.
+- Pairing is the login. Want a second wall in front of it? Path A's `Caddyfile` has a commented `basic_auth` block for a shared password.
 - The session cookie is marked `Secure`; do not serve this over plain HTTP on the public internet.
 - The one thing a stranger can read is `/.well-known/openmausbot/environment` (the server's id, label, version, capabilities) and `/api/health` (only the app name). Everything else answers "pair this device".
 
 ## Troubleshooting
 
-**Path B: the page never loads or shows a certificate error.** Caddy could not get a certificate. Check that the name resolves to the server and that ports 80 and 443 are open; `docker compose logs caddy` shows the reason.
+**Path A: the page never loads or shows a certificate error.** Caddy could not get a certificate. Check that the name resolves to the server and that ports 80 and 443 are open; `docker compose logs caddy` shows the reason.
 
 **"forbidden: pair this device to use the server remotely" / "this request came through a proxy".** Expected before pairing, and for tools that call the API without a session. Pair the device. Scripts send `Authorization: Bearer <token>` with the token from the pairing response instead of a cookie.
 
@@ -291,9 +308,9 @@ Read this before putting anything else in front of the server.
 
 **A bot says the engine is not signed in.** Sign that engine in again on the server.
 
-**What does the server think it is?** `https://<address>/.well-known/openmausbot/environment` is public and shows its id, label, version and capabilities; `npx openmausbot status` prints the same on the server.
+**What does the server think it is?** `https://<address>/.well-known/openmausbot/environment` is public and shows its id, label, version and capabilities; `node --experimental-strip-types server/openmausbot.ts status` prints the same on the server.
 
-**Something else.** `journalctl -u openmausbot --since -10m` (or `docker compose logs omb --tail 100`) shows the server's startup lines. Paste them with your question in the community channel.
+**Something else.** `journalctl -u openmausbot --since -10m` (or `docker compose logs omb --tail 100`) shows the server's startup lines. Paste them with your question in an issue at https://github.com/borjasolerme/Openpals/issues.
 
 ### Ubuntu 24.04 browser sandbox
 
@@ -302,7 +319,7 @@ shows an AppArmor `DENIED` for `userns`, the browser download is installed but
 Ubuntu is blocking its sandbox. [Chromium documents this restriction](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
 Do not add `--no-sandbox` or disable `kernel.apparmor_restrict_unprivileged_userns` globally.
 
-For paths A and C, an administrator can allow only a trusted, root-owned Chrome
+For path B, an administrator can allow only a trusted, root-owned Chrome
 copy. Find the service user's downloaded executable:
 
 ```sh

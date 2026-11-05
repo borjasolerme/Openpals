@@ -17,8 +17,8 @@ const turn = (mutate?: BoxMutation[]) => planBox(setup(mutate), {
   cwd, env: { PATH: "/usr/bin", HOME: home, CLAUDE_CONFIG_DIR: "/data/.claude" }, rw: [join(dataDir, "perm-abc.sock")],
 });
 
-// The box runs only on a Linux Cloud home (detect.ts says "not-linux" anywhere else): its plan is bubblewrap's argv
-// over POSIX paths, which Windows' path module would write with drive letters and backslashes.
+// The box runs only on Linux: its plan is bubblewrap's argv over POSIX paths, which Windows' path module would write
+// with drive letters and backslashes.
 const linuxBox = describe.skipIf(process.platform === "win32");
 
 linuxBox("the box plan", () => {
@@ -87,9 +87,9 @@ linuxBox("the box plan", () => {
   });
 
   it("the engines are there wherever HOME and the data folder are", () => {
-    const own = join(dataDir, "engine-homes", "member-aaaaaaaaaaaaaaaa");
-    const team = planBox(setup(), { command: "opencode", args: [], cwd, env: { HOME: own }});
-    expect(visibleInBox(team, join(dataDir, "tools", "npm", "bin", "opencode"))).toBe("ro");
+    const own = join(dataDir, "engine-home");
+    const inside = planBox(setup(), { command: "opencode", args: [], cwd, env: { HOME: own }});
+    expect(visibleInBox(inside, join(dataDir, "tools", "npm", "bin", "opencode"))).toBe("ro");
     const apart = planBox({ ...setup(), dataDir: "/srv/omb", home: "/home/maus", engineRoots: engineInstallRoots("/srv/omb") }, { command: "opencode", args: [], cwd: "/srv/omb/task-workspaces/b/t", env: {} });
     expect(visibleInBox(apart, "/srv/omb/tools/npm/bin/opencode")).toBe("ro");
     expect(visibleInBox(apart, "/srv/omb/messages.db")).toBe("none");
@@ -101,15 +101,6 @@ linuxBox("the box plan", () => {
     expect(visibleInBox(plan, "/tmp")).toBe("none");
     const elsewhere = planBox(setup(), { command: "/usr/bin/x", args: [], cwd, env: { TMPDIR: "/data/scratch" } });
     expect(visibleInBox(elsewhere, "/data/scratch/x")).toBe("rw");
-  });
-
-  it("a shared-network box (a browser) has no bridges and no network namespace", () => {
-    const plan = planBox(setup(), { command: "/opt/chrome", args: [], env: {}, net: "shared", rw: ["/data/.openmausbot/browser/profiles/p1"] });
-    expect(plan.net).toBe("shared");
-    expect(bwrapArgs(plan).join(" ")).not.toContain("--unshare-net");
-    expect(bwrapArgs(plan).join(" ")).not.toContain("/run/omb");
-    expect(visibleInBox(plan, "/data/.openmausbot/browser/profiles/p1/Default")).toBe("rw");
-    expect(visibleInBox(plan, "/data/.openmausbot/messages.db")).toBe("none");
   });
 
   it("Antigravity's own profile (GEMINI_HOME) goes back read-write, and no other account's", () => {

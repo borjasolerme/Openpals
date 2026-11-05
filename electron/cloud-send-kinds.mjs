@@ -71,14 +71,13 @@ const parseFiles = (value) => list(value?.files).filter((file) => record(file) &
  * @param {{
  *   localJson(route: string): Promise<any>,
  *   localBytes(route: string): Promise<Uint8Array | null>,
- *   localSend(method: string, route: string): Promise<{ ok: boolean, status: number }>,
  *   entry(origin: string): { files: Record<string, string>, on: Record<string, boolean> },
  *   persist(): void,
  *   progress(value: { done: number, total: number } | null): void,
  *   refusal(answer: { status: number, body: any }, fallback: string): string,
  * }} deps
  */
-export function createMoveKinds({ localJson, localBytes, localSend, entry, persist, progress, refusal }) {
+export function createMoveKinds({ localJson, localBytes, entry, persist, progress, refusal }) {
   const failed = (ctx, key, kind, label, error, final = false) => ctx.result.failed.push({ key, kind, label, error: sentence(error) ?? "It did not move.", ...(final ? { final: true } : {}) });
 
   /** The definition a routine goes with in the person's own move: this computer's when only it changed it or it changed it
@@ -95,7 +94,7 @@ export function createMoveKinds({ localJson, localBytes, localSend, entry, persi
   }
 
   /** One item only a move carries, as this computer holds it; an automation's switch here is kept (`on`) for the switch
-   * that turns on there what was on here; an app event this computer then lets go of, so only the server collects it. */
+   * that turns on there what was on here. */
   async function sendKind(ctx, row) {
     const held = await localJson(`/api/cloud-send/kind?key=${encodeURIComponent(row.key)}`);
     if (!record(held) || !("record" in held)) throw Object.assign(new Error("It could not be read on this computer."), { code: "local" });
@@ -105,10 +104,6 @@ export function createMoveKinds({ localJson, localBytes, localSend, entry, persi
     if (AUTOMATIONS.has(row.kind) && record(held.record)) {
       entry(ctx.origin).on[row.key] = row.kind === "call" ? held.record.nextRunAt !== null && held.record.nextRunAt !== undefined : held.record.enabled === true;
       persist();
-    }
-    if (row.kind === "app-event") {
-      const released = await localSend("DELETE", `/api/cloud-send/kind?key=${encodeURIComponent(row.key)}`).catch(() => null);
-      if (!released?.ok) throw new Error("The server has this app event, but this computer could not stop collecting it yet. It tries again next time.");
     }
   }
 

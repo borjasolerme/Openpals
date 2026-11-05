@@ -29,7 +29,7 @@ async function installation() {
   const mcp = { servers: {} as Record<string, unknown> };
   const deps = {
     store, routines,
-    skills: { install: skills.installSkill, setEnabled: skills.setSkillEnabled },
+    skills: { install: skills.installSkill },
     memory: { writeIndex: workspace.writeMemoryFile, writeTopic: workspace.writeMemoryTopic },
     mcp: { servers: () => mcp.servers, refusal: () => undefined, persist: (next: Record<string, unknown>) => { mcp.servers = next; } },
     sections: { writeBrief: () => {} },
@@ -38,8 +38,7 @@ async function installation() {
   };
   const move = (bot: Record<string, unknown>) => {
     const parsed = parseGrokExport(`Here you go:\n\`\`\`json\n${JSON.stringify({ format: GROK_EXPORT_FORMAT, version: 1, bots: [bot] })}\n\`\`\``);
-    const result = importer.importPackageDocument(grokMovePlan(parsed[0]!, { timeZone: "UTC" }).document, { trust: "file", mode: "add" }, deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = importer.importPackageDocument(grokMovePlan(parsed[0]!, { timeZone: "UTC" }).document, { mode: "add" }, deps);
     return result;
   };
   return { store, routines, skills, workspace, mcp, move };

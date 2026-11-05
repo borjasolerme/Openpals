@@ -1,4 +1,4 @@
-export type MoveKind = "routine" | "call" | "webhook" | "app-event" | "imported-skill" | "library-skill";
+export type MoveKind = "routine" | "call" | "webhook" | "imported-skill" | "library-skill";
 export type SendKind = "bot" | "skill" | "login" | "1password" | "setting" | MoveKind;
 
 export interface SendItem {

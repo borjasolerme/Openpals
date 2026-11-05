@@ -9,8 +9,6 @@ export interface EscalationBot {
   section?: string;
   chiefOfStaff?: boolean;
   managedSections?: string[];
-  createdBy?: string;
-  reportsTo?: string;
   hidden?: boolean;
   peers?: string[];
   visibility?: unknown;

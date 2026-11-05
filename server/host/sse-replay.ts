@@ -4,8 +4,6 @@ export interface ReplayFrame {
   frame: string | null;
   clientFrame: string | null;
   payload: Record<string, unknown> | null;
-  /** Only this person's streams get it (a Team Cloud's room as they read it). */
-  person?: string;
 }
 
 export const REPLAY_MAX_FRAMES = 500;
@@ -20,9 +18,8 @@ function retainedChars(entry: ReplayFrame): number {
 }
 
 /** Kinds that mean something only live: the buffer keeps their sequence slot, so resume-gap detection still works, and
- * never the frame. A screen is a large picture, stale at once; a Cloud home's `power` frame ("going to sleep"), replayed
- * to a page that reconnects after waking the home, would send that page straight back to sleep. */
-const LIVE_ONLY = new Set(["screen", "power"]);
+ * never the frame. A screen is a large picture, stale at once. */
+const LIVE_ONLY = new Set(["screen"]);
 
 /** The newest frames for reconnecting streams, oldest first; the newest frame always stays. */
 export class ReplayBuffer {

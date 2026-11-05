@@ -19,7 +19,7 @@ describe("postizAddress", () => {
     expect(postizAddress("https://postiz.example.com:8443", cloud)).toEqual({ ok: true, address: "https://postiz.example.com:8443" });
   });
 
-  it("takes plain http only for a Postiz on this computer, and never on a Cloud", () => {
+  it("takes plain http only for a Postiz on this computer, and never on a server", () => {
     expect(postizAddress("http://127.0.0.1:5000", desktop)).toEqual({ ok: true, address: "http://127.0.0.1:5000" });
     expect(postizAddress("http://localhost:3000/api", desktop)).toEqual({ ok: true, address: "http://localhost:3000/api" });
     expect(postizAddress("http://[::1]:5000", desktop)).toEqual({ ok: true, address: "http://[::1]:5000" });

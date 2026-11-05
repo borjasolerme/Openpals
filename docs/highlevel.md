@@ -1,6 +1,6 @@
 # HighLevel CRM (native integration)
 
-One card, **HighLevel**, in Connected apps, on desktop and on a Cloud home alike. It also covers Growably and every
+One card, **HighLevel**, in Connected apps, on the desktop and on a server alike. It also covers Growably and every
 other HighLevel-based white-label CRM: the sign-in uses HighLevel's white-label page, so those users never see the
 HighLevel brand. Composio is not involved; the server (`server/highlevel/*`) talks to
 `https://services.leadconnectorhq.com` itself.
@@ -34,7 +34,7 @@ OMB server                                 your OAuth relay (optional)          
   The token never refreshes. A 401 that rejects the token itself signs it out; a 401 for a missing scope does not (see
   [Permissions](#permissions-scopes)).
 - **Storage:** `DATA_DIR/highlevel.json.enc`, AES-256-GCM under `DATA_DIR/highlevel-key` (0600), the same scheme as
-  saved logins. No keychain in the path, so a Cloud home works the same way. Stored: kind (`oauth` | `token`), access
+  saved logins. No keychain in the path, so a headless server works the same way. Stored: kind (`oauth` | `token`), access
   token, refresh token, expiry, locationId, companyId, userId, location name, scopes, state (`signed-in` |
   `needs-sign-in`) and the plain-sentence problem when a new sign-in is needed. No route ever returns a token.
 - **Reconnect:** when the relay rejects a refresh (`401 highlevel_refresh_rejected`: revoked, app uninstalled) the

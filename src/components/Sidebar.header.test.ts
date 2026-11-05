@@ -237,7 +237,6 @@ describe("sidebar top row", () => {
     expect(foot).toMatch(/data-tour="nav-apps" data-sidebar-nav="apps"[^>]*aria-label="Connect apps"[^>]*class="[^"]*\bsize-9\b[^"]*"><svg[^>]*lucide-puzzle/);
     expect(foot).not.toContain("data-workspace-switcher");
     expect(foot).not.toContain('data-sidebar-nav="automations"');
-    expect(foot).not.toContain('data-sidebar-nav="team-map"');
     expect(html).not.toContain("Switch server:");
     expect(html.match(/aria-label="New or share"/g)).toHaveLength(1);
   });
@@ -354,7 +353,6 @@ describe("sidebar foot in Simple mode", () => {
     const foot = html.slice(html.indexOf('data-glass-bar="bottom"'));
     expect(foot).toContain('data-sidebar-footer="simple"');
     expect(html).not.toContain('data-sidebar-nav="automations"');
-    expect(html).not.toContain('data-sidebar-nav="team-map"');
     expect(html.match(/data-sidebar-nav="apps"/g)).toHaveLength(1);
     expect(foot.indexOf("data-sidebar-account")).toBeGreaterThan(-1);
     expect(foot.indexOf("data-sidebar-account")).toBeLessThan(foot.indexOf('data-sidebar-nav="apps"'));

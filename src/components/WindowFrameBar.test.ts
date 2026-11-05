@@ -39,7 +39,7 @@ beforeEach(() => {
   fixture.look = null;
   fixture.dispatch.mockClear();
   fixture.frameDrawn.mockClear();
-  place = { local: false, name: "My Cloud", origin: "https://cloud.example", color: "blue" };
+  place = { local: false, name: "Garage server", origin: "https://garage.example", color: "blue" };
   Object.assign(window, { ogb: { workspaces: { state: async () => place, onChanged: () => () => {}, menu: async () => {} } } });
 });
 afterEach(async () => { await act(async () => root?.unmount()); root = null; host.remove(); delete (window as { ogb?: unknown }).ogb; });
@@ -76,7 +76,7 @@ describe("the window frame's top bar", () => {
 
   it("names the place on screen in its middle, with its mark, quiet and in one line, and keeps it part of the drag region", async () => {
     await mount(createElement(WindowFrameBar));
-    expect(middle()!.textContent).toBe("MCMy Cloud");
+    expect(middle()!.textContent).toBe("GSGarage server");
     expect(middle()!.className.split(" ")).toEqual(expect.arrayContaining(["text-ink-secondary", "min-w-0"]));
     expect(middle()!.querySelector("span:last-child")!.className).toContain("truncate");
     expect(middle()!.querySelector("[aria-hidden='true']")!.getAttribute("style"), "the rail's tile, small, in the place's colour").toContain("width: 16px; height: 16px");

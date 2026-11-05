@@ -32,7 +32,7 @@ export interface StatusRouteDeps {
   broadcast(payload: Record<string, unknown>): void;
   browserEngineInstall: { get(): Promise<void> | null; set(install: Promise<void> | null): void };
   browserEngineInstallError: { set(error: string | null): void };
-  /** On a Team Cloud: false for someone else's private chat, whose words never reach this session's lists. */
+  /** False for a conversation this session may not see, whose words never reach its lists. */
   threadShown?(auth: RequestAuth): (threadId: string) => boolean;
 }
 

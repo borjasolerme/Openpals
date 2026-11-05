@@ -12,7 +12,7 @@ The `.env` file is ignored by Git. Shell environment variables take precedence.
 Internal service ports remain fixed inside the shared network namespace.
 `ENGINES` selects space-separated npm packages; an empty value skips installation.
 The image also carries Grok Build, pinned by `GROK_VERSION` in
-`deploy/local/Dockerfile`; Grok and Codex sign in from the app's engine setup
+`compose.yaml`; Grok and Codex sign in from the app's engine setup
 with a one-time code, no terminal needed.
 
 For Tailscale Serve, set `OMB_PUBLIC_URL` to your HTTPS URL and

@@ -66,16 +66,15 @@ import { MASCOT_BODIES } from "../../shared/mascot-bodies";
 
 const CARDS = 0;
 const CONFIGURED = 3;
-const STATUS = 6;
-const PHASE = 13;
-const HIGHLEVEL_CONNECTED = 21;
-const X_CONNECTED = 22;
-const CATEGORY = 20;
-const POSTIZ_CONNECTED = 23;
-const MODE = 4;
-const SEARCH = 15;
-const HOSTED_CONNECTED = 18;
-const TAB = 16;
+const STATUS = 4;
+const PHASE = 11;
+const HIGHLEVEL_CONNECTED = 19;
+const X_CONNECTED = 20;
+const CATEGORY = 18;
+const POSTIZ_CONNECTED = 21;
+const SEARCH = 13;
+const HOSTED_CONNECTED = 16;
+const TAB = 14;
 
 type Node = ReactElement<{ children?: ReactNode; "aria-pressed"?: boolean; "data-apps-filter"?: string; onClick?: () => void; [key: string]: unknown }>;
 function nodes(value: ReactNode): Node[] {
@@ -180,16 +179,16 @@ describe("Apps pop-up", () => {
     expect(render().html).toContain("2 connected");
   });
   it("hides HighLevel from the Connected tab until it is connected, and from a search that does not name it", () => {
-    fixture.overrides.set(16, "connected");
+    fixture.overrides.set(14, "connected");
     fixture.overrides.set(HIGHLEVEL_CONNECTED, false);
     const wrapper = (tree: Node[]) => tree.find((node) => node.props["data-native-card"] === "highlevel")!;
     expect(wrapper(render().nodes).props.className).toBe("hidden");
     fixture.overrides.set(HIGHLEVEL_CONNECTED, true);
     expect(wrapper(render().nodes).props.className).toBe("contents");
-    fixture.overrides.set(16, "marketplace");
-    fixture.overrides.set(15, "growably");
+    fixture.overrides.set(14, "marketplace");
+    fixture.overrides.set(13, "growably");
     expect(wrapper(render().nodes).props.className).toBe("contents");
-    fixture.overrides.set(15, "zendesk");
+    fixture.overrides.set(13, "zendesk");
     expect(wrapper(render().nodes).props.className).toBe("hidden");
   });
   it("shows the Postiz card in the grid and under Social, with a Social pill, and counts it once connected", () => {
@@ -230,21 +229,10 @@ describe("Apps pop-up", () => {
     fixture.overrides.set(SEARCH, "gmail");
     expect(wrapper(render().nodes).props.className).toBe("hidden");
   });
-  it("leaves out the managed install's dead Twitter tile, which the X card replaces, unless it is already connected", () => {
-    const tile = (tree: Node[]) => tree.find((node) => node.props["data-app-tile"] === "twitter");
-    fixture.overrides.set(CARDS, [card("gmail"), card("twitter")]);
-    fixture.overrides.set(MODE, "managed");
-    expect(tile(render().nodes)).toBeUndefined();
-    fixture.overrides.set(STATUS, { twitter: { connected: true, accounts: [{ id: "ca_x", status: "ACTIVE" }] } });
-    expect(tile(render().nodes)).toBeDefined();
-    fixture.overrides.set(STATUS, {});
-    fixture.overrides.set(MODE, "self-hosted");
-    expect(tile(render().nodes)).toBeDefined();
-  });
   it("keeps a safe explicit authorization link and reopens without creating another account", async () => {
     const url = "https://auth.example.test/flow";
     fixture.overrides.set(STATUS, { gmail: { connected: false, pending: true } });
-    fixture.overrides.set(8, { gmail: { url, createdAt: Date.now() } });
+    fixture.overrides.set(6, { gmail: { url, createdAt: Date.now() } });
     const page = { opener: {}, closed: false, location: { replace: vi.fn() }, close: vi.fn() };
     const open = vi.fn(() => page);
     vi.stubGlobal("window", { open });
@@ -265,8 +253,8 @@ describe("Apps pop-up", () => {
   });
 
   it("reserves before requesting authorization and closes its blank when the panel closes", async () => {
-    fixture.overrides.set(9, "gmail");
-    fixture.overrides.set(10, "work");
+    fixture.overrides.set(7, "gmail");
+    fixture.overrides.set(8, "work");
     let resolve!: (value: unknown) => void;
     vi.mocked(api).mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
     const page = { opener: {}, closed: false, location: { replace: vi.fn() }, close: vi.fn() };
@@ -287,7 +275,7 @@ describe("Apps pop-up", () => {
 
   it("renews an expired retained link without reusing its occupied account alias", async () => {
     fixture.overrides.set(STATUS, { gmail: { connected: false, pending: true, status: "INITIALIZING", accounts: [{ id: "ca_old", alias: "work", status: "INITIALIZING" }] } });
-    fixture.overrides.set(8, { gmail: { url: "https://auth.example.test/old", createdAt: Date.now() - 600_000 } });
+    fixture.overrides.set(6, { gmail: { url: "https://auth.example.test/old", createdAt: Date.now() - 600_000 } });
     vi.mocked(api).mockClear();
     vi.mocked(api).mockImplementationOnce(async (_path, request) => {
       if (request?.body) throw new Error("That account alias is already in use");
@@ -351,8 +339,8 @@ describe("Apps pop-up", () => {
       vi.stubGlobal("window", { open: () => page });
       const connectApp = async (slug: string) => {
         fixture.overrides.set(CARDS, [card(slug)]);
-        fixture.overrides.set(9, slug);
-        fixture.overrides.set(10, "work");
+        fixture.overrides.set(7, slug);
+        fixture.overrides.set(8, "work");
         vi.mocked(api).mockReset();
         vi.mocked(api).mockResolvedValueOnce({ url: `https://auth.example.test/${slug}` });
         const form = render().nodes.find((node) => node.type === "form")!;
@@ -384,8 +372,8 @@ describe("Apps pop-up", () => {
       const page = { opener: {}, closed: false, location: { replace: vi.fn() }, close: vi.fn() };
       vi.stubGlobal("window", { open: () => page });
       fixture.overrides.set(CARDS, [card("slack")]);
-      fixture.overrides.set(9, "slack");
-      fixture.overrides.set(10, "home");
+      fixture.overrides.set(7, "slack");
+      fixture.overrides.set(8, "home");
       vi.mocked(api).mockReset();
       vi.mocked(api).mockResolvedValueOnce({ url: "https://auth.example.test/slack" });
       const form = render().nodes.find((node) => node.type === "form")!;
@@ -517,15 +505,15 @@ describe("Apps pop-up", () => {
   });
 
   it("drops a selected category when a filter is chosen, so the MCP section comes back", () => {
-    fixture.overrides.set(20, "Design");
+    fixture.overrides.set(18, "Design");
     expect(render().html).not.toContain("MCP inventory");
     chip(render().nodes, "mcp").props.onClick!();
-    expect(fixture.overrides.get(20)).toBeNull();
+    expect(fixture.overrides.get(18)).toBeNull();
     expect(render().html).toContain("MCP inventory");
   });
 
   it("shows only connected apps, and no MCP section, under Connected", () => {
-    fixture.overrides.set(16, "connected");
+    fixture.overrides.set(14, "connected");
     const { html, nodes: tree } = render();
     expect(chip(tree, "connected").props["aria-pressed"]).toBe(true);
     expect(html).toContain('data-app-tile="slack"');
@@ -557,13 +545,13 @@ describe("Apps pop-up", () => {
     expect([...design.html.matchAll(/<h3 id="[^"]*"[^>]*>([^<]*)/g)].map((match) => match[1])).toEqual(["Design"]);
     expect(chip(design.nodes, "all").props["aria-pressed"]).toBe(false);
     expect(design.nodes.find((node) => node.props["data-apps-category"] === "Design")!.props["aria-pressed"]).toBe(true);
-    fixture.overrides.set(20, null);
+    fixture.overrides.set(18, null);
     const again = render();
     expect(again.html.match(/>View all</g)).toHaveLength(1);
     const sections = again.nodes.filter((node) => node.props.viewAll);
     expect(sections.map((node) => node.props.title)).toEqual(["Productivity"]);
     (sections[0]!.props.viewAll as { onClick: () => void }).onClick();
-    expect(fixture.overrides.get(20)).toBe("Productivity");
+    expect(fixture.overrides.get(18)).toBe("Productivity");
   });
 
   it("pairs the search with an MCP servers pill and puts the connected count, with app icons, in the header", () => {
@@ -573,7 +561,7 @@ describe("Apps pop-up", () => {
     expect(indicator.props["aria-pressed"]).toBe(false);
     expect(html).toContain("1 connected");
     indicator.props.onClick!();
-    expect(fixture.overrides.get(16)).toBe("connected");
+    expect(fixture.overrides.get(14)).toBe("connected");
   });
 
   it("caps the unsearched catalog so the MCP servers stay a short scroll away", () => {
@@ -586,10 +574,10 @@ describe("Apps pop-up", () => {
   it("keeps the per-bot banner, stale notice and self-host key link reachable", () => {
     fixture.instances = [claude];
     fixture.bots = [bot("scout", { composio: false })];
-    fixture.overrides.set(7, true);
+    fixture.overrides.set(5, true);
     let { html } = render();
     expect(html).toContain("Showing what was connected last time");
-    fixture.overrides.set(7, false);
+    fixture.overrides.set(5, false);
     ({ html } = render());
     expect(html).toContain("Not every bot can use these apps.");
     expect(html).toContain("Allow scout");

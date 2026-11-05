@@ -63,42 +63,41 @@ function profiles(): Record<string, Profile> {
 const PROFILES = profiles();
 const CHIEF_ONLY_TOOLS = ["create_bot", "list_team_setup", "list_team_library", "propose_team_setup", "propose_bot_deletion", "manage_room", "retry_thread"];
 const CHIEF_TARGET_TOOLS = ["propose_profile", "propose_model"];
-const CHIEF_PROFILE_TARGET = " A Chief of Staff may pass for_bot_id (from list_bots) for a requested change to another bot in its section.";
+const CHIEF_PROFILE_TARGET = " A Chief of Staff may pass for_bot_id (from list_bots) for a requested change to another bot on its team.";
 const TEAMWORK_TOOLS = ["list_room_targets", "coordinate_bots", "assignment_status", "list_bots", "list_rooms", "list_threads", "close_thread", "start_thread", "post_to_room"];
 const MAUSBOT_TOOLS = ["list_unread_notifications", "mark_notifications_read"];
 /** MausBot's tools may make its list at most this much longer than the same Chief's without them. */
 const MAUSBOT_ADDS = 0.02;
 const RESEARCH_TOOLS = ["x_search", "research_search", "research_endpoint", "research_call"];
-/** Only on the person's own Cloud: never on the fullest profile, a Team Cloud's. */
 /** The fullest profile, checked in whole; every other one is pinned by tool names, bytes and sha256. */
 const FULL = "skills+shared+voice+escalations+x";
 
 /** Bytes when the budget was last set; a profile may move at most 2% either way (lower it to lock in a win). */
 const BUDGET_BASELINE: Record<string, number> = {
-  "default": 58250,
-  "voice": 59031,
-  "shared": 60515,
-  "shared+voice": 61296,
-  "skills": 61069,
-  "skills+voice": 61850,
-  "skills+shared": 63334,
-  "skills+shared+voice": 64115,
-  "non-chief": 48881,
-  "voice+non-chief": 49662,
-  "shared+non-chief": 51146,
-  "shared+voice+non-chief": 51927,
-  "skills+non-chief": 51700,
-  "skills+voice+non-chief": 52793,
-  "skills+shared+non-chief": 53965,
-  "skills+shared+voice+non-chief": 55058,
-  "default+legacy-switches": 58250,
-  "default+mausbot": 58901,
-  "skills+shared+voice+mausbot": 64766,
-  "skills+shared+voice+escalations": 64945,
-  "skills+shared+voice+escalations+x": 68784,
-  "default+no-computer-pick": 57038,
-  "default+room": 49808,
-  "non-chief+room": 40751,
+  "default": 55291,
+  "voice": 56072,
+  "shared": 57556,
+  "shared+voice": 58337,
+  "skills": 58104,
+  "skills+voice": 58885,
+  "skills+shared": 60369,
+  "skills+shared+voice": 61150,
+  "non-chief": 46087,
+  "voice+non-chief": 46868,
+  "shared+non-chief": 48352,
+  "shared+voice+non-chief": 49133,
+  "skills+non-chief": 48900,
+  "skills+voice+non-chief": 49681,
+  "skills+shared+non-chief": 51165,
+  "skills+shared+voice+non-chief": 51946,
+  "default+legacy-switches": 55291,
+  "default+mausbot": 55942,
+  "skills+shared+voice+mausbot": 61801,
+  "skills+shared+voice+escalations": 61980,
+  "skills+shared+voice+escalations+x": 65808,
+  "default+no-computer-pick": 54085,
+  "default+room": 47167,
+  "non-chief+room": 37963,
 };
 
 const RPC_PREFIX = '{"jsonrpc":"2.0","id":1,"result":';
@@ -291,7 +290,7 @@ describe("agents proxy tools/list golden", () => {
     for (const name of switchedOn) {
       const without = toolsOf(wires[name.slice(0, -"+x".length)]!).map((tool) => tool.name);
       expect(toolsOf(wires[name]!).map((tool) => tool.name).filter((tool) => !RESEARCH_TOOLS.includes(tool))).toEqual(without);
-      // A plan's relay can have X without research: x_search alone, and nothing else changes.
+      // X without research: x_search alone, and nothing else changes.
       const xOnly = availableTools(catalogProfileFromEnv({ OMB_BOT_ID: "bot-golden", ...PROFILES[name]!.env, OMB_RESEARCH: "0" })).map((tool) => tool.name);
       expect(xOnly).toEqual(toolsOf(wires[name]!).map((tool) => tool.name).filter((tool) => tool === "x_search" || !RESEARCH_TOOLS.includes(tool)));
     }
@@ -307,7 +306,7 @@ describe("agents proxy tools/list golden", () => {
   it("writes the trigger fields out once, for every action of the trigger tool", () => {
     type TriggerTool = Tool & { inputSchema: { properties: Record<string, unknown> } };
     const trigger = toolsOf(wires[FULL]!).find((tool) => tool.name === "trigger") as TriggerTool;
-    expect(Object.keys(trigger.inputSchema.properties)).toEqual(expect.arrayContaining(["action", "trigger_id", "when", "name", "instructions", "schedule", "filter", "event_config", "run_on", "timeout_minutes", "clear_timeout", "continuity", "overlap", "run_on_startup", "for_bot_id"]));
+    expect(Object.keys(trigger.inputSchema.properties)).toEqual(expect.arrayContaining(["action", "trigger_id", "when", "name", "instructions", "schedule", "run_on", "timeout_minutes", "clear_timeout", "continuity", "overlap", "run_on_startup", "for_bot_id"]));
     expect(trigger.inputSchema.properties).not.toHaveProperty("changes");
     for (const wire of Object.values(wires)) expect(wire.match(/"every_minutes":/g)).toHaveLength(1);
   });

@@ -1,7 +1,6 @@
-// Whether this machine can run the bot box, decided once at boot: on by default on a Cloud home, off everywhere else
-// unless OMB_BOT_BOX=1, and never on without a working unprivileged bubblewrap (a kernel that refuses user namespaces,
-// or an image without bwrap, reports `off` with its reason rather than running turns unboxed by surprise: the report
-// says so, and the Admin shows it).
+// Whether this machine can run the bot box, decided once at boot: off unless OMB_BOT_BOX=1, and never on without a
+// working unprivileged bubblewrap (a kernel that refuses user namespaces, or an image without bwrap, reports `off` with
+// its reason rather than running turns unboxed by surprise: the report says so, and the Admin shows it).
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { delimiter, join } from "node:path";

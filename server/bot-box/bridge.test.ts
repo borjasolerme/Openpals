@@ -9,8 +9,8 @@ import { bridgedCommand, shellWord } from "./bridge.ts";
 
 const bridges = [{ name: "egress", port: 3128, socket: "/x/egress.sock" }, { name: "harness", port: 8799, socket: "/x/harness.sock" }];
 
-// The box runs only on a Linux Cloud home (detect.ts says "not-linux" anywhere else): the bridge is a POSIX shell
-// inside it, over unix sockets at POSIX paths, and Windows has neither.
+// The box runs only on Linux: the bridge is a POSIX shell inside it, over unix sockets at POSIX paths, and Windows has
+// neither.
 const linuxBox = describe.skipIf(process.platform === "win32");
 
 linuxBox("the in-box bridge command", () => {

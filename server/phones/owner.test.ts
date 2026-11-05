@@ -8,7 +8,7 @@ const said = (id: string, extra: Record<string, unknown> = {}) => ({ id, role: "
 const reply = (id: string, extra: Record<string, unknown> = {}) => ({ id, role: "bot", ...extra });
 const card = (answeredBy?: { kind: string; person?: string; name?: string }) =>
   reply("c1", { card: { requestId: "q1", answered: "answer", answeredText: "Yes", ...(answeredBy ? { answeredBy } : {}) } });
-/** What server/index.ts hands over off a Cloud home: the Cloud test's own owner, which knows nobody here. */
+/** What server/index.ts hands over: the lending test's own owner, which knows nobody here. */
 const base = (overrides: Partial<DesktopTurn> = {}): DesktopTurn => ({
   request: { messageId: "m1", generations: new Set(["g1"]) }, generation: "g1", thread: [said("m1"), reply("r1")],
   cardAnswerer: (c) => (c.answeredBy?.kind === "session" ? c.answeredBy.person : undefined),

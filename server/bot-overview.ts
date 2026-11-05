@@ -223,12 +223,9 @@ function reachesLines(facts: OverviewFacts): string[] {
   if (facts.engine?.agentsMcp && peers > 0 && facts.bot.peers?.length !== 0) {
     lines.push(Array.isArray(facts.bot.peers)
       ? "Talks only to the bots chosen for it."
-      : peers === 1 ? "Can talk to the other bot." : `Can talk to all ${peers} other bots, in any department.`);
+      : peers === 1 ? "Can talk to the other bot." : `Can talk to all ${peers} other bots.`);
   }
-  if (facts.bot.chiefOfStaff) lines.push("Coordinates its department as Chief of Staff.");
-  if (facts.bot.chiefOfStaff && facts.bot.managedSections?.length) {
-    lines.push(`Also in charge of these departments: ${facts.bot.managedSections.map(name => name || "General").join(", ")}.`);
-  }
+  if (facts.bot.chiefOfStaff) lines.push("Coordinates the other bots as Chief of Staff.");
   return lines;
 }
 

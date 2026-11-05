@@ -933,11 +933,11 @@ beforeAll(async () => {
       res.writeHead(201, { "content-type": "application/json" });
       return res.end(JSON.stringify({
         session_id: "trs_config_test",
-        mcp: { type: "http", url: "https://app.composio.dev/tool_router/v3/trs_config_test/mcp" },
+        mcp: { type: "http", url: `http://127.0.0.1:${boatStubPort}/tool_router/trs_config_test/mcp` },
         config: { user_id: body.user_id },
       }));
     }
-    if (req.url?.startsWith("/broker/v1/mcp")) {
+    if (req.url === "/tool_router/trs_config_test/mcp") {
       let raw = "";
       for await (const chunk of req) raw += chunk;
       const body = raw ? JSON.parse(raw) : null;
@@ -1243,9 +1243,6 @@ beforeAll(async () => {
       OMB_BOAT_API: `http://127.0.0.1:${boatStubPort}`,
       OMB_COMPOSIO_API: `http://127.0.0.1:${boatStubPort}/api/v3.1`,
       OMB_COMPOSIO_TOOLKITS_API: `http://127.0.0.1:${boatStubPort}/api/v3`,
-      // A managed connected-apps broker on the stub, so relayed MCP frames are observable without any network.
-      OMB_COMPOSIO_BROKER_URL: `http://127.0.0.1:${boatStubPort}/broker`,
-      OMB_COMPOSIO_BROKER_TOKEN: "a".repeat(64),
       OMB_STATIC_DIR: staticDir,
       // A stand-in binary the fake engines never run: the turn only has to mount it.
       OMB_AGENT_BROWSER_PATH: join(home, "fake-agent-browser"),
@@ -8936,7 +8933,7 @@ describe("harness HTTP API", () => {
     const fake = await startFakeHttpMcp({ acceptBearer: oauth.isValid, wwwAuthenticate: oauth.challenge });
     const opened = await api("POST", "/api/auth/pairing", { scopes: ["admin", "client"] });
     const token = (await api("POST", "/api/auth/pair", { code: opened.body.code })).body.token as string;
-    // What the edge proxy in front of My Cloud hands the server; node's fetch drops a custom Host header.
+    // What an edge proxy in front of a self-hosted server hands it; node's fetch drops a custom Host header.
     const viaProxy = (method: string, path: string, headers: Record<string, string> = {}, body?: unknown) =>
       new Promise<{ status: number; text: string; headers: Record<string, unknown> }>((resolve, reject) => {
         const req = request({
@@ -9206,7 +9203,6 @@ describe("harness HTTP API", () => {
       const root = /<openmaus-skill id="data-dashboards" version="[^"]+" root="([^"]+)">/.exec(system)?.[1];
       expect(root).toBeTruthy();
       expect(existsSync(join(root!, "dashboard.html"))).toBe(true);
-      expect(system).toContain("publish_page");
       expect(system).not.toContain('<openmaus-skill id="create-verification-skill"');
     } finally {
       await api("POST", `/api/bots/${bot.id}/interrupt`);
@@ -9243,11 +9239,11 @@ describe("harness HTTP API", () => {
         chiefOfStaff: true,
         modelSelection: { instanceId: "claude", model: "claude-sonnet-5" },
       })).status).toBe(200);
-      const roster = "Current Roster end department (your team):\n- No other visible bots are available yet.";
+      const roster = "Your team:\n- No other visible bots are available yet.";
 
       const sections = (await api("GET", `/api/bots/${bot.id}/system-prompt`)).body.sections as Array<{ id: string; text: string }>;
       const team = sections.find((section) => section.id === "coordination")?.text ?? "";
-      expect(team).toContain("the Chief of Staff for the Roster end department: their one point of contact.");
+      expect(team).toContain("their Chief of Staff: their one point of contact.");
       expect(team).toContain(roster);
       expect(team.split("\n").at(-1)).toMatch(/^- /);
 
@@ -9574,7 +9570,7 @@ describe("harness HTTP API", () => {
   });
 
   it("tells a /setup turn to connect an app itself when its connected-apps tools are mounted, and names the switch when they are off", async () => {
-    // This suite's server has the managed connected-apps service (the stub broker).
+    expect((await api("PUT", "/api/config", { composio: { apiKey: "ak_good" } })).status).toBe(200);
     type Dump = { systemPrompt: string; mcpConfig: { mcpServers: Record<string, unknown> } };
     const setupTurn = async (botId: string) => {
       rmSync(fakeClaudeDump, { force: true });
@@ -9605,6 +9601,7 @@ describe("harness HTTP API", () => {
         await api("POST", `/api/bots/${bot.id}/interrupt`);
         await api("DELETE", `/api/bots/${bot.id}`);
       }
+      await api("PUT", "/api/config", { composio: { apiKey: "" } });
     }
   });
 
@@ -11503,7 +11500,7 @@ describe("harness HTTP API", () => {
         forBotId: outsider.id,
       });
       expect(outOfSection.status).toBe(403);
-      expect(z.object({ error: z.string() }).parse(await outOfSection.json()).error).toMatch(/set up by bots in its own department or by its Chief/);
+      expect(z.object({ error: z.string() }).parse(await outOfSection.json()).error).toMatch(/you may not set up that bot's automations/);
 
       const unknown = await post({
         fromBotId: chief.id,
@@ -12018,7 +12015,7 @@ describe("harness HTTP API", () => {
       profile: { name: "External Store" },
     });
     expect(saved.status).toBe(200);
-    expect(saved.body.composio).toEqual({ configured: true, mode: "self-hosted" });
+    expect(saved.body.composio).toEqual({ configured: true });
     expect(saved.body.opencodeGo).toEqual({ configured: true, last4: "rnal", providerKeys: [] });
     expect(saved.body.profile).toEqual({ name: "External Store", email: "", aboutMe: "" });
     expect(JSON.stringify(saved.body)).not.toContain("ak_good");
@@ -12031,7 +12028,7 @@ describe("harness HTTP API", () => {
     expect(JSON.stringify(disk)).not.toContain("opencode-external");
 
     expect((await api("PUT", "/api/config", { profile: { name: "Grace" } })).status).toBe(200);
-    expect((await api("GET", "/api/config")).body.composio).toEqual({ configured: true, mode: "self-hosted" });
+    expect((await api("GET", "/api/config")).body.composio).toEqual({ configured: true });
 
     const kiwi = (await api("POST", "/api/bots", { name: "Kiwi" })).body.bot;
     try {
@@ -12247,7 +12244,7 @@ describe("harness HTTP API", () => {
 
   it("explains a missing Google permission instead of passing the bare 403 to the bot", async () => {
     // GMAIL_CREATE_FILTER needs gmail.settings.basic, which the default Composio Gmail connection never asks for.
-    expect((await api("PUT", "/api/config", { composio: { apiKey: "" } })).status).toBe(200);
+    expect((await api("PUT", "/api/config", { composio: { apiKey: "ak_good" } })).status).toBe(200);
     const bot = (await api("POST", "/api/bots")).body.bot;
     try {
       expect((await api("PATCH", `/api/bots/${bot.id}`, { composio: true })).status).toBe(200);
@@ -12268,12 +12265,12 @@ describe("harness HTTP API", () => {
       expect(hint).toContain("Do not retry");
     } finally {
       await api("DELETE", `/api/bots/${bot.id}`);
+      await api("PUT", "/api/config", { composio: { apiKey: "" } });
     }
   });
 
   it("enforces per-bot connector tool grants on relayed tool calls", async () => {
-    // Clear any project key an earlier test left, so the relay uses the stubbed managed broker.
-    expect((await api("PUT", "/api/config", { composio: { apiKey: "" } })).status).toBe(200);
+    expect((await api("PUT", "/api/config", { composio: { apiKey: "ak_good" } })).status).toBe(200);
     const bot = (await api("POST", "/api/bots")).body.bot;
     connectorRelayCalls.length = 0;
     const relayed = () => connectorRelayCalls.map((entry) => entry.body);
@@ -12382,11 +12379,12 @@ describe("harness HTTP API", () => {
       expect(allowRows.some((row) => row.botId === legacy.id && row.tool === "SLACK_POST_MESSAGE" && row.rule === "composio")).toBe(true);
     } finally {
       await api("DELETE", `/api/bots/${bot.id}`);
+      await api("PUT", "/api/config", { composio: { apiKey: "" } });
     }
   });
 
   it("refuses MULTI_EXECUTE shapes it cannot read and writes connector-scope denial rows", async () => {
-    expect((await api("PUT", "/api/config", { composio: { apiKey: "" } })).status).toBe(200);
+    expect((await api("PUT", "/api/config", { composio: { apiKey: "ak_good" } })).status).toBe(200);
     const bot = (await api("POST", "/api/bots")).body.bot;
     connectorRelayCalls.length = 0;
     try {
@@ -12436,6 +12434,7 @@ describe("harness HTTP API", () => {
       expect(denyRows.some((row) => row.tool === "gmail_send_email")).toBe(true);
     } finally {
       await api("DELETE", `/api/bots/${bot.id}`);
+      await api("PUT", "/api/config", { composio: { apiKey: "" } });
     }
   });
 
@@ -12529,9 +12528,9 @@ describe("harness HTTP API", () => {
   });
 
   it("serves the grant editor's tool inventory grouped by service", async () => {
-    // Broker mode: clear any project key an earlier test left behind.
-    expect((await api("PUT", "/api/config", { composio: { apiKey: "" } })).status).toBe(200);
+    expect((await api("PUT", "/api/config", { composio: { apiKey: "ak_good" } })).status).toBe(200);
     const response = await api("GET", "/api/connectors/tools");
+    await api("PUT", "/api/config", { composio: { apiKey: "" } });
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       configured: true,

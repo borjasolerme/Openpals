@@ -1,20 +1,17 @@
 # Terminal setup
 
-Install [Node.js](https://nodejs.org/) 24 or newer, then choose either way to run OpenMausBot:
+Install [Node.js](https://nodejs.org/) 24 or newer and git. Openpals has no npm
+package; run it from a clone of its source:
 
 ```sh
-# Install once, then use the short command:
-npm install -g openmausbot
-openmausbot
+git clone https://github.com/borjasolerme/Openpals.git && cd Openpals
+ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile
+corepack pnpm exec vite build      # the web UI the workspace serves
+corepack pnpm omb
 ```
 
-Or, without a global install:
-
-```sh
-npx openmausbot
-```
-
-Use the same command next time. The first launch guides you through setup; later launches reuse your saved AI connection and phone-access choice. `openmausbot start` is the same as the bare command. If that workspace is already running, OpenMausBot opens it instead of starting a second server.
+`corepack pnpm omb` runs `node --experimental-strip-types server/openmausbot.ts`;
+this page writes it as `openmausbot`. Use the same command, from the clone, next time. The first launch guides you through setup; later launches reuse your saved AI connection and phone-access choice. `openmausbot start` is the same as the bare command. If that workspace is already running, OpenMausBot opens it instead of starting a second server.
 
 ## First launch
 
@@ -37,7 +34,6 @@ A phone cannot connect to this computer's `localhost` address. The harness also 
 
 Choose one connection method:
 
-- **Managed HTTPS address:** setup asks explicit permission for a public endpoint through Cloudflare and a possible connector download. Device pairing protects chat and settings; the pairing page and basic server identity remain publicly reachable. Sign in to an **OpenMausBot account** using an emailed code, or reuse this machine's saved account. This account is separate from ChatGPT, Claude, or an API-provider account. The connection stays active while OpenMausBot runs.
 - **Existing Tailscale:** both computer and phone must already be signed in to the same tailnet, with HTTPS certificates enabled. Setup asks before enabling HTTPS serving to that tailnet; it does not install or sign in to Tailscale for you.
 - **Existing HTTPS address (advanced):** supply the origin of a reverse proxy you already configured, such as `https://maus.example.com`. Do not paste a password, path, query, or pairing code. Entering an address does not create the proxy or open a LAN listener.
 
@@ -48,11 +44,11 @@ After the connection is ready:
 
 Choose **Connect** on the phone. Scanning alone is not a successful pairing. The code is private, single-use, and expires after five minutes. Guided phone pairing grants client access for chat and approvals, not settings or pairing administration.
 
-If the workspace starts but its HTTPS check fails, the local workspace remains usable and no phone code is created. Fix the connection and run `openmausbot pair` in another terminal to try again. A missing account, connector, or Tailscale prerequisite can prevent startup; follow the printed error, or use `openmausbot --local`. To add phone access after skipping it, stop the server, run `openmausbot setup`, then start it again.
+If the workspace starts but its HTTPS check fails, the local workspace remains usable and no phone code is created. Fix the connection and run `openmausbot pair` in another terminal to try again. A missing Tailscale prerequisite can prevent startup; follow the printed error, or use `openmausbot --local`. To add phone access after skipping it, stop the server, run `openmausbot setup`, then start it again.
 
 ## Commands
 
-The examples below assume a global install; prefix them with `npx` otherwise.
+The examples below write `openmausbot` for `corepack pnpm omb`, run from the clone.
 
 | Command | Use |
 | --- | --- |
@@ -60,8 +56,8 @@ The examples below assume a global install; prefix them with `npx` otherwise.
 | `openmausbot setup` | Revisit AI and optional phone setup, save, and exit without starting. This is not a reset. |
 | `openmausbot --no-open` | Start without opening a browser. |
 | `openmausbot --local` | Ignore saved remote access for this launch; keep the saved choice for next time. |
-| `openmausbot --no-pair` | Suppress phone setup prompts and pairing invitations. This does **not** turn off saved remote access; use `--local` for that. |
-| `openmausbot pair` | Create another phone invitation while the configured workspace and HTTPS connection are running. |
+| `openmausbot --no-pair` | Suppress phone setup prompts and pairing codes. This does **not** turn off saved remote access; use `--local` for that. |
+| `openmausbot pair` | Create another phone pairing code while the configured workspace and HTTPS connection are running. |
 | `openmausbot sessions` | List paired devices; `openmausbot sessions revoke ID` signs one out. |
 | `openmausbot serve` | Start without onboarding prompts or automatic browser opening; specify remote-access flags explicitly for a service. |
 
@@ -76,8 +72,8 @@ Setup needs an interactive terminal. Later starts can run without one once setup
 
 ## Credentials and cancellation
 
-API keys are hidden while typed or pasted. New API connections save their key in the data directory's `config.json` as **plaintext, not encrypted**, with owner-only permissions (`0600`) on Unix. Managed-access account credentials in `tunnel-account.json` are also plaintext with `0600` permissions on Unix. Keep these files and backups private. Native provider sign-in credentials are managed by the provider's own CLI.
+API keys are hidden while typed or pasted. New API connections save their key in the data directory's `config.json` as **plaintext, not encrypted**, with owner-only permissions (`0600`) on Unix. Keep this file and backups private. Native provider sign-in credentials are managed by the provider's own CLI.
 
-Ctrl-C during AI setup leaves unsaved OMB changes unapplied. Installations and provider sign-ins already completed remain available. Ctrl-C during the later phone step keeps the AI setup you already saved, exits without starting a server, and does not undo an account sign-in already completed. Run `openmausbot setup` to continue; no destructive reset is needed.
+Ctrl-C during AI setup leaves unsaved OMB changes unapplied. Installations and provider sign-ins already completed remain available. Ctrl-C during the later phone step keeps the AI setup you already saved, and exits without starting a server. Run `openmausbot setup` to continue; no destructive reset is needed.
 
 For remote access and background deployment options, see [self-hosting](self-hosting.md) and [the VPS guide](deploy-vps.md).

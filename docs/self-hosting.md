@@ -2,7 +2,11 @@
 
 Run the harness server on an always-on Linux box (a VPS, a home server, a
 Mac mini in a closet) and pair browsers, the desktop app, or phones with it.
-The npm CLI supports Tailscale, your own domain, or your own proxy.
+Openpals has no npm package: it runs from a clone of its source, and its
+`openmausbot` command supports Tailscale, your own domain, or your own proxy.
+On this page `openmausbot …` stands for
+`node --experimental-strip-types server/openmausbot.ts …` run from that clone
+(`corepack pnpm omb …` is the same).
 
 > **Security first:** by default a self-hosted server trusts loopback as its
 > owner — any process that can reach `127.0.0.1:8799` has full control,
@@ -13,7 +17,7 @@ The npm CLI supports Tailscale, your own domain, or your own proxy.
 > through a correctly configured proxy require a paired session. If several people use one server, read
 > [Loopback trust](#loopback-trust-owner-or-service) below.
 
-Step by step, for a server you do not have yet: [Deploy OpenMausBot on a
+Step by step, for a server you do not have yet: [Deploy Openpals on a
 VPS](deploy-vps.md) walks through the two ways in (own domain,
 Tailscale), signing engines in, pairing, keeping it running,
 updating and backups. This page is the reference behind it.
@@ -32,7 +36,7 @@ Runs fully on a server:
 - text-to-speech (with a key), the web UI (the server serves it itself)
 
 - a browser for bots, once the engine is installed on the server
-  (`npx openmausbot browser install`, or nothing to do in the Docker image,
+  (`openmausbot browser install`, or nothing to do in the Docker image,
   which ships it): each bot gets its own isolated, persistent session.
   Watching it live from the app is the next step (docs/plans/browser-engine.md).
   It reaches the public internet and the dev servers a bot starts itself,
@@ -43,12 +47,15 @@ Desktop-only for now (needs the Mac/Linux app):
 
 - dictation/voice, controlling the host desktop
 
-## Quickest: one command with Node
+## Quickest: from a clone, with Node
 
-On any machine with Node 24 or newer (a VPS, a Mac mini, a Raspberry Pi):
+On any machine with Node 24 or newer and git (a VPS, a Mac mini, a Raspberry Pi):
 
 ```sh
-npx openmausbot start
+git clone https://github.com/borjasolerme/Openpals.git && cd Openpals
+ELECTRON_SKIP_BINARY_DOWNLOAD=1 corepack pnpm install --frozen-lockfile
+corepack pnpm exec vite build      # the web UI the server serves, in dist/
+node --experimental-strip-types server/openmausbot.ts start
 ```
 
 First launch asks you to choose AI access, connect an account or API key,
@@ -60,11 +67,11 @@ explains the choices, key storage, and how to run setup again safely.
 It then starts the server and keeps your data in `~/.openmausbot`. If you
 choose phone access, it prints a pairing link and QR code only after checking
 the HTTPS connection. Choosing **Skip for now** keeps the workspace local-only
-and creates no pairing invitation. Use `npx openmausbot setup` to configure without starting, or
-`npx openmausbot serve` to start non-interactively with your existing config
+and creates no pairing code. Use `openmausbot setup` to configure without starting, or
+`openmausbot serve` to start non-interactively with your existing config
 (for services and scripts).
 
-The npm package does not include engine CLIs (`claude`, `codex`, …); setup
+Openpals does not include engine CLIs (`claude`, `codex`, …); setup
 can offer to install and sign in supported engines on this machine.
 Run setup, engine authentication, and the server as the same unprivileged
 operating-system user. Engine credentials live in that user's CLI-specific
@@ -73,18 +80,18 @@ directories, not all under `.openmausbot`.
 For a Linux service, the [VPS guide](deploy-vps.md#before-you-start) shows the
 account setup, engine installation, and browser dependency installation.
 After installing browser libraries as administrator, also run
-`npx openmausbot browser install` as the service user so that user's browser
+`openmausbot browser install` as the service user so that user's browser
 is present. Three ways to make the server reachable from elsewhere:
 
 - **On your Tailscale network, no domain needed:**
-  `npx openmausbot serve --tailscale`. Tailscale terminates HTTPS with its
+  `openmausbot serve --tailscale`. Tailscale terminates HTTPS with its
   own certificate and the link uses this machine's MagicDNS name, so only
   devices on your tailnet can reach it. Needs Tailscale signed in and HTTPS
   certificates enabled for the tailnet (admin console → DNS).
 - **Your own domain, still one command:**
 
   ```sh
-  npx openmausbot serve --domain maus.example.com
+  node --experimental-strip-types server/openmausbot.ts serve --domain maus.example.com
   ```
 
   Point the domain's A record at this machine and open ports 80 and 443.
@@ -93,17 +100,16 @@ is present. Three ways to make the server reachable from elsewhere:
   and renews the certificate from Let's Encrypt. On Linux, binding ports 80
   and 443 as a normal user needs one privilege grant; when Caddy reports the
   refusal, `serve` prints the exact `setcap` command to run once.
-- **Behind your own proxy or domain:** `npx openmausbot serve --public-url
+- **Behind your own proxy or domain:** `openmausbot serve --public-url
   https://maus.example.com`, with the proxy rules from "Putting a proxy in
   front".
 
-Later: `npx openmausbot pair --label "Kitchen iPad"` for another device
+Later: `openmausbot pair --label "Kitchen iPad"` for another device
 (`--client` for one that may chat but not change settings), and
-`npx openmausbot sessions` to see or revoke them. `openmausbot serve` is a
+`openmausbot sessions` to see or revoke them. `openmausbot serve` is a
 plain foreground process. For unattended use, follow the
-[systemd example](deploy-vps.md#keep-it-running), which installs a chosen
-release and runs its binary directly. Restarting that service does not
-implicitly download a new release.
+[systemd example](deploy-vps.md#keep-it-running), which runs the checkout
+directly. Restarting that service does not update it.
 
 ## Connect ChatGPT from the browser
 
@@ -188,14 +194,13 @@ Requirements: Docker with Compose, a DNS name pointing at the machine, and
 ports 80/443 open.
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot/deploy
+git clone https://github.com/borjasolerme/Openpals.git && cd Openpals/deploy
 cp .env.example .env            # set DOMAIN
-docker compose pull omb && docker compose up -d
+docker compose up -d --build
 ```
 
-That uses the image CI publishes on every `main` push
-(`ghcr.io/milind-soni/openmausbot`, tagged `latest`, `sha-…` and `v…`).
-To build from your checkout instead: `docker compose up -d --build`.
+This builds the image from your checkout. There is no prebuilt Openpals
+image, so do not use `docker compose pull`.
 
 Then sign the engine CLIs in **inside the container** (their logins live on
 the `data` volume, so they survive restarts and image upgrades) and mint a
@@ -226,13 +231,10 @@ What the stack does, so you can adapt it:
   own pairing is the login. A shared-password `basic_auth` block is there,
   commented out, if you want a second wall in front of pairing.
 
-Upgrade with `docker compose pull omb && docker compose up -d` (or
-`git pull && docker compose up -d --build`). State (chats, routines,
+Upgrade with `git pull --ff-only && docker compose up -d --build`. State (chats, routines,
 engine logins, paired sessions) is on the `data` volume; back that up.
 
-The published image installs the current Chrome for Testing whenever a new
-Stable ships. A build from source keeps the Chrome (and any `ENGINES`) it
-installed first, because those layers sit beneath the app and stay cached
+A build keeps the Chrome (and any `ENGINES`) it installed first, because those layers sit beneath the app and stay cached
 across code changes. To pick up the current ones, rebuild with a new tag:
 
 ```sh
@@ -241,12 +243,13 @@ docker compose build --build-arg CHROME_CACHE_TAG=$(date +%F) omb && docker comp
 
 ## From source
 
-Requirements: Node 24+, pnpm, and at least one agent CLI installed and
-signed in on the server.
+Requirements: Node 24+, pnpm (`corepack pnpm` runs the pinned one), and at
+least one agent CLI installed and signed in on the server.
 
 ```sh
-git clone https://github.com/milind-soni/OpenMausBot && cd OpenMausBot
+git clone https://github.com/borjasolerme/Openpals.git && cd Openpals
 pnpm install
+pnpm exec vite build
 
 # choose where data lives and start the server
 OMB_DATA_DIR="$HOME/.openmausbot" OMB_PORT=8799 \
@@ -256,7 +259,7 @@ OMB_DATA_DIR="$HOME/.openmausbot" OMB_PORT=8799 \
 For something durable, let the CLI write the service for you:
 
 ```sh
-npx openmausbot service install --domain maus.example.com   # or --tailscale, or nothing
+node --experimental-strip-types server/openmausbot.ts service install --domain maus.example.com   # or --tailscale, or nothing
 ```
 
 It renders a systemd unit (Linux) or a launchd agent (macOS) that runs the
@@ -264,9 +267,9 @@ same `openmausbot serve …` with your options, restarts it if it stops, and,
 for `--domain`, grants the unit the capability to bind ports 80 and 443
 without root. The file is written next to your data and the two commands
 that install and start it are printed (they need `sudo` on Linux).
-`openmausbot service uninstall` prints the reverse. Install the package
-permanently first (`npm install -g openmausbot`): a service must not point
-at an `npx` cache that npm may prune.
+`openmausbot service uninstall` prints the reverse. The unit runs this
+checkout's `server/openmausbot.ts` with this Node, so keep the clone where it
+is, and run `service install` again after moving it or upgrading Node.
 
 Engine CLIs read their logins from the service user's home: sign them in
 from Settings → Engines (below), or as that user in a terminal, before you
@@ -388,7 +391,6 @@ Pair once, then use the server from any browser on any machine that can
 reach it. On the server:
 
 ```sh
-npx openmausbot pair                         # npm install
 pnpm omb pair                                # from a checkout
 docker compose exec omb node dist-server/openmausbot.js pair   # Docker
 ```
@@ -405,7 +407,7 @@ From the **desktop app**, use the server dropdown above Search → **Connect
 to a server…**, or **Settings → Servers**. Enter the server's
 HTTPS address or full pairing link, with an optional name. Custom domains and
 Cloudflare tunnel addresses work; Tailscale is not required. Generate a fresh
-link for each device: `npx openmausbot pair --label "My desktop"` creates an
+link for each device: `openmausbot pair --label "My desktop"` creates an
 owner link without the phone wizard; add `--client` for chat-only access.
 A code already used by your phone cannot also pair your desktop.
 
@@ -604,7 +606,7 @@ Openpals has no email sign-in. A device signs in with a pairing code: `openmausb
 `openmausbot pair --client` chat and approvals only. Sessions show in `openmausbot sessions` and are revoked the same way.
 
 The sign-in allow-list (`OMB_SIGNIN_EMAILS`, `OMB_SIGNIN_MEMBER_EMAILS`, `signIn.admins` / `signIn.members` in
-`config.json`, or `npx openmausbot access add|remove|list`) is still read: a list that names users marks the server as
+`config.json`, or `openmausbot access add|remove|list`) is still read: a list that names users marks the server as
 shared by several people, which narrows who may answer a card (below).
 
 On a hosted workspace whose members your organization's Admin manages (`OMB_ADMIN_MEMBERSHIP=portal`), people sign in
@@ -804,7 +806,7 @@ on your private networks (Tailscale-aware) and issues its own per-device
 credentials, which are **not** `openmausbot sessions` and are revoked from
 its own page at the `127.0.0.1:8811/#token=…` link it prints. It also serves phones over cleartext HTTP
 on port 8810, so do not expose it from a public server. It ships only in a
-git checkout: neither the npm package nor the Docker image contains it.
+git checkout: the Docker image does not contain it.
 
 ```sh
 node --experimental-strip-types companion/src/index.ts
@@ -1201,14 +1203,13 @@ settings do not change it.
 
 ## Updating
 
-For the npm service, [install the chosen new version](deploy-vps.md#update)
-as the service user while the server is stopped, then start it again.
-For a foreground invocation, `npx --yes openmausbot@X.Y.Z serve`
-selects a particular published release; replace `X.Y.Z` with that version.
+Stop the server, update the clone, reinstall and rebuild the web UI, then
+start it again ([the VPS guide's steps](deploy-vps.md#update)). To run a
+chosen version, `git checkout` its tag or commit instead of pulling.
 
 ```sh
-docker compose -f deploy/docker-compose.yml pull omb && docker compose -f deploy/docker-compose.yml up -d   # Docker
-git pull && pnpm install && sudo systemctl restart openmausbot          # from source
+git pull --ff-only && docker compose -f deploy/docker-compose.yml up -d --build   # Docker
+sudo systemctl stop openmausbot && git pull --ff-only && pnpm install && pnpm exec vite build && sudo systemctl start openmausbot   # from source
 ```
 
 Routines and queued work survive restarts. A teammate turn in flight runs

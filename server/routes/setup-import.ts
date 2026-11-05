@@ -8,8 +8,7 @@ import { PASS, type RouteHandler } from "./table.ts";
 
 export interface SetupImportRouteDeps {
   /** True only on the desktop app's own server. Never on `openmausbot serve`, where any local process, a bot's shell
-   * among them, is the owner's loopback; nor on a Cloud home or a hosted organization server, whose files are not the
-   * person's own. */
+   * among them, is the owner's loopback; nor on a hosted organization server, whose files are not the person's own. */
   local: boolean;
   cfg: Pick<AppConfig, "mcpServers" | "features">;
   mcpConfigBusy: BusyFlag;
@@ -25,7 +24,7 @@ const LOCAL_ONLY = "Only the desktop app on the computer running Openpals can br
 const requestSchema = z.object({ skills: z.boolean().optional(), tools: z.boolean().optional() }).strict();
 
 /** GET finds what is new here; POST brings in the chosen kinds. Only the owner's own loopback, never a paired device,
- * a browser elsewhere, a bot's shell on a service server, a Cloud home or a hosted server. */
+ * a browser elsewhere, a bot's shell on a service server or a hosted server. */
 export function createSetupImportRoutes(deps: SetupImportRouteDeps): RouteHandler {
   removeOldCursorSignIn(deps.dataDir ?? DATA_DIR);
   const machine = deps.machine ?? thisMachine;

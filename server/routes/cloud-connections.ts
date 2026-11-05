@@ -1,7 +1,7 @@
 // The routes a one-time move to the person's own Cloud uses for connections. GET /api/cloud-connections, on either
 // side, names this server's connections (never a secret) with the engines it runs and the programs it has. On a Cloud
-// home: POST /api/cloud-connections/connected-apps makes this Cloud act as the computer's connected-apps account (a
-// one-time code from OpenMausBot's service, or the person's own Composio project); PUT
+// home: POST /api/cloud-connections/connected-apps makes this Cloud act as the computer's connected-apps account (the
+// person's own Composio project); PUT
 // /api/cloud-connections/mcp/<name>/sign-in and PUT /api/cloud-connections/highlevel take a sign-in that moved; PUT
 // /api/cloud-connections/held-keys keeps a trial's moved keys unused while its Claude credit lasts. Admin scope
 // (request-auth's default): only the owner's app reaches them.
@@ -18,10 +18,7 @@ import { PASS, type RouteHandler } from "./table.ts";
 const SLUG = /^[a-z0-9_][a-z0-9_-]{0,80}$/u;
 const SIGN_IN = /^\/api\/cloud-connections\/mcp\/([a-z][a-z0-9_-]{0,31})\/sign-in$/u;
 const DIGEST = /^[0-9a-f]{64}$/u;
-const connectSchema = z.union([
-  z.object({ share: z.string().regex(/^[0-9a-f]{64}$/u), apps: z.array(z.string().regex(SLUG)).max(500).optional() }).strict(),
-  z.object({ apiKey: z.string().trim().min(1).max(500), userId: z.string().min(1).max(200), apps: z.array(z.string().regex(SLUG)).max(500).optional() }).strict(),
-]);
+const connectSchema = z.object({ apiKey: z.string().trim().min(1).max(500), userId: z.string().min(1).max(200), apps: z.array(z.string().regex(SLUG)).max(500).optional() }).strict();
 
 export interface ConnectionsAnswer {
   /** This server's own computer, which an MCP server that needs it is marked as running on. */
@@ -31,8 +28,6 @@ export interface ConnectionsAnswer {
   engines: string[];
   /** Programs a command-line MCP server may start that this server has. */
   commands: string[];
-  /** False on a server with no connected-apps service of MausBot's: connected apps through that service can't move here. */
-  managedApps?: false;
 }
 
 export type Adopted = { ok: true; outcome: "adopted" | "kept" } | { ok: false; status: number; error: string };
@@ -41,7 +36,6 @@ export interface CloudConnectionRouteDeps {
   /** Only a server of one person's own takes connections, from that person's session. */
   ownHome(auth: RequestAuth): boolean;
   list(): Promise<ConnectionsAnswer>;
-  adoptShare(code: string): Promise<ShareOutcome>;
   adoptOwn(apiKey: string, userId: string): Promise<ShareOutcome>;
   /** Which of these connected apps are connected here now. */
   composioConnected(slugs: string[]): Promise<Record<string, boolean>>;
@@ -81,11 +75,11 @@ export function createCloudConnectionRoutes(deps: CloudConnectionRouteDeps): Rou
     }
 
     const parsed = connectSchema.safeParse(body);
-    if (!parsed.success) return json(res, 400, { error: "send {share, apps} or {apiKey, userId, apps}" });
+    if (!parsed.success) return json(res, 400, { error: "send {apiKey, userId, apps}" });
     const asked = parsed.data;
     let outcome: ShareOutcome;
     try {
-      outcome = "share" in asked ? await deps.adoptShare(asked.share) : await deps.adoptOwn(asked.apiKey, asked.userId);
+      outcome = await deps.adoptOwn(asked.apiKey, asked.userId);
     } catch (error) {
       return json(res, 502, { error: error instanceof Error && error.message ? error.message.slice(0, 300) : "Connected apps could not be shared." });
     }

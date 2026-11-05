@@ -29,8 +29,8 @@ messages, or command arguments.
 Keys for OpenCode's other providers go under **Keys for other OpenCode
 providers** in the same place, each under the environment name OpenCode reads
 it from: `VENICE_API_KEY` for Venice, `GROQ_API_KEY` for Groq, and so on. This
-works on the desktop and on My Cloud, where there is no terminal to export
-them in. Each key is write-only (Settings shows its name, never the key), is
+works on the desktop and on a server, where there may be no terminal to
+export them in. Each key is write-only (Settings shows its name, never the key), is
 kept in the server's own config, and is passed only to the OpenCode process;
 saving one reloads the engines, so OpenCode lists that provider's models
 straight away. On a Cloud, a hosted team or an organization's desktop,

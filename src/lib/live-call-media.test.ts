@@ -89,7 +89,7 @@ describe("live call media", () => {
 
   it.each([
     ["the Mac app's own page", "desktop", { available: true, engine: "apple-speech", onDevice: true }],
-    ["My Cloud in the desktop app", "desktop", { reasonCode: "remote-server" }],
+    ["a paired server in the desktop app", "desktop", { reasonCode: "remote-server" }],
     ["the Windows app", "desktop", { reasonCode: "unsupported-platform" }],
     ["a web browser", "web", { reasonCode: "desktop-app-required" }],
   ] as const)("from %s, starts a %s call", async (_where, client, dictation) => {
@@ -762,7 +762,7 @@ describe("a blocked microphone", () => {
     expect(pageMicrophone).not.toHaveBeenCalled();
   });
 
-  it("allowed by this app on the person's Cloud, points at the computer's settings, then Try again", async () => {
+  it("allowed by this app on a paired server, points at the computer's settings, then Try again", async () => {
     blockedIn({ reasonCode: "remote-server" }, { pageMic: "allowed" });
     await startLiveCall({ botId: "b1", threadId: "t1" });
     expect(liveMedia()).toMatchObject({ phase: "failed", notice: COMPUTER, action: "retry" });

@@ -1,5 +1,5 @@
-// What a bot's browser may connect to: every address a destination resolves to gets a class, and the host
-// OpenMausBot runs on decides which classes pass.
+// What a bot's browser or its box's shell may connect to: every address a destination resolves to gets a class, and
+// the host OpenMausBot runs on (or the box) decides which classes pass.
 import { BlockList, isIP } from "node:net";
 import { z } from "zod";
 
@@ -7,11 +7,10 @@ import { addressClass, listed, ownAddresses, type AddressClass } from "../../../
 
 export { addressClass, ownAddresses, type AddressClass };
 
-/** `desktop`: the app on someone's computer. `server`: self-hosted (Docker, npm). `cloud`: a MausBot Cloud home. */
-export type EgressHost = "desktop" | "server" | "cloud";
+/** `desktop`: the app on someone's computer. `server`: self-hosted (Docker, npm). */
+export type EgressHost = "desktop" | "server";
 
-/** `home-network` and `port` come from the person's own computer when My Cloud's browsing goes out through it. */
-export type Refusal = "omb" | "this-computer" | "local-network" | "link-local" | "metadata" | "reserved" | "rebinding" | "reddit" | "home-network" | "port";
+export type Refusal = "omb" | "this-computer" | "local-network" | "link-local" | "metadata" | "reserved" | "rebinding";
 
 /** How a refusal reads in the page-health line. */
 export const REFUSAL_TEXT: Record<Refusal, string> = {
@@ -22,9 +21,6 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
   metadata: "the cloud metadata service",
   reserved: "a reserved address",
   rebinding: "a web address that points at this computer",
-  reddit: "Reddit",
-  "home-network": "the person's own computer or home network",
-  port: "a port other than 80 and 443, which the person's computer does not open for bots",
 };
 
 const family = (address: string) => (isIP(address) === 6 ? "ipv6" : "ipv4");
@@ -42,13 +38,13 @@ export function namesThisMachine(host: string): boolean {
 export const browserEgressConfigSchema = z.object({
   /** Self-hosted servers only: local-network or this-computer destinations bots' browsers may reach, as
    * `10.0.0.5`, `192.168.1.0/24`, `10.0.0.5:8080`, `fd12::/48` or `[fd12::1]:443`. OpenMausBot's own ports,
-   * cloud metadata and link-local addresses stay closed. MausBot Cloud ignores it. */
+   * cloud metadata and link-local addresses stay closed. */
   allow: z.array(z.string().trim().max(64).refine((entry) => parseAllowEntry(entry) !== null, {
     message: "must be an IP address or CIDR range, with an optional :port",
   })).max(64).optional(),
   /** Desktop: false keeps bots' browsers off the local network (the default lets them reach it). Self-hosted
    * servers: true lets them open this server's own sites and its local network (off by default); OpenMausBot's
-   * own ports, cloud metadata and link-local addresses stay closed. MausBot Cloud ignores it. */
+   * own ports, cloud metadata and link-local addresses stay closed. */
   localNetwork: z.boolean().optional(),
 });
 export type BrowserEgressConfig = z.output<typeof browserEgressConfigSchema>;
@@ -86,7 +82,8 @@ export function allowList(entries: readonly string[] | undefined): (address: str
 }
 
 export interface EgressRules {
-  host: EgressHost;
+  /** `box`: a bot box's shell, which reaches the public internet only. */
+  host: EgressHost | "box";
   /** A port one of OpenMausBot's own listeners holds on this machine. */
   ownPort(port: number): boolean;
   /** Whether every listener on this loopback port belongs to a bot's processes. */

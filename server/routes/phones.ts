@@ -10,9 +10,9 @@ const SELF_ONLY = "Only a paired phone can register its apps, and only for itsel
 /** What a job waiting on a phone that was just removed answers. */
 export const PHONE_ACCESS_CHANGED = "This phone's access changed.";
 
-/** Keyed by what authenticated the request, never by the body or its headers: a Cloud session, or the device the verified companion sidecar vouched for. */
+/** Keyed by what authenticated the request, never by the body or its headers: a paired session, or the device the verified companion sidecar vouched for. */
 export function phoneKey(auth: RequestAuth): string | null {
-  if (auth.kind === "session") return auth.session.cookieOnly ? null : `session:${auth.session.id}`;
+  if (auth.kind === "session") return `session:${auth.session.id}`;
   return auth.companionDevice ? `companion:${auth.companionDevice}` : null;
 }
 
@@ -24,7 +24,7 @@ export function isLongPollPath(path: string): boolean {
 export interface PhoneRouteDeps {
   registry: PhoneRegistry;
   jobs: PhoneJobs;
-  /** The owner this phone belongs to, or null when phones are not offered here (team Cloud, hosted workspace, guest session). */
+  /** The owner this phone belongs to, or null when phones are not offered here (a hosted or shared workspace). */
   owner: (auth: RequestAuth) => string | null;
   isAdmin: (auth: RequestAuth) => boolean;
   live: (auth: RequestAuth) => boolean;

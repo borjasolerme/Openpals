@@ -94,7 +94,7 @@ describe("the store side of waits", () => {
     expect(store.message(id).card).not.toHaveProperty("undone");
   });
 
-  it("queues the follow-up as an outside event that joins the chat, except on a Cloud home", () => {
+  it("queues the follow-up as an outside event that joins the chat, except in a room", () => {
     host.followUp({ ...wait, followUp: "Deploy it." });
     expect(enqueue).toHaveBeenLastCalledWith({ webhookId: "wait:w1", webhookName: "the build", prompt: "[Wait finished: the build] Deploy it.",
       botId: "bot-1", runOn: "maus", deliveryId: "w1", receivedAt: NOW, eventSource: "wait", resultsThreadId: "t-1" });

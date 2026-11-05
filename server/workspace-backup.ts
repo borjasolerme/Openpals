@@ -13,7 +13,7 @@ import { Worker } from "node:worker_threads";
 import { writeFileAtomic } from "./atomic.ts";
 import { WORKSPACE_BACKUP_CLIENT_KEYS } from "../shared/workspace-backup-client.ts";
 import { INSTRUCTION_FILE, restorePaths, validRelative } from "./workspace-backup-paths.ts";
-import { ephemeralWorkspaceTokenPath, excludedWorkspaceAuthPath, liveDataEnginePath, managedTaskSkillLink, portableWorkspaceConfig, redownloadedOrgLibraryPath, restoredWorkspaceConfig } from "./workspace-backup-policy.ts";
+import { ephemeralWorkspaceTokenPath, excludedWorkspaceAuthPath, liveDataEnginePath, managedTaskSkillLink, portableWorkspaceConfig, restoredWorkspaceConfig } from "./workspace-backup-policy.ts";
 import type { WorkspaceBackupClientState, WorkspaceBackupPrivateMetadata, WorkspaceBackupSummary, WorkspaceLeftBehind } from "../shared/workspace-backup.ts";
 
 export type { WorkspaceBackupSummary, WorkspaceBackupPrivateMetadata } from "../shared/workspace-backup.ts";
@@ -33,15 +33,10 @@ const EXCLUDED = new Set([
   "openmausbot-server.lease", "box-create-requests.lock", "messages.db-wal", "messages.db-shm",
   "runtime.db-wal", "runtime.db-shm",
   "decider-log",
-  "cloud-owner.json",
-  "sync",
   // "Also use my Claude Code skills": a link to the person's own ~/.claude/skills, made again on each turn.
   "claude-user-skills",
   // The bot box's live sockets and seccomp filter (bot-box/box.ts), made again each time the server starts.
   "box",
-  // A Team Cloud's engine homes (engine-homes/layout.ts): CLI login homes, each audience's own transcripts and the held
-  // folder, which no admin reads.
-  "engine-homes",
   WAITS_FILE,
 ]);
 const EXCLUSION_NOTES = [
@@ -330,7 +325,7 @@ export async function createWorkspaceBackupSnapshot(dataDir: string, options: Cr
       for (const name of readdirSync(directory).sort()) {
         if (!prefix && excluded(name)) continue;
         const path = prefix ? `${prefix}/${name}` : name;
-        if (excludedWorkspaceAuthPath(path) || ephemeralWorkspaceTokenPath(path) || redownloadedOrgLibraryPath(path) || liveDataEnginePath(path)) continue;
+        if (excludedWorkspaceAuthPath(path) || ephemeralWorkspaceTokenPath(path) || liveDataEnginePath(path)) continue;
         // Reject noncanonical spellings: a case-sensitive host must not export auth paths active on Windows/Mac.
         if (forbiddenArchivePath(path)) throw new Error("A workspace filename conflicts with a protected authentication or runtime path.");
         if (!validRelative(path)) throw new Error(`Cannot back up a name that cannot be restored on every supported platform, such as one with ":" or "\\", a trailing dot or space, or a Windows device name like CON or AUX; rename it first: ${path}`);
@@ -775,10 +770,6 @@ function prepareRestore(dataDir: string, id: string, manifest: Manifest): string
     if (!record(value)) throw new Error("Invalid calendar definitions in workspace backup.");
     if (Array.isArray(value.calls)) for (const call of value.calls) if (record(call)) call.nextRunAt = null;
   });
-  changeJson("app-triggers.json", (value) => {
-    if (!record(value)) throw new Error("Invalid app automations in workspace backup.");
-    if (Array.isArray(value.triggers)) for (const trigger of value.triggers) if (record(trigger)) trigger.enabled = false;
-  });
   if (existsSync(join(prepared, "delegations.json"))) writeJson(join(prepared, "delegations.json"), {});
   if (existsSync(join(prepared, "browser-cleanups.json"))) writeJson(join(prepared, "browser-cleanups.json"), []);
   for (const entry of manifest.entries) {
@@ -944,5 +935,5 @@ export function removeWorkspaceBackupJob(dataDir: string, id: string): void {
 }
 
 export function omittedFromWorkspaceBackup(path: string): boolean {
-  return excluded(path.split("/")[0]) || excludedWorkspaceAuthPath(path) || ephemeralWorkspaceTokenPath(path) || redownloadedOrgLibraryPath(path) || liveDataEnginePath(path);
+  return excluded(path.split("/")[0]) || excludedWorkspaceAuthPath(path) || ephemeralWorkspaceTokenPath(path) || liveDataEnginePath(path);
 }

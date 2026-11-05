@@ -1,5 +1,4 @@
 import { codexToolSurfaceArgs } from "./codex-tool-surface.ts";
-import { codexShellDisabled, GUEST_CONFINED_CODEX_ARGS } from "./codex-guest.ts";
 import { TEAM_TOOLS_FAILED, teamToolsFailed } from "./team-tools.ts";
 import { reportUnsupportedCalls, rolloutMark, type RolloutMark } from "./codex-unsupported-calls.ts";
 // The `codex` CLI headless over its app-server JSON-RPC (NDJSON on stdio): completion is
@@ -58,7 +57,7 @@ export { codexUpdateCommand };
 import { effectiveApprovalPolicy, effectiveApprovalsReviewer } from "./codex-approval-config.ts"; import { AGENTS_TOOL_TIMEOUT_SECONDS } from "./agents-tool-limit.ts";
 import { canUseMcpServer } from "../../shared/tool-scope.ts";
 import { assertToolScopeSupported } from "../../shared/tool-scope-support.ts";
-import { appMountFor, gateServer, mcpStdioServer } from "../mcp-gate-config.ts"; import { OWN_APPS_SERVER } from "../../shared/own-apps.ts";
+import { appMountFor, gateServer, mcpStdioServer } from "../mcp-gate-config.ts";
 import { CALL_TOOL, DESCRIBE_TOOL, SEARCH_TOOL, directoryCallTarget } from "../mcp-directory.ts"; import { codexCommandOutput, codexPatchProgress } from "./tool-progress.ts";
 
 export { decodeCodexSelection, readCodexModelCatalog, STATIC_CODEX_MODELS } from "./codex-catalog.ts";
@@ -670,9 +669,7 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
         if (planToken) env.OPENMAUSBOT_CHATGPT_TOKEN = planToken;
         const appServerArgs = ["app-server", ...(plan ? chatgptPlanCodexArgs() : config.managed ? managedCodexArgs(config.managed) : codexLocalProviderArgs(env, turn.model)), ...codexToolSurfaceArgs(),
           // Native shell snapshots can restore variables the shell policy removed.
-          ...(turn.toolScope === undefined ? [] : ["-c", "features.shell_snapshot=false"]),
-          // A guest-driven turn: no shell, no file reads (-c wins over config files).
-          ...(turn.guestConfined ? GUEST_CONFINED_CODEX_ARGS : [])];
+          ...(turn.toolScope === undefined ? [] : ["-c", "features.shell_snapshot=false"])];
         const baseEnv = new Map(Object.entries(env).filter(([, value]) => value !== undefined));
         const mountedNames = new Set<string>();
         const selectedMcp = new Map<string, StdioMcpSpec>();
@@ -713,7 +710,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
           }
         };
         if (turn.integrations?.composio) mountSelected("composio", "openmausbot_connectors", turn.integrations.composio);
-        if (turn.integrations?.composioOwn) mountSelected(OWN_APPS_SERVER, `openmausbot_${OWN_APPS_SERVER}`, turn.integrations.composioOwn);
         if (turn.integrations?.agents) {
           // OpenMausBot's own coordination tools never ask: "auto" quiets only read-only tools.
           mountSelected("agents", "agents", turn.integrations.agents, "approve"); if (selectedMcp.has("agents")) appServerArgs.push("-c", `mcp_servers.agents.tool_timeout_sec=${AGENTS_TOOL_TIMEOUT_SECONDS}`);
@@ -1472,10 +1468,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
             }
           }
         }
-        // A Codex that did not take the overrides runs nothing for a guest.
-        if (turn.guestConfined && !codexShellDisabled(effectiveConfig)) {
-          throw new Error(`This Codex could not turn its shell off, so it can't run this turn. Update Codex, or switch this bot to Claude.${turn.confinedWhy ? ` ${turn.confinedWhy}` : ""}`);
-        }
         const stableInstructions = typeof turn.systemStable === "string" && typeof turn.systemVolatile === "string"
           ? turn.systemStable
           : null;
@@ -1553,7 +1545,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
               model: selection.model,
               ...(selection.modelProvider ? { modelProvider: selection.modelProvider } : {}),
               ...approvalParams.thread,
-              ...(turn.guestConfined ? { environments: [] } : {}),
               ephemeral: false,
             });
           let started;
@@ -1598,9 +1589,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
             threadId: codexThreadId,
             input: turnInput,
             ...approvalParams.turn,
-            // No environment: exec_command, apply_patch and view_image are refused (codex-cli 0.159.0).
-            // Without the experimental API the field is rejected, not ignored.
-            ...(turn.guestConfined ? { environments: [] } : {}),
             // Spread, not `effort ?? null`: codex-cli 0.146.0 treats null as absent (the thread keeps
             // its effort), rejects "", and thread/start takes no effort, so a thread keeps its last level.
             ...(turn.effort ? { effort: turn.effort } : {}),
@@ -1759,7 +1747,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
       provider: DRIVER_KIND,
       capabilities: {
         sessionModelSwitch: "unsupported",
-        guestTurns: "confined",
         queueing: true,
         computerMcp: true,
         localComputerMcp: true,

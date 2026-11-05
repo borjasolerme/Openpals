@@ -200,7 +200,7 @@ describe("highlevelRpc", () => {
 });
 
 describe("host", () => {
-  it("mounts only with a connection and an allowed bot, records writes as activity rows, and lists itself in health only while a connection is saved", async () => {
+  it("mounts only with a connection and an allowed bot, and records writes as activity rows", async () => {
     const dir = mkdtempSync(join(tmpdir(), "omb-highlevel-host-"));
     dirs.push(dir);
     const service = createHighLevelService({ dataDir: dir, env: { OMB_HIGHLEVEL_RELAY_URL: "http://127.0.0.1:9", OMB_HIGHLEVEL_API_URL: hl.url } });
@@ -209,8 +209,6 @@ describe("host", () => {
     const host = createHighLevelHost({ service, dataDir: dir, bot: (id) => bots.get(id), inRoom: (threadId) => threadId.startsWith("room"), appendMessage: (threadId, message) => { rows.push({ threadId, message }); } });
     expect(host.mounts(legacy)).toBe(false);
     expect(host.integration(legacy, () => "tok", "http://127.0.0.1:1")).toBeNull();
-    expect(await host.health(null)).toBeNull();
-    expect(await host.health(Promise.resolve({ gmail: { connected: false } }))).toEqual({ gmail: { connected: false } });
     expect(host.toolListing()?.highlevel.map((tool) => tool.name)).toEqual([...HIGHLEVEL_TOOL_NAMES]);
     service.store.put({ kind: "oauth", accessToken: "hl_access_seed", refreshToken: "r", expiresAt: Date.now() + 3_600_000, locationId: FAKE_LOCATION_ID, scopes: "" });
     expect(host.mounts(legacy)).toBe(true);
@@ -218,8 +216,6 @@ describe("host", () => {
     const mounted = host.integration(legacy, () => "turn-token", "http://127.0.0.1:1")!;
     expect(mounted.args.at(-1)).toBe("highlevel");
     expect(mounted.env).toMatchObject({ OMB_MCP_TOKEN_HIGHLEVEL: "turn-token", OMB_HARNESS_URL: "http://127.0.0.1:1" });
-    expect(await host.health(null)).toEqual({ highlevel: { connected: true } });
-    expect(await host.health(Promise.resolve({ gmail: { connected: true } }))).toEqual({ gmail: { connected: true }, highlevel: { connected: true } });
     const result = await host.handle(call("HIGHLEVEL_ADD_NOTE", { contactId: "contact_1", body: "Secret body" }), { botId: "b1", threadId: "room-1" }, () => {}) as { isError?: boolean };
     expect(result.isError).toBeUndefined();
     expect(rows).toEqual([{ threadId: "room-1", message: { role: "bot", kind: "activity", tool: { name: "mcp__highlevel__HIGHLEVEL_ADD_NOTE", ok: true, summary: "note note_new: body" }, from: { botId: "b1", name: "Scout", color: "#abc" } } }]);
@@ -229,11 +225,6 @@ describe("host", () => {
     expect(off.content[0].text).toContain("Off has not been given access to HighLevel");
     const listed = await host.handle({ method: "tools/list" }, { botId: "b4", threadId: "t" }, () => {}) as { tools: unknown[] };
     expect(listed.tools).toEqual([]);
-    service.store.markNeedsSignIn("revoked", service.store.get()!);
-    expect(await host.health(Promise.resolve({ gmail: { connected: true } }))).toEqual({ gmail: { connected: true }, highlevel: { connected: false } });
-    service.disconnect();
-    expect(await host.health(Promise.resolve({ gmail: { connected: true } }))).toEqual({ gmail: { connected: true } });
-    expect(await host.health(null)).toBeNull();
     service.close();
   });
 });

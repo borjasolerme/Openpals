@@ -162,7 +162,7 @@ export function createCloudSend(deps: {
    * carries the sign-ins that refresh themselves and lets go of this computer's copies. */
   send(options?: { final?: boolean }): Promise<CloudSendOutcome>;
   check(): Promise<CloudMoveCheck>;
-  /** Each automation a move carried ("routine:<id>", "call:<id>", "webhook:<id>", "app-event:<id>") and whether it was
+  /** Each automation a move carried ("routine:<id>", "call:<id>", "webhook:<id>") and whether it was
    * on here when it went. */
   switches(): Record<string, boolean>;
   dismiss(signature: string): CloudSendSnapshot;

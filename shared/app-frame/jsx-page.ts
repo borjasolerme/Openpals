@@ -1,8 +1,6 @@
 // The page shell around a show_html `jsx` page: one React component file with a default export. The libraries are
 // pinned and come from cdn.jsdelivr.net, which a bot page's CSP already allows, through one import map; nothing is
-// bundled into the app. In a chat frame the shell transpiles the file itself with Sucrase; a published page carries
-// the server's transpiled code instead and loads no compiler.
-import { APP_THEME_STYLE } from "./helper.ts";
+// bundled into the app. The shell transpiles the file itself with Sucrase.
 
 /** Exact versions, each at least two weeks old when pinned; `sucrase` matches the server's own dependency. */
 export const JSX_PAGE_LIBRARIES = {
@@ -42,7 +40,7 @@ const IMPORT_REPAIRS: Readonly<Record<string, string>> = {
 export const JSX_PAGE_SUCRASE = `${NPM}/sucrase@${JSX_PAGE_LIBRARIES.sucrase}/+esm`;
 export const JSX_PAGE_TAILWIND = `${NPM}/@tailwindcss/browser@${JSX_PAGE_LIBRARIES["@tailwindcss/browser"]}/dist/index.global.js`;
 
-/** The same options in the frame and on the server, so a published page runs the code the preview ran. */
+/** The same options in the frame and on the server, so both read the code the same way. */
 export const JSX_TRANSFORM_OPTIONS = { transforms: ["jsx", "typescript", "imports"], jsxRuntime: "automatic", production: true } as const;
 
 /** JSON, made safe to sit in a script element: no `<` survives, so neither `</script` nor `<!--` can appear. */
@@ -54,8 +52,8 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-/** Plain ES2017 run as written in the page: `(function (env) {…})`. env: { doc, win, load(name), source?, page?, title }.
- * `page(require, module, exports)` is a published page's code; without it `source` is transpiled with Sucrase. */
+/** Plain ES2017 run as written in the page: `(function (env) {…})`. env: { doc, win, load(name), source, title }. `source`
+ * is transpiled with Sucrase. */
 export const JSX_RUNTIME_SOURCE = `(function (env) {
   "use strict";
   var doc = env.doc, win = env.win;
@@ -166,7 +164,6 @@ export const JSX_RUNTIME_SOURCE = `(function (env) {
     };
   };
   var compile = function () {
-    if (typeof env.page === "function") return Promise.resolve(null);
     return env.load("sucrase").then(function (sucrase) {
       try {
         return sucrase.transform(env.source, OPTIONS).code;
@@ -177,8 +174,7 @@ export const JSX_RUNTIME_SOURCE = `(function (env) {
   };
   var wanted = function (code) {
     var names = {}, found = [], pattern = /\\brequire\\((["'])([^"']+)\\1\\)/g, match;
-    var text = code === null ? String(env.page) : code;
-    while ((match = pattern.exec(text))) if (!names[match[2]]) { names[match[2]] = true; found.push(match[2]); }
+    while ((match = pattern.exec(code))) if (!names[match[2]]) { names[match[2]] = true; found.push(match[2]); }
     return found;
   };
   var run = function () {
@@ -208,8 +204,7 @@ export const JSX_RUNTIME_SOURCE = `(function (env) {
       };
       var module = { exports: {} };
       try {
-        if (ready.code === null) env.page(require, module, module.exports);
-        else new Function("require", "module", "exports", ready.code)(require, module, module.exports);
+        new Function("require", "module", "exports", ready.code)(require, module, module.exports);
       } catch (error) {
         if (error && error.pageProblem) throw error;
         throw fail("run", error && error.message ? error.message : String(error));
@@ -267,17 +262,4 @@ function shell(input: { title: string; head: string; boot: string }): string {
 export function jsxPageHtml(input: { title: string; source: string }): string {
   const env = `{ doc: document, win: window, load: function (name) { return import(name); }, title: ${scriptJson(input.title)}, source: ${scriptJson(input.source)} }`;
   return shell({ title: input.title, head: "", boot: `(${JSX_RUNTIME_SOURCE})(${env});` });
-}
-
-/** Code inside a script element: a `<` that would start `</script` or `<!--` is escaped, which reads the same in JS. */
-export function scriptSafe(code: string): string {
-  return code.replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--");
-}
-
-/** A published page: the server's transpiled code in a plain function, the theme colours the chat would give it, and no
- * compiler and no eval. */
-export function jsxPublishedHtml(input: { title: string; compiled: string }): string {
-  const page = `<script>window.__mausbotPage=function(require,module,exports){${scriptSafe(input.compiled)}\n};</script>`;
-  const env = `{ doc: document, win: window, load: function (name) { return import(name); }, title: ${scriptJson(input.title)}, page: window.__mausbotPage }`;
-  return shell({ title: input.title, head: `<style>${APP_THEME_STYLE}</style>${page}`, boot: `(${JSX_RUNTIME_SOURCE})(${env});` });
 }

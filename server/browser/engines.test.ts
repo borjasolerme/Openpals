@@ -4,11 +4,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { BrowserLive } from "../browser-live.ts";
-import { attachesToChrome, type BrowserRuntime } from "../browser-runtime.ts";
-import type { ListenerOwnership } from "./egress/ownership.ts";
-import type { EgressHost } from "./egress/policy.ts";
-import { REDDIT_REFUSAL } from "./egress/reddit.ts";
-import { BrowserEgress, OwnListeners } from "./egress/registry.ts";
+import type { BrowserRuntime } from "../browser-runtime.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { ProcessRegistry } from "./chrome/processes.ts";
 import { browserRoot } from "./chrome/profile.ts";
@@ -93,60 +89,15 @@ describe("the runtime router", () => {
     expect(old.closeIfIdle).toHaveBeenCalledWith("s", 1000, AGENT_BROWSER);
   });
 
-  /** As server/host/browser.ts wires it. */
-  const onHost = (host: EgressHost) => {
-    const egress = new BrowserEgress();
-    egress.configure({ host, config: () => ({}), ownership: { botOwned: async () => false } as unknown as ListenerOwnership, listeners: new OwnListeners(host, { env: {}, streamPorts: () => [], devToolsPorts: () => [] }) });
-    return engines({ refusal: (_session, spec, params) => (attachesToChrome(spec.env) ? null : egress.callRefusal(params)) });
-  };
-  const OPENS_REDDIT = [
-    { name: "agent_browser_open", arguments: { url: "https://www.reddit.com/r/test/" } },
-    { name: "agent_browser_navigate", arguments: { url: "old.reddit.com/r/test" } },
-    { name: "agent_browser_tabs", arguments: { action: "new", url: "https://i.redd.it/a.png" } },
-    { name: "agent_browser_tab_new", arguments: { url: "https://www.reddit.com/" } },
-  ];
-
-  it("tells a bot on MausBot Cloud why its browser doesn't open Reddit, on either engine, without reaching it", async () => {
-    const { old, chrome, runtime } = onHost("cloud");
-    for (const spec of [AGENT_BROWSER, CHROME]) {
-      for (const call of OPENS_REDDIT) {
-        await expect(runtime.agentRpc("s", spec, "tools/call", call), `${spec.command} ${call.name}`).resolves.toEqual({ isError: true, content: [{ type: "text", text: REDDIT_REFUSAL }] });
-      }
-    }
-    expect(old.agentRpc).not.toHaveBeenCalled();
-    expect(chrome.service.agentRpc).not.toHaveBeenCalled();
-    await expect(runtime.agentRpc("s", CHROME, "tools/call", { name: "agent_browser_open", arguments: { url: "https://example.com/" } })).resolves.toBe("chrome");
-    await expect(runtime.agentRpc("s", AGENT_BROWSER, "tools/list", OPENS_REDDIT[0])).resolves.toBe("agent-browser");
-  });
-
-  it("opens Reddit on the desktop, on a self-hosted server and in the person's own Chrome", async () => {
-    for (const host of ["desktop", "server"] as const) {
-      const { old, chrome, runtime } = onHost(host);
-      for (const call of OPENS_REDDIT) {
-        await expect(runtime.agentRpc("s", AGENT_BROWSER, "tools/call", call)).resolves.toBe("agent-browser");
-        await expect(runtime.agentRpc("s", CHROME, "tools/call", call)).resolves.toBe("chrome");
-      }
-      expect(old.agentRpc).toHaveBeenCalledTimes(OPENS_REDDIT.length);
-      expect(chrome.service.agentRpc).toHaveBeenCalledTimes(OPENS_REDDIT.length);
-    }
-    const { runtime } = onHost("cloud");
-    const myChrome = { ...AGENT_BROWSER, env: { ...AGENT_BROWSER.env, AGENT_BROWSER_AUTO_CONNECT: "1" } };
-    await expect(runtime.agentRpc("s", myChrome, "tools/call", OPENS_REDDIT[0])).resolves.toBe("agent-browser");
-  });
-
-  it("refusal and afterCall see the session", async () => {
-    const refused: string[] = [];
+  it("afterCall sees the session", async () => {
     const afterCall = vi.fn((_session: string, _spec: unknown, result: unknown) => ({ after: result }));
     const { old, runtime } = engines({
-      refusal: (session) => { refused.push(session); return null; },
       annotate: (_spec, result) => ({ annotated: result }),
       afterCall,
     });
     await expect(runtime.agentRpc("s1", AGENT_BROWSER, "tools/call", { name: "agent_browser_snapshot" })).resolves.toEqual({ after: { annotated: "agent-browser" } });
-    expect(refused).toEqual(["s1"]);
     expect(afterCall).toHaveBeenCalledWith("s1", AGENT_BROWSER, { annotated: "agent-browser" });
-    await expect(runtime.agentRpc("s1", AGENT_BROWSER, "tools/list", {}), "a listing is neither refused nor passed on").resolves.toBe("agent-browser");
-    expect(refused).toEqual(["s1"]);
+    await expect(runtime.agentRpc("s1", AGENT_BROWSER, "tools/list", {}), "a listing is not passed on").resolves.toBe("agent-browser");
     expect(afterCall).toHaveBeenCalledOnce();
     expect(old.agentRpc).toHaveBeenCalledTimes(2);
   });

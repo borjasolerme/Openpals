@@ -1,7 +1,7 @@
 // The box's way to the internet: an HTTP proxy (CONNECT for TLS, absolute-URI for plain HTTP) on a unix socket that a
 // loopback port inside the box is bridged to. Like the browser's SOCKS gate (server/browser/egress/gate.ts) it resolves
 // names itself and connects only to public addresses, so a bot's shell reaches neither this server's loopback routes,
-// the local network, the cloud metadata service nor Fly's private network, whatever name it uses.
+// the local network nor the cloud metadata service, whatever name it uses.
 import { createServer, request as httpRequest, type ClientRequest, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { connect, type Socket } from "node:net";
 import type { Duplex } from "node:stream";
@@ -11,7 +11,7 @@ import { refusalFor, type EgressRules } from "../browser/egress/policy.ts";
 
 export interface EgressGateOptions {
   socketPath: string;
-  /** Why `target` is refused, or null; the default is the Cloud policy: public addresses only. */
+  /** Why `target` is refused, or null; the default is the box's policy: public addresses only. */
   decide?(target: { host: string; port: number }, addresses: readonly ResolvedAddress[]): Promise<string | null>;
   resolve?(host: string): Promise<ResolvedAddress[]>;
   onRefusal?(target: { host: string; port: number }, reason: string): void;
@@ -25,7 +25,7 @@ export interface BoxEgressGate {
 
 /** The box's rules: nothing on this machine, nothing private, nothing reserved; only the public internet. */
 export const BOX_EGRESS_RULES: EgressRules = {
-  host: "cloud",
+  host: "box",
   ownPort: () => true,
   botPort: async () => false,
   localNetwork: false,

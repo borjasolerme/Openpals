@@ -3,7 +3,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { callTool, type ToolCallContext } from "./drivers/agents-call.ts";
 import { LimitResetClock } from "./limit-resets.ts";
@@ -134,11 +134,10 @@ describe("the request service", () => {
 describe("the limit-reset routes", () => {
   function routes(reset: number | null = NOW + 2 * HOUR) {
     const h = harness(reset);
-    const created = vi.fn();
     const handler = createLimitResetRoutes({
       clock: h.clock, now: () => NOW, routines: h.routines, requests: h.service, engineName: (engine) => engine === "claude" ? "Claude" : engine,
       threadTitle: (botId, threadId) => botId === "scout" && threadId === "thread-1" ? "Quarterly report" : null,
-      threadEngine: () => "claude", created,
+      threadEngine: () => "claude",
     });
     const call = async (method: string, path: string, body?: unknown) => {
       let status = 0, payload: any;
@@ -150,11 +149,11 @@ describe("the limit-reset routes", () => {
       const out = await handler(ctx);
       return out === PASS ? null : { status, body: payload };
     };
-    return { ...h, call, created };
+    return { ...h, call };
   }
 
   it("Continue creates a one-time limit-reset automation in that same conversation, told the turn hit the limit", async () => {
-    const { call, routines, store, created } = routes();
+    const { call, routines, store } = routes();
     const response = await call("POST", "/api/limit-resets/continue", { botId: "scout", threadId: "thread-1" });
     expect(response!.status).toBe(201);
     const routine = routines.listRoutines()[0]!;
@@ -166,7 +165,6 @@ describe("the limit-reset routes", () => {
     expect(routine.prompt).toBe(continueInstructions("Quarterly report", "Claude"));
     expect(routine.prompt).toContain("cut off because Claude's usage limit was reached");
     expect(store.messagesFor("thread-1")[0]!.card).toMatchObject({ autoApplied: true });
-    expect(created).toHaveBeenCalledWith(routine.id, expect.anything());
     const again = await call("POST", "/api/limit-resets/continue", { botId: "scout", threadId: "thread-1" });
     expect(again).toMatchObject({ status: 200, body: { routine: { id: routine.id } } });
     expect(routines.listRoutines()).toHaveLength(1);

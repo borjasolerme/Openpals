@@ -35,11 +35,8 @@ export interface ConnectionListing {
   /** A sign-in that refreshes itself (an MCP server's own account, HighLevel's): it moves, and this computer then
    * forgets it. */
   signIn?: true;
-  /** Connected apps: OpenMausBot's service or the person's own Composio project, the account in a digest equal on two
-   * servers exactly when they reach the same apps, and the service's installation a code is minted for. */
-  mode?: ComposioIdentity["mode"];
+  /** Connected apps: the account in a digest equal on two servers exactly when they reach the same apps. */
   account?: string;
-  installationId?: string;
 }
 
 /** What the person's own Cloud has a key for, when the key is theirs; keys for what a Cloud includes (voice, Boat, X
@@ -152,8 +149,7 @@ export function listConnections(sources: ConnectionSources): ConnectionListing[]
   for (const { provider } of movingKeys(cfg)) items.push({ id: `key:${provider.id}`, kind: "key", label: provider.label, for: [...provider.for] });
   const account = sources.composio;
   if (account) {
-    items.push({ id: "composio", kind: "composio", label: "Connected apps", mode: account.mode, account: account.account,
-      ...(account.installationId ? { installationId: account.installationId } : {}) });
+    items.push({ id: "composio", kind: "composio", label: "Connected apps", account: account.account });
   }
   const highlevel = sources.highlevel();
   if (highlevel) items.push({ id: "highlevel", kind: "highlevel", label: "HighLevel", ...(highlevel.kind === "oauth" ? { signIn: true as const } : {}) });
@@ -210,7 +206,7 @@ export function answerConnection(id: string, sources: HandoffSources):
   }
   if (id === "composio") {
     const apiKey = cfg.composio?.apiKey?.trim(), userId = cfg.composio?.userId;
-    return apiKey && userId ? { ok: true, connection: { composio: { apiKey, userId } } } : { ok: false, error: "Connected apps here use Openpals' service." };
+    return apiKey && userId ? { ok: true, connection: { composio: { apiKey, userId } } } : { ok: false, error: "Connected apps are not set up here." };
   }
   if (id === "highlevel") {
     const connection = sources.highlevel();

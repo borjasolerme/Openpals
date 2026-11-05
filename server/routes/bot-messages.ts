@@ -117,9 +117,6 @@ export interface BotMessageRouteDeps {
   /** Records a send a registered phone made, so the turn it starts knows the person is talking from the phone. */
   notePhoneSend(sendId: string): void;
   goals: Pick<OneOnOneGoals, "start">;
-  /** A Team Cloud: the person's reply to a line in their own inbox goes back where that line came from, with no turn
-   * here; null for any other message. */
-  inboxReply?(auth: RequestAuth, threadId: string, replyToId: string, text: string, line: { sendId?: string; sender?: ResolvedSender }): { status: number; message?: Message; error?: string } | null;
   /** A typed line that answers a bot's question card; null sends it as usual. */
   typedCardAnswer?(auth: RequestAuth, threadId: string, text: string, target: Message | undefined, line: { sendId?: string; sender?: ResolvedSender }): Promise<{ status: number; message?: Message; error?: string } | null>;
 }
@@ -244,10 +241,8 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
       const text = press ? press.text : appSent ? appSent.text : typed;
       const target = resolveReplyTarget(threadId, press ? press.messageId : appSent ? appSent.messageId : body.replyToId);
       if (relayed && target?.role !== "bot") return json(res, 400, { error: "a relayed reaction answers a bot's message" });
-      const passedBack = !guarded && !press && !appSent && !pointed && target ? deps.inboxReply?.(auth, threadId, target.id, text, { sendId, sender: messageSender(auth) }) : null;
-      const typedAnswer = passedBack || guarded || press || appSent || pointed ? null : await deps.typedCardAnswer?.(auth, threadId, text, target, { sendId, sender: messageSender(auth) });
-      const answeredBack = passedBack ?? typedAnswer;
-      if (answeredBack) return json(res, answeredBack.status, answeredBack.message ? { ok: true, threadId, message: answeredBack.message } : { error: answeredBack.error });
+      const typedAnswer = guarded || press || appSent || pointed ? null : await deps.typedCardAnswer?.(auth, threadId, text, target, { sendId, sender: messageSender(auth) });
+      if (typedAnswer) return json(res, typedAnswer.status, typedAnswer.message ? { ok: true, threadId, message: typedAnswer.message } : { error: typedAnswer.error });
       // Only a real press or reaction, or an app's own words, marks the reply; a typed reply to the same row never does, whatever its words.
       const records = press && target ? pressRecords(bot, press.action) : null;
       const replyTo: ReplyTarget | undefined = press && target ? { ...target, widgetPress: { label: press.label, action: press.action, ...(records ? { records } : {}) } }
@@ -412,7 +407,7 @@ export function createBotMessageRoutes(deps: BotMessageRouteDeps): RouteHandler 
     if (m && method === "POST") {
       const bot = store.bot(m[1]!);
       if (!bot?.defaultBot || bot.hidden) return json(res, 404, { error: "no such Pal" });
-      if (!mayFollowUp(bot, auth)) return json(res, 403, { error: "only Pal's own person can do this" });
+      if (!mayFollowUp(auth)) return json(res, 403, { error: "only an admin can do this" });
       const parsed = helperFollowupBody.safeParse(await readBody(req));
       if (!parsed.success) return json(res, 400, { error: "body must be { ai, apps?, threadId? }" });
       const threadId = parsed.data.threadId ?? bot.threadId;

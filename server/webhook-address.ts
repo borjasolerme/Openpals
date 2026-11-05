@@ -8,7 +8,7 @@ import type { WebhookManager } from "./webhooks.ts";
 export interface AddressAsk {
   from: RosterMember;
   owner: RosterMember;
-  /** A run a webhook or app event started, or work one handed on. */
+  /** A run a webhook started, or work one handed on. */
   outsideDriven: boolean;
 }
 

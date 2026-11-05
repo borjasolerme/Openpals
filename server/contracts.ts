@@ -125,10 +125,6 @@ export interface SendTurnInput {
   approvalModeNow?: () => ApprovalMode;
   /** Fresh owner selection, independent of execution approval and resume state. */
   toolScope?: ToolScope;
-  /** A guest turn: no shell or command execution, no reads outside its folder. Sent only to drivers whose guestTurns is "confined". */
-  guestConfined?: boolean;
-  /** Why this turn is confined, in the owner's words, for a refusal to end with. */
-  confinedWhy?: string;
   /** Images for this user turn only; kept out of replay transcripts. */
   images?: TurnImageInput[];
   model?: string;
@@ -161,8 +157,6 @@ export interface SendTurnInput {
   integrations?: {
     /** A harness-owned stdio bridge to Composio, so connection requests become trusted chat cards. */
     composio?: { command: string; args: string[]; env: Record<string, string> };
-    /** The same bridge to a Team Cloud member's own apps, only in that member's own turns. */
-    composioOwn?: { command: string; args: string[]; env: Record<string, string> };
     /** Stdio connection to a computer MCP server. `scope` is set only for the host desktop, so host-only approval rules never apply elsewhere. */
     localComputer?: {
       command: string;
@@ -274,8 +268,6 @@ export interface ProviderAdapter {
     strictResume?: boolean;
     /** sendTurn can register the harness's hook helper with the engine (integrations.hooks). */
     hooks?: boolean;
-    /** "confined": sendTurn honours `guestConfined`; absent, a guest turn is refused. */
-    guestTurns?: "confined";
     /** "meter": `contextTokens` / `contextWindow` are the engine's own report, shown on the context meter but never used to time compaction. */
     contextReading?: "meter";
     /** sendTurn calls `engineAdmission` itself before it starts an engine process or joins one. */

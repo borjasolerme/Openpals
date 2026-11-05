@@ -35,8 +35,8 @@ async function callInternal(
 }
 
 describe("X research internal routes", () => {
-  const included: ServiceCredential = { token: "omb_xd_t", api: "https://cloud.example.test/api/cloud/services/x"};
-  const enabled = (client = fakeClient(), credential: () => ServiceCredential | null = () => included) =>
+  const own: ServiceCredential = { token: "treg_own", api: "https://treg.to"};
+  const enabled = (client = fakeClient(), credential: () => ServiceCredential | null = () => own) =>
     ({ client, handler: createXResearchInternalRoutes({ credential, botEnabled: (id) => id === "bot-1", client: () => client }) });
 
   it("passes requests that are not its own", async () => {
@@ -46,7 +46,7 @@ describe("X research internal routes", () => {
     expect((await callInternal(handler, { method: "GET" })).out).toBe(PASS);
   });
 
-  it("refuses without a Cloud plan's credential, and refuses a bot that is not switched on, before any spend", async () => {
+  it("refuses without a key, and refuses a bot that is not switched on, before any spend", async () => {
     const client = fakeClient();
     const noToken = createXResearchInternalRoutes({ credential: () => null, botEnabled: () => true, client: () => client });
     expect(await callInternal(noToken, { body: { query: "maus" } })).toMatchObject({ status: 403, body: { error: X_MESSAGES.noKey } });
@@ -55,8 +55,8 @@ describe("X research internal routes", () => {
     expect(client.search).not.toHaveBeenCalled();
   });
 
-  it("reads the credential on every call, so a plan that lapsed (the desktop cleared it) stops the next one", async () => {
-    let credential: ServiceCredential | null = included;
+  it("reads the credential on every call, so a key the person removed stops the next one", async () => {
+    let credential: ServiceCredential | null = own;
     const { handler } = enabled(fakeClient(), () => credential);
     expect((await callInternal(handler, { body: { query: "maus" } })).status).toBe(200);
     credential = null;
@@ -104,13 +104,6 @@ describe("X research internal routes", () => {
     const badToken = enabled(fakeClient({ search: vi.fn(async () => { throw new XResearchError("bad_key", X_MESSAGES.ownBadKey); }) }));
     expect(await callInternal(badToken.handler, { body: { query: "maus" } }))
       .toMatchObject({ status: 502, body: { error: X_MESSAGES.ownBadKey, code: "bad_key" } });
-  });
-
-  it("keeps the Cloud home sentence for the plan's token only: a refused own treg key says to check the key", async () => {
-    const ownKey: ServiceCredential = { token: "treg_own", api: "https://treg.to"};
-    const client = fakeClient({ search: vi.fn(async () => { throw new XResearchError("bad_key", X_MESSAGES.ownBadKey); }) });
-    const home = createXResearchInternalRoutes({ credential: () => ownKey, botEnabled: () => true, client: () => client});
-    expect(await callInternal(home, { body: { query: "maus" } })).toMatchObject({ status: 502, body: { error: X_MESSAGES.ownBadKey } });
   });
 });
 

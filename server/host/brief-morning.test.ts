@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { CalendarEvent } from "../connected-reads.ts";
 import type { RoutineRun } from "../routines.ts";
 import { Store } from "../store.ts";
-import { createBrief, MORNING_WAKE_EARLY_MS } from "./brief.ts";
+import { createBrief } from "./brief.ts";
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -48,26 +48,6 @@ function setup(options: { zone: string; start: string; morning?: string; overnig
 }
 
 describe("the morning brief", () => {
-  it.each([
-    ["America/New_York", "2026-10-29T04:00:00.001Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T10:59:59.999Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T11:14:21.643Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T11:35:03.123Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T11:49:59.999Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T11:50:21.643Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T12:19:59.999Z", "2026-10-29T11:50:00Z"],
-    ["America/New_York", "2026-10-29T12:20:00.001Z", "2026-10-30T11:50:00Z"],
-    ["America/New_York", "2026-10-29T22:35:21.643Z", "2026-10-30T11:50:00Z"],
-    ["Europe/Berlin", "2026-10-24T18:35:21.643Z", "2026-10-25T06:50:00Z"],
-    ["America/New_York", "2026-10-31T22:35:21.643Z", "2026-11-01T12:50:00Z"],
-    ["America/New_York", "2026-03-07T23:35:21.643Z", "2026-03-08T11:50:00Z"],
-    ["Asia/Kolkata", "2026-10-29T01:44:21.643Z", "2026-10-29T02:20:00Z"],
-  ])("sets an exact morning wake boundary in %s at %s", async (zone, start, wake) => {
-    const s = setup({ zone, start });
-    await s.brief.active("desktop", zone, "en");
-    expect(s.brief.nextWakeAt()).toBe(Date.parse(wake));
-  });
-
   it("is posted and pushed at 8:00 in the person's own zone, not a minute before, and once a day", async () => {
     // 07:59 in New York is 11:59 UTC in October.
     const s = setup({ zone: "America/New_York", start: "2026-10-22T11:59:00Z" });
@@ -144,23 +124,11 @@ describe("the morning brief", () => {
     expect(s.pushed).toEqual(["Your first brief is ready"]);
   });
 
-  it("wakes a sleeping Cloud ten minutes early, for today's 8:00 until it is out and then tomorrow's, through a clock change", () => {
-    // Berlin leaves summer time at 03:00 on Sunday 25 October 2026.
-    const s = setup({ zone: "Europe/Berlin", start: "2026-10-24T18:00:00Z" });
-    void s.brief.active("desktop", "Europe/Berlin", "en");
-    const wake = s.brief.nextWakeAt()!;
-    expect(wake + MORNING_WAKE_EARLY_MS).toBe(Date.parse("2026-10-25T07:00:00Z"));
-    expect(clock(wake, "Europe/Berlin")).toBe("07:50");
-    s.set("2026-10-25T05:00:00Z");
-    expect(s.brief.nextWakeAt()).toBe(Date.parse("2026-10-25T06:50:00Z"));
-  });
-
   it("is never pushed where no morning time is set", async () => {
     const s = setup({ zone: "UTC", start: "2026-10-22T08:05:00Z", morning: "" });
     await s.brief.active("desktop", "UTC", "en");
     await s.brief.report({ routine: {} as never, at: s.now(), meetings: [s.meeting(Date.parse("2026-10-22T10:00:00Z"))], clashes: [] });
     await s.tick();
     expect(s.pushed).toEqual([]);
-    expect(s.brief.nextWakeAt()).toBeNull();
   });
 });

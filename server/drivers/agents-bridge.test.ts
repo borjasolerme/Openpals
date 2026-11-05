@@ -76,7 +76,6 @@ describe("what a bridged turn is listed", () => {
       "list_rooms",
       "select_computer",
       "attach_file",
-      "publish_page",
       "post_to_room",
       "request_credential",
       "request_sign_in",
@@ -95,7 +94,6 @@ describe("what a bridged turn is listed", () => {
       "list_rooms",
       "select_computer",
       "attach_file",
-      "publish_page",
       "post_to_room",
       "request_credential",
       "request_sign_in",
@@ -161,8 +159,8 @@ describe("what a bridged turn is listed", () => {
         for (const spelling of reportedAs(hidden.name)) expect(isOutboundTool(spelling), `${name}: ${spelling}`).toBe(false);
       }
     }
-    // today that is publish_page, listed for it alone, and the two the hot list names anyway
-    expect(names(availableTools(profile({ ...FULL_CHIEF }))).filter((tool) => reportedAs(tool).some(isOutboundTool))).toEqual(["publish_page", "post_to_room", "send_voice_note"]);
+    // today that is the two the hot list names anyway
+    expect(names(availableTools(profile({ ...FULL_CHIEF }))).filter((tool) => reportedAs(tool).some(isOutboundTool))).toEqual(["post_to_room", "send_voice_note"]);
     // and the bridge's own two names are not outward either
     for (const spelling of [...reportedAs(USE_TOOL), ...reportedAs(FIND_TOOL)]) expect(isOutboundTool(spelling), spelling).toBe(false);
     // derived, not listed by hand: a future tool named like a send is kept,
@@ -308,7 +306,6 @@ describe("find_tool", () => {
   it("reads a tool's other name, asked for exactly, as the tool it belongs to", async () => {
     const bridge = bridgeFor(FULL_CHIEF);
     expect((await found(bridge, "create_trigger")).matches[0]!.name).toBe("trigger");
-    expect((await found(bridge, "list_trigger_events")).matches[0]!.name).toBe("trigger_info");
     expect((await found(bridge, "update_widget")).matches[0]!.name).toBe("show_widget");
   });
 

@@ -10,7 +10,6 @@ const grok = (status: string, said = "") => `Internal error: API error (status $
 
 describe("engineFailureMessage", () => {
   it("names a Grok account out of credits, keeping Grok's own short reason", () => {
-    // the Cloud routine runs' error, as far as it was kept
     expect(engineFailureMessage("Grok", grok("402 Payment Required", "Grok Build us…")))
       .toBe('Your Grok account is out of credits (Grok says: "Grok Build us…"). Add credits with Grok, then run it again.');
     expect(engineFailureMessage("Grok", "Internal error: API error (status 402 Payment Required) (session/prompt, service: session, APIError)"))

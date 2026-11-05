@@ -1,9 +1,9 @@
 // The bot box runtime: one per server. Decides once at boot whether turns are boxed (detect.ts), opens the two gates the
 // boxes reach through unix sockets (egress-gate.ts, harness-gate.ts), and wraps each bot spawn (server/procs.ts spawnCli
 // with owner "bot") in bubblewrap by the plan (plan.ts). Nothing here changes a spawn when the box is off: the command,
-// its arguments and its environment go through untouched, so every host that is not a Cloud home behaves as before.
+// its arguments and its environment go through untouched.
 import { existsSync, mkdirSync, openSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 
 import { engineInstallRoots } from "../engine-roots.ts";
 import { SERVER_ROOT, resolveProxy } from "../proxy-paths.ts";
@@ -65,26 +65,10 @@ export interface RunnerOptions {
 /** Wraps spawns for one setup (the server's, or a self-check fixture's). */
 export class BoxRunner {
   private readonly options: RunnerOptions;
-  /** Paths a conversation's turns may write besides the bot's own folder (a member's or a room's memory layer on a Team Cloud). */
-  private readonly lent = new Map<string, readonly string[]>();
 
   constructor(options: RunnerOptions) { this.options = options; }
 
-  get setup(): BoxSetup { return this.options.setup; }
-
-  /** Lends `rw` paths to every box of this conversation until `lend` is called again with none. */
-  lend(botId: string, threadId: string, rw: readonly string[]): void {
-    if (rw.length) this.lent.set(`${botId}/${threadId}`, [...rw]); else this.lent.delete(`${botId}/${threadId}`);
-  }
-
-  lentTo(botId: string, threadId: string): readonly string[] {
-    return this.lent.get(`${botId}/${threadId}`) ?? [];
-  }
-
-  wrap(given: BoxRequest): WrappedSpawn {
-    const ids = given.cwd ? taskWorkspaceIds(given.cwd, this.options.setup.dataDir) : null;
-    const lent = ids ? this.lentTo(ids.botId, ids.threadId) : [];
-    const request: BoxRequest = lent.length ? { ...given, rw: [...(given.rw ?? []), ...lent] } : given;
+  wrap(request: BoxRequest): WrappedSpawn {
     const extraFds: number[] = [];
     const seccomp = this.options.seccompFile && !this.options.setup.mutate?.has("no-seccomp") ? this.options.seccompFile : null;
     if (seccomp) extraFds.push(openSync(seccomp, "r"));
@@ -148,7 +132,7 @@ export function writeSeccompFile(dir: string): string | null {
   return file;
 }
 
-/** Whether the host's /proc hides other users' processes (the Cloud supervisor remounts it so at boot). */
+/** Whether the host's /proc hides other users' processes. */
 export function procHidepid(mounts: () => string = () => readFileSync("/proc/mounts", "utf8")): boolean {
   try { return /^proc \/proc proc [^\n]*\bhidepid=(?:2|invisible)\b/m.test(mounts()); } catch { return false; }
 }
@@ -247,22 +231,6 @@ export class BotBox {
   }
 
   enabled(): boolean { return this.runner !== null; }
-
-  /** The box a bot's Chrome runs in: the system read-only, private /tmp and /run, the host's network (the browser's own
-   * gate filters it), `ro` paths, and nothing of HOME or the data folder; the launcher binds the one profile it starts
-   * Chrome on. bubblewrap's options before `--`; null when turns are not boxed here. */
-  browserBox(seccompFd: number, ro: readonly string[]): { bwrap: string; options: string[]; seccomp: string | null } | null {
-    if (!this.runner || !this.detection.tools) return null;
-    const setup = { ...this.runner.setup, engineRoots: [] };
-    const seccomp = this.seccompFile && !setup.mutate?.has("no-seccomp") ? this.seccompFile : null;
-    const plan = planBox({ ...setup, seccompFd: seccomp ? seccompFd : undefined }, { command: "chrome", args: [], env: {}, net: "shared", ro });
-    const home = resolve(setup.home), dataDir = resolve(setup.dataDir);
-    const mounts = plan.mounts.filter((mount) => !(mount.kind === "bind" && mount.target === home) && !(mount.kind === "tmpfs" && mount.target === dataDir));
-    return { bwrap: this.detection.tools.bwrap, options: bwrapArgs({ ...plan, mounts }), seccomp };
-  }
-
-  /** More read-write folders for one conversation's boxes (a memory layer); nothing without a runner. */
-  lend(botId: string, threadId: string, rw: readonly string[]): void { this.runner?.lend(botId, threadId, rw); }
 
   tools(): { bwrap: string; socat: string | null } | null { return this.detection.tools; }
 

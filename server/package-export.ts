@@ -685,7 +685,7 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
   } as PackageDocument);
   let document: PackageDocument;
   try {
-    document = parsePackageDocument(redactedDocument, { trust: "file" });
+    document = parsePackageDocument(redactedDocument);
   } catch (error) {
     if (error instanceof PackageFormatError && error.code === "too_large") throw new TeamExportError(TEAM_TOO_LARGE_MESSAGE);
     throw new TeamExportError(error instanceof Error ? error.message : "This department could not be shared.");
@@ -794,7 +794,7 @@ export function createLibraryPackageExport(input: LibraryExportInput): LibraryEx
   } as PackageDocument);
   let document: PackageDocument;
   try {
-    document = parsePackageDocument(redactedDocument, { trust: "file" });
+    document = parsePackageDocument(redactedDocument);
   } catch (error) {
     if (error instanceof PackageFormatError && error.code === "too_large") throw new TeamExportError(PRESET_TOO_LARGE_MESSAGE);
     throw new TeamExportError(error instanceof Error ? error.message : "This preset could not be shared.");

@@ -70,8 +70,8 @@ it("shares one team whole (minus chat history) and imports it back as new, inert
     expect(again.document.package.rooms[0].key).toBe(saved.document.package.rooms[0].key);
 
     const beforeServers = (await ok("GET", "/api/mcp/servers")).servers.map((server: { name: string }) => server.name);
-    const imported = await call("POST", "/api/teams/import?trust=org", {
-      ...saved.document, trust: "org", org: { installId: "x" },
+    const imported = await call("POST", "/api/teams/import", {
+      ...saved.document,
       package: { ...saved.document.package, publisher: { organization: "acme", name: "Acme" } },
     });
     expect(imported.status).toBe(201);
@@ -79,7 +79,7 @@ it("shares one team whole (minus chat history) and imports it back as new, inert
     expect(imported.body.connections).toEqual([{ key: "crm", name: "crm-2", label: "crm" }]);
     const copies = imported.body.bots as Array<{ id: string; name: string; installedPackage: Record<string, unknown>; approvalMode?: string; avatarUrl: string | null; mcpServers?: string[]; chiefOfStaff?: boolean }>;
     const copyLead = copies.find((bot) => bot.name === "Morgan 2")!;
-    expect(copyLead).toMatchObject({ chiefOfStaff: true, mcpServers: ["crm-2"], installedPackage: { id: "sales-desk", source: "file", agentKey: "morgan" } });
+    expect(copyLead).toMatchObject({ chiefOfStaff: true, mcpServers: ["crm-2"], installedPackage: { id: "sales-desk", agentKey: "morgan" } });
     expect(copyLead.installedPackage).not.toHaveProperty("publisher");
     expect(copyLead.avatarUrl).toMatch(/^\/api\/attachments\//);
     expect(copies.map((bot) => bot.approvalMode)).toEqual(copies.map(() => "full"));

@@ -5,7 +5,7 @@ import { OwnedFile, writeFileAtomic } from "./atomic.ts"; import { saveSoon } fr
 import { commitRegistryChange, keptRevocation, saveRegistryFor, touchesPermissions } from "./registry-save.ts";
 import { parseToolScope, toolScopeWidens } from "../shared/tool-scope.ts"; import { grantScopedApps } from "../shared/connector-scopes.ts";
 import { reorderStable } from "../shared/bot-order.ts";
-import { botOwner, chiefConflict, chiefScope, ownerEmail } from "../shared/bot-owner.ts";
+import { chiefConflict, chiefScope } from "../shared/bot-owner.ts";
 import { ensureSections, readSections, changeEmptySection } from "./section-context.ts";
 import type { TeamComputers } from "./team-computers.ts";
 import { removeBotFolder, soulFile, soulHash, writeSoulMirror } from "./bot-folder.ts";
@@ -38,7 +38,7 @@ import type {
 import { movesThreadToTop, nextOpenThread } from "../shared/wire.ts";
 import { parseConnectorTools } from "./connector-tools.ts";
 import { sameModelSelection } from "../shared/thread-model.ts";
-import { initialGreetingMessage } from "./initial-greeting.ts"; import { createDefaultBot, defaultBotRefusal, type DefaultBotIntro } from "./default-bot.ts";
+import { initialGreetingMessage } from "./initial-greeting.ts"; import { createDefaultBot, defaultBotRefusal } from "./default-bot.ts";
 import { appsFromCreator } from "./inherited-apps.ts";
 import { ThreadCache, type ThreadState } from "./thread-cache.ts";
 export type {
@@ -1324,7 +1324,7 @@ export class Store {
     profile: Partial<
       Pick<
         BotRecord,
-        "name" | "title" | "description" | "soul" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor" | "modelSelection" | "section" | "cwd" | "visibility" | "toolScope" | "createdBy" | "reportsTo"
+        "name" | "title" | "description" | "soul" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor" | "modelSelection" | "section" | "cwd" | "visibility" | "toolScope"
       >
     > = {},
     opts: {
@@ -1357,8 +1357,6 @@ export class Store {
       createdAt: Date.now(),
     };
     if (section) bot.section = section;
-    if (profile.createdBy?.trim()) bot.createdBy = ownerEmail(profile.createdBy);
-    if (profile.reportsTo?.trim()) bot.reportsTo = ownerEmail(profile.reportsTo);
     if (profile.cwd) bot.cwd = profile.cwd;
     bot.tasks = [{
       threadId: bot.threadId,
@@ -1408,8 +1406,6 @@ export class Store {
           autoApprove: false, approvePeerComms: false,
           // A restricted Chief never creates a bot everyone sees.
           ...(chief.visibility && chief.visibility !== "everyone" ? { visibility: structuredClone(chief.visibility) } : {}),
-          // A Chief's new specialist reports to the Chief's own person.
-          ...(botOwner(chief) ? { createdBy: botOwner(chief)! } : {}),
           tasks: [{ threadId: operation.threadId, title: UNTITLED_THREAD, createdAt, updatedAt: createdAt, resumeCursors: {},
             unread: false, activity: "idle", busy: false }],
         };
@@ -1697,8 +1693,7 @@ export class Store {
     bot.busy = ACTIVITY_BUSY.has(bot.activity);
   }
 
-  /** Makes `id` its scope's one Chief (its owner's on a Team Cloud, else its department's), or with no `id` leaves
-   * `section` without one. */
+  /** Makes `id` its department's one Chief, or with no `id` leaves `section` without one. */
   setChiefOfStaff(id: string | null, section?: string | null): BotRecord[] | null {
     const selected = id ? this.bot(id) : null;
     if (id && !selected) return null;
@@ -2314,9 +2309,9 @@ export class Store {
 
   needsSeed() { return this.bots.length === 0; }
 
-  /** A new place's first bot is its MausBot and its Chief; a Team Cloud's (`defaultBot: false`) is the team's Chief only. */
-  seedIfEmpty({ defaultBot = true, intro }: { defaultBot?: boolean; intro?: DefaultBotIntro } = {}) {
+  /** A new place's first bot is its MausBot and its Chief. */
+  seedIfEmpty() {
     if (!this.needsSeed()) return;
-    if (defaultBot) createDefaultBot(this, { chief: (id) => this.setChiefOfStaff(id), ...(intro ? { intro } : {}) }); else this.setChiefOfStaff(this.createBot().id);
+    createDefaultBot(this, { chief: (id) => this.setChiefOfStaff(id) });
   }
 }

@@ -6,10 +6,7 @@ import type { DefaultBotFields } from "../shared/default-bot.ts";
  * escalations, who answers a room) stays with `chiefOfStaff`. */
 export function chiefLevel(bot: ({ chiefOfStaff?: boolean } & DefaultBotFields) | null | undefined): boolean {
   if (!bot) return false;
-  if (bot.chiefOfStaff === true) return true;
-  if (!bot.defaultBot) return false;
-  // A per-person MausBot came from a Team Cloud; it never holds more than its member, whose role no longer exists here.
-  return !bot.defaultBot.person?.trim();
+  return bot.chiefOfStaff === true || Boolean(bot.defaultBot);
 }
 
 type RoleBot = ({ chiefOfStaff?: boolean } & DefaultBotFields) | null | undefined;

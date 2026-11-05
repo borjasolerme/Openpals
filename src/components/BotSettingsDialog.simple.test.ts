@@ -36,7 +36,7 @@ const fixture = vi.hoisted(() => {
       refresh: (() => Promise.resolve()) as () => Promise<void>,
       putAssignments: (() => Promise.resolve()) as (name: string, remove?: boolean) => Promise<void>,
     },
-    memory: { docs: null as MemoryDoc[] | null, error: false, mine: false, setDoc: (() => {}) as (doc: MemoryDoc) => void, reload: () => Promise.resolve() },
+    memory: { doc: null as MemoryDoc | null, error: false, setDoc: (() => {}) as (doc: MemoryDoc) => void, reload: () => Promise.resolve() },
     saveMemory: (() => Promise.resolve({ ok: true })) as (...args: unknown[]) => Promise<unknown>,
     openExternal: (() => Promise.resolve()) as (url: string) => Promise<void>,
     derived: {} as Record<string, unknown>,
@@ -248,7 +248,7 @@ beforeEach(() => {
     skills: [], loading: false, working: "", error: "", reviewing: null, toggle: vi.fn(() => Promise.resolve()),
     setWorking: vi.fn(), setError: vi.fn(), refresh: vi.fn(() => Promise.resolve()), putAssignments: vi.fn(() => Promise.resolve()),
   };
-  fixture.memory = { docs: null, error: false, mine: false, setDoc: vi.fn(), reload: vi.fn(() => Promise.resolve()) };
+  fixture.memory = { doc: null, error: false, setDoc: vi.fn(), reload: vi.fn(() => Promise.resolve()) };
   patch.mockReset();
   onOpen.mockReset();
   onClose.mockReset();
@@ -785,14 +785,14 @@ describe("the Library tab", () => {
 
   it("values What it remembers by the notes in MEMORY.md, says Off when memory is off, and opens the memory page", () => {
     expect(rowValue(library(makeBot()), "memory")).toBeUndefined();
-    fixture.memory.docs = [memoryDoc("# Notes\n- Likes short replies\n- Uses Resolve\n- Works nights\n")];
+    fixture.memory.doc = memoryDoc("# Notes\n- Likes short replies\n- Uses Resolve\n- Works nights\n");
     const rendered = library(makeBot());
     expect(rowValue(rendered, "memory")).toBe("3 notes");
     click(find(rendered, "data-panel-page", "memory"));
     expect(onOpen).toHaveBeenLastCalledWith("memory");
-    fixture.memory.docs = [memoryDoc("- One thing\n")];
+    fixture.memory.doc = memoryDoc("- One thing\n");
     expect(rowValue(library(makeBot()), "memory")).toBe("1 note");
-    fixture.memory.docs = [memoryDoc("# Empty\n")];
+    fixture.memory.doc = memoryDoc("# Empty\n");
     expect(rowValue(library(makeBot()), "memory")).toBe("Nothing yet");
     expect(rowValue(library(makeBot({ memoryEnabled: false })), "memory")).toBe("Off");
   });
@@ -1007,7 +1007,7 @@ describe("the drill-in pages", () => {
   });
 
   it("lists what MEMORY.md remembers, forgets one line through the memory file route, and adds one", async () => {
-    fixture.memory.docs = [memoryDoc("# Notes\n- Likes short replies\n\n- Uses Resolve Studio\n")];
+    fixture.memory.doc = memoryDoc("# Notes\n- Likes short replies\n\n- Uses Resolve Studio\n");
     const rendered = body("memory");
     expect(rendered.html).toContain("Likes short replies");
     expect(rendered.html).toContain("Uses Resolve Studio");
@@ -1029,12 +1029,12 @@ describe("the drill-in pages", () => {
   it("says when memory is off, empty or unreadable, and re-reads on a conflict", async () => {
     expect(body("memory", makeBot({ memoryEnabled: false })).html).toContain("Memory is off for Scout.");
     expect(has(body("memory", makeBot({ memoryEnabled: false })), "data-panel-form", "memory-add")).toBe(false);
-    fixture.memory.docs = [memoryDoc("")];
+    fixture.memory.doc = memoryDoc("");
     expect(body("memory").html).toContain("Nothing remembered yet.");
-    fixture.memory = { ...fixture.memory, docs: null, error: true };
+    fixture.memory = { ...fixture.memory, doc: null, error: true };
     expect(body("memory").html).toContain("Couldn&#x27;t read the memory file just now.");
 
-    fixture.memory = { ...fixture.memory, docs: [memoryDoc("- Old\n")], error: false };
+    fixture.memory = { ...fixture.memory, doc: memoryDoc("- Old\n"), error: false };
     fixture.saveMemory = vi.fn(() => Promise.resolve({ ok: false, conflict: true, current: "- New\n", currentHash: "h3" }));
     click(find(body("memory"), "label", "Forget"));
     await Promise.resolve();

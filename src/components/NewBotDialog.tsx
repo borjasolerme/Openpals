@@ -5,7 +5,7 @@ import { BotCreationDraft, EMPTY_BOT_DEFAULTS } from "@/lib/bot-creation-draft";
 import { createConfiguredBot, preparedBotTemplate } from "@/lib/create-configured-bot";
 import { BOT_ROLES, roleProfilePatch } from "@/lib/bot-roles";
 import { readyBot, readyBotTemplate } from "@/lib/ready-bots";
-import { chosenPreset, presetDraftPatch, presetGroups, presetPictureFile, presetSummaryLines, type BotPreset } from "@/lib/bot-presets";
+import { chosenPreset, presetDraftPatch, presetPictureFile, presetSummaryLines, type BotPreset } from "@/lib/bot-presets";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
@@ -275,16 +275,16 @@ function StartingRole({ draft, defaultsMode }: { draft: BotCreationDraft; defaul
     <label className="block text-[13px] text-ink-secondary">{t("newBot.startingRole")}
       <Select size="lg" className="mt-1.5 w-full" value={draft.preset ? `preset:${draft.preset.id}` : ""} onChange={event => void choose(event.target.value)}>
         <option value="">{t("newBot.customSettings")}</option>
-        {presetGroups(presets).map(group => <optgroup key={group.label} label={group.label}>
-          {group.presets.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.name}</option>)}
-        </optgroup>)}
+        {presets.length > 0 && <optgroup label={t("newBot.presetsImported")}>
+          {presets.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.name}</option>)}
+        </optgroup>}
         {presets.length ? <optgroup label={t("newBot.builtInRoles")}>{roles}</optgroup> : roles}
       </Select>
     </label>
     {chosen && <div className="mt-2 space-y-1 rounded-lg bg-card px-3 py-2.5 text-[13px] text-ink-secondary" data-new-bot-preset>
       {presetSummaryLines(chosen).map((line, index) => <p key={index} className="break-words">{line}</p>)}
-      {chosen.source === "file" && <button type="button" onClick={() => void remove(chosen)}
-        className="mt-1 rounded-md px-2 py-1 text-[12px] text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.presetRemove")}</button>}
+      <button type="button" onClick={() => void remove(chosen)}
+        className="mt-1 rounded-md px-2 py-1 text-[12px] text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.presetRemove")}</button>
     </div>}
     {error && <p role="alert" className="mt-2 text-[13px] text-danger">{error}</p>}
   </div>;

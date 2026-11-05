@@ -41,8 +41,7 @@ function sendGet(socketPath: string, url: string): Socket {
   return socket;
 }
 
-// The box runs only on a Linux Cloud home (detect.ts says "not-linux" anywhere else): its egress gate listens on a
-// unix socket, which Windows refuses at a file path (EACCES).
+// The box runs only on Linux: its egress gate listens on a unix socket, which Windows refuses at a file path (EACCES).
 const linuxBox = describe.skipIf(process.platform === "win32");
 
 linuxBox("the box's egress gate", () => {
@@ -135,7 +134,7 @@ linuxBox("the box's egress gate", () => {
     expect(await boxRefusal({ host: "example.com", port: 443 }, [PUBLIC])).toBeNull();
     expect(await boxRefusal({ host: "localhost", port: 8799 }, [{ address: "127.0.0.1", family: 4 }])).toBe("omb");
     expect(await boxRefusal({ host: "x", port: 443 }, [{ address: "fd12::1", family: 6 }])).toBe("local-network");
-    expect(BOX_EGRESS_RULES.host).toBe("cloud");
+    expect(BOX_EGRESS_RULES.host).toBe("box");
     expect(await BOX_EGRESS_RULES.botPort(3000)).toBe(false);
     expect(BOX_EGRESS_RULES.allowed("10.0.0.1", 443)).toBe(false);
   });

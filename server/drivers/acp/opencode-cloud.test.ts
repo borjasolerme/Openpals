@@ -48,7 +48,7 @@ async function open(driver: ReturnType<typeof createOpenCodeDriver>, instanceId:
   return { scratch, run };
 }
 
-describe("the keys saved for OpenCode inside the Cloud bot box", () => {
+describe("the keys saved for OpenCode inside the bot box", () => {
   const setup = {
     dataDir: "/data/.openmausbot", home: "/data", codeRoots: ["/app"], engineRoots: engineInstallRoots("/data/.openmausbot"),
     bridges: [{ name: "egress", port: BOX_EGRESS_PORT, socket: "/data/.openmausbot/box/egress.sock" }],

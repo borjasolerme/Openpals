@@ -532,26 +532,6 @@ export function installSkill(
   return installPreparedSkill(botId, source, prepared, { enabled: false });
 }
 
-/** Arrives enabled (the Admin is the review); `source` comes from the caller, never from the package. */
-export function installOrgSkill(
-  botId: string,
-  source: string,
-  skillMd: string,
-  stamp: SkillPackageStamp,
-): SkillListing | { error: string } {
-  if (!source.startsWith("org:")) return { error: "organization skills need an org: source" };
-  const prepared = preparedSkillFiles([{ path: "SKILL.md", content: skillMd }]);
-  if ("error" in prepared) return prepared;
-  if (prepared.parsed.name !== stamp.key) return { error: `the skill is named "${prepared.parsed.name}", not "${stamp.key}"` };
-  return installPreparedSkill(botId, source, prepared, { enabled: true, package: { ...stamp } });
-}
-
-export function skillPackageStamps(botId: string): Array<{ name: string; enabled: boolean; stamp: SkillPackageStamp }> {
-  return Object.entries(readManifest(botId)).flatMap(([name, entry]) => entry.package
-    ? [{ name, enabled: entry.enabled, stamp: { ...entry.package } }]
-    : []);
-}
-
 export function setSkillEnabled(botId: string, name: string, enabled: boolean): SkillListing | { error: string } {
   if (!isSkillName(name)) return { error: "invalid skill name" };
   const manifest = readManifest(botId);
@@ -841,7 +821,7 @@ function installPreparedSkill(
   botId: string,
   source: string,
   prepared: PreparedSkillFiles,
-  options: { enabled: boolean; appliedStageId?: string; package?: SkillPackageStamp },
+  options: { enabled: boolean; appliedStageId?: string },
 ): SkillListing | { error: string } {
   const name = prepared.parsed.name;
   const manifest = readManifest(botId);
@@ -875,7 +855,6 @@ function installPreparedSkill(
     skippedFiles: prepared.skippedFiles,
     ...(referencesSha256 ? { referencesSha256 } : {}),
     appliedStageId: options.appliedStageId,
-    ...(options.package ? { package: options.package } : {}),
   };
   const root = ensureSkillsRoot(botId);
   if (!root) return { error: "the workspace skills path must be a real directory, not a symlink or file" };

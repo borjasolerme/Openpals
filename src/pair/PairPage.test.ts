@@ -25,7 +25,7 @@ it("in the desktop app, a code the link carried connects at once; a browser stil
   expect(pairsAutomatically(null, true)).toBe(false);
 });
 
-it("opening My Cloud from the app needs no click and no code to type", async () => {
+it("opening a paired server from the app needs no click and no code to type", async () => {
   vi.stubGlobal("window", { ogb: { workspaces: {} } });
   f.pair.mockResolvedValue({ ok: true });
   const html = render(code);

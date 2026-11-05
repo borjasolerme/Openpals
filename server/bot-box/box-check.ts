@@ -1,6 +1,6 @@
 // `node dist-server/bot-box/box-check.js [--mutate=bind-data,share-pid] [--public=host:port|none] [--root=DIR]`
 // Runs the box self-check (self-check.ts) on this machine and prints its JSON: what the Admin's `checks: n/n` counts,
-// runnable by hand on a Cloud home or a test machine, with mutations to prove each check has teeth.
+// runnable by hand on a boxed server or a test machine, with mutations to prove each check has teeth.
 import { existsSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -11,7 +11,7 @@ import { detectBox } from "./detect.ts";
 import { BOX_MUTATIONS, type BoxMutation } from "./plan.ts";
 import { runBoxSelfCheck } from "./self-check.ts";
 
-export const CHECK_DENY_ENV: ReadonlySet<string> = new Set(["COMPOSIO_API_KEY", "OMB_COMPOSIO_BROKER_TOKEN", "OMB_HIGHLEVEL_TOKEN"]);
+export const CHECK_DENY_ENV: ReadonlySet<string> = new Set(["COMPOSIO_API_KEY", "OMB_HIGHLEVEL_TOKEN"]);
 
 export async function boxCheckMain(argv: readonly string[], env: Record<string, string | undefined> = process.env): Promise<number> {
   const mutate = new Set<BoxMutation>();

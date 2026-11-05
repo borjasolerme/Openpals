@@ -161,7 +161,7 @@ describe("preloadScreens", () => {
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
   });
 
-  it("a Cloud page fetches the screens after launch, one per idle moment, and can be cancelled", async () => {
+  it("a remote server's page fetches the screens after launch, one per idle moment, and can be cancelled", async () => {
     vi.useFakeTimers();
     const idle: Array<() => void> = [];
     const cancel = vi.fn();
@@ -173,7 +173,7 @@ describe("preloadScreens", () => {
     vi.stubGlobal("cancelIdleCallback", cancel);
     const preloads = stubPreloads();
     const called = () => preloads.filter((preload) => preload.mock.calls.length > 0).length;
-    const stop = preloadScreens("cloud.example");
+    const stop = preloadScreens("server.example");
     vi.advanceTimersByTime(4_999);
     expect(idle.length, "nothing during launch").toBe(0);
     vi.advanceTimersByTime(1);
@@ -193,11 +193,11 @@ describe("preloadScreens", () => {
     expect(idle.length, "nothing after cancel").toBe(0);
   });
 
-  it("reaches every screen on a Cloud page, by timer where requestIdleCallback is missing", async () => {
+  it("reaches every screen on a remote server's page, by timer where requestIdleCallback is missing", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("requestIdleCallback", undefined);
     const preloads = stubPreloads();
-    preloadScreens("cloud.example");
+    preloadScreens("server.example");
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(60_000);
     const rarelyOpened = [screens.GrokMoveDialog, screens.ShareTeamDialog, screens.TeamLibraryPanel];

@@ -36,7 +36,7 @@ async function installation(options: { refuse?: (name: string) => string | undef
   const deps = {
     store,
     routines,
-    skills: { install: skills.installSkill, setEnabled: skills.setSkillEnabled, installOrg: skills.installOrgSkill },
+    skills: { install: skills.installSkill },
     memory: { writeIndex: workspace.writeMemoryFile, writeTopic: workspace.writeMemoryTopic },
     mcp: {
       servers: () => mcp.servers,
@@ -64,8 +64,7 @@ describe("importing a whole team", () => {
   it("adds every part from a file: persona, picture, brief, Chief, rooms, paused routines, skills off, valueless connections, notes", async () => {
     const app = await installation({ servers: { crm: { type: "http", url: "https://existing.example.com", headers: { Authorization: "Bearer mine" }, enabled: true } } });
     const document: PackageDocument = app.parsePackageDocument(fixture("full-team.v2.json"));
-    const result = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     const byKey = new Map(result.bots.map((bot) => [bot.installedPackage!.agentKey, app.store.bot(bot.id)!]));
     const lead = byKey.get("lead")!;
     const scout = byKey.get("scout")!;
@@ -75,7 +74,7 @@ describe("importing a whole team", () => {
       color: "purple", mascotExpression: "focused", section: "Sales desk", chiefOfStaff: true,
       composio: false, connectorTools: {}, avatarCrop: "circle", modelSelection: { instanceId: "claude", model: "default-model" },
       playbooks: [expect.objectContaining({ key: "qualify" })],
-      installedPackage: { id: "sales-desk", release: "1.3.0", source: "file", agentKey: "lead", suggestedApproval: "auto",
+      installedPackage: { id: "sales-desk", release: "1.3.0", agentKey: "lead", suggestedApproval: "auto",
         requiredApps: [expect.objectContaining({ slug: "hubspot" })] },
     });
     expect(lead.avatarUrl).toMatch(/^\/api\/attachments\/[\w-]+\.png$/);
@@ -118,8 +117,7 @@ describe("importing a whole team", () => {
     const exported = createBotPackageExport({ name: "Mine", groups: [], routines: [], bots: app.store.bots });
     const document: PackageDocument = app.parsePackageDocument(JSON.parse(JSON.stringify(exported)));
     expect(document.package.agents.map((agent) => [agent.name, agent.appearance?.color])).toEqual([["Pal", "chrome"]]);
-    const result = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     expect(result.bots.map((bot) => app.store.bot(bot.id)?.color)).toEqual(["chrome"]);
   });
 
@@ -127,8 +125,7 @@ describe("importing a whole team", () => {
     const app = await installation();
     const document: PackageDocument = app.parsePackageDocument(fixture("full-team.v2.json"));
     document.package.routines!.find((routine) => routine.key === "daily-digest")!.runOnStartup = true;
-    const result = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     expect(result.routines).toEqual([
       expect.objectContaining({ name: "Daily digest", enabled: false, runOnStartup: true }),
       expect.not.objectContaining({ runOnStartup: true }),
@@ -140,8 +137,7 @@ describe("importing a whole team", () => {
     const raw = fixture("full-team.v2.json");
     raw.package.agents.find((agent: { key: string }) => agent.key === "scout").recordBrowserSteps = true;
     const document: PackageDocument = app.parsePackageDocument(raw);
-    const result = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     const byKey = new Map(result.bots.map((bot) => [bot.installedPackage!.agentKey, app.store.bot(bot.id)!]));
     expect(byKey.get("scout")!.recordBrowserSteps).toBe(true);
     expect(byKey.get("lead")).not.toHaveProperty("recordBrowserSteps");
@@ -151,9 +147,8 @@ describe("importing a whole team", () => {
   it("imports the same file twice as two independent copies", async () => {
     const app = await installation();
     const document = app.parsePackageDocument(fixture("full-team.v2.json"));
-    const first = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    const second = app.importer.importPackageDocument(document, { trust: "file", mode: "add" }, app.deps);
-    if (first.alreadyAdded || second.alreadyAdded) throw new Error("file imports are never 'already added'");
+    const first = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
+    const second = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     expect(second.section).toBe("Sales desk 2");
     expect(second.bots[0]!.name).toBe("Morgan 2");
     expect(second.installId).not.toBe(first.installId);
@@ -164,16 +159,16 @@ describe("importing a whole team", () => {
     const app = await installation();
     const before = app.snapshot();
     const failing = { ...app.deps, sections: { writeBrief: () => { throw new Error("disk full"); } } };
-    expect(() => app.importer.importPackageDocument(app.parsePackageDocument(fixture("full-team.v2.json")), { trust: "file", mode: "add" }, failing))
+    expect(() => app.importer.importPackageDocument(app.parsePackageDocument(fixture("full-team.v2.json")), { mode: "add" }, failing))
       .toThrow("disk full");
     expect(app.snapshot()).toBe(before);
     expect(app.sections.readSectionContext("Sales desk")).toBeNull();
   });
 
-  it("refuses a library-only package with a pointer to the shelf, creating nothing", async () => {
+  it("refuses a library-only package when there is nowhere to keep its presets, creating nothing", async () => {
     const app = await installation();
     const before = app.snapshot();
-    expect(() => app.importer.importPackageDocument(app.parsePackageDocument(fixture("library-only.v2.json")), { trust: "file", mode: "add" }, app.deps))
+    expect(() => app.importer.importPackageDocument(app.parsePackageDocument(fixture("library-only.v2.json")), { mode: "add" }, app.deps))
       .toThrow(app.importer.NO_BOTS_MESSAGE);
     expect(app.snapshot()).toBe(before);
   });
@@ -182,36 +177,8 @@ describe("importing a whole team", () => {
     const app = await installation();
     const input = fixture("full-team.v2.json");
     input.package.routines[0].timeoutMinutes = 600;
-    const result = app.importer.importPackageDocument(app.parsePackageDocument(input), { trust: "file", mode: "add" }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
+    const result = app.importer.importPackageDocument(app.parsePackageDocument(input), { mode: "add" }, app.deps);
     expect(result.routines[0]!.timeoutMinutes).toBe(240);
     expect(result.skipped).toContainEqual({ part: "routines[daily-digest].timeoutMinutes", reason: "run_limit_adjusted" });
-  });
-
-  it("switches skills on and stamps provenance only for the organization channel, once", async () => {
-    const app = await installation();
-    const document = app.parsePackageDocument({ ...fixture("full-team.v2.json") }, { trust: "org" });
-    document.package.publisher = { organization: "acme", name: "Acme Partners" };
-    const org = {
-      adminOrigin: "https://admin.example.com", organizationId: "org-1", packageId: "pkg-1", ref: "acme/sales-desk", sha256: "a".repeat(64),
-      publisher: { organizationId: "org-acme", slug: "acme", name: "Acme Partners" },
-      installId: app.importer.orgInstallId("https://admin.example.com", "org-1", "pkg-1"),
-    };
-    const result = app.importer.importPackageDocument(document, { trust: "org", mode: "add", org }, app.deps);
-    if (result.alreadyAdded) throw new Error("unexpected");
-    const scout = result.bots.find((bot) => bot.installedPackage?.agentKey === "scout")!;
-    expect(app.skills.listSkills(scout.id)).toEqual([
-      expect.objectContaining({ name: "pricing-policy", enabled: true, source: "org:acme/sales-desk@1.3.0" }),
-      expect.objectContaining({ name: "research-brief", enabled: true }),
-    ]);
-    expect(scout.installedPackage).toMatchObject({ source: "org", installId: org.installId, ref: "acme/sales-desk", sha256: org.sha256, publisher: org.publisher });
-    expect(result.routines.every((routine) => !routine.enabled)).toBe(true);
-    const bots = app.store.bots.length;
-    expect(app.importer.importPackageDocument(document, { trust: "org", mode: "add", org }, app.deps)).toEqual({ alreadyAdded: true, installId: org.installId });
-    expect(app.store.bots).toHaveLength(bots);
-    expect(() => app.importer.importPackageDocument(document, { trust: "org", mode: "add", org: { ...org, installId: "f".repeat(32) } }, app.deps))
-      .toThrow("install id");
-    expect(() => app.importer.importPackageDocument(document, { trust: "org", mode: "add", org: { ...org, publisher: { ...org.publisher, slug: "other" } } }, app.deps))
-      .toThrow("not published by the organization");
   });
 });

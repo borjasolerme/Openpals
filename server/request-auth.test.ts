@@ -9,7 +9,6 @@ import {
   clearSessionCookie,
   fromBrowser,
   adminOnlyBotSetting,
-  botProfileSettings,
   clientBotPatchViolation,
   clientGroupPatchViolation,
   ipcPeer,
@@ -174,17 +173,6 @@ describe("scopes", () => {
     ] as const) expect(requiredScope(method, path), `${method} ${path}`).toBe("admin");
   });
 
-  it("lets a Team Cloud member reach only their own connections; who connects what stays an admin's", () => {
-    for (const [method, path] of [
-      ["GET", "/api/team/my-connections"], ["POST", "/api/team/my-connections/apps/gmail/connect"], ["DELETE", "/api/team/my-connections/apps/gmail"],
-      ["POST", "/api/team/my-connections/mcp/mail/sign-in"], ["PUT", "/api/team/my-connections/mcp/mail/key"], ["DELETE", "/api/team/my-connections/mcp/mail"],
-    ] as const) expect(requiredScope(method, path), `${method} ${path}`).toBe("client");
-    for (const [method, path] of [
-      ["PUT", "/api/team/connection-scopes"], ["GET", "/api/team/my-connections/mcp/mail/key"], ["POST", "/api/team/my-connections/apps/gmail"],
-      ["POST", "/api/connectors/gmail/authorize"], ["POST", "/api/mcp/servers/mail/sign-in"],
-    ] as const) expect(requiredScope(method, path), `${method} ${path}`).toBe("admin");
-  });
-
   it("lets a desktop's own lending connector reach its device link only while lending is on, like its poll", () => {
     for (const path of ["/api/shared-computers/c1/poll", "/api/shared-computers/c1/link"]) {
       const method = path.endsWith("link") ? "GET" : "POST";
@@ -213,9 +201,8 @@ describe("scopes", () => {
     const profile = { name: "Scout", title: "Trips", soul: "Plans trips.", color: "teal", avatarCrop: "square", voice: "alloy", modelSelection: { instanceId: "claude", model: "m" } };
     expect(adminOnlyBotSetting(profile)).toBeNull();
     for (const field of ["approvalMode", "autoApprove", "alwaysAllow", "chiefOfStaff", "managedSections", "computer", "cwd", "peers", "approvePeerComms",
-      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "section", "visibility", "reportsTo", "preset", "defaultBot", "installedPackage"]) {
+      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "section", "visibility", "preset", "defaultBot", "installedPackage"]) {
       expect(adminOnlyBotSetting({ ...profile, [field]: true }), field).toBe(field);
-      expect(botProfileSettings({ ...profile, [field]: true }), field).toEqual(profile);
     }
   });
 });
@@ -427,31 +414,7 @@ describe("resolveRequestAuth", () => {
     expect(csrf.error).toBe("forbidden: cross-origin request");
   });
 
-  it("lets a browser sign-in's session make changes only when the browser says the request is its own page's", () => {
-    const { credential } = sessions.openPairing({ browser: true, owner: "ada@example.test" });
-    const signedIn = sessions.exchange({ code: credential, label: "Chrome on Mac", source: "1.2.3.4", browser: true });
-    if (!signedIn.ok) throw new Error(signedIn.error);
-    const cookie = `${cookieName}=${signedIn.token}`;
-    const cloud = { host: "omb-u-0123456789ab.fly.dev", "x-forwarded-proto": "https", cookie };
-    expect(resolve(cloud).auth?.kind).toBe("session");
-    expect(resolve({ ...cloud, origin: "https://omb-u-0123456789ab.fly.dev" }, "/api/bots", "POST").auth?.kind).toBe("session");
-    expect(resolve({ ...cloud, "sec-fetch-site": "same-origin" }, "/api/bots", "DELETE").auth?.kind).toBe("session");
-    for (const [headers, method] of [[{}, "POST"], [{}, "PUT"], [{}, "PATCH"], [{}, "DELETE"], [{ "sec-fetch-site": "none" }, "POST"], [{ "sec-fetch-site": "cross-site" }, "POST"],
-      [{ "sec-fetch-site": "same-site" }, "POST"], [{ origin: "https://evil.example", "sec-fetch-site": "same-origin" }, "POST"]] as const) {
-      const refused = resolve({ ...cloud, ...headers }, "/api/bots", method);
-      expect(refused.auth, `${method} ${JSON.stringify(headers)}`).toBeNull();
-      expect(refused.status).toBe(403);
-    }
-    expect(resolve(cloud, "/api/bots", "POST").error).toBe("forbidden: this browser's session makes changes only from its own page");
-    const connectorRefresh = "/api/bots/bot-1/connector-cards/card-1/status";
-    const notItsPage: Record<string, string>[] = [{}, { "sec-fetch-site": "same-site" }, { "sec-fetch-site": "cross-site" }, { origin: "https://evil.example" }];
-    for (const headers of notItsPage) {
-      expect(resolve({ ...cloud, ...headers }, connectorRefresh, "GET").auth, JSON.stringify(headers)).toBeNull();
-    }
-    expect(resolve({ ...cloud, "sec-fetch-site": "same-origin" }, connectorRefresh, "GET").auth?.kind).toBe("session");
-    expect(resolve({ ...cloud, "sec-fetch-site": "same-site" }, "/api/bots", "GET").auth?.kind).toBe("session");
-    const paired = pairedToken();
-    expect(resolve({ host: "omb-u-0123456789ab.fly.dev", "x-forwarded-proto": "https", cookie: `${cookieName}=${paired}` }, "/api/bots", "POST").auth?.kind).toBe("session");
+  it("proves same origin only from the browser's own headers", () => {
     expect(provesSameOrigin(request({ host: "a.example", origin: "http://a.example" }))).toBe(true);
     expect(provesSameOrigin(request({ host: "a.example" }))).toBe(false);
     expect(provesSameOrigin(request({ host: "a.example", origin: "https://evil.example", "sec-fetch-site": "same-origin" }))).toBe(false);

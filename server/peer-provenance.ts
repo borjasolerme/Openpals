@@ -9,10 +9,9 @@ import { AUTHORITY, botWho, fromNoteWith, informationOnly, lineNote, type LineLa
 
 const REQUEST_QUOTE_MAX = 400;
 
-/** From the harness's records, never from model text; work handed on keeps the origin it came from. `person`: on work
- * handed on, whom it acts for (server/host/acting-person.ts), so it may use that person's own apps. */
+/** From the harness's records, never from model text; work handed on keeps the origin it came from. */
 export const workOriginSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("user"), request: z.string().min(1).max(REQUEST_QUOTE_MAX), person: z.string().regex(/^p_[\w-]{22}$/).optional() }),
+  z.object({ kind: z.literal("user"), request: z.string().min(1).max(REQUEST_QUOTE_MAX) }),
   z.object({ kind: z.literal("outside") }),
 ]);
 export type WorkOrigin = z.infer<typeof workOriginSchema>;
@@ -32,15 +31,14 @@ export function workOrigin(line: RequestLine | undefined): WorkOrigin {
   return request ? { kind: "user", request } : OUTSIDE;
 }
 
-/** A routine's or webhook's run, or a Cloud guest's turn, is never the user's; a continuation passes no line, since a stored line cannot prove who wrote it. */
-export function requestWorkOrigin({ trigger, guest, handed, continued, line }: {
+/** A routine's or webhook's run is never the user's; a continuation passes no line, since a stored line cannot prove who wrote it. */
+export function requestWorkOrigin({ trigger, handed, continued, line }: {
   trigger?: RoutineRunTrigger;
-  guest?: boolean;
   handed?: WorkOrigin;
   continued?: WorkOrigin;
   line?: RequestLine;
 }): WorkOrigin {
-  if (trigger || guest) return OUTSIDE;
+  if (trigger) return OUTSIDE;
   return handed ?? continued ?? workOrigin(line);
 }
 

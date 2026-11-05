@@ -45,7 +45,6 @@ describe("New bot", () => {
     const sent = await newBot(request);
     expect(calls.map((call) => `${call.method} ${call.path}`)).toEqual(["GET /api/bot-defaults", "POST /api/bots", "PATCH /api/bots/created"]);
     expect(created()).toMatchObject({ name: "Pixel", modelSelection: { instanceId: "claude", model: "sonnet" }, requireAvailableModel: true, useDefaults: false });
-    expect(created()).not.toHaveProperty("reportsTo");
     expect(sent).toEqual([{ type: "botAdded", bot: expect.objectContaining({ id: "created", name: "Pixel" }), preserveSelection: false }]);
   });
 

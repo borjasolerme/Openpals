@@ -28,9 +28,7 @@ you to sign in opens its sign-in page. A click on a server's switch in the
 moment after a passing test turned it on keeps it on (*it passed its test a
 moment ago*): it was aimed at the Off you saw, never at switching it straight
 back off.
-Compatible bots get it on their next task; no app restart is needed. On a
-Team Cloud everyone on the team can use a server an Admin adds; **Only for
-me**, offered for a server with one key, keeps that key as the Admin's own.
+Compatible bots get it on their next task; no app restart is needed.
 
 Header and environment values are write-only: typed like passwords, never shown
 again, and a saved one left blank is kept. Tokens for URL servers go in
@@ -94,8 +92,8 @@ tool calls the same way (an HTTP 401 pointing at those sign-in details) shows
   app registered in advance, add that app as described below. A 401 without
   sign-in details keeps the old message: check the address and headers.
 - **Where you can sign in.** Anywhere you use OpenMausBot: on the computer
-  it runs on, or in a browser on another computer (My Cloud, a hosted
-  workspace, a server of your own). See below.
+  it runs on, or in a browser on another computer (a hosted workspace, a
+  server of your own). See below.
 - **Bots never sign in.** A server that needs sign-in is left out of every
   turn until someone signs in from this page. A signed-in server gets
   `Authorization: Bearer …` in place of any `Authorization` header you set,
@@ -114,7 +112,7 @@ On the computer OpenMausBot runs on, your browser returns to it at
 `127.0.0.1`. In a browser on another computer that address is your own
 computer, where OpenMausBot is not, so sign-in comes back another way:
 
-- **Over https (My Cloud, a hosted workspace, a server behind https).** When
+- **Over https (a hosted workspace, a server behind https).** When
   the server lets apps register themselves, your browser returns to the
   address you are using OpenMausBot at, at `/mcp-oauth/callback`, and the tab
   says **Signed in. You can close this tab and return to OpenMausBot.** Nothing
@@ -242,7 +240,7 @@ change afterwards is left out until it is brought in again. A turn whose
 engine already loads the folder a skill came from leaves the copy out, so
 nothing is listed twice: Claude Code with **Also use my Claude Code skills**
 on, and Codex on the person's own `CODEX_HOME`. The copies travel with
-backups and Copy to My Cloud. The step never opens credential, session or
+backups. The step never opens credential, session or
 history files, and it is skipped when there is nothing new.
 
 Open a bot’s **Tools → Access → MCP servers** to narrow the enabled global

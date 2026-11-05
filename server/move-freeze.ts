@@ -1,11 +1,10 @@
 // This computer's copy once the person's bots moved to their own Cloud: one marker, moved.json in the data folder. A
-// frozen server admits no turns, runs no schedules, app events or memory upkeep, and answers every change but the
+// frozen server admits no turns, runs no schedules or memory upkeep, and answers every change but the
 // move's own with one sentence. Nothing in the workspace is edited, so lifting the marker leaves this computer exactly
 // as it was.
 import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
-import type { AppTriggerManager } from "./app-triggers.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import type { CalendarCallManager } from "./calendar-calls.ts";
 import type { RoutineManager } from "./routines.ts";
@@ -40,12 +39,11 @@ export interface MoveAutomations {
   routines(): Pick<RoutineManager, "listRoutines" | "update"> | null;
   calls(): Pick<CalendarCallManager, "list" | "switchOff"> | null;
   webhooks(): Pick<WebhookManager, "list" | "update"> | null;
-  appEvents(): Pick<AppTriggerManager, "list" | "update"> | null;
   waits(): Pick<WaitManager, "all" | "cancel"> | null;
 }
 
 /** Switches off every automation that is on, or only those named by key ("routine:<id>", "call:<id>", "webhook:<id>",
- * "app-event:<id>", "wait:<id>"); the person can switch each on again by hand, and a wait is cancelled. Done while frozen,
+ * "wait:<id>"); the person can switch each on again by hand, and a wait is cancelled. Done while frozen,
  * so none of them runs once the freeze lifts. One that can't be switched off is logged, never a reason to stay frozen.
  * The keys of those switched off. */
 export async function switchAutomationsOff(automations: MoveAutomations, only?: ReadonlySet<string>): Promise<string[]> {
@@ -55,11 +53,10 @@ export async function switchAutomationsOff(automations: MoveAutomations, only?: 
     if (only && !only.has(key)) return;
     try { await work(); done.push(key); } catch (error) { console.warn(`move freeze: could not switch ${kind} ${id} off (${(error as Error).message})`); }
   };
-  const routines = automations.routines(), calls = automations.calls(), webhooks = automations.webhooks(), appEvents = automations.appEvents(), waits = automations.waits();
+  const routines = automations.routines(), calls = automations.calls(), webhooks = automations.webhooks(), waits = automations.waits();
   for (const routine of routines?.listRoutines() ?? []) if (routine.enabled) await off("routine", routine.id, () => routines!.update(routine.id, { enabled: false }));
   for (const call of calls?.list() ?? []) if (call.nextRunAt !== null) await off("call", call.id, () => calls!.switchOff(call.id));
   for (const webhook of webhooks?.list() ?? []) if (webhook.enabled) await off("webhook", webhook.id, () => webhooks!.update(webhook.id, { enabled: false }));
-  for (const trigger of appEvents?.list() ?? []) if (trigger.enabled) await off("app-event", trigger.id, () => appEvents!.update(trigger.id, { enabled: false }));
   for (const wait of waits?.all() ?? []) await off("wait", wait.id, () => { if (!waits!.cancel(wait.id, wait.botId)) throw new Error("it already ended"); });
   return done;
 }

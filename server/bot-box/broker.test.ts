@@ -20,8 +20,7 @@ function call(socketPath: string, method: string, path: string, headers: Record<
   });
 }
 
-// The box runs only on a Linux Cloud home (detect.ts says "not-linux" anywhere else): its broker listens on a unix
-// socket, which Windows refuses at a file path (EACCES).
+// The box runs only on Linux: its broker listens on a unix socket, which Windows refuses at a file path (EACCES).
 const linuxBox = describe.skipIf(process.platform === "win32");
 
 linuxBox("the credential broker", () => {

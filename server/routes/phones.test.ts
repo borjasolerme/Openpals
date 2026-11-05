@@ -25,7 +25,7 @@ afterEach(async () => {
 const ADMIN: RequestAuth = { kind: "loopback", scopes: ["admin", "client"] };
 const clientSession = (id: string): RequestAuth => ({
   kind: "session", via: "bearer", scopes: ["client"],
-  session: { id, cookieOnly: false } as unknown as Extract<RequestAuth, { kind: "session" }>["session"],
+  session: { id } as unknown as Extract<RequestAuth, { kind: "session" }>["session"],
 });
 const companion = (device: string): RequestAuth => ({ kind: "loopback", scopes: ["admin", "client"], companionDevice: device });
 const registration = {
@@ -115,13 +115,6 @@ describe("phone routes", () => {
     const out = await call("POST", "/api/phones/self/jobs/nope/result", { ok: true, result: 1 }, fromPhone("d1"));
     expect(out.status).toBe(409);
     expect((await call("POST", "/api/phones/self/jobs/nope/result", { bad: true }, fromPhone("d1"))).status).toBe(400);
-  });
-
-  it("a cookie-only session cannot claim a companion identity", async () => {
-    const auth = clientSession("s1");
-    if (auth.kind === "session") (auth.session as { cookieOnly?: boolean }).cookieOnly = true;
-    const { call } = await setup({ auth });
-    expect((await call("PUT", "/api/phones/self", registration, fromPhone("d1"))).status).toBe(403);
   });
 
   it("plain loopback with companion headers, but no verified device, gets 403 on the poll", async () => {
@@ -214,7 +207,7 @@ describe("phone routes", () => {
     expect(registry.get("session:s1")).toBeUndefined();
   });
 
-  it("a team Cloud offers no phones", async () => {
+  it("a server that offers no phones registers none", async () => {
     // A verified phone key, so the refusal comes from there being no owner, not from a missing key.
     const { call } = await setup({ auth: companion("d1"), owner: () => null });
     expect((await call("PUT", "/api/phones/self", registration, fromPhone("d1"))).status).toBe(403);

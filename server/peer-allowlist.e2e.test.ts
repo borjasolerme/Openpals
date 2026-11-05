@@ -261,9 +261,9 @@ describe("peer allow-list", () => {
 
       const systemPrompt = String(dump.systemPrompt);
       expect(systemPrompt).toContain("[TEAM ROSTER]");
-      expect(systemPrompt).toContain(`- Quill — General assistant (General) [id: ${quill.id}]`);
-      expect(systemPrompt).toContain(`- Patch — General assistant (General) [id: ${patch.id}]`);
-      expect(systemPrompt).toContain("(Starter) [id: ");
+      expect(systemPrompt).toContain(`- Quill — General assistant [id: ${quill.id}]`);
+      expect(systemPrompt).toContain(`- Patch — General assistant [id: ${patch.id}]`);
+      expect(systemPrompt).not.toMatch(/\((General|Starter)\) \[id: /);
       expect(systemPrompt).toContain("Team availability: every teammate is available.");
       expect(systemPrompt).toContain("Use coordinate_bots");
       expect(systemPrompt).toContain("Each recipient runs with its own model and permissions");

@@ -29,7 +29,6 @@ export const WORKSPACE_CREDENTIAL_ENV = [
   "OMB_CUSTOM_IMAGE_KEY",
   "OMB_OPENAI_LIVE_KEY", "OMB_TREG_KEY", "OMB_POSTIZ_API_KEY",
   "COMPOSIO_API_KEY",
-  "OMB_COMPOSIO_BROKER_TOKEN",
   // Not credentials, but they point a shell-capable agent at app-owned state.
   "OMB_BROWSER_CONNECTION", "OMB_USER_DATA", "OMB_BOAT_API",
 ] as const;

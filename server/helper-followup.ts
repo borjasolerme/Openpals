@@ -2,7 +2,6 @@
 // once under its intro as a real bot message. Its client says what it saw (an AI, the apps); the counts are the server's.
 import { z } from "zod";
 
-import { defaultBotPerson } from "../shared/default-bot.ts";
 import { englishFollowup, type HelperFollowupFacts } from "../shared/helper-followup.ts";
 import type { RequestAuth } from "./request-auth.ts";
 import type { BotRecord, Message } from "./store.ts";
@@ -16,17 +15,9 @@ export const helperFollowupBody = z.object({
   apps: z.array(appName).max(20).default([]),
 });
 
-/** Only MausBot's own person writes its follow-up: on a Team Cloud the member it belongs to, else the place's owner. */
-export function mayFollowUp(bot: BotRecord, auth: RequestAuth): boolean {
-  const person = defaultBotPerson(bot);
-  if (!person) return auth.scopes.includes("admin");
-  return auth.kind === "session" && auth.session.email?.trim().toLowerCase() === person;
-}
-
-function seenBy(bot: BotRecord, person: string): boolean {
-  const visibility = bot.visibility;
-  if (!person || visibility === undefined || visibility === "everyone") return true;
-  return typeof visibility === "object" && visibility.people.some((email) => email.trim().toLowerCase() === person);
+/** Only an admin writes MausBot's follow-up. */
+export function mayFollowUp(auth: RequestAuth): boolean {
+  return auth.scopes.includes("admin");
 }
 
 /** What MausBot found: what its client saw, with the person's other bots and the routines they run counted here. */
@@ -36,8 +27,7 @@ export function followupFacts(
   bots: readonly BotRecord[],
   routines: readonly { botId: string; enabled: boolean }[],
 ): HelperFollowupFacts {
-  const person = defaultBotPerson(maus);
-  const others = bots.filter((bot) => bot.id !== maus.id && !bot.hidden && !bot.defaultBot && !bot.movedTo && seenBy(bot, person));
+  const others = bots.filter((bot) => bot.id !== maus.id && !bot.hidden && !bot.defaultBot);
   const theirs = new Set([maus.id, ...others.map((bot) => bot.id)]);
   return {
     ai: seen.ai,

@@ -1,4 +1,4 @@
-// Which run each outside event (a webhook delivery or a connected-app event) went to, kept 7 days so a retry of the
+// Which run each outside event (a webhook delivery) went to, kept 7 days so a retry of the
 // same event is answered with the same run instead of starting another.
 import { z } from "zod";
 

@@ -10,7 +10,6 @@ import { connectorStatusMemory, preloadConnectedApps, rememberConnectorStatus } 
 import { reserveConnectionPage, reusableConnectionUrl, type PendingAuthorization } from "@/lib/connector-oauth";
 import { mcpSignInLink } from "@/lib/mcp-sign-in";
 import { pollConnector } from "@/lib/connector-poll";
-import { managedConnectorUnavailableReason } from "../../shared/connector-availability";
 import { connectorServiceAccess, isConnectorToolGrantShape } from "@/lib/connector-grants";
 import {
   accountAliasTaken,
@@ -82,19 +81,13 @@ export function hostedShown(app: HostedApp, search: string, filter: AppsFilter, 
   return matches && (filter === "all" || (filter === "connected" && connected?.[app.id] !== false));
 }
 
-export type ConnectorSetup = "ready" | "needs-setup" | "service-unavailable";
-
 export function connectorSetupNotice(state: {
   configured: boolean;
   stale: boolean;
-  setup: ConnectorSetup | undefined;
   remoteClient: boolean;
-}): { key: LocaleKey; tone: "info" | "warning" } | null {
+}): LocaleKey | null {
   if (state.configured || state.stale) return null;
-  if (state.setup === "needs-setup") {
-    return { key: state.remoteClient ? "connectors.setupNeededRemote" : "connectors.setupNeeded", tone: "info" };
-  }
-  return { key: "connectors.notConfigured", tone: "warning" };
+  return state.remoteClient ? "connectors.setupNeededRemote" : "connectors.setupNeeded";
 }
 
 export interface CatalogPagination {
@@ -128,8 +121,6 @@ export function PluginsPanel() {
   const [source, setSource] = useState<"api" | "curated">("curated");
   const [pagination, setPagination] = useState<CatalogPagination | null>(null);
   const [configured, setConfigured] = useState(false);
-  const [mode, setMode] = useState<"managed" | "self-hosted" | "unavailable">("unavailable");
-  const [setup, setSetup] = useState<ConnectorSetup | undefined>(undefined);
   const [status, setStatus] = useState<Record<string, ConnectorStatus>>(
     () => connectorStatusMemory()?.services ?? readCachedInventory()?.services ?? {},
   );
@@ -254,8 +245,6 @@ export function PluginsPanel() {
         setSource(r.source ?? "curated");
         setPagination(r.pagination ?? null);
         setConfigured(Boolean(r.configured));
-        setMode(r.mode ?? "unavailable");
-        setSetup(r.setup);
       })
       .catch((e) => {
         if (!alive) return;
@@ -395,8 +384,7 @@ export function PluginsPanel() {
       .finally(() => setBusySlug(null));
   };
 
-  const matching = (cards ?? []).filter((c) => (!managedConnectorUnavailableReason(mode, c.slug) || hasActiveConnection(status[c.slug]))
-    && (!search || `${c.label} ${c.slug} ${connectorDescription(c)}`.toLowerCase().includes(search.toLowerCase())));
+  const matching = (cards ?? []).filter((c) => !search || `${c.label} ${c.slug} ${connectorDescription(c)}`.toLowerCase().includes(search.toLowerCase()));
   const isConnected = (slug: string) => Boolean(status[slug]?.connected || status[slug]?.accounts?.length);
   const filter: AppsFilter = surface === "mcp" ? "mcp" : tab === "connected" ? "connected" : "all";
   const shownHosted = new Set(HOSTED_MCP_APPS.filter((app) => hostedShown(app, search, filter, hostedConnected)).map((app) => app.id));
@@ -412,7 +400,7 @@ export function PluginsPanel() {
   const connectedCount = Object.values(status).filter(hasActiveConnection).length + connectedHosted.length + Number(highLevelConnected === true) + Number(xConnected === true) + Number(postizConnected === true);
   const connectedEmptyCopy = connectedInventoryCopy(inventoryPhase);
   const close = () => dispatch({ type: "togglePlugins", open: false });
-  const setupNotice = connectorSetupNotice({ configured, stale, setup, remoteClient });
+  const setupNotice = connectorSetupNotice({ configured, stale, remoteClient });
   const botsWithoutApps = hasUsableConnectedApps(configured, inventoryPhase, stale, status)
     ? botsMissingConnectedApps(state.bots, state.instances)
     : [];
@@ -591,21 +579,12 @@ export function PluginsPanel() {
             </div>
           )}
           {setupNotice && filter !== "mcp" && (
-            <div
-              className={cn(
-                "mb-3 rounded-xl px-4 py-3 text-[13px]",
-                setupNotice.tone === "warning" ? "bg-warning/10 text-warning" : "bg-control/50 text-ink-secondary",
-              )}
-            >
+            <div className="mb-3 rounded-xl bg-control/50 px-4 py-3 text-[13px] text-ink-secondary">
               {connectedHosted.length > 0
                 ? t("hostedMcp.otherAppsSetup", { services: new Intl.ListFormat(activeLocale(), { style: "long", type: "conjunction" }).format(connectedHosted.map((app) => app.label)) })
-                : t(setupNotice.key)}{" "}
+                : t(setupNotice)}{" "}
               <button
-                className={cn(
-                  "font-medium underline underline-offset-2",
-                  setupNotice.tone === "info" && "text-ink",
-                  remoteClient && "hidden",
-                )}
+                className={cn("font-medium text-ink underline underline-offset-2", remoteClient && "hidden")}
                 onClick={() => { close(); dispatch(openKeySettings("composio")); }}
               >
                 {t("connectors.openSettings")}
@@ -630,7 +609,7 @@ export function PluginsPanel() {
               </div>
             </div>
           )}
-          {configured && !remoteClient && source === "curated" && mode === "self-hosted" && filter !== "mcp" && (
+          {configured && !remoteClient && source === "curated" && filter !== "mcp" && (
             <div className="mb-3 text-[12px] text-ink-secondary">
               {t("connectors.featuredBefore")}{" "}
               <button
@@ -759,19 +738,16 @@ export function PluginsPanel() {
     const reconnect = pending ? undefined : accountToReconnect(serviceStatus);
     const addingAccount = aliasSlug === card.slug && !included;
     const busy = busySlug === card.slug;
-    const unavailableReason = managedConnectorUnavailableReason(mode, card.slug) ? t("connectors.selfHostOnlyReason") : null;
     const usedBy = connected || included ? botsUsingService(state.bots, state.instances, card.slug) : [];
-    const description = unavailableReason ?? (
-      pending
-        ? authorizationUrl
-          ? t("connectors.finishSetup")
-          : t("connectors.finishSetupOrDisconnect")
-        : reconnect
-          ? t("connectors.signedOut")
-          : failed && !accounts.length
-            ? t("connectors.authExpired")
-            : connectorDescription(card)
-    );
+    const description = pending
+      ? authorizationUrl
+        ? t("connectors.finishSetup")
+        : t("connectors.finishSetupOrDisconnect")
+      : reconnect
+        ? t("connectors.signedOut")
+        : failed && !accounts.length
+          ? t("connectors.authExpired")
+          : connectorDescription(card);
     return (
       <div
         key={card.slug}
@@ -811,8 +787,7 @@ export function PluginsPanel() {
           </div>
           <button
             type="button"
-            disabled={!configured || inventoryPhase !== "ready" || busy || included || Boolean(unavailableReason)}
-            title={unavailableReason ?? undefined}
+            disabled={!configured || inventoryPhase !== "ready" || busy || included}
             onClick={() => {
               if (pending && !failed) {
                 const url = reusableConnectionUrl(pendingAuthorization);
@@ -831,9 +806,7 @@ export function PluginsPanel() {
             }}
             className="inline-flex h-7 min-w-[64px] shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-[13px] font-medium leading-5 text-ink transition-colors hover:bg-raised-hover disabled:opacity-40"
           >
-            {unavailableReason ? (
-              t("connectors.selfHostOnly")
-            ) : busy ? (
+            {busy ? (
               <Loader2 size={14} className="animate-spin" />
             ) : (
               connectorActionLabel(inventoryPhase, {

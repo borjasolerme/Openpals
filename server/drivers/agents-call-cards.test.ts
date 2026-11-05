@@ -148,7 +148,7 @@ describe("update_widget", () => {
 
 describe("the chat-app tools", () => {
   it("are in every catalog, after the widget tools, with schemas a model can fill and no read-only annotation", () => {
-    for (const profile of [PROFILE, { ...PROFILE, chief: true, skillAuthoring: true, sharedComputers: true, voiceNotes: true }, { ...PROFILE, cloudHome: true }]) {
+    for (const profile of [PROFILE, { ...PROFILE, chief: true, skillAuthoring: true, sharedComputers: true, voiceNotes: true }]) {
       const names = availableTools(profile).map((tool) => tool.name);
       expect(names.slice(names.indexOf("show_widget"), names.indexOf("show_widget") + 2)).toEqual(["show_widget", "show_html"]);
     }

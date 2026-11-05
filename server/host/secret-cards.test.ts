@@ -33,7 +33,7 @@ function fixture(language?: string) {
     store: store as never, cfg: {} as never, botLogins: { credentialConfig: (config) => ({ ...config, onePassword: { connected: false } }) },
     phoneSecrets: { provide: async () => {}, open: () => {} } as never, phoneSecretSubmissions: {} as never,
     connectorThread: () => ({ bot, group: undefined }), answerCardNode: () => true, dataDir, 
-    layerFolder: () => dataDir, turnVm: () => undefined, ...(language ? { threadLanguage: () => language } : {}),
+    turnVm: () => undefined, ...(language ? { threadLanguage: () => language } : {}),
   });
   return { cards, lines, bot };
 }

@@ -4,8 +4,6 @@
 // transcript or a delegation would otherwise carry a restricted bot's words to people who cannot see it.
 import { z } from "zod";
 
-import { accessFromVisibility, entryMatches, higherLevel, sharedLevel, type BotAccess, type BotAccessLevel } from "../shared/bot-access.ts";
-import { botOwner, type OwnedBot } from "../shared/bot-owner.ts";
 import type { BotVisibility } from "../shared/wire.ts";
 
 export type { BotVisibility };
@@ -52,6 +50,11 @@ export function isRestricted(value: unknown): boolean {
   return storedVisibility(value) !== "everyone";
 }
 
+/** A visibility entry is an address, or an `@domain` that covers that domain's addresses. */
+function entryMatches(entry: string, email: string): boolean {
+  return entry.startsWith("@") ? email.endsWith(entry) && email.length > entry.length : entry === email;
+}
+
 export function viewerSees(viewer: Viewer, visibility: unknown): boolean {
   if (viewer.kind === "all") return true;
   const stored = storedVisibility(visibility);
@@ -59,44 +62,6 @@ export function viewerSees(viewer: Viewer, visibility: unknown): boolean {
   if (stored === "admins") return false;
   const email = viewer.email?.trim().toLowerCase();
   return Boolean(email && email.includes("@") && stored.people.some((entry) => entryMatches(entry, email)));
-}
-
-const accessSchema = z.object({
-  everyone: z.enum(["none", "view", "chat", "edit"]),
-  people: z.record(z.string().max(320), z.enum(["view", "chat", "edit"])),
-}).strict();
-
-/** A bot's sharing as a request sends it: every entry an address or @domain, at most MAX_VISIBILITY_PEOPLE of them. */
-export function parseBotAccess(value: unknown): { ok: true; access: BotAccess } | { ok: false; error: string } {
-  const parsed = accessSchema.safeParse(value);
-  if (!parsed.success) return { ok: false, error: 'access must be { "everyone": "none" | "view" | "chat" | "edit", "people": { email: "view" | "chat" | "edit" } }' };
-  const people: Record<string, "view" | "chat" | "edit"> = {};
-  for (const [raw, level] of Object.entries(parsed.data.people)) {
-    const entry = raw.trim().toLowerCase();
-    if (!ENTRY.test(entry)) return { ok: false, error: `"${raw.slice(0, 80)}" is not an email address` };
-    people[entry] = level;
-  }
-  if (Object.keys(people).length > MAX_VISIBILITY_PEOPLE) return { ok: false, error: `at most ${MAX_VISIBILITY_PEOPLE} people` };
-  return { ok: true, access: { everyone: parsed.data.everyone, people } };
-}
-
-export type AccessBot = OwnedBot & { visibility?: unknown; access?: unknown };
-
-/** The bot's sharing; one set before levels existed means what its visibility meant. A damaged stored value gives every
- * member who sees the bot no more than viewing it. */
-export function accessOf(bot: AccessBot): BotAccess {
-  if (bot.access === undefined) return accessFromVisibility(storedVisibility(bot.visibility));
-  const parsed = parseBotAccess(bot.access);
-  return parsed.ok ? parsed.access : { everyone: "none", people: {} };
-}
-
-/** What a Team Cloud member may do with the bot. Seeing it is still its visibility's to decide, which an access change
- * keeps in step; the owner can always edit; anyone who sees it can at least view it. */
-export function memberLevel(bot: AccessBot, email: string | undefined): BotAccessLevel {
-  const address = email?.trim().toLowerCase() ?? "";
-  if (!viewerSees({ kind: "member", email: address }, bot.visibility)) return "none";
-  if (address && botOwner(bot) === address) return "edit";
-  return higherLevel(sharedLevel(accessOf(bot), address), "view");
 }
 
 export function sameAudience(a: unknown, b: unknown): boolean {
@@ -145,8 +110,9 @@ export function roomFeeds(memberVisibilities: readonly unknown[], botVisibility:
   return memberVisibilities.every((visibility) => audienceWithin(botVisibility, visibility));
 }
 
-export interface VisibilityBot extends AccessBot {
+export interface VisibilityBot {
   id: string;
+  visibility?: unknown;
   threadId: string;
   section?: string;
   avatarUrl?: string | null;
@@ -192,12 +158,6 @@ export class VisibleSet {
   /** A non-admin session, even one that can see every bot: what only an admin reads still stays off its copy. */
   get member(): boolean {
     return this.viewer.kind === "member";
-  }
-
-  /** What this viewer may do with the bot: an admin edits every bot it sees; a member chats with every bot they see. */
-  level(id: string): BotAccessLevel {
-    if (!this.bot(id)) return "none";
-    return this.viewer.kind === "all" ? "edit" : "chat";
   }
 
   bot(id: string): boolean {
@@ -301,14 +261,6 @@ export function pathSubject(path: string): PathSubject | null {
   return null;
 }
 
-/** The conversations a request names outside `/api/threads/<id>` (pathSubject): a bot's or a room's task in the path,
- * and `?threadId=`. */
-export function requestThreadIds(path: string, query: URLSearchParams): string[] {
-  const ids = query.getAll("threadId").filter(Boolean);
-  const task = /^\/api\/(?:bots|groups)\/[\w-]+\/tasks\/([\w-]+)(?:\/|$)/.exec(path);
-  return task ? [task[1]!, ...ids] : ids;
-}
-
 const THREAD_FIELD = /^(?:threadId|[A-Za-z]+ThreadId)$/;
 
 /** The conversations a JSON body names: `threadId`, any `…ThreadId` and `threadIds`, at its top and one level down. */
@@ -353,8 +305,7 @@ export interface FrameContext {
 }
 
 /** No audience list (who else may see a bot is an admin's business), no teammate ids the member cannot see, and no
- * server alias: a member learns the default VPS alias only as configured-or-not, and a bot's own alias the same way.
- * On a Team Cloud an admin gets the bot whole but, like a member, only the conversations they may read. */
+ * server alias: a member learns the default VPS alias only as configured-or-not, and a bot's own alias the same way. */
 export function memberBot<T extends object>(bot: T, visible: VisibleSet): T {
   if (visible.everything) return visible.member ? withoutServerAlias(bot) : bot;
   if (!visible.member) return bot;
@@ -534,8 +485,7 @@ export function routineVisible(value: { botId?: unknown; groupId?: unknown }, vi
   return typeof value.botId === "string" && visible.bot(value.botId);
 }
 
-/** A run's prompt and output are its conversation's words: on a Team Cloud a run that went into someone's private chat
- * is theirs alone. */
+/** A run's prompt and output are its conversation's words: shown only to someone who sees each conversation it names. */
 export function routineRunVisible(run: { botId?: unknown; groupId?: unknown; threadId?: unknown; resultsThreadId?: unknown; sourceThreadId?: unknown }, visible: VisibleSet): boolean {
   if (!routineVisible(run, visible)) return false;
   return [run.threadId, run.resultsThreadId, run.sourceThreadId].every((id) => typeof id !== "string" || !id || !visible.hides(id));

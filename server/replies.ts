@@ -18,7 +18,7 @@ export function replyExcerpt(text: string, limit = MAX_REPLY_EXCERPT): string {
   return `${clean.slice(0, Math.max(0, limit - 1)).trimEnd()}…`;
 }
 /** What people's lines are called in a bot's prompt: one name where one person uses the server, or a name per line from
- * its speaker on a Team Cloud, where no one person is the user. */
+ * its speaker where several people share the workspace. */
 export type PersonName = string | ((line: Pick<Message, "sender">) => string);
 
 /** The one name, or this line's speaker. */

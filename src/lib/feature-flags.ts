@@ -89,7 +89,7 @@ export function savedStepsEnabled(config: FeatureFlagConfig | null | undefined):
   return config?.features?.savedSteps !== false;
 }
 
-/** The server can run saved steps (a Mac, not Windows or a Cloud home); unsaid counts as no. */
+/** The server can run saved steps (only on a Mac); unsaid counts as no. */
 export function savedStepsHere(config: FeatureFlagConfig | null | undefined): boolean {
   return config?.features?.savedStepsHere === true;
 }

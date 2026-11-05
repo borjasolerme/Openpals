@@ -158,7 +158,7 @@ describe("the chat", () => {
     expect(fixture.api).toHaveBeenCalledWith("/api/limit-resets?refresh=1");
   });
 
-  it("reads limits on its own as a background poll, so a sleeping Cloud home stays asleep", async () => {
+  it("reads limits on its own as a background poll, held while the page is hidden", async () => {
     fixture.api.mockClear();
     mount(createElement(EngineLimitNotice, { engine: "claude" }));
     await settle();

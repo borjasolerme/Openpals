@@ -1,6 +1,5 @@
 // Wire shapes of the usage trace view, shared by the server's builder and the renderer.
 import { TOOL_NAMESPACE, toolSurfaceKind } from "./tool-surface.ts";
-import { isConnectedAppsServer, OWN_APPS_SERVER } from "./own-apps.ts";
 
 /** Who or what started a root. */
 export type TraceSource = "person" | "owner" | "routine" | "bot" | "helper";
@@ -150,7 +149,7 @@ export function traceRootId(threadId: string, turnId: string): string {
 }
 
 const SERVER_ICONS: Readonly<Record<string, TraceToolIcon>> = { phone: "phone", data: "data", dweb: "web", browser: "browser", computer: "computer" };
-const OWN_SERVERS = new Set(["agents", "ogb", "composio", OWN_APPS_SERVER, ...Object.keys(SERVER_ICONS)]);
+const OWN_SERVERS = new Set(["agents", "ogb", "composio", ...Object.keys(SERVER_ICONS)]);
 const COMPOSIO_ACTION = /^([A-Z][A-Z0-9]+)_[A-Z0-9_]+$/;
 const BUILT_IN_ICONS: ReadonlyArray<[RegExp, TraceToolIcon]> = [
   [/^(?:websearch|web_search|search_web|google_search|x_search|research)$/, "search"],
@@ -159,7 +158,7 @@ const BUILT_IN_ICONS: ReadonlyArray<[RegExp, TraceToolIcon]> = [
   [/^(?:read|read_file|write|write_file|create_file|edit|multiedit|str_replace|apply_patch|notebookedit|delete|grep|glob|find|ls|list_files|attach_file|view|tool_result_read)$/, "files"],
   [/^(?:memory|remember|recall|memory_[a-z_]+|search_memory|save_memory|session_search|session_read)$/, "memory"],
   [/^(?:routine|routines|schedule|cron)(?:_[a-z_]+)?$|^[a-z_]*(?:routine|trigger)[a-z_]*$/, "routine"],
-  [/^(?:publish_page|unpublish_page|[a-z_]*page_publish[a-z_]*|pages?_[a-z_]+)$/, "page"],
+  [/^pages?_[a-z_]+$/, "page"],
   [/^(?:show_html|show_widget|render_widget|show_chart|show_table|show_card|widget|[a-z_]*_card)$/, "widget"],
   [/^(?:coordinate_bots|ask_bots?|delegate|task|agent|assignment_status|send_to_bot|raise_escalation|select_computer|create_bot)$/, "bots"],
   [/^(?:(?:open|start|list|close|retry)_threads?|list_bots|list_rooms|list_room_targets|post_to_room|create_room|manage_room)$/, "bots"],
@@ -174,7 +173,7 @@ export function traceToolLook(name: string): { icon: TraceToolIcon; app?: string
   const bare = name.replace(TOOL_NAMESPACE, "");
   const composio = COMPOSIO_ACTION.exec(bare);
   if (composio && composio[1] !== "COMPOSIO") return { icon: "app", app: composio[1]!.toLowerCase() };
-  if ((server && isConnectedAppsServer(server)) || composio) return { icon: "app" };
+  if (server === "composio" || composio) return { icon: "app" };
   const surface = toolSurfaceKind(name);
   if (surface) return { icon: surface };
   const lower = bare.toLowerCase();

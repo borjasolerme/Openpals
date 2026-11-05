@@ -5,16 +5,13 @@
 # declared on the `omb` service (the namespace owner).
 #
 #   cp .env.example .env   # set DOMAIN
-#   docker compose pull omb && docker compose up -d     # prebuilt image
-#   docker compose up -d --build                        # or build from source
+#   docker compose up -d --build
 services:
   omb:
     build:
       context: ..
       args:
         ENGINES: ${ENGINES:-}
-    # prebuilt on every main push; `docker compose up --build` builds from source instead
-    image: ghcr.io/milind-soni/openmausbot:latest
     restart: unless-stopped
     # The bots' browsers (docs/browser-packaging.md, "Process hygiene"): an
     # init collects the browser processes whose parents exit, and Chrome
@@ -33,10 +30,6 @@ services:
       OMB_WEBHOOK_PUBLIC_URL: https://${DOMAIN}
       # pairing links for remote clients point here (docs/self-hosting.md)
       OMB_PUBLIC_URL: https://${DOMAIN}
-      # Who may sign in with an emailed code at /pair (docs/self-hosting.md,
-      # "Sign in with your email"). Empty means pairing codes only.
-      OMB_SIGNIN_EMAILS: ${OMB_SIGNIN_EMAILS:-}
-      OMB_SIGNIN_MEMBER_EMAILS: ${OMB_SIGNIN_MEMBER_EMAILS:-}
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8799/api/health | grep -q openmausbot"]
       interval: 30s

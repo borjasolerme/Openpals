@@ -98,7 +98,7 @@ describe("POST /api/cloud-send/home", () => {
 describe("POST /api/cloud-send/automations-off", () => {
   /** My Cloud's automations, all on: two computers' and one made there. */
   function automations() {
-    const on = new Map([["routine:a1", true], ["routine:b1", true], ["call:a2", true], ["webhook:a3", true], ["app-event:a4", true], ["routine:c1", true], ["routine:a5", false]]);
+    const on = new Map([["routine:a1", true], ["routine:b1", true], ["call:a2", true], ["webhook:a3", true], ["routine:c1", true], ["routine:a5", false]]);
     const id = (key: string) => key.slice(key.indexOf(":") + 1);
     const of = (kind: string) => [...on].filter(([key]) => key.startsWith(`${kind}:`)).map(([key, value]) => ({ id: id(key), value }));
     const turnOff = (kind: string) => async (target: string) => { on.set(`${kind}:${target}`, false); return null; };
@@ -106,7 +106,6 @@ describe("POST /api/cloud-send/automations-off", () => {
       routines: () => ({ listRoutines: () => of("routine").map(({ id: routine, value }) => ({ id: routine, enabled: value })), update: turnOff("routine") }),
       calls: () => ({ list: () => of("call").map(({ id: call, value }) => ({ id: call, nextRunAt: value ? 1 : null })), switchOff: (call: string) => { on.set(`call:${call}`, false); return true; } }),
       webhooks: () => ({ list: () => of("webhook").map(({ id: hook, value }) => ({ id: hook, enabled: value })), update: turnOff("webhook") }),
-      appEvents: () => ({ list: () => of("app-event").map(({ id: trigger, value }) => ({ id: trigger, enabled: value })), update: turnOff("app-event") }),
       waits: () => null,
     } as unknown as MoveAutomations;
     return { on, deps };
@@ -121,9 +120,9 @@ describe("POST /api/cloud-send/automations-off", () => {
 
   it("stops exactly the automations a computer brought, of every kind, and says which were on; the rest of My Cloud goes on", async () => {
     const { on, deps } = automations();
-    expect(await ask(deps, { v: 1, keys: ["routine:a1", "call:a2", "webhook:a3", "app-event:a4", "routine:a5", "routine:gone"] }))
-      .toEqual({ handled: true, status: 200, body: { v: 1, off: ["routine:a1", "call:a2", "webhook:a3", "app-event:a4"] } });
-    expect(Object.fromEntries(on)).toEqual({ "routine:a1": false, "routine:b1": true, "call:a2": false, "webhook:a3": false, "app-event:a4": false, "routine:c1": true, "routine:a5": false });
+    expect(await ask(deps, { v: 1, keys: ["routine:a1", "call:a2", "webhook:a3", "routine:a5", "routine:gone"] }))
+      .toEqual({ handled: true, status: 200, body: { v: 1, off: ["routine:a1", "call:a2", "webhook:a3"] } });
+    expect(Object.fromEntries(on)).toEqual({ "routine:a1": false, "routine:b1": true, "call:a2": false, "webhook:a3": false, "routine:c1": true, "routine:a5": false });
     expect((await ask(deps, { v: 1, keys: ["routine:a1"] })).body, "asked again after a crash: nothing else changes").toEqual({ v: 1, off: [] });
   });
 
@@ -132,6 +131,6 @@ describe("POST /api/cloud-send/automations-off", () => {
     expect((await ask(deps, { v: 1, keys: ["routine:b1"] }, { owner: false })).status).toBe(403);
     expect((await ask(deps, { v: 1, keys: ["bot:b1"] })).status).toBe(400);
     expect((await ask(deps, { v: 1, keys: ["routine:b1"] }, { method: "GET" })).status).toBe(405);
-    expect([...on.values()].filter(Boolean)).toHaveLength(6);
+    expect([...on.values()].filter(Boolean)).toHaveLength(5);
   });
 });

@@ -162,8 +162,7 @@ export type ParsedShareableTeam = ParsedTeamManifest | ParsedBotPackage | Packag
 function parseShareable(value: JsonValue | string): ParsedShareableTeam {
   if (typeof value === "string") return parseBotPackage(value);
   if (!isBotPackage(value)) return parseTeamManifest(value);
-  // A shared team (v2) is read as a file: it cannot claim a publisher.
-  return (value as { version?: unknown }).version === 1 ? parseBotPackage(value) : parsePackageDocument(value, { trust: "file" });
+  return (value as { version?: unknown }).version === 1 ? parseBotPackage(value) : parsePackageDocument(value);
 }
 
 async function fetchShareable(url: string, fetcher: Fetcher): Promise<ParsedShareableTeam> {

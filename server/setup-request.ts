@@ -119,7 +119,7 @@ export function takeSetupRequest(store: SetupRequestStore, turn: SetupTurn): Mes
   if (line.setupRequest) return turn.mounted ? line : null;
   const edited = turn.editedFrom ? store.messagesFor(threadId).find((message) => message.id === turn.editedFrom) : undefined;
   if (edited?.setupRequest) {
-    // Someone else's edit of the presser's line (a Team Cloud stores both senders) runs as typed.
+    // Someone else's edit of the presser's line (a shared workspace stores both senders) runs as typed.
     const author = linePersonKey(edited), editor = linePersonKey(line);
     return command(line) || (author && editor && author !== editor) ? null : mark(store, threadId, line, turn.mounted);
   }

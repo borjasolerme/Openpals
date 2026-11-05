@@ -17,7 +17,7 @@ describe("CloudBackendPicker", () => {
   afterEach(() => { fixture.config = null; });
 
   it("offers Boat or a self-hosted VPS on a desktop or self-hosted server", () => {
-    fixture.config = { cloudHome: false };
+    fixture.config = {};
     expect(picker()).toContain("Self-hosted VPS");
   });
 

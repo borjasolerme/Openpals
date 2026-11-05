@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "about": "Expected results of parsePackageDocument(fixture, { trust: \"file\" }). sha256 is over canonicalJson of the parsed document. Regenerate only with a deliberate format change; Admin tests read this file from the pinned runtime.",
+  "about": "Expected results of parsePackageDocument(fixture). sha256 is over canonicalJson of the parsed document. Regenerate only with a deliberate format change.",
   "fixtures": {
     "full-team.v2.json": {
       "sha256": "d80e4e49382b88ae41b09ef7c49a699c6b07cf198f76ab1cf10c5b15e5f4981a",

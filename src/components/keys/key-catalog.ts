@@ -20,7 +20,7 @@ export type TestableProvider = "anthropic" | "openai" | "openrouter" | "openaiCo
 
 export type DesktopSlot = Parameters<NonNullable<NonNullable<Window["ogb"]>["setCredential"]>>[0];
 
-export interface SavedState { configured: boolean; last4?: string; included?: boolean }
+export interface SavedState { configured: boolean; last4?: string }
 
 export interface KeyTarget {
   patch: (value: string, firstKey: boolean) => Record<string, unknown>;
@@ -149,8 +149,7 @@ export const KEY_CATALOG: readonly KeyEntry[] = [
   { id: "composio", section: "apps", labelKey: "keys.composio.label", purposeKey: "keys.purpose.composio", name: "Composio", env: ["COMPOSIO_API_KEY"],
     words: ["composio", "connected apps", "apps", "gmail", "slack", "github", "notion", "self-host"], mark: { icon: Blocks }, kind: "key",
     target: { patch: (value) => ({ composio: { apiKey: value } }), slot: "composioApiKey", verifiedOnSave: true,
-      saved: (config) => ({ ...flag((config.composio?.mode ?? "self-hosted") === "self-hosted" ? config.composio : undefined),
-        ...(config.composio?.mode === "managed" ? { included: true } : {}) }),
+      saved: (config) => flag(config.composio),
       placeholder: "ak_…", href: "https://dashboard.composio.dev", shape: /^ak_/ } },
   { id: "treg", section: "apps", labelKey: "keys.treg.label", purposeKey: "keys.purpose.treg", name: "treg", env: ["OMB_TREG_KEY"],
     words: ["treg", "research", "x", "twitter", "companies", "people", "funding", "news"], mark: { icon: Search }, kind: "key",

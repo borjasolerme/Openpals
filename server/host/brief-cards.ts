@@ -106,8 +106,7 @@ export const DISMISS_ACTION = "dismiss_row";
 export const DRAFT_ACTION = "draft_reply";
 
 export interface BriefEmail { messageId: string; threadId: string; from: string; subject: string; why?: string; needsReply: boolean }
-/** `page`: the live page a routine's run published; its row's Open page opens it, while Open opens the run's chat. */
-export interface BriefRow { text: string; note: string; open?: OpenTarget; page?: string }
+export interface BriefRow { text: string; note: string; open?: OpenTarget }
 /** A row that needs the person. `key` names what it is about in no particular language, so a new language is not news. */
 export type NeedRow = BriefRow & { key: string };
 export interface BriefMeeting { title: string; start: number; joinUrl?: string }
@@ -151,7 +150,6 @@ function capped(rows: Node[], w: BriefWords): Node[] {
 const section = (title: string, rows: Node[], w: BriefWords, empty?: string, after: Node[] = []): Node[] =>
   [{ type: "Title", value: title, size: "sm" }, ...(rows.length ? capped(rows, w) : empty ? [text(empty)] : []), ...after];
 const openButton = (target: OpenTarget | undefined, w: BriefWords): Node[] => (target ? [button(w.open, { type: "open_thread", payload: target })] : []);
-const pageButton = (url: string | undefined, w: BriefWords): Node[] => { const link = httpsLink(url), open = link ? openUrl(link) : undefined; return open ? [button(w.openPage, open)] : []; };
 
 function emailRow(email: BriefEmail, w: BriefWords): Node {
   const who = sender(email, BRIEF_TEXT.label, w);
@@ -178,7 +176,7 @@ export function briefCard(facts: BriefFacts): BuiltCard {
   const waiting = facts.waiting === true ? w.waitingMany : facts.waiting ? w.waitingCount(facts.waiting) : undefined;
   const importantRows = important.map((email) => emailRow(email, w));
   const waitingNotice = waiting ? [caption(waiting)] : [];
-  const routineRows = facts.routines.map((row) => rowBeside(row.text, row.note, [...pageButton(row.page, w), ...openButton(row.open, w)]));
+  const routineRows = facts.routines.map((row) => rowBeside(row.text, row.note, openButton(row.open, w)));
   const ideaRows = (facts.ideas ?? []).map((row) => rowBeside(row.text, row.note, []));
   const children: Node[] = [
     ...(facts.overnight ? [{ type: "Text", value: clip(facts.overnight, BRIEF_TEXT.note * 2), weight: "medium" }] : []),

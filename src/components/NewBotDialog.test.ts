@@ -3,10 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fixture = vi.hoisted(() => ({ effects: [] as EffectCallback[], dispatch: vi.fn(), api: vi.fn(), create: vi.fn(), setDraft: vi.fn(), ready: false, hook: 0, admin: false,
-  profile: {} as Record<string, unknown>, advanced: true, appSettingsOpen: false, openBot: vi.fn(), close: vi.fn() }));
-vi.mock("@/state/thread-navigation", async importOriginal => ({
-  ...await importOriginal<typeof import("@/state/thread-navigation")>(), openBot: fixture.openBot,
-}));
+  profile: {} as Record<string, unknown>, advanced: true, appSettingsOpen: false, close: vi.fn() }));
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => fixture.advanced }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.admin }));
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: {} }) }));
@@ -64,7 +61,6 @@ beforeEach(() => {
   fixture.effects = []; fixture.dispatch.mockReset(); fixture.api.mockReset();
   fixture.ready = false; fixture.admin = false; fixture.create.mockReset(); fixture.setDraft.mockReset(); fixture.profile = {};
   fixture.appSettingsOpen = false;
-  fixture.openBot.mockReset();
   fixture.close.mockReset();
   fixture.api.mockReturnValue(new Promise(() => {}));
 });
@@ -169,15 +165,6 @@ describe("bot draft dialog", () => {
     for (const value of choices) chooseStartingRole(dialog, value);
     dialog.filter(node => node.type === "button").at(-1)!.props.onClick!();
     await vi.waitFor(() => expect(fixture.close).toHaveBeenCalledOnce());
-  });
-
-  it("anywhere but a team's Cloud, leaves the new bot selected as it always was", async () => {
-    fixture.ready = true;
-    fixture.create.mockResolvedValue({ bot: { id: "created", name: "Fixture" }, warnings: [] });
-    render().nodes.filter(node => node.type === "button").at(-1)!.props.onClick!();
-    await vi.waitFor(() => expect(fixture.dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "botAdded" })));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(fixture.openBot).not.toHaveBeenCalled();
   });
 
   it("reports a preset chosen after a starting role as the start, never naming the preset", async () => {

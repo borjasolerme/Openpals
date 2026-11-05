@@ -122,7 +122,7 @@ describe("whose phones", () => {
     expect(phones.integration(chief, TURN)).toBeNull();
   });
 
-  it("a Team Cloud or hosted workspace, a server several people sign in to, and a service-trust machine get no phone", () => {
+  it("a hosted workspace, a server several people sign in to, and a service-trust machine get no phone", () => {
     for (const overrides of [{ shared: true }, { sharedMembership: () => true }, { loopbackTrust: "service" as const }]) {
       const { phones, send } = world(overrides);
       send(phones.sendIdFor(loopback));

@@ -229,18 +229,18 @@ describe("memory_update", () => {
       api: async () => ({}),
       apiResponse: async (_path, init) => {
         const body = JSON.parse(String(init?.body));
-        const prefer = allowed ? { person: "Ada", save: (text: string) => aboutMe.learn({ botId: bot, botName: "Scout" }, [text]) } : null;
+        const prefer = allowed ? { save: (text: string) => aboutMe.learn({ botId: bot, botName: "Scout" }, [text]) } : null;
         const result = botMemoryUpdate(bot, body, { source: 'chat "Turn"', aboutMe, prefer });
         return { ok: result.ok, status: result.ok ? 200 : 400, body: result };
       },
     };
     const ctx = context({ botId: bot, client });
     const saved = await callTool("memory_update", { action: "prefer", text: "Reminders  go to the task app" }, ctx);
-    expect(saved).toEqual({ text: "Saved in Ada's About me, which every bot reads in their work. Don't pass it on to other bots or save it in your own notes too." });
+    expect(saved).toEqual({ text: "Saved in the person's About me, which every bot reads in their work. Don't pass it on to other bots or save it in your own notes too." });
     expect(profile.aboutMe).toBe("I live in Pune.\n- 2026-10-27 · learned by Scout · Reminders go to the task app");
     expect(readMemoryFile(bot).text, "nothing went into the bot's own notes").not.toContain("task app");
     expect((await callTool("memory_update", { action: "prefer", text: "Reminders go to the task app" }, ctx)).text)
-      .toBe("Already in Ada's About me, or they removed it before: nothing to save or pass on.");
+      .toBe("Already in the person's About me, or they removed it before: nothing to save or pass on.");
     expect(await callTool("memory_update", { action: "prefer" }, ctx)).toMatchObject({ isError: true });
     expect(await callTool("memory_update", { action: "prefer", text: "x".repeat(301) }, ctx)).toMatchObject({ isError: true, text: expect.stringContaining("at most 300 characters") });
     allowed = false;
@@ -351,16 +351,3 @@ describe("X research tools", () => {
   });
 });
 
-describe("page tools", () => {
-  it("send the tool's arguments to their internal routes and hand back the sentence, or the refusal as an error", async () => {
-    const calls: Array<{ path: string; body: unknown }> = [];
-    const answers = [{ ok: true, status: 200, body: { ok: true, text: "Published “Bake sale” at https://abcdefghijklmnopqrstuvwxyz.mausbot.page/" } },
-      { ok: false, status: 402, body: { error: "You’ve used your 5 free pages. MausBot Cloud gives you more, and pages without the badge." } }];
-    const client = { api: async () => ({}), apiResponse: async (path: string, init?: RequestInit) => { calls.push({ path, body: JSON.parse(String(init?.body)) }); return answers.shift()!; } };
-    expect(await callTool("publish_page", { path: "site", title: "Bake sale" }, context({ client }))).toEqual({ text: "Published “Bake sale” at https://abcdefghijklmnopqrstuvwxyz.mausbot.page/" });
-    expect(await callTool("unpublish_page", { page_id: "abcdefghijklmnopqrstuvwxyz" }, context({ client })))
-      .toEqual({ text: "You’ve used your 5 free pages. MausBot Cloud gives you more, and pages without the badge.", isError: true });
-    expect(calls).toEqual([{ path: "/api/internal/pages/publish", body: { path: "site", title: "Bake sale" } },
-      { path: "/api/internal/pages/unpublish", body: { page_id: "abcdefghijklmnopqrstuvwxyz" } }]);
-  });
-});

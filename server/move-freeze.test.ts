@@ -100,7 +100,7 @@ describe("switching this computer's automations off for a move", () => {
     await waits.tick();
     expect(waits.all().map((wait) => [wait.label, wait.ending?.status])).toEqual([["the report", undefined], ["the build", "fired"]]);
 
-    const automations: MoveAutomations = { routines: () => null, calls: () => null, webhooks: () => null, appEvents: () => null, waits: () => waits };
+    const automations: MoveAutomations = { routines: () => null, calls: () => null, webhooks: () => null, waits: () => waits };
     expect(await switchAutomationsOff(automations, new Set(["routine:r1"])), "only what is named").toEqual([]);
     expect(waits.all()).toHaveLength(2);
     expect(await switchAutomationsOff(automations)).toEqual([`wait:${report}`, `wait:${build}`]);

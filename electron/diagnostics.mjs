@@ -32,7 +32,6 @@ export const CREDENTIAL_ENV_NAMES = [
   "OMB_TREG_KEY",
   "OMB_POSTIZ_API_KEY",
   "COMPOSIO_API_KEY",
-  "OMB_COMPOSIO_BROKER_TOKEN",
   // Private even though they are not traditional API credentials.
   "OMB_BROWSER_CONNECTION",
   "OMB_USER_DATA",

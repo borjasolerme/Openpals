@@ -2689,7 +2689,6 @@ describe("ACP turns (fake CLI)", () => {
     };
 
     it("names a Grok account out of credits, with Grok's own reason, as the account failure it is", async () => {
-      // what Cloud routine runs recorded, as far as the aggregate kept it
       refuse("API error (status 402 Payment Required): Grok Build us…");
       await create(GrokAgentDriver);
       const { completed, errors } = await failed("t-grok-402");

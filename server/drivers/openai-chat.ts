@@ -561,7 +561,7 @@ export function createOpenAIChatRuntime<Config>(options: RuntimeOptions<Config>)
     if (sessionGrants.size > MAX_DELIVERED_THREADS) sessionGrants.delete(sessionGrants.keys().next().value!);
     const approval = createChatToolApproval({
       signal: abort.signal,
-      granted: turn.guestConfined ? undefined : granted,
+      granted,
       open: (ask) => emit({
         ...base(turn.threadId, turnId), type: "request.opened", requestType: "permission",
         requestId: ask.id, tool: ask.tool, summary: ask.summary, allowSession: ask.grant !== undefined,
@@ -947,8 +947,7 @@ export function createOpenAIChatRuntime<Config>(options: RuntimeOptions<Config>)
         highlevelMcp: options.tools !== false,
         deviceMcp: options.tools !== false,
         queueing: true,
-        ...(options.tools !== false ? { askTool: { kind: "native" as const, name: ASK_USER_TOOL } } : {}),
-        guestTurns: "confined" },
+        ...(options.tools !== false ? { askTool: { kind: "native" as const, name: ASK_USER_TOOL } } : {}) },
       sendTurn,
       interruptTurn: async (threadId, turnId) => {
         const turn = active.get(threadId);

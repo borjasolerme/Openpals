@@ -10,7 +10,6 @@ export const JEV_MODEL = "jev-latest";
 export const JEV_MAX_OPTIONS = 255;
 export const JEV_MIN_LEVELS = 2;
 export const JEV_MAX_LEVELS = 10;
-/** Sent only with Cloud's included token, to the Admin's relay. */
 
 /** Null when the key must not be sent there: https anywhere, plain http only to this machine. */
 export function jevEndpoint(baseUrl?: string | null): URL | null {

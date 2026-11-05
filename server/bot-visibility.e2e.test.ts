@@ -280,7 +280,7 @@ posixOnly("per-bot visibility on a shared workspace", () => {
     expect(await status("POST", `/api/groups/${ids.roomPub}/read`, BOB)).toBe(200);
   });
 
-  it("narrows search, routines, webhooks and the team map", async () => {
+  it("narrows search, routines and webhooks", async () => {
     const hits = async (as: string) => (await api("GET", "/api/search?q=Zebra", undefined, as)).body.hits as Array<{ threadId: string }>;
     expect((await hits(ADA)).some((hit) => hit.threadId === ids.hrThread)).toBe(true);
     expect(await hits(BOB)).toEqual([]);
@@ -292,9 +292,6 @@ posixOnly("per-bot visibility on a shared workspace", () => {
     const hooks = async (as: string) => (await api("GET", "/api/webhooks", undefined, as)).body.webhooks.map((w: any) => w.id);
     expect(await hooks(ADA)).toContain(ids.hrHook);
     expect(await hooks(BOB)).not.toContain(ids.hrHook);
-
-    const map = (await api("GET", "/api/team-map", undefined, BOB)).body;
-    expect(JSON.stringify(map)).not.toContain(ids.hr);
   });
 
   it("marks as seen only the failed routine runs a member may see", async () => {

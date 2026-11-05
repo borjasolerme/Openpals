@@ -2,7 +2,7 @@ import { EyeOff } from "lucide-react";
 
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { DEFAULT_BOT_NAME, myDefaultBot, useViewerEmail } from "@/lib/default-bot";
+import { DEFAULT_BOT_NAME, defaultBotIn } from "@/lib/default-bot";
 import { useStore, type Action, type Bot } from "@/state/store";
 import { Card, NavRow } from "./bot-panel/rows";
 import { SettingRow, Switch } from "./SettingsPrimitives";
@@ -30,10 +30,10 @@ export function HideDefaultBotItem({ bot, onDone, className = "flex w-full items
   );
 }
 
-/** Settings → General: whether the viewer's own MausBot has a row in the sidebar. */
+/** Settings → General: whether MausBot has a row in the sidebar. */
 export function DefaultBotSidebarRow({ simple = false }: { simple?: boolean }) {
   const { state, dispatch } = useStore();
-  const bot = myDefaultBot(state.bots, useViewerEmail());
+  const bot = defaultBotIn(state.bots);
   if (!bot) return null;
   const shown = !bot.sidebarHidden;
   return (

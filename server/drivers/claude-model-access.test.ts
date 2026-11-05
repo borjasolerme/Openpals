@@ -99,7 +99,7 @@ describe("reading the account config", () => {
     writeFileSync(file, access({ apiName: "claude-fable-5-1", entitled: false }));
     const seen: string[][] = [];
     const reads = [() => Promise.resolve(access({ apiName: "claude-fable-5-1", entitled: false })), () => Promise.reject(new Error("EPERM")), () => Promise.resolve(access())];
-    const blocks = createOrgModelBlocks(() => [{ HOME: home, USERPROFILE: home }], (blocked) => seen.push([...blocked]), () => reads.shift()!());
+    const blocks = createOrgModelBlocks({ HOME: home, USERPROFILE: home }, (blocked) => seen.push([...blocked]), () => reads.shift()!());
     await blocks.refresh();
     utimesSync(file, new Date(), new Date(Date.now() + 5_000));
     await blocks.refresh();
@@ -108,16 +108,16 @@ describe("reading the account config", () => {
     expect(seen).toEqual([["claude-fable-5-1"], []]);
   });
 
-  const watch = (env: Record<string, string | undefined>[]) => {
+  const watch = (env: Record<string, string | undefined>) => {
     const seen: string[][] = [];
-    return { seen, blocks: createOrgModelBlocks(() => env, (blocked) => seen.push([...blocked])) };
+    return { seen, blocks: createOrgModelBlocks(env, (blocked) => seen.push([...blocked])) };
   };
 
   it("reads again only when the file changed", async () => {
     const home = tempDir();
     const file = join(home, ".claude.json");
     writeFileSync(file, access({ apiName: "claude-fable-5-1", entitled: false }));
-    const { seen, blocks } = watch([{ HOME: home, USERPROFILE: home }]);
+    const { seen, blocks } = watch({ HOME: home, USERPROFILE: home });
     await blocks.refresh();
     await blocks.refresh();
     expect(seen).toEqual([["claude-fable-5-1"]]);
@@ -130,19 +130,9 @@ describe("reading the account config", () => {
   it("on a cloud provider's backend ignores a list an earlier sign-in left", async () => {
     const home = tempDir();
     writeFileSync(join(home, ".claude.json"), access({ apiName: "claude-fable-5-1", entitled: false }));
-    const { seen, blocks } = watch([{ HOME: home, USERPROFILE: home, CLAUDE_CODE_USE_BEDROCK: "1" }]);
+    const { seen, blocks } = watch({ HOME: home, USERPROFILE: home, CLAUDE_CODE_USE_BEDROCK: "1" });
     await blocks.refresh();
     expect(seen).toEqual([[]]);
-  });
-
-  it("takes the newest answer among a Team Cloud's engine homes", async () => {
-    const [older, newer] = [tempDir(), tempDir()];
-    writeFileSync(join(older, ".claude.json"), access({ apiName: "claude-opus-5", entitled: false }));
-    utimesSync(join(older, ".claude.json"), new Date(1_000), new Date(1_000));
-    writeFileSync(join(newer, ".claude.json"), access({ apiName: "claude-fable-5", entitled: false }));
-    const { seen, blocks } = watch([{ HOME: older, USERPROFILE: older }, { HOME: newer, USERPROFILE: newer }]);
-    await blocks.refresh();
-    expect(seen).toEqual([["claude-fable-5"]]);
   });
 });
 

@@ -70,16 +70,6 @@ export function takePairingCodeFromLocation(): string | null {
   return decodeURIComponent(m[1]);
 }
 
-/** A single-use sign-in credential: taken off the address bar and out of history before anything renders, never shown. */
-export function takeBrowserSignInFromLocation(): string | null {
-  if (!/[#&]signin=/.test(location.hash)) return null;
-  const m = /[#&]signin=(omb_pair_[A-Za-z0-9_-]{43})(?:&|$)/.exec(location.hash);
-  history.replaceState(null, "", location.pathname + location.search);
-  return m ? m[1] : null;
-}
-
-export const BROWSER_SIGN_IN_FAILED = "This sign-in link has expired or was already used. Get a new one with openmausbot pair on the server.";
-
 export function defaultDeviceLabel(userAgent: string = navigator.userAgent): string {
   const browser = /Edg\//.test(userAgent) ? "Edge" : /OPR\//.test(userAgent) ? "Opera" : /Chrome\//.test(userAgent) ? "Chrome" : /Firefox\//.test(userAgent) ? "Firefox" : /Safari\//.test(userAgent) ? "Safari" : "Browser";
   const os = /iPhone/.test(userAgent) ? "iPhone" : /iPad/.test(userAgent) ? "iPad" : /Android/.test(userAgent) ? "Android" : /Mac OS X/.test(userAgent) ? "Mac" : /Windows/.test(userAgent) ? "Windows" : /Linux/.test(userAgent) ? "Linux" : "";
@@ -92,7 +82,7 @@ export function newAttemptId(): string {
 }
 
 export async function pairWithCode(
-  input: { code: string; label: string; attemptId?: string; browser?: boolean },
+  input: { code: string; label: string; attemptId?: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   let res: Response;
@@ -101,7 +91,7 @@ export async function pairWithCode(
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ code: input.code, label: input.label, cookie: true, attemptId: input.attemptId ?? newAttemptId(), ...(input.browser ? { browser: true } : {}) }),
+      body: JSON.stringify({ code: input.code, label: input.label, cookie: true, attemptId: input.attemptId ?? newAttemptId() }),
     });
   } catch (error) {
     return { ok: false, error: `could not reach the server (${error instanceof Error ? error.message : String(error)})` };
@@ -110,25 +100,6 @@ export async function pairWithCode(
   if (res.ok) return { ok: true };
   const error = Reflect.get(Object(body), "error");
   return { ok: false, error: typeof error === "string" ? error : `${res.status} ${res.statusText}` };
-}
-
-export async function previewBrowserSignIn(credential: string, fetchImpl: typeof fetch = fetch): Promise<{ owner: string } | null> {
-  try {
-    const res = await fetchImpl("/api/auth/pair", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ code: credential, browser: true, preview: true }),
-    });
-    const owner: unknown = Reflect.get(Object(await res.json().catch(() => ({}))), "owner");
-    return res.ok && typeof owner === "string" && owner ? { owner } : null;
-  } catch {
-    return null;
-  }
-}
-
-export function signInWithBrowserGrant(credential: string, attemptId: string, fetchImpl: typeof fetch = fetch): Promise<{ ok: true } | { ok: false; error: string }> {
-  return pairWithCode({ code: credential, label: defaultDeviceLabel(), attemptId, browser: true }, fetchImpl);
 }
 
 export function reasonWorthShowing(reason: string | undefined): string | null {

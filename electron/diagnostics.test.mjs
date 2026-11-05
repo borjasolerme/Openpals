@@ -74,7 +74,7 @@ describe("buildDiagnosticsReport", () => {
 
   it("masks JSON credential fields and cookies in HTTP dumps", () => {
     const redacted = redactSecretsInLine([
-      '{"OMB_COMPOSIO_BROKER_TOKEN":"opaque-broker-value","password":"opaque-password-value"}',
+      '{"COMPOSIO_API_KEY":"opaque-broker-value","password":"opaque-password-value"}',
       '{"Cookie":"session=private-cookie; tracking=private-tracker"}',
       "Cookie: session=private-session; tracking=private-tracking",
     ].join("\n"));

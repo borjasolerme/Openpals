@@ -19,7 +19,7 @@ export function attachCustomMcp(
   integrations: Pick<NonNullable<SendTurnInput["integrations"]>, "custom" | "customResultBudgets">,
   custom: Record<string, McpServerSpec>,
   cfg: AppConfig,
-  /** The turn, so a URL server's secret headers stay with the credential broker on a boxed Cloud home (server/bot-box). */
+  /** The turn, so a URL server's secret headers stay with the credential broker when its bot runs in a box. */
   turn?: BrokerTurn,
 ): void {
   if (!Object.keys(custom).length) return;

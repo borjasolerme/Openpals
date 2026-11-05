@@ -392,7 +392,7 @@ describe("placeUnavailable", () => {
 
 describe("a connected app before any screen", () => {
   const RULE = "When a connected app can do the task, use it before any browser or screen. If that app is refused or fails, say so in one plain line with what fixes it (connecting it, or who can), and ask before doing the task on a screen instead.";
-  it("is said wherever a browser or a screen is mounted, a Cloud home's too", () => {
+  it("is said wherever a browser or a screen is mounted", () => {
     for (const mounted of [{ computer: "local" as const, browser: true }, { computer: "local" as const, browser: false }, { computer: "cloud" as const, browser: true }, { computer: null, browser: true }]) {
       expect(surfacePrompt(mounted), JSON.stringify(mounted)).toContain(RULE);
       expect(surfacePrompt(mounted, { }), JSON.stringify(mounted)).toContain(RULE);

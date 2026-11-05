@@ -36,7 +36,7 @@ import { t } from "@/lib/i18n";
 import { shouldOpenKeyboardShortcuts } from "@/lib/keyboard-shortcuts";
 import { effectiveLanguage, useLanguageChoice, usePageLanguage } from "@/lib/language-preference";
 import { botShowsUnread, showBrowserUnread } from "@/lib/bot-unread";
-import { phonePairingSettingsAction, takePhonePairingRequest } from "@/lib/phone-pairing"; import { takeConnectRequest } from "@/lib/connect-link";
+import { phonePairingSettingsAction, takePhonePairingRequest } from "@/lib/phone-pairing";
 import { useExternalChatLinks } from "@/hooks/use-external-chat-links";
 import { useReadShownChatOnFocus } from "@/hooks/use-read-shown-chat";
 import { usePresence } from "@/hooks/use-presence";
@@ -84,12 +84,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
     if (rest === null) return;
     window.history.replaceState(null, "", rest);
     dispatch(phonePairingSettingsAction());
-  }, [dispatch]);
-  useEffect(() => { // A bot's link to a connection that needs the person on My Cloud opens the page that connects it.
-    const request = takeConnectRequest(window.location.href);
-    if (!request) return;
-    window.history.replaceState(null, "", request.rest);
-    dispatch("section" in request ? { type: "toggleAppSettings", open: true, section: request.section } : { type: "togglePlugins", open: true, surface: request.surface });
   }, [dispatch]);
   useExternalChatLinks(state, dispatch);
   usePresence(state, dispatch);

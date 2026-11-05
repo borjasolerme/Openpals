@@ -11,7 +11,7 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 
-import { AUTH_CONFIG_ID } from "../shared/connector-availability.ts";
+import { AUTH_CONFIG_ID } from "../shared/auth-config-id.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import { DATA_DIR } from "./config.ts";
 

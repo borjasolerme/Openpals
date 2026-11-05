@@ -20,7 +20,6 @@ vi.mock("@/components/EngineSetup", async (original) => {
   return { ...(await original<typeof import("@/components/EngineSetup")>()),
     EngineSetup: ({ instance }: { instance: InstanceInfo }) => h("div", { "data-engine-setup": instance.instanceId }) };
 });
-vi.mock("@/lib/default-bot", async (original) => ({ ...(await original<typeof import("@/lib/default-bot")>()), useViewerEmail: () => null }));
 vi.mock("@/lib/mausbot-landing", () => ({ FLIGHT_MS: 700, landInSidebar: (input: { botId: string; commit: () => void }) => { f.landed(input.botId); input.commit(); } }));
 const { WelcomeFlow } = await import("./WelcomeFlow");
 const { CHIEF_FADE_MS, CHIEF_GUARD_MS } = await import("./ChiefIntro");
@@ -82,7 +81,7 @@ beforeEach(() => {
     if (path.endsWith("/check")) { f.checks.push(path); return { ok: true }; }
     return path === "/api/instances" ? { instances: f.state.instances } : JSON.parse(init?.body ?? "{}");
   });
-  f.state = { instances: [claude(true)], config: { onboarding: EMPTY_ONBOARDING, profile: { name: "" } }, bots: [maus], cloudAdd: null };
+  f.state = { instances: [claude(true)], config: { onboarding: EMPTY_ONBOARDING, profile: { name: "" } }, bots: [maus] };
   stageIntro(null);
   host = document.createElement("div");
   document.body.append(host);

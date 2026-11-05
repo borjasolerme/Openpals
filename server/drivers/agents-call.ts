@@ -17,7 +17,6 @@ import { callHelperTool, HELPER_TOOL_NAMES } from "./agents-helper-tools.ts";
 import { callUsageLimitsTool, USAGE_LIMITS_TOOL } from "./agents-usage-tool.ts";
 import { callWaitTool, WAIT_TOOL_NAMES } from "./agents-wait-tools.ts";
 import { callMausBotTool, MAUSBOT_TOOL_NAMES } from "./agents-mausbot-tools.ts";
-import { callPageTool, PAGE_TOOL_NAMES } from "./agents-pages-tools.ts";
 
 export interface ToolCallContext {
   botId: string;
@@ -103,10 +102,9 @@ const FORGOTTEN_SHOWN = 8;
 
 /** A preference saved once in the person's About me, which every bot reads in their work. */
 function preferText(r: Json): string {
-  const whose = typeof r.person === "string" && r.person ? `${r.person}'s` : "the person's";
   return r.preference === "saved"
-    ? `Saved in ${whose} About me, which every bot reads in their work. Don't pass it on to other bots or save it in your own notes too.`
-    : `Already in ${whose} About me, or they removed it before: nothing to save or pass on.`;
+    ? "Saved in the person's About me, which every bot reads in their work. Don't pass it on to other bots or save it in your own notes too."
+    : "Already in the person's About me, or they removed it before: nothing to save or pass on.";
 }
 
 function forgetText(passage: string, r: Json): string {
@@ -213,7 +211,6 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
   if (RESEARCH_TOOL_NAMES.has(name)) return callResearchTool(name, args, context);
   if (HELPER_TOOL_NAMES.has(name)) return callHelperTool(name, args, context);
   if (MAUSBOT_TOOL_NAMES.has(name)) return callMausBotTool(name, args, context);
-  if (PAGE_TOOL_NAMES.has(name)) return callPageTool(name, args, context);
   if (TRIGGER_TOOL_NAMES.has(name)) return callTriggerTool(name, args, context);
   if (WAIT_TOOL_NAMES.has(name)) return callWaitTool(name, args, context);
   if (name === USAGE_LIMITS_TOOL) return callUsageLimitsTool(context);
@@ -314,11 +311,10 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
       const state = typeof b.statusText === "string"
         ? (b.status === "available" ? "" : b.statusText)
         : (b.busy ? "busy" : "");
-      const team = typeof b.section === "string" ? `, department: ${peerName(b.section) || "General"}` : "";
-      return `- ${b.name}${role}${about} [id: ${b.id}, model: ${b.model}${team}${state ? `, ${state}` : ""}]`;
+      return `- ${b.name}${role}${about} [id: ${b.id}, model: ${b.model}${state ? `, ${state}` : ""}]`;
     });
     return {
-      text: `Bots you can reach (every department; you can contact any of them):\n${lines.join("\n")}\n\nUse coordinate_bots for concrete work or, with consult: true, for advice, then end your turn. Busy teammates queue and results resume you automatically.`,
+      text: `Bots you can reach (you can contact any of them):\n${lines.join("\n")}\n\nUse coordinate_bots for concrete work or, with consult: true, for advice, then end your turn. Busy teammates queue and results resume you automatically.`,
     };
   }
   if (name === "list_rooms") {
@@ -476,11 +472,11 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
     }
     if (!r.id) return completedProposalResult(r, `creating @${botName}`) ?? { text: `@${botName} was not created.`, isError: true };
     return {
-      text: `Created @${r.name ?? botName} in ${r.section ?? "General"} [id: ${r.id}].${r.modelSelection ? ` Model: ${JSON.stringify(r.modelSelection)}.` : ""} Assign work with coordinate_bots.`,
+      text: `Created @${r.name ?? botName} [id: ${r.id}].${r.modelSelection ? ` Model: ${JSON.stringify(r.modelSelection)}.` : ""} Assign work with coordinate_bots.`,
     };
   }
   if (member === "create_room") {
-    if (args.section !== undefined) return { text: "A room you create stays in your own department; ask the user to move it.", isError: true };
+    if (args.section !== undefined) return { text: "manage_room takes no section: leave it out and try again.", isError: true };
     const roomName = String(args.name ?? "").trim();
     const memberIds = Array.isArray(args.member_bot_ids)
       ? args.member_bot_ids.map((id) => String(id).trim()).filter(Boolean)
@@ -504,11 +500,11 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
     });
     if (r.error) return { text: `Couldn't create room: ${r.error}`, isError: true };
     return {
-      text: `Created room “${r.name ?? roomName}” in section “${r.section ?? "General"}” [id: ${r.id}] with ${r.memberCount ?? memberIds.length} members.`,
+      text: `Created room “${r.name ?? roomName}” [id: ${r.id}] with ${r.memberCount ?? memberIds.length} members.`,
     };
   }
   if (member === "manage_room") {
-    if (args.section !== undefined || args.action === "set_section") return { text: "Moving rooms between sections is user-only.", isError: true };
+    if (args.section !== undefined || args.action === "set_section") return { text: "manage_room takes no section and has no set_section action: leave them out and try again.", isError: true };
     const roomId = String(args.room_id ?? "").trim();
     const action = String(args.action ?? "").trim();
     if (!roomId || !action) {
@@ -555,7 +551,7 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
       return { text: `${r.label ?? CREDENTIAL_TARGETS[credentialId].label} is already configured. Continue the task.` };
     }
     if (credentialId === "onePasswordToken") {
-      return { text: `A secure ${r.label ?? CREDENTIAL_TARGETS[credentialId].label} request is ready: the person pastes it into its card in Openpals, on their computer or in My Cloud, and Openpals checks it with 1Password before keeping it. End this turn; Openpals will resume the task after they save or decline. Never ask them to paste the token into chat, and never pass it to a command line.` };
+      return { text: `A secure ${r.label ?? CREDENTIAL_TARGETS[credentialId].label} request is ready: the person pastes it into its card in Openpals, and Openpals checks it with 1Password before keeping it. End this turn; Openpals will resume the task after they save or decline. Never ask them to paste the token into chat, and never pass it to a command line.` };
     }
     return {
       text: `A secure ${r.label ?? CREDENTIAL_TARGETS[credentialId].label} request is ready. The desktop app and a freshly QR-paired mobile app show its secure entry card; older mobile pairings explain how to pair again or finish on the computer. End this turn; Openpals will resume the task after the user saves or declines. Never ask them to paste the key into chat.`,

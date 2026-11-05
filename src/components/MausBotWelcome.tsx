@@ -5,7 +5,7 @@ import { BookOpen, Crown, Pencil, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { DEFAULT_BOT_NAME, myDefaultBot, setWelcomingBot, useViewerEmail } from "@/lib/default-bot";
+import { DEFAULT_BOT_NAME, defaultBotIn, setWelcomingBot } from "@/lib/default-bot";
 import { landInSidebar } from "@/lib/mausbot-landing";
 import { firstReplyPending } from "@/lib/corner-popup";
 import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
@@ -48,7 +48,7 @@ export function mausBotWelcomeDue(input: { bot: Pick<Bot, "welcomed" | "hidden">
  * has not already used. The notices queue asks this too, so the card goes first. */
 export function useMausBotWelcomeDue(viewer: WelcomeViewer | null): { bot: Bot | undefined; due: boolean } {
   const { state } = useStore();
-  const bot = myDefaultBot(state.bots, useViewerEmail());
+  const bot = defaultBotIn(state.bots);
   // The app tour runs only when Settings starts it; one never taken does not hold this back.
   const touring = state.tourOpen;
   const onboardingDue = !viewer || welcomeDue(state.config, {

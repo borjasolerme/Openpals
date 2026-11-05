@@ -500,7 +500,7 @@ describe("agents-proxy MCP surface", () => {
       } else {
         expect(description).toContain("it applies immediately at every access level, and the person sees it with an Undo where possible");
         expect(description).toContain("If applied, continue the work without another confirmation");
-        expect(description).toContain("Only a pending result (a Cloud conversation its owner did not drive)");
+        expect(description).toContain("Only a pending result (a conversation its owner did not drive)");
       }
       expect(description).toContain("Never claim success without an applied result");
       expect(description).toContain("does not elevate another bot's execution permissions");
@@ -638,8 +638,6 @@ describe("agents-proxy MCP surface", () => {
       "attach_file",
       "show_widget",
       "show_html",
-      "publish_page",
-      "unpublish_page",
       "post_to_room",
       "create_bot",
       "list_team_setup",
@@ -774,7 +772,7 @@ describe("agents-proxy MCP surface", () => {
     expect(create.inputSchema.required).toEqual(["action"]);
     expect(create.inputSchema.properties.action.enum).toEqual(["create", "update", "pause", "resume", "run_now"]);
     expect(Object.keys(create.inputSchema.properties)).not.toContain("changes");
-    expect(create.inputSchema.properties.when.enum).toEqual(["schedule", "app_event", "webhook", "limit_reset"]);
+    expect(create.inputSchema.properties.when.enum).toEqual(["schedule", "webhook", "limit_reset"]);
     expect(create.inputSchema.properties.repeat.enum).toEqual(["once", "every_reset"]);
     const schedule = create.inputSchema.properties.schedule;
     expect(JSON.stringify(create.inputSchema)).not.toMatch(/"oneOf"|"anyOf"|"allOf"|"const"/);
@@ -824,7 +822,7 @@ describe("agents-proxy MCP surface", () => {
     agentsResponse = {
       bots: [
         { id: "bot-helper", name: "Helper", model: "fake-model", busy: true, status: "waiting-on-user", statusText: "waiting on the user" },
-        { id: "bot-quill", name: "Quill", model: "fake-model", busy: false, status: "available", statusText: "available" },
+        { id: "bot-quill", name: "Quill", model: "fake-model", busy: false, status: "available", statusText: "available", section: "Sales" },
         { id: "bot-old", name: "Old", model: "fake-model", busy: true },
       ],
     };
@@ -833,6 +831,7 @@ describe("agents-proxy MCP surface", () => {
       expect(text).toContain("[id: bot-helper, model: fake-model, waiting on the user]");
       expect(text).toContain("[id: bot-quill, model: fake-model]");
       expect(text).toContain("[id: bot-old, model: fake-model, busy]");
+      expect(text).not.toMatch(/department|Sales/);
     } finally {
       agentsResponse = DEFAULT_AGENTS;
     }
@@ -1041,7 +1040,7 @@ describe("agents-proxy MCP surface", () => {
       role: "Product designer",
       instructions: "Design and review the user experience.",
     });
-    expect(res.result.content[0].text).toContain("Created @Pixel in Work");
+    expect(res.result.content[0].text).toBe("Created @Pixel [id: bot-designer]. Assign work with coordinate_bots.");
     expect(lastCreateBody).toEqual({
       fromBotId: "bot-asker",
       fromThreadId: "thread-asker-routine",
@@ -1066,7 +1065,7 @@ describe("agents-proxy MCP surface", () => {
       member_bot_ids: ["bot-1", "bot-2"],
       bulletin: "Ship fast.",
     });
-    expect(resCreate.result.content[0].text).toContain("Created room “Dev Team” in section “Work”");
+    expect(resCreate.result.content[0].text).toBe("Created room “Dev Team” [id: room-dev] with 2 members.");
     expect(lastCreateRoomBody).toEqual({
       fromBotId: "bot-asker",
       fromThreadId: "thread-asker-routine",
@@ -2354,7 +2353,7 @@ describe("tool bridge", () => {
   /** The main child's switches: a Chief with skills and shared computers. */
   const CHIEF = { OMB_SKILL_AUTHORING_ENABLED: "1", OMB_SHARED_COMPUTERS_ENABLED: "1", OMB_CHIEF_OF_STAFF: "1", OMB_COMPUTER_SELECTION: "1" };
   const CHIEF_ONLY = ["create_bot", "list_team_setup", "propose_team_setup", "propose_bot_deletion", "manage_room", "retry_thread"];
-  const HOT = ["tool_result_read", "list_room_targets", "coordinate_bots", "list_bots", "list_rooms", "select_computer", "attach_file", "publish_page", "post_to_room", "request_credential", "request_sign_in", "fill_login", "memory_update"];
+  const HOT = ["tool_result_read", "list_room_targets", "coordinate_bots", "list_bots", "list_rooms", "select_computer", "attach_file", "post_to_room", "request_credential", "request_sign_in", "fill_login", "memory_update"];
   let chief: Rpc;
   let plain: Rpc;
   let off: Rpc;

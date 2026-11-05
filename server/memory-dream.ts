@@ -55,11 +55,10 @@ const bytes = (text: string) => UTF8.encode(text).length;
 const clean = (text: string, max: number) => text.replace(/<attached-image\b[^>]*>(?:<\/attached-image>)?/g, "[image]").replace(/\s+/g, " ").trim().slice(0, max);
 
 /**
- * The chats the person wrote in since `since`, newest first, each cut to its latest lines that fit. Only the owner's
- * own lines count as the person's; a teammate's ask, an aside, a webhook post or another sender is left out.
+ * The chats the person wrote in since `since`, newest first, each cut to its latest lines that fit. Only the person's
+ * own lines count; a teammate's ask, an aside, a webhook post or another sender is left out.
  */
-export function dreamConversations(source: DreamSource, botId: string, since: number, allow: (threadId: string) => boolean = () => true,
-  isOwner: (sender: ResolvedSender | undefined) => boolean = (sender) => !sender): DreamConversation[] {
+export function dreamConversations(source: DreamSource, botId: string, since: number, allow: (threadId: string) => boolean = () => true): DreamConversation[] {
   const threads = source.tasks(botId)
     .filter((task) => !task.routineRunId && (task.askedAt ?? 0) > since && allow(task.threadId))
     .sort((a, b) => (b.askedAt ?? 0) - (a.askedAt ?? 0))
@@ -71,7 +70,7 @@ export function dreamConversations(source: DreamSource, botId: string, since: nu
     let size = 0;
     const excludedRequests = new Set<string>();
     const path = source.activePath(task.threadId).filter((message) => {
-      if (message.automation || (message.role === "user" && (!isOwner(message.sender) || message.peerAsk || message.aside || message.webhookPost || message.relayed || message.via === "api"))) {
+      if (message.automation || (message.role === "user" && (message.sender || message.peerAsk || message.aside || message.webhookPost || message.relayed || message.via === "api"))) {
         if (message.id) excludedRequests.add(message.id);
         return false;
       }

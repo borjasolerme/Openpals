@@ -46,7 +46,7 @@ function messageText(message: Message): string {
   return parts.filter(Boolean).join("\n");
 }
 
-/** `shown`: on a Team Cloud someone else's private chat is never in the exporting person's backup. */
+/** `shown`: a conversation the exporting person may not see is never in their backup. */
 export function createTeamBackup(store: Store, routines: Routine[], name: string, shown: (threadId: string) => boolean = () => true): TeamBackup {
   const botIds = new Set(store.bots.map((bot) => bot.id));
   const warnings: string[] = [];

@@ -102,7 +102,7 @@ export interface AutomationsOffDeps {
   owner(auth: RequestAuth): CloudOwner | null;
 }
 
-const KEY = /^(?:routine|call|webhook|app-event):[\w-]{1,128}$/u;
+const KEY = /^(?:routine|call|webhook):[\w-]{1,128}$/u;
 const offBody = z.object({ v: z.literal(1), keys: z.array(z.string().regex(KEY)).max(2_000) });
 
 /** POST /api/cloud-send/automations-off on My Cloud, over its owner's own session, as a computer's bots go home to it while

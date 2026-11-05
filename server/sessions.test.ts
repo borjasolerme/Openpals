@@ -89,61 +89,6 @@ describe("the native-app encoding of a pairing window", () => {
   });
 });
 
-describe("a browser sign-in window (an OMB Cloud page's \"Use in your browser\")", () => {
-  it("is redeemed only by a browser sign-in, only by its credential, and only once", () => {
-    const { code, credential } = registry.openPairing({ scopes: ["admin", "client"], label: "Web browser", browser: true });
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.5" }).ok).toBe(false);
-    expect(registry.exchange({ code, label: "", source: "10.0.0.5", browser: true }).ok).toBe(false);
-    expect(registry.openPairings()).toHaveLength(1);
-    const signedIn = registry.exchange({ code: credential, label: "Safari on iPad", source: "10.0.0.5", browser: true });
-    expect(signedIn).toMatchObject({ ok: true, session: { label: "Safari on iPad", scopes: ["admin", "client"] } });
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.6", browser: true }).ok).toBe(false);
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.6" }).ok).toBe(false);
-  });
-
-  it("never redeems an ordinary window, and expires with its own term", () => {
-    const ordinary = registry.openPairing({ label: "Pixel" });
-    expect(registry.exchange({ code: ordinary.credential, label: "", source: "10.0.0.7", browser: true }).ok).toBe(false);
-    expect(registry.exchange({ code: ordinary.code, label: "", source: "10.0.0.7", browser: true }).ok).toBe(false);
-    expect(registry.exchange({ code: ordinary.credential, label: "", source: "10.0.0.7" }).ok).toBe(true);
-    const { credential } = registry.openPairing({ ttlMs: 120_000, browser: true });
-    clock += 120_000;
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.7", browser: true }).ok).toBe(false);
-  });
-
-  it("answers a lost-response retry only as the same kind of sign-in", () => {
-    const { credential } = registry.openPairing({ browser: true });
-    const first = registry.exchange({ code: credential, label: "", source: "10.0.0.8", attemptId: "attempt-browser-1", browser: true });
-    expect(first.ok).toBe(true);
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.8", attemptId: "attempt-browser-1", browser: true })).toEqual(first);
-    expect(registry.exchange({ code: credential, label: "", source: "10.0.0.8", attemptId: "attempt-browser-1" }).ok).toBe(false);
-  });
-
-  it("names its owner before anything is redeemed, and gives its session that owner and the cookie alone", () => {
-    const { credential } = registry.openPairing({ browser: true, owner: "ada@example.test", ttlMs: 120_000 });
-    expect(registry.previewBrowserSignIn(credential)).toEqual({ owner: "ada@example.test", expiresAt: clock + 120_000 });
-    expect(registry.previewBrowserSignIn(credential)).toEqual({ owner: "ada@example.test", expiresAt: clock + 120_000 });
-    const ordinary = registry.openPairing({ owner: "ignored@example.test" });
-    expect(registry.previewBrowserSignIn(ordinary.credential)).toBeNull();
-    expect(registry.previewBrowserSignIn(ordinary.code)).toBeNull();
-    const signedIn = registry.exchange({ code: credential, label: "", source: "10.0.0.9", browser: true });
-    if (!signedIn.ok) throw new Error(signedIn.error);
-    expect(signedIn.session.owner).toBe("ada@example.test");
-    expect(registry.authenticate(signedIn.token)).toMatchObject({ cookieOnly: true, owner: "ada@example.test" });
-    expect(registry.previewBrowserSignIn(credential)).toBeNull();
-    const app = registry.exchange({ code: ordinary.code, label: "", source: "10.0.0.9" });
-    if (!app.ok) throw new Error(app.error);
-    expect(registry.authenticate(app.token)).not.toHaveProperty("cookieOnly");
-    expect(app.session).not.toHaveProperty("owner");
-    const reloaded = new SessionRegistry({ file: file(), now: () => clock });
-    expect(reloaded.authenticate(signedIn.token)).toMatchObject({ cookieOnly: true, owner: "ada@example.test" });
-  });
-
-  it("is looked at without counting toward the lockout", () => {
-    for (let attempt = 0; attempt < LOCKOUT.failures * 2; attempt += 1) registry.previewBrowserSignIn(generatePairingCredential());
-    expect(registry.failureSources()).toEqual([]);
-  });
-});
 
 function pair(label = "MacBook", source = "10.0.0.2") {
   const { code } = registry.openPairing();

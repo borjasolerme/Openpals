@@ -212,7 +212,7 @@ describe("a new conversation once an AI is known to be at its limit", () => {
 
     at.now = NOW + 20 * 60_000;
     const restarted = boot();
-    expect(restarted.clock.blockedUntil("claude"), "a restart, or a sleep the Cloud was stopped for, still knows the limit").toBe(NOW + 5 * HOUR);
+    expect(restarted.clock.blockedUntil("claude"), "a restart still knows the limit").toBe(NOW + 5 * HOUR);
     expect(restarted.instance.heldAtStart(KAI, on("claude", "claude-opus-5-5"))).toEqual({ scope: "engine", resetsAt: NOW + 5 * HOUR });
     expect(restarted.instance.backups("kai", on("claude", "claude-opus-5-5"))).toEqual([on("codex", "gpt-6")]);
 
@@ -280,16 +280,16 @@ describe("an AI that is signed out", () => {
   };
 
   it("sends new turns to a backup the person chose, says it once with the way to sign in, and goes back once signed in", () => {
-    const { instance, told, record } = takeover({ chosen: () => [on("codex", "gpt-6")], where: "on the Cloud" });
+    const { instance, told, record } = takeover({ chosen: () => [on("codex", "gpt-6")] });
     signedOut(instance);
     expect(instance.heldAtStart(KAI, CLAUDE_ON)).toEqual({ scope: "signed-out" });
     expect(instance.backups("kai", CLAUDE_ON, "signed-out")).toEqual([on("codex", "gpt-6")]);
-    expect(instance.tell(KAI, CLAUDE_ON, { scope: "signed-out" })).toBe("Claude is signed out on the Cloud. Sign in again in Settings → AI to keep using it.");
+    expect(instance.tell(KAI, CLAUDE_ON, { scope: "signed-out" })).toBe("Claude is signed out on this computer. Sign in again in Settings → AI to keep using it.");
     expect(instance.tell(KAI, CLAUDE_ON, { scope: "signed-out", backup: on("codex", "gpt-6") }), "once, not once a turn").toBeNull();
     signedOut(instance);
     expect(instance.carriedOn(KAI, "t2", CLAUDE_ON, on("codex", "gpt-6"), { scope: "signed-out" }))
       .toEqual([{ name: "recovery: Claude is signed out, so Codex took over.", ok: true }]);
-    expect(told.map((entry) => entry.text)).toEqual(["Claude is signed out on the Cloud. Sign in again in Settings → AI to keep using it."]);
+    expect(told.map((entry) => entry.text)).toEqual(["Claude is signed out on this computer. Sign in again in Settings → AI to keep using it."]);
     expect(record.mock.calls.at(-1)![0]).toMatchObject({ threadId: "t2", why: "signed-out", resetsAt: null });
 
     instance.signedIn("claude");
@@ -298,7 +298,7 @@ describe("an AI that is signed out", () => {
     signedOut(instance);
     expect(instance.carriedOn(KAI, "t3", CLAUDE_ON, on("codex", "gpt-6"), { scope: "signed-out" }), "a new sign-out is told again").toEqual([
       { name: "recovery: Claude is signed out, so Codex took over.", ok: true },
-      { name: "notice: Claude is signed out on the Cloud, so Kai is using Codex meanwhile. Sign in again in Settings → AI to keep using Claude.", ok: true, setup: true },
+      { name: "notice: Claude is signed out on this computer, so Kai is using Codex meanwhile. Sign in again in Settings → AI to keep using Claude.", ok: true, setup: true },
     ]);
   });
 

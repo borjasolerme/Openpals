@@ -1,4 +1,5 @@
-// The one suggestion to add a helper-model key: once, never on Cloud, and Not now sticks until another inbox arrives.
+// The one suggestion to add a helper-model key: once, never on a hosted team workspace, and Not now sticks until another
+// inbox arrives.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,7 +16,7 @@ const guest: RequestAuth = { kind: "loopback", scopes: ["client"], trust: "servi
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
-function setup(options: { cloud?: boolean } = {}) {
+function setup(options: { hosted?: boolean } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "omb-helper-suggestion-"));
   dirs.push(dir);
   const store = new Store(() => ({ instanceId: "codex", model: "gpt-5.5" }));
@@ -24,7 +25,7 @@ function setup(options: { cloud?: boolean } = {}) {
   let settled = false;
   let busy = false;
   const make = () => createHelperSuggestion({
-    store, dataDir: dir, cloud: options.cloud ?? false, settled: () => settled, owner: () => proactiveOwner(store),
+    store, dataDir: dir, hosted: options.hosted ?? false, settled: () => settled, owner: () => proactiveOwner(store),
     mainThread: (botId) => store.bot(botId)!.threadId, threadBusy: () => busy,
   });
   let suggestion = make();
@@ -51,8 +52,8 @@ describe("the add-a-key suggestion", () => {
     expect(s.store.taskByThread(s.chief.id, s.thread())?.unread).toBe(true);
   });
 
-  it("is never shown on Cloud, where the keys come with the plan", () => {
-    const s = setup({ cloud: true });
+  it("is never shown on a hosted team workspace", () => {
+    const s = setup({ hosted: true });
     expect(s.suggestion.consider({ gmailConnected: true, inbox: "me@x.test" })).toBeNull();
     expect(s.cards()).toEqual([]);
   });

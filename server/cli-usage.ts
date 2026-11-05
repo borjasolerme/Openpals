@@ -52,8 +52,8 @@ access  the sign-in list a hosted workspace narrows to: an address or
         Takes effect at once, no restart.
 service keep the server running across reboots: writes a systemd unit
         (Linux) or a launchd agent (macOS) for the same serve options and
-        prints the commands that install it. Install the package
-        permanently first (npm install -g openmausbot).
+        prints the commands that install it. Run it from a permanent
+        checkout of the source.
 browser install: the bots' browser engine (agent-browser, pinned) into the
         data dir, and Chrome for Testing into the user's browser cache.
         --with-deps also installs
@@ -82,6 +82,6 @@ fleet   many client workspaces on one Linux server, each its own account,
 
 ${HEADLESS_USAGE}
 
-Install once with \`npm install -g openmausbot\`, then type \`openmausbot\`.
-Or run without a global install: \`npx openmausbot\`. Node 24+ is required.
+\`openmausbot\` above is \`node --experimental-strip-types server/openmausbot.ts\` (or \`pnpm omb\`)
+run from a checkout of the source. Node 24+ is required.
 `;

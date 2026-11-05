@@ -2,7 +2,7 @@
 import type { Assignment } from "./types.ts";
 
 /** At Full access ("Just do it") a teammate's question is its requester's to answer, in work the person or their routine
- * started. Security: work an outside event started (a webhook, a relay, a guest) still asks the person, since its brief
+ * started. Security: work an outside event started (a webhook, a relay, another bot) still asks the person, since its brief
  * is not the person's authority. */
 export const requesterDecides = (a: Pick<Assignment, "level" | "requester" | "origin">): boolean =>
   a.level === "full" && a.requester.kind === "bot_turn" && a.origin.kind !== "outside";

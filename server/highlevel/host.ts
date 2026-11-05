@@ -1,6 +1,5 @@
 // What server/index.ts needs from the HighLevel integration, in one object so the host file gains only a few lines:
-// the per-turn mount, the prompt part, the internal MCP handler (per-bot verdict, decision rows, write activity) and
-// the Cloud health merge.
+// the per-turn mount, the prompt part and the internal MCP handler (per-bot verdict, decision rows, write activity).
 import { HIGHLEVEL_MCP_SERVER } from "../../shared/highlevel.ts";
 import { appendDecision } from "../decision-log.ts";
 import { harnessMcpTokenEnv } from "../harness-mcp-token.ts";
@@ -27,9 +26,6 @@ export interface HighLevelHost {
   handle(body: unknown, capability: { botId: string; threadId: string }, assertActive: () => void): Promise<HighLevelToolsList | HighLevelToolResult>;
   /** The HIGHLEVEL_* names for the per-bot tool grants picker (/api/connectors/tools). */
   toolListing(): { highlevel: Array<{ name: string; description: string }> };
-  /** Merges {highlevel:{connected}} into the Cloud health connectors report, only while a HighLevel connection is saved
-   * (signed in, or needing sign-in again): a HighLevel never set up is not listed. */
-  health(base: Promise<Record<string, { connected: boolean; pending?: boolean }>> | null): Promise<Record<string, { connected: boolean; pending?: boolean }>> | null;
 }
 
 /** "contact abc: email, tags": the record and the field names, never the values. */
@@ -75,12 +71,6 @@ export function createHighLevelHost(deps: HighLevelHostDeps): HighLevelHost {
           });
         },
       });
-    },
-    health(base) {
-      const connection = service.store.get();
-      if (!connection) return base;
-      const highlevel = { connected: connection.state === "signed-in" };
-      return (base ?? Promise.resolve({})).then((connectors) => ({ ...connectors, highlevel }), () => ({ highlevel }));
     },
   };
 }

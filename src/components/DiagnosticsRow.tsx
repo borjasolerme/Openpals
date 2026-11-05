@@ -39,7 +39,7 @@ export function DiagnosticsRow({ simple = false }: { simple?: boolean }) {
     }
   };
 
-  // My Cloud's page in the app, or a browser: this computer's logs are not reachable from here.
+  // A paired server's page in the app, or a browser: this computer's logs are not reachable from here.
   const here = Boolean(window.ogb?.exportDiagnostics);
   return (
     <SettingRow

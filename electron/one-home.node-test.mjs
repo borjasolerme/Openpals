@@ -319,7 +319,6 @@ test("a newer app tops up once from the frozen copy", async () => {
 test("automations switch on through their own routes, and the done line counts only what both sides hold", () => {
   assert.deepEqual(switchOn("routine:r1"), { method: "PATCH", route: "/api/routines/r1", body: { enabled: true } });
   assert.deepEqual(switchOn("call:c1"), { method: "PATCH", route: "/api/calendar-calls/c1", body: {} });
-  assert.deepEqual(switchOn("app-event:a1"), { method: "PATCH", route: "/api/app-triggers/a1", body: { enabled: true } });
   assert.equal(switchOn("bot:b1"), null);
   assert.deepEqual(arrivedCounts({ items: [{ key: "bot:a", kind: "bot" }, { key: "bot:b", kind: "bot" }, { key: "1password", kind: "1password" }], conversations: [{ threadId: "t1" }, { threadId: "t2" }] },
     { items: [{ key: "bot:a", kind: "bot" }, { key: "1password", kind: "1password" }], conversations: [{ threadId: "t1" }] }),

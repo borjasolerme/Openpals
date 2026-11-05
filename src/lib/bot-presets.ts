@@ -3,13 +3,11 @@ import type { BotDefaultsProfile } from "../../shared/new-bot-defaults";
 
 export interface BotPreset {
   id: string;
-  source: "file" | "org";
   key: string;
   name: string;
   description?: string;
   packageName: string;
   release: string;
-  publisherName?: string;
   bot: {
     name?: string;
     title?: string;
@@ -23,7 +21,6 @@ export interface BotPreset {
     };
   };
   skills: Array<{ name: string; description: string }>;
-  skillsEnabled: boolean;
   playbooks: string[];
   notes: string[];
 }
@@ -32,24 +29,6 @@ export interface ChosenPreset {
   id: string;
   skills: string[];
   notes: string[];
-}
-
-export interface PresetGroup {
-  label: string;
-  presets: BotPreset[];
-}
-
-export function presetGroups(presets: readonly BotPreset[]): PresetGroup[] {
-  const groups: PresetGroup[] = [];
-  for (const preset of presets) {
-    const label = preset.source === "org"
-      ? t("newBot.presetsFromOrganization", { name: preset.publisherName ?? preset.packageName })
-      : t("newBot.presetsImported");
-    const group = groups.find((candidate) => candidate.label === label);
-    if (group) group.presets.push(preset);
-    else groups.push({ label, presets: [preset] });
-  }
-  return groups;
 }
 
 /** Never a model, computer, folder, approval level or connected apps: the draft keeps its own. */
@@ -84,12 +63,10 @@ export function presetPictureFile(preset: BotPreset): File | null {
 }
 
 export function presetSummaryLines(preset: BotPreset): string[] {
-  const lines = [preset.source === "org" && preset.publisherName
-    ? t("newBot.presetFromOrg", { package: preset.packageName, release: preset.release, publisher: preset.publisherName })
-    : t("newBot.presetFrom", { package: preset.packageName, release: preset.release })];
+  const lines = [t("newBot.presetFrom", { package: preset.packageName, release: preset.release })];
   if (preset.description) lines.push(preset.description);
   const skills = preset.skills.map((skill) => skill.name).join(", ");
-  if (skills) lines.push(t(preset.skillsEnabled ? "newBot.presetSkillsOn" : "newBot.presetSkillsOff", { names: skills }));
+  if (skills) lines.push(t("newBot.presetSkillsOff", { names: skills }));
   if (preset.notes.length) lines.push(t("newBot.presetNotes", { names: preset.notes.join(", ") }));
   if (preset.playbooks.length) lines.push(t("newBot.presetPlaybooks", { names: preset.playbooks.join(", ") }));
   lines.push(t("newBot.presetKeeps"));

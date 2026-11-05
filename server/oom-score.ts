@@ -1,11 +1,10 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 /** Linux's OOM killer takes the process with the highest score first, and `oom_score_adj` (-1000 to 1000) moves a process
- * up or down that order. On a Cloud home everything a bot runs goes first: its engine and the tools and MCP servers that
- * engine starts, the MCP servers the server runs for it, the helper engines, and its browser (agent-browser's daemon and
- * Chrome, whose tabs Chrome then scores 200 and up itself). The server and the edge, which answer the health check, go last,
- * and the root supervisor that restarts them never. */
-export const OOM_SCORE = { bot: 1000, server: -800, edge: -900, supervisor: -1000 } as const;
+ * up or down that order. Everything a bot runs goes first: its engine and the tools and MCP servers that engine starts,
+ * the MCP servers the server runs for it, the helper engines, and its browser (agent-browser's daemon and Chrome, whose
+ * tabs Chrome then scores 200 and up itself). */
+const BOT_OOM_SCORE = 1000;
 
 const OWN = "/proc/self/oom_score_adj";
 
@@ -33,17 +32,5 @@ export function spawnWithOomScore<T>(score: number, spawn: () => T, file: ScoreF
   }
 }
 
-/** A bot's own work (its browser, a helper engine, a tool): started with OOM_SCORE.bot, so memory runs out on it first. */
-export const spawnBotWork = <T>(spawn: () => T, file: ScoreFile = procFile): T => spawnWithOomScore(OOM_SCORE.bot, spawn, file);
-
-/** The root supervisor's own score, set once at start: root may lower it, and the kernel then never picks it. False where
- * it can't be set (not Linux, not root). */
-export function protectSupervisor(file: ScoreFile = procFile): boolean {
-  if (process.platform !== "linux") return false;
-  try {
-    file.write(OWN, String(OOM_SCORE.supervisor));
-    return file.read(OWN).trim() === String(OOM_SCORE.supervisor);
-  } catch {
-    return false;
-  }
-}
+/** A bot's own work (its browser, a helper engine, a tool): started with BOT_OOM_SCORE, so memory runs out on it first. */
+export const spawnBotWork = <T>(spawn: () => T, file: ScoreFile = procFile): T => spawnWithOomScore(BOT_OOM_SCORE, spawn, file);

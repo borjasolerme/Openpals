@@ -1,6 +1,5 @@
-// The real box, where it can run: Linux with an unprivileged bubblewrap (a Cloud home, the Fly test machine). Elsewhere
-// the suite says so and skips; the Fly acceptance run (`node dist-server/bot-box/box-check.js`) is where this is proved
-// for the image (see _plans/team-mode-2026-10-21/T0-BUILD.md).
+// The real box, where it can run: Linux with an unprivileged bubblewrap. Elsewhere the suite says so and skips;
+// `node dist-server/bot-box/box-check.js` proves it for an image.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

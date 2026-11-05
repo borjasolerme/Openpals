@@ -9,7 +9,7 @@ interface SignedInSitesAnswer { running: boolean; sites: SignedInSite[] }
 /** Security: the server reads and clears the browser itself, running or not, and keeps the key. */
 export function SignedInSites({ target, sharedBy, disabled = false, bare = false }: {
   target: { profile: string } | { bot: string };
-  /** Which conversation's browser is meant, on a Team Cloud. */
+  /** The names of the bots that use this browser. */
   sharedBy: string[];
   disabled?: boolean;
   bare?: boolean;

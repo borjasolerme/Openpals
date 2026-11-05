@@ -62,7 +62,6 @@ export interface UpkeepDeps {
   dreamer?: () => string | undefined;
   quietMs: () => number;
   tidyHour: () => number;
-  writing?: <T>(botId: string, write: () => T) => T;
   now?: () => Date;
   log?: (line: string) => void;
 }
@@ -340,7 +339,6 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
     return promise;
   };
 
-  const writing = deps.writing ?? (<T>(_botId: string, write: () => T): T => write());
 
   /** Files items under one source label, with the step and thread (when there is one) on every journal row. */
   function fileCandidates(botId: string, candidates: readonly Candidate[], filed: { source: string; via: string; threadId?: string }): { added: number; topics: number; kept: { text: string; where: string }[] } {
@@ -412,7 +410,6 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
   /** One model call for one bot's waiting chats, each read as its own conversation. */
   async function captureCall(batches: readonly CaptureBatch[]): Promise<CaptureReport> {
     const started = generation;
-    // The batch names where the facts go (a bot's own memory, or one of its layers on a Team Cloud); the bot record says whose.
     const id = batches[0]!.botId;
     const bot = deps.bot(id);
     const at = now().getTime();
@@ -462,17 +459,14 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
       if (isForgotten(item.candidate.text) || !statedInConversation(item.candidate, turns, false)) return [];
       return [{ ...item, aboutMe: item.aboutMe && statedInConversation(item.candidate, turns, true) }];
     });
-    const { added, topics } = writing(id, () => {
-      let added = 0;
-      let topics = 0;
-      conversations.forEach((conversation, i) => {
-        const own = filed.filter((item) => item.at === i).map((item) => item.candidate);
-        if (!own.length) return;
-        const result = fileCandidates(id, own, { source: `${deps.sourceLabel(id, conversation.threadId)} (noticed)`, via: "capture", threadId: conversation.threadId });
-        added += result.added;
-        topics += result.topics;
-      });
-      return { added, topics };
+    let added = 0;
+    let topics = 0;
+    conversations.forEach((conversation, i) => {
+      const own = filed.filter((item) => item.at === i).map((item) => item.candidate);
+      if (!own.length) return;
+      const result = fileCandidates(id, own, { source: `${deps.sourceLabel(id, conversation.threadId)} (noticed)`, via: "capture", threadId: conversation.threadId });
+      added += result.added;
+      topics += result.topics;
     });
     const learned = filed.filter((item) => item.aboutMe).map((item) => item.candidate.text);
     const aboutMe = learned.length ? deps.addToAboutMe({ botId: id, botName: bot.name }, learned) : 0;
@@ -570,37 +564,35 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
     const judgedCore = candidates.filter((entry) => !moved.has(entry.line)).map((entry) => factIdentity(entry.body));
     record(botId, { core: [...new Set([...(loaded().bots[botId]?.core ?? []), ...judgedCore])].slice(-MAX_CORE) });
     if (!moves.length) return 0;
-    return writing(botId, () => {
-      const { byTopic } = applyMoves(before, moves);
-      const written = new Set<string>();
-      const existing = new Map(listMemoryTopics(botId).map((topic) => [topic.name.toLowerCase(), topic.name]));
-      let count = 0;
-      for (const [wanted, group] of byTopic) {
-        const name = existing.get(wanted) ?? wanted;
-        const path = `memory/${name}`;
-        const current = readRaw(botId, path);
-        const seen = notebookIdentities(current ?? "");
-        const lines = group.lines.filter((line) => !seen.has(lineFactIdentity(line)));
-        if (lines.length) {
-          try {
-            writeMemoryTopic(botId, name, mergeTopicText(current, { title: name.replace(/\.md$/, "").replace(/-/g, " "), aliases: group.aliases, lines }));
-          } catch (error) {
-            log(`memory upkeep: could not write ${path}; kept its entries in MEMORY.md: ${(error as Error).message}`);
-            continue;
-          }
-          recordMemoryChange(botId, { path, actor: "upkeep", via: "organize", before: current, after: readRaw(botId, path) });
+    const { byTopic } = applyMoves(before, moves);
+    const written = new Set<string>();
+    const existing = new Map(listMemoryTopics(botId).map((topic) => [topic.name.toLowerCase(), topic.name]));
+    let count = 0;
+    for (const [wanted, group] of byTopic) {
+      const name = existing.get(wanted) ?? wanted;
+      const path = `memory/${name}`;
+      const current = readRaw(botId, path);
+      const seen = notebookIdentities(current ?? "");
+      const lines = group.lines.filter((line) => !seen.has(lineFactIdentity(line)));
+      if (lines.length) {
+        try {
+          writeMemoryTopic(botId, name, mergeTopicText(current, { title: name.replace(/\.md$/, "").replace(/-/g, " "), aliases: group.aliases, lines }));
+        } catch (error) {
+          log(`memory upkeep: could not write ${path}; kept its entries in MEMORY.md: ${(error as Error).message}`);
+          continue;
         }
-        existing.set(name.toLowerCase(), name);
-        written.add(wanted);
-        count += group.lines.length;
+        recordMemoryChange(botId, { path, actor: "upkeep", via: "organize", before: current, after: readRaw(botId, path) });
       }
-      if (!written.size) return 0;
-      const { text } = applyMoves(before, moves.filter((move) => written.has(move.topic)));
-      writeMemoryFile(botId, text);
-      recordMemoryChange(botId, { path: "MEMORY.md", actor: "upkeep", via: "organize", before, after: readRaw(botId, "MEMORY.md") });
-      log(`memory upkeep: moved ${count} entr${count === 1 ? "y" : "ies"} from MEMORY.md into topic files for ${deps.bot(botId)?.name ?? botId}`);
-      return count;
-    });
+      existing.set(name.toLowerCase(), name);
+      written.add(wanted);
+      count += group.lines.length;
+    }
+    if (!written.size) return 0;
+    const { text } = applyMoves(before, moves.filter((move) => written.has(move.topic)));
+    writeMemoryFile(botId, text);
+    recordMemoryChange(botId, { path: "MEMORY.md", actor: "upkeep", via: "organize", before, after: readRaw(botId, "MEMORY.md") });
+    log(`memory upkeep: moved ${count} entr${count === 1 ? "y" : "ies"} from MEMORY.md into topic files for ${deps.bot(botId)?.name ?? botId}`);
+    return count;
   }
 
   function appendArchive(botId: string, archived: readonly string[]): void {
@@ -646,10 +638,8 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
     if (planChanges(plan)) {
       const { text, archived } = applyTidy(before, plan, today);
       // The archive is written first: a line is never out of MEMORY.md before it is in the archive.
-      writing(botId, () => {
-        if (archived.length) appendArchive(botId, archived);
-        writeMemoryFile(botId, text);
-      });
+      if (archived.length) appendArchive(botId, archived);
+      writeMemoryFile(botId, text);
       recordMemoryChange(botId, { path: "MEMORY.md", actor: "upkeep", via: "tidy", before, after: readRaw(botId, "MEMORY.md") });
     }
     let topicExpired = 0;
@@ -692,10 +682,8 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
       topicDeferred += topicPlan.deferred;
       if (!planChanges(topicPlan)) continue;
       const tidied = applyTidy(topicBefore, topicPlan, today);
-      writing(botId, () => {
-        if (tidied.archived.length) appendArchive(botId, tidied.archived);
-        writeMemoryTopic(botId, topic.name, tidied.text);
-      });
+      if (tidied.archived.length) appendArchive(botId, tidied.archived);
+      writeMemoryTopic(botId, topic.name, tidied.text);
       recordMemoryChange(botId, { path, actor: "upkeep", via: "tidy", before: topicBefore, after: readRaw(botId, path) });
       topicExpired += topicPlan.expired.length;
       topicDuplicates += topicPlan.duplicates.length;
@@ -763,38 +751,35 @@ export function createMemoryUpkeep(deps: UpkeepDeps): MemoryUpkeep {
     }
     const dreamt = parseDream(answer, conversations.length, notebook.length);
     const source = `dream across ${conversations.length} chats`;
-    // Re-read inside the write: if the notes changed after the prompt, its line numbers are stale.
-    const written = writing(botId, () => {
-      const before = readRaw(botId, "MEMORY.md") ?? "";
-      const outdated: DreamReport["outdated"] = [];
-      const stale = dreamt.outdated.length > 0 && before !== first;
-      if (!stale) {
-        for (const item of dreamt.outdated) {
-          const entry = notebook[item.line]!;
-          if (updateMemory(botId, { action: "supersede", oldText: entry.body, text: item.now }, { source, now: now() }).ok) outdated.push({ was: entry.body, now: item.now });
-        }
-        if (outdated.length) recordMemoryChange(botId, { path: "MEMORY.md", actor: "upkeep", via: "dream", before, after: readRaw(botId, "MEMORY.md") });
+    // Re-read now: if the notes changed after the prompt, its line numbers are stale.
+    const before = readRaw(botId, "MEMORY.md") ?? "";
+    const outdated: DreamReport["outdated"] = [];
+    const stale = dreamt.outdated.length > 0 && before !== first;
+    if (!stale) {
+      for (const item of dreamt.outdated) {
+        const entry = notebook[item.line]!;
+        if (updateMemory(botId, { action: "supersede", oldText: entry.body, text: item.now }, { source, now: now() }).ok) outdated.push({ was: entry.body, now: item.now });
       }
-      const candidates: Candidate[] = dreamt.learned.map((item) => ({
-        text: item.text,
-        kind: "preference",
-        aboutUser: item.aboutUser,
-        ...(item.topic ? { topic: item.topic } : {}),
-        ...(item.topicAliases ? { topicAliases: item.topicAliases } : {}),
-      }));
-      const { kept } = candidates.length ? fileCandidates(botId, candidates, { source, via: "dream" }) : { kept: [] };
-      return { outdated, kept, stale };
-    });
+      if (outdated.length) recordMemoryChange(botId, { path: "MEMORY.md", actor: "upkeep", via: "dream", before, after: readRaw(botId, "MEMORY.md") });
+    }
+    const candidates: Candidate[] = dreamt.learned.map((item) => ({
+      text: item.text,
+      kind: "preference",
+      aboutUser: item.aboutUser,
+      ...(item.topic ? { topic: item.topic } : {}),
+      ...(item.topicAliases ? { topicAliases: item.topicAliases } : {}),
+    }));
+    const { kept } = candidates.length ? fileCandidates(botId, candidates, { source, via: "dream" }) : { kept: [] };
     const aboutUser = dreamt.learned.filter((item) => item.aboutUser).map((item) => item.text);
     const aboutMe = aboutUser.length ? deps.addToAboutMe({ botId, botName: bot.name }, aboutUser) : 0;
     const done: DreamReport = {
       at,
       conversations: conversations.length,
-      learned: written.kept,
-      outdated: written.outdated,
+      learned: kept,
+      outdated,
       ideas: dreamt.ideas.map((idea) => idea.text),
       aboutMe,
-      ...(written.stale ? { note: "The notes changed during the dream, so outdated notes wait for the next one." } : {}),
+      ...(stale ? { note: "The notes changed during the dream, so outdated notes wait for the next one." } : {}),
     };
     record(botId, { lastDream: done, dreamedTo: at });
     log(`memory upkeep: ${bot.name} (${botId}) dreamt over ${conversations.length} chats — ${done.learned.length} learned, ${done.outdated.length} updated, ${done.ideas.length} idea(s), ${aboutMe} for About me`);

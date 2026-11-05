@@ -1,5 +1,5 @@
 // The HighLevel connection's tokens, sealed under a key of their own (a 0600 file beside the store) so they rest
-// encrypted on desktop and on a Cloud home alike, with no keychain in the path. No route ever returns a token.
+// encrypted on desktop and on a server alike, with no keychain in the path. No route ever returns a token.
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";

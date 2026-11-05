@@ -1,15 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  BROWSER_SIGN_IN_FAILED, previewBrowserSignIn, readSessionState, SERVICE_TRUST_REASON, takeBrowserSignInFromLocation, takePairingCodeFromLocation,
-} from "./lib/session";
+import { readSessionState, SERVICE_TRUST_REASON, takePairingCodeFromLocation } from "./lib/session";
 import { bootstrapBrand, productName } from "./lib/brand";
 import { loadPageLanguage } from "./lib/language-preference";
 import { applySkinChoice, readSkinChoice } from "./lib/skins";
 import { applyChatWidth, readChatWidth } from "./lib/chat-width";
 import { applyFont, readFont } from "./lib/fonts";
 import { settleAdvancedModeDefault } from "./lib/interface-mode";
-import { BrowserSignInPage } from "./pair/BrowserSignInPage";
 import { PairPage } from "./pair/PairPage";
 import { PageBoundary } from "./components/PageBoundary";
 import { endedBeforeReload, forgetEndedSession, SESSION_ENDED_REASON } from "./lib/session-ended";
@@ -28,14 +25,7 @@ const loadApp = () => import("./App").catch((error: unknown) => ({ default: (): 
 const appPage = PAGES_WITHOUT_THE_APP.has(location.pathname) ? null : loadApp();
 
 async function chooseRoot(): Promise<React.ReactNode> {
-  if (location.pathname === "/pair") {
-    const signIn = takeBrowserSignInFromLocation();
-    if (signIn) {
-      const preview = await previewBrowserSignIn(signIn);
-      return preview ? <BrowserSignInPage credential={signIn} owner={preview.owner} /> : <PairPage initialCode={null} reason={BROWSER_SIGN_IN_FAILED} />;
-    }
-    return <PairPage initialCode={takePairingCodeFromLocation()} />;
-  }
+  if (location.pathname === "/pair") return <PairPage initialCode={takePairingCodeFromLocation()} />;
   const session = await readSessionState();
   if (session.kind === "unauthenticated") {
     return <PairPage initialCode={null} reason={endedBeforeReload() ? SESSION_ENDED_REASON : session.error} />;

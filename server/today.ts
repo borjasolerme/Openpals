@@ -18,9 +18,6 @@ export interface TodayViewer {
   admin: boolean;
   thread(threadId: string): boolean;
   routine(run: { botId?: unknown; groupId?: unknown }): boolean;
-  /** A Team Cloud: whether an ask in this conversation is this viewer's. It then holds approvals too, since each one
-   * waits on the one person it is for. */
-  asks?(botId: string | undefined, threadId: string): boolean;
 }
 
 interface RunRecord {
@@ -57,7 +54,7 @@ const OWNER_PLACES: ReadonlySet<PlaceState> = new Set([
 ]);
 /** A connected app refusing for want of a working sign-in, as Composio and the apps behind it word it. */
 const BROKEN_CONNECTION = /\b(?:401|unauthori[sz]ed|invalid[_ ]grant|(?:token|credentials?) (?:has |have )?(?:expired|been revoked)|expired (?:token|credentials?)|re-?authori[sz]e|re-?authenticate|reconnect|no (?:active )?connected account|connected ?account (?:not found|is (?:inactive|expired|disabled))|connection (?:is )?(?:inactive|expired|revoked|not found)|insufficient[_ ](?:scopes?|permissions?)|ACCESS_TOKEN_SCOPE_INSUFFICIENT|not connected)\b/i;
-const KIND_ORDER: Record<NeedsYouItem["kind"], number> = { "signed-out": 0, "usage-limit": 2, connection: 3, place: 4, question: 5, message: 6 };
+const KIND_ORDER: Record<NeedsYouItem["kind"], number> = { "signed-out": 0, "usage-limit": 2, connection: 3, place: 4, question: 5 };
 const DAY_MS = 24 * 60 * 60_000;
 const TITLE_CHARS = 160;
 /** A failed row and the summary its turn ends with are written this close together. */
@@ -111,10 +108,6 @@ function runEnd(run: RunRecord, now: number): number | null {
   if (run.status === "completed" || run.status === "failed") return run.finishedAt ?? run.startedAt ?? run.scheduledFor;
   if (run.status === "missed") return run.finishedAt ?? run.scheduledFor;
   return run.status === "cancelled" ? null : now;
-}
-
-function approvalText(card: QuestionCard & { tool?: string }): string {
-  return plainTitle(`Approve: ${card.subtitle || card.tool || card.title || ""}`);
 }
 
 /** A question card the harness made carries the question as its subtitle, under a generic title. */
@@ -270,13 +263,11 @@ function needsYou(sources: TodaySources, viewer: TodayViewer, owners: Map<string
     if (row.kind === "options") {
       const card = parse<QuestionCard>(row.card);
       const botId = botOf(row);
-      if (!card || !botId || card.outboundRequest || card.quotaSwitch || card.teamMemoryRequest || card.autoApplied) continue;
-      const approval = viewer.asks !== undefined && (card.requestType === "permission" || Boolean(card.tool));
-      if (!(approval || isPersistentQuestionCard(card)) || (viewer.asks && !viewer.asks(botId, row.threadId))) continue;
+      if (!card || !botId || card.outboundRequest || card.quotaSwitch || card.teamMemoryRequest || card.autoApplied || !isPersistentQuestionCard(card)) continue;
       const earlier = card.requestId ? askedIn.get(card.requestId) : undefined;
       if (earlier && earlier !== `question:${row.threadId}`) items.delete(earlier);
       if (card.requestId) askedIn.set(card.requestId, `question:${row.threadId}`);
-      keep(`question:${row.threadId}`, { kind: "question", id: row.id, at: row.at, botId, threadId: row.threadId, text: approval ? approvalText(card) : questionText(card) });
+      keep(`question:${row.threadId}`, { kind: "question", id: row.id, at: row.at, botId, threadId: row.threadId, text: questionText(card) });
       continue;
     }
     if (!viewer.admin || row.kind !== "activity" || !row.name) continue;
@@ -322,7 +313,7 @@ function needsYou(sources: TodaySources, viewer: TodayViewer, owners: Map<string
   }
 
   for (const work of sources.parked) {
-    if (!work.question || work.decide || items.has(`question:${work.threadId}`) || !seen(work.threadId) || (viewer.asks && !viewer.asks(work.botId, work.threadId))) continue;
+    if (!work.question || work.decide || items.has(`question:${work.threadId}`) || !seen(work.threadId)) continue;
     keep(`question:${work.threadId}`, { kind: "question", id: work.id, at: work.createdAt, botId: work.botId, threadId: work.threadId, text: plainTitle(work.question) });
   }
 

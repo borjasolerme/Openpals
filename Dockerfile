@@ -114,6 +114,17 @@ FROM runtime AS server
 # Optional engine CLIs baked into the image (space-separated npm packages).
 ARG ENGINES=""
 RUN if [ -n "$ENGINES" ]; then HOME=/tmp/omb-build-home npm install -g $ENGINES && rm -rf /tmp/omb-build-home /tmp/node-compile-cache; fi
+# Optional Grok Build from xAI's own installer, pinned; it signs in from the app
+# with a device code into ~/.grok on the data volume.
+ARG GROK_VERSION=""
+RUN if [ -n "$GROK_VERSION" ]; then \
+      mkdir -p /tmp/grok-install \
+      && curl -fsSL https://x.ai/cli/install.sh -o /tmp/grok-install/install.sh \
+      && HOME=/tmp/grok-install PATH="/tmp/grok-install/.grok/bin:$PATH" bash /tmp/grok-install/install.sh "$GROK_VERSION" \
+      && install -m 0755 "$(readlink -f /tmp/grok-install/.grok/bin/grok)" /usr/local/bin/grok \
+      && HOME=/tmp/grok-install grok --version | grep -qF "grok $GROK_VERSION " \
+      && rm -rf /tmp/grok-install; \
+    fi
 COPY --from=build --chown=maus:maus /src/dist-native/duckdb/target ./duckdb
 COPY --from=build --chown=maus:maus /src/dist-server ./dist-server
 COPY --from=build --chown=maus:maus /src/dist ./dist

@@ -111,13 +111,6 @@ describe("POST /api/bots/:botId/apps/:messageId/context", () => {
     expect(await post(`/api/bots/${bot.id}/apps/${id}/context`, { threadId: bot.threadId, content: "words" })).toMatchObject({ status: 400 });
   });
 
-  it("refuses a Cloud guest's change to a conversation it did not start", async () => {
-    const { bot, post, page } = await fixture({ threadRefusal: () => "On this Cloud you can only change conversations you started." });
-    const id = page();
-    expect(await post(`/api/bots/${bot.id}/apps/${id}/context`, { threadId: bot.threadId, content: [] }))
-      .toEqual({ status: 403, body: { error: "On this Cloud you can only change conversations you started." } });
-  });
-
   it("holds an app to 120 updates a minute", async () => {
     const { bot, post, page } = await fixture();
     const id = page();

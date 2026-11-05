@@ -1,7 +1,7 @@
 // The proactive main agent, wired from ordinary routines: the checks a routine runs before any AI turn, the
 // read-and-draft fence its runs work inside, the brief its results become, and the proactive bot's default "Keep an eye
-// on my day" routine, created once with no button on a personal install or a personal Cloud that can reach connected
-// apps, and never on a team's. The brief is there only while that routine is on.
+// on my day" routine, created once with no button on an install that can reach connected apps, and never on a hosted
+// team workspace. The brief is there only while that routine is on.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
@@ -17,7 +17,7 @@ import { createConnectedReads, READ_APPS, type ReadApp } from "../connected-read
 import { evaluateConnectorTools } from "../connector-verdict.ts";
 import type { DecisionRow } from "../decision-log.ts";
 import type { ProviderAdapter } from "../contracts.ts";
-import { createReadAndDraft, type ReadAndDraftDeps } from "../read-and-draft.ts";
+import { createReadAndDraft } from "../read-and-draft.ts";
 import type { Routine, RoutineChecks, RoutineManager, RoutineRun } from "../routines.ts";
 import type { BotRecord, Store } from "../store.ts";
 import { deciderEnabled, type Decider } from "../decider/index.ts";
@@ -61,12 +61,10 @@ export interface ProactiveDeps {
   };
   registry: { get(instanceId: string): { driverKind: string; adapter: ProviderAdapter } | null | undefined };
   dataDir: string;
-  /** A hosted team workspace or a Team Cloud. */
+  /** A hosted team workspace. */
   team: boolean;
-  /** This computer's bots moved to My Cloud: nothing here is changed. */
+  /** This computer's bots moved to another server: nothing here is changed. */
   frozen?: () => boolean;
-  /** Any Cloud (a Cloud home included): the add-a-key suggestion is never shown there. */
-  cloud?: boolean;
   routines(): RoutineManager | null;
   mainThread: BriefDeps["mainThread"];
   threadBusy: BriefDeps["threadBusy"];
@@ -85,8 +83,6 @@ export interface ProactiveDeps {
   ideas?: BriefDeps["ideas"];
   /** What the proactive bot did, counted as it happens: emails sorted, replies drafted, meetings prepared. */
   counted?(kind: ValueKind, count: number): void;
-  /** A new Cloud's first look, confined like a read-and-draft run. */
-  look?: ReadAndDraftDeps["look"];
   morning?: MorningDeps;
 }
 
@@ -135,7 +131,7 @@ export function createProactive(deps: ProactiveDeps) {
   });
   const inbox = deps.helpers ? createInboxTriage({ ...deps.helpers, config: () => cfg }) : undefined;
   const suggestion = createHelperSuggestion({
-    store, dataDir: deps.dataDir, cloud: deps.cloud !== false || deps.team, owner, mainThread: deps.mainThread, threadBusy: deps.threadBusy,
+    store, dataDir: deps.dataDir, hosted: deps.team, owner, mainThread: deps.mainThread, threadBusy: deps.threadBusy,
     // Set up and on, or switched off on purpose: either way there is nothing to suggest.
     settled: () => deciderEnabled(cfg) || cfg.decider?.enabled === false || cfg.decider?.provider === "off",
   });
@@ -164,7 +160,6 @@ export function createProactive(deps: ProactiveDeps) {
     adapter: (instanceId) => deps.registry.get(instanceId)?.adapter,
     stale: deps.stale, decide: deps.decide, release: deps.release,
     mayDraft: checks.mayDraft, drafted: checks.drafted,
-    ...(deps.look ? { look: deps.look } : {}),
     wroteDrafts: (botId, count) => { if (botId === owner()?.id) deps.counted?.("drafted", count); },
   });
 
@@ -216,7 +211,7 @@ export function createProactive(deps: ProactiveDeps) {
   }
 
   /** The proactive bot's default routine, once, when connected apps are there to read: pausing or deleting it is how it
-   * is switched off, so it is never made again. Asked at start and every minute, since a Cloud's access arrives later,
+   * is switched off, so it is never made again. Asked at start and every minute, since connected apps can arrive later,
    * and a MausBot can arrive after the routine was made. */
   function ensureWatch(): Routine | null {
     const manager = deps.routines();
