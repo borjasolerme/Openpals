@@ -631,12 +631,14 @@ function DraftWorksOn({ bot, patch, seat }: { bot: Bot; patch: ReturnType<typeof
   const { state } = useStore();
   const { capabilities } = useDesktopCapabilities();
   const providerSupportsLocal = instanceSupportsLocalComputer(state.instances, bot);
+  const localReason = localComputerDisabledReason({ capabilities, providerSupportsLocal });
+  const named = { ...bot, name: bot.name || t("sidebar.newBotSimple") };
   const options = WORKS_ON_CHOICES.map(([mode, labelKey, descriptionKey, Icon]) => {
     const view = placeViewFor(placeFacts({
-      bot, place: mode ?? "auto", seat, config: state.config, instances: state.instances,
+      bot: named, place: mode ?? "auto", seat, config: state.config, instances: state.instances,
       local: {
         ready: localComputerSelectable({ capabilities, providerSupportsLocal }),
-        reason: localComputerDisabledReason({ capabilities, providerSupportsLocal }) ?? t("computer.unavailableLocal"),
+        reason: localReason ?? t("computer.unavailableLocal"),
       },
     }));
     return {
@@ -644,6 +646,7 @@ function DraftWorksOn({ bot, patch, seat }: { bot: Bot; patch: ReturnType<typeof
       selected: mode === null ? !bot.computer : bot.computer === mode,
       disabled: placeBlocked(view),
       issue: placeHasIssue(view),
+      note: placeHasIssue(view) ? view.line : mode === "local" ? localReason ?? undefined : undefined,
     };
   });
   const choose = (mode: WorksOnMode) => patch(mode === "browser" ? { computer: mode, browser: true } : { computer: mode });
