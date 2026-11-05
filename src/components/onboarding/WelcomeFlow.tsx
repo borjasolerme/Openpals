@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
-import { chiefStepFits, defaultBotIn, setChiefStepOpen } from "@/lib/default-bot";
+import { stageIntro } from "@/lib/default-bot";
+import { GROK_MOVE_NOTICE } from "@/lib/notices";
 import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, type BeatId } from "@/lib/onboarding";
+import { desktopShowsOtherServer } from "@/lib/other-server";
+import { placeAvailable, useBotsPlace } from "@/lib/place";
 import { clearWelcomeDraft, readWelcomeDraft, saveWelcomeDraft } from "@/lib/welcome-draft";
 import { api, useStore } from "@/state/store";
-import { ChiefIntro } from "./ChiefIntro";
-import { MeetScreen } from "./MeetScreen";
+import { AppsStep } from "./AppsStep";
+import { BotsStep, firstBot, NOTHING_BROUGHT, type BroughtBots } from "./BotsStep";
+import { DoneStep } from "./DoneStep";
+import { PlaceStep } from "./PlaceStep";
+import { SignInStep } from "./SignInStep";
+import type { StepProgress } from "./StepFrame";
 import { localDesktopPage } from "./WelcomeGate";
-
-const LEAVE_MS = 100;
-const FADE_MS = 150;
+import { WelcomeStep } from "./WelcomeStep";
 
 type Config = ReturnType<typeof useStore>["state"]["config"];
 
@@ -45,28 +50,36 @@ function trapTab(event: ReactKeyboardEvent<HTMLElement>, root: HTMLElement | nul
   }
 }
 
-/** The first run: two screens, then the chat. Meeting the app (with an AI to connect when none works), then the Chief of
- * Staff over the app itself. Its end is the chat with the bot chosen there (`onDone`). */
-export function WelcomeFlow({
-  onDone,
-  replay = false,
-  initialBeat,
-  embedded = false,
-  hosted = false,
-}: {
+/** The steps between the welcome and the end are counted. */
+function progressOf(beats: readonly BeatId[], beat: BeatId): StepProgress | null {
+  const counted: readonly BeatId[] = beats.filter((id) => id !== "welcome" && id !== "done");
+  const at = counted.indexOf(beat);
+  return at < 0 ? null : { current: at + 1, total: counted.length };
+}
+
+/** The first run, one screen at a time: welcome, where the bots live (desktop app only), the AI, the bots, the apps, then
+ * done. Its end is the chat with the bot brought here (`onDone`). */
+export function WelcomeFlow(props: {
   onDone: (botId: string | null) => void;
   replay?: boolean;
   initialBeat?: BeatId;
   embedded?: boolean;
   hosted?: boolean;
 }) {
+  const place = useBotsPlace();
+  // The desktop app answers where the bots live before the first screen shows; a browser has no question to ask.
+  if (placeAvailable() && !place) return <div className={cn("bg-app", props.embedded ? "h-full w-full" : "fixed inset-0 z-50")} />;
+  return <Steps {...props} place={place?.kind === "local"} />;
+}
+
+function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted = false, place }: Parameters<typeof WelcomeFlow>[0] & { place: boolean }) {
   const { state, dispatch } = useStore();
-  const maus = defaultBotIn(state.bots);
   // A first run keeps its screen in this browser, so a reload resumes it; a replay starts over. A hosted place's
   // browser may hold another person's draft.
   const keepsDraft = !replay && !embedded && !hosted;
-  const beats = beatsFor({ hosted });
+  const [beats] = useState(() => beatsFor({ hosted, place, welcomed: desktopShowsOtherServer() }));
   const [beat, setBeat] = useState<BeatId>(() => resumeBeat(beats, initialBeat ?? (keepsDraft ? readWelcomeDraft()?.beat : undefined)));
+  const [brought, setBrought] = useState<BroughtBots>(NOTHING_BROUGHT);
   const root = useRef<HTMLDivElement>(null);
   const finishing = useRef(false);
   const record = useRef(state.config?.onboarding);
@@ -81,63 +94,43 @@ export function WelcomeFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    root.current?.focus({ preventScroll: true });
+    root.current?.scrollTo?.({ top: 0 });
+  }, [beat]);
+
   const finish = useCallback(
     async (botId: string | null) => {
       if (finishing.current) return;
       finishing.current = true;
       if (!replay && !embedded) markWelcomeFinished();
       if (keepsDraft) clearWelcomeDraft();
+      // Pal started here says its first lines one at a time as its chat opens.
+      if (!replay && botId && botId === brought.pal) stageIntro(botId);
       onDone(botId);
       try {
-        const patch = replay ? completionPatch() : firstRunPatch(record.current, new Date());
+        // The bots step offered the move from Grok Bot, so its popup has nothing left to offer.
+        const patch = replay ? completionPatch() : firstRunPatch(record.current, new Date(), beats.includes("bots") ? [GROK_MOVE_NOTICE] : []);
         const config = await api("/api/config", { method: "PUT", body: JSON.stringify(patch), signal: AbortSignal.timeout(10_000) });
         dispatch({ type: "configStatus", config });
       } catch {
       }
     },
-    [dispatch, onDone, replay, embedded, keepsDraft],
+    [dispatch, onDone, replay, embedded, keepsDraft, brought.pal, beats],
   );
 
-  // The first screen fades away before the Chief step comes up; a timer moves on, since a hidden window runs no
-  // animation to its end.
-  const toChief = beats.includes("chief") && chiefStepFits(state.bots, maus);
-  const leaving = useRef(false);
-  const next = useCallback(() => {
-    if (finishing.current || leaving.current) return;
-    if (!toChief) return void finish(null);
-    leaving.current = true;
-    root.current?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: LEAVE_MS, easing: "ease-in", fill: "forwards" });
-    setTimeout(() => {
-      root.current?.getAnimations().forEach((animation) => animation.cancel());
-      setBeat("chief");
-    }, LEAVE_MS);
-  }, [toChief, finish]);
+  const at = beats.indexOf(beat);
+  const next = () => {
+    const following = beats[at + 1];
+    if (following) setBeat(following);
+    else void finish(firstBot(brought));
+  };
+  const back = at > 0 ? () => setBeat(beats[at - 1]!) : undefined;
+  const progress = progressOf(beats, beat);
 
-  const chief = beat === "chief";
-  useEffect(() => {
-    if (!chief || embedded) return;
-    setChiefStepOpen(true);
-    return () => setChiefStepOpen(false);
-  }, [chief, embedded]);
-  // The scrim fades with the dialog and lets clicks through while MausBot lands.
-  const fadeScrim = useCallback(() => {
-    if (!root.current) return;
-    root.current.style.pointerEvents = "none";
-    root.current.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, fill: "forwards" });
-  }, []);
-
-  useEffect(() => {
-    if (beat === "meet") root.current?.focus({ preventScroll: true });
-  }, [beat]);
-
-  // Escape moves on as Later does; Enter on the screen itself presses Next while it can be pressed.
+  // Enter on the screen itself presses its main button while it can be pressed.
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (beat === "meet" && event.key === "Escape") {
-      event.preventDefault();
-      next();
-      return;
-    }
-    if (beat === "meet" && event.key === "Enter" && event.target === root.current) {
+    if (event.key === "Enter" && event.target === root.current) {
       event.preventDefault();
       root.current.querySelector<HTMLButtonElement>("[data-primary]:not([disabled])")?.click();
       return;
@@ -145,26 +138,26 @@ export function WelcomeFlow({
     trapTab(event, root.current);
   };
 
+  const target = firstBot(brought);
   return (
     <div
       ref={root}
-      role={chief ? undefined : "dialog"}
-      aria-modal={chief ? undefined : true}
-      aria-labelledby={chief ? undefined : "welcome-title"}
+      role="dialog"
+      aria-modal
+      aria-labelledby="welcome-title"
       tabIndex={-1}
       onKeyDown={onKeyDown}
       data-welcome={beat}
-      className={cn(
-        "welcome-screen flex outline-none",
-        embedded ? "relative h-full w-full" : "fixed inset-0 z-50",
-        chief ? "ui-scrim items-center justify-center p-4" : "overflow-y-auto bg-app",
-      )}
+      className={cn("welcome-screen flex overflow-y-auto bg-app outline-none", embedded ? "relative h-full w-full" : "fixed inset-0 z-50")}
     >
-      {chief ? (
-        <ChiefIntro replay={replay} onLeave={fadeScrim} onDone={(botId) => void finish(botId)} />
-      ) : (
-        <MeetScreen hosted={hosted} onNext={next} />
-      )}
+      <div key={beat} className="flex min-h-full w-full">
+        {beat === "welcome" ? <WelcomeStep hosted={hosted} onNext={next} />
+          : beat === "place" ? <PlaceStep progress={progress} onBack={back} onNext={next} />
+          : beat === "ai" ? <SignInStep progress={progress} onBack={back} onNext={next} />
+          : beat === "bots" ? <BotsStep progress={progress} brought={brought} onBrought={setBrought} onBack={back} onNext={next} />
+          : beat === "apps" ? <AppsStep progress={progress} onBack={back} onNext={next} />
+          : <DoneStep bot={state.bots.find((bot) => bot.id === target)} onBack={back} onDone={() => void finish(target)} />}
+      </div>
     </div>
   );
 }

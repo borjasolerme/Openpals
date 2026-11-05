@@ -45,8 +45,8 @@ const { marker } = vi.hoisted(() => ({
 vi.mock("./EnginesSettings", () => ({ EnginesSettings: marker("engines") }));
 vi.mock("./DecisionModelSettings", () => ({ DecisionModelSettings: marker("decisionModel") }));
 vi.mock("./keys/KeysPage", () => ({ KeysPage: marker("apiKey") }));
-vi.mock("./RemoteComputerSection", () => ({ RemoteComputerSection: marker("companion") }));
-vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: () => null }));
+vi.mock("./BotsPlaceSection", () => ({ BotsPlaceSection: marker("place") }));
+vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: marker("domain") }));
 vi.mock("./CompanionSection", () => ({ CompanionSection: () => null }));
 vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: () => null }));
 vi.mock("./LocalComputerSection", () => ({ LocalComputerSection: marker("computer") }));
@@ -160,8 +160,9 @@ describe("Settings in Simple mode", () => {
   it("opens the fold that holds a linked setting: API keys or connecting to a server", () => {
     expect(placement(open("connections"), "MARKER:apiKey;")).toBe("shown");
     expect(placement(open("engines"), "MARKER:apiKey;")).toBe("folded");
-    expect(placement(open("remote"), "MARKER:companion;")).toBe("shown");
-    expect(placement(open("companion"), "MARKER:companion;")).toBe("folded");
+    expect(placement(open("remote"), "MARKER:domain;")).toBe("shown");
+    expect(placement(open("companion"), "MARKER:domain;")).toBe("folded");
+    expect(placement(open("companion"), "MARKER:place;"), "where the bots live is never folded").toBe("shown");
     expect(SIMPLE_FOLDED).toEqual({ connections: "ai-keys", remote: "computer-elsewhere" });
   });
 
@@ -175,11 +176,11 @@ describe("Settings in Simple mode", () => {
     expect(html).not.toContain("API keys and connections");
   });
 
-  it("orders Computer as your bots' computers, your devices, the browser, logins, then Connect from elsewhere", () => {
+  it("orders Computer as where your bots live, their computers, your devices, the browser, logins, then Connect from elsewhere", () => {
     fixture.section = "companion";
     const html = render();
     expect(currentPage(html)).toBe("computer");
-    expect(blocks(html)).toEqual(["computer", "companion", "browser", "logins", "elsewhere", "remote"]);
+    expect(blocks(html)).toEqual(["place", "computer", "companion", "browser", "logins", "elsewhere", "remote"]);
     expect(groupLabels(html)).toEqual(["Your bots’ computers", "Your devices", "Built-in browser"].map((label) => label.replace("’", "&#x27;")));
     expect(html).toContain('aria-label="Enable the built-in browser"');
   });

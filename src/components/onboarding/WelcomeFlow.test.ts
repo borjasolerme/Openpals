@@ -1,17 +1,17 @@
 // @vitest-environment happy-dom
-// The first run: two screens, then the chat. Meeting the app (and connecting an AI when none works), then the Chief of
-// Staff over the app; what it saves, where it lands, and what a reload or a replay does.
+// The first run, one screen at a time: welcome, where the bots live (desktop app only), the AI, the bots, the apps, then
+// done; what it saves, where it lands, and what a reload or a replay does.
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { introStaged, stageIntro, useChiefStepOpen } from "@/lib/default-bot";
+import { introStaged, stageIntro } from "@/lib/default-bot";
 import { setLocale } from "@/lib/i18n";
+import { GROK_MOVE_NOTICE } from "@/lib/notices";
 import { EMPTY_ONBOARDING, MET_CHIEF_HINT, WELCOME_VERSION } from "@/lib/onboarding";
 import { saveWelcomeDraft } from "@/lib/welcome-draft";
 import type { InstanceInfo } from "@/state/store";
 
-const f = vi.hoisted(() => ({ state: {} as Record<string, unknown>, dispatch: vi.fn(), api: vi.fn(), landed: vi.fn(), onDone: vi.fn(),
-  checks: [] as string[] }));
+const f = vi.hoisted(() => ({ state: {} as Record<string, unknown>, dispatch: vi.fn(), api: vi.fn(), onDone: vi.fn(), checks: [] as string[] }));
 vi.mock("@/state/store", () => ({ useStore: () => ({ state: f.state, dispatch: f.dispatch }), api: f.api }));
 vi.mock("@/components/Avatar", () => ({ BotAvatar: () => null, MausAvatar: () => null }));
 vi.mock("@/components/mascot-clock", () => ({ usePrefersReducedMotion: () => true }));
@@ -20,9 +20,15 @@ vi.mock("@/components/EngineSetup", async (original) => {
   return { ...(await original<typeof import("@/components/EngineSetup")>()),
     EngineSetup: ({ instance }: { instance: InstanceInfo }) => h("div", { "data-engine-setup": instance.instanceId }) };
 });
-vi.mock("@/lib/mausbot-landing", () => ({ FLIGHT_MS: 700, landInSidebar: (input: { botId: string; commit: () => void }) => { f.landed(input.botId); input.commit(); } }));
+vi.mock("@/components/keys/KeyRow", async (original) => {
+  const { createElement: h } = await import("react");
+  return { ...(await original<typeof import("@/components/keys/KeyRow")>()), KeyRow: ({ id }: { id: string }) => h("div", { "data-key-row": id }) };
+});
+vi.mock("@/components/lazy-screens", async () => {
+  const { createElement: h } = await import("react");
+  return { GrokMoveDialog: ({ onClose }: { onClose: () => void }) => h("button", { "data-grok-move": "", onClick: onClose }, "Close Grok") };
+});
 const { WelcomeFlow } = await import("./WelcomeFlow");
-const { CHIEF_FADE_MS, CHIEF_GUARD_MS } = await import("./ChiefIntro");
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const claude = (ready: boolean, aiTest?: InstanceInfo["aiTest"]): InstanceInfo => ({
@@ -36,50 +42,60 @@ const freeOpenCode: InstanceInfo = {
 const signIn = (): InstanceInfo => ({ ...claude(false), snapshot: { state: "available", authenticated: false }, authentication: { method: "paste-code" } } as InstanceInfo);
 const maus = { id: "maus", threadId: "t", name: "Pal", title: "", description: "", notifications: true, color: "chrome", unread: false,
   modelSelection: { instanceId: "claude", model: "m" }, messages: [], defaultBot: {}, chiefOfStaff: true };
+const research = { ...maus, id: "research", threadId: "r", name: "Research", defaultBot: undefined, chiefOfStaff: false };
 
 let host: HTMLDivElement, root: Root;
-let chiefStep = false;
-function Watch() {
-  chiefStep = useChiefStepOpen();
-  return null;
-}
 const text = () => host.textContent ?? "";
+const title = () => host.querySelector("h1")?.textContent;
 const button = (label: string) => [...host.querySelectorAll("button")].find((node) => node.textContent === label);
-const press = async (label: string) => { await act(async () => { button(label)!.click(); }); };
-const tick = async (ms: number) => { await act(async () => { vi.advanceTimersByTime(ms); }); };
-const key = async (name: string) => {
-  const screen = host.querySelector<HTMLElement>("[data-welcome]")!;
-  await act(async () => { screen.dispatchEvent(new KeyboardEvent("keydown", { key: name, bubbles: true })); });
+const press = async (label: string) => {
+  const target = button(label);
+  if (!target) throw new Error(`no "${label}" button in: ${text()}`);
+  await act(async () => { target.click(); });
 };
+const pick = async (selector: string) => { await act(async () => { host.querySelector<HTMLElement>(selector)!.click(); }); };
+const type = async (selector: string, value: string) => {
+  const input = host.querySelector<HTMLInputElement>(selector)!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+};
+const submit = async (selector: string) => { await act(async () => { host.querySelector<HTMLFormElement>(selector)!.requestSubmit(); }); };
 const show = async (extra: Record<string, unknown> = {}) => {
-  await act(async () => { root.render([createElement(Watch, { key: "w" }), createElement(WelcomeFlow, { key: "f", onDone: f.onDone, ...extra })]); });
-};
-/** Next, the first screen's 100 ms fade, and the Chief dialog's input guard. */
-const toChief = async (label = "Next") => {
-  await press(label);
-  await tick(100);
-  await tick(CHIEF_GUARD_MS);
+  await act(async () => { root.render(createElement(WelcomeFlow, { onDone: f.onDone, ...extra })); });
+  await act(async () => {});
 };
 const saved = () => f.api.mock.calls.filter(([path, init]) => path === "/api/config" && init?.method === "PUT").map(([, init]) => JSON.parse(init.body));
 const memoryStorage = () => {
   const values = new Map<string, string>();
   return { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => void values.set(k, String(v)), removeItem: (k: string) => void values.delete(k), clear: () => values.clear() };
 };
+type Place = { kind: "local" } | { kind: "server"; url: string; label: string };
+const desktop = (place: Place, ownPage = true) => {
+  const bridge = {
+    current: vi.fn(async () => place),
+    connect: vi.fn(async (): Promise<{ ok: true } | { ok: false; error: string }> => ({ ok: true })),
+    disconnect: vi.fn(async () => {}),
+    onChanged: vi.fn(() => () => {}),
+  };
+  Object.assign(window, { ogb: { place: bridge, app: { version: "1", ownPage } } });
+  return bridge;
+};
 
 beforeEach(() => {
-  vi.useFakeTimers();
-  HTMLElement.prototype.animate = vi.fn(() => ({ onfinish: null, oncancel: null, cancel() {} }) as unknown as Animation);
   setLocale("en");
   vi.stubGlobal("localStorage", memoryStorage());
   vi.stubGlobal("sessionStorage", memoryStorage());
   f.dispatch.mockReset();
-  f.landed.mockReset();
   f.onDone.mockReset();
   f.api.mockReset();
   f.checks = [];
-  f.api.mockImplementation(async (path: string, init?: { body?: string }) => {
+  f.api.mockImplementation(async (path: string, init?: { method?: string; body?: string }) => {
     if (path.endsWith("/check")) { f.checks.push(path); return { ok: true }; }
-    return path === "/api/instances" ? { instances: f.state.instances } : JSON.parse(init?.body ?? "{}");
+    if (path === "/api/instances") return { instances: f.state.instances };
+    if (path.endsWith("/test")) return { ok: true };
+    return JSON.parse(init?.body ?? "{}");
   });
   f.state = { instances: [claude(true)], config: { onboarding: EMPTY_ONBOARDING, profile: { name: "" } }, bots: [maus] };
   stageIntro(null);
@@ -90,167 +106,205 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  delete (window as { ogb?: unknown }).ogb;
   vi.unstubAllGlobals();
-  vi.useRealTimers();
 });
 
 describe("a new install's first run", () => {
-  it("is two screens with an AI already working: Next, then Create, and it lands in the Chief's chat", async () => {
+  it("meets the app, signs in, starts with Pal, skips the apps and lands in Pal's chat", async () => {
     await show();
-    expect(host.querySelector("h1")?.textContent).toBe("Meet Openpals");
-    expect(host.querySelector("[data-demo-composer]")?.textContent, "reduced motion shows the whole sentence").toContain("Hand off any task to your team of bots");
-    for (const gone of ["Step 1", "Back", "Skip", "Your name", "Connect an AI", "Set up later"]) expect(text()).not.toContain(gone);
-    expect(button("Next")!.disabled).toBe(false);
+    expect(title()).toBe("Welcome to Openpals");
+    expect(button("Back"), "nothing before the first screen").toBeUndefined();
+    await press("Get started");
 
-    await press("Next");
-    expect(host.querySelector("[data-welcome]")?.getAttribute("data-welcome"), "the first screen fades out first").toBe("meet");
-    await tick(100);
-    expect(host.querySelector("[role=dialog]")?.textContent).toContain("Introducing your Chief of Staff");
-    expect(host.querySelector("[data-welcome]")!.className).toContain("ui-scrim");
-    expect(chiefStep, "the app behind it is the empty shell").toBe(true);
-    expect(button("Choose an existing bot"), "no bots of the person's own yet").toBeUndefined();
+    expect(title(), "a browser has no question of where the bots live").toBe("Sign in to your AI");
+    expect(text()).toContain("Step 1 of 3");
+    expect(f.checks, "the AI answered one tiny test message").toEqual(["/api/instances/claude/check"]);
+    expect(host.querySelector("[data-ai-connected]")?.textContent).toBe("Connected to Claude");
+    await press("Continue");
 
-    await tick(CHIEF_GUARD_MS);
-    await press("Create Chief of Staff");
-    expect(f.landed).toHaveBeenCalledWith("maus");
+    expect(title()).toBe("Bring your bots");
+    expect(button("Skip"), "nothing brought yet").toBeDefined();
+    await pick('[data-bots-choice="pal"]');
     expect(f.dispatch).toHaveBeenCalledWith({ type: "updateBot", botId: "maus", patch: { welcomed: true } });
-    await tick(CHIEF_FADE_MS);
+    expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Pal");
+    await press("Continue");
+
+    expect(title()).toBe("Connect your apps");
+    expect(host.querySelector('[data-key-row="composio"]'), "a Composio project's key").not.toBeNull();
+    expect(host.querySelector("[data-composio-personal]"), "or a personal one").not.toBeNull();
+    await press("Skip");
+
+    expect(title()).toBe("You're all set");
+    await press("Chat with Pal");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith("maus");
     expect(introStaged("maus"), "its first messages arrive one at a time").toBe(true);
     await act(async () => {});
-    expect(saved()).toEqual([{ onboarding: expect.objectContaining({ version: WELCOME_VERSION, hintsSeen: [MET_CHIEF_HINT] }) }]);
+    expect(saved(), "the Grok Bot popup has nothing left to offer").toEqual([{ onboarding: expect.objectContaining({ version: WELCOME_VERSION, hintsSeen: [MET_CHIEF_HINT, GROK_MOVE_NOTICE] }) }]);
   });
 
-  it("counts an AI once it answered one tiny test message, and never before", async () => {
-    await show();
-    expect(f.checks).toEqual(["/api/instances/claude/check"]);
-    expect(button("Next")!.disabled).toBe(false);
-    expect(host.querySelector("[data-sign-in]")).toBeNull();
+  it("goes back a step with Back", async () => {
+    await show({ initialBeat: "bots" });
+    await press("Back");
+    expect(title()).toBe("Sign in to your AI");
   });
 
-  it("comes back to the second screen after a reload there", async () => {
-    saveWelcomeDraft({ beat: "chief" });
-    await show();
-    expect(text()).toContain("Introducing your Chief of Staff");
-  });
-});
-
-describe("the Chief step", () => {
-  const finishesAtNext = async () => {
-    await show();
-    await press("Next");
-    await tick(100);
-    expect(text()).not.toContain("Introducing your Chief of Staff");
+  it("ends in the app with nothing brought, for the chat the app chooses", async () => {
+    await show({ initialBeat: "bots" });
+    await press("Skip");
+    await press("Skip");
+    expect(text()).toContain("You can add bots and connect apps any time");
+    await press("Open Openpals");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith(null);
-    expect(chiefStep).toBe(false);
-  };
-
-  it("is skipped once Pal has met the person", async () => {
-    f.state = { ...f.state, bots: [{ ...maus, welcomed: true }] };
-    await finishesAtNext();
+    expect(introStaged("maus")).toBe(false);
   });
 
-  it("is skipped where another bot is already the Chief", async () => {
-    f.state = { ...f.state, bots: [{ ...maus, chiefOfStaff: false }, { ...maus, id: "research", threadId: "r", name: "Research", defaultBot: undefined, chiefOfStaff: true }] };
-    await finishesAtNext();
-  });
-
-  it("is skipped where there is no Pal", async () => {
-    f.state = { ...f.state, bots: [] };
-    await finishesAtNext();
+  it("comes back to the screen it was on after a reload", async () => {
+    saveWelcomeDraft({ beat: "apps" });
+    await show();
+    expect(title()).toBe("Connect your apps");
   });
 });
 
+describe("where the bots live", () => {
+  it("is asked in the desktop app on this computer, and This computer goes on to the AI", async () => {
+    desktop({ kind: "local" });
+    await show({ initialBeat: "place" });
+    expect(title()).toBe("Where should your bots live?");
+    expect(text()).toContain("Step 1 of 4");
+    await pick('[data-place-choice="local"]');
+    expect(title()).toBe("Sign in to your AI");
+  });
+
+  it("guides the setup of a server and pairs with the link the installer printed", async () => {
+    const place = desktop({ kind: "local" });
+    await show({ initialBeat: "place" });
+    await pick('[data-place-choice="server"]');
+    expect(title()).toBe("Set up an always-on server");
+    expect(host.querySelector('[data-server-guide="boat"]')?.textContent).toContain("boat host <id> 8799 --public --localhost");
+    await type('input[placeholder="<id>"]', "m-42");
+    expect(text()).toContain("boat extend m-42 --no-auto-stop");
+    await press("Your own Linux server");
+    await type('input[placeholder="https://…"]', "https://bots.example.com/");
+    expect(text()).toContain("install-server.sh | bash -s -- --public-url https://bots.example.com");
+
+    await type("[data-pairing-link]", "https://bots.example.com/pair");
+    await submit("[data-server-guide] form");
+    expect(place.connect).not.toHaveBeenCalled();
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("That isn't a pairing link");
+
+    place.connect.mockResolvedValueOnce({ ok: false, error: "unreachable" });
+    await type("[data-pairing-link]", "https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
+    await submit("[data-server-guide] form");
+    expect(place.connect).toHaveBeenCalledWith("https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("Couldn't reach that server");
+
+    place.connect.mockResolvedValueOnce({ ok: false, error: "cancelled" });
+    await submit("[data-server-guide] form");
+    expect(host.querySelector("[role=alert]"), "declining the app's own question is no error").toBeNull();
+  });
+
+  it("can still choose this computer from the guide", async () => {
+    desktop({ kind: "local" });
+    await show({ initialBeat: "place" });
+    await pick('[data-place-choice="server"]');
+    await press("Use this computer instead");
+    expect(title()).toBe("Sign in to your AI");
+  });
+
+  it("is not asked again on the server's page once paired, which goes on from the AI", async () => {
+    desktop({ kind: "server", url: "https://bots.example.com", label: "Box" }, false);
+    await show();
+    expect(title()).toBe("Sign in to your AI");
+    expect(button("Back")).toBeUndefined();
+  });
+});
 
 describe("with no AI working yet", () => {
-  it("keeps the screen's shape: the pill signs in, and the line under it offers other ways or later", async () => {
+  it("signs one in, or offers other ways and later", async () => {
     f.state = { ...f.state, instances: [signIn()] };
-    await show();
-    expect(host.querySelector("h1")?.textContent).toBe("Meet Openpals");
-    expect(button("Next")).toBeUndefined();
+    await show({ initialBeat: "ai" });
+    expect(button("Continue")).toBeUndefined();
     expect(button("Sign in with Claude")).toBeDefined();
-    expect(button("Other ways to connect")).toBeDefined();
-    expect(host.querySelector("[data-engine-setup]"), "no setup card on the screen itself").toBeNull();
-    await toChief("Set up later");
-    expect(text()).toContain("Introducing your Chief of Staff");
+    await press("Set up later");
+    expect(title()).toBe("Bring your bots");
   });
 
   it("opens every other way in the Connect an AI dialog, where OpenCode's free model is only a backup", async () => {
     f.state = { ...f.state, instances: [freeOpenCode, claude(false)] };
-    await show();
+    await show({ initialBeat: "ai" });
     expect(button("Connect Claude"), "an AI set up in Terminal opens the dialog").toBeDefined();
     expect(f.checks).toEqual([]);
     await press("Other ways to connect");
     const dialog = host.querySelector("[data-connect-ai]")!;
-    expect(dialog.textContent).toContain("Connect an AI");
     expect(dialog.textContent).toContain("OpenCode's free model is ready as a backup");
     expect(dialog.querySelector('[data-engine-setup="claude"]')).not.toBeNull();
     await act(async () => { dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
     expect(host.querySelector("[data-connect-ai]")).toBeNull();
-    expect(text(), "Escape closed the dialog only").toContain("Meet Openpals");
+    expect(title()).toBe("Sign in to your AI");
   });
 
-  it("says why an AI didn't answer its test, under the pill and in the dialog with Check again", async () => {
+  it("says why an AI didn't answer its test", async () => {
     f.state = { ...f.state, instances: [freeOpenCode, claude(true, "failed")] };
-    await show();
+    await show({ initialBeat: "ai" });
     expect(host.querySelector("[role=alert]")?.textContent).toContain("Claude");
-    await press("Other ways to connect");
-    expect(host.querySelector("[data-connect-ai] [data-ai-silent]")).not.toBeNull();
   });
 
-  it("leaves the AI out for one that answered the server's own test", async () => {
-    f.state = { ...f.state, instances: [freeOpenCode, claude(true, "passed")] };
-    await show();
-    expect(button("Next")!.disabled).toBe(false);
-    expect(f.checks).toEqual([]);
-  });
-
-  it("doesn't count an AI that offers no model yet, such as OpenCode still listing its models", async () => {
-    f.state = { ...f.state, instances: [{ ...freeOpenCode, snapshot: { state: "available", authenticated: true }, models: { default: "", options: [] }, aiTest: undefined }, claude(false)] };
-    await show();
-    expect(button("Next")).toBeUndefined();
-    expect(f.checks).toEqual([]);
-  });
-
-  it("turns the pill into Next once the AI connects, with the confirmation above it", async () => {
+  it("goes on once the AI connects, with the confirmation", async () => {
     f.state = { ...f.state, instances: [claude(false)] };
-    await show();
+    await show({ initialBeat: "ai" });
     f.state = { ...f.state, instances: [claude(true)] };
-    await show();
+    await show({ initialBeat: "ai" });
     await act(async () => {});
     expect(text()).toContain("Connected to Claude");
-    expect(button("Next")!.disabled).toBe(false);
     expect(button("Set up later")).toBeUndefined();
   });
+});
 
-  it("moves on with Escape, and Enter presses the pill, never past an AI still to connect", async () => {
-    f.state = { ...f.state, instances: [claude(false)] };
-    await show();
-    await key("Enter");
-    expect(host.querySelector("[data-connect-ai]"), "Enter pressed Connect Claude").not.toBeNull();
-    expect(text()).toContain("Meet Openpals");
-    await act(async () => { host.querySelector("[data-connect-ai]")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); });
-    await key("Escape");
-    await tick(100);
-    expect(text()).toContain("Introducing your Chief of Staff");
+describe("bringing bots and apps", () => {
+  it("opens the chat with the first bot moved from Grok Bot", async () => {
+    await show({ initialBeat: "bots" });
+    await pick('[data-bots-choice="grok"]');
+    f.state = { ...f.state, bots: [maus, research] };
+    await show({ initialBeat: "bots" });
+    await press("Close Grok");
+    expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Research");
+    await press("Continue");
+    await press("Skip");
+    await press("Chat with Research");
+    expect(f.onDone).toHaveBeenCalledExactlyOnceWith("research");
+  });
+
+  it("saves a personal Composio key as an MCP server, switched on once Composio accepts it", async () => {
+    await show({ initialBeat: "apps" });
+    await type("[data-composio-personal] input", "ak_project");
+    await submit("[data-composio-personal]");
+    expect(host.querySelector("[data-composio-personal] [role=alert]")?.textContent).toBe("A personal Composio key starts with ck_.");
+    await type("[data-composio-personal] input", "ck_mine");
+    await submit("[data-composio-personal]");
+    const calls = f.api.mock.calls.map(([path, init]) => `${init?.method ?? "GET"} ${path}`);
+    expect(calls).toEqual(expect.arrayContaining(["POST /api/mcp/servers", "POST /api/mcp/servers/composio-personal/test", "PATCH /api/mcp/servers/composio-personal"]));
+    expect(text()).toContain("Connected. Every bot can use your apps.");
+    expect(button("Continue")).toBeDefined();
   });
 });
 
 describe("other first runs", () => {
   it("gives a hosted place's admin the first screen only, then the chat", async () => {
+    desktop({ kind: "local" });
     await show({ hosted: true });
     expect(text()).toContain("This is your team's shared Openpals");
-    await press("Next");
-    expect(text()).not.toContain("Introducing your Chief of Staff");
+    await press("Get started");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith(null);
   });
 
   it("a replay from Settings records nothing about a first chat", async () => {
     f.state = { ...f.state, config: { onboarding: { ...EMPTY_ONBOARDING, completedAt: "2026-09-01T00:00:00.000Z", version: WELCOME_VERSION } } };
-    await show({ replay: true });
-    await toChief();
-    await press("Create Chief of Staff");
-    await tick(CHIEF_FADE_MS);
+    await show({ replay: true, initialBeat: "bots" });
+    await pick('[data-bots-choice="pal"]');
+    await press("Continue");
+    await press("Skip");
+    await press("Chat with Pal");
     await act(async () => {});
     expect(saved()[0].onboarding).not.toHaveProperty("hintsSeen");
     expect(introStaged("maus"), "a replay lands in a chat that may be long under way").toBe(false);

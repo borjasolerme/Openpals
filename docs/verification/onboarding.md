@@ -1,14 +1,18 @@
 # Welcome flow and guided tour
 
-The first run is two screens, then the chat (Oct 27 2026): "Meet OpenMausBot"
-(a composer typing one sentence and Next; with no AI working, the same pill
-signs one in, with "Other ways to connect · Set up later" under it), then
-"Introducing your Chief of Staff" over an empty app (Create Chief of Staff, and
-Choose an existing bot where the person has bots). The Chief step shows only
-for a MausBot not yet introduced where no other bot is the Chief. It lands in
-the Chief's chat, where MausBot's three lines, its follow-up (written once by
-the server, `POST /api/bots/:id/helper-followup`) and chips offer only what is
-still missing. The app tour starts only from Settings → Replay app tour.
+The first run goes one screen at a time, then to the chat: Welcome (one line
+and Get started); Where should your bots live? (only in the desktop app while
+it shows this computer: This computer, or An always-on server with a Boat or
+own-Linux-server guide, `scripts/install-server.sh`, and the pairing link);
+Sign in to your AI (the sign-in pill, Other ways to connect, Set up later);
+Bring your bots (Move from Grok Bot, Start with Pal; skippable); Connect your
+apps (a personal Composio key saved as the `composio-personal` MCP server, or a
+Composio project key; skippable); and You're all set, which opens the chat with
+the bot brought in (Pal first, else the first bot moved from Grok Bot), or the
+Chief's chat. A server's page reached by pairing starts at the AI. Pal started
+here lands in a chat where MausBot's three lines, its follow-up (written once
+by the server, `POST /api/bots/:id/helper-followup`) and chips offer only what
+is still missing. The app tour starts only from Settings → Replay app tour.
 
 Launch the isolated full-app fixture following [Chat UI](chat-ui.md):
 
@@ -27,12 +31,11 @@ first-run onboarding through the fixture-only `?onboarding=1` entry. It uses
 the real renderer and fake-engine server. No provider login, real phone
 pairing, native permissions or user workspace is involved.
 
-Assertions cover the two screens: no field, step count, Back or Skip on the
-first; a reload on the second coming back to it; Create landing in the Chief's
+Assertions cover the screens: no field, step count, Back or Skip on the first;
+a reload coming back to the screen it was on; starting with Pal landing in its
 chat with its first messages and one saved follow-up even when the completion
 save fails, and the next browser without this one's mark seeing the welcome
-again, without the Chief step MausBot already had, and saving it (with
-`met-chief-v1`); no app tour after the welcome or a reload; automatic
+again, skipping every step and saving it (with `met-chief-v1`); no app tour after the welcome or a reload; automatic
 starter-model selection and a successful first composer message without opening
 the model picker; every app tour step from Settings, persistence after reload,
 Settings replay, skipping while Next is saving, closing a welcome replay while
@@ -47,10 +50,12 @@ Stop the launcher with Ctrl-C; it owns and removes only its disposable home.
 The rules behind it run offline:
 
 ```sh
-pnpm exec vitest run src/components/onboarding/WelcomeFlow.test.ts src/components/onboarding/ChiefIntro.test.ts src/components/onboarding/ConnectAi.test.ts src/components/HelperIntro.test.ts src/lib/default-bot.test.ts server/routes/helper-followup.test.ts electron/system-name.test.mjs src/components/CardHint.test.ts
+pnpm exec vitest run src/components/onboarding/WelcomeFlow.test.ts src/components/onboarding/ConnectAi.test.ts src/lib/composio-personal.test.ts src/lib/place.test.ts src/components/BotsPlaceSection.dom.test.ts scripts/install-server.test.mjs src/components/HelperIntro.test.ts src/lib/default-bot.test.ts server/routes/helper-followup.test.ts electron/system-name.test.mjs src/components/CardHint.test.ts
 ```
 
-They cover when the Chief step shows, its 300 ms input guard, the chips' order and
+They cover the screens and their order (where the bots live only in the
+desktop app on this computer), the server guide and pairing errors, the
+personal Composio key, the installer's argument checks, the chips' order and
 cap, the follow-up written once and only by MausBot's own person, the default
 profile name's guards, and the Advanced intro and spotlights kept as they were.
 

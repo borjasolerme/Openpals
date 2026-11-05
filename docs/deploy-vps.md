@@ -11,6 +11,24 @@ Two ways to make the server reachable are covered. Pick one; the rest of the gui
 
 Whichever you pick, the login is the same: you **pair** each device once with a short code and it stays signed in. A session lasts 30 days; using it with half that or less left renews it to a full 30, up to 180 days from pairing (`OMB_SESSION_TTL_DAYS` and `OMB_SESSION_MAX_DAYS` change both numbers). There is no password.
 
+## The quick way: one command
+
+On a fresh Ubuntu or Debian server that already has an HTTPS address reaching
+port 8799 (from Boat's `boat host`, Caddy, Tailscale or your own proxy), one
+command installs Node 24, builds Openpals from this repository, runs it as the
+`openpals` systemd service and prints a one-time pairing link:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh \
+  | bash -s -- --public-url https://bots.example.com --label "My server"
+```
+
+Paste that link in the Openpals app (the welcome's "An always-on server", or
+Settings → Where your bots live). Run the command again to update and get a new
+link. On a server with less than 6 GB of memory it adds a 4 GB swap file first,
+so the build fits. The rest of this guide is the manual way, with the HTTPS
+options explained.
+
 ## What runs on a server, and what does not
 
 Runs fully on the server: every engine CLI (Claude Code, Codex, Grok, custom ACP engines), chats, rooms, bot-to-bot coordination, routines, connected apps and custom MCP servers, webhooks, Company Brain, computer use on cloud or container computers, text-to-speech, and the web UI (the server serves it itself).

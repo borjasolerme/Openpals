@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { connectServer, currentPlace, disconnectServer, onPlaceChanged } from "./place";
+import { connectServer, currentPlace, disconnectServer, isServerPairingLink, onPlaceChanged } from "./place";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -36,5 +36,36 @@ describe("where the bots live", () => {
     unsubscribe();
     expect(seen).toEqual([{ kind: "local" }]);
     expect(stop).toHaveBeenCalledOnce();
+  });
+});
+
+describe("server pairing links", () => {
+  it.each([
+    "https://bots.example.com/pair#code=ABCD-EFGH-JKLM",
+    " https://custom.example.com:8443/pair/#code=ABCD%2DEFGH%2DJKLM ",
+    "https://random.trycloudflare.com/pair#code=ABCDEFGHJKLM",
+  ])("accepts a complete HTTPS link: %s", (link) => {
+    expect(isServerPairingLink(link)).toBe(true);
+  });
+
+  it.each([
+    "",
+    "ABCD-EFGH-JKLM",
+    "http://bots.example.com/pair#code=ABCD-EFGH-JKLM",
+    "https:example.com/pair#code=ABCD-EFGH-JKLM",
+    "https://user:secret@bots.example.com/pair#code=ABCD-EFGH-JKLM",
+    "https://bots.example.com",
+    "https://bots.example.com/pair",
+    "https://bots.example.com/pair#code=",
+    "https://bots.example.com/pair#code=%20",
+    "https://bots.example.com/pair#code=%",
+    "https://bots.example.com/other#code=ABCD-EFGH-JKLM",
+    "https://bots.example.com/pair?code=ABCD-EFGH-JKLM",
+    "https://bots.example.com/pair?code=secret#code=ABCD-EFGH-JKLM",
+    "https://bots.example.com/pair#code=ABCD EFGH JKLM",
+    "https://bots.example.com\\@other.example/pair#code=ABCD-EFGH-JKLM",
+    "openmausbot://pair?code=123456",
+  ])("rejects an incomplete, malformed or insecure link: %s", (link) => {
+    expect(isServerPairingLink(link)).toBe(false);
   });
 });

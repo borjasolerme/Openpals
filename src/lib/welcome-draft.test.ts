@@ -21,8 +21,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe("the welcome draft", () => {
   it("keeps the screen across a reload, and nothing else, until it is cleared", () => {
     expect(readWelcomeDraft()).toBeNull();
-    saveWelcomeDraft({ beat: "chief" });
-    expect(readWelcomeDraft()).toEqual({ beat: "chief" });
+    saveWelcomeDraft({ beat: "bots" });
+    expect(readWelcomeDraft()).toEqual({ beat: "bots" });
     expect(Object.keys(JSON.parse(local.values.get(WELCOME_DRAFT_KEY)!)).sort()).toEqual(["beat", "version"]);
     clearWelcomeDraft();
     expect(readWelcomeDraft()).toBeNull();
@@ -30,16 +30,16 @@ describe("the welcome draft", () => {
   });
 
   it("forgets a draft written by another version of the welcome", () => {
-    saveWelcomeDraft({ beat: "chief" });
+    saveWelcomeDraft({ beat: "bots" });
     expect(JSON.parse(local.values.get(WELCOME_DRAFT_KEY)!).version).toBe(WELCOME_VERSION);
     for (const version of [undefined, WELCOME_VERSION - 1, WELCOME_VERSION + 1]) {
-      local.values.set(WELCOME_DRAFT_KEY, JSON.stringify({ version, beat: "chief" }));
+      local.values.set(WELCOME_DRAFT_KEY, JSON.stringify({ version, beat: "bots" }));
       expect(readWelcomeDraft(), String(version)).toBeNull();
     }
   });
 
-  it("ignores anything it did not write, such as a step from the longer welcome with a typed name", () => {
-    for (const junk of ["{", "null", "[]", JSON.stringify({ version: WELCOME_VERSION, beat: "reel" }),
+  it("ignores anything it did not write, such as a step from an earlier welcome", () => {
+    for (const junk of ["{", "null", "[]", JSON.stringify({ version: WELCOME_VERSION, beat: "reel" }), JSON.stringify({ version: WELCOME_VERSION, beat: "chief" }),
       JSON.stringify({ version: WELCOME_VERSION, beat: "engines", name: "Ada" }), JSON.stringify({ version: WELCOME_VERSION, beat: "hello", name: "Ada" })]) {
       local.values.set(WELCOME_DRAFT_KEY, junk);
       expect(readWelcomeDraft(), junk.slice(0, 40)).toBeNull();
@@ -49,7 +49,7 @@ describe("the welcome draft", () => {
   it("works on without browser storage", () => {
     vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); }, removeItem: () => { throw new Error("blocked"); } });
     expect(readWelcomeDraft()).toBeNull();
-    expect(() => saveWelcomeDraft({ beat: "meet" })).not.toThrow();
+    expect(() => saveWelcomeDraft({ beat: "welcome" })).not.toThrow();
     expect(() => clearWelcomeDraft()).not.toThrow();
   });
 });

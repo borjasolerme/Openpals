@@ -15,7 +15,7 @@ vi.mock("@/state/store", async (importOriginal) => ({
   api: vi.fn(),
   useStore: () => ({ state: { appSettingsSection: fixture.section, config: fixture.config, appSettingsPhonePairing: fixture.phonePairing }, dispatch: vi.fn() }),
 }));
-vi.mock("./RemoteComputerSection", () => ({ RemoteComputerSection: () => null }));
+vi.mock("./BotsPlaceSection", () => ({ BotsPlaceSection: () => null }));
 vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: () => null }));
 vi.mock("./CompanionSection", () => ({ CompanionSection: ({ focusRequest }: { focusRequest?: number }) => `COMPANION_SECTION focus=${focusRequest ?? 0}` }));
 vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: ({ focusRequest }: { focusRequest?: number }) => `SERVER_PAIRING_CARD_MARKER focus=${focusRequest ?? 0}` }));

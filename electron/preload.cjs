@@ -56,7 +56,8 @@ const bridge = {
     /** Where the bots live now: `{ kind: "local" }` or `{ kind: "server", url, label }`. */
     current: () => ipcRenderer.invoke("place:current"),
     /** Pairs with an always-on server from its one-time pairing link (https://host/pair#code=…) and opens it. Resolves
-     * `{ ok: true }`, or `{ ok: false, error }` with "cancelled" when the person declined main's confirmation. */
+     * `{ ok: true }`, or `{ ok: false, error }` with "cancelled" when the person declined main's confirmation and
+     * "unreachable" when the server didn't answer. */
     connect: (link) => isLocalPage || navigator.userActivation?.isActive === true
       ? ipcRenderer.invoke("place:connect", String(link)) : Promise.reject(new Error("Choose Connect to connect to a server.")),
     /** Forgets the server and goes back to this computer. */

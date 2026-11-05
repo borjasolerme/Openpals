@@ -155,30 +155,40 @@ describe("persistence patches", () => {
     expect(hintSeenPatch(record, "apps")).toEqual({ onboarding: { hintsSeen: ["computer", "apps"] } });
   });
 
-  it("marks a first run as the one that met the Chief, keeping every hint already seen", () => {
+  it("marks a first run as done with this welcome, keeping every hint already seen", () => {
     const now = new Date("2026-10-27T12:00:00.000Z");
     expect(firstRunPatch(undefined, now)).toEqual({ onboarding: { completedAt: now.toISOString(), version: WELCOME_VERSION, hintsSeen: [MET_CHIEF_HINT] } });
     expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: ["computer"] }, now).onboarding.hintsSeen).toEqual(["computer", MET_CHIEF_HINT]);
     expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: [MET_CHIEF_HINT] }, now).onboarding, "already met").toEqual({ completedAt: now.toISOString(), version: WELCOME_VERSION });
     expect(completionPatch(now).onboarding, "a replay says nothing about a first chat").not.toHaveProperty("hintsSeen");
+    expect(firstRunPatch({ ...EMPTY_ONBOARDING, hintsSeen: ["offer"] }, now, ["offer", "other", "other"]).onboarding.hintsSeen, "offers the welcome made")
+      .toEqual(["offer", MET_CHIEF_HINT, "other"]);
   });
 });
 
 describe("the first run's screens", () => {
-  it("is two screens, meeting the app and then the Chief of Staff, whatever this computer has", () => {
-    expect(beatsFor({})).toEqual(["meet", "chief"]);
-    expect(beatsFor({ hosted: false })).toEqual(["meet", "chief"]);
+  it("meets the app, then the AI, the bots and the apps, then ends", () => {
+    expect(beatsFor({})).toEqual(["welcome", "ai", "bots", "apps", "done"]);
   });
 
-  it("gives a hosted place's admin only the first: their team's bots and Chief are set up already", () => {
-    expect(beatsFor({ hosted: true })).toEqual(["meet"]);
+  it("asks where the bots live only in the desktop app on this computer", () => {
+    expect(beatsFor({ place: true })).toEqual(["welcome", "place", "ai", "bots", "apps", "done"]);
+  });
+
+  it("goes straight on to the AI on a server's page after pairing it", () => {
+    expect(beatsFor({ welcomed: true })).toEqual(["ai", "bots", "apps", "done"]);
+  });
+
+  it("gives a hosted place's admin only the first: their team's AI, bots and apps are set up already", () => {
+    expect(beatsFor({ hosted: true, place: true })).toEqual(["welcome"]);
   });
 
   it("resumes the saved screen while it is offered, else starts at the first", () => {
-    expect(resumeBeat(beatsFor({}), "chief")).toBe("chief");
-    expect(resumeBeat(beatsFor({}), undefined)).toBe("meet");
-    expect(resumeBeat(beatsFor({ hosted: true }), "chief")).toBe("meet");
-    expect(resumeBeat(beatsFor({}), "engines" as never), "a step from the longer welcome").toBe("meet");
+    expect(resumeBeat(beatsFor({}), "bots")).toBe("bots");
+    expect(resumeBeat(beatsFor({}), undefined)).toBe("welcome");
+    expect(resumeBeat(beatsFor({}), "place")).toBe("welcome");
+    expect(resumeBeat(beatsFor({ hosted: true }), "bots")).toBe("welcome");
+    expect(resumeBeat(beatsFor({}), "chief" as never), "a step from the earlier welcome").toBe("welcome");
   });
 });
 

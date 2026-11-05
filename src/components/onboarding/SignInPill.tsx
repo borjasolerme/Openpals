@@ -145,10 +145,10 @@ function PasteSlot({ name, onSubmit }: { name: string; onSubmit: (code: string) 
   const [code, setCode] = useState("");
   return (
     <form data-sign-in="paste" className="relative w-[288px] max-w-full" onSubmit={(event) => { event.preventDefault(); onSubmit(code); }}>
-      <input autoFocus value={code} onChange={(event) => setCode(event.target.value)} aria-label={t("onboarding.meet.paste", { name })}
-        placeholder={t("onboarding.meet.paste", { name })}
+      <input autoFocus value={code} onChange={(event) => setCode(event.target.value)} aria-label={t("onboarding.ai.paste", { name })}
+        placeholder={t("onboarding.ai.paste", { name })}
         className="h-9 w-full rounded-[18px] border-[0.5px] border-ink/10 bg-composer pl-4 pr-10 text-[14px] leading-5 text-ink placeholder:text-ink-tertiary" />
-      <button type="submit" disabled={!code.trim()} aria-label={t("onboarding.meet.pasteSubmit")} title={t("onboarding.meet.pasteSubmit")}
+      <button type="submit" disabled={!code.trim()} aria-label={t("onboarding.ai.pasteSubmit")} title={t("onboarding.ai.pasteSubmit")}
         className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-ink text-app disabled:opacity-40">
         <ArrowUp size={14} strokeWidth={2} />
       </button>
@@ -172,16 +172,16 @@ export function SignInPill({ pill, instance, waiting, onDialog }: {
     return (
       <button type="button" data-sign-in="waiting" className={PILL} aria-disabled={!link}
         onClick={() => link && void openExternalLink(link).catch(() => {})}>
-        <LoaderCircle size={14} aria-hidden="true" className="shrink-0 animate-spin" />{t("onboarding.meet.waiting", { name })}
+        <LoaderCircle size={14} aria-hidden="true" className="shrink-0 animate-spin" />{t("onboarding.ai.waiting", { name })}
       </button>
     );
   }
   if (slot.kind === "paste") return <PasteSlot name={name} onSubmit={(code) => void submit(code)} />;
   if (slot.kind === "code") return <CodeSlot code={slot.code} />;
   const way = pillWay(instance);
-  const label = way === "install" ? t("onboarding.meet.install", { name })
-    : way === "sign-in" ? t("onboarding.meet.signIn", { name })
-    : instance ? t("onboarding.meet.connectNamed", { name }) : t("onboarding.meet.connectAi");
+  const label = way === "install" ? t("onboarding.ai.install", { name })
+    : way === "sign-in" ? t("onboarding.ai.signIn", { name })
+    : instance ? t("onboarding.ai.connectNamed", { name }) : t("onboarding.ai.connectAi");
   return (
     <button type="button" data-primary="" data-sign-in={way} className={PILL}
       onClick={() => (way === "install" ? void install() : way === "sign-in" ? void start() : onDialog())}>

@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLocale } from "@/lib/i18n";
-import { RemoteComputerSection } from "./RemoteComputerSection";
+import { BotsPlaceSection } from "./BotsPlaceSection";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 type Place = { kind: "local" } | { kind: "server"; url: string; label: string };
@@ -29,44 +29,36 @@ afterEach(async () => { await act(async () => root?.unmount()); root = null; hos
 
 async function mount() {
   root = createRoot(host);
-  await act(async () => root!.render(createElement(RemoteComputerSection)));
+  await act(async () => root!.render(createElement(BotsPlaceSection)));
   await act(async () => { await Promise.resolve(); });
 }
+const button = (label: string) => [...host.querySelectorAll("button")].find((node) => node.textContent?.includes(label));
 
-async function submit(link: string) {
-  const input = host.querySelector("input")!;
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, link);
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  await act(async () => { host.querySelector("form")!.requestSubmit(); });
-}
-
-describe("connecting this app to a server", () => {
-  it("pairs from a full pairing link and shows what the app refused", async () => {
-    place.connect.mockResolvedValueOnce({ ok: false, error: "That pairing code has expired." });
+describe("Settings → Where your bots live", () => {
+  it("is shown only in the desktop app", async () => {
+    delete (window as { ogb?: unknown }).ogb;
     await mount();
-    await submit("https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
-    expect(place.connect).toHaveBeenCalledWith("https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
-    expect(host.querySelector('[role="alert"]')?.textContent).toBe("That pairing code has expired.");
+    expect(host.innerHTML).toBe("");
   });
 
-  it("refuses a link without its code before asking the app", async () => {
+  it("names this computer and opens the server guide to connect", async () => {
     await mount();
-    await submit("https://bots.example.com/pair");
-    expect(place.connect).not.toHaveBeenCalled();
-    expect(host.querySelector('[role="alert"]')?.textContent).toContain("Paste a full HTTPS server pairing link");
+    expect(host.textContent).toContain("Where your bots live");
+    expect(host.textContent).toContain("This computer");
+    await act(async () => button("Connect to a server")!.click());
+    expect(host.querySelector("[data-server-guide]")).not.toBeNull();
+    await act(async () => button("Cancel")!.click());
+    expect(host.querySelector("[data-server-guide]")).toBeNull();
   });
 
   it("names the server the bots live on and goes back to this computer", async () => {
     now = { kind: "server", url: "https://bots.example.com", label: "Office server" };
     await mount();
-    expect(host.textContent).toContain("Connected to Office server");
+    expect(host.textContent).toContain("Office server");
     expect(host.textContent).toContain("https://bots.example.com");
-    const disconnect = [...host.querySelectorAll("button")].find((button) => button.textContent?.includes("Disconnect"));
-    await act(async () => disconnect!.click());
+    await act(async () => button("Disconnect")!.click());
     expect(place.disconnect).toHaveBeenCalledOnce();
     await act(async () => changed?.({ kind: "local" }));
-    expect(host.querySelector("form")).not.toBeNull();
+    expect(host.textContent).toContain("This computer");
   });
 });

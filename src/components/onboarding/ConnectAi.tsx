@@ -163,7 +163,7 @@ export function ConnectAiDialog({ tested, onClose }: { tested: WelcomeAiNow | nu
         className="ui-modal animate-pop-in flex max-h-[min(640px,calc(100vh-32px))] w-[440px] max-w-full flex-col overflow-hidden text-left"
       >
         <div className="flex h-[52px] shrink-0 items-center justify-between pl-4 pr-3">
-          <h2 id="connect-ai-title" className="text-[14px] font-semibold leading-[22px] text-ink">{t("onboarding.meet.connectAi")}</h2>
+          <h2 id="connect-ai-title" className="text-[14px] font-semibold leading-[22px] text-ink">{t("onboarding.ai.connectAi")}</h2>
           <button type="button" autoFocus onClick={onClose} aria-label={t("common.close")} title={t("common.close")}
             className="flex size-7 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink">
             <X size={16} />

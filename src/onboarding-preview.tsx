@@ -1,21 +1,24 @@
-// Dev-only gallery of the first run's two screens, served at /onboarding-preview.html; not in the packaged app.
+// Dev-only gallery of the first run's screens, served at /onboarding-preview.html; not in the packaged app.
 // It answers the app's own requests from a fixture, so it needs no server and never touches one.
 import { Component, StrictMode, useEffect, useState, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { DesktopCapabilitiesProvider } from "@/components/DesktopCapabilities";
 import { WelcomeFlow } from "@/components/onboarding/WelcomeFlow";
 import { Select } from "@/components/Select";
-import { EMPTY_ONBOARDING, type BeatId } from "@/lib/onboarding";
+import { BEAT_ORDER, EMPTY_ONBOARDING, type BeatId } from "@/lib/onboarding";
 import { SKINS, type SkinId } from "@/lib/skins";
 import { StoreProvider } from "@/state/store";
 import "./styles.css";
 
-/** ?screen=chief&ai=0&bots=3&skin=daylight&reduced=1 opens any state directly; ?w=1338&h=870 sizes the stage. */
+/** ?screen=bots&ai=0&bots=3&desktop=1&skin=daylight&reduced=1 opens any state directly (desktop=1: the desktop app on this
+ * computer, which asks where the bots live); ?w=1338&h=870 sizes the stage. */
 function fromUrl() {
   const params = new URLSearchParams(location.search);
   const skin = params.get("skin") as SkinId | null;
+  const screen = params.get("screen") as BeatId | null;
   return {
-    screen: (params.get("screen") === "chief" ? "chief" : "meet") as BeatId,
+    screen: screen && BEAT_ORDER.includes(screen) ? screen : "welcome",
+    desktop: params.get("desktop") === "1",
     skin: skin && SKINS.some((s) => s.id === skin) ? skin : ("midnight" as SkinId),
     ai: params.get("ai") !== "0",
     bots: Math.max(0, Math.min(20, Number(params.get("bots")) || 0)),
@@ -53,8 +56,9 @@ function fixture(url: string, ai: boolean, bots: number): unknown {
     }] };
   }
   if (path === "/api/config") return { onboarding: EMPTY_ONBOARDING, profile: { name: "", email: "", aboutMe: "" } };
+  if (path === "/api/mcp/servers") return { servers: [] };
   if (path === "/api/auth/session") return { kind: "local" };
-  if (path.startsWith("/api/routines?since=")) return { routines: [], runs: [] };
+  if (path === "/api/routines") return { routines: [], runs: [] };
   if (path === "/api/notifications") return { notifications: [] };
   if (path === "/api/webhooks") return { webhooks: [], attempts: [], ingress: null };
   if (path === "/api/phones") return { phones: [] };
@@ -88,8 +92,7 @@ function Preview() {
         <h1 className="mr-2 text-[18px] font-semibold text-ink">First run</h1>
         <label className="flex items-center gap-1.5">Screen
           <Select size="sm" value={screen} onChange={(e) => { setScreen(e.target.value as BeatId); setRun((r) => r + 1); }}>
-            <option value="meet">Meet</option>
-            <option value="chief">Chief of Staff</option>
+            {BEAT_ORDER.map((beat) => <option key={beat} value={beat}>{beat}</option>)}
           </Select>
         </label>
         <label className="flex items-center gap-1.5">Skin
@@ -117,8 +120,19 @@ class Crash extends Component<{ children: ReactNode }, { error: Error | null }> 
   }
 }
 
-const { ai, bots } = fromUrl();
+/** The desktop app's bridge as this computer's page sees it: the bots live here, and pairing only says it was declined. */
+function pretendDesktop() {
+  Object.assign(window, { ogb: { place: {
+    current: async () => ({ kind: "local" }),
+    connect: async () => ({ ok: false, error: "unreachable" }),
+    disconnect: async () => {},
+    onChanged: () => () => {},
+  } } });
+}
+
+const { ai, bots, desktop } = fromUrl();
 answerFromFixture(ai, bots);
+if (desktop) pretendDesktop();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Crash>

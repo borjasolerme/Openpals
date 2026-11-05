@@ -21,10 +21,11 @@ function section(start, end) {
 }
 
 /** main's own place actions, with Electron faked: `answer` is the native dialog's button. */
-function harness({ state = env.LOCAL_PLACE, answer = 0, logout = async () => ({ ok: true }) } = {}) {
-  const calls = { dialogs: [], saved: [], navigated: [], logouts: [], cleared: [] };
+function harness({ state = env.LOCAL_PLACE, answer = 0, logout = async () => ({ ok: true }), health = async () => new Response(JSON.stringify({ app: "openmausbot" })) } = {}) {
+  const calls = { dialogs: [], saved: [], navigated: [], logouts: [], cleared: [], health: [] };
   const context = vm.createContext({
     ...env, placeState: state, URL, AbortSignal, Promise,
+    fetch: async (url) => { calls.health.push(url); return health(url); },
     showMessage: async (options) => { calls.dialogs.push(options); return { response: answer }; },
     dialog: { showMessageBox: async (options) => { calls.dialogs.push(options); return { response: 0 }; } },
     clipboard: { readText: () => LINK },
@@ -66,6 +67,19 @@ test("connect shows the server only once the person confirms its host natively, 
   assert.deepEqual(plain(h.calls.saved), [{ server: { origin: VPS, name: "bots.example.com" }, active: "server" }]);
   assert.deepEqual(h.calls.navigated, [LINK]);
   assert.deepEqual(h.calls.logouts, [], "nothing to sign out of");
+  assert.deepEqual(h.calls.health, [`${VPS}/api/health`]);
+  assert.deepEqual(declined.calls.health, [], "nothing is probed before the person confirms");
+});
+
+test("connect keeps this computer when the server doesn't answer as Openpals", async () => {
+  for (const health of [async () => { throw new Error("ECONNREFUSED"); }, async () => new Response("<html>", { status: 502 }), async () => new Response(JSON.stringify({ app: "other" }))]) {
+    const h = harness({ health });
+    assert.deepEqual(plain(await h.context.connectServer(LINK)), { ok: false, error: "unreachable" });
+    assert.deepEqual([h.calls.saved, h.calls.navigated], [[], []]);
+  }
+  const menu = harness({ health: async () => { throw new Error("ECONNREFUSED"); } });
+  await menu.context.connectFromClipboard();
+  assert.match(menu.calls.dialogs.at(-1).detail, /didn't answer/);
 });
 
 test("connecting to another server signs this app out of the one it showed", async () => {

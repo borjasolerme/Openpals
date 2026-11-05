@@ -48,6 +48,8 @@ const EN_ALLOWED: Record<string, string> = {
   "boatOffer.body": "Boat's credit offer names Boat, whose credit and plan it is",
   "boatOffer.get": "Boat's credit offer names Boat, whose credit and plan it is",
   "homeLine.clean": "MausBot Cloud copy, left as it is until the Cloud is removed from Openpals",
+  "serverGuide.boat.tab": "the always-on server guide names Boat, the service the person signs up with",
+  "serverGuide.boat.docs": "the always-on server guide names Boat, the service the person signs up with",
 };
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));

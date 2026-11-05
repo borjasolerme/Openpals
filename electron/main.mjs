@@ -916,6 +916,7 @@ async function connectServer(input) {
       : "The link has no pairing code; the server will ask for one.",
   });
   if (response !== 0) return { ok: false, error: "cancelled" };
+  if (!(await serverAnswers(link.origin))) return { ok: false, error: "unreachable" };
   const previous = activeServer(placeState);
   try {
     savePlace(withServer(placeState, { origin: link.origin }));
@@ -927,10 +928,22 @@ async function connectServer(input) {
   return { ok: true };
 }
 
+/** Asked only after the person confirmed the destination, so a page cannot make this app probe addresses. */
+async function serverAnswers(origin) {
+  try {
+    const response = await fetch(`${origin}/api/health`, { signal: AbortSignal.timeout(10_000) });
+    const body = await response.json();
+    return response.ok && body?.app === "openmausbot";
+  } catch {
+    return false;
+  }
+}
+
 async function connectFromClipboard() {
   const result = await connectServer(clipboard.readText());
   if (!result.ok && result.error !== "cancelled") {
-    await dialog.showMessageBox({ type: "info", message: "Could not connect to the server", detail: result.error });
+    const detail = result.error === "unreachable" ? "The server didn't answer. Check that it is running and that its HTTPS address is right." : result.error;
+    await dialog.showMessageBox({ type: "info", message: "Could not connect to the server", detail });
   }
 }
 

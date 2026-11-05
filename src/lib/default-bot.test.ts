@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { chiefChoices, chiefFor, chiefStepFits, createChiefPatch, defaultBotIn, INTRO_CHIPS, introChips, setupSteps } from "./default-bot";
+import { chiefFor, createChiefPatch, defaultBotIn, INTRO_CHIPS, introChips, setupSteps } from "./default-bot";
 import { partitionSidebarBots } from "./sidebar-layout";
 import type { DefaultBotFields } from "../../shared/default-bot";
 
@@ -49,28 +49,7 @@ describe("what MausBot offers to set up", () => {
   });
 });
 
-describe("the first run's Chief step", () => {
-  const maus = { id: "maus", defaultBot: {}, chiefOfStaff: true };
-
-  it("shows for a MausBot not yet introduced, where it is the Chief or there is none", () => {
-    expect(chiefStepFits([maus], maus)).toBe(true);
-    expect(chiefStepFits([{ ...maus, chiefOfStaff: false }], { ...maus, chiefOfStaff: false })).toBe(true);
-  });
-
-  it("is skipped where another bot is the Chief, once MausBot has met the person, and with no MausBot", () => {
-    const other = { ...maus, chiefOfStaff: false };
-    expect(chiefStepFits([other, { id: "research", chiefOfStaff: true }], other)).toBe(false);
-    expect(chiefStepFits([{ ...maus, welcomed: true }], { ...maus, welcomed: true })).toBe(false);
-    expect(chiefStepFits([{ id: "research" }], undefined)).toBe(false);
-  });
-
-  it("keeps a Chief in another department out of it", () => {
-    const other = { ...maus, chiefOfStaff: false };
-    expect(chiefStepFits([other, { id: "sales", chiefOfStaff: true, section: "Sales" }], other)).toBe(true);
-  });
-});
-
-describe("who becomes the Chief of Staff on the first run", () => {
+describe("who becomes the Chief of Staff when the first run starts with MausBot", () => {
   type Candidate = { id: string; defaultBot?: DefaultBotFields["defaultBot"]; chiefOfStaff?: boolean; section?: string; hidden?: boolean; sidebarHidden?: boolean };
   const maus: Candidate = { id: "maus", defaultBot: {}, chiefOfStaff: true };
   const research: Candidate = { id: "research" };
@@ -82,13 +61,7 @@ describe("who becomes the Chief of Staff on the first run", () => {
     expect(chiefFor([{ ...maus, chiefOfStaff: false }, { id: "old", chiefOfStaff: true, hidden: true }], maus)).toBeUndefined();
   });
 
-  it("offers the bots there to choose from, never MausBot, a hidden bot or one left out of the sidebar", () => {
-    const bots: Candidate[] = [maus, research, { id: "sales", section: "Sales" }, { id: "gone", hidden: true }, { id: "tucked", sidebarHidden: true }];
-    expect(chiefChoices(bots, maus).map((bot) => bot.id)).toEqual(["research"]);
-    expect(chiefChoices([maus], maus)).toEqual([]);
-  });
-
-  it("Create makes MausBot the Chief only where there is none, and never takes the role from a Chief someone has", () => {
+  it("starting with MausBot makes it the Chief only where there is none, and never takes the role from a Chief someone has", () => {
     expect(createChiefPatch({ defaultBot: {} }, undefined)).toEqual({ welcomed: true, chiefOfStaff: true });
     expect(createChiefPatch({ defaultBot: {} }, maus)).toEqual({ welcomed: true });
     expect(createChiefPatch({ defaultBot: {}, sidebarHidden: true }, maus), "back in the sidebar").toEqual({ welcomed: true, sidebarHidden: false });

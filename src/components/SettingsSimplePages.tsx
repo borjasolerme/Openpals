@@ -118,6 +118,7 @@ export type RemoteAccessCards = Record<"client" | "domain" | "pairing" | "compan
 export function SimpleComputerPage({ has, remoteAccess, disclose }: { has: Has; remoteAccess: RemoteAccessCards; disclose: Disclose }) {
   return (
     <>
+      {has("companion") && <div data-settings-block="place" className="scroll-mt-4 empty:hidden">{remoteAccess.client}</div>}
       {has("computer") && <SettingsGroup label={t("settings.simple.computer.bots")} block="computer"><AdminOnly><LocalComputerSection /></AdminOnly></SettingsGroup>}
       {has("companion") && (
         <SettingsGroup label={t("settings.simple.computer.devices")} block="companion">
@@ -134,7 +135,7 @@ export function SimpleComputerPage({ has, remoteAccess, disclose }: { has: Has; 
       {has("logins") && <div data-settings-block="logins" className="scroll-mt-4"><LoginsSettings /></div>}
       {has("companion") && (
         <SettingsDisclosureRow title={t("settings.simple.computer.elsewhere")} block="elsewhere" {...disclose("computer-elsewhere")}>
-          <div data-settings-block="remote" className="flex scroll-mt-4 flex-col gap-4 empty:hidden">{remoteAccess.client}{remoteAccess.domain}</div>
+          <div data-settings-block="remote" className="flex scroll-mt-4 flex-col gap-4 empty:hidden">{remoteAccess.domain}</div>
         </SettingsDisclosureRow>
       )}
     </>

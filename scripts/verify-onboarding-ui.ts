@@ -32,6 +32,15 @@ const poll = async (read: () => Promise<unknown>, expected: unknown, label: stri
   assert.deepEqual(result, expected, label);
 };
 const textVisible = (text: string) => poll(async () => (await snapshot()).includes(text), true, text);
+/** Through every screen of the welcome, bringing and connecting nothing. */
+const finishWelcome = async () => {
+  await click("Get started");
+  await click("Continue");
+  await click("Skip");
+  await click("Skip");
+  await textVisible("You're all set");
+  await evaluate("document.querySelector('[data-welcome] [data-primary]').click(); true");
+};
 const evidence = resolve(".omb-scratch/verify-evidence/onboarding");
 mkdirSync(evidence, { recursive: true });
 const screenshot = (name: string) => ui("screenshot", "--out", resolve(evidence, `${name}.png`));
@@ -65,19 +74,21 @@ await evaluate("fetch('/api/config', {method:'PUT', headers:{'Content-Type':'app
 await evaluate("fetch('/api/bots').then(r => r.json()).then(data => Promise.all(data.bots.filter(bot => bot.defaultBot).map(bot => fetch('/api/bots/' + bot.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({welcomed:false})}).then(r => r.ok)))).then(oks => oks.length > 0 && oks.every(Boolean))");
 // A new install opens in Simple mode; this page's own writes after the clear would otherwise read as an earlier run.
 await evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('omb-advanced-mode', '0'); setTimeout(() => { location.search = '?onboarding=1'; }, 0); true");
-await textVisible("Meet OpenMausBot");
+await textVisible("Welcome to Openpals");
 await evaluate("document.documentElement.dataset.reducedMotion = 'true'; true");
 await screenshot("welcome");
-// Two screens, no form: the first asks nothing and shows no steps, Back or Skip.
+// The first screen asks nothing and shows no steps, Back or Skip. A browser is never asked where the bots live.
 assert.equal(await evaluate("document.querySelectorAll('[data-welcome] input').length"), 0, "no field on the first screen");
 for (const gone of ["Step 1", "Back", "Skip", "Your name"]) assert.equal((await snapshot()).includes(gone), false, gone);
-await click("Next");
-await textVisible("Introducing your Chief of Staff");
-// A reload on the second screen comes back to it.
+await click("Get started");
+await textVisible("Sign in to your AI");
+await click("Continue");
+await textVisible("Bring your bots");
+// A reload comes back to the screen it was on.
 await evaluate("setTimeout(() => location.reload(), 0); true");
-await textVisible("Introducing your Chief of Staff");
-await screenshot("chief");
-console.log("PASS the first run is two screens, and a reload keeps the second");
+await textVisible("Bring your bots");
+await screenshot("bots");
+console.log("PASS the first run goes screen by screen, and a reload keeps the screen");
 
 // The completion write failing never keeps the person out of the chat.
 await evaluate(`(() => {
@@ -91,8 +102,13 @@ await evaluate(`(() => {
   };
   return true;
 })()`);
-await click("Create Chief of Staff");
-await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "Create lands in the chat");
+await evaluate("document.querySelector('[data-bots-choice=pal]').click(); true");
+await click("Continue");
+await textVisible("Connect your apps");
+await click("Skip");
+await textVisible("You're all set");
+await evaluate("document.querySelector('[data-welcome] [data-primary]').click(); true");
+await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");
 // The welcome lands in the chat with the Chief (the server's first bot): its first messages, no AI asked.
 const first = await evaluate("fetch('/api/bots').then(r => r.json()).then(data => data.bots.find(bot => bot.chiefOfStaff && !bot.hidden))");
 assert.ok(first?.name, "the Chief");
@@ -104,7 +120,7 @@ await textVisible("I looked around");
 const followups = await evaluate(`fetch('/api/threads/${first.threadId}/messages?limit=20').then(r => r.json()).then(data => data.messages.filter(message => message.helperFollowup).length)`);
 assert.equal(followups, 1, "its follow-up is written once, as a message the model reads");
 assert.equal((await config()).profile.email, "", "the welcome saves no email");
-console.log("PASS Create lands in the Chief's chat with its first messages, though the save failed");
+console.log("PASS starting with Pal lands in its chat with its first messages, though the save failed");
 
 const starter = await evaluate("fetch('/api/bots').then(r => r.json()).then(data => data.bots.find(bot => bot.name === 'Pepper'))");
 assert.ok(starter?.modelSelection?.instanceId && starter.modelSelection.model, "starter has a model without opening the picker");
@@ -115,11 +131,11 @@ assert.notEqual(selected?.snapshot.authenticated, false, "starter uses a connect
 assert.equal(starter.modelSelection.model, selected.models.default);
 // The failed save left the server's record empty: a browser without this one's local mark shows the welcome again,
 // and this time it is saved.
-// MausBot has met the person by now, so the Chief step is not shown again: Next lands in the Chief's chat.
-await evaluate("localStorage.removeItem('omb-email-gate'); setTimeout(() => location.reload(), 0); true");
-await textVisible("Meet OpenMausBot");
-await click("Next");
-await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "Next lands in the chat");
+// Skipping every step this time lands in the Chief's chat.
+await evaluate("localStorage.removeItem('omb-email-gate'); localStorage.removeItem('omb.onboarding.welcomeDraft'); setTimeout(() => location.reload(), 0); true");
+await textVisible("Welcome to Openpals");
+await finishWelcome();
+await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");
 await textVisible(composer);
 await poll(async () => Boolean((await config()).onboarding.completedAt), true, "welcome completion saved");
 assert.ok((await config()).onboarding.hintsSeen.includes("met-chief-v1"), "the first chat is marked to stay quiet");
@@ -169,9 +185,9 @@ console.log("PASS Settings replay and Skip queued behind slow Next");
 
 await openSettings();
 await click("Replay welcome tour");
-await textVisible("Meet OpenMausBot");
+await textVisible("Welcome to Openpals");
 await holdConfigWrite();
-await click("Next");
+await finishWelcome();
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "slow completion cannot trap welcome");
 await evaluate("window.releaseWrite(); true");
 console.log("PASS welcome replay can close while persistence is pending");

@@ -152,12 +152,13 @@ export function SettingsDisclosureRow({ id, title, subtitle, trailing, block, op
   );
 }
 
-export function CommandLine({ command, copyLabel = "Copy command" }: { command: string; copyLabel?: string }) {
+/** `wrap`: a long command shows whole over several lines instead of scrolling. */
+export function CommandLine({ command, copyLabel = "Copy command", wrap = false }: { command: string; copyLabel?: string; wrap?: boolean }) {
   const { state, copy } = useCopyFeedback(command);
 
   return (
     <div className="flex items-center gap-2 rounded-lg bg-inset px-3 py-2">
-      <code className="min-w-0 flex-1 select-all overflow-x-auto whitespace-nowrap font-mono text-[12px] text-ink">
+      <code className={cn("min-w-0 flex-1 select-all font-mono text-[12px] text-ink", wrap ? "whitespace-pre-wrap [overflow-wrap:anywhere]" : "overflow-x-auto whitespace-nowrap")}>
         {command}
       </code>
       <button

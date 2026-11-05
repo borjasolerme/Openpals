@@ -17,39 +17,8 @@ export function chiefFor<T extends ChiefCandidate>(bots: readonly T[], maus: T |
   return bots.find((bot) => bot.chiefOfStaff && !bot.hidden && chiefScope(bot) === scope);
 }
 
-/** The bots that may be made the Chief instead of MausBot: in MausBot's scope and in the sidebar. */
-export function chiefChoices<T extends ChiefCandidate>(bots: readonly T[], maus: T | undefined): T[] {
-  const scope = chiefScope(maus ?? {});
-  return bots.filter((bot) => !bot.defaultBot && !bot.hidden && !bot.sidebarHidden && chiefScope(bot) === scope);
-}
-
-/** The first run shows its Chief step only for a MausBot not yet introduced, where no other bot is the Chief in its
- * scope; otherwise the first run ends in the chat. */
-export function chiefStepFits<T extends ChiefCandidate>(bots: readonly T[], maus: (T & { welcomed?: boolean }) | undefined): boolean {
-  if (!maus || maus.welcomed || maus.hidden) return false;
-  const chief = chiefFor(bots, maus);
-  return !chief || chief.id === maus.id;
-}
-
-let chiefStep = false;
-const chiefStepListeners = new Set<() => void>();
-
-/** The first run's Chief step is on screen: the app behind it is the empty shell, never a chat. */
-export function setChiefStepOpen(open: boolean): void {
-  if (chiefStep === open) return;
-  chiefStep = open;
-  for (const listener of chiefStepListeners) listener();
-}
-
-export function useChiefStepOpen(): boolean {
-  return useSyncExternalStore((listener) => {
-    chiefStepListeners.add(listener);
-    return () => chiefStepListeners.delete(listener);
-  }, () => chiefStep, () => false);
-}
-
-/** What Create saves on MausBot: seen, in the sidebar, and the Chief only where there is none, so a Chief someone
- * already has is never replaced. */
+/** What starting with MausBot saves on it: seen, in the sidebar, and the Chief only where there is none, so a Chief
+ * someone already has is never replaced. */
 export function createChiefPatch(maus: DefaultBotFields, chief: { id: string } | undefined): { welcomed: true; sidebarHidden?: false; chiefOfStaff?: true } {
   return { welcomed: true, ...(maus.sidebarHidden ? { sidebarHidden: false as const } : {}), ...(chief ? {} : { chiefOfStaff: true as const }) };
 }

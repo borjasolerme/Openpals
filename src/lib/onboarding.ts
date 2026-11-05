@@ -61,13 +61,16 @@ export function completionPatch(now: Date = new Date()): { onboarding: { complet
  * corner notices until a reply, no spotlights). */
 export const MET_CHIEF_HINT = "met-chief-v1";
 
-/** The first run's record: done, and marked as the one that met the Chief (MET_CHIEF_HINT). */
+/** The first run's record: done, and marked as the one that met the Chief (MET_CHIEF_HINT), with `seen`: the notices
+ * whose offer the welcome made itself. */
 export function firstRunPatch(
   record: OnboardingStatus | undefined,
   now: Date = new Date(),
+  seen: readonly string[] = [],
 ): { onboarding: { completedAt: string; version: number; hintsSeen?: string[] } } {
   const have = record?.hintsSeen ?? [];
-  return { onboarding: { ...completionPatch(now).onboarding, ...(have.includes(MET_CHIEF_HINT) ? {} : { hintsSeen: [...have, MET_CHIEF_HINT] }) } };
+  const added = [MET_CHIEF_HINT, ...seen].filter((id, at, all) => !have.includes(id) && all.indexOf(id) === at);
+  return { onboarding: { ...completionPatch(now).onboarding, ...(added.length ? { hintsSeen: [...have, ...added] } : {}) } };
 }
 
 export function hintSeen(record: OnboardingStatus | undefined, id: string): boolean {
@@ -83,20 +86,22 @@ export function hintSeenPatch(
 }
 
 
-export type BeatId = "meet" | "chief";
+export type BeatId = "welcome" | "place" | "ai" | "bots" | "apps" | "done";
 
 /** Every screen the first run can show, in the order it shows them. */
-export const BEAT_ORDER: readonly BeatId[] = ["meet", "chief"];
+export const BEAT_ORDER: readonly BeatId[] = ["welcome", "place", "ai", "bots", "apps", "done"];
 
-/** Two screens, then the chat: meeting the app (and connecting an AI when none works), then the Chief of Staff. A hosted
- * place's admin only meets the app: their team's bots and Chief are already set up. */
-export function beatsFor(options: { hosted?: boolean }): BeatId[] {
-  return options.hosted ? ["meet"] : ["meet", "chief"];
+/** The first run's screens. `place`: the desktop app shows this computer's bots, so it may choose a server instead.
+ * `welcomed`: the person met the app already, before pairing the server this page comes from. A hosted place's admin
+ * only meets the app: their team's AI, bots and apps are already set up. */
+export function beatsFor(options: { hosted?: boolean; place?: boolean; welcomed?: boolean }): BeatId[] {
+  if (options.hosted) return ["welcome"];
+  return BEAT_ORDER.filter((beat) => (beat !== "place" || options.place) && (beat !== "welcome" || !options.welcomed));
 }
 
 /** Where a reloaded first run opens: the saved screen while it is offered, else the first. */
 export function resumeBeat(beats: readonly BeatId[], saved: BeatId | undefined): BeatId {
-  return saved && beats.includes(saved) ? saved : beats[0] ?? "meet";
+  return saved && beats.includes(saved) ? saved : beats[0] ?? "welcome";
 }
 
 const WELCOME_FINISHED_KEY = "omb.onboarding.welcomeFinished";
