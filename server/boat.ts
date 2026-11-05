@@ -134,7 +134,7 @@ function snapshotBoatConfig(cfg: AppConfig): AppConfig {
   return { box: cfg.box ? { token: cfg.box.token } : undefined };
 }
 
-function boatFetch(cfg: AppConfig, path: string, opts: RequestInit = {}) {
+export function boatFetch(cfg: AppConfig, path: string, opts: RequestInit = {}) {
   const account = boatAccount(cfg);
   return fetch(`${account?.api ?? boatProviderApi()}${path}`, {
     ...opts,
@@ -717,7 +717,7 @@ function deletionFenceError(): Error & { status: number } {
   );
 }
 
-function assertBoatNotDeleting(boxId: string): void {
+export function assertBoatNotDeleting(boxId: string): void {
   if (getBoatDeletion(boxId)) throw deletionFenceError();
 }
 
