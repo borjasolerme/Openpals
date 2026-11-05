@@ -8,11 +8,13 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import { mcpServersForBot, mcpServersOfBot, mcpSwitch, useMcpServers } from "@/lib/mcp-servers";
-import { placeFacts, placeViewFor, usePlaceSeat } from "@/lib/place-view";
+import { instanceSupportsLocalComputer, localComputerDisabledReason, localComputerSelectable } from "@/lib/local-computer";
+import { placeBlocked, placeFacts, placeHasIssue, placeViewFor, usePlaceSeat, type PlaceSeat } from "@/lib/place-view";
 import { shortPath } from "@/lib/short-path";
 import { isOwnThreadFolder } from "../../../shared/thread-folder";
 import { useDesktopCapabilities } from "../DesktopCapabilities";
 import { CloudBackendPicker } from "../CloudBackendPicker";
+import { WORKS_ON_CHOICES, WorksOnGrid, type WorksOnMode } from "../WorksOnGrid";
 import { Switch } from "../SettingsPrimitives";
 import { PhoneAppsCard } from "./PhoneAppsCard";
 import { ProposalStatus } from "./ProposalStatus";
@@ -593,7 +595,7 @@ export function CloudPreference({ bot, patch }: { bot: Bot; patch: ReturnType<ty
   if (!cloudPreferenceShown(bot)) return null;
   return (
     <>
-      {!bot.computer && (
+      {!bot.computer && !draft && (
         <div className="mt-3 rounded-lg bg-inset px-3 py-2.5 text-sm leading-relaxed text-ink-secondary">
           <span className="font-medium text-ink">{t("botAccess.cloud.autoTitle")}</span>{" "}
           {t("botAccess.cloud.autoDescription")}
@@ -622,6 +624,34 @@ export function CloudPreference({ bot, patch }: { bot: Bot; patch: ReturnType<ty
       )}
     </>
   );
+}
+
+/** A bot not made yet has no Screen panel to open, so its place is chosen here. */
+function DraftWorksOn({ bot, patch, seat }: { bot: Bot; patch: ReturnType<typeof useBotSettingsDerived>["patch"]; seat: PlaceSeat }) {
+  const { state } = useStore();
+  const { capabilities } = useDesktopCapabilities();
+  const providerSupportsLocal = instanceSupportsLocalComputer(state.instances, bot);
+  const options = WORKS_ON_CHOICES.map(([mode, labelKey, descriptionKey, Icon]) => {
+    const view = placeViewFor(placeFacts({
+      bot, place: mode ?? "auto", seat, config: state.config, instances: state.instances,
+      local: {
+        ready: localComputerSelectable({ capabilities, providerSupportsLocal }),
+        reason: localComputerDisabledReason({ capabilities, providerSupportsLocal }) ?? t("computer.unavailableLocal"),
+      },
+    }));
+    return {
+      mode, labelKey, descriptionKey, Icon, view,
+      selected: mode === null ? !bot.computer : bot.computer === mode,
+      disabled: placeBlocked(view),
+      issue: placeHasIssue(view),
+    };
+  });
+  const choose = (mode: WorksOnMode) => patch(mode === "browser" ? { computer: mode, browser: true } : { computer: mode });
+  return <>
+    <div className="text-lg font-medium text-ink">{t("computer.worksOn")}</div>
+    <p className="mt-1 text-sm leading-5 text-ink-secondary">{t("computer.worksOnHint")}</p>
+    <WorksOnGrid options={options} onSelect={choose} />
+  </>;
 }
 
 export type AccessPart = "worksOn" | "folder" | "apps" | "phone" | "xResearch" | "mcp" | "tools" | "browser" | "webhooks" | "always";
@@ -669,18 +699,20 @@ export function AccessSection({
   return (
     <div className="flex flex-col gap-4">
       {shows("worksOn") && <div className="rounded-xl bg-card p-4" data-testid="access-works-on">
-        <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
-        <ProposalStatus bot={bot} kind="owner" />
-        <button
-          type="button"
-          onClick={() => {
-            dispatch({ type: "toggleSettings", open: false });
-            dispatch({ type: "toggleComputer", open: true });
-          }}
-          className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
-        >
-          {t("place.action.openComputerPanel")}
-        </button>
+        {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
+          <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
+          <ProposalStatus bot={bot} kind="owner" />
+          <button
+            type="button"
+            onClick={() => {
+              dispatch({ type: "toggleSettings", open: false });
+              dispatch({ type: "toggleComputer", open: true });
+            }}
+            className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
+          >
+            {t("place.action.openComputerPanel")}
+          </button>
+        </>}
         <CloudPreference bot={bot} patch={patch} />
       </div>}
 
