@@ -247,7 +247,8 @@ describe("a folder page", () => {
     writeFileSync(film, "");
     truncateSync(film, 6 * 1024 * 1024 * 1024);
     writeFileSync(join(where.mine, "dash", "notes.mkv"), "not a page's video");
-    expect(await createAppCard({ store, docs, bot: SCOUT, threadId: THREAD, input: { tool: "show_html", path: "dash", title: "Dash" }, folders: where.of })).toEqual({ ok: true, messageId: "m1" });
+    expect(await createAppCard({ store, docs, bot: SCOUT, threadId: THREAD, input: { tool: "show_html", path: "dash", title: "Dash" }, folders: where.of }))
+      .toEqual({ ok: true, messageId: "m1", leftOut: "Left out notes.mkv (pages can't carry .mkv files)." });
     const doc = row("m1").app!.doc;
     const before = statSync(film, { bigint: true });
     expect(docs.video(doc, "clip.mp4")).toEqual({ file: realpathSync.native(film), bytes: 6 * 1024 * 1024 * 1024, dev: String(before.dev), ino: String(before.ino), mtimeNs: String(before.mtimeNs) });
@@ -258,8 +259,26 @@ describe("a folder page", () => {
     expect(Object.keys(docs.read(doc)?.data?.files ?? {}).sort()).toEqual(["app.js", "data.parquet"]);
 
     const bundled = await readPageBundle("dash", [where.mine]);
-    expect(bundled.skipped.sort()).toEqual(["clip.mp4", "notes.mkv"]);
+    expect(bundled.skipped).toEqual([{ path: "clip.mp4", why: "video" }, { path: "notes.mkv", why: "type" }]);
     expect(bundled.videos).toBeUndefined();
+  });
+
+  it("keeps map and table data beside index.html, and tells the bot each file it left out and why", async () => {
+    const { docs, store, row } = setup();
+    const where = folders();
+    const dash = join(where.mine, "dash");
+    const data = { "trails.json": "[]", "land.geojson": "{\"type\":\"FeatureCollection\",\"features\":[]}", "world.topojson": "{\"type\":\"Topology\"}",
+      "rows.tsv": "a\tb\n1\t2", "events.ndjson": "{\"a\":1}\n" };
+    for (const [name, text] of Object.entries({ ...data, "land.foo": "?", ".env": "SECRET=1" })) writeFileSync(join(dash, name), text);
+    mkdirSync(join(dash, ".git"));
+    writeFileSync(join(dash, ".git", "config"), "x");
+    const show = (input: Record<string, unknown>) => createAppCard({ store, docs, bot: SCOUT, threadId: THREAD, input, folders: where.of });
+    const note = "Left out land.foo (pages can't carry .foo files) and .env, .git/ (hidden).";
+    expect(await show({ tool: "show_html", path: "dash", title: "Trails" })).toEqual({ ok: true, messageId: "m1", leftOut: note });
+    for (const [name, text] of Object.entries(data)) expect(docs.readFile(row("m1").app!.doc, name)?.toString()).toBe(text);
+    expect(docs.readFile(row("m1").app!.doc, "land.foo")).toBeNull();
+    writeFileSync(join(dash, "app.js"), "drawMore()");
+    expect(await show({ tool: "update_html", app_id: "m1", path: "dash" })).toEqual({ ok: true, messageId: "m1", leftOut: note });
   });
 
   it("will not record a video reached by a link out of the bot's folders", async () => {
