@@ -68,6 +68,18 @@ async function serve(options: { botsPath?: () => BrokerPath | null; bots?: Bot[]
   return { cfg, post, base, get: () => fetch(`${base}/api/mcp/servers`) };
 }
 
+it("adds a command server sent with type stdio, as other MCP clients write it, and keeps the old shape working", async () => {
+  const { cfg, post } = await serve();
+  const typed = await post("/api/mcp/servers", { name: "notes", type: "stdio", command: "npx", args: ["-y", "notes-mcp"] });
+  expect(typed.status, await typed.clone().text()).toBe(201);
+  const plain = await post("/api/mcp/servers", { name: "files", command: "npx", args: ["-y", "files-mcp"] });
+  expect(plain.status, await plain.clone().text()).toBe(201);
+  expect(cfg.mcpServers).toEqual({
+    notes: { command: "npx", args: ["-y", "notes-mcp"], env: {}, enabled: false },
+    files: { command: "npx", args: ["-y", "files-mcp"], env: {}, enabled: false },
+  });
+});
+
 it.each(["create", "import"])("keeps a blank header and a filled one as given on %s", async (action) => {
   const { cfg, post } = await serve();
   for (const [name, value] of [["private", ""], ["public", "Bearer team-secret"]] as const) {
