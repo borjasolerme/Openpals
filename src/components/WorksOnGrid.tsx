@@ -56,7 +56,7 @@ export function WorksOnGrid({ options, onSelect }: { options: readonly WorksOnOp
             <span>{t(labelKey)}</span>
           </span>
           <span className="mt-1.5 block text-xs leading-4 text-ink-secondary">
-            {note ?? (issue ? view.short : t(descriptionKey))}
+            {note ?? (disabled ? view.line : issue ? view.short : t(descriptionKey))}
           </span>
         </button>
       ))}
