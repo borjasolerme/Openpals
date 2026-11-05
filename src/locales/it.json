@@ -2563,6 +2563,7 @@
   "accounts.removeBodyAntigravity": "Questo rimuove l'account e il suo accesso da {app}. Gli altri tuoi account Antigravity restano collegati.",
   "accounts.addClaude": "Aggiungi un altro account Claude",
   "accounts.addChatgpt": "Aggiungi un altro account ChatGPT",
+  "accounts.addChatgptWorkspaceNote": "Le organizzazioni ChatGPT Business ed Enterprise possono impedire di aggiungere un account qui (OpenAI mostra 3p_delegated_access_policy_denied).",
   "accounts.nameLabel": "Nome account",
   "accounts.namePlaceholder": "Lavoro",
   "accounts.addSubmit": "Aggiungi e accedi",

@@ -2353,6 +2353,7 @@
   "accounts.removeBodyChatgpt": "Esto cierra la sesión de la cuenta y la quita de {app}.",
   "accounts.addClaude": "Añadir otra cuenta de Claude",
   "accounts.addChatgpt": "Añadir otra cuenta de ChatGPT",
+  "accounts.addChatgptWorkspaceNote": "Las organizaciones de ChatGPT Business y Enterprise pueden bloquear que se añada una cuenta aquí (OpenAI muestra 3p_delegated_access_policy_denied).",
   "accounts.nameLabel": "Nombre de la cuenta",
   "accounts.namePlaceholder": "Trabajo",
   "accounts.addSubmit": "Añadir e iniciar sesión",

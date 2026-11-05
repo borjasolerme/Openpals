@@ -2519,6 +2519,7 @@
   "accounts.removeBodyChatgpt": "Isso desconecta a conta e a remove do {app}.",
   "accounts.addClaude": "Adicionar outra conta do Claude",
   "accounts.addChatgpt": "Adicionar outra conta do ChatGPT",
+  "accounts.addChatgptWorkspaceNote": "Organizações do ChatGPT Business e Enterprise podem bloquear a adição de uma conta aqui (a OpenAI mostra 3p_delegated_access_policy_denied).",
   "accounts.nameLabel": "Nome da conta",
   "accounts.namePlaceholder": "Trabalho",
   "accounts.addSubmit": "Adicionar e entrar",

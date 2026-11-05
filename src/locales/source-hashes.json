@@ -2097,7 +2097,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6342,7 +6343,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8388,7 +8390,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10434,7 +10437,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15398,7 +15402,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20236,7 +20241,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25724,7 +25730,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29215,7 +29222,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31633,7 +31641,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35610,7 +35619,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39587,7 +39597,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44489,7 +44500,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49432,7 +49444,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54222,7 +54235,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59620,7 +59634,8 @@
       "liveConnection.retry": "d8b8392e2c542950ca64867168e4ef87d4ad606882d5898f826b51c6d553988f",
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
-      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658"
+      "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
     }
   }
 }

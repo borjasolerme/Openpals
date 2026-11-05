@@ -2284,6 +2284,7 @@
   "accounts.removeBodyChatgpt": "Thao tác này đăng xuất tài khoản và gỡ tài khoản khỏi {app}.",
   "accounts.addClaude": "Thêm tài khoản Claude khác",
   "accounts.addChatgpt": "Thêm tài khoản ChatGPT khác",
+  "accounts.addChatgptWorkspaceNote": "Các tổ chức ChatGPT Business và Enterprise có thể chặn việc thêm tài khoản tại đây (OpenAI hiển thị 3p_delegated_access_policy_denied).",
   "accounts.nameLabel": "Tên tài khoản",
   "accounts.namePlaceholder": "Công việc",
   "accounts.addSubmit": "Thêm và đăng nhập",

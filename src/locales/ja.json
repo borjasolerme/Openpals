@@ -2642,6 +2642,7 @@
   "accounts.removeBodyAntigravity": "このアカウントとそのサインイン情報を {app} から削除します。他の Antigravity アカウントは接続されたままです。",
   "accounts.addClaude": "別のClaudeアカウントを追加",
   "accounts.addChatgpt": "別のChatGPTアカウントを追加",
+  "accounts.addChatgptWorkspaceNote": "ChatGPT Business と Enterprise の組織は、ここでのアカウント追加をブロックできます（OpenAI は 3p_delegated_access_policy_denied と表示します）。",
   "accounts.nameLabel": "アカウント名",
   "accounts.namePlaceholder": "仕事用",
   "accounts.addSubmit": "追加してサインイン",

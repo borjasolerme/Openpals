@@ -2829,6 +2829,7 @@
   "accounts.removeBodyAntigravity": "이 계정과 로그인 정보를 {app}에서 제거해요. 다른 Antigravity 계정은 연결된 채로 남아요.",
   "accounts.addClaude": "다른 Claude 계정 추가",
   "accounts.addChatgpt": "다른 ChatGPT 계정 추가",
+  "accounts.addChatgptWorkspaceNote": "ChatGPT Business 및 Enterprise 조직은 여기에서 계정 추가를 막을 수 있습니다(OpenAI가 3p_delegated_access_policy_denied를 표시합니다).",
   "accounts.nameLabel": "계정 이름",
   "accounts.namePlaceholder": "업무",
   "accounts.addSubmit": "추가하고 로그인",

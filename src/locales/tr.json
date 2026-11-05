@@ -2284,6 +2284,7 @@
   "accounts.removeBodyChatgpt": "Bu işlem hesabın oturumunu kapatır ve hesabı {app}'tan kaldırır.",
   "accounts.addClaude": "Başka bir Claude hesabı ekle",
   "accounts.addChatgpt": "Başka bir ChatGPT hesabı ekle",
+  "accounts.addChatgptWorkspaceNote": "ChatGPT Business ve Enterprise kuruluşları buraya hesap eklenmesini engelleyebilir (OpenAI 3p_delegated_access_policy_denied gösterir).",
   "accounts.nameLabel": "Hesap adı",
   "accounts.namePlaceholder": "İş",
   "accounts.addSubmit": "Ekle ve giriş yap",
