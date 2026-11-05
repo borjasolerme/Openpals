@@ -189,7 +189,7 @@
   "server.mcp.signIn.card": "{label} 的 MCP 服务器需要登录。请在 Openpals 中打开此对话进行登录。",
   "server.mcp.signIn.description": "{bot} 添加了 {label} 的 MCP 服务器（{host}）。登录后 {bot} 才能使用它。",
   "server.mcp.signIn.onYourMac": "请在你的 Mac 上打开此聊天以登录 {label}。",
-  "server.mcp.signIn.inSettings": "请在 设置 → MCP 服务器 中完成此次登录。",
+  "server.mcp.signIn.inSettings": "请在 应用 → MCP 服务器 中完成此次登录。",
   "server.mcp.signIn.adminOnly": "只有此安装的管理员可以登录 {label}。",
   "server.mcp.signIn.expired": "登录时间已过。请重试。",
   "server.mcp.signIn.failed": "登录没有完成。请重试。",

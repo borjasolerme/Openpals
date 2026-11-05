@@ -164,7 +164,7 @@
   "server.mcp.signIn.card": "MCP-серверу {label} нужен вход. Откройте этот разговор в Openpals, чтобы войти.",
   "server.mcp.signIn.description": "{bot} добавил MCP-сервер {label} ({host}). Войдите, чтобы {bot} мог им пользоваться.",
   "server.mcp.signIn.onYourMac": "Откройте этот чат на своём Mac, чтобы войти в {label}.",
-  "server.mcp.signIn.inSettings": "Завершите этот вход в разделе Настройки → MCP-серверы.",
+  "server.mcp.signIn.inSettings": "Завершите этот вход в разделе Приложения → MCP-серверы.",
   "server.mcp.signIn.adminOnly": "Войти в {label} может только администратор этой установки.",
   "server.mcp.signIn.expired": "Время на вход истекло. Попробуйте ещё раз.",
   "server.mcp.signIn.failed": "Вход не завершён. Попробуйте ещё раз.",

@@ -164,7 +164,7 @@
   "server.mcp.signIn.card": "{label} の MCP サーバーにはサインインが必要です。Openpals でこの会話を開いてサインインしてください。",
   "server.mcp.signIn.description": "{bot} が {label} の MCP サーバー（{host}）を追加しました。{bot} が使えるようにサインインしてください。",
   "server.mcp.signIn.onYourMac": "{label} にサインインするには、Mac でこのチャットを開いてください。",
-  "server.mcp.signIn.inSettings": "このサインインは 設定 → MCP サーバー で完了してください。",
+  "server.mcp.signIn.inSettings": "このサインインは アプリ → MCP サーバー で完了してください。",
   "server.mcp.signIn.adminOnly": "{label} にサインインできるのは、このインストールの管理者だけです。",
   "server.mcp.signIn.expired": "サインインの有効時間が切れました。もう一度お試しください。",
   "server.mcp.signIn.failed": "サインインが完了しませんでした。もう一度お試しください。",
