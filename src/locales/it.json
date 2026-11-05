@@ -4732,6 +4732,8 @@
   "app.reload": "Ricarica l'app",
   "app.open": "Apri l'app",
   "app.openAgain": "Apri di nuovo",
+  "app.done": "Fatto: {tool}",
+  "app.doneOpen": "Apri",
   "app.loading": "Apertura dell'app",
   "app.strip.signIn": "Accedi di nuovo a {server}",
   "app.strip.signInAction": "Accedi",

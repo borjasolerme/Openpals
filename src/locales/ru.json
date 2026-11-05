@@ -4879,6 +4879,8 @@
   "app.reload": "Перезагрузить приложение",
   "app.open": "Открыть приложение",
   "app.openAgain": "Открыть снова",
+  "app.done": "Готово: {tool}",
+  "app.doneOpen": "Открыть",
   "app.loading": "Открываем приложение",
   "app.strip.signIn": "Войдите в {server} снова",
   "app.strip.signInAction": "Войти",

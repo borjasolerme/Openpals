@@ -1835,6 +1835,8 @@
   "app.reload": "ऐप फिर से लोड करें",
   "app.open": "ऐप खोलें",
   "app.openAgain": "फिर से खोलें",
+  "app.done": "पूरा हुआ: {tool}",
+  "app.doneOpen": "खोलें",
   "app.loading": "ऐप खुल रहा है",
   "app.strip.signIn": "{server} में फिर से साइन इन करें",
   "app.strip.signInAction": "साइन इन करें",

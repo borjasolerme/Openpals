@@ -5300,6 +5300,8 @@
   "app.reload": "앱 새로고침",
   "app.open": "앱 열기",
   "app.openAgain": "다시 열기",
+  "app.done": "완료: {tool}",
+  "app.doneOpen": "열기",
   "app.loading": "앱 여는 중",
   "app.strip.signIn": "{server}에 다시 로그인하세요",
   "app.strip.signInAction": "로그인",

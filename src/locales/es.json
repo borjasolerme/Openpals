@@ -4149,6 +4149,8 @@
   "app.reload": "Recargar app",
   "app.open": "Abrir app",
   "app.openAgain": "Abrir de nuevo",
+  "app.done": "Hecho: {tool}",
+  "app.doneOpen": "Abrir",
   "app.loading": "Abriendo la app",
   "app.strip.signIn": "Vuelve a iniciar sesión en {server}",
   "app.strip.signInAction": "Iniciar sesión",

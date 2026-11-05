@@ -3837,6 +3837,8 @@
   "app.reload": "Uygulamayı yeniden yükle",
   "app.open": "Uygulamayı aç",
   "app.openAgain": "Yeniden aç",
+  "app.done": "Tamamlandı: {tool}",
+  "app.doneOpen": "Aç",
   "app.loading": "Uygulama açılıyor",
   "app.strip.signIn": "{server} hesabına yeniden giriş yapın",
   "app.strip.signInAction": "Giriş yap",

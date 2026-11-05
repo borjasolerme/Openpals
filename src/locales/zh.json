@@ -5389,6 +5389,8 @@
   "page.broken.reload": "重新加载",
   "app.open": "打开应用",
   "app.openAgain": "重新打开",
+  "app.done": "已完成：{tool}",
+  "app.doneOpen": "打开",
   "app.loading": "正在打开应用",
   "app.strip.signIn": "请重新登录 {server}",
   "app.strip.signInAction": "登录",

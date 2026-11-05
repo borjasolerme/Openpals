@@ -4839,6 +4839,8 @@
   "app.reload": "Odśwież aplikację",
   "app.open": "Otwórz aplikację",
   "app.openAgain": "Otwórz ponownie",
+  "app.done": "Gotowe: {tool}",
+  "app.doneOpen": "Otwórz",
   "app.loading": "Otwieranie aplikacji",
   "app.strip.signIn": "Zaloguj się ponownie do {server}",
   "app.strip.signInAction": "Zaloguj się",

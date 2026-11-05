@@ -3338,6 +3338,8 @@
   "app.reload": "重新載入應用程式",
   "app.open": "開啟應用程式",
   "app.openAgain": "再次開啟",
+  "app.done": "已完成：{tool}",
+  "app.doneOpen": "開啟",
   "app.loading": "正在開啟應用程式",
   "app.strip.signIn": "請重新登入 {server}",
   "app.strip.signInAction": "登入",

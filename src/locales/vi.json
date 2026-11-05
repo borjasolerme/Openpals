@@ -3837,6 +3837,8 @@
   "app.reload": "Tải lại ứng dụng",
   "app.open": "Mở ứng dụng",
   "app.openAgain": "Mở lại",
+  "app.done": "Đã xong: {tool}",
+  "app.doneOpen": "Mở",
   "app.loading": "Đang mở ứng dụng",
   "app.strip.signIn": "Đăng nhập lại vào {server}",
   "app.strip.signInAction": "Đăng nhập",

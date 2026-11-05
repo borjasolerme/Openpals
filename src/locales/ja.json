@@ -4905,6 +4905,8 @@
   "app.reload": "アプリを再読み込み",
   "app.open": "アプリを開く",
   "app.openAgain": "もう一度開く",
+  "app.done": "完了: {tool}",
+  "app.doneOpen": "開く",
   "app.loading": "アプリを開いています",
   "app.strip.signIn": "{server} にもう一度サインインしてください",
   "app.strip.signInAction": "サインイン",

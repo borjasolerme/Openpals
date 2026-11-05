@@ -1861,6 +1861,8 @@
   "app.reload": "App neu laden",
   "app.open": "App öffnen",
   "app.openAgain": "Wieder öffnen",
+  "app.done": "Erledigt: {tool}",
+  "app.doneOpen": "Öffnen",
   "app.loading": "App wird geöffnet",
   "app.strip.signIn": "Melde dich erneut bei {server} an",
   "app.strip.signInAction": "Anmelden",

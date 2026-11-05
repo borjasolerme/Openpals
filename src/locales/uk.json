@@ -2236,6 +2236,8 @@
   "app.reload": "Перезавантажити застосунок",
   "app.open": "Відкрити застосунок",
   "app.openAgain": "Відкрити знову",
+  "app.done": "Готово: {tool}",
+  "app.doneOpen": "Відкрити",
   "app.loading": "Відкриваємо застосунок",
   "app.strip.signIn": "Увійдіть у {server} ще раз",
   "app.strip.signInAction": "Увійти",
