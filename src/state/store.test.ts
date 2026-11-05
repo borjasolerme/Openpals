@@ -1528,21 +1528,6 @@ describe("tool selection announcements", () => {
   });
 });
 
-describe("team access announcements", () => {
-  it.each(["botPatched", "taskSwitched", "botPatchedSwitch"] as const)("clears additional teams after a demote via %s", kind => {
-    const bot: Bot = { id: "chief", threadId: "old", name: "Chief fixture", title: "", description: "",
-      notifications: false, color: "green", unread: false, modelSelection: { instanceId: "pi", model: "local" },
-      chiefOfStaff: true, managedSections: ["Research", ""], messages: [] };
-    const { managedSections: _sections, ...demoted } = { ...bot, chiefOfStaff: false };
-    const next = reducer({ ...initialState, bots: [bot] }, {
-      type: kind === "taskSwitched" ? "taskSwitched" : "botPatched",
-      bot: { ...demoted, threadId: kind === "botPatchedSwitch" ? "new" : bot.threadId },
-    });
-    expect(next.bots[0]?.chiefOfStaff).toBe(false);
-    expect(next.bots[0]?.managedSections).toBeUndefined();
-  });
-});
-
 describe("teammate wait announcements", () => {
   const waiting: Bot = {
     id: "wait-bot", threadId: "wait-thread", name: "Scooter", title: "", description: "",
@@ -1613,8 +1598,8 @@ describe("phone grant announcements", () => {
   });
 });
 
-describe("section Chiefs", () => {
-  const bot = (id: string, section: string, chiefOfStaff = false) => ({
+describe("the Chief of Staff", () => {
+  const bot = (id: string, chiefOfStaff = false) => ({
     id,
     threadId: `thread-${id}`,
     name: id,
@@ -1624,66 +1609,46 @@ describe("section Chiefs", () => {
     color: "green" as const,
     unread: false,
     modelSelection: { instanceId: "codex", model: "default" },
-    section,
     chiefOfStaff,
   });
 
-  it("clears previous membership when a complete bot frame moves it to General", () => {
-    const current = { ...bot("moved", "Delivery"), messages: [] };
-    const { section: _oldSection, ...announcement } = current;
-    const next = reducer({ ...initialState, bots: [current] }, { type: "botPatched", bot: announcement });
-    expect(next.bots[0].section).toBeUndefined();
-  });
-
-  it("clears full group membership without treating a partial patch as a move", () => {
-    const group = { id: "group", threadId: "thread", section: "Delivery", name: "Review", memberIds: [], defaultResponder: { kind: "mentions" }, createdAt: 1, bulletin: "", messages: [], unread: false } satisfies Group;
-    const state = { ...initialState, groups: [group] };
-    expect(reducer(state, { type: "groupPatched", group: { id: group.id, unread: true } }).groups[0].section).toBe("Delivery");
-    const { section: _oldSection, ...announcement } = group;
-    expect(reducer(state, { type: "groupPatched", group: announcement }).groups[0].section).toBeUndefined();
-  });
-
-  it("hands off only within the patched bot's section", () => {
-    const workChief = bot("work-a", "Work", true);
-    const workCandidate = bot("work-b", "Work");
-    const personalChief = bot("personal", "Personal", true);
+  it("hands the role over when another bot becomes Chief", () => {
+    const chief = bot("chief", true);
+    const candidate = bot("candidate");
     const state = {
       ...initialState,
-      bots: [workChief, workCandidate, personalChief].map((candidate) => ({ ...candidate, messages: [] })),
+      bots: [chief, candidate].map((entry) => ({ ...entry, messages: [] })),
     };
 
     const next = reducer(state, {
       type: "botPatched",
-      bot: { ...workCandidate, chiefOfStaff: true },
+      bot: { ...candidate, chiefOfStaff: true },
     });
 
-    expect(next.bots.find((candidate) => candidate.id === workChief.id)?.chiefOfStaff).toBe(false);
-    expect(next.bots.find((candidate) => candidate.id === workCandidate.id)?.chiefOfStaff).toBe(true);
-    expect(next.bots.find((candidate) => candidate.id === personalChief.id)?.chiefOfStaff).toBe(true);
+    expect(next.bots.find((entry) => entry.id === chief.id)?.chiefOfStaff).toBe(false);
+    expect(next.bots.find((entry) => entry.id === candidate.id)?.chiefOfStaff).toBe(true);
   });
 
-  it("keeps other section Chiefs during an optimistic settings update", () => {
-    const workChief = bot("work-a", "Work", true);
-    const workCandidate = bot("work-b", "Work");
-    const personalChief = bot("personal", "Personal", true);
+  it("hands the role over during an optimistic settings update", () => {
+    const chief = bot("chief", true);
+    const candidate = bot("candidate");
     const state = {
       ...initialState,
-      bots: [workChief, workCandidate, personalChief].map((candidate) => ({ ...candidate, messages: [] })),
+      bots: [chief, candidate].map((entry) => ({ ...entry, messages: [] })),
     };
 
     const next = reducer(state, {
       type: "updateBot",
-      botId: workCandidate.id,
+      botId: candidate.id,
       patch: { chiefOfStaff: true },
     });
 
-    expect(next.bots.find((candidate) => candidate.id === workChief.id)?.chiefOfStaff).toBe(false);
-    expect(next.bots.find((candidate) => candidate.id === workCandidate.id)?.chiefOfStaff).toBe(true);
-    expect(next.bots.find((candidate) => candidate.id === personalChief.id)?.chiefOfStaff).toBe(true);
+    expect(next.bots.find((entry) => entry.id === chief.id)?.chiefOfStaff).toBe(false);
+    expect(next.bots.find((entry) => entry.id === candidate.id)?.chiefOfStaff).toBe(true);
   });
 
   it("optimistically clears an explicit computer when Auto is selected", () => {
-    const current = { ...bot("cloud-bot", "Work"), computer: "cloud" as const, messages: [] };
+    const current = { ...bot("cloud-bot"), computer: "cloud" as const, messages: [] };
     const next = reducer({ ...initialState, bots: [current] }, {
       type: "updateBot",
       botId: current.id,

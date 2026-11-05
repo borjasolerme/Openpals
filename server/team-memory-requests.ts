@@ -5,7 +5,7 @@ import { UNDO_STALE, type DirectApply } from "./direct-apply.ts";
 import { TeamMemoryConflict, type TeamMemory, type TeamMemoryInput } from "./team-memory.ts";
 import type { OptionCardData } from "../shared/wire.ts";
 
-type Speaker = { id: string; name: string; color: string; section?: string };
+type Speaker = { id: string; name: string; color: string };
 type Card = OptionCardData;
 
 export interface TeamMemoryRequestDeps {
@@ -17,7 +17,6 @@ export interface TeamMemoryRequestDeps {
     bot(id: string): { id: string; name: string } | null | undefined;
     botByThread(threadId: string): { id: string; name: string } | null | undefined;
   };
-  sectionKey(section: string | undefined): string;
   decide(row: Omit<DecisionRow, "at">): void;
 }
 
@@ -34,17 +33,17 @@ export function createTeamMemoryRequests(deps: TeamMemoryRequestDeps) {
   return {
     /** Throws on invalid input; a conflict with an accepted fact comes back as `error` and saves nothing. */
     submit(from: Speaker, threadId: string, inRoom: boolean, input: TeamMemoryInput, direct: DirectApply | null) {
-      const proposed = teamMemory.propose(from.section, input, { botId: from.id, botName: from.name, threadId, at: Date.now() });
+      const proposed = teamMemory.propose(input, { botId: from.id, botName: from.name, threadId, at: Date.now() });
       const entry = proposed.entry;
       let revision: string | undefined;
       if (direct) {
-        try { teamMemory.resolve(from.section, entry.id, "accept"); }
+        try { teamMemory.resolve(entry.id, "accept"); }
         catch (error) {
-          teamMemory.resolve(from.section, entry.id, "reject");
+          teamMemory.resolve(entry.id, "reject");
           if (error instanceof TeamMemoryConflict) return { status: 409, body: { error: error.message } };
           throw error;
         }
-        revision = teamMemory.list(from.section).find((candidate) => candidate.id === entry.id)?.revision;
+        revision = teamMemory.list().find((candidate) => candidate.id === entry.id)?.revision;
       }
       const summary = `${entry.kind[0].toUpperCase()}${entry.kind.slice(1)}: ${entry.name}${entry.aliases.length ? ` (also ${entry.aliases.join(", ")})` : ""} — ${entry.detail}`;
       const message = store.appendMessage(threadId, {
@@ -58,7 +57,7 @@ export function createTeamMemoryRequests(deps: TeamMemoryRequestDeps) {
           ...(direct ? { answered: "allow", autoApplied: true } : {}),
           requestId: entry.id,
           tool: TOOL,
-          teamMemoryRequest: { section: deps.sectionKey(from.section), entryId: entry.id, kind: entry.kind, ...(revision ? { revision } : {}) },
+          teamMemoryRequest: { entryId: entry.id, kind: entry.kind, ...(revision ? { revision } : {}) },
         },
       });
       deps.decide({ threadId, requestId: entry.id, botId: from.id, botName: from.name, tool: TOOL, summary,
@@ -93,7 +92,7 @@ export function createTeamMemoryRequests(deps: TeamMemoryRequestDeps) {
       if (!card.autoApplied || card.answered !== "allow" || !request.revision) {
         return { claimed: true, state: "invalid", error: "Only a change that applied on its own can be undone here.", status: 409 };
       }
-      if (!teamMemory.undoAccept(request.section, request.entryId, request.revision)) {
+      if (!teamMemory.undoAccept(request.entryId, request.revision)) {
         return { claimed: true, state: "invalid", error: UNDO_STALE, status: 409, stale: true };
       }
       store.patchMessage(threadId, message.id, { card: { ...card, undone: true } });

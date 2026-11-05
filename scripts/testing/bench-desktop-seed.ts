@@ -1,4 +1,4 @@
-// Seeds a fixture data folder for scripts/bench-desktop.ts before its server starts: many bots in departments, two
+// Seeds a fixture data folder for scripts/bench-desktop.ts before its server starts: many bots, two
 // threads each, a few unread, and one long conversation of markdown, code, tables, images and tool rows. Runs only in
 // a child whose OMB_DATA_DIR and HOME are the fixture's own folder; prints the ids the bench needs as JSON.
 //   OMB_DATA_DIR=... node --experimental-strip-types scripts/testing/bench-desktop-seed.ts BOTS THREADS MESSAGES
@@ -15,7 +15,7 @@ const { ATTACHMENTS_DIR } = await import("../../server/attachments.ts");
 type Message = import("../../server/store.ts").Message;
 
 const store = new Store(() => ({ instanceId: "claude", model: "claude-sonnet-5" }));
-const SECTIONS = ["Sales", "Support", "Engineering", "Research", "Operations", "Marketing", "Finance", "People"];
+const AREAS = ["Sales", "Support", "Engineering", "Research", "Operations", "Marketing", "Finance", "People"];
 const start = Date.now() - 30 * 24 * 3600_000;
 let clock = start;
 const tick = (ms = 45_000) => (clock += ms);
@@ -69,10 +69,10 @@ function conversation(count: number): Message[] {
 
 const created: Array<{ id: string; threadId: string; name: string }> = [];
 for (let index = 0; index < bots - 1; index += 1) {
-  const bot = store.createBot({ name: `Bot ${String(index + 1).padStart(3, "0")}`, section: SECTIONS[index % SECTIONS.length]!, description: `Helps with ${SECTIONS[index % SECTIONS.length]!.toLowerCase()} work.` }, { seedMessages: false });
+  const bot = store.createBot({ name: `Bot ${String(index + 1).padStart(3, "0")}`, description: `Helps with ${AREAS[index % AREAS.length]!.toLowerCase()} work.` }, { seedMessages: false });
   created.push({ id: bot.id, threadId: bot.threadId, name: bot.name });
 }
-const big = store.createBot({ name: "Long Talk", section: SECTIONS[0]!, description: "Holds the long conversation." }, { seedMessages: false });
+const big = store.createBot({ name: "Long Talk", description: "Holds the long conversation." }, { seedMessages: false });
 
 const extraThreads = Math.max(0, threads - bots);
 let otherSideThreadId = "";

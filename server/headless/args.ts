@@ -69,11 +69,11 @@ const VERBS: Record<string, { options: ParseArgsOptionsConfig; positionals: numb
   wait: { options: { ...TARGET, ...WAITING, for: { type: "string" }, since: { type: "string" } }, positionals: 1 },
   interrupt: { options: { ...TARGET, tree: { type: "boolean" }, "dry-run": { type: "boolean" } }, positionals: 1 },
   "new-bot": {
-    options: { name: { type: "string" }, title: { type: "string" }, team: { type: "string" }, section: { type: "string" },
+    options: { name: { type: "string" }, title: { type: "string" },
       model: { type: "string" }, instance: { type: "string" }, effort: { type: "string" } },
     positionals: 1,
   },
-  "new-channel": { options: { name: { type: "string" }, members: { type: "string" }, team: { type: "string" }, section: { type: "string" } }, positionals: 1 },
+  "new-channel": { options: { name: { type: "string" }, members: { type: "string" } }, positionals: 1 },
   "set-model": { options: { ...TARGET, model: { type: "string" }, instance: { type: "string" }, effort: { type: "string" }, "dry-run": { type: "boolean" } }, positionals: 1 },
   edit: { options: { ...TARGET, ...TEXT, message: { type: "string" }, "dry-run": { type: "boolean" } }, positionals: 2 },
   export: {
@@ -93,7 +93,7 @@ const VERBS: Record<string, { options: ParseArgsOptionsConfig; positionals: numb
       "rotate-secrets": { type: "boolean" }, "wait-idle": { type: "string" } },
     positionals: 1,
   },
-  "team export": { options: { team: { type: "string", multiple: true }, out: { type: "string" } }, positionals: 0 },
+  "team export": { options: { out: { type: "string" } }, positionals: 0 },
   "engine set": {
     options: { "key-env": { type: "string" }, "key-file": { type: "string" }, "base-url": { type: "string" },
       "only-claude-api": { type: "boolean" }, install: { type: "boolean" }, rotate: { type: "boolean" }, "dry-run": { type: "boolean" } },

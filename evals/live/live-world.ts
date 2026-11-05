@@ -31,11 +31,8 @@ export class LiveWorld extends BaseWorld {
     for (const bot of scenario.bots) await this.createBot(bot.key, bot.name);
     for (const bot of scenario.bots) {
       const patch: Record<string, unknown> = {};
-      if (bot.section !== undefined) patch.section = bot.section;
       if (bot.chiefOfStaff !== undefined) patch.chiefOfStaff = bot.chiefOfStaff;
-      if (bot.managedSections !== undefined) patch.managedSections = bot.managedSections;
-      if (bot.managedSections !== undefined && bot.acknowledgePeerScope === undefined) patch.acknowledgePeerScope = true;
-      else if (bot.acknowledgePeerScope !== undefined) patch.acknowledgePeerScope = bot.acknowledgePeerScope;
+      if (bot.acknowledgePeerScope !== undefined) patch.acknowledgePeerScope = bot.acknowledgePeerScope;
       if (Object.keys(patch).length > 0) {
         const response = await this.api.patch("/api/bots/" + this.botId(bot.key), patch);
         if (response.status >= 300) throw new Error("bot patch failed: " + JSON.stringify(response.body));

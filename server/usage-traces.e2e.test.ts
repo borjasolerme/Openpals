@@ -14,9 +14,9 @@ it("traces a person's message to the Chief through the teammate it delegated to 
   const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as Promise<any>;
   const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   try {
-    const chief = (await cli("new-bot", "--name", "Clive", "--section", "Leadership")).bot;
-    const researcher = (await cli("new-bot", "--name", "Researcher", "--section", "Engineering")).bot;
-    await api(`/api/bots/${chief.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true }, "PATCH");
+    const chief = (await cli("new-bot", "--name", "Clive")).bot;
+    const researcher = (await cli("new-bot", "--name", "Researcher")).bot;
+    await api(`/api/bots/${chief.id}`, { chiefOfStaff: true }, "PATCH");
     writeFileSync(join(session.info.dataDir, "room-plan.json"), JSON.stringify({
       [chief.id]: { steps: [{ arguments: { bot_ids: [researcher.id], message: "Compare the pricing pages" } }], reply: "Assigned", resumeReply: "Pricing compared" },
       [researcher.id]: { steps: [{ tool: "list_bots", arguments: {} }, { tool: "list_rooms", arguments: {} }], reply: "Two pages compared" },

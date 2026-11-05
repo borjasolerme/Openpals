@@ -1,14 +1,12 @@
 import type { PeerAction } from "./peer-approval-key.ts";
-import { hasAuthority, peerAllowed, peerName } from "./peer-roster.ts";
+import { peerAllowed, peerName } from "./peer-roster.ts";
 
 export type EscalationKind = "peer-approval" | "needs-input" | "raised";
 
 export interface EscalationBot {
   id: string;
   name: string;
-  section?: string;
   chiefOfStaff?: boolean;
-  managedSections?: string[];
   hidden?: boolean;
   peers?: string[];
   visibility?: unknown;
@@ -40,7 +38,7 @@ export function escalationDeliverable(
   chief: EscalationBot,
   bot: EscalationBot,
 ): boolean {
-  return hasAuthority(chief, bot) && peerAllowed(chief, bot);
+  return peerAllowed(chief, bot);
 }
 
 export const ESCALATION_HARD_LIMIT = 3;

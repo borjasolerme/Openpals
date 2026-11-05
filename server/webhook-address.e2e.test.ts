@@ -39,17 +39,16 @@ it("gives the address to the owning bot and its Chief, never to a teammate, anot
   const urlIn = (text: string) => /"url": "([^"]+)"/u.exec(text)?.[1];
   const ask = (triggerId: string, forBotId?: string) => ({ tool: "list_triggers", arguments: { trigger_id: triggerId, include_address: true, ...(forBotId ? { for_bot_id: forBotId } : {}) } });
   try {
-    const courier = (await cli("new-bot", "--name", "Courier", "--section", "Operations")).bot;
-    const ledger = (await cli("new-bot", "--name", "Ledger", "--section", "Operations")).bot;
-    const clive = (await cli("new-bot", "--name", "Clive", "--section", "Operations")).bot;
+    const courier = (await cli("new-bot", "--name", "Courier")).bot;
+    const ledger = (await cli("new-bot", "--name", "Ledger")).bot;
+    const clive = (await cli("new-bot", "--name", "Clive")).bot;
     await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true });
-    // Another team's Chief that also manages Operations, but is shown to a different audience.
-    const vera = (await cli("new-bot", "--name", "Vera", "--section", "Finance")).bot;
-    await api("PATCH", `/api/bots/${vera.id}`, { chiefOfStaff: true, managedSections: ["Operations"], acknowledgePeerScope: true });
+    // A bot shown to a different audience, made the Chief later on.
+    const vera = (await cli("new-bot", "--name", "Vera")).bot;
     await api("PATCH", `/api/bots/${vera.id}`, { visibility: { people: ["ada@example.test"] } });
-    // Chief first: the fixture's starter is the Chief of its own, unsectioned team.
+    // One Chief: Clive took the role over from the fixture's starter.
     const roster = (await api("GET", "/api/bots")).bots as any[];
-    expect(roster.filter((bot) => bot.chiefOfStaff).map((bot) => bot.name).sort()).toEqual(["Clive", "Fixture Starter", "Vera"]);
+    expect(roster.filter((bot) => bot.chiefOfStaff).map((bot) => bot.name)).toEqual(["Clive"]);
 
     // 1. Creating it hands the owner the address, which works; a careless reply repeating it is masked in the transcript.
     const created = await turn(courier, "Set up an address my WhatsApp watcher can send new messages to, and connect it yourself.", [
@@ -79,16 +78,17 @@ it("gives the address to the owning bot and its Chief, never to a teammate, anot
     // 3. Asked again in the person's chat, the owner gets the same address: reading it never replaces it.
     expect(urlIn(said(await turn(courier, "What's the watcher's address again?", [ask(webhookId)]), "list_triggers"))).toBe(address);
 
-    // 4. A teammate in the same section can see the automation but not its address.
+    // 4. A teammate can see the automation but not its address.
     const peer = said(await turn(ledger, "Get Courier's watcher address.", [ask(webhookId, courier.id)]), "list_triggers");
     expect(peer).toContain("Only Courier, which owns this automation, or a Chief of Staff gets its address.");
     expect(peer).not.toContain(secret);
 
-    // 5. The section's Chief gets it.
+    // 5. The Chief gets it.
     const chief = said(await turn(clive, "Get Courier's watcher address.", [ask(webhookId, courier.id)]), "list_triggers");
     expect(urlIn(chief), chief).toBe(address);
 
     // 6. A Chief whose audience differs cannot reach that bot at all.
+    await api("PATCH", `/api/bots/${vera.id}`, { chiefOfStaff: true });
     const hidden = await turn(vera, "Get Courier's watcher address.", [{ ...ask(webhookId, courier.id), expectError: true }]);
     expect(said(hidden, "list_triggers")).toContain("you may not set up that bot's automations, or it is unavailable");
     expect(JSON.stringify(hidden)).not.toContain(secret);

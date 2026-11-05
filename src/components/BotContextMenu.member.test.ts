@@ -54,7 +54,6 @@ describe("a team bot's actions for a session without the admin scope", () => {
     fixture.admin = true;
     const html = render(scout);
     for (const offered of [">Archive</button>", ">Delete</button>", "Duplicate"]) expect(html).toContain(offered);
-    expect(html).not.toContain("Move to department");
     expect(html).toContain("Choose Claude or an ACP model provider first");
   });
 });

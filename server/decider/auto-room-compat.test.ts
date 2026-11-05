@@ -76,14 +76,14 @@ describe("packages", () => {
   it("an Auto room is exported as its lead, which every older app can open", () => {
     const bot = (id: string, name: string): BotRecord => ({
       id, threadId: `thread-${id}`, name, title: "", description: "", notifications: true, color: "green", unread: false,
-      modelSelection: { instanceId: "engine", model: "model" }, resumeCursors: {}, createdAt: 1, section: "Desk",
+      modelSelection: { instanceId: "engine", model: "model" }, resumeCursors: {}, createdAt: 1,
     });
     const room = (defaultResponder: GroupRecord["defaultResponder"]): GroupRecord => ({
       id: "room", threadId: "room-thread", name: "Desk room", memberIds: ["a", "b"], defaultResponder, bulletin: "",
-      unread: false, createdAt: 1, section: "Desk",
+      unread: false, createdAt: 1,
     });
     const exported = (defaultResponder: GroupRecord["defaultResponder"]) => createTeamPackageExport({
-      team: "Desk", authorName: "Mira", bots: [bot("a", "Ada"), bot("b", "Bea")], groups: [room(defaultResponder)], routines: [],
+      name: "Desk", authorName: "Mira", bots: [bot("a", "Ada"), bot("b", "Bea")], groups: [room(defaultResponder)], routines: [],
       published: null, skillsByBot: new Map(), mcpServers: {}, avatars: {},
     }).document.package.rooms?.[0]?.defaultResponder;
     expect(exported({ kind: "auto", fallbackBotId: "b" })).toEqual({ kind: "agent", agent: "bea" });
@@ -104,7 +104,7 @@ describe("team backups", () => {
     });
     const ada = store.createBot({ name: "Ada" }, { seedMessages: false });
     const bea = store.createBot({ name: "Bea" }, { seedMessages: false });
-    const group = store.createGroup("Room", [ada.id, bea.id], false, undefined, { bulletin: "", defaultResponder, completed: true });
+    const group = store.createGroup("Room", [ada.id, bea.id], false, { bulletin: "", defaultResponder, completed: true });
     return { store, routines, ada, bea, group };
   };
 

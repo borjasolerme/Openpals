@@ -50,15 +50,14 @@ describe("what MausBot offers to set up", () => {
 });
 
 describe("who becomes the Chief of Staff when the first run starts with MausBot", () => {
-  type Candidate = { id: string; defaultBot?: DefaultBotFields["defaultBot"]; chiefOfStaff?: boolean; section?: string; hidden?: boolean; sidebarHidden?: boolean };
+  type Candidate = { id: string; defaultBot?: DefaultBotFields["defaultBot"]; chiefOfStaff?: boolean; hidden?: boolean; sidebarHidden?: boolean };
   const maus: Candidate = { id: "maus", defaultBot: {}, chiefOfStaff: true };
   const research: Candidate = { id: "research" };
 
-  it("finds the Chief in MausBot's own department, never a department's or a hidden one", () => {
-    expect(chiefFor([maus, research], maus)?.id).toBe("maus");
-    expect(chiefFor([{ ...maus, chiefOfStaff: false }, { ...research, chiefOfStaff: true }], maus)?.id).toBe("research");
-    expect(chiefFor([{ ...maus, chiefOfStaff: false }, { id: "sales", section: "Sales", chiefOfStaff: true }], maus)).toBeUndefined();
-    expect(chiefFor([{ ...maus, chiefOfStaff: false }, { id: "old", chiefOfStaff: true, hidden: true }], maus)).toBeUndefined();
+  it("finds the Chief, never a hidden one", () => {
+    expect(chiefFor([maus, research])?.id).toBe("maus");
+    expect(chiefFor([{ ...maus, chiefOfStaff: false }, { ...research, chiefOfStaff: true }])?.id).toBe("research");
+    expect(chiefFor([{ ...maus, chiefOfStaff: false }, { id: "old", chiefOfStaff: true, hidden: true }])).toBeUndefined();
   });
 
   it("starting with MausBot makes it the Chief only where there is none, and never takes the role from a Chief someone has", () => {

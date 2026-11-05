@@ -49,7 +49,6 @@ export interface OverviewFacts {
     | "connectorTools"
     | "browser"
     | "chiefOfStaff"
-    | "managedSections"
   >;
   routines: Array<{
     id: string;
@@ -64,7 +63,7 @@ export interface OverviewFacts {
   engine: { agentsMcp?: boolean; composioMcp?: boolean; browserMcp?: boolean; computerMcp?: boolean } | null;
   browserEnabled?: boolean;
   connectedApps: { configured: boolean; authoritative: boolean; services: string[] };
-  sectionPeers: number;
+  peers: number;
   timeZone: string;
   recent: Array<{ at: number; summary: string }>;
 }
@@ -219,7 +218,7 @@ function reachesLines(facts: OverviewFacts): string[] {
     lines.push("Connected apps could not be checked.");
   }
   if (facts.browserEnabled && facts.engine?.browserMcp && facts.bot.browser !== false && facts.bot.computer !== "off") lines.push("Has the built-in browser.");
-  const peers = facts.sectionPeers;
+  const peers = facts.peers;
   if (facts.engine?.agentsMcp && peers > 0 && facts.bot.peers?.length !== 0) {
     lines.push(Array.isArray(facts.bot.peers)
       ? "Talks only to the bots chosen for it."

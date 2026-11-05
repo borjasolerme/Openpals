@@ -8,13 +8,13 @@ import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.
 import { waitForExit } from "./testing/cleanup.ts";
 
 type Bot = { id: string; threadId: string; name: string };
-type Room = { id: string; name: string; memberIds: string[]; section?: string; bulletin: string; working?: boolean };
+type Room = { id: string; name: string; memberIds: string[]; bulletin: string; working?: boolean };
 type RpcReply = { result: { isError?: boolean; content: Array<{ text: string }> } };
 type Mounted = { command: string; args: string[]; env: Record<string, string> };
 
 const CHIEF_ONLY_TOOLS = ["create_bot", "list_team_setup", "propose_team_setup", "propose_bot_deletion", "manage_room", "retry_thread"];
 
-it("creates and manages an own-section room through the mounted Chief MCP proxy", async () => {
+it("creates and manages a room through the mounted Chief MCP proxy", async () => {
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_MODE: "hang" });
   const evidence: unknown[] = [{ fixture: fixture.info }];
   const proxies: ChildProcess[] = [];
@@ -36,7 +36,6 @@ it("creates and manages an own-section room through the mounted Chief MCP proxy"
     for (const name of ["Fixture Chief", "Fixture Peer", "Fixture Second", "Foreign Peer"]) {
       const { bot } = await control(["new-bot", "--name", name]) as { bot: Bot };
       bots.push(bot);
-      await api("PATCH", `/api/bots/${bot.id}`, { section: name === "Foreign Peer" ? "Private" : "Room verification" });
     }
     const [chief, peer, second, foreign] = bots;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
@@ -96,18 +95,18 @@ it("creates and manages an own-section room through the mounted Chief MCP proxy"
     const rooms = async () => (await api<{ groups: Room[] }>("GET", "/api/bots?messages=0")).groups;
     await tool("create_room", { name: "Review room", member_bot_ids: [peer.id], bulletin: "Review only the assigned change." });
     const room = (await rooms()).find((candidate) => candidate.name === "Review room")!;
-    expect(room).toMatchObject({ section: "Room verification", memberIds: [chief.id, peer.id], working: false });
+    expect(room).toMatchObject({ memberIds: [chief.id, peer.id], working: false });
     expect(await tool("list_rooms", {})).toContain(room.id);
     await tool("manage_room", { room_id: room.id, action: "rename", name: "Verified room" });
     await tool("manage_room", { room_id: room.id, action: "add_members", member_bot_ids: [second.id] });
     await tool("manage_room", { room_id: room.id, action: "remove_members", member_bot_ids: [peer.id] });
     await tool("manage_room", { room_id: room.id, action: "set_bulletin", bulletin: "Verified short brief ✓" });
     const saved = (await rooms()).find((candidate) => candidate.id === room.id);
-    expect(saved).toMatchObject({ name: "Verified room", memberIds: [chief.id, second.id], bulletin: "Verified short brief ✓", section: "Room verification" });
+    expect(saved).toMatchObject({ name: "Verified room", memberIds: [chief.id, second.id], bulletin: "Verified short brief ✓" });
     evidence.push({ saved });
     await tool("create_room", { name: "Mixed room", member_bot_ids: [foreign.id] });
     expect((await rooms()).find((candidate) => candidate.name === "Mixed room"))
-      .toMatchObject({ section: "Room verification", memberIds: [chief.id, foreign.id] });
+      .toMatchObject({ memberIds: [chief.id, foreign.id] });
     await api("PATCH", `/api/bots/${chief.id}`, { peers: [peer.id, second.id], acknowledgePeerScope: true });
     await tool("create_room", { name: "Forbidden room", member_bot_ids: [foreign.id] }, true);
     await tool("manage_room", { room_id: room.id, action: "add_members", member_bot_ids: [foreign.id] }, true);

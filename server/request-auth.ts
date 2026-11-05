@@ -396,7 +396,7 @@ export function clientBotPatchViolation(body: unknown): string | null {
 
 /** All a paired device may give a bot it makes or brings in: who the bot is, how it looks, its
  * own playbooks, projects and library skills, and which of this place's models it runs on. Everything else (what it may
- * do and reach, where it runs, its department, whom it answers to or directs, whether it is the MausBot or a package's
+ * do and reach, where it runs, whom it answers to or directs, whether it is the MausBot or a package's
  * bot) only an admin on the host sets. */
 const BOT_PROFILE_SETTINGS: ReadonlySet<string> = new Set([
   ...CLIENT_BOT_PATCH_FIELDS, ...BOT_PROFILE_PATCH_FIELDS, "hidden",
@@ -409,7 +409,7 @@ export function adminOnlyBotSetting(fields: Record<string, unknown>): string | n
 }
 
 /** A client may change a room's name and reading state, never its folder or who answers. */
-const CLIENT_GROUP_PATCH_FIELDS = new Set(["name", "bulletin", "unread", "pinnedMessageId", "section", "turnTimeoutMinutes"]);
+const CLIENT_GROUP_PATCH_FIELDS = new Set(["name", "bulletin", "unread", "pinnedMessageId", "turnTimeoutMinutes"]);
 export function clientGroupPatchViolation(body: unknown): string | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return "body";
   for (const key of Object.keys(body)) if (!CLIENT_GROUP_PATCH_FIELDS.has(key)) return key;

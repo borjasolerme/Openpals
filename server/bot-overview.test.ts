@@ -25,7 +25,7 @@ function baseFacts(overrides: Partial<OverviewFacts> = {}): OverviewFacts {
     skills: [],
     engine: null,
     connectedApps: { configured: false, authoritative: true, services: [] },
-    sectionPeers: 0,
+    peers: 0,
     timeZone: "UTC",
     recent: [],
     ...overrides,
@@ -42,21 +42,19 @@ const WONT_ORDER = [
 ];
 
 describe("buildBotOverview", () => {
-  it("names a Chief's role without filing it anywhere", () => {
-    const facts = baseFacts({ bot: { ...baseFacts().bot, chiefOfStaff: true, peers: undefined }, engine: { agentsMcp: true }, sectionPeers: 3 });
+  it("names a Chief's role", () => {
+    const facts = baseFacts({ bot: { ...baseFacts().bot, chiefOfStaff: true, peers: undefined }, engine: { agentsMcp: true }, peers: 3 });
     expect(buildBotOverview(facts).reaches).toContain("Coordinates the other bots as Chief of Staff.");
-    expect(buildBotOverview(facts).reaches.join(" ")).not.toContain("department");
     facts.bot.chiefOfStaff = false;
     expect(buildBotOverview(facts).reaches.join(" ")).not.toContain("Chief of Staff");
   });
 
   it("says a bot can talk to every other bot unless a peers list narrows it", () => {
-    const open = baseFacts({ bot: { ...baseFacts().bot, peers: undefined }, engine: { agentsMcp: true }, sectionPeers: 3 });
+    const open = baseFacts({ bot: { ...baseFacts().bot, peers: undefined }, engine: { agentsMcp: true }, peers: 3 });
     expect(buildBotOverview(open).reaches).toContain("Can talk to all 3 other bots.");
-    expect(buildBotOverview({ ...open, sectionPeers: 1 }).reaches).toContain("Can talk to the other bot.");
-    const listed = baseFacts({ bot: { ...baseFacts().bot, peers: ["a", "b"] }, engine: { agentsMcp: true }, sectionPeers: 2 });
+    expect(buildBotOverview({ ...open, peers: 1 }).reaches).toContain("Can talk to the other bot.");
+    const listed = baseFacts({ bot: { ...baseFacts().bot, peers: ["a", "b"] }, engine: { agentsMcp: true }, peers: 2 });
     expect(buildBotOverview(listed).reaches).toContain("Talks only to the bots chosen for it.");
-    expect(buildBotOverview(listed).reaches.join(" ")).not.toContain("department");
   });
   it("yields all six wont lines in order and no does lines for a bot on Ask", () => {
     const overview = buildBotOverview(baseFacts({ bot: { ...baseFacts().bot, approvalMode: "ask" } }));

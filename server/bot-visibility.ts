@@ -114,7 +114,6 @@ export interface VisibilityBot {
   id: string;
   visibility?: unknown;
   threadId: string;
-  section?: string;
   avatarUrl?: string | null;
   tasks?: ReadonlyArray<{ threadId: string }>;
 }
@@ -123,7 +122,6 @@ export interface VisibilityGroup {
   id: string;
   threadId: string;
   memberIds: readonly string[];
-  section?: string;
   tasks?: ReadonlyArray<{ threadId: string }>;
   /** The narrowest audience the room has had: a bot leaving never widens it, only an admin's explicit reset. */
   audienceFloor?: unknown;
@@ -208,15 +206,6 @@ export class VisibleSet {
       this.threads = threads;
     }
     return this.threads.get(threadId);
-  }
-
-  sections(all: readonly string[]): string[] {
-    if (this.everything || this.viewer.kind === "all") return [...all];
-    const key = (value?: string) => value?.trim() || "";
-    const shown = new Set<string>();
-    for (const bot of this.bots.values()) if (this.bot(bot.id)) shown.add(key(bot.section));
-    for (const group of this.groups.values()) if (this.group(group.id)) shown.add(key(group.section));
-    return all.filter((section) => shown.has(key(section)));
   }
 
   /** Refused only when everything referencing it is hidden; an unreferenced one (a member's own upload) is served, its name is random. */
@@ -366,10 +355,6 @@ export function frameForMember(payload: Record<string, unknown>, ctx: FrameConte
   const str = (value: unknown) => (typeof value === "string" ? value : "");
   const field = (key: string) => (payload[key] && typeof payload[key] === "object" ? payload[key] as Record<string, unknown> : {});
   switch (kind) {
-    case "sections": {
-      const sections = Array.isArray(payload.sections) ? payload.sections.filter((s): s is string => typeof s === "string") : [];
-      return { ...payload, sections: visible.sections(sections) };
-    }
     case "bot.queued": {
       const queues = field("queues");
       return { ...payload, queues: Object.fromEntries(Object.entries(queues).filter(([threadId]) => visible.thread(threadId))) };

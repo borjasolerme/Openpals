@@ -40,22 +40,16 @@ function save(teams: Map<string, PublishedTeam>): void {
   writeFileAtomic(PUBLISHED_TEAMS_FILE, JSON.stringify({ version: 1, teams: out }, null, 2), { mode: 0o600 });
 }
 
-export function readPublishedTeam(section: string): PublishedTeam | null {
-  return load().get(section) ?? null;
+/** The one shared team is every bot, kept under "" (an older file has an entry per department). */
+const TEAM = "";
+
+export function readPublishedTeam(): PublishedTeam | null {
+  return load().get(TEAM) ?? null;
 }
 
-export function writePublishedTeam(section: string, entry: PublishedTeam): void {
+export function writePublishedTeam(entry: PublishedTeam): void {
   const teams = load();
-  teams.set(section, entry);
-  save(teams);
-}
-
-export function renamePublishedTeam(name: string, nextName: string | null): void {
-  const teams = load();
-  const entry = teams.get(name);
-  if (!entry || name === nextName) return;
-  teams.delete(name);
-  if (nextName !== null) teams.set(nextName, entry);
+  teams.set(TEAM, entry);
   save(teams);
 }
 

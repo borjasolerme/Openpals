@@ -21,7 +21,6 @@ async function installation() {
   const { RoutineManager } = await import("./routines.ts");
   const skills = await import("./skills.ts");
   const workspace = await import("./workspace.ts");
-  const sections = await import("./section-context.ts");
   const presets = await import("./presets.ts");
   const importer = await import("./package-import.ts");
   const exporter = await import("./package-export.ts");
@@ -43,7 +42,6 @@ async function installation() {
     skills: { install: skills.installSkill },
     memory: { writeIndex: workspace.writeMemoryFile, writeTopic: workspace.writeMemoryTopic },
     mcp: { servers: () => mcp.servers, persist: (next: Record<string, unknown>) => { mcp.servers = next; } },
-    sections: { writeBrief: (section: string, text: string) => void sections.writeSectionContext(section, text) },
     images: { save: () => "/api/attachments/fixture.png" },
     defaultSelection: () => ({ instanceId: "claude", model: "default-model" }),
     presets: presetStore,
@@ -94,10 +92,9 @@ describe("preset store", () => {
   it("stores a library file's presets and offers its skills, and refuses a file with nothing to add", async () => {
     const app = await installation();
     const result = app.importer.importPackageDocument(app.parsePackageDocument(fixture("library-only.v2.json")), { mode: "add" }, app.deps);
-    expect(result).toMatchObject({ name: "Sales skills", section: "", bots: [], groups: [], routines: [], offeredSkills: ["objection-handling", "follow-up"], connections: [], brief: false, notes: 0 });
+    expect(result).toMatchObject({ name: "Sales skills", bots: [], groups: [], routines: [], offeredSkills: ["objection-handling", "follow-up"], connections: [], brief: false, notes: 0 });
     expect(result.presets).toEqual([{ id: expect.any(String), key: "support", name: "Support agent" }]);
     expect(app.store.bots).toEqual([]);
-    expect(app.store.sections).toEqual([]);
 
     const skillsOnly = fixture("library-only.v2.json");
     delete skillsOnly.package.presets;
@@ -176,8 +173,8 @@ describe("sharing my New bot defaults as a preset", () => {
     profile: {
       name: "Sky", title: "Support", description: "Answers customers.", soul: "Be kind.\n", color: "blue", mascotExpression: "happy",
       modelSelection: { instanceId: "claude", model: "opus" }, computer: "local", cwd: "/Users/me/secret", approvalMode: "full",
-      alwaysAllow: ["Bash(*)"], chiefOfStaff: true, managedSections: ["Ops"], peers: ["x"], composio: true, browser: true,
-      browserProfile: "work", mcpServers: ["crm"], section: "Support", approvePeerComms: true, parkDirectMessages: true, avatarCrop: "rounded",
+      alwaysAllow: ["Bash(*)"], chiefOfStaff: true, peers: ["x"], composio: true, browser: true,
+      browserProfile: "work", mcpServers: ["crm"], approvePeerComms: true, parkDirectMessages: true, avatarCrop: "rounded",
     },
     memory: { "MEMORY.md": "- Customers first.\n", "memory/tone.md": "Warm.\n" },
     skills: [{ name: "follow-up", description: "follow-up steps.", source: "https://github.com/acme/skills", text: skillText("follow-up"), enabled: true, warnings: [] }],
@@ -197,7 +194,7 @@ describe("sharing my New bot defaults as a preset", () => {
       skills: ["follow-up"],
       seed: { memory: { "MEMORY.md": "- Customers first.\n", "memory/tone.md": "Warm.\n" } },
     });
-    expect(JSON.stringify(built.value)).not.toMatch(/opus|secret|full|Bash|crm|work|Ops|Daily/);
+    expect(JSON.stringify(built.value)).not.toMatch(/opus|secret|full|Bash|crm|work|Daily/);
     expect(app.presets.presetFromDefaults(defaults(), { includeNotes: false }).value!.preset).not.toHaveProperty("seed");
     const empty = app.presets.presetFromDefaults({ profile: { approvalMode: "auto", computer: "local" }, memory: {}, skills: [], routines: [] }, { includeNotes: true });
     expect(empty).toEqual({ value: null, skipped: [{ part: "presets[new-bot-defaults]", reason: "preset_empty" }] });
@@ -211,9 +208,9 @@ describe("sharing my New bot defaults as a preset", () => {
         { name: "research-brief", description: "research-brief steps.", source: "fixture", text: skillText("research-brief", "Different."), enabled: true, warnings: [] },
       ],
     }), { includeNotes: true });
-    const bot = { id: "b1", threadId: "t1", name: "Morgan", color: "green", section: "Sales desk", createdAt: 1 } as BotRecord;
+    const bot = { id: "b1", threadId: "t1", name: "Morgan", color: "green", createdAt: 1 } as BotRecord;
     const exported = app.exporter.createTeamPackageExport({
-      team: "Sales desk", bots: [bot], groups: [], routines: [], published: null,
+      name: "Sales desk", bots: [bot], groups: [], routines: [], published: null,
       skillsByBot: new Map([["b1", [{ name: "research-brief", description: "research-brief steps.", instructions: skillText("research-brief"), source: "fixture" }]]]),
       preset: built.value,
     });

@@ -63,11 +63,11 @@ async function launch() {
 it("delivers a pending peer-comm approval card to the Chief's escalations thread", async () => {
   const { api, control, dump, messages, plan, useCli, turnEnded, escalationsThread, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Clive", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Clive"])).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const ada = (await control(["new-bot", "--name", "Ada", "--section", "Ops"])).bot;
+    const ada = (await control(["new-bot", "--name", "Ada"])).bot;
     await api("PATCH", `/api/bots/${ada.id}`, { approvePeerComms: true, approvalMode: "ask" });
-    const hedge = (await control(["new-bot", "--name", "Hedge", "--section", "Ops"])).bot;
+    const hedge = (await control(["new-bot", "--name", "Hedge"])).bot;
     await useCli();
     plan(ada.activeTaskId, {
       tools: [{ name: "coordinate_bots", server: "agents", input: { bot_ids: [hedge.id], message: "Hedge, a quick one before I file the memo.", consult: true } }],
@@ -105,9 +105,9 @@ it("delivers a pending peer-comm approval card to the Chief's escalations thread
 it("delivers a teammate turn that ends needing input to the Chief's escalations thread", async () => {
   const { api, control, dump, messages, plan, useCli, turnEnded, escalationsThread, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Clive", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Clive"])).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const mira = (await control(["new-bot", "--name", "Mira", "--section", "Ops"])).bot;
+    const mira = (await control(["new-bot", "--name", "Mira"])).bot;
     await useCli();
     plan(mira.activeTaskId, { replies: ["Half done.\nNEEDS INPUT: which repository should I tag?"] });
     plan(chief.activeTaskId, { replies: ["I told the person."] });
@@ -136,9 +136,9 @@ it("delivers a teammate turn that ends needing input to the Chief's escalations 
 it("carries the provenance fence header on a bot-raised escalation", async () => {
   const { api, control, dump, messages, plan, useCli, turnEnded, escalationsThread, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Clive", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Clive"])).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const mira = (await control(["new-bot", "--name", "Mira", "--section", "Ops"])).bot;
+    const mira = (await control(["new-bot", "--name", "Mira"])).bot;
     await useCli();
     plan(mira.activeTaskId, {
       tools: [{ name: "raise_escalation", server: "agents", input: { reason: "The deploy needs the production key only the person can unlock." } }],
@@ -168,7 +168,7 @@ it("carries the provenance fence header on a bot-raised escalation", async () =>
 it("routes a Chief's own gate to the person, never a dead end", async () => {
   const { url, api, control, botsNow, plan, useCli, turnEnded, close } = await launch();
   try {
-    const clive = (await control(["new-bot", "--name", "Clive", "--section", "Ops"])).bot;
+    const clive = (await control(["new-bot", "--name", "Clive"])).bot;
     await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true });
     await useCli();
     plan(clive.activeTaskId, {

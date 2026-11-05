@@ -4,8 +4,7 @@ import type { MapComputer, MapComputersPayload } from "../../shared/map-computer
 import { createComputerFrames, mapComputerState, type ComputerFrames, type FrameMachine } from "../computer-frames.ts";
 import type { AppConfig } from "../config.ts";
 import { latestTurnFrame } from "../screen-frame-source.ts";
-import { sectionKey, type BotRecord, type Store } from "../store.ts";
-import { teamComputerOwner, type TeamComputerRecord, type TeamComputers } from "../team-computers.ts";
+import type { BotRecord, Store } from "../store.ts";
 import type { RemoteComputerProvider } from "./config.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 
@@ -17,42 +16,26 @@ const MAP_FRAME_PATH = "/tmp/ogb-map-frame.jpg";
 export interface ComputerFramesRouteDeps {
   cfg: AppConfig;
   store: Pick<Store, "bots">;
-  teamComputers: Pick<TeamComputers, "list">;
   computerControl: Pick<ComputerControl, "snapshot">;
   computerProviderConfigTransitions: Pick<Set<RemoteComputerProvider>, "has">;
   managedBoatOwners(): boat.ManagedBoatOwner[];
   botHasActiveTurn(botId: string): boolean;
-  teamComputerInUse(computer: TeamComputerRecord): boolean;
 }
 
-type MapBot = Pick<BotRecord, "id" | "name" | "section" | "computer" | "cloudBackend" | "hidden">;
+type MapBot = Pick<BotRecord, "id" | "name" | "computer" | "cloudBackend" | "hidden">;
 
-/** Auto bots of a team use its computer; a bot set to its own cloud computer, or one that already has one, gets its own. */
+/** A bot set to its own cloud computer, or one that already has one. */
 export function mapComputers(input: {
   bots: readonly MapBot[];
-  teamComputers: readonly Pick<TeamComputerRecord, "id" | "name" | "section">[];
   machine(owner: string): FrameMachine | undefined;
   working(owner: string): boolean;
 }): Omit<MapComputer, "frame">[] {
-  const bots = input.bots.filter((bot) => !bot.hidden);
-  const teams = input.teamComputers.filter((computer) => computer.section !== null);
-  const sharedBy = (computer: (typeof teams)[number]) => bots.filter((bot) =>
-    bot.computer === undefined && bot.cloudBackend !== "vps" && sectionKey(bot.section) === computer.section);
-  const usesTeam = new Set(teams.flatMap((computer) => sharedBy(computer).map((bot) => bot.id)));
-  const own = bots.filter((bot) => bot.cloudBackend !== "vps" && (bot.computer === "cloud" || (!usesTeam.has(bot.id) && input.machine(bot.id) !== undefined)));
-  return [
-    ...own.map((bot) => ({
-      id: bot.id, kind: "bot" as const, name: bot.name, botIds: [bot.id],
+  return input.bots
+    .filter((bot) => !bot.hidden && bot.cloudBackend !== "vps" && (bot.computer === "cloud" || input.machine(bot.id) !== undefined))
+    .map((bot) => ({
+      id: bot.id, name: bot.name, botIds: [bot.id],
       state: mapComputerState(input.machine(bot.id), input.working(bot.id)),
-    })),
-    ...teams.map((computer) => {
-      const owner = teamComputerOwner(computer.id);
-      return {
-        id: owner, kind: "team" as const, name: computer.name, section: computer.section!, botIds: sharedBy(computer).map((bot) => bot.id),
-        state: mapComputerState(input.machine(owner), input.working(owner)),
-      };
-    }),
-  ];
+    }));
 }
 
 export function parseHave(raw: string | null): Map<string, string> {
@@ -81,12 +64,8 @@ async function captureThumbnail(cfg: AppConfig, boxId: string, signal: AbortSign
 
 /** GET /api/computers/frames?have=ID:VERSION,… → `{ configured, available, now, computers }`. Admin-only like every computer route. */
 export function createComputerFramesRoutes(deps: ComputerFramesRouteDeps, frames?: ComputerFrames): RouteHandler {
-  const { cfg, store, teamComputers, computerControl } = deps;
-  const teamFor = (owner: string) => teamComputers.list().find((computer) => teamComputerOwner(computer.id) === owner);
-  const working = (owner: string) => {
-    const team = teamFor(owner);
-    return team ? deps.teamComputerInUse(team) : deps.botHasActiveTurn(owner);
-  };
+  const { cfg, store, computerControl } = deps;
+  const working = (owner: string) => deps.botHasActiveTurn(owner);
   const cache = frames ?? createComputerFrames({
     listMachines: async () => {
       const inventory = await boat.listManagedBoats(cfg, deps.managedBoatOwners(), { adoptLegacy: false });
@@ -110,7 +89,7 @@ export function createComputerFramesRoutes(deps: ComputerFramesRouteDeps, frames
     if (configured) await cache.watch();
     const have = parseHave(url.searchParams.get("have"));
     const computers: MapComputer[] = mapComputers({
-      bots: store.bots, teamComputers: teamComputers.list(),
+      bots: store.bots,
       machine: (owner) => configured ? cache.machine(owner) : undefined, working,
     }).map((computer) => {
       const frame = configured ? cache.frame(computer.id) : undefined;

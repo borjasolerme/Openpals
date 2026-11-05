@@ -53,14 +53,13 @@ beforeEach(() => {
   requests.length = 0;
 });
 
-async function usage(cfg: AppConfig, options: { owners?: Array<{ botId: string; name: string; inUse: boolean }>; teams?: number; changing?: RemoteComputerProvider[] } = {}) {
+async function usage(cfg: AppConfig, options: { owners?: Array<{ botId: string; name: string; inUse: boolean }>; changing?: RemoteComputerProvider[] } = {}) {
   const sent: Array<{ status: number; body: unknown; headers: Record<string, string> }> = [];
   const headers: Record<string, string> = {};
   const res = { setHeader: (name: string, value: string) => { headers[name] = value; } } as unknown as ServerResponse;
   const handler = routes.createComputerUsageRoutes({
     cfg,
     managedBoatOwners: () => options.owners ?? [],
-    teamComputers: { list: () => Array.from({ length: options.teams ?? 0 }, (_, index) => ({ id: `team-${index}` })) as never },
     computerProviderConfigTransitions: new Set(options.changing ?? []),
   });
   const out = await handler({
@@ -79,7 +78,7 @@ describe("GET /api/computers/usage", () => {
 
   it("answers only its own path", async () => {
     const handler = routes.createComputerUsageRoutes({
-      cfg: {}, managedBoatOwners: () => [], teamComputers: { list: () => [] }, computerProviderConfigTransitions: new Set(),
+      cfg: {}, managedBoatOwners: () => [], computerProviderConfigTransitions: new Set(),
     });
     for (const [method, path] of [["POST", "/api/computers/usage"], ["GET", "/api/computers/boxes"], ["GET", "/api/computers/usage/x"]]) {
       expect(await handler({ method, path } as RouteContext)).toBe(PASS);
@@ -87,8 +86,8 @@ describe("GET /api/computers/usage", () => {
   });
 
   it("counts no cloud computers without a Boat account, and asks no one", async () => {
-    const reply = await usage({}, { teams: 2 });
-    expect(reply).toEqual({ status: 200, body: { cloudComputers: 0, teamComputers: 2 }, headers: { "cache-control": "private, no-store" } });
+    const reply = await usage({});
+    expect(reply).toEqual({ status: 200, body: { cloudComputers: 0 }, headers: { "cache-control": "private, no-store" } });
     expect(requests).toEqual([]);
   });
 
@@ -96,35 +95,34 @@ describe("GET /api/computers/usage", () => {
     const botId = "usage-counted-bot";
     rows = [
       { id: "bx_23456789", name: await boat.boatNameFor(botId), state: "ready" },
-      { id: "bx_3456789a", name: await boat.boatNameFor("usage-team-computer"), state: "archived" },
+      { id: "bx_3456789a", name: await boat.boatNameFor("usage-other-bot"), state: "archived" },
       { id: "bx_456789ab", name: "someone-elses-box", state: "running" },
     ];
     const { body } = await usage({ box: { token: "box_usage" } } as AppConfig, {
-      owners: [{ botId, name: "Research", inUse: false }, { botId: "usage-team-computer", name: "Team box", inUse: false }],
-      teams: 1,
+      owners: [{ botId, name: "Research", inUse: false }, { botId: "usage-other-bot", name: "Writer", inUse: false }],
     });
-    expect(body).toEqual({ cloudComputers: 2, teamComputers: 1 });
+    expect(body).toEqual({ cloudComputers: 2 });
     expect(Object.values(body as object).every((value) => Number.isInteger(value))).toBe(true);
-    expect(JSON.stringify(body)).not.toMatch(/bx_|Research|Team box|ogb-|ready|archived/);
+    expect(JSON.stringify(body)).not.toMatch(/bx_|Research|Writer|ogb-|ready|archived/);
     expect(requests).toEqual(["GET /api/v1/sandboxes?limit=200"]);
   });
 
   it.each([401, 503])("says it does not know when Boat answers %i", async (status) => {
     listStatus = status;
-    expect((await usage({ box: { token: "box_usage" } } as AppConfig, { teams: 1 })).body).toEqual({ cloudComputers: null, teamComputers: 1 });
+    expect((await usage({ box: { token: "box_usage" } } as AppConfig)).body).toEqual({ cloudComputers: null });
   });
 
   it("says it does not know when Boat cannot be reached", async () => {
     vi.stubEnv("OMB_BOAT_API", "http://127.0.0.1:9/api/v1");
     try {
-      expect((await usage({ box: { token: "box_usage" } } as AppConfig)).body).toEqual({ cloudComputers: null, teamComputers: 0 });
+      expect((await usage({ box: { token: "box_usage" } } as AppConfig)).body).toEqual({ cloudComputers: null });
     } finally {
       vi.stubEnv("OMB_BOAT_API", `http://127.0.0.1:${(api.address() as { port: number }).port}/api/v1`);
     }
   });
 
   it("does not list while the Boat account is changing", async () => {
-    expect((await usage({ box: { token: "box_usage" } } as AppConfig, { changing: ["box"] })).body).toEqual({ cloudComputers: null, teamComputers: 0 });
+    expect((await usage({ box: { token: "box_usage" } } as AppConfig, { changing: ["box"] })).body).toEqual({ cloudComputers: null });
     expect(requests).toEqual([]);
   });
 
@@ -133,7 +131,7 @@ describe("GET /api/computers/usage", () => {
     rows = [{ id: "bx_56789abc", name: legacyNameFor(botId), state: "ready" }];
     const before = { creates: journal.boatCreateRecoverySnapshot(), deletions: deletions.boatDeletionSnapshot() };
     const { body } = await usage({ box: { token: "box_usage" } } as AppConfig, { owners: [{ botId, name: "Legacy", inUse: false }] });
-    expect(body).toEqual({ cloudComputers: 1, teamComputers: 0 });
+    expect(body).toEqual({ cloudComputers: 1 });
     expect({ creates: journal.boatCreateRecoverySnapshot(), deletions: deletions.boatDeletionSnapshot() }).toEqual(before);
     expect(before.creates.some((record) => record.botId === botId)).toBe(false);
   });

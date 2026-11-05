@@ -22,15 +22,14 @@ function fixture() {
     createTask: (id, title) => store.createTask(id, title),
     startTurn: async () => { throw new Error("Import must never run a bot"); },
   });
-  const chief = store.createBot({ name: "Mira", section: "Engineering", description: "Full instructions\n".repeat(400) }, { seedMessages: false });
+  const chief = store.createBot({ name: "Mira", description: "Full instructions\n".repeat(400) }, { seedMessages: false });
   store.setSoul(chief.id, "  Cite sources.\nRespect the user's current request. 🐭\n");
-  const scout = store.createBot({ name: "Scout", section: "Engineering", mascotBody: "circle", mascotFaceColor: "black" }, { seedMessages: false });
-  const otherChief = store.createBot({ name: "Ava", section: "Operations" }, { seedMessages: false });
+  const scout = store.createBot({ name: "Scout", mascotBody: "circle", mascotFaceColor: "black" }, { seedMessages: false });
+  const ava = store.createBot({ name: "Ava" }, { seedMessages: false });
   const archived = store.createBot({ name: "Archived" }, { seedMessages: false });
   store.patchBot(archived.id, { hidden: true });
   store.patchBot(chief.id, { chiefOfStaff: true, autoApprove: true, approvalMode: "full", alwaysAllow: ["Bash"], cwd: "/private/old-workspace", composio: true,
     playbooks: [{ key: "research", name: "Research", summary: "Find evidence", triggers: ["research"], instructions: "Cite sources" }] });
-  store.setChiefOfStaff(otherChief.id);
   const root = store.appendMessage(chief.threadId, { role: "user", kind: "text", text: "Original question", at: 100 });
   const answer = store.appendMessage(chief.threadId, { role: "bot", kind: "text", text: "Original answer", at: 101 });
   store.branchMessage(chief.threadId, root.id, "Edited question");
@@ -47,14 +46,14 @@ function fixture() {
     title: "Permission request", subtitle: "Old approval", options: ["Allow"], requestId: "do-not-resume", allowKey: "Bash",
   } });
   store.appendMessage(active.threadId, { role: "user", kind: "text", text: "An image", attachments: [{ kind: "image", path: "/private/image.png", mime: "image/png" }] });
-  const group = store.createGroup("Project room", [chief.id, scout.id], false, "Engineering", {
+  const group = store.createGroup("Project room", [chief.id, scout.id], false, {
     bulletin: "Build carefully", defaultResponder: { kind: "member", botId: chief.id }, completed: true,
   });
   store.appendMessage(group.threadId, { role: "bot", kind: "text", text: "Room answer", from: { botId: scout.id, name: scout.name, color: scout.color }, peerPost: { unattended: true } });
   store.createGroupTask(group.id, "Second room task", false);
   routines.create({ name: "Daily", prompt: "Report progress", botId: chief.id, enabled: true, schedule: { type: "daily", time: "09:00", weekdays: [1, 2, 3, 4, 5] } });
   routines.create({ name: "Standup", prompt: "Discuss progress", target: "room-goal", groupId: group.id, botId: chief.id, enabled: true, schedule: { type: "interval", everyMinutes: 30, anchorAt: 0 } });
-  return { store, routines, chief, scout, otherChief, archived, group };
+  return { store, routines, chief, scout, ava, archived, group };
 }
 
 describe("additive portable team backups", () => {
@@ -160,8 +159,8 @@ describe("additive portable team backups", () => {
     expect(readMemoryFile(noMemory.id).text).toBe("");
   });
 
-  it("round-trips all bots, sections, Chiefs, rooms, tasks and branches without changing originals", () => {
-    const { store, routines, chief, scout, otherChief, archived, group } = fixture();
+  it("round-trips all bots, rooms, tasks and branches without changing originals or their Chief", () => {
+    const { store, routines, chief, scout, ava, archived, group } = fixture();
     const backup = createTeamBackup(store, routines.listRoutines(), "My team");
     const originalBots = structuredClone(store.bots);
     const originalGroups = structuredClone(store.groups);
@@ -177,20 +176,21 @@ describe("additive portable team backups", () => {
     expect(importedChief.soul).toBe(chief.soul);
     expect(importedChief.soulHash).toBe(soulHash(chief.soul!));
     expect(readFileSync(soulFile(importedChief.id), "utf8")).toBe(chief.soul);
-    expect(importedChief).toMatchObject({ section: "Engineering 2", chiefOfStaff: true, description: chief.description, computer: "off", composio: false, browser: false, resumeCursors: {}, playbooks: chief.playbooks });
+    expect(importedChief).toMatchObject({ chiefOfStaff: false, description: chief.description, computer: "off", composio: false, browser: false, resumeCursors: {}, playbooks: chief.playbooks });
     expect(approvalModeFor(importedChief)).toBe("full");
-    expect(result.bots.find((bot) => bot.name === "Ava 2")).toMatchObject({ section: "Operations 2", chiefOfStaff: true });
+    expect(result.bots.find((bot) => bot.name === "Ava 2")).toMatchObject({ chiefOfStaff: false });
     expect(result.bots.find((bot) => bot.name === "Archived 2")).toMatchObject({ hidden: true });
     expect(importedChief).not.toHaveProperty("cwd");
     expect(importedChief).not.toHaveProperty("alwaysAllow");
     expect(importedChief.tasks?.every((task) => task.activity === "idle" && task.busy === false
       && task.unread === false && task.modelSelection === undefined
       && store.projectBotForTask(importedChief.id, task.threadId)?.modelSelection.instanceId === selection().instanceId)).toBe(true);
-    expect(store.bot(otherChief.id)?.chiefOfStaff).toBe(true);
+    expect(store.bot(chief.id)?.chiefOfStaff).toBe(true);
+    expect(store.bot(ava.id)?.chiefOfStaff).toBeFalsy();
     expect(store.bot(archived.id)?.hidden).toBe(true);
     expect(importedScout.mascotBody).toBe(scout.mascotBody);
     expect(importedScout.mascotFaceColor).toBe("black");
-    expect(result.groups[0]).toMatchObject({ name: "Project room 2", section: "Engineering 2", memberIds: [importedChief.id, importedScout.id], defaultResponder: { kind: "member", botId: importedChief.id } });
+    expect(result.groups[0]).toMatchObject({ name: "Project room 2", memberIds: [importedChief.id, importedScout.id], defaultResponder: { kind: "member", botId: importedChief.id } });
     expect(result.groups[0].tasks?.map((task) => [task.title, task.createdAt])).toEqual(group.tasks?.map((task) => [task.title, task.createdAt]));
     const roomMessage = store.messagesFor(result.groups[0].threadId)[0];
     expect(roomMessage).toMatchObject({ text: "Room answer", from: { botId: importedScout.id }, peerPost: { unattended: true } });
@@ -218,7 +218,7 @@ describe("additive portable team backups", () => {
     expect(reloaded.bot(importedChief.id)?.tasks).toEqual(importedChief.tasks);
     expect(reloaded.messagesFor(chief.threadId)).toEqual(store.messagesFor(chief.threadId));
     const second = importTeamBackup(store, routines, backup, selection());
-    expect(second.bots.find((bot) => bot.name === "Mira 3")).toMatchObject({ section: "Engineering 3", chiefOfStaff: true });
+    expect(second.bots.find((bot) => bot.name === "Mira 3")).toMatchObject({ chiefOfStaff: false });
     expect(store.bot(importedChief.id)).toEqual(importedChief);
   });
 
@@ -283,7 +283,7 @@ describe("additive portable team backups", () => {
     expect(restoredDm.dm).toBe(true);
   });
 
-  it.each(["unknown-version", "duplicate-bot", "cycle", "dangling-room", "dangling-task", "duplicate-chief", "oversized-soul"])("rejects %s before any writes", (corruption) => {
+  it.each(["unknown-version", "duplicate-bot", "cycle", "dangling-room", "dangling-task", "hidden-chief", "oversized-soul"])("rejects %s before any writes", (corruption) => {
     const { store, routines } = fixture();
     const backup = createTeamBackup(store, routines.listRoutines(), "My team");
     const before = readFileSync(join(DATA_DIR, "bots.json"), "utf8");
@@ -294,7 +294,7 @@ describe("additive portable team backups", () => {
     if (corruption === "cycle") source.tasks[0].messages[0].parentId = source.tasks[0].messages[0].id;
     if (corruption === "dangling-room") backup.groups[0].memberIds.push("missing");
     if (corruption === "dangling-task") source.activeTask = "missing";
-    if (corruption === "duplicate-chief") backup.bots.find((bot) => bot.name === "Scout")!.chiefOfStaff = true;
+    if (corruption === "hidden-chief") source.hidden = true;
     if (corruption === "oversized-soul") source.soul = "🐭".repeat(6_001);
     expect(() => importTeamBackup(store, routines, backup, selection())).toThrow("Invalid backup");
     expect(readFileSync(join(DATA_DIR, "bots.json"), "utf8")).toBe(before);
@@ -328,7 +328,6 @@ describe("additive portable team backups", () => {
 
   it("rolls back fresh bots, rooms and transcripts after a late failure", () => {
     const { store, routines } = fixture();
-    const beforeSections = [...store.sections];
     const backup = createTeamBackup(store, routines.listRoutines(), "My team");
     const before = createTeamBackup(store, routines.listRoutines(), "My team");
     const write = vi.spyOn(routines, "create").mockImplementationOnce(() => { throw new Error("fixture disk failure"); });
@@ -336,7 +335,6 @@ describe("additive portable team backups", () => {
     write.mockRestore();
     const after = createTeamBackup(new Store(selection), routines.listRoutines(), "My team");
     expect({ ...after, exportedAt: 0 }).toEqual({ ...before, exportedAt: 0 });
-    expect(new Store(selection).sections).toEqual(beforeSections);
   });
 
   it("refuses to populate a thread that already has history", () => {
@@ -348,7 +346,6 @@ describe("additive portable team backups", () => {
 
   it("also rolls back a creation that throws before returning its new record", () => {
     const { store, routines } = fixture();
-    const beforeSections = [...store.sections];
     const backup = createTeamBackup(store, routines.listRoutines(), "My team");
     const before = structuredClone(store.bots);
     const create = store.createBot.bind(store);
@@ -360,22 +357,22 @@ describe("additive portable team backups", () => {
     fail.mockRestore();
     expect(store.bots).toEqual(before);
     expect(new Store(selection).bots.map((bot) => bot.id)).toEqual(before.map((bot) => bot.id));
-    expect(new Store(selection).sections).toEqual(beforeSections);
   });
 
-  it("keeps case-distinct sections and their Chiefs separate", () => {
-    const { store, routines } = fixture();
-    const second = store.createBot({ name: "Another chief", section: "engineering" }, { seedMessages: false });
-    store.setChiefOfStaff(second.id);
-    const imported = importTeamBackup(store, routines, createTeamBackup(store, routines.listRoutines(), "My team"), selection());
-    const chief = imported.bots.find((bot) => bot.name === "Mira 2")!;
-    const other = imported.bots.find((bot) => bot.name === "Another chief 2")!;
+  it("makes the backup's first Chief the Chief only while the workspace has none", () => {
+    const { store, routines, ava } = fixture();
+    const backup = createTeamBackup(store, routines.listRoutines(), "My team");
+    backup.bots.find((bot) => bot.key === ava.id)!.chiefOfStaff = true;
+    const [first, later] = backup.bots.filter((bot) => bot.chiefOfStaff).map((bot) => `${bot.name} 2`);
+    store.setChiefOfStaff(null);
+    const imported = importTeamBackup(store, routines, JSON.parse(JSON.stringify(backup)), selection());
+    const chief = imported.bots.find((bot) => bot.name === first)!;
     expect(chief.chiefOfStaff).toBe(true);
-    expect(other.chiefOfStaff).toBe(true);
-    expect(chief.section?.toLowerCase()).not.toBe(other.section?.toLowerCase());
+    expect(imported.bots.find((bot) => bot.name === later)!.chiefOfStaff).toBe(false);
     const reloaded = new Store(selection);
-    expect(reloaded.bot(chief.id)?.chiefOfStaff).toBe(true);
-    expect(reloaded.bot(other.id)?.chiefOfStaff).toBe(true);
+    expect(reloaded.bots.filter((bot) => bot.chiefOfStaff).map((bot) => bot.id)).toEqual([chief.id]);
+    const again = importTeamBackup(store, routines, JSON.parse(JSON.stringify(backup)), selection());
+    expect(again.bots.some((bot) => bot.chiefOfStaff)).toBe(false);
   });
 
   it("backs a widget up as its text fallback and restores it as plain text, with the answer still a reply to it", () => {

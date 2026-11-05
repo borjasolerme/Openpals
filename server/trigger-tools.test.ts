@@ -70,16 +70,16 @@ describe("parseTriggerRequest", () => {
 
 describe("triggerTarget", () => {
   const bots = {
-    a: { id: "bot-a", name: "A", section: "Ops" },
-    b: { id: "bot-b", name: "B", section: "Ops" },
-    c: { id: "bot-c", name: "C", section: "Sales" },
+    a: { id: "bot-a", name: "A", peers: ["bot-b"] },
+    b: { id: "bot-b", name: "B" },
+    c: { id: "bot-c", name: "C" },
   };
   const lookup = (id: string) => Object.values(bots).find((bot) => bot.id === id);
   it("needs no target for the sender, names a teammate, and refuses one it may not manage", () => {
     expect(triggerTarget(bots.a, undefined, lookup)).toEqual({});
     expect(triggerTarget(bots.a, "bot-a", lookup)).toEqual({});
     expect(triggerTarget(bots.a, "bot-b", lookup)).toEqual({ forBot: { botId: "bot-b", name: "B" } });
-    expect(triggerTarget(bots.a, "bot-c", lookup)).toMatchObject({ status: 403, error: expect.not.stringMatching(/department|section/) });
+    expect(triggerTarget(bots.a, "bot-c", lookup)).toMatchObject({ status: 403 });
     expect(triggerTarget(bots.a, "bot-zzz", lookup)).toMatchObject({ status: 404 });
     expect(triggerTarget(bots.a, "  ", lookup)).toMatchObject({ status: 400 });
   });

@@ -68,9 +68,9 @@ it("keeps a routine waiting through a restart, reruns its cut teammate once, and
   let restarted: ChildProcess | undefined;
   try {
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
-    const { bot: chief } = await cli("new-bot", "--name", "Clive", "--section", "Leadership");
-    const { bot: mate } = await cli("new-bot", "--name", "Mira", "--section", "Engineering");
-    await request(`/api/bots/${chief.id}`, { method: "PATCH", body: JSON.stringify({ chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true }) }, url);
+    const { bot: chief } = await cli("new-bot", "--name", "Clive");
+    const { bot: mate } = await cli("new-bot", "--name", "Mira");
+    await request(`/api/bots/${chief.id}`, { method: "PATCH", body: JSON.stringify({ chiefOfStaff: true }) }, url);
     await waitForExit(fixture.child, { signal: "SIGTERM" });
     const at = Date.now() - 60_000;
     writeFileSync(join(dataDir, "routines.json"), JSON.stringify({ version: 1, routines: [], runs: [{

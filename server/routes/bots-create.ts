@@ -25,7 +25,6 @@ export interface BotCreateRouteDeps {
   /** A hosted (company) workspace: Full access comes only from its policy. */
   hostedWorkspace: boolean;
   hostedFullAccessRefusal: string;
-  desktopManaged: boolean;
   maxWorkspaceBots: number;
   routines(): RoutineManager | null;
   storedAvatarExists(avatarUrl: string): boolean;
@@ -61,7 +60,7 @@ function askedSettings(body: Record<string, unknown>): Record<string, unknown> {
 
 export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
   const {
-    store, cfg, presetStore, hostedWorkspace: HOSTED_WORKSPACE, hostedFullAccessRefusal: HOSTED_FULL_ACCESS_REFUSAL, desktopManaged: DESKTOP_MANAGED,
+    store, cfg, presetStore, hostedWorkspace: HOSTED_WORKSPACE, hostedFullAccessRefusal: HOSTED_FULL_ACCESS_REFUSAL,
     maxWorkspaceBots: MAX_WORKSPACE_BOTS,
     storedAvatarExists, defaultSelection, checkedModelSelection, wireBot,
   } = deps;
@@ -113,15 +112,6 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       if (settings.mcpServers?.some(name => mcpServerNameError(name) !== null) || (settings.mcpServers?.length ?? 0) > MAX_MCP_SERVERS) {
         return json(res, 400, { error: "Invalid MCP server selection" });
       }
-      if (settings.managedSections?.length) {
-        if (!settings.chiefOfStaff || settings.managedSections.some(name => name !== "" && !store.sections.includes(name))) {
-          return json(res, 400, { error: "Only a Chief may manage existing additional departments" });
-        }
-        if (body.acknowledgePeerScope !== true) return json(res, 400, { error: "Confirm additional department access (acknowledgePeerScope)" });
-        if (auth.kind === "loopback" && !DESKTOP_MANAGED && store.bots.some(bot => bot.busy)) {
-          return json(res, 409, { error: "Stop running bots before granting access to another department" });
-        }
-      }
       const checkedCwd = validateBotCwd(settings.cwd ?? null);
       if (!checkedCwd.ok) return json(res, 400, { error: checkedCwd.error });
       if (body.requireAvailableModel !== undefined && typeof body.requireAvailableModel !== "boolean") {
@@ -137,14 +127,6 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       );
       const profile = parseBotProfilePatch(profileInput, true);
       if (!profile.ok) return json(res, 400, { error: profile.error });
-      let section: string | undefined;
-      if (body.section !== undefined && body.section !== null) {
-        if (typeof body.section !== "string") return json(res, 400, { error: "section must be a string" });
-        section = body.section.trim() || undefined;
-        if (section && section.length > 60) {
-          return json(res, 400, { error: "section must be at most 60 characters" });
-        }
-      }
       let selection: ModelSelection;
       if (body.modelSelection === undefined) {
         selection = await defaultSelection();
@@ -164,15 +146,15 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       if (kept.id && "error" in keptBotIds(kept, store)) return json(res, 409, { error: "a bot with this id already exists here" });
       // A bot moved in from another computer keeps its own look; a new one named no look starts in a fresh one.
       const look = kept.id || settings.color || settings.mascotBody ? undefined : freshLook(store.bots);
-      const bot = store.createBot({ ...profile.patch, soul: settings.soul, section, modelSelection: selection,
+      const bot = store.createBot({ ...profile.patch, soul: settings.soul, modelSelection: selection,
         toolScope: settings.toolScope ?? undefined, color: settings.color ?? look?.color, mascotBody: settings.mascotBody ?? look?.mascotBody,
         ...(created?.ok ? { visibility: created.visibility } : {}) }, kept.id ? { ...kept, seedMessages: false } : {});
       const createdRoutines: Array<{ id: string; enabled: boolean }> = [];
       try {
-        const { chiefOfStaff: _chief, managedSections: _managed, toolScope: _toolScope, ...ordinary } = settings;
+        const { chiefOfStaff: _chief, toolScope: _toolScope, ...ordinary } = settings;
         store.patchBot(bot.id, {
           // Store creation completed the workspace defaults (effort included): the rest of the template must not undo them.
-          ...ordinary, name: bot.name, section, modelSelection: bot.modelSelection,
+          ...ordinary, name: bot.name, modelSelection: bot.modelSelection,
           mascotExpression: ordinary.mascotExpression ?? undefined,
           avatarUrl: ordinary.avatarUrl || undefined,
           computer: ordinary.computer ?? undefined, cwd: checkedCwd.cwd ?? undefined,
@@ -217,7 +199,6 @@ export function createBotCreateRoutes(deps: BotCreateRouteDeps): RouteHandler {
       const warnings: string[] = [];
       if (settings.chiefOfStaff) {
         try {
-          store.patchBot(bot.id, { managedSections: settings.managedSections ?? [] });
           store.setChiefOfStaff(bot.id);
         } catch {
           warnings.push("Bot created; review its Chief of Staff setting before delegating work.");

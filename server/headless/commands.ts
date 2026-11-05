@@ -85,7 +85,7 @@ export async function list(ctx: VerbContext): Promise<VerbOutcome> {
   const tool = ctx.verb === "bots" ? "list_bots" : ctx.verb === "channels" ? "list_channels" : "list_available_models";
   const result = await (await ctx.client()).tool(tool, {});
   const human = ctx.verb === "bots"
-    ? (result.bots as Rec[]).map((bot) => `${bot.name}${bot.title ? ` — ${bot.title}` : ""} · ${bot.section ? `team ${bot.section}` : "no team"}${bot.chiefOfStaff ? " · Chief of Staff" : ""} · ${bot.activity === "waiting-on-you" ? "waiting on you" : bot.busy ? "working" : bot.waitingForTeammates ? "waiting on teammates" : "idle"} · id ${bot.id}`)
+    ? (result.bots as Rec[]).map((bot) => `${bot.name}${bot.title ? ` — ${bot.title}` : ""}${bot.chiefOfStaff ? " · Chief of Staff" : ""} · ${bot.activity === "waiting-on-you" ? "waiting on you" : bot.busy ? "working" : bot.waitingForTeammates ? "waiting on teammates" : "idle"} · id ${bot.id}`)
     : ctx.verb === "channels"
       ? (result.channels as Rec[]).map((room) => `${room.name} · ${room.memberIds?.length ?? 0} members · ${room.working ? "working" : "idle"} · id ${room.id}`)
       : (result.instances as Rec[]).map((instance) => `${instance.instanceId} · ${instance.snapshot?.state ?? "unknown"}${instance.models?.default ? ` · default ${instance.models.default}` : ""}${Array.isArray(instance.models?.options) ? ` · ${instance.models.options.length} models` : ""}`);
@@ -162,10 +162,9 @@ function modelArgs(ctx: VerbContext, required: boolean): Rec {
 export async function newBot(ctx: VerbContext): Promise<VerbOutcome> {
   const name = (flag(ctx.flags, "name") ?? ctx.positionals[0])?.trim();
   if (!name) throw usageError("--name is required (the new bot's name)");
-  const team = (flag(ctx.flags, "team") ?? flag(ctx.flags, "section"))?.trim();
   const title = flag(ctx.flags, "title");
-  const result = await (await ctx.client()).tool("create_bot", { name, ...(title ? { title } : {}), ...(team ? { section: team } : {}), ...modelArgs(ctx, false) });
-  return { result, exitCode: EXIT.done, human: [`Created ${result.bot.name}${team ? ` in team ${team}` : ""} (id ${result.bot.id}).`] };
+  const result = await (await ctx.client()).tool("create_bot", { name, ...(title ? { title } : {}), ...modelArgs(ctx, false) });
+  return { result, exitCode: EXIT.done, human: [`Created ${result.bot.name} (id ${result.bot.id}).`] };
 }
 
 export async function newChannel(ctx: VerbContext): Promise<VerbOutcome> {
@@ -181,8 +180,7 @@ export async function newChannel(ctx: VerbContext): Promise<VerbOutcome> {
     if (byName.length !== 1) throw usageError(byName.length ? `"${member}" names ${byName.length} bots: use their ids` : `no bot named "${member}"`, "openmausbot bots lists them");
     return byName[0]!.id as string;
   });
-  const team = (flag(ctx.flags, "team") ?? flag(ctx.flags, "section"))?.trim();
-  const result = await client.tool("create_channel", { name, member_ids: memberIds, ...(team ? { section: team } : {}) });
+  const result = await client.tool("create_channel", { name, member_ids: memberIds });
   return { result, exitCode: EXIT.done, human: [`Created room ${result.channel.name} with ${memberIds.length} members (id ${result.channel.id}).`] };
 }
 

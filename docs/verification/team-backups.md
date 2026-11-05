@@ -6,11 +6,12 @@ This is the legacy partial team-copy format. The sidebar no longer offers it;
 use **Settings → Backups** for a [full workspace backup](workspace-backups.md).
 Existing `.mausbackup.json` files remain importable through
 Teams → Import → choose the file → review → **Import backup**.
-Import always adds independent copies; existing bots, Chiefs, rooms and chats
-are never archived, overwritten or merged. Repeated imports number copies.
+Import always adds independent copies; existing bots, the Chief, rooms and
+chats are never archived, overwritten or merged. Repeated imports number
+copies. The backup's Chief becomes the Chief only while the workspace has none.
 
 The private portable backup includes active and archived bot profiles,
-instructions (SOUL.md), sections, room membership, Chiefs, playbooks, paused
+instructions (SOUL.md), room membership, the Chief, playbooks, paused
 routine definitions, each bot's memory (`MEMORY.md`, `memory/<topic>.md` and
 the `memory/log/` daily logs, with secrets removed on the way out), and
 conversation text from every task and branch. Action cards become inert
@@ -28,9 +29,9 @@ explicit notes in the backup, download confirmation and import preview.
 
 Existing `.mausteam.json` and BotMRR Markdown templates remain importable;
 they contain setup only, not conversation history. Every template import adds
-a new section named after the team, with its new bots and any imported rooms
-inside. Existing sections are left alone; importing again numbers the new
-section (for example, "Sales 2"). Project imports use the same grouping.
+its bots and any imported rooms beside the existing ones; a bot whose name is
+taken is numbered (for example, "Scout 2"). A project import also puts the new
+bots in one room.
 Old clients attempting
 `mode=replace` receive a clear error and change nothing.
 
@@ -49,9 +50,9 @@ fixture in `finally`. Its steps are covered by
 The output records doctor, new-bot, send, wait and messages; the export/import
 counts; exact original-record and transcript comparisons; rejection of old
 replace mode and malformed files; and settled turns on imported bots. It also
-imports legacy v1/v2 templates, a project and repeated Markdown packages into
-unique sections, checking that existing bots, section Chiefs, rooms and the
-original conversation remain unchanged after each import.
+imports legacy v1/v2 templates, a project and repeated Markdown packages,
+checking that no imported bot becomes Chief and that existing bots, the Chief,
+rooms and the original conversation remain unchanged after each import.
 Keep that JSON output and the printed persistent server log as evidence.
 
 A bot switched to never use the helper model (`helperModel: false`, see
@@ -61,7 +62,7 @@ is applied: a file that says a bot may use the helper imports like one that
 says nothing, so a file cannot put a bot on the helper.
 
 `server/team-backup.test.ts` additionally covers all-task/branch restoration,
-multi-section Chiefs, room-goal routines, repeat imports, restart persistence,
+a backup's Chief taking over only when there is none, room-goal routines, repeat imports, restart persistence,
 malformed reference graphs, permission injection and rollback on failure.
 The scripted fixture does not by itself prove the native file picker or
 download UI; verify those separately in a renderer connected to a fixture.
@@ -73,9 +74,9 @@ OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-template-ui.e2e.test.ts -
 ```
 
 This owns a disposable `control-omb ui` app. It sends a fixture conversation,
-creates two existing sections, imports a catalog template, then imports the
-same template through the file input. It checks the preview copy, distinct
-new sections, and preservation of existing bots and their conversation.
+imports a catalog template, then imports the same template through the file
+input. It checks the preview copy, the new bots arriving beside the existing
+ones, and preservation of existing bots and their conversation.
 The catalog download is simulated; the renderer, import API and persistence
 are real. The file-input change handler is exercised, not the OS file picker.
 The output includes the fixture log path and a sidebar screenshot saved at
@@ -83,9 +84,9 @@ The output includes the fixture log path and a sidebar screenshot saved at
 
 ## Explicit skills in setup packages
 
-This section is the original whole-installation Markdown export. Sharing one
+This section is the original whole-installation Markdown export. Sharing the
 team with everything but its chat history (all its skills by default) is
-**Share team…**, covered in [team-sharing.md](team-sharing.md).
+**Templates → Share → Share…**, covered in [team-sharing.md](team-sharing.md).
 
 The existing package export API accepts an explicit list of imported skill names:
 `POST /api/teams/export` with

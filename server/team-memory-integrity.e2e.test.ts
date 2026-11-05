@@ -9,7 +9,7 @@ import { waitForExit } from "./testing/cleanup.ts";
 import { CAPTURE_MARKER } from "./memory-capture.ts";
 import type { TeamMemoryEntry } from "./team-memory.ts";
 
-it("preserves team identity, rejects stale writes and searches omitted shared notes", async () => {
+it("rejects stale writes and searches omitted shared notes", async () => {
   const scratch = mkdtempSync(join(tmpdir(), "omb-memory-integrity-"));
   const routes = join(scratch, "routes.json");
   writeFileSync(routes, JSON.stringify({ [CAPTURE_MARKER]: JSON.stringify([{ kind: "decision", text: "Use amber for the fixture", teamName: "Fixture treatment", key: "fixture/treatment", sourceTurn: 0, sourceQuote: "Use amber for the fixture", confidence: 0.9 }]) }));
@@ -36,24 +36,21 @@ it("preserves team identity, rejects stale writes and searches omitted shared no
     mkdirSync(folder);
     writeFileSync(join(folder, "project.aep"), "revision one");
     writeFileSync(join(folder, "preview.png"), "synthetic preview");
-    const { bot } = await api("/api/bots", "POST", { name: "Memory editor", section: "Editing", cwd: folder }, undefined, 201);
+    const { bot } = await api("/api/bots", "POST", { name: "Memory editor", cwd: folder }, undefined, 201);
     await api(`/api/bots/${bot.id}`, "PATCH", { cwd: folder });
-    const added = await api("/api/team-memory?section=Editing", "POST", { kind: "decision", name: "Colour", detail: "Blue", key: "project/colour" }, undefined, 201);
+    const added = await api("/api/team-memory", "POST", { kind: "decision", name: "Colour", detail: "Blue", key: "project/colour" }, undefined, 201);
     const old: TeamMemoryEntry = added.entries[0];
-    await api(`/api/team-memory/${old.id}?section=Editing`, "PATCH", { detail: "stale" }, undefined, 428);
-    await api(`/api/team-memory/${old.id}?section=Editing`, "PATCH", { detail: "Green", expectedRevision: old.revision });
-    await api(`/api/team-memory/${old.id}?section=Editing`, "PATCH", { detail: "Blue", expectedRevision: old.revision }, undefined, 409);
-    await api(`/api/team-memory/${old.id}?section=Editing&revision=${old.revision}`, "DELETE", undefined, undefined, 409);
-    await api("/api/sidebar-sections?section=Editing", "PATCH", { name: "Postproduction" });
-    expect((await api("/api/team-memory?section=Postproduction")).entries[0].detail).toBe("Green");
-    await api("/api/sidebar-sections", "POST", { name: "Editing" });
-    expect((await api("/api/team-memory?section=Editing")).entries).toEqual([]);
+    await api(`/api/team-memory/${old.id}`, "PATCH", { detail: "stale" }, undefined, 428);
+    await api(`/api/team-memory/${old.id}`, "PATCH", { detail: "Green", expectedRevision: old.revision });
+    await api(`/api/team-memory/${old.id}`, "PATCH", { detail: "Blue", expectedRevision: old.revision }, undefined, 409);
+    await api(`/api/team-memory/${old.id}?revision=${old.revision}`, "DELETE", undefined, undefined, 409);
+    expect((await api("/api/team-memory")).entries[0].detail).toBe("Green");
     const minted = await fetch(fixture.info.url + "/api/testing/internal-capability", { method: "POST",
       headers: { "content-type": "application/json", "x-openmausbot-test-capability": capabilityKey }, body: JSON.stringify({ botId: bot.id, threadId: bot.threadId, kind: "agents" }) });
     expect(minted.status).toBe(201);
     const { token } = await minted.json() as { token: string };
-    for (let i = 0; i < 16; i++) await api("/api/team-memory?section=Postproduction", "POST", { kind: "term", name: `Note ${i}`, detail: "Background notes. ".repeat(30) }, undefined, 201);
-    const page = await api("/api/team-memory?section=Postproduction");
+    for (let i = 0; i < 16; i++) await api("/api/team-memory", "POST", { kind: "term", name: `Note ${i}`, detail: "Background notes. ".repeat(30) }, undefined, 201);
+    const page = await api("/api/team-memory");
     const omitted = page.entries.find((entry: TeamMemoryEntry) => !page.loadedIds.includes(entry.id));
     expect(omitted).toBeDefined();
     const search = await api(`/api/internal/session-search?fromBotId=${bot.id}&fromThreadId=${bot.threadId}&scope=team&q=${encodeURIComponent(omitted.name)}`, "GET", undefined, token);

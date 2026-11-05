@@ -27,11 +27,10 @@ export function PermissionsSection({
   derived: ReturnType<typeof useBotSettingsDerived>;
   parts?: readonly PermissionsPart[];
 }) {
-  const { patch, engine, canCoordinate, approvalMode, trustedModesAvailable, sectionName, currentChief } = derived;
+  const { patch, engine, canCoordinate, approvalMode, trustedModesAvailable, currentChief } = derived;
   const { state, dispatch } = useStore();
   const ownerOrAdmin = useOwnerOrAdmin();
   const { draft } = useBotEditor();
-  const displaySectionName = sectionName === "General" ? t("botAccess.teams.general") : sectionName;
   const [localAutoWarning, setLocalAutoWarning] = useState<string | null>(null);
   const [commandAllowlistTarget, setCommandAllowlistTarget] = useState<{ botId: string; botName: string } | null>(null);
   const shows = (part: PermissionsPart) => !parts || parts.includes(part);
@@ -69,7 +68,7 @@ export function PermissionsSection({
           </span>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-medium text-ink">{t("permissions.chief.title")}</div>
-            <div className="text-[12px] text-ink-secondary">{t("permissions.chief.oneFor", { section: displaySectionName })}</div>
+            <div className="text-[12px] text-ink-secondary">{t("permissions.chief.oneFor")}</div>
           </div>
           <Switch
             checked={Boolean(bot.chiefOfStaff)}
@@ -84,12 +83,12 @@ export function PermissionsSection({
           {bot.chiefOfStaff && !canCoordinate
             ? t("permissions.chief.unsupportedCurrent")
             : bot.chiefOfStaff
-              ? t("permissions.chief.active", { section: displaySectionName })
+              ? t("permissions.chief.active")
               : !canCoordinate
                 ? t("permissions.chief.unsupported")
                 : currentChief
-                  ? t("permissions.chief.replace", { section: displaySectionName, current: currentChief.name })
-                  : t("permissions.chief.make", { section: displaySectionName })}
+                  ? t("permissions.chief.replace", { current: currentChief.name })
+                  : t("permissions.chief.make")}
         </div>
         <ProposalStatus bot={bot} kind="chief" />
         {bot.chiefOfStaff && <ProposalStatus bot={bot} kind="owner" />}

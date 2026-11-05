@@ -330,14 +330,10 @@ export interface WireBot extends DefaultBotFields {
   rewound?: boolean;
   pinned?: boolean;
   hidden?: boolean;
-  /** Optional labeled divider used to organize this bot in the sidebar. */
-  section?: string;
   /** the one message pinned to the top of this bot's active thread */
   pinnedMessageId?: string;
-  /** The coordinator for this bot's sidebar section. */
+  /** The person's one point of contact, who coordinates every other bot. */
   chiefOfStaff?: boolean;
-  /** Owner-selected additional teams this Chief may coordinate. */
-  managedSections?: string[];
   /** Pause for human approval before this bot talks to a peer. */
   approvePeerComms?: boolean;
   /** Bot ids this bot is allowed to contact. */
@@ -622,7 +618,7 @@ export interface OptionCardData extends WaitCardField {
   /** calls: one per outbound call the card covers, in subtitle order. */
   outboundRequest?: { tool: string; app: string | null; calls?: Array<{ app: string | null; label: string }> };
   /** `revision`: the entry as it applied without a person, so Undo can tell it changed since. */
-  teamMemoryRequest?: { section: string; entryId: string; kind: string; revision?: string };
+  teamMemoryRequest?: { entryId: string; kind: string; revision?: string };
   title: string;
   subtitle: string;
   options: string[];
@@ -836,8 +832,6 @@ export interface WireGroup {
   cwd?: string;
   pinnedCwd?: string | null;
   pinnedMessageId?: string;
-  /** sidebar section heading this room is filed under. */
-  section?: string;
   /** New user-created rooms start with setup pending. */
   setupCompletedAt?: number | null;
   setupSkippedAt?: number | null;
@@ -917,7 +911,6 @@ export interface BotAssignedSkillsWire {
 }
 
 export type ServerFrame =
-  | { kind: "sections"; sections: string[] }
   | { kind: "bot.queued"; queues: BotQueuedMessages }
   | { kind: "message"; threadId: string; message: WireMessage }
   | { kind: "message.patch"; threadId: string; message: WireMessage }

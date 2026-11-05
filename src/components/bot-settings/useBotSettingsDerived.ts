@@ -37,7 +37,6 @@ export type BotPatch = Partial<
     | "xResearch"
     | "voice"
     | "chiefOfStaff"
-    | "managedSections"
     | "approvePeerComms"
     | "composio"
     | "browser"
@@ -78,12 +77,7 @@ export function useBotSettingsDerived(bot: Bot) {
   const browserFeature = builtInBrowserEnabled(state.config);
   const browserAllowed = bot.browser !== false;
   const browserEnabled = browserFeature && browserAllowed;
-  const sectionName = bot.section?.trim() || "General";
-  const currentChief = state.bots.find(
-    (candidate) =>
-      candidate.chiefOfStaff &&
-      (candidate.section?.trim() || "") === (bot.section?.trim() || ""),
-  );
+  const currentChief = state.bots.find((candidate) => candidate.chiefOfStaff);
   const botRoutines = state.routines.filter((routine) => routine.botId === bot.id);
   const activeBotRoutines = botRoutines.filter((routine) => routine.enabled).length;
 
@@ -103,7 +97,6 @@ export function useBotSettingsDerived(bot: Bot) {
     browserFeature,
     browserAllowed,
     browserEnabled,
-    sectionName,
     currentChief,
     botRoutines,
     activeBotRoutines,

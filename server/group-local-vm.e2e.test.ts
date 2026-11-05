@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -455,37 +455,31 @@ describe("Group Local VM ownership on the real isolated server", () => {
     }
   });
 
-  it("does not stall an admitted turn waiting for another turn's shared computer", async () => {
-    const section = `Watchdog fixture ${randomUUID()}`;
-    const bots: any[] = [];
+  it("does not stall an admitted turn waiting for another turn's computer", async () => {
+    const { bot } = await api("POST", "/api/bots", { name: "Computer holder" });
     try {
       vmState(); rmSync(dumpFile, { force: true }); rmSync(finishFile, { force: true });
       allowBoatCreation = true;
+      boatCalls.length = 0;
       await api("PUT", "/api/config", { box: { token: "box_fixture" } });
-      // A team's shared computer is held for the whole turn, so the gated slow fake is the holder.
-      for (const name of ["Computer holder", "Computer waiter"]) {
-        const { bot } = await api("POST", "/api/bots", { name, section });
-        bots.push(bot);
-      }
-      const requestId = randomUUID();
-      await api("POST", "/api/team-computers", { requestId, name: "Wait watchdog fixture", acknowledgeCost: true });
-      await api("PATCH", `/api/team-computers/${requestId}`, { section, acknowledgeSharedAccess: true });
+      // A bot's cloud computer serves one of its conversations at a time, so the gated slow fake is the holder.
+      await api("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
+      const { task: waiter } = await api("POST", `/api/bots/${bot.id}/tasks`, { title: "Computer waiter" });
       const count = boatPrompts.length;
-      await api("POST", `/api/bots/${bots[0].id}/messages`, { text: "Hold the shared computer" });
-      await dump();
-      await api("POST", `/api/bots/${bots[1].id}/messages`, { text: "Wait for the shared computer" });
-      const transcript = () => api("GET", `/api/threads/${bots[1].threadId}/messages?limit=50`);
+      await api("POST", `/api/bots/${bot.id}/messages`, { text: "Hold the computer", threadId: bot.threadId });
+      await until(() => boatCalls.some(call => call.method === "POST" && call.path === "/sandboxes"), Boolean);
+      await api("POST", `/api/bots/${bot.id}/messages`, { text: "Wait for the computer", threadId: waiter.threadId });
+      const transcript = () => api("GET", `/api/threads/${waiter.threadId}/messages?limit=50`);
       await until(transcript, value => JSON.stringify(value).includes("Waiting for"));
       // Only the waiting thread gets the short clock; the holder is deliberately gated.
-      vmState({ stallThread: bots[1].threadId });
+      vmState({ stallThread: waiter.threadId });
       await new Promise(resolve => setTimeout(resolve, 400));
       expect(JSON.stringify(await transcript())).not.toContain("the turn was stopped");
       const state = await api("GET", "/api/bots?messages=0");
-      expect(state.bots.find((bot: any) => bot.id === bots[1].id).busy).toBe(true);
+      expect(state.bots.find((entry: any) => entry.id === bot.id).tasks.find((task: any) => task.threadId === waiter.threadId).busy).toBe(true);
       vmState();
       writeFileSync(finishFile, "finish");
-      await idle(bots[0].id);
-      await idle(bots[1].id);
+      await idle(bot.id);
       expect(boatPrompts.length).toBe(count);
       const settled = await transcript();
       expect(JSON.stringify(settled)).not.toContain("the turn was stopped");
@@ -494,11 +488,9 @@ describe("Group Local VM ownership on the real isolated server", () => {
       vmState();
       writeFileSync(finishFile, "finish");
       allowBoatCreation = false;
-      for (const bot of bots) {
-        await api("POST", `/api/bots/${bot.id}/interrupt`, {});
-        await idle(bot.id);
-        await api("DELETE", `/api/bots/${bot.id}`);
-      }
+      await api("POST", `/api/bots/${bot.id}/interrupt`, {});
+      await idle(bot.id);
+      await api("DELETE", `/api/bots/${bot.id}`);
       boatRow = null;
       await api("PUT", "/api/config", { box: { token: "" } });
     }

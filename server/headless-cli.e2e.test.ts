@@ -60,19 +60,14 @@ describe("openmausbot headless: team apply → run --wait job → export", () =>
     model = json(await cli(["models", "--json"])).instances.find((instance: any) => instance.instanceId === "claude").models.default;
     teamFile = join(dir, "launch-room.yaml");
     writeFileSync(teamFile, `version: 1
+prune: true
 defaults:
-  team: Launch Room
   model: claude/${model}
   approval: full
   computer: "off"
   browser: { enabled: true, profile: guest }
   # Claude limits MCP tools only; this keeps a mail server's tools from every visitor
   tools: { deny: ["mcp:mail:*"] }
-teams:
-  - name: Launch Room
-    prune: true
-    brief: |
-      We rehearse a product launch before it happens. Never ask the person anything.
 bots:
   - name: Room Lead
     chief: true
@@ -94,7 +89,6 @@ bots:
     soul: You are Marcus, who gives a site 30 seconds.
 rooms:
   - name: Debrief
-    team: Launch Room
     members: [Room Lead, Priya, Marcus]
     brief: Talk over what each visitor saw.
     responder: Room Lead
@@ -102,9 +96,9 @@ rooms:
 
     const applied = await cli(["team", "apply", teamFile]);
     expect(applied.code, applied.stderr).toBe(0);
-    expect(applied.stdout).toContain('bot "Room Lead": create (Chief of Launch Room');
-    expect(applied.stdout).toContain('room "Debrief": create (3 members, team Launch Room)');
-    expect(applied.stdout).toContain("Applied: 5 created, 0 changed, 0 deleted.");
+    expect(applied.stdout).toContain('bot "Room Lead": create (Chief of Staff');
+    expect(applied.stdout).toContain('room "Debrief": create (3 members)');
+    expect(applied.stdout).toContain("Applied: 4 created, 0 changed, 0 deleted.");
     const again = await cli(["team", "apply", teamFile, "--json"]);
     expect(again.code, again.stderr).toBe(0);
     expect(json(again)).toMatchObject({ created: 0, changed: 0, deleted: 0, writes: 0, plan: [] });
@@ -113,10 +107,9 @@ rooms:
     const bots = await botsNow();
     const byName = (name: string) => bots.find((bot) => bot.name === name);
     [lead, priya, marcus] = ["Room Lead", "Priya", "Marcus"].map(byName);
-    expect(lead).toMatchObject({ section: "Launch Room", chiefOfStaff: true, modelSelection: { instanceId: "claude", model } });
-    expect([priya, marcus].every((bot) => bot.section === "Launch Room")).toBe(true);
+    expect(lead).toMatchObject({ chiefOfStaff: true, modelSelection: { instanceId: "claude", model } });
     const room = json(await cli(["channels", "--json"])).channels.find((channel: any) => channel.name === "Debrief");
-    expect(room).toMatchObject({ section: "Launch Room", bulletin: "Talk over what each visitor saw.", defaultResponder: { kind: "member", botId: lead.id } });
+    expect(room).toMatchObject({ bulletin: "Talk over what each visitor saw.", defaultResponder: { kind: "member", botId: lead.id } });
     expect(new Set(room.memberIds)).toEqual(new Set([lead.id, priya.id, marcus.id]));
 
     // Scripted: the Chief hands the site to both visitors and writes the report once both reported; each saves a screenshot.
@@ -177,15 +170,15 @@ rooms:
   it("exports the team as a file that applies back unchanged, then renames and prunes from a second file", async () => {
     const exportedFile = join(dir, "exported", "team.yaml");
     mkdirSync(join(dir, "exported"), { recursive: true });
-    const exported = await cli(["team", "export", "--team", "Launch Room", "--out", exportedFile, "--json"]);
+    const exported = await cli(["team", "export", "--out", exportedFile, "--json"]);
     expect(exported.code, exported.stderr).toBe(0);
-    expect(json(exported)).toMatchObject({ ok: true, teams: 1, bots: 3, rooms: 1, skills: 1 });
+    expect(json(exported)).toMatchObject({ ok: true, bots: 4, rooms: 1, skills: 1 });
     expect(readFileSync(exportedFile, "utf8")).toContain("name: Room Lead");
     const check = await cli(["team", "apply", exportedFile, "--check"]);
     expect(check.code, `${check.stdout}\n${check.stderr}`).toBe(0);
     expect(check.stdout.trim()).toBe("No changes.");
 
-    expect((await cli(["new-bot", "Old visitor", "--team", "Launch Room", "--json"])).code).toBe(0);
+    expect((await cli(["new-bot", "Old visitor", "--json"])).code).toBe(0);
     const next = join(dir, "launch-room-v2.yaml");
     writeFileSync(next, readFileSync(teamFile, "utf8")
       .replace("  - name: Marcus\n", "  - name: Marcus Lee\n    was: Marcus\n")
@@ -200,6 +193,7 @@ rooms:
     expect(pruned.stdout).toContain('bot "Old visitor": delete (not in file)');
     const bots = await botsNow();
     expect(bots.find((bot) => bot.name === "Old visitor")).toBeUndefined();
+    expect(bots.map((bot) => bot.name).sort()).toEqual(["Fixture Starter", "Marcus Lee", "Priya", "Room Lead"]);
     expect(bots.find((bot) => bot.name === "Marcus Lee")?.id).toBe(marcus.id);
     expect((await cli(["team", "apply", next, "--check"])).code).toBe(0);
 

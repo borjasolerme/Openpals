@@ -57,11 +57,11 @@ function remember(dataDir: string, botId: string): void {
   writeFileAtomic(join(dataDir, LEDGER), JSON.stringify({ v: 1, places: { ...places, "": botId } }), { mode: 0o600 });
 }
 
-/** A new install's own MausBot from before it was marked: the place's oldest bot, still live, outside any department,
- * not installed from a package, and still named Pal (or MausBot, its name before the fork) or still in the colour a new install gave it. */
+/** A new install's own MausBot from before it was marked: the place's oldest bot, still live, not installed from a
+ * package, and still named Pal (or MausBot, its name before the fork) or still in the colour a new install gave it. */
 export function seededMausBot(bots: readonly BotRecord[]): BotRecord | undefined {
   const oldest = bots.reduce<BotRecord | undefined>((first, bot) => !first || bot.createdAt < first.createdAt ? bot : first, undefined);
-  if (!oldest || oldest.hidden || oldest.section?.trim() || oldest.installedPackage) return undefined;
+  if (!oldest || oldest.hidden || oldest.installedPackage) return undefined;
   return oldest.name === DEFAULT_BOT_NAME || oldest.name === LEGACY_DEFAULT_BOT_NAME || oldest.color === STARTER_COLOR ? oldest : undefined;
 }
 

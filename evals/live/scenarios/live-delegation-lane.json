@@ -6,13 +6,11 @@
     {
       "key": "chief",
       "name": "Chief",
-      "chiefOfStaff": true,
-      "managedSections": ["Engineering"]
+      "chiefOfStaff": true
     },
     {
       "key": "maker",
-      "name": "Maker",
-      "section": "Engineering"
+      "name": "Maker"
     }
   ],
   "steps": [

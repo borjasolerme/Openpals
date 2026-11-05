@@ -52,7 +52,6 @@ export type BoatPanelAction =
   | "cloud-asleep"
   | "attach-ready-boat"
   | "busy-boat"
-  | "team-boat"
   | "show-ready-boat"
   | "show-sleeping-boat"
   | "show-pending-boat"
@@ -74,7 +73,6 @@ export function resolveBoatPanelAction({
   boatState,
   canUseCloud,
   autoLocal,
-  teamComputer = false,
   busy = false,
 }: {
   computer: Bot["computer"];
@@ -82,10 +80,8 @@ export function resolveBoatPanelAction({
   boatState: string | null;
   canUseCloud: boolean;
   autoLocal: boolean;
-  teamComputer?: boolean;
   busy?: boolean;
 }): BoatPanelAction {
-  if (computer === undefined && teamComputer) return "team-boat";
   const explicitCloud = computer === "cloud";
 
   if (!configured) {

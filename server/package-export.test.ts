@@ -243,11 +243,11 @@ describe("whole-team export (package v2)", () => {
     id, threadId: `thread-${id}`, name, title: `${name} title`, description: `${name} description`,
     notifications: true, color: "green", unread: false,
     modelSelection: { instanceId: "private-engine", model: "secret-model" }, resumeCursors: { provider: "secret-session" },
-    createdAt: 1, section: "Sales desk", ...extra,
+    createdAt: 1, ...extra,
   });
   const room = (id: string, name: string, memberIds: string[], extra: Partial<GroupRecord> = {}): GroupRecord => ({
     id, threadId: `room-thread-${id}`, name, memberIds, defaultResponder: { kind: "mentions" }, bulletin: "",
-    unread: false, createdAt: 1, section: "Sales desk", ...extra,
+    unread: false, createdAt: 1, ...extra,
   });
   const routine = (id: string, name: string, botId: string, extra: Partial<Routine> = {}): Routine => ({
     id, name, prompt: `${name} prompt`, target: "bot", botId, runOn: "maus", enabled: true,
@@ -262,22 +262,18 @@ describe("whole-team export (package v2)", () => {
         mcpServers: ["crm", "local-tool", "plain-http"], playbooks: [{ key: "qualify", name: "Qualify", summary: "Check fit", triggers: ["qualify"], instructions: "Ask four questions." }] }),
       bot("scout", "Scout", { mcpServers: ["crm"] }),
       bot("hidden", "Archived", { hidden: true }),
-      bot("other", "Elsewhere", { section: "Support" }),
     ];
     const groups = [
-      room("desk", "Deal desk", ["lead", "scout", "other", "hidden"], { defaultResponder: { kind: "member", botId: "lead" }, bulletin: "Cite sources." }),
-      room("support-room", "Support room", ["other"], { section: "Support" }),
+      room("desk", "Deal desk", ["lead", "scout", "hidden"], { defaultResponder: { kind: "member", botId: "lead" }, bulletin: "Cite sources." }),
       room("dm", "DM", ["lead", "scout"], { dm: true }),
-      room("foreign-only", "Only outsiders", ["other"]),
     ];
     const routines = [
       routine("digest", "Daily digest", "scout", { continuity: true, runOnStartup: true, attachments: [{ id: "a", kind: "file", name: "x.txt", path: "/private/x.txt", size: 1 }] }),
       routine("review", "Weekly review", "lead", { target: "room-goal", groupId: "desk", enabled: false }),
-      routine("elsewhere", "Support digest", "other"),
+      routine("archived", "Archived digest", "hidden"),
     ];
     return {
-      team: "Sales desk", authorName: "Mira", bots, groups, routines, published: null,
-      brief: "Quote list prices only.",
+      name: "Sales desk", authorName: "Mira", bots, groups, routines, published: null,
       skillsByBot: new Map([["lead", [skill("pricing")]], ["scout", [skill("pricing"), skill("research")]]]),
       mcpServers: {
         crm: { type: "http", url: "https://mcp.example.com/crm", headers: { Authorization: "Bearer real-value-never-shared" }, enabled: true },
@@ -288,12 +284,12 @@ describe("whole-team export (package v2)", () => {
     };
   };
 
-  it("exports only the chosen team, whole, without chat history or authority", () => {
+  it("exports every visible bot, whole, without chat history or authority", () => {
     const result = createTeamPackageExport(fixture());
     const pkg = result.document.package;
     expect(result.document).toMatchObject({ format: "openmaus.package", version: 2 });
     expect(pkg.agents.map((agent) => agent.key)).toEqual(["morgan", "scout"]);
-    expect(pkg.team).toEqual({ name: "Sales desk", brief: "Quote list prices only.", leader: "morgan" });
+    expect(pkg.team).toEqual({ name: "Sales desk", leader: "morgan" });
     expect(pkg.agents[0]).toMatchObject({
       name: "Morgan", soul: "Coordinate the desk.\n", playbooks: ["qualify"], skills: ["pricing"], connections: ["crm"],
       appearance: { color: "green", avatar: { mime: "image/png", data: PNG, crop: "rounded" } },
@@ -308,7 +304,7 @@ describe("whole-team export (package v2)", () => {
       mcp: { transport: "http", url: "https://mcp.example.com/crm", valueNames: ["Authorization"] } }]);
     expect(pkg.skills?.entries.map((entry) => entry.name)).toEqual(["pricing", "research"]);
     const text = JSON.stringify(result.document);
-    expect(text).not.toMatch(/Archived|Elsewhere|Support|Only outsiders|"DM"|real-value-never-shared|secret-model|secret-session|thread-|private\/x\.txt|"seed"/);
+    expect(text).not.toMatch(/Archived|"DM"|real-value-never-shared|secret-model|secret-session|thread-|private\/x\.txt|"seed"/);
     expect(result.skipped).toEqual([
       { part: "connections[local-tool]", reason: "stdio_server" },
       { part: "connections[plain-http]", reason: "insecure_address" },
@@ -360,8 +356,7 @@ describe("whole-team export (package v2)", () => {
   it("keeps every key after renaming a bot, a group chat, a routine and the team", () => {
     const first = createTeamPackageExport(fixture());
     const renamed = fixture();
-    renamed.team = "Revenue desk";
-    for (const record of [...renamed.bots, ...renamed.groups]) if (record.section === "Sales desk") record.section = "Revenue desk";
+    renamed.name = "Revenue desk";
     renamed.bots[0] = { ...renamed.bots[0]!, name: "Morgan Lee" };
     renamed.groups[0] = { ...renamed.groups[0]!, name: "Pipeline room" };
     renamed.routines[0] = { ...renamed.routines[0]!, name: "Morning digest" };
@@ -377,7 +372,7 @@ describe("whole-team export (package v2)", () => {
   it("never gives a new bot a key recorded for one that left", () => {
     const first = createTeamPackageExport(fixture());
     const input = fixture();
-    input.bots[1] = { ...input.bots[1]!, section: "Support" };
+    input.bots[1] = { ...input.bots[1]!, hidden: true };
     input.bots.push(bot("newcomer", "Scout"));
     const second = createTeamPackageExport({ ...input, published: first.published });
     expect(second.document.package.agents.map((agent) => agent.key)).toEqual(["morgan", "scout-2"]);
@@ -386,7 +381,7 @@ describe("whole-team export (package v2)", () => {
 
   it("starts from the release a team was installed from", () => {
     const input = fixture();
-    input.bots = input.bots.map((record) => record.section === "Sales desk" && !record.hidden
+    input.bots = input.bots.map((record) => !record.hidden
       ? { ...record, installedPackage: { id: "acme-sales", name: "Acme sales", release: "2.4.0", requiredApps: [], agentKey: record.id === "lead" ? "boss" : "finder" } }
       : record);
     const result = createTeamPackageExport(input);
@@ -395,7 +390,7 @@ describe("whole-team export (package v2)", () => {
   });
 
   it("refuses plainly when there is nothing to share, a bad version or too much", () => {
-    expect(() => createTeamPackageExport({ ...fixture(), team: "Empty" })).toThrow("Add a bot to this department before sharing it.");
+    expect(() => createTeamPackageExport({ ...fixture(), bots: fixture().bots.filter((record) => record.hidden) })).toThrow("Add a bot before sharing your team.");
     expect(() => createTeamPackageExport({ ...fixture(), release: "one" })).toThrow("Use a version like 1.2.3.");
     const huge = fixture();
     huge.skillsByBot = new Map([["lead", Array.from({ length: 17 }, (_, index) => ({
@@ -488,7 +483,7 @@ describe("whole-team export (package v2)", () => {
       expect((crowded as Error).message).toBe("Morgan has more than 30 skills. Choose fewer skills and try again.");
       const conflict = refusal(new Map([["lead", [skill("pricing")]], ["scout", [conflicting]]]));
       expect(conflict).toBeInstanceOf(TeamExportError);
-      expect((conflict as Error).message).toBe('Two bots in this department have different skills named "pricing". Leave that skill out and try again.');
+      expect((conflict as Error).message).toBe('Two bots have different skills named "pricing". Leave that skill out and try again.');
     });
   });
 

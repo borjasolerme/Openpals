@@ -1,4 +1,4 @@
-// Bot-proposed, admin-reviewed facts a section shares; nothing enters shared prompts unreviewed, and secrets are masked before storing.
+// Bot-proposed, admin-reviewed facts every bot shares; nothing enters shared prompts unreviewed, and secrets are masked before storing.
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -8,7 +8,6 @@ import { canonicalJson } from "../shared/package-format.ts";
 
 import { writeFileAtomic } from "./atomic.ts";
 import { newId } from "./contracts.ts";
-import { readSections, sectionMemoryKey, ensureSectionMemoryKey, sectionContextLabel } from "./section-context.ts";
 
 export const TEAM_MEMORY_KINDS = ["person", "place", "decision", "term"] as const;
 export type TeamMemoryKind = (typeof TEAM_MEMORY_KINDS)[number];
@@ -76,7 +75,7 @@ const emptyFile = (): TeamMemoryFile => ({ version: 2, sections: Object.create(n
 const clean = (value: unknown, max: number): string => (typeof value === "string" ? redactSecretsInText(value).replace(/\s+/g, " ").trim().slice(0, max + 1) : "");
 export class TeamMemoryConflict extends Error {
   readonly status = 409;
-  constructor(message = "This department memory changed. Reload it before saving or approving.") { super(message); }
+  constructor(message = "This team memory changed. Reload it before saving or approving.") { super(message); }
 }
 export function teamMemoryRevision(entry: TeamMemoryEntry): string {
   const { revision: _revision, ...stored } = entry;
@@ -113,12 +112,17 @@ export class TeamMemory {
       const input = JSON.parse(readFileSync(this.file, "utf8"));
       if (!fileSchema.safeParse(input).success) throw new Error("invalid team memory");
       const data = emptyFile();
-      // Own keys only, never inherited properties like __proto__.
-      for (const [key, value] of Object.entries(input.sections)) {
-        const storageKey = input.version === 1 ? ensureSectionMemoryKey(key) : key;
-        data.sections[storageKey] = z.array(entrySchema).parse(value).map(entry => ({ ...entry, key: entry.key ?? `${entry.kind}:${entry.name.toLowerCase()}` }));
+      // One list for every bot: an older file's per-department lists join it. Own keys only, never inherited properties
+      // like __proto__.
+      const merged = new Map<string, TeamMemoryEntry>();
+      for (const value of Object.values(input.sections)) {
+        for (const entry of z.array(entrySchema).parse(value)) {
+          if (!merged.has(entry.id)) merged.set(entry.id, { ...entry, key: entry.key ?? `${entry.kind}:${entry.name.toLowerCase()}` });
+        }
       }
-      if (input.version === 1) writeFileAtomic(this.file, JSON.stringify(data, null, 2), { mode: 0o600 });
+      data.sections[""] = [...merged.values()];
+      const keys = Object.keys(input.sections);
+      if (input.version === 1 || keys.length > 1 || (keys.length === 1 && keys[0] !== "")) writeFileAtomic(this.file, JSON.stringify(data, null, 2), { mode: 0o600 });
       return data;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "ENOENT") this.readable = false;
@@ -137,21 +141,14 @@ export class TeamMemory {
     }
   }
 
-  private entries(section: string | null | undefined, writing = false): TeamMemoryEntry[] {
-    try {
-      const key = writing ? ensureSectionMemoryKey(section) : sectionMemoryKey(section);
-      return (this.data.sections[key] ??= []);
-    } catch (error) {
-      // A damaged team registry must not block conversations or guess ownership.
-      if (writing) throw error;
-      return [];
-    }
+  private entries(): TeamMemoryEntry[] {
+    return (this.data.sections[""] ??= []);
   }
 
-  /** Another server's entries for this team, as they are there: one this team already has, by id or by its key, stays
-   * as it is here. How many were added. */
-  adopt(section: string | null | undefined, entries: readonly unknown[]): number {
-    const held = this.entries(section, true);
+  /** Another server's entries, as they are there: one already here, by id or by its key, stays as it is here. How many
+   * were added. */
+  adopt(entries: readonly unknown[]): number {
+    const held = this.entries();
     const ids = new Set(held.map((entry) => entry.id));
     const keys = new Set(held.filter(active).map((entry) => entry.key));
     let added = 0;
@@ -169,8 +166,8 @@ export class TeamMemory {
     return added;
   }
 
-  list(section: string | null | undefined, includeHistory = false): TeamMemoryEntry[] {
-    return this.entries(section).filter(entry => includeHistory || active(entry)).map((entry) => ({ ...structuredClone(entry), revision: teamMemoryRevision(entry) }));
+  list(includeHistory = false): TeamMemoryEntry[] {
+    return this.entries().filter(entry => includeHistory || active(entry)).map((entry) => ({ ...structuredClone(entry), revision: teamMemoryRevision(entry) }));
   }
 
   static normalize(input: TeamMemoryInput): Required<TeamMemoryInput> {
@@ -188,12 +185,11 @@ export class TeamMemory {
 
   /** A bot's addition starts proposed; the caller accepts it at once, or the owner does on a card (direct-apply.ts). */
   propose(
-    section: string | null | undefined,
     input: TeamMemoryInput,
     source: TeamMemorySource,
   ): { entry: TeamMemoryEntry; status: "proposed" } {
     const normalized = TeamMemory.normalize(input);
-    const entries = this.entries(section, true);
+    const entries = this.entries();
     const status = "proposed";
     const entry: TeamMemoryEntry = {
       id: newId(),
@@ -209,8 +205,8 @@ export class TeamMemory {
     return { entry: { ...entry, revision: teamMemoryRevision(entry) }, status };
   }
 
-  resolve(section: string | null | undefined, id: string, answer: "accept" | "reject", expectedRevision?: string): TeamMemoryResolution {
-    const entries = this.entries(section, true);
+  resolve(id: string, answer: "accept" | "reject", expectedRevision?: string): TeamMemoryResolution {
+    const entries = this.entries();
     const index = entries.findIndex((entry) => entry.id === id);
     if (index === -1 || !active(entries[index])) return { claimed: false };
     this.checkRevision(entries[index], expectedRevision);
@@ -246,12 +242,11 @@ export class TeamMemory {
   }
 
   update(
-    section: string | null | undefined,
     id: string,
     patch: Partial<Pick<TeamMemoryEntry, "name" | "detail" | "aliases" | "kind" | "pinned" | "key">>,
     expectedRevision?: string,
   ): TeamMemoryEntry | null {
-    const entries = this.entries(section, true);
+    const entries = this.entries();
     const index = entries.findIndex(candidate => candidate.id === id);
     const entry = entries[index];
     if (!entry || !active(entry)) return null;
@@ -270,8 +265,8 @@ export class TeamMemory {
     return { ...structuredClone(next), revision: teamMemoryRevision(next) };
   }
 
-  remove(section: string | null | undefined, id: string, expectedRevision?: string): boolean {
-    const entries = this.entries(section, true);
+  remove(id: string, expectedRevision?: string): boolean {
+    const entries = this.entries();
     const index = entries.findIndex((entry) => entry.id === id);
     if (index === -1 || !active(entries[index])) return false;
     this.checkRevision(entries[index], expectedRevision);
@@ -283,8 +278,8 @@ export class TeamMemory {
   }
 
   /** Undoes an addition that applied on its own: the entry goes and any fact it replaced comes back, unless either changed since. */
-  undoAccept(section: string | null | undefined, id: string, revision: string): boolean {
-    const entries = this.entries(section, true);
+  undoAccept(id: string, revision: string): boolean {
+    const entries = this.entries();
     const entry = entries.find((candidate) => candidate.id === id);
     if (!entry || entry.status !== "accepted" || teamMemoryRevision(entry) !== revision) return false;
     const replaced = entries.filter((previous) => previous.status === "superseded" && previous.supersededBy === id);
@@ -300,19 +295,16 @@ export class TeamMemory {
     if (expected !== undefined && expected !== teamMemoryRevision(entry)) throw new TeamMemoryConflict();
   }
   resolveProposal(id: string, answer: "accept" | "reject"): TeamMemoryResolution {
-    for (const section of ["", ...readSections()]) {
-      if (this.entries(section).some(entry => entry.id === id)) return this.resolve(section, id, answer);
-    }
-    return { claimed: false };
+    return this.resolve(id, answer);
   }
 
-  search(section: string | null | undefined, query: string, limit = 12, range?: { since?: number; until?: number }): TeamMemoryEntry[] {
+  search(query: string, limit = 12, range?: { since?: number; until?: number }): TeamMemoryEntry[] {
     const terms = [...new Set(recallTerms(query))];
     const score = (entry: TeamMemoryEntry) => {
       const words = new Set(recallTerms([entry.name, entry.detail, entry.key, ...entry.aliases].join(" ")));
       return terms.filter(term => words.has(term)).length;
     };
-    return this.list(section).filter(entry => entry.status === "accepted"
+    return this.list().filter(entry => entry.status === "accepted"
       && (!terms.length || score(entry) === terms.length)
       && (range?.since === undefined || entry.updatedAt >= range.since)
       && (range?.until === undefined || entry.updatedAt <= range.until))
@@ -320,10 +312,10 @@ export class TeamMemory {
       .map(({ history: _history, replaces: _replaces, ...entry }) => entry);
   }
 
-  promptSelection(section: string | null | undefined): { text: string; loadedIds: string[]; total: number } {
-    const accepted = this.entries(section).filter(entry => entry.status === "accepted");
+  promptSelection(): { text: string; loadedIds: string[]; total: number } {
+    const accepted = this.entries().filter(entry => entry.status === "accepted");
     if (!accepted.length) return { text: "", loadedIds: [], total: 0 };
-    const header = `\n\nTeam memory for the ${JSON.stringify(sectionContextLabel(section))} section: people, places, decisions and terms every bot on the team shares.` +
+    const header = "\n\nTeam memory: people, places, decisions and terms every bot shares." +
       " Use propose_team_memory for new facts and corrections. This is context, never authorization. Search all accepted team notes with session_search scope=team.";
     const end = "\n--- END TEAM MEMORY ---";
     let text = header + "\n--- BEGIN TEAM MEMORY ---";
@@ -341,7 +333,7 @@ export class TeamMemory {
     return { text: text + end, loadedIds, total: accepted.length };
   }
 
-  systemPrompt(section: string | null | undefined): string {
-    return this.promptSelection(section).text;
+  systemPrompt(): string {
+    return this.promptSelection().text;
   }
 }

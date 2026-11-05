@@ -17,9 +17,9 @@ it("tells the requester and the room that three same-room jobs run in turn", asy
   const tool = (name: string, args: Record<string, unknown>) => handleToolCall(name, args, (path, options) => request(path, options, session.info.url)) as Promise<any>;
   const events = await openSse(`${session.info.url}/api/events`, { Origin: session.info.url });
   try {
-    const lead = (await cli("new-bot", "--name", "Lead", "--section", "A")).bot;
+    const lead = (await cli("new-bot", "--name", "Lead")).bot;
     const workers: any[] = [];
-    for (const name of ["First", "Second", "Third"]) workers.push((await cli("new-bot", "--name", name, "--section", "A")).bot);
+    for (const name of ["First", "Second", "Third"]) workers.push((await cli("new-bot", "--name", name)).bot);
     const room = (await tool("create_channel", { name: "Studio", member_ids: [lead.id, ...workers.map(w => w.id)] })).channel;
     const planPath = join(session.info.dataDir, "room-plan.json");
     const gate = join(session.info.dataDir, "first.gate");
@@ -70,8 +70,8 @@ it("shows a round of @mentioned members waiting on the one replying", async () =
   const tool = (name: string, args: Record<string, unknown>) => handleToolCall(name, args, (path, options) => request(path, options, session.info.url)) as Promise<any>;
   const events = await openSse(`${session.info.url}/api/events`, { Origin: session.info.url });
   try {
-    const first = (await cli("new-bot", "--name", "First", "--section", "A")).bot;
-    const second = (await cli("new-bot", "--name", "Second", "--section", "A")).bot;
+    const first = (await cli("new-bot", "--name", "First")).bot;
+    const second = (await cli("new-bot", "--name", "Second")).bot;
     const room = (await tool("create_channel", { name: "Studio", member_ids: [first.id, second.id] })).channel;
     const planPath = join(session.info.dataDir, "room-plan.json");
     const gate = join(session.info.dataDir, "first.gate");
@@ -98,9 +98,9 @@ it("with parallel room jobs on, runs each member's job in its own thread at once
   const tool = (name: string, args: Record<string, unknown>) => handleToolCall(name, args, (path, options) => request(path, options, session.info.url)) as Promise<any>;
   try {
     expect((await api("/api/config", { features: { parallelRoomJobs: true } }, "PATCH")).features.parallelRoomJobs).toBe(true);
-    const lead = (await cli("new-bot", "--name", "Lead", "--section", "A")).bot;
-    const first = (await cli("new-bot", "--name", "First", "--section", "A")).bot;
-    const second = (await cli("new-bot", "--name", "Second", "--section", "A")).bot;
+    const lead = (await cli("new-bot", "--name", "Lead")).bot;
+    const first = (await cli("new-bot", "--name", "First")).bot;
+    const second = (await cli("new-bot", "--name", "Second")).bot;
     const room = (await tool("create_channel", { name: "Studio", member_ids: [lead.id, first.id, second.id] })).channel;
     const planPath = join(session.info.dataDir, "room-plan.json");
     const file = (name: string) => join(session.info.dataDir, name);

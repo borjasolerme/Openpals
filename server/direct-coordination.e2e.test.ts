@@ -32,10 +32,10 @@ async function fixtureSession(test: (f: any) => Promise<void>, fakeEnv: NodeJS.P
   const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as Promise<any>;
   const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   try {
-    const chief = (await cli("new-bot", "--name", "Clive", "--section", "Leadership")).bot;
-    const lead = (await cli("new-bot", "--name", "Engineering lead", "--section", "Engineering")).bot;
-    const specialist = (await cli("new-bot", "--name", "Reviewer", "--section", "Engineering")).bot;
-    await api(`/api/bots/${chief.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true }, "PATCH");
+    const chief = (await cli("new-bot", "--name", "Clive")).bot;
+    const lead = (await cli("new-bot", "--name", "Engineering lead")).bot;
+    const specialist = (await cli("new-bot", "--name", "Reviewer")).bot;
+    await api(`/api/bots/${chief.id}`, { chiefOfStaff: true }, "PATCH");
     const planPath = join(session.info.dataDir, "room-plan.json");
     const plan: Record<string, any> = {
       [chief.id]: { steps: [{ arguments: { bot_ids: [lead.id], message: "Implement and independently verify the CSV export" } }], reply: "Assigned to Engineering", resumeReply: "The requested CSV export is implemented and verified" },
@@ -133,9 +133,7 @@ it("marks a failed one-way send so restart recovery cannot duplicate its notice"
   expect((await failureNotice())?.tool?.handoffId).toEqual(expect.any(String));
 }), 45_000);
 
-it("lets a bot ask a bot in another department directly, with nothing set up first", () => fixture(async f => {
-  // Engineering lead and Clive, the Chief in Leadership: different departments, no peers list, no grant either way.
-  await f.api(`/api/bots/${f.chief.id}`, { managedSections: [] }, "PATCH");
+it("lets a bot consult the Chief directly, with nothing set up first", () => fixture(async f => {
   f.plan[f.lead.id] = {
     steps: [{ arguments: { bot_ids: ["Clive"], message: "Can we upgrade to the latest PHP version?", consult: true } }],
     reply: "Asked Clive", resumeReply: "Clive says yes: the latest PHP is fine for us.",
@@ -198,7 +196,6 @@ it("coordinates a lead and its specialist from ordinary chat, returns to Clive, 
   expect(receipt.threadRef.threadId).not.toBe(f.lead.activeTaskId);
   expect((await f.messages(f.chief.activeTaskId)).some((message: any) => message.text === "The requested CSV export is implemented and verified")).toBe(true);
   const bots = (await f.api("/api/bots")).bots;
-  expect(bots.find((bot: any) => bot.id === f.lead.id).managedSections).toBeUndefined();
   const turn = f.evidence().find((entry: any) => entry.botId === f.lead.id);
   const leadTools = turn.evidence[0].result.tools;
   const tools = leadTools.map((tool: any) => tool.name);
@@ -427,7 +424,7 @@ it("lets the opener find and close the completed task", () => fixture(async f =>
 
 it("does not treat self-opened work or an abandoned human branch as new human authority", () => fixture(async f => {
   await f.api("/api/config", { threads: { maxConcurrentPerBot: 1 } }, "PUT");
-  const room = (await f.cli("new-channel", "--name", "Updates", "--members", f.chief.id, "--section", "Leadership")).channel;
+  const room = (await f.cli("new-channel", "--name", "Updates", "--members", f.chief.id)).channel;
   const post = (message: string, expectError = false) => ({ tool: "post_to_room", arguments: { group_id: room.id, message }, expectError });
   f.plan[f.chief.id] = { turns: [
     { steps: [post("First update"), post("Second update"), { tool: "start_thread", arguments: { title: "Independent job", message: "Continue the separate check." } }], reply: "Opened the independent job" },
@@ -796,7 +793,7 @@ it("parks a message behind outstanding teammate work when the bot opts in, then 
 }), 60_000);
 
 it("runs a teammate's hand-off to the Chief in the Chief's work thread for that sender, cancelling no live coordination", () => fixture(async f => {
-  const ops = (await f.cli("new-bot", "--name", "Ops", "--section", "Leadership")).bot;
+  const ops = (await f.cli("new-bot", "--name", "Ops")).bot;
   const assign = structuredClone(f.plan[f.chief.id].steps);
   f.plan[f.lead.id] = { delayMs: 6000, reply: "CSV export implemented" };
   // Turns whose order nothing pins pick their entry by what they were asked.

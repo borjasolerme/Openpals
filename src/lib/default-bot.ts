@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-import { chiefScope, type OwnedBot } from "../../shared/bot-owner";
+import type { OwnedBot } from "../../shared/bot-owner";
 import type { DefaultBotFields } from "../../shared/default-bot";
 
 export { DEFAULT_BOT_NAME } from "../../shared/default-bot";
@@ -11,10 +11,9 @@ export function defaultBotIn<T extends DefaultBotFields>(bots: readonly T[]): T 
 
 type ChiefCandidate = DefaultBotFields & OwnedBot & { id: string; hidden?: boolean };
 
-/** The Chief of Staff in MausBot's department, if one is there to see. */
-export function chiefFor<T extends ChiefCandidate>(bots: readonly T[], maus: T | undefined): T | undefined {
-  const scope = chiefScope(maus ?? {});
-  return bots.find((bot) => bot.chiefOfStaff && !bot.hidden && chiefScope(bot) === scope);
+/** The Chief of Staff, if one is there to see. */
+export function chiefFor<T extends ChiefCandidate>(bots: readonly T[]): T | undefined {
+  return bots.find((bot) => bot.chiefOfStaff && !bot.hidden);
 }
 
 /** What starting with MausBot saves on it: seen, in the sidebar, and the Chief only where there is none, so a Chief

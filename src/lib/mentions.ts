@@ -31,7 +31,6 @@ export function mentionChoicesForQuery<T extends { name: string }>(pool: readonl
 export type MentionRowDetail =
   | { kind: "bot"; title: string }
   | { kind: "everyone"; count: number }
-  | { kind: "team"; count: number }
   | { kind: "all"; count: number };
 
 export function mentionRowDescription(detail: MentionRowDetail): string {
@@ -42,8 +41,6 @@ export function mentionRowDescription(detail: MentionRowDetail): string {
       return detail.count === 1
         ? t("composer.mention.everyoneOne")
         : t("composer.mention.everyoneMany", { count: detail.count });
-    case "team":
-      return detail.count === 1 ? t("composer.mention.teamOne") : t("composer.mention.teamMany", { count: detail.count });
     case "all":
       return detail.count === 1 ? t("composer.mention.allOne") : t("composer.mention.allMany", { count: detail.count });
     default: {

@@ -5,28 +5,26 @@ import { addressFor, addressRefusal, webhookAddress } from "./webhook-address.ts
 const SECRET = "whsec_fixture-only-secret-0123456789abcdef";
 const webhook = { id: "hook-1", endpointId: "wh_abc", botId: "owner" };
 const kept = { currentSecret: (id: string) => id === "hook-1" ? { webhook, secret: SECRET } as never : null };
-const owner = { id: "owner", name: "Courier", section: "Ops" };
+const owner = { id: "owner", name: "Courier" };
 const ask = (from: Record<string, unknown>, extra: Partial<{ outsideDriven: boolean }> = {}) =>
   ({ from: { name: "Asker", ...from } as never, owner, outsideDriven: false, ...extra });
 
 describe("who gets a webhook automation's address", () => {
   it("the bot that owns it, and a Chief of Staff that reaches that bot", () => {
-    expect(addressRefusal(ask({ id: "owner", section: "Ops" }))).toBeNull();
-    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, section: "Ops" }))).toBeNull();
-    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, section: "Sales", managedSections: ["Ops"] }))).toBeNull();
+    expect(addressRefusal(ask({ id: "owner" }))).toBeNull();
+    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true }))).toBeNull();
   });
 
   it("never a teammate, a Chief that cannot reach the bot, or one whose audience differs on a shared workspace", () => {
     const only = "Only Courier, which owns this automation, or a Chief of Staff gets its address.";
-    expect(addressRefusal(ask({ id: "peer", section: "Ops" }))).toBe(only);
-    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, section: "Sales" }))).toBe(only);
-    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, section: "Ops", peers: ["someone-else"] }))).toBe(only);
-    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, section: "Ops", visibility: { people: ["ada@example.com"] } }))).toBe(only);
+    expect(addressRefusal(ask({ id: "peer" }))).toBe(only);
+    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, peers: ["someone-else"] }))).toBe(only);
+    expect(addressRefusal(ask({ id: "chief", chiefOfStaff: true, visibility: { people: ["ada@example.com"] } }))).toBe(only);
   });
 
   it("never in a turn an outside event drives, even for the owner", () => {
-    expect(addressRefusal(ask({ id: "owner", section: "Ops" }, { outsideDriven: true }))).toContain("A run that an outside event started never gets");
-    expect(addressFor(ask({ id: "owner", section: "Ops" }, { outsideDriven: true }), kept, "hook-1", "http://127.0.0.1:8800")).not.toHaveProperty("address");
+    expect(addressRefusal(ask({ id: "owner" }, { outsideDriven: true }))).toContain("A run that an outside event started never gets");
+    expect(addressFor(ask({ id: "owner" }, { outsideDriven: true }), kept, "hook-1", "http://127.0.0.1:8800")).not.toHaveProperty("address");
   });
 });
 

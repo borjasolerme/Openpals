@@ -14,16 +14,16 @@ const saved: Message = {
   card: {
     title: "Remember", subtitle: "Person: Ada Lovelace — Runs the payroll review.", options: [], answered: "allow", dismissed: true,
     autoApplied: true, requestId: "memory-request", tool: "propose_team_memory",
-    teamMemoryRequest: { section: "", entryId: "e", kind: "person", revision: "v1" },
+    teamMemoryRequest: { entryId: "e", kind: "person", revision: "v1" },
   },
 };
 const render = () => renderToStaticMarkup(createElement(ApprovalCard, { bot: { name: "Luna" }, message: saved, threadId: "thread-1" }));
 
 beforeEach(() => { fixture.admin = false; });
 
-it("offers no Undo on a department memory notice to a session that may not review team memory", () => {
+it("offers no Undo on a team memory notice to a session that may not review team memory", () => {
   const html = render();
-  expect(html).toContain("Luna saved to department memory: Person: Ada Lovelace");
+  expect(html).toContain("Luna saved to team memory: Person: Ada Lovelace");
   expect(html).not.toContain(">Undo<");
 });
 

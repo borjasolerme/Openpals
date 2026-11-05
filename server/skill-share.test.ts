@@ -15,7 +15,7 @@ const { learnSource } = await import("./skill-learn.ts");
 const SKILL = (name: string, body = "Do the thing.") =>
   `---\nname: ${name}\ndescription: Cuts a rough edit the way this team does.\n---\n\n# ${name}\n\n${body}\n`;
 
-interface Bot { id: string; name: string; section?: string; assignedSkills?: string[]; visibility?: unknown }
+interface Bot { id: string; name: string; assignedSkills?: string[]; visibility?: unknown }
 
 let bots: Bot[];
 let author: Bot;
@@ -38,27 +38,27 @@ function learn(botId: string, name: string, body?: string) {
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "omb-skill-share-lib-"));
-  author = { id: id("author"), name: "Cutter", section: "Editing", assignedSkills: [] };
-  mate = { id: id("mate"), name: "Colorist", section: " Editing ", assignedSkills: ["existing-skill"] };
-  other = { id: id("other"), name: "Accountant", section: "Finance" };
+  author = { id: id("author"), name: "Cutter", assignedSkills: [] };
+  mate = { id: id("mate"), name: "Colorist", assignedSkills: ["existing-skill"] };
+  other = { id: id("other"), name: "Accountant" };
   bots = [author, mate, other];
 });
 
 describe("sharing learned skills with the team", () => {
-  it("moves a learned skill into the library and assigns it to the author's team only", () => {
+  it("moves a learned skill into the library and assigns it to every bot", () => {
     const staged = learn(author.id, "rough-cut");
     const result = share.shareLearnedSkill({ author, bots, name: "rough-cut", patchAssigned, root, now: 1000 });
     if ("error" in result) throw new Error(result.error);
     expect(result.library).toBe("installed");
     expect(result.sha256).toBe(staged.sha256);
-    expect(result.assigned.map((bot) => bot.botId)).toEqual([author.id, mate.id]);
+    expect(result.assigned.map((bot) => bot.botId)).toEqual([author.id, mate.id, other.id]);
     expect(library.readLibrarySkillFile("rough-cut", root)).toBe(SKILL("rough-cut"));
     expect(library.listLibrarySkills(root)[0]).toMatchObject({ name: "rough-cut", enabled: true });
     expect(skills.listSkills(author.id).map((skill) => skill.name)).not.toContain("rough-cut");
     expect(readFileSync(join(library.libraryArchiveDirectory(root, author.id, "rough-cut"), "SKILL.md"), "utf8")).toBe(SKILL("rough-cut"));
     expect(author.assignedSkills).toEqual(["rough-cut"]);
     expect(mate.assignedSkills).toEqual(["existing-skill", "rough-cut"]);
-    expect(other.assignedSkills).toBeUndefined();
+    expect(other.assignedSkills).toEqual(["rough-cut"]);
     expect(JSON.parse(readFileSync(join(root, "pending-assignments.json"), "utf8"))[author.id]).toBeUndefined();
     expect(share.sharedAssignmentTimes(mate.id, root)).toEqual({ "rough-cut": 1000 });
     expect(share.sharedAssignmentTimes(author.id, root)).toEqual({});
@@ -141,14 +141,14 @@ describe("sharing learned skills with the team", () => {
 
   it("skips a teammate more people can see than could see where the skill was learned", () => {
     author.visibility = "admins";
-    const wide = { id: id("wide"), name: "Assistant", section: "Editing", assignedSkills: [] as string[] };
-    const narrow = { id: id("narrow"), name: "Archivist", section: "Editing", assignedSkills: [] as string[], visibility: "admins" };
+    const wide = { id: id("wide"), name: "Assistant", assignedSkills: [] as string[] };
+    const narrow = { id: id("narrow"), name: "Archivist", assignedSkills: [] as string[], visibility: "admins" };
     bots.push(wide, narrow);
     learn(author.id, "rough-cut");
     const result = share.shareLearnedSkill({ author, bots, name: "rough-cut", patchAssigned, root });
     if ("error" in result) throw new Error(result.error);
     expect(result.assigned.map((bot) => bot.botId)).toEqual([author.id, narrow.id]);
-    expect(result.skipped.map((bot) => bot.botId)).toEqual([mate.id, wide.id]);
+    expect(result.skipped.map((bot) => bot.botId)).toEqual([mate.id, other.id, wide.id]);
     expect(result.skipped[0]?.reason).toContain("more people can see it");
     expect(wide.assignedSkills).toEqual([]);
     author.visibility = undefined;
@@ -205,7 +205,7 @@ describe("sharing learned skills with the team", () => {
     const result = share.shareLearnedSkill({ author, bots, name: "rough-cut", patchAssigned, root });
     if ("error" in result) throw new Error(result.error);
     expect(result.library).toBe("assigned");
-    expect(result.assigned.map((bot) => bot.botId)).toEqual([mate.id]);
+    expect(result.assigned.map((bot) => bot.botId)).toEqual([mate.id, other.id]);
   });
 });
 

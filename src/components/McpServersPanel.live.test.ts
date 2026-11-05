@@ -37,7 +37,7 @@ afterEach(() => {
 
 it("lists the servers again, without disabling anything, when one is added, changed or removed elsewhere", async () => {
   expect(api).toHaveBeenCalledTimes(1);
-  publishLiveFrame({ kind: "sections", sections: [] });
+  publishLiveFrame({ kind: "bots.order", botIds: [] });
   expect(api).toHaveBeenCalledTimes(1);
   let answer!: (value: unknown) => void;
   api.mockImplementationOnce(() => new Promise((resolve) => { answer = resolve; }));

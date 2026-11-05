@@ -19,7 +19,7 @@ export interface CatalogProfile {
   escalations?: boolean;
   /** The person's MausBot with a Chief's powers: its notification tools are mounted. */
   mausbot?: boolean;
-  /** A direct chat whose bot may pick where it works (Works on is not Off and no team computer is its own): select_computer
+  /** A direct chat whose bot may pick where it works (Works on is not Off): select_computer
    * is mounted, and the harness refuses a pick on any turn but a person's own message. */
   computerSelection?: boolean;
   /** A room's thread: the widget and page tools, which rooms refuse, and the wait tools, since a room holds no wait,

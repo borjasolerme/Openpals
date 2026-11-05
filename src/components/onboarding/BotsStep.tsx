@@ -46,7 +46,7 @@ export function BotsStep({ progress, brought, onBrought, onBack, onNext }: {
   };
   const startPal = () => {
     if (!maus || brought.pal) return;
-    if (!maus.welcomed || maus.sidebarHidden) dispatch({ type: "updateBot", botId: maus.id, patch: createChiefPatch(maus, chiefFor(state.bots, maus)) });
+    if (!maus.welcomed || maus.sidebarHidden) dispatch({ type: "updateBot", botId: maus.id, patch: createChiefPatch(maus, chiefFor(state.bots)) });
     onBrought({ ...brought, pal: maus.id });
   };
 

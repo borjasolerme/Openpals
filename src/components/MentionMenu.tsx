@@ -9,8 +9,8 @@ import { BotAvatar } from "./Avatar";
 import { ComposerMenuRow } from "./ComposerMenuRow";
 import type { MenuMotion } from "./MenuMotion";
 
-/** One row of the @ list: a bot, a whole team, or everyone. */
-export type MentionChoice = { id: string; name: string; bot?: Bot; team?: { count: number }; all?: { count: number } };
+/** One row of the @ list: a bot or everyone. */
+export type MentionChoice = { id: string; name: string; bot?: Bot; all?: { count: number } };
 
 /** The composer's @ list, shared by every composer that tags bots. */
 export function MentionMenu({ listRef, motion, choices, highlight, everyoneCount, onPick, onHighlight, className }: {
@@ -33,8 +33,7 @@ export function MentionMenu({ listRef, motion, choices, highlight, everyoneCount
     >
       {choices.map((choice, i) => {
         const description = mentionRowDescription(choice.bot ? { kind: "bot", title: choice.bot.title }
-          : choice.team ? { kind: "team", count: choice.team.count }
-            : choice.all ? { kind: "all", count: choice.all.count } : { kind: "everyone", count: everyoneCount });
+          : choice.all ? { kind: "all", count: choice.all.count } : { kind: "everyone", count: everyoneCount });
         return (
           <ComposerMenuRow
             key={choice.id}
@@ -59,7 +58,7 @@ export function MentionMenu({ listRef, motion, choices, highlight, everyoneCount
             )}
             name={choice.name}
             description={description || undefined}
-            kind={choice.bot ? t("composer.mention.agent") : choice.team ? t("composer.mention.team") : t("composer.mention.channel")}
+            kind={choice.bot ? t("composer.mention.agent") : t("composer.mention.channel")}
           />
         );
       })}

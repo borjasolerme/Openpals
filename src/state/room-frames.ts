@@ -11,7 +11,7 @@ function roomFieldsOnly({
   threadId: _threadId, pinnedCwd: _pinnedCwd, pinnedMessageId: _pinnedMessageId, usage: _usage,
   memberContext: _memberContext, busyBotId: _busyBotId, turnStartedAt: _turnStartedAt, ...room
 }: GroupPatch): GroupPatch {
-  return { ...room, section: room.section };
+  return room;
 }
 
 function foldSnapshotOntoStreamed(
@@ -41,7 +41,6 @@ export function patchedGroups(groups: Group[], group: GroupPatch): Group[] {
   if (!shown) return [{ ...(patch.description === null ? { ...patch, description: undefined } : patch) as Group, messages: patch.messages ?? [] }, ...groups];
   return groups.map((g) => (g.id === patch.id ? {
     ...g, ...patch,
-    section: typeof patch.threadId === "string" || Object.hasOwn(patch, "section") ? patch.section : g.section,
     description: Object.hasOwn(patch, "description") ? (patch.description ?? undefined) : g.description,
     tasks: patch.tasks ? mergeTaskStamps(g.tasks, patch.tasks) : g.tasks,
     turnTimeoutMinutes: Object.hasOwn(patch, "turnTimeoutMinutes") ? (patch.turnTimeoutMinutes ?? undefined) : g.turnTimeoutMinutes,

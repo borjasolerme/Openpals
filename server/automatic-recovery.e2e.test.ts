@@ -205,10 +205,10 @@ it("keeps a Set me up request a setup turn on the backup, and an edit of it too"
 
 it("recovers a coordinated specialist and returns its result to the Chief exactly once", async () => {
   await withRecoveryFixture({ scripted: true }, async ({ api, control, calls, dataDir, evidence }) => {
-    const { bot: chief } = await control("new-bot", "--name", "Recovery Chief", "--section", "Leadership");
-    const { bot: specialist } = await control("new-bot", "--name", "Recovery specialist", "--section", "Engineering");
+    const { bot: chief } = await control("new-bot", "--name", "Recovery Chief");
+    const { bot: specialist } = await control("new-bot", "--name", "Recovery specialist");
     await api("PATCH", `/api/bots/${chief.id}`, {
-      chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true,
+      chiefOfStaff: true,
     });
     await api("PATCH", `/api/bots/${specialist.id}/tasks/${specialist.activeTaskId}`, {
       modelSelection: primary, updateBotDefault: true, approvalMode: "ask",

@@ -10,7 +10,6 @@ import { parseSkillMd } from "../../shared/skill-md.ts";
 import { parseToolScope, type ToolScope } from "../../shared/tool-scope.ts";
 import { usageError } from "./args.ts";
 
-export const TEAM_BRIEF_MAX_BYTES = 24_000;
 export const ROOM_BRIEF_MAX_CHARS = 12_000;
 export const SKILL_MAX_BYTES = 262_144;
 
@@ -38,7 +37,6 @@ const oneLine = (what: string, max: number) => z.string().max(max, `must be at m
   .refine(fitsOnOneLine, `${what} must fit on one line`);
 
 const botFields = {
-  team: z.string().trim().min(1).max(60).optional(),
   title: oneLine("a title", BOT_PROFILE_LIMITS.title).optional(),
   description: z.string().max(BOT_PROFILE_LIMITS.description, `must be at most ${BOT_PROFILE_LIMITS.description} characters`).optional(),
   soul: textOrFile.optional(),
@@ -56,21 +54,15 @@ const teamFileSchema = z.object({
   version: z.literal(1, { error: "version: 1 is required" }),
   engines: enginesSchema.optional(),
   defaults: z.object(botFields).strict().optional(),
-  teams: z.array(z.object({
-    name: z.string().trim().min(1).max(60),
-    brief: textOrFile.optional(),
-    prune: z.boolean().optional(),
-  }).strict()).optional(),
+  prune: z.boolean().optional(),
   bots: z.array(z.object({
     name: oneLine("a name", BOT_PROFILE_LIMITS.name).pipe(z.string().trim().min(1, "must not be empty")),
     was: z.string().trim().min(1).max(BOT_PROFILE_LIMITS.name).optional(),
     chief: z.boolean().optional(),
-    manages: z.array(z.string().trim().min(1).max(60)).optional(),
     ...botFields,
   }).strict()).min(1, "list at least one bot"),
   rooms: z.array(z.object({
     name: z.string().trim().min(1).max(100),
-    team: z.string().trim().min(1).max(60).optional(),
     members: z.array(z.string().trim().min(1)).min(1),
     brief: textOrFile.optional(),
     responder: z.string().trim().min(1).optional(),
@@ -84,12 +76,10 @@ export interface DesiredSkill { name: string; description: string; text: string;
 export interface DesiredBot {
   name: string;
   was?: string;
-  team?: string;
   title?: string;
   description?: string;
-  /** true: the Chief of Staff of its team; false: not; absent: left as it is. */
+  /** true: the Chief of Staff; false: not; absent: left as it is. */
   chief?: boolean;
-  manages: string[];
   soul?: string;
   model?: { instanceId: string; model: string };
   effort?: string;
@@ -101,14 +91,14 @@ export interface DesiredBot {
   tools?: ToolScope | null;
   skills: DesiredSkill[];
 }
-export interface DesiredRoom { name: string; team?: string; members: string[]; brief?: string; responder?: string }
-export interface DesiredTeam { name: string; brief?: string; prune: boolean }
+export interface DesiredRoom { name: string; members: string[]; brief?: string; responder?: string }
 export interface DesiredEngine { kind: string; key: Secret; baseUrl?: string | Secret; everyClaudeBot?: boolean; install?: boolean }
 
 export interface TeamFile {
   path: string;
   engines: DesiredEngine[];
-  teams: DesiredTeam[];
+  /** With --prune, bots and rooms the file leaves out are deleted. */
+  prune: boolean;
   bots: DesiredBot[];
   rooms: DesiredRoom[];
   warnings: string[];
@@ -186,23 +176,10 @@ export function checkTeamFile(input: TeamFileInput, file: string, dir: string): 
     if (seen.has(key(bot.name))) throw usageError(`bots: "${bot.name}" is listed twice (names are compared without case)`);
     seen.set(key(bot.name), bot.name);
   }
-  const teams: DesiredTeam[] = (input.teams ?? []).map((team) => {
-    const brief = kept(text(dir, team.brief, `team "${team.name}" brief`), `team "${team.name}": its brief`);
-    if (brief !== undefined && Buffer.byteLength(brief.trimEnd(), "utf8") > TEAM_BRIEF_MAX_BYTES) {
-      throw usageError(`team "${team.name}": brief is over ${TEAM_BRIEF_MAX_BYTES} bytes`);
-    }
-    return { name: team.name, ...(brief !== undefined ? { brief } : {}), prune: team.prune === true };
-  });
-  const teamSeen = new Set<string>();
-  for (const team of teams) {
-    if (teamSeen.has(key(team.name))) throw usageError(`teams: "${team.name}" is listed twice`);
-    teamSeen.add(key(team.name));
-  }
   const defaults = input.defaults ?? {};
   const bots: DesiredBot[] = input.bots.map((entry) => {
     const bot = { ...defaults, ...entry };
     const where = `bot "${bot.name}"`;
-    if (bot.manages?.length && !bot.chief) throw usageError(`${where}: manages needs chief: true`);
     let cwd: string | undefined;
     if (bot.cwd !== undefined) {
       if (bot.cwd === "~" || bot.cwd.startsWith("~/")) throw usageError(`${where}: cwd must be a full path (~ is not expanded the same way on the server)`);
@@ -231,21 +208,17 @@ export function checkTeamFile(input: TeamFileInput, file: string, dir: string): 
     const slash = bot.model?.indexOf("/") ?? -1;
     const browser = bot.browser === undefined ? undefined : typeof bot.browser === "boolean" ? { enabled: bot.browser } : bot.browser;
     return {
-      name: bot.name, ...(bot.was ? { was: bot.was } : {}), ...(bot.team ? { team: bot.team } : {}),
+      name: bot.name, ...(bot.was ? { was: bot.was } : {}),
       ...(bot.title !== undefined ? { title: bot.title } : {}), ...(description !== undefined ? { description } : {}),
-      ...(bot.chief !== undefined ? { chief: bot.chief } : {}), manages: bot.manages ?? [], ...(soul !== undefined ? { soul } : {}),
+      ...(bot.chief !== undefined ? { chief: bot.chief } : {}), ...(soul !== undefined ? { soul } : {}),
       ...(bot.model ? { model: { instanceId: bot.model.slice(0, slash), model: bot.model.slice(slash + 1) } } : {}),
       ...(bot.effort ? { effort: bot.effort } : {}), ...(bot.approval ? { approval: bot.approval } : {}),
       ...(bot.computer ? { computer: bot.computer } : {}), ...(cwd ? { cwd } : {}), ...(browser ? { browser } : {}),
       ...(tools !== undefined ? { tools } : {}), skills,
     };
   });
-  const chiefs = new Map<string, string>();
-  for (const bot of bots.filter((candidate) => candidate.chief === true)) {
-    const team = key(bot.team ?? "");
-    if (chiefs.has(team)) throw usageError(`team "${bot.team ?? "(no team)"}" has two chiefs: ${chiefs.get(team)} and ${bot.name}`);
-    chiefs.set(team, bot.name);
-  }
+  const chiefs = bots.filter((candidate) => candidate.chief === true);
+  if (chiefs.length > 1) throw usageError(`two chiefs: ${chiefs[0]!.name} and ${chiefs[1]!.name} (there is one Chief of Staff)`);
   const roomSeen = new Set<string>();
   const rooms: DesiredRoom[] = (input.rooms ?? []).map((room) => {
     const where = `room "${room.name}"`;
@@ -257,7 +230,7 @@ export function checkTeamFile(input: TeamFileInput, file: string, dir: string): 
     }
     const brief = kept(text(dir, room.brief, `${where} brief`), `${where}: its brief`);
     if (brief !== undefined && brief.trimEnd().length > ROOM_BRIEF_MAX_CHARS) throw usageError(`${where}: brief is over ${ROOM_BRIEF_MAX_CHARS} characters`);
-    return { name: room.name, ...(room.team ? { team: room.team } : {}), members: room.members, ...(brief !== undefined ? { brief } : {}), ...(room.responder ? { responder: room.responder } : {}) };
+    return { name: room.name, members: room.members, ...(brief !== undefined ? { brief } : {}), ...(room.responder ? { responder: room.responder } : {}) };
   });
   const engines: DesiredEngine[] = Object.entries(input.engines ?? {}).flatMap(([name, value]) => {
     if (!value) return [];
@@ -266,5 +239,5 @@ export function checkTeamFile(input: TeamFileInput, file: string, dir: string): 
     return [{ kind: ENGINE_KIND[name]!, key: anchored(spec.key), ...(spec.baseUrl !== undefined ? { baseUrl: anchored(spec.baseUrl) } : {}),
       ...(spec.everyClaudeBot !== undefined ? { everyClaudeBot: spec.everyClaudeBot } : {}), ...(spec.install ? { install: true } : {}) }];
   });
-  return { path: file, engines, teams, bots, rooms, warnings };
+  return { path: file, engines, prune: input.prune === true, bots, rooms, warnings };
 }

@@ -46,10 +46,10 @@ async function scenario(test: (f: any) => Promise<void>) {
       try { parsed = JSON.parse(raw); } catch {}
       return { status: response.status, body: parsed };
     };
-    const bot = async (name: string, section: string) => ((await runControlOmb(["new-bot", "--name", name, "--section", section, "--url", url])) as any).bot;
-    const clive = await bot("Clive", "Leadership");
-    const mira = await bot("Mira", "Engineering");
-    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true })).status).toBe(200);
+    const bot = async (name: string) => ((await runControlOmb(["new-bot", "--name", name, "--url", url])) as any).bot;
+    const clive = await bot("Clive");
+    const mira = await bot("Mira");
+    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true })).status).toBe(200);
     const planPath = join(dataDir, "room-plan.json");
     const plan: Record<string, { script: unknown[] }> = { [clive.id]: { script: [] }, [mira.id]: { script: [] } };
     const script = (botId: string, ...entries: unknown[]) => {

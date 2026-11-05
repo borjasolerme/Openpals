@@ -61,7 +61,6 @@ function makeDerived(): ReturnType<typeof import("./useBotSettingsDerived").useB
     browserEnabled: false,
     browserSelectable: false,
     browserDisabledReason: "The built-in browser needs the Openpals desktop app",
-    sectionName: "General",
     currentChief: undefined,
     botRoutines: [],
     activeBotRoutines: 0,
@@ -85,32 +84,16 @@ describe("ProposalStatus", () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it("shows both markers when another bot is the section's Chief", () => {
+  it("shows both markers when another bot is the Chief", () => {
     fixture.bots = [makeBot(), makeBot({ id: "chief-1", name: "Atlas", chiefOfStaff: true })];
     expect(renderMarker(makeBot(), "chief")).toContain(CHIEF_COPY);
     expect(renderMarker(makeBot(), "owner")).toContain(OWNER_COPY);
   });
 
-  it("hides both markers when no Chief covers the section", () => {
+  it("hides both markers when there is no Chief", () => {
     fixture.bots = [makeBot()];
     expect(renderMarker(makeBot(), "chief")).toBe("");
     expect(renderMarker(makeBot(), "owner")).toBe("");
-  });
-
-  it("shows markers when a Chief of another section manages this one", () => {
-    fixture.bots = [
-      makeBot({ section: "General" }),
-      makeBot({ id: "chief-1", name: "Atlas", section: "Elsewhere", chiefOfStaff: true, managedSections: ["General"] }),
-    ];
-    expect(renderMarker(makeBot({ section: "General" }), "chief")).toContain(CHIEF_COPY);
-  });
-
-  it("hides markers for a Chief outside the section it does not manage", () => {
-    fixture.bots = [
-      makeBot({ section: "General" }),
-      makeBot({ id: "chief-1", name: "Atlas", section: "Elsewhere", chiefOfStaff: true, managedSections: ["Other"] }),
-    ];
-    expect(renderMarker(makeBot({ section: "General" }), "chief")).toBe("");
   });
 
   it("hides markers when the bot itself is the only Chief", () => {
@@ -126,14 +109,6 @@ describe("ProposalStatus", () => {
       createElement(ProposalStatus, { bot: makeBot(), kind: "chief" }),
     ));
     expect(markup).toBe("");
-  });
-
-  it("matches a Chief across section whitespace", () => {
-    fixture.bots = [
-      makeBot({ section: " General " }),
-      makeBot({ id: "chief-1", section: "General", chiefOfStaff: true }),
-    ];
-    expect(renderMarker(makeBot({ section: " General " }), "chief")).toContain(CHIEF_COPY);
   });
 });
 
@@ -176,7 +151,7 @@ describe("Edit Profile boundary markers in sections", () => {
     expect(markup).not.toContain(OWNER_COPY);
   });
 
-  it("marks the managed-teams group owner-only inside the Chief card", () => {
+  it("marks the Chief card Chief-proposable and owner-only", () => {
     fixture.bots = [makeBot({ chiefOfStaff: true }), makeBot({ id: "chief-1", chiefOfStaff: true })];
     const markup = renderToStaticMarkup(
       createElement(StoreProvider, null, createElement(PermissionsSection, { bot: makeBot({ chiefOfStaff: true }), derived: makeDerived() })),

@@ -1,8 +1,8 @@
-# Sharing a whole department
+# Sharing your team
 
-The sidebar groups bots into departments. **Share department…** saves one department as a single file (`<team>-<version>.openmaus.json`).
-Someone else adds it in **Templates → Import**. Open it from the department's menu in the sidebar (right-click
-the department name), or from **Templates → Share**.
+**Templates → Share → Share…** saves all your bots as a single file (`<team>-<version>.openmaus.json`).
+Someone else adds it in **Templates → Import**. The team's name starts as "Your bots"; change it before you
+save. Hidden bots stay out.
 
 ## What goes in the file
 
@@ -19,8 +19,7 @@ the department name), or from **Templates → Share**.
   another bot's copy went in), so unticking any box is always a choice that
   fits. When you tick more than fits, it says why and keeps every skill box
   so you can change the choice.
-- **Playbooks**, **group chats** (members and who answers by default) and the
-  team's **shared instructions**.
+- **Playbooks** and **group chats** (members and who answers by default).
 - **Routines**, including group chat goals. They always arrive paused.
 - **The Chief of Staff.**
 - **Connections.** For each remote MCP server a bot uses: its address and the
@@ -65,19 +64,19 @@ There is no confirmation step: **Save file** is the decision.
 
 ## Versions and identity
 
-The first time a team is shared it gets a package id (from its name) and each
-bot, group chat and routine gets a key. Later shares of the same team reuse
+The first time your team is shared it gets a package id (from its name) and each
+bot, group chat and routine gets a key. Later shares reuse
 them, even after renaming the team or anything in it, and suggest the next
-version (1.0.0, then 1.0.1, …). A team first added from a shared file keeps
-that file's package id and bot keys, so "import the published release, edit,
-share again" produces the next release of the same package. The record lives
+version (1.0.0, then 1.0.1, …). When every bot came from one shared file,
+sharing keeps that file's package id and bot keys, so "import the published
+release, edit, share again" produces the next release of the same package. The record lives
 in `published-teams.json` in the data folder.
 
 ## Adding a shared team
 
-Import is additive: everything becomes new records in a new team (numbered if
-the name is taken). Nothing in the file can change a bot, group chat or team
-you already have.
+Import is additive: everything becomes new records next to your bots (a bot
+whose name is taken is numbered, as "Scout 2"). Nothing in the file can change
+a bot or group chat you already have.
 
 - Bots start at the default approval level, **Full access** (Ask on a hosted
   company workspace), with no connected-app access and the installation's
@@ -91,6 +90,10 @@ you already have.
   added. Finish connections in **Plugins → MCP
   servers**.
 - Starter notes are written once, through the normal memory writer.
+- The file's shared instructions for its team go at the end of each new bot's
+  standing instructions, under "Shared instructions for this team:".
+- The file's Chief of Staff becomes your Chief only when you have none. There
+  is one Chief for all your bots, so otherwise it arrives as a regular bot.
 - Preset bots in a file appear in **New bot** under **Imported presets**; a
   bot made from one gets the preset's skills switched off
   ([presets.md](presets.md)).
@@ -128,7 +131,7 @@ remote viewer, someone who cannot add a bot and a branded build.
 
 | In Grok Bot | Here |
 | --- | --- |
-| Name, title, instructions | A new bot in its own section, through the `openmaus.package` import |
+| Name, title, instructions | A new bot, through the `openmaus.package` import |
 | Skills | That bot's skills, switched on. One the skill scan flags stays off, and the dialog names it |
 | Memories and facts about you | That bot's `MEMORY.md`, repeats dropped |
 | Routine on a schedule | A routine named `<Bot>: <routine>`, paused, with its schedule and time zone and the skills it uses named in its prompt |
@@ -171,7 +174,8 @@ version 2 files with their existing "not supported" message. A file is at most 4
 and their expected hashes live in `shared/package-fixtures/`.
 
 The HTTP route is `POST /api/teams/export` with
-`{"format":"package","version":2,"team":"Sales desk"}` (admin scope). Optional
+`{"format":"package","version":2}` (admin scope). It exports every bot that
+is not hidden. Optional
 fields: `name`, `tagline`, `summary`, `release`, `notes`, `skills` (`"all"` or
 names), `includeMemory` (default `false` over the API), `avatars` (data URLs
 by bot id) and `dryRun` (count without recording keys). The response is
@@ -179,7 +183,7 @@ by bot id) and `dryRun` (count without recording keys). The response is
 `skills: "all"` the export puts in the skills that fit and lists the rest in
 `skipped`; a list of names is shared exactly or refused. Every `400` from a
 version 2 body also carries `choices: {skills}` (every skill name on the
-team's bots), so a client can offer a different choice. `includeDefaultsPreset:
+bots), so a client can offer a different choice. `includeDefaultsPreset:
 true` adds the New bot defaults preset, and `kind: "library"` (instead of
 `team`) saves a preset file; both are described in [presets.md](presets.md).
 A body without `version: 2` keeps the original whole-installation Markdown

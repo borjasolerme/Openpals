@@ -87,7 +87,7 @@ beforeEach(() => {
   fixture.dispatch.mockClear();
   fixture.state = {
     ...initialState,
-    bots: [bot("atlas"), bot("bea"), bot("dodo", { section: "Work" })],
+    bots: [bot("atlas"), bot("bea"), bot("dodo")],
     groups: [room],
   };
   vi.stubGlobal("window", Object.assign(new EventTarget(), { innerWidth: 1280, innerHeight: 800, ogb: undefined, setTimeout, clearTimeout }));
@@ -104,7 +104,7 @@ afterEach(() => {
 });
 
 describe("Simple-mode sidebar layout", () => {
-  it("lists every bot in one flat list with no heading, a section an older bot stored included, then group chats under a quiet heading with a count", () => {
+  it("lists every bot in one flat list with no heading, then group chats under a quiet heading with a count", () => {
     const { tree } = render();
     expect(sectionOrder(tree)).toEqual([BOTS_SECTION_ID, CHANNELS_SECTION_ID]);
     expect(listedBots(tree)).toEqual(["atlas", "bea", "dodo"]);
@@ -114,7 +114,7 @@ describe("Simple-mode sidebar layout", () => {
   });
 
   it("shows the Chief and the pinned bots as tiles above the rows, with no Pinned or Bots heading", () => {
-    fixture.state = { ...fixture.state, bots: [bot("chief", { chiefOfStaff: true, pinned: true }), bot("atlas", { pinned: true }), bot("bea"), bot("dodo", { section: "Work", pinned: true })] };
+    fixture.state = { ...fixture.state, bots: [bot("chief", { chiefOfStaff: true, pinned: true }), bot("atlas", { pinned: true }), bot("bea"), bot("dodo", { pinned: true })] };
     const { tree } = render();
     const grid = tree.find((node) => node.type === SidebarTileGrid)!.props as Parameters<typeof SidebarTileGrid>[0];
     expect(grid.primary?.id).toBe("chief");
@@ -271,7 +271,6 @@ describe("Simple-mode sidebar layout", () => {
     expect(menu.props.className).toEqual(expect.stringContaining("left-full top-0"));
     expect(menu.props.className).toEqual(expect.stringContaining("rounded-[var(--radius-menu)]"));
     const item = (label: string) => nodes(top().props.children).find((node) => node.type === "button" && nodes(node.props.children).concat(node).some((part) => Children.toArray(part.props.children).includes(label)));
-    expect(item("Create department")).toBeUndefined();
     expect(item("New chat"), "a new conversation starts from the bot panel").toBeUndefined();
     expect(item("New bot")).toBeDefined();
     expect(item("New group chat")).toBeDefined();
@@ -295,7 +294,6 @@ describe("Simple-mode sidebar layout", () => {
     fixture.values = [];
     fixture.advanced = true;
     const item = openMenu();
-    expect(item("Create department")).toBeUndefined();
     expect(item("Templates")).toBeDefined();
     (item("New Bot")!.props.onClick as () => void)();
     expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "newBot" }]);

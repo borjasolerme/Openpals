@@ -58,17 +58,6 @@ async function openExternal(url: string): Promise<void> {
   if (opened) opened.opener = null;
 }
 
-export function shareableTeamList(bots: ReadonlyArray<Pick<Bot, "section" | "hidden">>): Array<{ name: string; bots: number }> {
-  const counts = new Map<string, number>();
-  for (const bot of bots) {
-    if (bot.hidden) continue;
-    const team = bot.section?.trim() ?? "";
-    counts.set(team, (counts.get(team) ?? 0) + 1);
-  }
-  const order = [...counts.keys()].filter((name) => name !== "");
-  return [...order, ""].flatMap((name) => (counts.get(name) ? [{ name, bots: counts.get(name)! }] : []));
-}
-
 function TeamGlyph({ index }: { index: number }) {
   return (
     <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", TEAM_GLYPHS[index % TEAM_GLYPHS.length])}>
@@ -112,13 +101,12 @@ export function TeamLibraryPanel({
   const [pickedDirectory, setPickedDirectory] = useState<Set<string>>(new Set());
   const [roomName, setRoomName] = useState("");
   const [creating, setCreating] = useState(false);
-  const [sharing, setSharing] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const [nestedDialog, setNestedDialog] = useState(false);
   // Monotonic scout token: a late response from an older scout must never overwrite a newer one's state.
   const scoutRequest = useRef(0);
 
   const currentBotCount = state.bots.filter((bot) => !bot.hidden).length;
-  const shareableTeams = shareableTeamList(state.bots);
   const takenNames = new Set(state.bots.map((bot) => bot.name.trim().toLowerCase()));
   const importedNames = pending?.members.map((member) => takeImportName(member.name, takenNames)) ?? [];
 
@@ -146,7 +134,7 @@ export function TeamLibraryPanel({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (sharing !== null || nestedDialog) return;
+      if (sharing || nestedDialog) return;
       if (event.key === "Escape" && !importing) {
         event.preventDefault();
         event.stopPropagation();
@@ -648,28 +636,23 @@ export function TeamLibraryPanel({
               {tab === "share" && (
                 <div>
                   <p className="max-w-2xl text-[13px] leading-relaxed text-ink-secondary">{t("teamLibrary.shareIntro")}</p>
-                  {shareableTeams.length === 0 ? (
+                  {currentBotCount === 0 ? (
                     <p className="mt-6 text-[13px] text-ink-secondary">{t("teamLibrary.shareEmpty")}</p>
                   ) : (
-                    <div className="mt-4 grid grid-cols-1 gap-x-10 md:grid-cols-2">
-                      {shareableTeams.map((team, index) => (
-                        <article key={team.name || "general"} className="flex min-h-[84px] items-center gap-3 border-b border-hairline/35 px-1 py-4">
-                          <TeamGlyph index={index} />
-                          <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-[14px] font-medium text-ink">{team.name || t("teamLibrary.general")}</h3>
-                            <p className="mt-0.5 text-[13px] text-ink-secondary">{t("teamLibrary.shareBots", { count: team.bots })}</p>
-                          </div>
-                          <button
-                            onClick={() => setSharing(team.name)}
-                            aria-label={t("teamLibrary.shareTeamAria", { name: team.name || t("teamLibrary.general") })}
-                            className="flex items-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-[13px] text-ink hover:bg-raised-hover"
-                          >
-                            <Share2 size={13} />
-                            {t("teamLibrary.shareTeam")}
-                          </button>
-                        </article>
-                      ))}
-                    </div>
+                    <article className="mt-4 flex min-h-[84px] max-w-md items-center gap-3 border-b border-hairline/35 px-1 py-4">
+                      <TeamGlyph index={0} />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate text-[14px] font-medium text-ink">{t("teamLibrary.yourBots")}</h3>
+                        <p className="mt-0.5 text-[13px] text-ink-secondary">{t("teamLibrary.shareBots", { count: currentBotCount })}</p>
+                      </div>
+                      <button
+                        onClick={() => setSharing(true)}
+                        className="flex items-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-[13px] text-ink hover:bg-raised-hover"
+                      >
+                        <Share2 size={13} />
+                        {t("teamLibrary.shareTeam")}
+                      </button>
+                    </article>
                   )}
                 </div>
               )}
@@ -818,7 +801,7 @@ export function TeamLibraryPanel({
           </>
         )}
       </div>
-      {sharing !== null && <ShareTeamDialog team={sharing} onClose={() => setSharing(null)} />}
+      {sharing && <ShareTeamDialog onClose={() => setSharing(false)} />}
     </div>,
     document.body,
   );

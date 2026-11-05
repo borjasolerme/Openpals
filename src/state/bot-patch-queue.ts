@@ -31,7 +31,6 @@ export type BotUpdatePatch = Partial<
     | "hidden"
     | "sidebarHidden"
     | "welcomed"
-    | "section"
     | "pinnedMessageId"
     | "chiefOfStaff"
     | "approvePeerComms"

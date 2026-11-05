@@ -4,27 +4,22 @@ import { createComputerFramesRoutes, frameForCaller, mapComputers, parseHave } f
 import { PASS } from "./table.ts";
 
 const bots = [
-  { id: "ada", name: "Ada", section: "Research", computer: "cloud" as const },
-  { id: "ben", name: "Ben", section: "Research" },
-  { id: "cy", name: "Cy", section: "Design" },
-  { id: "dee", name: "Dee", section: "Design", computer: "cloud" as const, cloudBackend: "vps" as const },
-  { id: "eve", name: "Eve", section: "Design", computer: "cloud" as const, hidden: true },
-  { id: "fay", name: "Fay", section: "Ops" },
-  { id: "gus", name: "Gus", section: "Ops", computer: "off" as const },
-];
-const teamComputers = [
-  { id: "11111111-1111-4111-8111-111111111111", name: "Design desktop", section: "Design" },
-  { id: "22222222-2222-4222-8222-222222222222", name: "Spare", section: null },
+  { id: "ada", name: "Ada", computer: "cloud" as const },
+  { id: "ben", name: "Ben" },
+  { id: "cy", name: "Cy" },
+  { id: "dee", name: "Dee", computer: "cloud" as const, cloudBackend: "vps" as const },
+  { id: "eve", name: "Eve", computer: "cloud" as const, hidden: true },
+  { id: "fay", name: "Fay" },
+  { id: "gus", name: "Gus", computer: "off" as const },
 ];
 
 describe("map computers", () => {
-  it("draws a bot's own cloud computer and one shared node per team computer", () => {
+  it("draws each bot's own cloud computer", () => {
     const machines = new Map([["gus", { owner: "gus", boxId: "bx_g", state: "archived" }]]);
-    const nodes = mapComputers({ bots, teamComputers, machine: (owner) => machines.get(owner), working: () => false });
+    const nodes = mapComputers({ bots, machine: (owner) => machines.get(owner), working: () => false });
     expect(nodes).toEqual([
-      { id: "ada", kind: "bot", name: "Ada", botIds: ["ada"], state: "off" },
-      { id: "gus", kind: "bot", name: "Gus", botIds: ["gus"], state: "asleep" },
-      { id: "computer_11111111-1111-4111-8111-111111111111", kind: "team", name: "Design desktop", section: "Design", botIds: ["cy"], state: "off" },
+      { id: "ada", name: "Ada", botIds: ["ada"], state: "off" },
+      { id: "gus", name: "Gus", botIds: ["gus"], state: "asleep" },
     ]);
   });
 
@@ -58,14 +53,14 @@ describe("GET /api/computers/frames", () => {
       working: () => false, held: () => false, tickMs: 1e9,
     });
     const handler = createComputerFramesRoutes({
-      cfg: {} as any, store: { bots } as any, teamComputers: { list: () => teamComputers as any },
+      cfg: {} as any, store: { bots } as any,
       computerControl: { snapshot: () => ({ held: false }) } as any, computerProviderConfigTransitions: new Set(),
-      managedBoatOwners: () => [], botHasActiveTurn: () => false, teamComputerInUse: () => false,
+      managedBoatOwners: () => [], botHasActiveTurn: () => false,
     }, frames);
     expect((await request(handler, "/api/other")).out).toBe(PASS);
     const { body } = await request(handler);
     expect(body.configured).toBe(false);
-    expect(body.computers.map((computer: { id: string }) => computer.id)).toEqual(["ada", "computer_11111111-1111-4111-8111-111111111111"]);
+    expect(body.computers.map((computer: { id: string }) => computer.id)).toEqual(["ada"]);
     expect(lists).toBe(0);
     expect(frames.watching()).toBe(false);
   });

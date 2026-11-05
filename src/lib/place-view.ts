@@ -44,7 +44,6 @@ export function placeFacts(input: {
   instances: InstanceInfo[];
   local?: PlaceFacts["local"];
   computer?: PlaceFacts["computer"];
-  teamComputer?: string;
 }): PlaceFacts {
   const { bot, config, seat } = input;
   const instance = input.instances.find((candidate) => candidate.instanceId === bot.modelSelection.instanceId);
@@ -61,7 +60,6 @@ export function placeFacts(input: {
     mode: seat.mode,
     ...(input.local ? { local: input.local } : {}),
     ...(input.computer ? { computer: input.computer } : {}),
-    ...(input.teamComputer ? { teamComputer: input.teamComputer } : {}),
   };
 }
 

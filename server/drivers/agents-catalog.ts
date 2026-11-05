@@ -349,7 +349,7 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "list_team_setup",
-    description: "Chief of Staff only: list authorized teams, teammate IDs, and exact engine/model choices for team setup. Call before proposing configuration; never invent model IDs. Existing thread models are independent of bot defaults.",
+    description: "Chief of Staff only: list teammate IDs and exact engine/model choices for team setup. Call before proposing configuration; never invent model IDs. Existing thread models are independent of bot defaults.",
     inputSchema: { type: "object", additionalProperties: false, properties: {} },
   },
   {
@@ -359,12 +359,11 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "propose_team_setup",
-    description: "Chief of Staff only: submit all requested specialist creation, profile/model configuration, Chief assignments, and authorized team moves in ONE combined plan. Use exact catalog engine/model IDs from list_team_setup. Combine all fields for each bot; use the same create key or botId to coalesce repeated entries. New teams must be named explicitly in newTeams and have a specialist in this plan; access is granted only to those new teams. Existing unauthorized teams cannot be included. Models change bot defaults for groups/new threads; existing threads and execution permissions stay unchanged. If review is pending, the decision and structured result automatically resume you once; do not ask again, poll, or repeat the proposal." + APPLIES_OUTCOME,
+    description: "Chief of Staff only: submit all requested specialist creation, profile/model configuration and Chief assignments in ONE combined plan. Use exact catalog engine/model IDs from list_team_setup. Combine all fields for each bot; use the same create key or botId to coalesce repeated entries. Models change bot defaults for groups/new threads; existing threads and execution permissions stay unchanged. If review is pending, the decision and structured result automatically resume you once; do not ask again, poll, or repeat the proposal." + APPLIES_OUTCOME,
     inputSchema: {
       type: "object", additionalProperties: false,
       properties: {
         reason: { type: "string", minLength: 1, maxLength: 500 },
-        newTeams: { type: "array", maxItems: 8, items: { type: "string", minLength: 1, maxLength: 60 } },
         operations: { type: "array", minItems: 1, maxItems: 24, items: {
           type: "object", additionalProperties: false,
           properties: {
@@ -373,10 +372,9 @@ const TOOL_DEFINITIONS = [
             botId: { type: "string", description: "For update: exact existing bot ID from list_team_setup." },
             fields: { type: "object", additionalProperties: false, properties: {
               name: { type: "string", maxLength: 100 }, title: { type: "string", maxLength: 200 },
-              chiefOfStaff: { type: "boolean", description: "Appoint or remove this team's Chief. At most one Chief per team: explicitly demote the current Chief in the same plan when replacing them. Does not grant access to other teams or change execution permissions." },
+              chiefOfStaff: { type: "boolean", description: "Appoint or remove the Chief. There is one Chief: explicitly demote the current Chief in the same plan when replacing them. Does not change execution permissions." },
               description: { type: "string", maxLength: 4000 }, soul: { type: "string", description: "Standing instructions; required with name/title/modelSelection for every new bot." },
               cwd: { type: "string", maxLength: 1024, description: "Create only: absolute path of the folder the new bot's tools read and write in. It must already exist. Leave it out for a private workspace." },
-              section: { type: "string", maxLength: 60, description: "Exact authorized existing team, or a team explicitly named in newTeams. Empty string means General." },
               modelSelection: { type: "object", additionalProperties: false, properties: {
                 instanceId: { type: "string" }, model: { type: "string" }, effort: { type: "string" }, variant: { type: "string" },
               }, required: ["instanceId", "model"] },
@@ -388,7 +386,7 @@ const TOOL_DEFINITIONS = [
   },
   {
     name: "propose_bot_deletion",
-    description: "Chief of Staff only: when the user explicitly asks to delete a named teammate, submit a separate deletion request for that exact bot. Deletion removes its conversations, memory, instructions, skills, and any computer owned only by it; generated project files and shared team computers remain. Running work or an unavailable computer provider can block deletion safely. Never delete yourself, substitute an archive, or put deletion into a setup batch. If review is pending, the decision and result resume you once." + APPLIES_OUTCOME,
+    description: "Chief of Staff only: when the user explicitly asks to delete a named teammate, submit a separate deletion request for that exact bot. Deletion removes its conversations, memory, instructions, skills, and its own computer; generated project files remain. Running work or an unavailable computer provider can block deletion safely. Never delete yourself, substitute an archive, or put deletion into a setup batch. If review is pending, the decision and result resume you once." + APPLIES_OUTCOME,
     inputSchema: { type: "object", additionalProperties: false, properties: {
       bot_id: { type: "string", minLength: 1 }, reason: { type: "string", minLength: 1, maxLength: 500 },
     }, required: ["bot_id", "reason"] },

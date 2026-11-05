@@ -11,9 +11,7 @@ import { assertionSchema, stepSchema } from "../types.ts";
 export const liveBotSchema = z.object({
   key: z.string(),
   name: z.string(),
-  section: z.string().optional(),
   chiefOfStaff: z.boolean().optional(),
-  managedSections: z.array(z.string()).optional(),
 });
 
 /** Invariants are tier-1 assertion kinds (checked against the frozen

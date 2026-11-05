@@ -82,8 +82,8 @@ async function scenario(test: (f: any) => Promise<void>, options: { fake?: Recor
       return { status: response.status, body: parsed };
     };
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
-    const bot = async (name: string, section: string) => (await cli("new-bot", "--name", name, "--section", section)).bot;
-    const clive = await bot("Clive", "Leadership");
+    const bot = async (name: string) => (await cli("new-bot", "--name", name)).bot;
+    const clive = await bot("Clive");
     const planPath = join(dataDir, "room-plan.json");
     const plan: Record<string, { script: unknown[] }> = { [clive.id]: { script: [] } };
     const script = (botId: string, ...entries: unknown[]) => {
@@ -150,7 +150,7 @@ async function scenario(test: (f: any) => Promise<void>, options: { fake?: Recor
 const nothingLive = (f: any) => f.db().assignments.filter((row: any) => !["completed", "failed", "cancelled"].includes(row.status));
 
 it("R1 runs each responder of a person's room message as a root in the room thread", () => scenario(async (f) => {
-  const mira = await f.bot("Mira", "Engineering");
+  const mira = await f.bot("Mira");
   const room = await f.room("Engineering", [f.clive.id, mira.id], { kind: "mentions" });
   f.script(f.clive.id, { key: "C0", match: ["R1-JOB"], reply: "R1-CLIVE: the invoices are in." });
   f.script(mira.id, { key: "M0", match: ["R1-JOB"], reply: "R1-MIRA: the total is 42." });
@@ -177,8 +177,8 @@ it("R1 runs each responder of a person's room message as a root in the room thre
 }), hostTimeout(60_000));
 
 it("R2 a member's coordinate_bots reuses its turn's root, and a Chief's Full reaches the teammate's row and turn", () => scenario(async (f) => {
-  const mira = await f.bot("Mira", "Engineering");
-  expect((await f.api("PATCH", `/api/bots/${f.clive.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true })).status).toBe(200);
+  const mira = await f.bot("Mira");
+  expect((await f.api("PATCH", `/api/bots/${f.clive.id}`, { chiefOfStaff: true })).status).toBe(200);
   // Full on the Chief is the operator's grant, seeded on the stored record while the server is down.
   await f.restart("SIGTERM", {}, () => {
     const stored = JSON.parse(readFileSync(join(f.dataDir, "bots.json"), "utf8"));
@@ -496,7 +496,7 @@ it("R6 does not rerun a member's cut turn that already pushed: the root ends wit
 }, hostTimeout(90_000));
 
 it("R7 does not rerun a cut goal step after a restart: its run ended with the restart, the step ends with that reason, silently", () => scenario(async (f) => {
-  const mira = await f.bot("Mira", "Engineering");
+  const mira = await f.bot("Mira");
   const room = await f.room("Engineering", [f.clive.id, mira.id], { kind: "member", botId: f.clive.id });
   f.script(f.clive.id, { key: "C-STEP", match: ["R7-GOAL"], readyFile: f.ready("step"), gateFile: f.gate("step"), reply: "never" });
   await f.post(room, "R7-GOAL: get the export verified.", { mode: "goal" });
@@ -524,7 +524,7 @@ it("R7 does not rerun a cut goal step after a restart: its run ended with the re
 }), hostTimeout(90_000));
 
 it("R7 a goal step the watchdog stops after it posted a credential card fails as stalled and stops the card", () => scenario(async (f) => {
-  const mira = await f.bot("Mira", "Engineering");
+  const mira = await f.bot("Mira");
   const room = await f.room("Engineering", [f.clive.id, mira.id], { kind: "member", botId: f.clive.id });
   f.script(f.clive.id, { key: "C-STEP", match: ["R7S-GOAL"], steps: [{ tool: "request_credential", arguments: { credential_id: "xaiApiKey", reason: "R7S fixture model" } }],
     gateFile: f.gate("step"), reply: "R7S-LATE: never shown." });
@@ -546,7 +546,7 @@ it("R7 a goal step the watchdog stops after it posted a credential card fails as
 }, { fake: { OMB_TEST_STALL_CLOCK: "1" } }), hostTimeout(60_000));
 
 it("R8 runs a chained @mention as a root of its own, with the hop recorded", () => scenario(async (f) => {
-  const mira = await f.bot("Mira", "Engineering");
+  const mira = await f.bot("Mira");
   const room = await f.room("Engineering", [f.clive.id, mira.id], { kind: "member", botId: f.clive.id });
   f.script(f.clive.id, { key: "C0", match: ["R8-JOB"], reply: "R8-CLIVE: @Mira please confirm the total." });
   f.script(mira.id, { key: "M1", match: ["R8-JOB", "R8-CLIVE"], reply: "R8-MIRA: confirmed, 42." });

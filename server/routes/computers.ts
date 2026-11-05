@@ -17,12 +17,8 @@ import { localVmViewerStatus } from "../desktop-viewer-targets.ts";
 import { keepFirefoxProfileBeforeRemove } from "../local-vm-profiles.ts";
 import type { ComputerIdleTimer } from "../computer-idle.ts";
 import type { LocalVmLease } from "../local-vm-lease.ts";
-import { redactSecretsInText } from "../redact.ts";
 import type { RequestAuth } from "../request-auth.ts";
-import type { RoutineManager } from "../routines.ts";
-import type { SessionRegistry } from "../sessions.ts";
-import { sectionKey, type BotRecord, type Store } from "../store.ts";
-import { teamComputerAssignment, teamComputerCreate, teamComputerOwner, type TeamComputerRecord, type TeamComputers } from "../team-computers.ts";
+import type { BotRecord, Store } from "../store.ts";
 import * as vps from "../vps-computer.ts";
 import { vpsAliasesInPlay } from "../vps-hosts.ts";
 import type { BusyFlag, RemoteComputerProvider } from "./config.ts";
@@ -37,12 +33,9 @@ async function keepSignInsBeforeRemove(target: LocalVmTarget): Promise<void> {
 }
 
 export interface ComputerRouteDeps {
-  store: Pick<Store, "bot" | "bots" | "sections">;
+  store: Pick<Store, "bot" | "bots">;
   cfg: AppConfig;
-  sessions: Pick<SessionRegistry, "isLive">;
-  teamComputers: Pick<TeamComputers, "get" | "create" | "assign" | "setProblem" | "list">;
   computerControl: Pick<ComputerControl, "snapshot" | "take" | "release" | "acquireLease" | "releaseLease" | "ownsLease">;
-  routines(): Pick<RoutineManager, "activeRunForBot"> | null;
   controlLeaseIdSchema: ZodString;
   boatLifecycleBusyBots: Pick<Set<string>, "has">;
   computerProviderConfigTransitions: Pick<Set<RemoteComputerProvider>, "has">;
@@ -61,35 +54,24 @@ export interface ComputerRouteDeps {
   localVmPayload(target: LocalVmTarget, auth: RequestAuth): Promise<unknown>;
   localVmInventoryPayload(): Promise<unknown>;
   existingPerBotLocalVmCount(runtime: Runtime): Promise<number>;
-  teamComputersPayload(): Promise<unknown>;
-  teamComputerInUse(computer: TeamComputerRecord): boolean;
   managedBoatOwners(): boat.ManagedBoatOwner[];
   providerTransitionMessage(provider: RemoteComputerProvider): string;
   botHasActiveTurn(botId: string): boolean;
-  botComputerControlKey(bot: BotRecord): string;
-  botComputerControlSnapshot(botId: string): { held: boolean };
   computerPreviewBot(botId: string, url: URL): BotRecord | null;
   computerPreviewSurface(bot: BotRecord, threadId?: string): Promise<string | undefined>;
-  claimTeamComputerLifecycle(computer: TeamComputerRecord): () => void;
-  /** `allowPreview`: a desktop link only reads the screen, so a panel's preview in flight does not refuse it. */
-  claimBotComputerLifecycle(botId: string, allowPreview?: boolean): () => void;
   claimBoatInventoryRequest(boxId: string): () => void;
   claimManagedBoatMutation(instance: boat.ManagedBoatInventoryInstance): () => void;
   claimManagedVpsMutation(containerName: string): () => void;
-  /** A cloud computer was just woken, created or opened: its idle window starts again. */
-  cloudComputerUsed(owner: string): void;
 }
 
 export function createComputerRoutes(deps: ComputerRouteDeps): RouteHandler {
   const {
-    store, cfg, sessions, teamComputers, computerControl, controlLeaseIdSchema, boatLifecycleBusyBots,
+    store, cfg, computerControl, controlLeaseIdSchema, boatLifecycleBusyBots,
     computerProviderConfigTransitions, localVmActiveThreads, localVmLifecycleBusy, localVmSeen, localVmImageBusy,
     localVmProvisionBusy, localVmModeChangeBusy, localVmOwnerBusy, localVmIdleMs, localVmLeaseFor, localVmIdleFor,
     localVmTargetForBot, localVmTargetForStatus, localVmPayload, localVmInventoryPayload, existingPerBotLocalVmCount,
-    teamComputersPayload, teamComputerInUse, managedBoatOwners, providerTransitionMessage, botHasActiveTurn,
-    botComputerControlKey, botComputerControlSnapshot, computerPreviewBot, computerPreviewSurface,
-    claimTeamComputerLifecycle, claimBotComputerLifecycle, claimBoatInventoryRequest, claimManagedBoatMutation,
-    claimManagedVpsMutation, cloudComputerUsed,
+    managedBoatOwners, providerTransitionMessage, computerPreviewBot, computerPreviewSurface,
+    claimBoatInventoryRequest, claimManagedBoatMutation, claimManagedVpsMutation,
   } = deps;
   const usage = createComputerUsageRoutes(deps);
   const frames = createComputerFramesRoutes(deps);
@@ -97,108 +79,7 @@ export function createComputerRoutes(deps: ComputerRouteDeps): RouteHandler {
     if (await usage(context) !== PASS) return;
     if (await frames(context) !== PASS) return;
     const { req, res, url, path, method, auth, json, readBody } = context;
-    const routines = deps.routines();
     let m: RegExpMatchArray | null = null;
-    // Team Boats have real ownership, never a hidden bot or an arbitrary provider id. Admin-only.
-    if (path === "/api/team-computers" && method === "GET") {
-      res.setHeader("cache-control", "private, no-store");
-      return json(res, 200, await teamComputersPayload());
-    }
-    m = path.match(/^\/api\/team-computers(?:\/([\w-]+)(?:\/(provision|join|sleep|control))?)?$/);
-    if (m) {
-      const computerId = m[1];
-      const action = m[2];
-      let found = computerId ? teamComputers.get(computerId) : undefined;
-      if (computerId && !found) return json(res, 404, { error: "No such team computer" });
-      if (method === "GET" && action === "control" && found) {
-        return json(res, 200, computerControl.snapshot(teamComputerOwner(found.id)));
-      }
-      if (method === "GET" && action !== "control") {
-        return json(res, 404, { error: "unknown team computer action" });
-      }
-      if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) return json(res, 415, { error: "content-type must be application/json" });
-      const body = await readBody(req);
-      found = computerId ? teamComputers.get(computerId) : undefined;
-      const assertCurrentOwner = () => {
-        if (auth.kind === "session" && !sessions.isLive(auth.session.id)) throw Object.assign(new Error("Your session ended; sign in again"), { status: 401 });
-        if (computerProviderConfigTransitions.has("box")) throw Object.assign(new Error(providerTransitionMessage("box")), { status: 409 });
-      };
-      assertCurrentOwner();
-      if (action === "control" && method === "POST" && found) {
-        const parsed = z.object({ action: z.enum(["take", "release"]), controlLeaseId: controlLeaseIdSchema.optional() }).strict().safeParse(body);
-        if (!parsed.success) return json(res, 400, { error: "Choose take or release with a valid optional controlLeaseId" });
-        const key = teamComputerOwner(found.id);
-        if (parsed.data.action === "take" && boatLifecycleBusyBots.has(key)) return json(res, 409, { error: "Wait for this computer's action to finish before taking control" });
-        if (parsed.data.controlLeaseId) {
-          const result = parsed.data.action === "take"
-            ? computerControl.acquireLease(key, parsed.data.controlLeaseId)
-            : computerControl.releaseLease(key, parsed.data.controlLeaseId);
-          return json(res, 200, { ...result.snapshot, ...result });
-        }
-        return json(res, 200, parsed.data.action === "take" ? computerControl.take(key) : computerControl.release(key));
-      }
-      if (method === "PATCH" && found && !action) {
-        const parsed = teamComputerAssignment.safeParse(body);
-        if (!parsed.success) return json(res, 400, { error: "Confirm shared desktop access with section and acknowledgeSharedAccess: true" });
-        const section = parsed.data.section;
-        const checkAssignment = () => {
-          assertCurrentOwner();
-          if (section !== null && section !== "" && !store.sections.includes(section)) throw Object.assign(new Error("Create the team before assigning a computer"), { status: 404 });
-          if (section !== null && store.bots.some(bot => sectionKey(bot.section) === section && (
-            botHasActiveTurn(bot.id) || routines?.activeRunForBot(bot.id) || botComputerControlSnapshot(bot.id).held || boatLifecycleBusyBots.has(bot.id)
-          ))) throw Object.assign(new Error("Stop the target team's work and release computer control before assigning this computer"), { status: 409 });
-        };
-        checkAssignment();
-        const release = claimTeamComputerLifecycle(found);
-        try {
-          if (section !== null && !(await boat.findBoat(cfg, teamComputerOwner(found.id)))) return json(res, 409, { error: "Create or retry this computer before assigning it to a team" });
-          checkAssignment();
-          if (teamComputerInUse(found)) return json(res, 409, { error: "This team computer became busy; stop its work before assigning it" });
-          teamComputers.assign(found.id, section);
-          return json(res, 200, { ok: true });
-        } finally { release(); }
-      }
-      if (method === "POST" && !computerId) {
-        const parsed = teamComputerCreate.safeParse(body);
-        if (!parsed.success) return json(res, 400, { error: "Provide requestId (UUID), a name, and acknowledgeCost: true to create a paid cloud computer" });
-        if (!boat.boatConfigured(cfg)) return json(res, 409, { error: "Configure Boat in Settings before creating a cloud computer" });
-        const computer = teamComputers.create(parsed.data.name, parsed.data.requestId);
-        const release = claimTeamComputerLifecycle(computer);
-        try {
-          await boat.provisionBoat(cfg, teamComputerOwner(computer.id), computer.name);
-          teamComputers.setProblem(computer.id);
-          return json(res, 201, { id: computer.id });
-        } catch (error) {
-          teamComputers.setProblem(computer.id, redactSecretsInText(error instanceof Error ? error.message : String(error)));
-          throw error;
-        } finally { release(); cloudComputerUsed(teamComputerOwner(computer.id)); }
-      }
-      if (method === "POST" && found && action && action !== "control") {
-        if (action === "provision" && body?.acknowledgeCost !== true) return json(res, 400, { error: "Confirm cloud computer creation or wake costs with acknowledgeCost: true" });
-        // A ready-only join never wakes, provisions or steals an agent's turn: human control takes its own lease first.
-        if (action === "join") {
-          const key = teamComputerOwner(found.id);
-          if (boatLifecycleBusyBots.has(key)) return json(res, 409, { error: "Wait for this computer's action to finish" });
-          if (!computerControl.snapshot(key).held) return json(res, 409, { error: "Take control before opening this shared desktop" });
-          const release = claimBotComputerLifecycle(key, true);
-          try { return json(res, 200, await boat.joinReadyBoat(cfg, key)); }
-          finally { release(); cloudComputerUsed(key); }
-        }
-        const release = claimTeamComputerLifecycle(found);
-        try {
-          const result = action === "provision"
-            ? await boat.provisionBoat(cfg, teamComputerOwner(found.id), found.name)
-            : await boat.sleepBoat(cfg, teamComputerOwner(found.id));
-          teamComputers.setProblem(found.id);
-          return json(res, 200, result);
-        } catch (error) {
-          teamComputers.setProblem(found.id, redactSecretsInText(error instanceof Error ? error.message : String(error)));
-          throw error;
-        } finally { release(); if (action === "provision") cloudComputerUsed(teamComputerOwner(found.id)); }
-      }
-      return json(res, 405, { error: "method not allowed" });
-    }
-
     // Read-only; lifecycle changes are revalidated against a fresh provider listing. The path keeps its historical /boxes segment.
     if (method === "GET" && path === "/api/computers/boxes") {
       res.setHeader("cache-control", "private, no-store");
@@ -438,7 +319,7 @@ export function createComputerRoutes(deps: ComputerRouteDeps): RouteHandler {
       const lease = controlLeaseIdSchema.safeParse(url.searchParams.get("controlLeaseId") ?? undefined);
       if (!lease.success) return json(res, 400, { error: "controlLeaseId is required" });
       const controlBot = store.bot(bot.id);
-      if (!controlBot || !computerControl.ownsLease(botComputerControlKey(controlBot), lease.data)) {
+      if (!controlBot || !computerControl.ownsLease(controlBot.id, lease.data)) {
         return json(res, 409, { error: "Take control of this computer first" });
       }
       const target = localVmTargetForStatus(bot.id, threadId);

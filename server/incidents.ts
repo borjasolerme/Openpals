@@ -1,7 +1,6 @@
 import type { WireMessage as Message } from "../shared/wire.ts";
 import { withoutDeliveredNote } from "./peer-provenance.ts";
 import { AUTHORITY, fromNoteWith, HARNESS_WHO } from "./provenance-label.ts";
-import { hasTeamAuthority } from "./peer-roster.ts";
 import { serverLine, type ServerLineKey } from "./server-lines.ts";
 
 export type IncidentKind = "failed" | "stalled" | "could-not-start" | "routine-failed";
@@ -9,9 +8,7 @@ export type IncidentKind = "failed" | "stalled" | "could-not-start" | "routine-f
 export interface IncidentBot {
   id: string;
   name: string;
-  section?: string;
   chiefOfStaff?: boolean;
-  managedSections?: string[];
   hidden?: boolean;
 }
 
@@ -30,14 +27,9 @@ export const INCIDENTS_THREAD_TITLE = "Problems to look at";
 /** The same notices chat, as older versions named it. */
 export const OLD_INCIDENTS_THREAD_TITLE = "Team incidents";
 
-const sectionKey = (section?: string): string => section?.trim() || "";
-
 export function chiefForBot<T extends IncidentBot>(bots: readonly T[], bot: IncidentBot): T | null {
   if (bot.chiefOfStaff) return null;
-  const chiefs = bots.filter((candidate) => candidate.chiefOfStaff && !candidate.hidden && candidate.id !== bot.id);
-  return chiefs.find((chief) => sectionKey(chief.section) === sectionKey(bot.section))
-    ?? chiefs.find((chief) => hasTeamAuthority(chief, bot.section))
-    ?? null;
+  return bots.find((candidate) => candidate.chiefOfStaff && !candidate.hidden && candidate.id !== bot.id) ?? null;
 }
 
 /** Why retry_thread cannot resume a thread yet, in words the Chief can act on. */

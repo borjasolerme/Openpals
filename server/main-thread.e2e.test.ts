@@ -112,9 +112,9 @@ it("moves no main thread for a teammate's work or results or a team incident; re
   const { fixture, dataDir, api, cli, wire, tasks, stamps, thread, idle, said, replied } = await launch();
   try {
     await api("PUT", "/api/config", { threads: { maxConcurrentPerBot: 1 } });
-    const asker = (await cli("new-bot", "--name", "Asker", "--section", "Ops")).bot;
-    const teammate = (await cli("new-bot", "--name", "Teammate", "--section", "Ops")).bot;
-    const chief = (await cli("new-bot", "--name", "Chief", "--section", "Ops")).bot;
+    const asker = (await cli("new-bot", "--name", "Asker")).bot;
+    const teammate = (await cli("new-bot", "--name", "Teammate")).bot;
+    const chief = (await cli("new-bot", "--name", "Chief")).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
     writeFileSync(join(dataDir, "room-plan.json"), JSON.stringify({
       [asker.id]: { script: [
@@ -157,8 +157,8 @@ it("moves no main thread for a teammate's work or results or a team incident; re
 it("marks a job's review answer and a webhook post unread where they land", async () => {
   const { fixture, dataDir, api, cli, tasks, replied } = await launch();
   try {
-    const asker = (await cli("new-bot", "--name", "Asker", "--section", "Ops")).bot;
-    const teammate = (await cli("new-bot", "--name", "Teammate", "--section", "Ops")).bot;
+    const asker = (await cli("new-bot", "--name", "Asker")).bot;
+    const teammate = (await cli("new-bot", "--name", "Teammate")).bot;
     const gate = join(dataDir, "review.gate");
     writeFileSync(join(dataDir, "room-plan.json"), JSON.stringify({
       [asker.id]: { script: [

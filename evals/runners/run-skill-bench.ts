@@ -25,7 +25,7 @@ export const skillBenchSchema = z.object({
   title: z.string(),
   behavior: z.string(),
   skill: fixtureSkillSchema,
-  /** The bot the skill is tested on. Chief/section fields follow the
+  /** The bot the skill is tested on. Chief fields follow the
    * scenario bot schema so dispatch-bearing skills work out of the box. */
   subject: scenarioBotSchema.omit({ turns: true }),
   /** Bots the with-skill arm may dispatch to; they replay their scripted

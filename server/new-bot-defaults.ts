@@ -33,7 +33,6 @@ export const botDefaultsProfileSchema = profilePatchSchema.extend({
   approvalMode: z.enum(["ask", "auto", "full", "custom"]).optional(),
   alwaysAllow: strings(200, 500).optional(),
   chiefOfStaff: z.boolean().optional(),
-  managedSections: strings(100, 60).optional(),
   approvePeerComms: z.boolean().optional(),
   peers: strings(1000, 100).nullable().optional(),
   composio: z.boolean().optional(),

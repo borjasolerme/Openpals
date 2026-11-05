@@ -55,17 +55,18 @@ it("shares New bot defaults as a preset, imports it, and creates bots from it an
     expect(() => parsePackageDocument(saved.document)).not.toThrow();
     expect((await ok("POST", "/api/teams/export", body)).document.package.release).toBe("1.0.1");
 
-    const lead = (await ok("POST", "/api/bots", { name: "Morgan", section: "Sales desk", useDefaults: false })).bot;
-    const plain = await ok("POST", "/api/teams/export", { format: "package", version: 2, team: "Sales desk", dryRun: true });
+    const lead = (await ok("POST", "/api/bots", { name: "Morgan", useDefaults: false })).bot;
+    const visible = ((await ok("GET", "/api/bots")).bots as Array<{ hidden?: boolean }>).filter((bot) => !bot.hidden).length;
+    const plain = await ok("POST", "/api/teams/export", { format: "package", version: 2, dryRun: true });
     expect(plain.document.package).not.toHaveProperty("presets");
-    const withPreset = await ok("POST", "/api/teams/export", { format: "package", version: 2, team: "Sales desk", includeDefaultsPreset: true, presetName: "Support agent", dryRun: true });
-    expect(withPreset.summary.counts).toMatchObject({ bots: 1, presets: 1, skills: 1 });
+    const withPreset = await ok("POST", "/api/teams/export", { format: "package", version: 2, includeDefaultsPreset: true, presetName: "Support agent", dryRun: true });
+    expect(withPreset.summary.counts).toMatchObject({ bots: visible, presets: 1, skills: 1 });
     expect(withPreset.document.package.presets[0]).not.toHaveProperty("seed");
     expect(lead.name).toBe("Morgan");
 
     const imported = await call("POST", "/api/teams/import", saved.document);
     expect(imported.status).toBe(201);
-    expect(imported.body).toMatchObject({ name: "Support agent", section: "", bots: [], groups: [], routines: [], offeredSkills: ["follow-up"],
+    expect(imported.body).toMatchObject({ name: "Support agent", bots: [], groups: [], routines: [], offeredSkills: ["follow-up"],
       presets: [{ id: expect.any(String), key: "new-bot-defaults", name: "Support agent" }] });
     const fileId = imported.body.presets[0].id as string;
     const listed = (await ok("GET", "/api/bot-presets")).presets;

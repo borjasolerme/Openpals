@@ -40,9 +40,7 @@ export const scenarioBotSchema = z.object({
   /** Referenced from steps and scripted arguments as "@key". */
   key: z.string(),
   name: z.string(),
-  section: z.string().optional(),
   chiefOfStaff: z.boolean().optional(),
-  managedSections: z.array(z.string()).optional(),
   acknowledgePeerScope: z.boolean().optional(),
   computer: z.enum(["vm", "browser", "off"]).optional(),
   browser: z.boolean().optional(),

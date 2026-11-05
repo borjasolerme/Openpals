@@ -146,8 +146,11 @@ async function scenario(test: (f: any) => Promise<void>, options: { env?: Record
       return { status: response.status, body: parsed };
     };
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
-    const bot = async (name: string, section: string) => (await cli("new-bot", "--name", name, "--section", section)).bot;
-    const clive = await bot("Clive", "Leadership");
+    const bot = async (name: string) => (await cli("new-bot", "--name", name)).bot;
+    const clive = await bot("Clive");
+    // The seeded Chief would get an incident report for each of Clive's failed runs, turns these scenarios do not script.
+    const seeded = ((await api("GET", "/api/bots?messages=0")).body.bots as any[]).find((candidate) => candidate.chiefOfStaff);
+    if (seeded) expect((await api("PATCH", `/api/bots/${seeded.id}`, { chiefOfStaff: false })).status).toBe(200);
     const planPath = join(dataDir, "room-plan.json");
     const plan: Record<string, { script: unknown[] }> = { [clive.id]: { script: [] } };
     const script = (botId: string, ...entries: unknown[]) => {
@@ -362,7 +365,7 @@ it("T6 continues a person's step-capped turn in place on the same root", async (
   const model = await loopbackModel();
   try {
     await scenario(async (f) => {
-      const eli = (await f.cli("new-bot", "--name", "Eli", "--section", "Engineering")).bot;
+      const eli = (await f.cli("new-bot", "--name", "Eli")).bot;
       const compat = { key: "synthetic-fixture-key", url: model.url, model: "loop-model" };
       expect((await f.api("PATCH", "/api/config", { openaiCompat: compat })).status).toBe(200);
       await f.cli("set-model", "--bot", eli.id, "--instance", "openaiCompat", "--model", "loop-model");
@@ -654,8 +657,8 @@ it("T9 parks the root on a sign-in card and runs it again with the signed-in lin
 }), hostTimeout(60_000));
 
 it("T10 parks a teammate's turn on its credential card, tells the Chief at once, and the key answers the teammate", () => scenario(async (f) => {
-  const mira = (await f.cli("new-bot", "--name", "Mira", "--section", "Engineering")).bot;
-  expect((await f.api("PATCH", `/api/bots/${f.clive.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true })).status).toBe(200);
+  const mira = (await f.cli("new-bot", "--name", "Mira")).bot;
+  expect((await f.api("PATCH", `/api/bots/${f.clive.id}`, { chiefOfStaff: true })).status).toBe(200);
   const brief = "T10-BRIEF: set up the Grok model for the export; ask for the key you need.";
   f.script(f.clive.id,
     { key: "C0", match: ["T10-JOB"], steps: [{ arguments: { bot_ids: [mira.id], message: brief } }], reply: "C0: Mira is on it." },

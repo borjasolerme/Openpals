@@ -99,7 +99,7 @@ export async function verifyWorkspaceBackup(report: (event: unknown) => void = (
     destination = await launchBackupFixture();
     record({ destination: destination.info });
     assert.equal((await control(source, "doctor") as { ok: boolean }).ok, true);
-    const { bot } = await control(source, "new-bot", "--name", "Full backup probe", "--section", "Fixture team") as { bot: { id: string; threadId: string } };
+    const { bot } = await control(source, "new-bot", "--name", "Full backup probe") as { bot: { id: string; threadId: string } };
     const { bot: oldBot } = await control(destination, "new-bot", "--name", "Original destination") as { bot: { id: string } };
     const soul = "Retain these exact standing instructions. 🐭\n";
     assert.equal((await api(source, "PATCH", `/api/bots/${bot.id}/profile`, { soul })).status, 200);

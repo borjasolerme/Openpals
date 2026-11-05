@@ -27,8 +27,11 @@ async function withRooms(test: (f: any) => Promise<void>) {
     await expect.poll(() => fetch(`${session.info.url}/api/health`, { signal: AbortSignal.timeout(1_000) }).then(r => r.ok, () => false), { timeout: 20_000 }).toBe(true);
   };
   try {
-    const sender = (await cli("new-bot", "--name", "Director", "--section", "A")).bot;
-    const target = (await cli("new-bot", "--name", "Engineer", "--section", "A")).bot;
+    const sender = (await cli("new-bot", "--name", "Director")).bot;
+    const target = (await cli("new-bot", "--name", "Engineer")).bot;
+    // The seeded Chief would get an incident report for each failed hand-off, turns these plans do not script.
+    const seeded = (await api("/api/bots?messages=0", undefined, "GET")).bots.find((bot: any) => bot.chiefOfStaff);
+    if (seeded) await api(`/api/bots/${seeded.id}`, { chiefOfStaff: false }, "PATCH");
     const source = (await tool("create_channel", { name: "Planning", member_ids: [sender.id], bulletin: "SOURCE_ONLY" })).channel;
     const destination = (await tool("create_channel", { name: "Engineering", member_ids: [target.id], bulletin: "DESTINATION_ONLY" })).channel;
     const planPath = join(session.info.dataDir, "room-plan.json");
@@ -50,9 +53,9 @@ async function withRooms(test: (f: any) => Promise<void>) {
   }
 }
 
-async function addSupervisingChief(f: any, section = "") {
+async function addSupervisingChief(f: any) {
   const chief = (await f.cli("new-bot", "--name", "Supervisor")).bot;
-  await f.api(`/api/bots/${chief.id}`, { section, chiefOfStaff: true, managedSections: ["A"], acknowledgePeerScope: true }, "PATCH");
+  await f.api(`/api/bots/${chief.id}`, { chiefOfStaff: true }, "PATCH");
   await f.tool("update_channel", { channel_id: f.source.id, member_ids: [f.sender.id, f.target.id, chief.id] });
   f.plan[chief.id] = { reply: "Supervisor checked the work" };
   return chief;
@@ -64,8 +67,8 @@ async function releaseAfterWithhold(f: any, gateFile: string) {
   writeFileSync(gateFile, "release");
 }
 
-it.each(["", "Leadership"])("lists and coordinates with a supervising Chief and same-section peer in the same room (Chief section %j)", section => withRooms(async f => {
-  const chief = await addSupervisingChief(f, section);
+it("lists and coordinates with a supervising Chief and a peer in the same room", () => withRooms(async f => {
+  const chief = await addSupervisingChief(f);
   f.plan[f.sender.id].steps = [{ arguments: { bot_ids: [chief.id, f.target.id], message: "Review the work here" } }];
   f.plan[f.target.id] = { reply: "Built CSV", expectContextIncludes: ["[LIVE TEAMMATES]", `[id: ${f.sender.id}]`] };
   await f.start(); expect((await f.wait()).status).toBe("settled");
@@ -74,21 +77,6 @@ it.each(["", "Leadership"])("lists and coordinates with a supervising Chief and 
   const children = f.nodes().filter((node: any) => node.parentId);
   expect(children.map((node: any) => node.botId).sort()).toEqual([chief.id, f.target.id].sort());
   expect(children.every((node: any) => node.status === "completed" && node.groupId === f.source.id && node.threadId === f.source.activeTaskId)).toBe(true);
-}), 45_000);
-
-it("coordinates in a room that mixes departments, with a Chief that manages none of them", () => withRooms(async f => {
-  const chief = await addSupervisingChief(f);
-  await f.api(`/api/bots/${chief.id}`, { managedSections: [] }, "PATCH");
-  const outsider = (await f.cli("new-bot", "--name", "Outsider", "--section", "Finance")).bot;
-  await f.tool("update_channel", { channel_id: f.source.id, member_ids: [f.sender.id, f.target.id, chief.id, outsider.id] });
-  f.plan[outsider.id] = { reply: "Finance numbers checked" };
-  f.plan[f.sender.id].steps = [{ arguments: { bot_ids: [chief.id, outsider.id], message: "Review the work here" } }];
-  await f.start(); expect((await f.wait()).status).toBe("settled");
-  const discovery = JSON.parse(f.provider().find((turn: any) => turn.botId === f.sender.id).evidence[1].result.content[0].text);
-  expect(discovery.rooms.find((room: any) => room.id === f.source.id).members.map((bot: any) => bot.id)).toEqual(expect.arrayContaining([chief.id, outsider.id]));
-  const children = f.handoffs();
-  expect(children.map((node: any) => node.botId).sort()).toEqual([chief.id, outsider.id].sort());
-  expect(children.every((node: any) => node.status === "completed" && node.groupId === f.source.id)).toBe(true);
 }), 45_000);
 
 it("refuses supervisor room coordination with a disallowed peer", () => withRooms(async f => {
@@ -151,10 +139,9 @@ it("frames room work it cannot trace as outside content, and defuses forged enve
   expect(review).not.toMatch(/outside content|Complete the current addressed teammate request/);
 }), 45_000);
 
-it("lets an explicitly authorized Chief coordinate another team, which can consult its own specialist", () => withRooms(async f => {
-  await f.api(`/api/bots/${f.target.id}`, { section: "Engineering" }, "PATCH");
-  await f.api(`/api/bots/${f.sender.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true }, "PATCH");
-  const reviewer = (await f.cli("new-bot", "--name", "Reviewer", "--section", "Engineering")).bot;
+it("lets a Chief coordinate a teammate, which can consult its own specialist", () => withRooms(async f => {
+  await f.api(`/api/bots/${f.sender.id}`, { chiefOfStaff: true }, "PATCH");
+  const reviewer = (await f.cli("new-bot", "--name", "Reviewer")).bot;
   const reviewRoom = (await f.tool("create_channel", { name: "Quality", member_ids: [reviewer.id] })).channel;
   f.plan[f.target.id] = {
     steps: [{ arguments: { group_id: reviewRoom.id, bot_ids: [reviewer.id], message: "Check the CSV output" } }],
@@ -168,13 +155,9 @@ it("lets an explicitly authorized Chief coordinate another team, which can consu
   expect((await f.messages(f.source.activeTaskId)).some((m: any) => m.text === "Reviewed downstream outcome")).toBe(true);
   const resumedPrompt = f.provider().filter((turn: any) => turn.botId === f.target.id).at(-1).prompt;
   expect(JSON.stringify(resumedPrompt).match(/CSV checks passed/g)).toHaveLength(1);
-  const bots = (await f.api("/api/bots")).bots;
-  expect(bots.find((b: any) => b.id === f.target.id).managedSections).toBeUndefined();
-  expect(bots.find((b: any) => b.id === reviewer.id).managedSections).toBeUndefined();
 }), 45_000);
 
-it("withholds a cross-department result if the sender's peers list cuts the recipient off while it runs", () => withRooms(async f => {
-  await f.api(`/api/bots/${f.target.id}`, { section: "Engineering" }, "PATCH");
+it("withholds a teammate's result if the sender's peers list cuts the recipient off while it runs", () => withRooms(async f => {
   const gateFile = join(f.session.info.dataDir, "cross-team-revocation.gate");
   f.plan[f.target.id] = { gateFile, reply: "PRIVATE_RESULT_AFTER_REVOCATION" };
   await f.start();
@@ -188,17 +171,6 @@ it("withholds a cross-department result if the sender's peers list cuts the reci
   expect(messages.some((m: any) => m.tool?.name.includes("Result withheld"))).toBe(true);
 }), 60_000);
 
-it("hands work to a bot in another department, into a room whose readers are in other departments", () => withRooms(async f => {
-  await f.api(`/api/bots/${f.target.id}`, { section: "Other company" }, "PATCH");
-  const outsider = (await f.cli("new-bot", "--name", "Outsider", "--section", "Elsewhere")).bot;
-  for (const room of [f.source, f.destination]) await f.tool("update_channel", { channel_id: room.id, member_ids: [...room.memberIds, outsider.id] });
-  await f.start(); expect((await f.wait()).status).toBe("settled");
-  const node = f.handoffs()[0];
-  expect(node).toMatchObject({ botId: f.target.id, groupId: f.destination.id, status: "completed" });
-  expect((await f.messages(f.destination.activeTaskId)).some((m: any) => m.text?.includes("Please build CSV"))).toBe(true);
-  expect((await f.messages(f.source.activeTaskId)).some((m: any) => m.text === "Reviewed downstream outcome")).toBe(true);
-}), 45_000);
-
 it.each([4000, 4001])("enforces the %i-character request boundary on the real server", length => withRooms(async f => {
   f.plan[f.sender.id].steps[0].arguments.message = "x".repeat(length);
   f.plan[f.sender.id].steps[0].expectError = length > 4000;
@@ -208,7 +180,7 @@ it.each([4000, 4001])("enforces the %i-character request boundary on the real se
 }), 45_000);
 
 it("does not turn incidental mentions into extra participants in initiating or dispatched turns", () => withRooms(async f => {
-  const observer = (await f.cli("new-bot", "--name", "Observer", "--section", "A")).bot;
+  const observer = (await f.cli("new-bot", "--name", "Observer")).bot;
   for (const room of [f.source, f.destination]) {
     await f.tool("update_channel", { channel_id: room.id, member_ids: [...room.memberIds, observer.id] });
   }
@@ -298,7 +270,7 @@ it.each(["allow", "deny"])("honors %s on the sender's peer-approval card", behav
 }), 45_000);
 
 it.each(["allow", "deny"])("presents all peer approvals together and dispatches only if every recipient is allowed (%s)", behavior => withRooms(async f => {
-  const reviewer = (await f.cli("new-bot", "--name", "Reviewer", "--section", "A")).bot;
+  const reviewer = (await f.cli("new-bot", "--name", "Reviewer")).bot;
   await f.tool("update_channel", { channel_id: f.destination.id, member_ids: [f.target.id, reviewer.id] });
   await f.api(`/api/bots/${f.sender.id}`, { approvePeerComms: true, approvalMode: "ask" }, "PATCH");
   f.plan[reviewer.id] = { reply: "Reviewed CSV" };
@@ -342,7 +314,7 @@ it("pins a busy destination's task even when its active task changes", () => wit
   expect(created.success).toBe(true);
 }), 45_000);
 it("consults multiple existing members and returns once, with no discussion prerequisite or new room settings", () => withRooms(async f => {
-  const reviewer = (await f.cli("new-bot", "--name", "Reviewer", "--section", "A")).bot;
+  const reviewer = (await f.cli("new-bot", "--name", "Reviewer")).bot;
   await f.tool("update_channel", { channel_id: f.source.id, member_ids: [f.sender.id, f.target.id, reviewer.id] });
   f.plan[f.sender.id].steps = [{ arguments: { bot_ids: [f.target.id, reviewer.id], message: "Give one risk from your role" } }];
   f.plan[reviewer.id] = { reply: "Privacy risk" };
@@ -425,7 +397,7 @@ it("resolves a unique teammate name in a bot_ids slot, and refuses an ambiguous 
   expect(node.status).toBe("completed");
   expect((await f.messages(f.destination.activeTaskId)).some((m: any) => m.text?.includes("Please build CSV"))).toBe(true);
 
-  const twin = (await f.cli("new-bot", "--name", f.target.name, "--section", "A")).bot;
+  const twin = (await f.cli("new-bot", "--name", f.target.name)).bot;
   expect(twin.id).not.toBe(f.target.id);
   f.plan[f.sender.id] = { steps: [{ expectError: true, arguments: { group_id: f.destination.id, bot_ids: [f.target.name], message: "Review CSV" } }], reply: "Refused" };
   f.savePlan(); await f.cli("send-channel", "--channel", f.source.id, "--text", "@Director Ask again");
@@ -436,7 +408,7 @@ it("resolves a unique teammate name in a bot_ids slot, and refuses an ambiguous 
 }), 60_000);
 
 it("does not repeat a shared brief or rerun recipients on an identical tool retry", () => withRooms(async f => {
-  const reviewer = (await f.cli("new-bot", "--name", "Reviewer", "--section", "A")).bot;
+  const reviewer = (await f.cli("new-bot", "--name", "Reviewer")).bot;
   await f.tool("update_channel", { channel_id: f.source.id, member_ids: [f.sender.id, f.target.id, reviewer.id] });
   const args = { bot_ids: [f.target.id, reviewer.id], message: "Review the release checklist" };
   f.plan[f.sender.id].steps = [{ arguments: args }, { arguments: args }];
@@ -449,7 +421,7 @@ it("does not repeat a shared brief or rerun recipients on an identical tool retr
 }), 45_000);
 
 it("keeps genuinely different room briefs separate", () => withRooms(async f => {
-  const reviewer = (await f.cli("new-bot", "--name", "Reviewer", "--section", "A")).bot;
+  const reviewer = (await f.cli("new-bot", "--name", "Reviewer")).bot;
   await f.tool("update_channel", { channel_id: f.source.id, member_ids: [f.sender.id, f.target.id, reviewer.id] });
   f.plan[f.sender.id].steps = [
     { arguments: { bot_ids: [f.target.id], message: "Check the migration" } },
@@ -484,7 +456,7 @@ it("runs a room member's turn a restart cut again once, told so, and resumes the
 }), 60_000);
 
 it("hands work a Chief addresses into its room to the bots it just made, which are not in the room, directly", () => withRooms(async f => {
-  await f.api(`/api/bots/${f.sender.id}`, { section: "Sales OS", chiefOfStaff: true, acknowledgePeerScope: true }, "PATCH");
+  await f.api(`/api/bots/${f.sender.id}`, { chiefOfStaff: true }, "PATCH");
   const made = (name: string, key: string) => ({ tool: "create_bot", capture: { [key]: "\\[id: ([^\\]]+)\\]" },
     arguments: { name, role: `${name} lead`, instructions: `Own the ${name} part of the Sales OS.` } });
   f.plan[f.sender.id] = {
@@ -497,7 +469,7 @@ it("hands work a Chief addresses into its room to the bots it just made, which a
   const names = ["Buyer Research", "Sales Writer", "Revenue Ops"];
   const { bots, groups } = await f.api("/api/bots?messages=0", undefined, "GET");
   const made3 = names.map(name => bots.find((bot: any) => bot.name === name));
-  expect(made3.map((bot: any) => bot?.section)).toEqual(["Sales OS", "Sales OS", "Sales OS"]);
+  expect(made3.every(Boolean)).toBe(true);
   expect(groups.find((room: any) => room.id === f.source.id).memberIds).toEqual([f.sender.id]);
 
   const children = f.handoffs();

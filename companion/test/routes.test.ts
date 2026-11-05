@@ -42,7 +42,6 @@ describe("what the app may do", () => {
     ["POST", "/api/bots"],
     ["PATCH", "/api/bots/bot_123"],
     ["PUT", "/api/bots/order"],
-    ["POST", "/api/sidebar-sections"],
     ["POST", "/api/bots/bot_123/messages"],
     ["PATCH", "/api/bots/bot_123/cards/msg_2"],
     ["POST", "/api/bots/bot_123/respond"],
@@ -287,9 +286,7 @@ describe("what it may not", () => {
     expect(allowed("POST", "/api/bots/bot_123/overview")).toBe(false);
     expect(allowed("GET", "/api/bots/bot_123/overview/extra")).toBe(false);
     expect(allowed("PATCH", "/api/bots/bot_123/profile/execution-policy")).toBe(false);
-    expect(allowed("GET", "/api/sidebar-sections")).toBe(false);
-    expect(allowed("PATCH", "/api/sidebar-sections")).toBe(false);
-    expect(allowed("POST", "/api/sidebar-sections/extra")).toBe(false);
+    expect(allowed("POST", "/api/sidebar-sections")).toBe(false);
     expect(allowed("PUT", "/api/config")).toBe(false);
     expect(allowed("GET", "/api/attachments/../config.json")).toBe(false);
     expect(allowed("GET", "/api/files")).toBe(false);

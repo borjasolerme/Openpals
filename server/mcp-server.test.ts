@@ -240,13 +240,13 @@ describe("MCP tool execution", () => {
   it("creates a bot through the safe profile boundary", async () => {
     const fetcher = vi.fn(async (path: string, options?: RequestInit) => {
       if (path === "/api/bots" && options?.method === "POST") {
-        expect(JSON.parse(String(options.body))).toEqual({ name: "Mira", title: "Researcher", section: "Work" });
-        return { bot: { id: "bot-new", name: "Mira", title: "Researcher", section: "Work", threadId: "task-new", tasks: [] } };
+        expect(JSON.parse(String(options.body))).toEqual({ name: "Mira", title: "Researcher" });
+        return { bot: { id: "bot-new", name: "Mira", title: "Researcher", threadId: "task-new", tasks: [] } };
       }
       throw new Error(`unexpected path ${path}`);
     });
-    const result: any = await handleToolCall("create_bot", { name: "Mira", title: "Researcher", section: "Work" }, fetcher);
-    expect(result.bot).toMatchObject({ id: "bot-new", name: "Mira", section: "Work" });
+    const result: any = await handleToolCall("create_bot", { name: "Mira", title: "Researcher" }, fetcher);
+    expect(result.bot).toMatchObject({ id: "bot-new", name: "Mira" });
   });
 
   it("leaves single-request bot-create failures to the server without destructive rollback", async () => {
@@ -266,7 +266,6 @@ describe("MCP tool execution", () => {
         expect(JSON.parse(String(options?.body))).toEqual({
           name: "Launch",
           memberIds: ["bot-1", "bot-2"],
-          section: "Work",
           setup: { bulletin: "Ship safely", defaultResponder: { kind: "everyone" } },
         });
         return { group: { id: "channel-1", name: "Launch", memberIds: ["bot-1", "bot-2"], threadId: "task-1", tasks: [] } };
@@ -274,7 +273,7 @@ describe("MCP tool execution", () => {
       throw new Error(`unexpected path ${path}`);
     });
     const result: any = await handleToolCall("create_channel", {
-      name: "Launch", member_ids: ["bot-1", "bot-2"], section: "Work", bulletin: "Ship safely",
+      name: "Launch", member_ids: ["bot-1", "bot-2"], bulletin: "Ship safely",
       default_responder: { kind: "everyone" },
     }, fetcher);
     expect(result.channel.id).toBe("channel-1");

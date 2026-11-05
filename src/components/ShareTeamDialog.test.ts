@@ -12,7 +12,7 @@ import { saveShareFile, SHARE_VIEW_START, shareRefused, tickedSkills, type Share
 import { teamImportPreview } from "@/lib/team-import";
 import { ApiError } from "@/state/store";
 import { ShareSkillChoices, ShareTeamContents } from "./ShareTeamDialog";
-import { shareableTeamList, TeamImportDetails } from "./TeamLibraryPanel";
+import { TeamImportDetails } from "./TeamLibraryPanel";
 import { packageSummary, parsePackageDocument } from "../../shared/package-format";
 
 const fixture = () => JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "shared", "package-fixtures", "full-team.v2.json"), "utf8"));
@@ -24,14 +24,6 @@ afterEach(() => {
 });
 
 describe("Share team", () => {
-  it("lists shareable teams by the section older bots stored, General last, never empty ones", () => {
-    expect(shareableTeamList([
-      { section: "Support" }, { section: " Sales desk " }, { section: "Sales desk" }, { section: "Sales desk", hidden: true }, {},
-    ])).toEqual([
-      { name: "Support", bots: 1 }, { name: "Sales desk", bots: 2 }, { name: "", bots: 1 },
-    ]);
-  });
-
   it("shows exactly what the file holds, what never travels, and what was removed or left out", () => {
     const document = parsePackageDocument(fixture());
     const preview: ShareResponse = {
@@ -69,7 +61,7 @@ describe("Share team", () => {
     expect(markup).toMatch(/<input type="checkbox"[^>]*\/>step-31/);
     expect(markup).not.toMatch(/checked=""[^>]*\/>step-31/);
     expect(text(renderToStaticMarkup(createElement(ShareSkillChoices, { available: [], ticked: new Set<string>(), counted: true, onToggle: vi.fn() }))))
-      .toContain("This department's bots have no skills.");
+      .toContain("Your bots have no skills.");
   });
 
   it("saves the document as the file other apps and Admin read", async () => {

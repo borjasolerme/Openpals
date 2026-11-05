@@ -15,7 +15,7 @@ export type PageId =
   | "setup" | "model" | "instructions" | "approvals" | "always" | "routines" | "apps"
   | "memory" | "skills"
   | "browser" | "folder" | "android"
-  | "voice" | "blurb" | "team" | "chiefteams" | "mcp" | "tools" | "webhooks" | "visibility" | "slack"
+  | "voice" | "blurb" | "mcp" | "tools" | "webhooks" | "visibility" | "slack"
   | "overview" | "prompt" | "history";
 
 /** The pages Simple mode draws; a link to any other page lands where its section does. */
@@ -48,8 +48,6 @@ export const PAGES: Record<PageId, PageMeta> = {
   android: { title: "botPanel.page.android", home: "computer" },
   voice: { title: "botPanel.page.voice", home: "details" },
   blurb: { title: "botPanel.page.blurb", home: "details" },
-  team: { title: "botPanel.page.team", home: "details" },
-  chiefteams: { title: "botPanel.page.chiefTeams", home: "details" },
   mcp: { title: "connectors.tab.mcp", home: "details" },
   tools: { title: "botAccess.tools.title", home: "details" },
   webhooks: { title: "botPanel.page.webhooks", home: "details" },

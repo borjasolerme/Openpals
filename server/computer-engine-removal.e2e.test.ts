@@ -107,9 +107,6 @@ function install(home: string, boatPort: () => number) {
   return { data, dumpFile, api, send, bots, bot, editSavedBot, editConfig, lines, moveLines, turn, start, stop, log: () => output };
 }
 
-const claudeEntry = (dumpFile: string) => ({
-  driver: "claudeAgent", displayName: ENGINE_NAME, config: { cli: FAKE_CLI }, environment: { FAKE_CLAUDE_DUMP: dumpFile },
-});
 const onEngine = (model: string) => ({ instanceId: "computer", model });
 /** A bot (and each of its conversations) as v0.1.94 saved it on the engine. */
 const savedOnEngine = (saved: any) => {
@@ -315,33 +312,6 @@ describe("removing the Computer engine", () => {
     const model = instances.find((instance: any) => instance.instanceId === "later").models.default;
     await expect.poll(async () => (await server.bot(starter.id)).modelSelection, { timeout: 15_000 })
       .toEqual({ instanceId: "later", model });
-    expect(await server.moveLines(starter.threadId)).toEqual([
-      `${starter.name} now uses ${ENGINE_NAME}. ${REMOVED} ${starter.name} still works on its cloud desktop.`,
-    ]);
-    await server.stop();
-  }, 120_000);
-
-  it("keeps serving when the move fails at start, and moves the bots on a later try", async () => {
-    const { server } = fresh();
-    const teams = join(server.data, "section-contexts.json");
-    server.editConfig(config => Object.assign(config, { box: { token: "box_verification_fixture" }, instances: { claude: claudeEntry(server.dumpFile) } }));
-    await server.start();
-    const [starter] = await server.bots();
-    await server.stop();
-    server.editConfig(config => Object.assign(config, { instances: { claude: claudeEntry(server.dumpFile), computer: { driver: "boxAgent" } } }));
-    server.editSavedBot(starter.id, savedOnEngine);
-    // An unreadable teams file stops every save of the bots, the move's too.
-    writeFileSync(teams, "not json");
-
-    await server.start();
-    expect(server.log()).toContain("[engines] moving bots off the removed Computer engine failed");
-    expect((await server.bot(starter.id)).modelSelection.instanceId).toBe("computer");
-    expect(await server.moveLines(starter.threadId)).toEqual([]);
-
-    rmSync(teams);
-    await server.send(starter.id, starter.threadId, "hello");
-    await expect.poll(async () => (await server.bot(starter.id)).modelSelection.instanceId, { timeout: 15_000 }).toBe("claude");
-    expect((await server.bot(starter.id)).computer).toBe("cloud");
     expect(await server.moveLines(starter.threadId)).toEqual([
       `${starter.name} now uses ${ENGINE_NAME}. ${REMOVED} ${starter.name} still works on its cloud desktop.`,
     ]);

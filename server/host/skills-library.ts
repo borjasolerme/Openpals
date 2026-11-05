@@ -98,7 +98,7 @@ export function createSkillsLibraryHost(deps: SkillsLibraryHostDeps) {
   };
 
   const shareBotsNow = (): ShareBot[] =>
-    store.bots.map((bot) => ({ id: bot.id, name: bot.name, section: bot.section, assignedSkills: bot.assignedSkills, visibility: bot.visibility }));
+    store.bots.map((bot) => ({ id: bot.id, name: bot.name, assignedSkills: bot.assignedSkills, visibility: bot.visibility }));
   const patchAssigned = (botId: string, assignedSkills: string[]) => {
     store.patchBot(botId, { assignedSkills });
   };

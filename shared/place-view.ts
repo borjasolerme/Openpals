@@ -8,7 +8,7 @@ export type Place = "cloud" | "vm" | "local" | "browser";
 
 /** Every state a place can be in. cc-* is the cloud computer. */
 export const PLACE_STATES = [
-  "auto", "auto-team",
+  "auto",
   "cc-cannot", "cc-tools-off", "cc-sign-in", "cc-new", "cc-starting", "cc-waking", "cc-on", "cc-asleep",
   "cc-unavailable", "cc-no-start", "cc-clearing", "cc-provider",
   "cc-needs-key", "vps",
@@ -96,8 +96,6 @@ export interface PlaceFacts {
   mode?: "simple" | "advanced";
   /** The cloud computer as last seen; unknown reads as not made yet. */
   computer?: "none" | "starting" | "waking" | "on" | "asleep";
-  /** Auto uses a team's shared cloud computer by this name. */
-  teamComputer?: string;
   /** This computer can be picked; `reason` says why not. */
   local?: { ready: boolean; reason?: string };
   /** A refusal already read from a failed start (cloudRefusal). */
@@ -109,8 +107,6 @@ export const PLACE_EN = {
   "place.view.auto.short": "Chooses for you",
   "place.view.auto.lineDesktop": "Uses the built-in browser, a private desktop on this computer, or this computer's screen, whichever the task needs.",
   "place.view.auto.lineLinux": "Uses the built-in browser, or a running private desktop when a task needs one.",
-  "place.view.autoTeam.short": "Shared",
-  "place.view.autoTeam.line": "Uses {computer}, the cloud desktop this department shares.",
   "place.view.ccCannot.short": "Not with this model",
   "place.view.ccCannot.line": "{model} can't use a desktop. Choose a model that can, such as Claude or ChatGPT.",
   "place.view.ccToolsOff.short": "Not allowed",
@@ -211,7 +207,6 @@ export const english: PlaceTranslate = (key, params) => fill(PLACE_EN[key], para
 /** Each state's key segment, short and line keys, and own action. */
 const STATE: Record<PlaceState, { key: string; action: PlaceActionId | null }> = {
   auto: { key: "auto", action: null },
-  "auto-team": { key: "autoTeam", action: null },
   "cc-cannot": { key: "ccCannot", action: "choose-model" },
   "cc-tools-off": { key: "ccToolsOff", action: "open-tools" },
   "cc-sign-in": { key: "ccSignIn", action: "sign-in" },
@@ -273,9 +268,7 @@ export function placeState(facts: PlaceFacts): { state: PlaceState; params: Plac
   const model = facts.engine.model || facts.engine.name;
   if (facts.place === "off") return { state: "off", params: { bot } };
   if (facts.place === "auto") {
-    return facts.teamComputer
-      ? { state: "auto-team", params: { bot, computer: facts.teamComputer } }
-      : { state: "auto", params: { bot } };
+    return { state: "auto", params: { bot } };
   }
   if (facts.place === "browser") {
     if (!facts.engine.browser) return { state: "browser-cannot", params: { bot, model } };

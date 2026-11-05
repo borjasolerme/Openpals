@@ -40,9 +40,9 @@ async function scenario(test: (f: any) => Promise<void>) {
       return { status: response.status, body: parsed };
     };
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
-    // Two peers of one section: each can reach the other with every tool.
-    const owner = (await cli("new-bot", "--name", "Owner", "--section", "Ops")).bot;
-    const peer = (await cli("new-bot", "--name", "Peer", "--section", "Ops")).bot;
+    // Two peers: each can reach the other with every tool.
+    const owner = (await cli("new-bot", "--name", "Owner")).bot;
+    const peer = (await cli("new-bot", "--name", "Peer")).bot;
     const planPath = join(dataDir, "room-plan.json");
     const plan: Record<string, { script: unknown[] }> = { [owner.id]: { script: [] }, [peer.id]: { script: [] } };
     const script = (botId: string, ...entries: unknown[]) => {

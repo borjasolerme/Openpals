@@ -30,7 +30,7 @@ export type MessagePage = { messages: Array<Message | Record<string, unknown>>; 
 export interface ThreadRouteDeps {
   store: Pick<Store,
     | "activeLeaf" | "activePath" | "bot" | "botByThread" | "bots" | "groupByThread" | "groupTaskByThread" | "groups" | "messagesFor"
-    | "onChange" | "sections" | "taskByThread" | "tasks">;
+    | "onChange" | "taskByThread" | "tasks">;
   coordinator: Pick<Coordinator, "job">;
   groupThreadIsWorking(groupId: string, threadId: string): boolean;
   /** What people's lines are called in this conversation (replies.ts PersonName). */
@@ -91,7 +91,6 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
           return { ...shown, ...(typeof shown.threadId === "string" ? messagePage(shown.threadId, limit) : { messages: [], hasMore: false, activeLeafId: null }) };
         }),
         botQueuedMessages: visible.everything ? queued : Object.fromEntries(Object.entries(queued).filter(([threadId]) => visible.thread(threadId))),
-        sections: visible.sections(store.sections),
         groups: store.groups.filter((g) => visible.group(g.id)).map((g) => {
           const group = publicGroupState(g);
           const room = { ...group, ...messagePage(g.threadId, limit) };

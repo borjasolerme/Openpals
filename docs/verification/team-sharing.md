@@ -1,6 +1,6 @@
 # Sharing a whole team
 
-What it covers: **Share team…** (package format v2), the file it saves, and
+What it covers: **Templates → Share → Share…** (package format v2), the file it saves, and
 adding that file back through **Templates → Import**. The product behaviour
 is described in [../team-sharing.md](../team-sharing.md).
 
@@ -13,21 +13,22 @@ pnpm exec vitest run server/team-share.e2e.test.ts --silent=false
 This launches and cleans its own fake-engine fixture through
 `launchVerificationServer` (no live URL, no user data). Through the public API
 it builds a team with a Chief, a standing instruction containing a
-password-shaped string, shared instructions, a skill, a remote MCP server with
+password-shaped string, a skill, a remote MCP server with
 a header value and a local command server, starter notes, a group chat and a
 bot routine plus a group chat goal. It then checks:
 
 - a dry run (`dryRun: true`) counts every part and writes no
   `published-teams.json`;
 - the saved file is `sales-desk-1.0.0.openmaus.json`, reports the redacted
-  standing instruction and the skipped command server, and contains no
-  secret, header value, other team's bot, model or thread id;
-- after renaming the team and a bot, the next save keeps the package id and
-  every key and suggests `1.0.1`;
+  standing instruction and the skipped command server, holds every visible
+  bot, and contains no secret, header value, model or thread id;
+- after renaming a bot and saving under another name, the next save keeps the
+  package id and every key and suggests `1.0.1`;
 - importing the file: skills off, routines paused, no publisher stamp, the
   slot created as `crm-2` (switched off, empty header
-  value) and bound only to the new bot, the brief, notes, Chief, picture and
-  group chat default responder restored;
+  value) and bound only to the new bot, notes, picture and group chat default
+  responder restored, and the lead's copy a regular bot, since the workspace
+  already has a Chief;
 - a library-only package adds its preset to New bot and no bot
   ([presets.md](presets.md) covers presets), and a version 3 file is refused
   with the "update the app" sentence, creating nothing.
@@ -57,7 +58,7 @@ pnpm exec vitest run shared/package-format.test.ts server/package-export.test.ts
   v1 downgrade recorded in `manifest.json`, and covers the 4 MiB boundary,
   stripped authority fields, a claimed publisher dropped,
   each refusal sentence, redaction and the canonical form.
-- `server/package-export.test.ts` covers team scoping, starter-note caps,
+- `server/package-export.test.ts` covers every visible bot going in, starter-note caps,
   redaction, picture and connection skips, key stability across renames,
   what "all" leaves out (30 per bot with switched-on skills first, 60 per
   team, conflicting names), exact choices refused with `TeamExportError`,
@@ -81,7 +82,7 @@ pnpm exec vitest run src/components/ShareTeamDialog.test.ts src/lib/team-share.t
 OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/team-share-ui.e2e.test.ts --silent=false
 ```
 
-The first command renders the team menu, the dialog's contents list (with
+The first command renders the dialog's contents list (with
 each connection's full address), the skill boxes drawn from a refused
 31-skill choice, and the import preview to markup, and checks the saved file.
 `src/lib/team-share.test.ts` also covers the dialog's state as pure
@@ -91,12 +92,12 @@ refusal dropping the counts (so Save is off) while keeping every skill box.
 The second command also runs in CI, in the advisory `ui-smoke` job.
 The second owns a disposable `control-omb ui` app whose Scout has 31 skills,
 17 of them long enough that the file passes 4 MB: Templates → Share →
-**Share the Sales desk team** shows the refusal with every skill box and Save
+**Share…** shows the refusal with every skill box and Save
 disabled; unticking one long skill brings the counts back; starter notes are
 in by default and unticking takes them out; ticking a 31st skill is refused with the per-bot sentence
 and unticking another fits again. Then **Save file** (the download is
 captured in the page), and the captured file is imported through the Import
-tab's file input as "Sales desk 2" with skills off. Screenshots go to
+tab's file input as numbered copies ("Scout 2") with skills off. Screenshots go to
 `.omb-scratch/verify-evidence/share-team-*.png`.
 
 ## 2026-09-24: what was actually run

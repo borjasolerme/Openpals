@@ -127,34 +127,27 @@ const waitForPeerCard = async (threadId: string): Promise<StoredMessage> => {
 
 const makeBot = async (
   name: string,
-  section: string,
   instanceId = "claude",
 ): Promise<{ id: string; threadId: string }> => {
   const created = await api("POST", "/api/bots");
   const id = str(field(created.body, "bot", "id"));
   const patched = await api("PATCH", `/api/bots/${id}`, {
     name,
-    section,
     modelSelection: { instanceId, model: "claude-sonnet-5" },
   });
   expect(patched.status).toBe(200);
   return { id, threadId: str(field(created.body, "bot", "threadId")) };
 };
 
-const makeCoordinator = async (
+const makeChief = async (
   name: string,
-  section: string,
-  managedSections: string[],
   instanceId = "claude",
 ): Promise<{ id: string; threadId: string }> => {
   const created = await api("POST", "/api/bots");
   const id = str(field(created.body, "bot", "id"));
   const patched = await api("PATCH", `/api/bots/${id}`, {
     name,
-    section,
     chiefOfStaff: true,
-    managedSections,
-    acknowledgePeerScope: true,
     modelSelection: { instanceId, model: "claude-sonnet-5" },
   });
   expect(patched.status).toBe(200);
@@ -164,14 +157,12 @@ const makeCoordinator = async (
 const makeRoom = async (
   name: string,
   memberIds: string[],
-  section: string,
   // A case that must prove no turn ran picks a responder that would certainly have run.
   defaultResponder: Record<string, unknown> = { kind: "mentions" },
 ): Promise<{ id: string; threadId: string }> => {
   const created = await api("POST", "/api/groups", {
     name,
     memberIds,
-    section,
     // An unfinished room setup is not open for posting; finishing it keeps these cases about posting rules.
     setup: { bulletin: "", defaultResponder },
   });
@@ -242,8 +233,8 @@ afterAll(async () => {
 
 describe("room messages through the local API", () => {
   it("stamps a user message that arrives with no session and no browser origin", async () => {
-    const member = await makeBot("Ledger", "API ingress");
-    const room = await makeRoom("Finance", [member.id], "API ingress");
+    const member = await makeBot("Ledger");
+    const room = await makeRoom("Finance", [member.id]);
 
     const sent = await api("POST", `/api/groups/${room.id}/messages`, { text: "export the customer list" });
     expect(sent.status).toBe(202);
@@ -265,9 +256,9 @@ describe("room messages through the local API", () => {
 
 describe("peer comms from a room turn", () => {
   it("lets a bot ask a peer while its source conversation is a room", async () => {
-    const asker = await makeBot("Room Asker", "Room comms");
-    const helper = await makeBot("Room Helper", "Room comms");
-    const room = await makeRoom("Ask room", [asker.id, helper.id], "Room comms");
+    const asker = await makeBot("Room Asker");
+    const helper = await makeBot("Room Helper");
+    const room = await makeRoom("Ask room", [asker.id, helper.id]);
     const helperConversation = await messagesOf(helper.threadId);
 
     const asked = await internal("POST", "/api/internal/coordinate-bots", {
@@ -307,10 +298,10 @@ describe("peer comms from a room turn", () => {
   }, 40_000);
 
   it("refuses a conversation the sender does not belong to", async () => {
-    const outsider = await makeBot("Outsider", "Room comms");
-    const insider = await makeBot("Insider", "Room comms");
-    const helper = await makeBot("Private Helper", "Room comms");
-    const closed = await makeRoom("Closed room", [insider.id, helper.id], "Room comms");
+    const outsider = await makeBot("Outsider");
+    const insider = await makeBot("Insider");
+    const helper = await makeBot("Private Helper");
+    const closed = await makeRoom("Closed room", [insider.id, helper.id]);
 
     const throughRoom = await internal("POST", "/api/internal/coordinate-bots", {
       fromBotId: outsider.id,
@@ -337,11 +328,11 @@ describe("peer comms from a room turn", () => {
 
 describe("a room turn and the teammates outside the room", () => {
   it("routes room work through target discovery, keeps mentions local, and shows a mention that missed", async () => {
-    const speaker = await makeBot("Room Speaker", "Reach", "mentioner");
-    const inside = await makeBot("Room Inside", "Reach");
-    const outside = await makeBot(OUTSIDE_BOT, "Reach");
-    const elsewhere = await makeBot("Elsewhere Bot", "Reach elsewhere");
-    const room = await makeRoom("Reach room", [speaker.id, inside.id], "Reach", {
+    const speaker = await makeBot("Room Speaker", "mentioner");
+    const inside = await makeBot("Room Inside");
+    const outside = await makeBot(OUTSIDE_BOT);
+    const elsewhere = await makeBot("Elsewhere Bot");
+    const room = await makeRoom("Reach room", [speaker.id, inside.id], {
       kind: "member",
       botId: speaker.id,
     });
@@ -379,13 +370,13 @@ describe("a room turn and the teammates outside the room", () => {
 });
 
 describe("list_rooms discovery", () => {
-  it("lists the rooms the caller belongs to, whichever departments their members are in", async () => {
-    const scout = await makeBot("Scout", "Discovery");
-    const mate = await makeBot("Scout Mate", "Discovery");
-    const stranger = await makeBot("Stranger", "Elsewhere");
-    const mine = await makeRoom("My room", [scout.id, mate.id], "Discovery");
-    const theirs = await makeRoom("Their room", [mate.id, (await makeBot("Third Wheel", "Discovery")).id], "Discovery");
-    const mixed = await makeRoom("Mixed room", [scout.id, stranger.id], "Discovery");
+  it("lists only the rooms the caller belongs to", async () => {
+    const scout = await makeBot("Scout");
+    const mate = await makeBot("Scout Mate");
+    const stranger = await makeBot("Stranger");
+    const mine = await makeRoom("My room", [scout.id, mate.id]);
+    const theirs = await makeRoom("Their room", [mate.id, (await makeBot("Third Wheel")).id]);
+    const mixed = await makeRoom("Mixed room", [scout.id, stranger.id]);
 
     const listed = await internal("GET", `/api/internal/rooms?fromBotId=${scout.id}&fromThreadId=${scout.threadId}`);
     expect(listed.status).toBe(200);
@@ -393,7 +384,7 @@ describe("list_rooms discovery", () => {
     const ids = rooms.map((room) => str(field(room as Record<string, unknown>, "id")));
     expect(ids).toContain(mine.id);
     expect(ids, "a room the caller is not in was listed").not.toContain(theirs.id);
-    expect(ids, "a room mixing departments is a room like any other").toContain(mixed.id);
+    expect(ids).toContain(mixed.id);
     expect(listed.body.unpostable).toEqual([]);
 
     const listedRoom = rooms.find((room) => str(field(room as Record<string, unknown>, "id")) === mine.id);
@@ -401,8 +392,8 @@ describe("list_rooms discovery", () => {
   }, 40_000);
 
   it("lists no bot-to-bot channel after a consultation, and refuses a caller with no claim on the conversation", async () => {
-    const a = await makeBot("Pair A", "Discovery");
-    const b = await makeBot("Pair B", "Discovery");
+    const a = await makeBot("Pair A");
+    const b = await makeBot("Pair B");
     const asked = await internal("POST", "/api/internal/coordinate-bots", {
       fromBotId: a.id,
       fromThreadId: a.threadId,
@@ -432,10 +423,10 @@ describe("post_to_room", () => {
     internal("POST", "/api/internal/post-to-room", { fromBotId, fromThreadId, groupId, message });
 
   it("writes a bot-authored message and starts nobody's turn", async () => {
-    const poster = await makeBot("Poster", "Posting");
-    const listener = await makeBot("Listener", "Posting");
+    const poster = await makeBot("Poster");
+    const listener = await makeBot("Listener");
     // a responder that WOULD have answered, so silence means no turn ran
-    const room = await makeRoom("Standup", [poster.id, listener.id], "Posting", {
+    const room = await makeRoom("Standup", [poster.id, listener.id], {
       kind: "member",
       botId: listener.id,
     });
@@ -469,9 +460,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("writes the poster's receipt in the language set for this place", async () => {
-    const poster = await makeBot("Herold", "Posting");
-    const listener = await makeBot("Hoerer", "Posting");
-    const room = await makeRoom("Morgenrunde", [poster.id, listener.id], "Posting", { kind: "member", botId: listener.id });
+    const poster = await makeBot("Herold");
+    const listener = await makeBot("Hoerer");
+    const room = await makeRoom("Morgenrunde", [poster.id, listener.id], { kind: "member", botId: listener.id });
     expect((await api("PATCH", "/api/config", { language: "de" })).status).toBe(200);
     try {
       const posted = await post(poster.id, poster.threadId, room.id, "Deploy ist grün");
@@ -485,11 +476,11 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("refuses a source conversation the sender has no claim on", async () => {
-    const sender = await makeBot("Thread Borrower", "Borrowing");
-    const bystander = await makeBot("Thread Lender", "Borrowing");
-    const stranger = await makeBot("Thread Stranger", "Borrowing");
-    const room = await makeRoom("Borrower's room", [sender.id, bystander.id], "Borrowing");
-    const elsewhere = await makeRoom("Rooms apart", [bystander.id, stranger.id], "Borrowing");
+    const sender = await makeBot("Thread Borrower");
+    const bystander = await makeBot("Thread Lender");
+    const stranger = await makeBot("Thread Stranger");
+    const room = await makeRoom("Borrower's room", [sender.id, bystander.id]);
+    const elsewhere = await makeRoom("Rooms apart", [bystander.id, stranger.id]);
 
     const borrowed = await internal("POST", "/api/internal/post-to-room", {
       fromBotId: sender.id,
@@ -517,10 +508,10 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("refuses a room the sender is not a member of, whatever id it sends", async () => {
-    const outsider = await makeBot("Post Outsider", "Posting");
-    const insider = await makeBot("Post Insider", "Posting");
-    const other = await makeBot("Post Other", "Posting");
-    const closed = await makeRoom("Members only", [insider.id, other.id], "Posting");
+    const outsider = await makeBot("Post Outsider");
+    const insider = await makeBot("Post Insider");
+    const other = await makeBot("Post Other");
+    const closed = await makeRoom("Members only", [insider.id, other.id]);
 
     const refused = await post(outsider.id, outsider.threadId, closed.id, "let me in");
     expect(refused.status).toBe(403);
@@ -528,22 +519,10 @@ describe("post_to_room", () => {
     expect(await messagesOf(closed.threadId)).toHaveLength(0);
   }, 40_000);
 
-  it("posts into a room whose members are in other departments, with or without a Chief that manages them", async () => {
-    const inside = await makeBot("Section Inside", "Section A");
-    const outside = await makeBot("Section Outside", "Section B");
-    await makeBot("Finance Bot", "Finance");
-    const unmanaging = await makeCoordinator("Finance Chief", "Coordinators", ["Finance"]);
-    const mixed = await makeRoom("Cross section", [inside.id, outside.id, unmanaging.id], "Section A");
-
-    const posted = await post(inside.id, inside.threadId, mixed.id, "hello other section");
-    expect(posted.status, JSON.stringify(posted.body)).toBe(201);
-    expect((await messagesOf(mixed.threadId)).some((m) => m.text === "hello other section" && m.from?.botId === inside.id)).toBe(true);
-  }, 40_000);
-
-  it.each(["Coordinators", ""])("allows a section bot to post to and list a room holding its supervising coordinator in section %j", async (section) => {
-    const member = await makeBot("Build Member", "Build");
-    const coordinator = await makeCoordinator("Build Chief", section, ["Build"]);
-    const room = await makeRoom("Build Room", [member.id, coordinator.id], "Build");
+  it("allows a bot to post to and list a room holding the Chief", async () => {
+    const member = await makeBot("Build Member");
+    const coordinator = await makeChief("Build Chief");
+    const room = await makeRoom("Build Room", [member.id, coordinator.id]);
 
     const listed = await internal("GET", `/api/internal/rooms?fromBotId=${member.id}&fromThreadId=${member.threadId}`);
     expect(listed.status).toBe(200);
@@ -557,9 +536,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("refuses the room the sender is already speaking in", async () => {
-    const a = await makeBot("Channel A", "Posting");
-    const b = await makeBot("Channel B", "Posting");
-    const room = await makeRoom("Shared desk", [a.id, b.id], "Posting");
+    const a = await makeBot("Channel A");
+    const b = await makeBot("Channel B");
+    const room = await makeRoom("Shared desk", [a.id, b.id]);
 
     const intoOwnRoom = await post(a.id, room.threadId, room.id, "hello again");
     expect(intoOwnRoom.status).toBe(409);
@@ -567,10 +546,10 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("stops the room at its third bot post and sends the model to the user", async () => {
-    const one = await makeBot("Budget One", "Budget");
-    const two = await makeBot("Budget Two", "Budget");
-    const three = await makeBot("Budget Three", "Budget");
-    const room = await makeRoom("Busy room", [one.id, two.id, three.id], "Budget");
+    const one = await makeBot("Budget One");
+    const two = await makeBot("Budget Two");
+    const three = await makeBot("Budget Three");
+    const room = await makeRoom("Busy room", [one.id, two.id, three.id]);
 
     expect((await post(one.id, one.threadId, room.id, "first")).status).toBe(201);
     expect((await post(two.id, two.threadId, room.id, "second")).status).toBe(201);
@@ -582,9 +561,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("re-arms the room's ceiling once the person writes in it", async () => {
-    const one = await makeBot("Answered One", "Answered");
-    const two = await makeBot("Answered Two", "Answered");
-    const room = await makeRoom("Answered room", [one.id, two.id], "Answered");
+    const one = await makeBot("Answered One");
+    const two = await makeBot("Answered Two");
+    const room = await makeRoom("Answered room", [one.id, two.id]);
 
     expect((await post(one.id, one.threadId, room.id, "first")).status).toBe(201);
     expect((await post(two.id, two.threadId, room.id, "second")).status).toBe(201);
@@ -598,9 +577,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("counts the person who asked for the post, in the bot's own conversation, as present", async () => {
-    const asked = await makeBot("Asked One", "Asked");
-    const other = await makeBot("Asked Two", "Asked");
-    const room = await makeRoom("Asked room", [asked.id, other.id], "Asked");
+    const asked = await makeBot("Asked One");
+    const other = await makeBot("Asked Two");
+    const room = await makeRoom("Asked room", [asked.id, other.id]);
 
     expect((await post(asked.id, asked.threadId, room.id, "first")).status).toBe(201);
     expect((await post(other.id, other.threadId, room.id, "second")).status).toBe(201);
@@ -624,10 +603,10 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("shuts the room on a three-bot ring, which no per-sender limit would see", async () => {
-    const a = await makeBot("Ring A", "Ring");
-    const b = await makeBot("Ring B", "Ring");
-    const c = await makeBot("Ring C", "Ring");
-    const room = await makeRoom("Ring room", [a.id, b.id, c.id], "Ring");
+    const a = await makeBot("Ring A");
+    const b = await makeBot("Ring B");
+    const c = await makeBot("Ring C");
+    const room = await makeRoom("Ring room", [a.id, b.id, c.id]);
 
     expect((await post(a.id, a.threadId, room.id, "one")).status).toBe(201);
     expect((await post(b.id, b.threadId, room.id, "two")).status).toBe(201);
@@ -646,9 +625,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("refuses an identical repost without spending the room's budget", async () => {
-    const bot = await makeBot("Repeater", "Repeats");
-    const mate = await makeBot("Repeat Mate", "Repeats");
-    const room = await makeRoom("Echo room", [bot.id, mate.id], "Repeats");
+    const bot = await makeBot("Repeater");
+    const mate = await makeBot("Repeat Mate");
+    const room = await makeRoom("Echo room", [bot.id, mate.id]);
 
     expect((await post(bot.id, bot.threadId, room.id, "same words")).status).toBe(201);
     const again = await post(bot.id, bot.threadId, room.id, "same words");
@@ -659,9 +638,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("holds the post behind the human card when the sender's peer gate is on", async () => {
-    const gated = await makeBot("Gated Poster", "Gated");
-    const mate = await makeBot("Gate Mate", "Gated");
-    const room = await makeRoom("Gated room", [gated.id, mate.id], "Gated");
+    const gated = await makeBot("Gated Poster");
+    const mate = await makeBot("Gate Mate");
+    const room = await makeRoom("Gated room", [gated.id, mate.id]);
     expect((await api("PATCH", `/api/bots/${gated.id}`, { approvePeerComms: true, approvalMode: "ask" })).status).toBe(200);
 
     const pending = post(gated.id, gated.threadId, room.id, "needs a human first");
@@ -679,9 +658,9 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("posts nothing when the human denies the card, and charges the room for nothing", async () => {
-    const gated = await makeBot("Denied Poster", "Denied");
-    const mate = await makeBot("Deny Mate", "Denied");
-    const room = await makeRoom("Denied room", [gated.id, mate.id], "Denied");
+    const gated = await makeBot("Denied Poster");
+    const mate = await makeBot("Deny Mate");
+    const room = await makeRoom("Denied room", [gated.id, mate.id]);
     expect((await api("PATCH", `/api/bots/${gated.id}`, { approvePeerComms: true, approvalMode: "ask" })).status).toBe(200);
 
     const pending = post(gated.id, gated.threadId, room.id, "deploy is green");
@@ -704,10 +683,10 @@ describe("post_to_room", () => {
   }, 40_000);
 
   it("marks a post from an unattended bot, and leaves an attended one unmarked", async () => {
-    const attended = await makeBot("Attended Poster", "Unattended");
-    const automated = await makeBot("Automated Poster", "Unattended");
-    const attendedRoom = await makeRoom("Attended room", [attended.id, automated.id], "Unattended");
-    const automatedRoom = await makeRoom("Automated room", [automated.id, attended.id], "Unattended");
+    const attended = await makeBot("Attended Poster");
+    const automated = await makeBot("Automated Poster");
+    const attendedRoom = await makeRoom("Attended room", [attended.id, automated.id]);
+    const automatedRoom = await makeRoom("Automated room", [automated.id, attended.id]);
 
     expect((await post(attended.id, attended.threadId, attendedRoom.id, "typed by a person's bot")).status).toBe(201);
     const attendedPost = (await messagesOf(attendedRoom.threadId))[0];
@@ -752,9 +731,9 @@ describe("post_to_room", () => {
 
 describe("provenance on a peer-authored room message", () => {
   it("tells a reader who wrote a post_to_room message, and that silence is allowed", async () => {
-    const poster = await makeBot("Provenance Poster", "Provenance");
-    const reader = await makeBot("Provenance Reader", "Provenance");
-    const room = await makeRoom("Provenance room", [poster.id, reader.id], "Provenance", {
+    const poster = await makeBot("Provenance Poster");
+    const reader = await makeBot("Provenance Reader");
+    const room = await makeRoom("Provenance room", [poster.id, reader.id], {
       kind: "member",
       botId: reader.id,
     });
@@ -786,9 +765,9 @@ describe("provenance on a peer-authored room message", () => {
 
 describe("limits counted per turn on a bearer that outlives the turn", () => {
   it("stops a turn at its third room post, and the next turn may post again", async () => {
-    const poster = await makeBot("Turn Poster", "Turn posts");
-    const mate = await makeBot("Turn Mate", "Turn posts");
-    const room = await makeRoom("Turn room", [poster.id, mate.id], "Turn posts");
+    const poster = await makeBot("Turn Poster");
+    const mate = await makeBot("Turn Mate");
+    const room = await makeRoom("Turn room", [poster.id, mate.id]);
     const post = (token: string, message: string) => asTurn(token, "POST", "/api/internal/post-to-room", {
       fromBotId: poster.id, fromThreadId: poster.threadId, groupId: room.id, message,
     });
@@ -809,8 +788,8 @@ describe("limits counted per turn on a bearer that outlives the turn", () => {
   }, 40_000);
 
   it("refuses to read an assignment's status in the turn that handed it out, and answers in the next", async () => {
-    const from = await makeBot("Turn Delegator", "Turn delegations");
-    const to = await makeBot("Turn Delegate", "Turn delegations");
+    const from = await makeBot("Turn Delegator");
+    const to = await makeBot("Turn Delegate");
     const token = await startTurn(from.id, from.threadId);
     const delegated = await asTurn(token, "POST", "/api/internal/coordinate-bots", {
       botIds: [to.id], message: "Write the summary.",

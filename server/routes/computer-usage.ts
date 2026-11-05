@@ -1,24 +1,22 @@
 import * as boat from "../boat.ts";
 import type { AppConfig } from "../config.ts";
-import type { TeamComputers } from "../team-computers.ts";
 import type { RemoteComputerProvider } from "./config.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 
 export interface ComputerUsageRouteDeps {
   cfg: AppConfig;
   managedBoatOwners(): boat.ManagedBoatOwner[];
-  teamComputers: Pick<TeamComputers, "list">;
   computerProviderConfigTransitions: Pick<Set<RemoteComputerProvider>, "has">;
 }
 
-/** GET /api/computers/usage → `{ cloudComputers: number | null, teamComputers: number }`: counts for the owner's daily
+/** GET /api/computers/usage → `{ cloudComputers: number | null }`: a count for the owner's daily
  * usage snapshot, never a name, an id or a state. `cloudComputers` is null while the Boat account changes or the
  * provider cannot be read. */
 export function createComputerUsageRoutes(deps: ComputerUsageRouteDeps): RouteHandler {
   return async ({ res, path, method, json }) => {
     if (method !== "GET" || path !== "/api/computers/usage") return PASS;
     res.setHeader("cache-control", "private, no-store");
-    return json(res, 200, { cloudComputers: await cloudComputers(deps), teamComputers: deps.teamComputers.list().length });
+    return json(res, 200, { cloudComputers: await cloudComputers(deps) });
   };
 }
 

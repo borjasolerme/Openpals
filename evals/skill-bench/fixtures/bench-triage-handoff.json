@@ -15,14 +15,12 @@
   "subject": {
     "key": "worker",
     "name": "Bench coordinator",
-    "chiefOfStaff": true,
-    "managedSections": ["Operations"]
+    "chiefOfStaff": true
   },
   "targets": [
     {
       "key": "duty",
       "name": "Duty officer",
-      "section": "Operations",
       "turns": [
         {
           "reply": "Triage handled; one item escalated."

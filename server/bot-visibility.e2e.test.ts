@@ -112,8 +112,8 @@ function openStream(as: string, lastEventId?: string) {
 
 const ids = { pub: "", pubThread: "", hr: "", hrThread: "", board: "", roomPub: "", roomMixed: "", roomMixedThread: "", hrRoutine: "", hrHook: "", hrImage: "", avatar: "", fresh: "" };
 
-async function makeBot(name: string, section?: string) {
-  const created = await api("POST", "/api/bots", { name, ...(section ? { section } : {}) }, BOSS);
+async function makeBot(name: string) {
+  const created = await api("POST", "/api/bots", { name }, BOSS);
   expect(created.status, JSON.stringify(created.body)).toBe(201);
   const patched = await api("PATCH", `/api/bots/${created.body.bot.id}`, { modelSelection: { instanceId: "grok", model: "fake-model" } }, BOSS);
   expect(patched.status).toBe(200);
@@ -154,9 +154,9 @@ posixOnly("per-bot visibility on a shared workspace", () => {
     registry.close();
     await start();
 
-    const pub = await makeBot("Helpdesk Otter", "Ops");
-    const hr = await makeBot("Payroll Zebra", "People");
-    const board = await makeBot("Board Heron", "People");
+    const pub = await makeBot("Helpdesk Otter");
+    const hr = await makeBot("Payroll Zebra");
+    const board = await makeBot("Board Heron");
     Object.assign(ids, { pub: pub.id, pubThread: pub.threadId, hr: hr.id, hrThread: hr.threadId, board: board.id });
     const roomPub = await api("POST", "/api/groups", { memberIds: [pub.id], name: "Front desk" }, BOSS);
     const roomMixed = await api("POST", "/api/groups", { memberIds: [pub.id, hr.id], name: "Pay questions",
@@ -210,7 +210,6 @@ posixOnly("per-bot visibility on a shared workspace", () => {
     expect(bobBots).not.toContain(ids.hr);
     expect(bobBots).not.toContain(ids.board);
     expect(bob.groups.map((group: any) => group.id)).toEqual([ids.roomPub]);
-    expect(bob.sections).toEqual(["Ops"]);
     expect(Object.keys(bob.computerControl).sort()).toEqual([...bobBots].sort());
     const text = JSON.stringify(bob);
     for (const hidden of [ids.hr, ids.hrThread, ids.board, ids.roomMixed, "Payroll Zebra", "Board Heron"]) expect(text).not.toContain(hidden);
@@ -218,7 +217,6 @@ posixOnly("per-bot visibility on a shared workspace", () => {
     const ada = (await api("GET", "/api/bots?messages=5", undefined, ADA)).body;
     expect(ada.bots.map((bot: any) => bot.id).sort()).toEqual([...bobBots, ids.hr].sort());
     expect(ada.groups.map((group: any) => group.id).sort()).toEqual([ids.roomPub, ids.roomMixed].sort());
-    expect(ada.sections.sort()).toEqual(["Ops", "People"]);
     expect(ada.bots.find((bot: any) => bot.id === ids.hr).visibility).toBeUndefined();
 
     const boss = (await api("GET", "/api/bots?messages=0", undefined, BOSS)).body;
@@ -296,7 +294,7 @@ posixOnly("per-bot visibility on a shared workspace", () => {
 
   it("marks as seen only the failed routine runs a member may see", async () => {
     const failing = async (name: string, people?: string[]) => {
-      const bot = await makeBot(name, "Ops");
+      const bot = await makeBot(name);
       expect((await api("PATCH", `/api/bots/${bot.id}`, { modelSelection: { instanceId: "missing-instance", model: "fake-model" } }, BOSS)).status).toBe(200);
       if (people) expect((await api("PATCH", `/api/bots/${bot.id}`, { visibility: { people } }, BOSS)).status).toBe(200);
       const routine = await api("POST", "/api/routines", { name: `${name} sweep`, botId: bot.id, prompt: `SECRET-${name}`, enabled: false,
@@ -623,7 +621,7 @@ posixOnly("per-bot visibility on a shared workspace", () => {
   it("keeps bots with different audiences from reaching each other", async () => {
     // Payroll (Ada), Benefits (Ada) and Board (admins) share a team. Only the
     // two with the same audience are teammates to each other.
-    const benefits = await makeBot("Benefits Lynx", "People");
+    const benefits = await makeBot("Benefits Lynx");
     expect((await api("PATCH", `/api/bots/${benefits.id}`, { visibility: { people: [ADA] } }, BOSS)).status).toBe(200);
     const roster = async (id: string) => JSON.stringify((await api("GET", `/api/bots/${id}/system-prompt`, undefined, BOSS)).body);
     const hr = await roster(ids.hr);

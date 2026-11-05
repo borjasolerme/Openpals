@@ -399,39 +399,6 @@ describe("the sidecar in front of an unmodified harness", () => {
     expect(refreshed.body.bots.find((candidate: { id: string }) => candidate.id === bot.id)).toEqual(bot);
   });
 
-  it("files bots through only the narrow atomic organizer route", async () => {
-    const listed = await device("GET", "/api/bots");
-    const first = listed.body.bots[0];
-    const second = (await device("POST", "/api/bots")).body.bot;
-
-    const partial = await device("POST", "/api/sidebar-sections", {
-      body: { name: "Mobile", botIds: [first.id, "missing"] },
-    });
-    expect(partial.status).toBe(404);
-    const afterFailure = await device("GET", "/api/bots");
-    expect(afterFailure.body.bots.find((bot: { id: string }) => bot.id === first.id)?.section)
-      .toBe(first.section);
-
-    const filed = await device("POST", "/api/sidebar-sections", {
-      body: { name: "  Mobile  ", botIds: [first.id, second.id, first.id] },
-    });
-    expect(filed.status).toBe(200);
-    expect(filed.body.section).toBe("Mobile");
-    expect(filed.body.bots.map((bot: { id: string }) => bot.id)).toEqual([first.id, second.id]);
-    expect(filed.body.bots.every((bot: { section?: string }) => bot.section === "Mobile")).toBe(true);
-
-    const cleared = await device("POST", "/api/sidebar-sections", {
-      body: { name: "", botIds: [first.id] },
-    });
-    expect(cleared.status).toBe(200);
-    expect(cleared.body.bots[0].section).toBeUndefined();
-
-    const smuggled = await device("POST", "/api/sidebar-sections", {
-      body: { name: "Unsafe", botIds: [first.id], autoApprove: true },
-    });
-    expect(smuggled.status).toBe(400);
-  });
-
   it("creates a bot through companion pairing without host defaults or settings access", async () => {
     const before = (await device("GET", "/api/bots")).body.bots;
     const created = await device("POST", "/api/bots");

@@ -149,11 +149,7 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
       await api("PATCH", `/api/bots/${existing.id}`, { hidden: true });
     }
   };
-  /** A section change is refused while any bot runs or a hand-off is in flight, and a failed test may have left turns running. */
-  const awaitIdle = () => waitUntil(async () => !rows().some((node) => ["source", "queued", "running", "resume"].includes(node.status))
-    && (await api("GET", "/api/bots?messages=0")).body.bots.every((candidate: any) => !candidate.busy), 30_000, "the fleet never went idle");
   const named = async (name: string, patch: Record<string, unknown>) => {
-    if (patch.section !== undefined) await awaitIdle();
     const created = (await api("POST", "/api/bots")).body.bot;
     const patched = await api("PATCH", `/api/bots/${created.id}`, { name, ...patch });
     expect(patched.status, JSON.stringify(patched.body)).toBe(200);
@@ -470,14 +466,12 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
   it(
     "lets a Gemini Antigravity bot call a peer through the temporary agents MCP mount",
     async () => {
-      // A unique section makes list_bots deterministic even though this
-      // suite deliberately keeps earlier bots around to exercise the real
-      // persisted fleet. Only these two teammates can see one another.
-      const section = "Gemini agents MCP e2e";
+      // Hiding the earlier bots makes list_bots deterministic: only these two teammates are visible.
+      await hideAll();
       // One-word names: the fake's resume branch reads `What @<name> said:`
       // up to the next space (fake-acp-cli.ts).
-      const helper = await named("GeminiHelper", { section, modelSelection: HELPER });
-      const asker = await named("Gemini Asker", { section, modelSelection: { instanceId: "geminiAsker", model: "gemini-3.8-flash-high" } });
+      const helper = await named("GeminiHelper", { modelSelection: HELPER });
+      const asker = await named("Gemini Asker", { modelSelection: { instanceId: "geminiAsker", model: "gemini-3.8-flash-high" } });
 
       const send = await startRoutine(asker.id, "Ask the other bot for a status check.");
       expect(send.status).toBe(201);
@@ -507,10 +501,9 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
   );
 
   it(
-    "lets a section Chief create a safe operator and delegate work to it",
+    "lets a Chief create a safe operator and delegate work to it",
     async () => {
       const chief = await named("Atlas", {
-        section: "Launch",
         chiefOfStaff: true,
         approvalMode: "ask",
         modelSelection: { instanceId: "chiefCreator", model: "fake-model" },
@@ -534,7 +527,7 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
       await waitUntil(async () => {
         const sent = (await api("GET", `/api/threads/${threadId}/messages?limit=50`)).body.messages ?? [];
         if (!sent.some((message: any) => message.kind === "activity" && message.tool?.name === "Sent to Pixel")) return false;
-        operator = (await api("GET", "/api/bots")).body.bots.find((bot: any) => bot.name === "Pixel" && bot.section === "Launch");
+        operator = (await api("GET", "/api/bots")).body.bots.find((bot: any) => bot.name === "Pixel");
         work = [];
         for (const task of operator?.tasks ?? []) {
           work.push(...((await api("GET", `/api/threads/${task.threadId}/messages?limit=50`)).body.messages ?? []));
@@ -545,7 +538,6 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
       expect(operator).toMatchObject({
         title: "Product designer",
         description: "Design and review the user experience.",
-        section: "Launch",
         autoApprove: false,
         approvePeerComms: false,
         approvalMode: "full",
@@ -678,8 +670,8 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
       await hideAll();
       rmSync(gateFile, { force: true });
 
-      const helper = await named("LongWorker", { section: "Operations", modelSelection: { instanceId: "helperGate", model: "fake-model" } });
-      const chief = await named("Atlas", { section: "Operations", chiefOfStaff: true, modelSelection: { instanceId: "chiefAsync", model: "fake-model" } });
+      const helper = await named("LongWorker", { modelSelection: { instanceId: "helperGate", model: "fake-model" } });
+      const chief = await named("Atlas", { chiefOfStaff: true, modelSelection: { instanceId: "chiefAsync", model: "fake-model" } });
 
       try {
         expect((await startRoutine(chief.id, "ASSIGN_TO_PEER: have @LongWorker handle the long task.")).status).toBe(201);
@@ -741,9 +733,9 @@ describe("routine comms e2e on the job runtime (fake ACP fleet)", () => {
     "tells a Chief, and shows it, when its delegated teammate is waiting on an approval",
     async () => {
       await hideAll();
-      const helper = await named("Gatekeeper", { section: "Approvals", approvalMode: "ask", modelSelection: { instanceId: "helperPermission", model: "fake-model" } });
+      const helper = await named("Gatekeeper", { approvalMode: "ask", modelSelection: { instanceId: "helperPermission", model: "fake-model" } });
       // A Chief on Ask passes no level down, so the teammate's own Ask holds.
-      const chief = await named("Warden", { section: "Approvals", chiefOfStaff: true, approvalMode: "ask", modelSelection: { instanceId: "chiefAsync", model: "fake-model" } });
+      const chief = await named("Warden", { chiefOfStaff: true, approvalMode: "ask", modelSelection: { instanceId: "chiefAsync", model: "fake-model" } });
       const chiefThreads = async () => {
         const tasks = (await bot(chief.id)).tasks as any[];
         const out: Array<{ threadId: string; messages: any[] }> = [];

@@ -25,8 +25,7 @@ import { readPublishedLibrary, writePublishedLibrary, type DefaultsPreset } from
 import { scoutProject, suggestTeam } from "../project-scout.ts";
 import { readPublishedTeam, writePublishedTeam } from "../published-teams.ts";
 import type { RoutineManager } from "../routines.ts";
-import { readSectionContext } from "../section-context.ts";
-import { sectionKey, type BotRecord, type GroupRecord, type Store } from "../store.ts";
+import type { BotRecord, GroupRecord, Store } from "../store.ts";
 import { createTeamBackup, importTeamBackup } from "../team-backup.ts";
 import { fetchGithubTeam, fetchLibraryTeam, fetchTeamCatalog } from "../team-library.ts";
 import { createTeamManifest, parseTeamManifest } from "../team-manifest.ts";
@@ -96,13 +95,8 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
         }
       }
       if (body.format === "package" && body.version === 2) {
-        if (typeof body.team !== "string") return json(res, 400, { error: "Choose a team to share." });
-        const team = body.team.trim();
-        if (team && !store.sections.includes(team) && !store.bots.some((bot) => sectionKey(bot.section) === team)) {
-          return json(res, 404, { error: "That team no longer exists." });
-        }
         const optional = (value: unknown) => (typeof value === "string" ? value : undefined);
-        const teamBots = store.bots.filter((bot) => !bot.hidden && sectionKey(bot.section) === team);
+        const teamBots = store.bots.filter((bot) => !bot.hidden);
         const skills = collectTeamSkills(teamBots, body.skills);
         if (!skills.ok) return json(res, 400, { error: skills.error, choices: { skills: skills.available } });
         const avatars = body.avatars && typeof body.avatars === "object" && !Array.isArray(body.avatars)
@@ -111,7 +105,6 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
         const defaults = body.includeDefaultsPreset === true ? defaultsPresetFor(body, body.includeMemory === true) : null;
         try {
           const exported = createTeamPackageExport({
-            team,
             name: optional(body.name),
             tagline: optional(body.tagline),
             summary: optional(body.summary),
@@ -121,8 +114,7 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
             bots: store.bots,
             groups: store.groups,
             routines: routines!.listRoutines(),
-            brief: readSectionContext(team)?.text,
-            published: readPublishedTeam(team),
+            published: readPublishedTeam(),
             skillsByBot: skills.skillsByBot,
             skillSelection: skills.all ? "all" : "chosen",
             memoryByBot: body.includeMemory === true ? new Map(teamBots.map((bot) => [bot.id, starterNotes(bot.id)])) : undefined,
@@ -131,7 +123,7 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
             skipped: [...skills.skipped, ...(defaults?.skipped ?? [])],
             preset: defaults?.preset ?? null,
           });
-          if (body.dryRun !== true) writePublishedTeam(team, exported.published);
+          if (body.dryRun !== true) writePublishedTeam(exported.published);
           return json(res, 200, {
             document: exported.document,
             filename: exported.filename,
@@ -313,7 +305,6 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
       }
       return json(res, 201, {
         name: imported.name,
-        section: imported.section,
         bots: imported.bots.map((bot) => publicBot(store.bot(bot.id) ?? bot)),
         group: imported.group,
         groups: imported.groups.map((created) => ({ ...created, messages: [] })),

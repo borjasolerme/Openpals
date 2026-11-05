@@ -22,7 +22,6 @@ const FENCE = /^\[.+ from Openpals — not from the person\. .+\]$/;
 const bot = (over: Partial<EscalationBot> = {}): EscalationBot => ({
   id: "b-mira",
   name: "Mira",
-  section: "ops",
   ...over,
 });
 
@@ -102,7 +101,7 @@ describe("EscalationLedger", () => {
 });
 
 describe("escalationDeliverable", () => {
-  it("lets a Chief reach its own section but not a visibility-fenced one", () => {
+  it("lets a Chief reach a teammate but not a visibility-fenced one", () => {
     const chief = bot({ id: "b-clive", name: "Clive", chiefOfStaff: true });
     expect(escalationDeliverable(chief, bot())).toBe(true);
     expect(escalationDeliverable(chief, bot({ visibility: { sameAudience: "top" } }))).toBe(false);
@@ -140,7 +139,7 @@ describe("opt-in", () => {
   });
 
   it("keeps the Escalations line out of a Chief's prompt unless it is on", () => {
-    const team = [{ id: "chief", name: "Clive", section: "Ops", chiefOfStaff: true }, { id: "mira", name: "Mira", section: "Ops" }];
+    const team = [{ id: "chief", name: "Clive", chiefOfStaff: true }, { id: "mira", name: "Mira" }];
     expect(chiefOfStaffSystemPrompt("chief", team, true)).not.toContain("Team escalations");
     expect(chiefOfStaffSystemPrompt("chief", team, true, true)).toContain("Team escalations");
   });

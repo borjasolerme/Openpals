@@ -1,5 +1,5 @@
 // Three threads of one bot, each with a turn held open by a gate only the test releases.
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
@@ -276,7 +276,7 @@ describe.skipIf(process.platform === "win32").each(["desktop"] as const)("two th
 // One stub plays Boat's public API v1 on the person's own key; a picture stands in for the desktop.
 const OWN_KEY = "boat_own_fixture";
 const FRAME = Buffer.from("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAALCAABAAEBAREA/8QAFAABAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==", "base64");
-describe.each(["desktop"] as const)("two threads of a bot on the team's shared computer on a %s server", (role) => {
+describe.each(["desktop"] as const)("two threads of a bot on its cloud computer on a %s server", (role) => {
   let f: Fixture;
   const servers: Server[] = [];
   afterEach(async () => {
@@ -319,13 +319,8 @@ describe.each(["desktop"] as const)("two threads of a bot on the team's shared c
     f = new Fixture(role);
     f.extraEnv = { OMB_BOAT_API: `${boatBase}/boat/api/v1`, BOX_TOKEN: OWN_KEY, OMB_COMPUTER_CALL_WAIT_MS: "500" };
     await f.start();
-    const requestId = randomUUID();
-    const made = await f.api("POST", "/api/team-computers", { requestId, name: "Ops desktop", acknowledgeCost: true });
-    expect(made.status, JSON.stringify(made.body)).toBe(201);
     const { botId, threads } = await botWithThreads(f, CLAUDE, 2);
-    expect((await f.api("PATCH", `/api/bots/${botId}`, { section: "Ops" })).status).toBe(200);
-    const assigned = await f.api("PATCH", `/api/team-computers/${requestId}`, { section: "Ops", acknowledgeSharedAccess: true });
-    expect(assigned.status, JSON.stringify(assigned.body)).toBe(200);
+    expect((await f.api("PATCH", `/api/bots/${botId}`, { computer: "cloud" })).status).toBe(200);
 
     await send(f, botId, threads[0]!, "First job");
     await send(f, botId, threads[1]!, "Second job");

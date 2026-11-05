@@ -78,7 +78,7 @@ export function createTeamBackup(store: Store, routines: Routine[], name: string
     const memberIds = group.memberIds.filter((id) => botIds.has(id));
     if (memberIds.length !== group.memberIds.length) warnings.push(`Room “${group.name}” contains deleted bots. Its conversation is included with the remaining members.`);
     return {
-      key: group.id, name: group.name, section: group.section, dm: Boolean(group.dm) && memberIds.length === 2,
+      key: group.id, name: group.name, dm: Boolean(group.dm) && memberIds.length === 2,
       bulletin: group.bulletin, memberIds,
       defaultResponder: group.defaultResponder.kind === "member" && !memberIds.includes(group.defaultResponder.botId)
         ? { kind: "mentions" as const }
@@ -103,7 +103,7 @@ export function createTeamBackup(store: Store, routines: Routine[], name: string
     warnings,
     bots: store.bots.map((bot) => ({
       key: bot.id, name: bot.name, title: bot.title, description: bot.description, soul: bot.soul,
-      section: bot.section, color: bot.color,
+      color: bot.color,
       mascotExpression: bot.mascotExpression ?? undefined, mascotBody: bot.mascotBody ?? undefined,
       mascotFaceColor: bot.mascotFaceColor ?? undefined,
       chiefOfStaff: Boolean(bot.chiefOfStaff), hidden: Boolean(bot.hidden), playbooks: bot.playbooks ?? [],
@@ -142,16 +142,8 @@ export function importTeamBackup(store: Store, routines: RoutineManager, input: 
   const groupIds = new Map<string, string>();
   const takenNames = new Set(store.bots.map((bot) => bot.name.trim().toLowerCase()));
   const takenGroups = new Set(store.groups.map((group) => group.name.trim().toLowerCase()));
-  const takenSections = new Set([
-    ...store.sections.map((section) => section.toLowerCase()),
-    ...[...store.bots, ...store.groups].map((record) => record.section?.trim().toLowerCase() ?? ""),
-  ]);
-  const sections = new Map<string, string>();
-  const sectionFor = (section?: string) => {
-    const key = section?.trim() ?? "";
-    if (!sections.has(key)) sections.set(key, takeImportName(section?.trim() || "Imported bots", takenSections, 60));
-    return sections.get(key)!;
-  };
+  // An imported Chief takes the role only where there is none: one Chief for all the bots.
+  let chiefFree = !store.bots.some((bot) => bot.chiefOfStaff && !bot.hidden);
   const restore = (task: BackupTask, threadId: string) => {
     const ids = new Map(task.messages.map((message) => [message.id, newId()]));
     const messages: Message[] = task.messages.map((message) => ({
@@ -175,15 +167,16 @@ export function importTeamBackup(store: Store, routines: RoutineManager, input: 
         color: source.color, mascotExpression: source.mascotExpression,
         mascotBody: botBodyId(source.mascotBody),
         mascotFaceColor: source.mascotFaceColor,
-        modelSelection: selection, section: sectionFor(source.section),
+        modelSelection: selection,
         // who may see the imported team is the importing admin's choice
         ...(options.visibility ? { visibility: options.visibility } : {}),
       }, { seedMessages: false });
       bots.push(bot);
       botIds.set(source.key, bot.id);
       store.patchBot(bot.id, { composio: false, computer: "off", browser: false, autoApprove: false,
-        connectorTools: {}, toolScope: source.toolScope, hidden: source.hidden, chiefOfStaff: source.chiefOfStaff, playbooks: source.playbooks,
+        connectorTools: {}, toolScope: source.toolScope, hidden: source.hidden, chiefOfStaff: Boolean(source.chiefOfStaff) && chiefFree, playbooks: source.playbooks,
         ...(source.helperModel === false ? { helperModel: false } : {}) });
+      if (source.chiefOfStaff) chiefFree = false;
       if (source.memory) restoreMemory(bot.id, source.memory);
     }
     for (const source of backup.bots) {
@@ -208,7 +201,7 @@ export function importTeamBackup(store: Store, routines: RoutineManager, input: 
       source.tasks.forEach((task, i) => restore(task, tasks[i].threadId));
     }
     for (const source of backup.groups) {
-      const group = store.createGroup(takeImportName(source.name, takenGroups), source.memberIds.map((id) => botIds.get(id)!), source.dm, sectionFor(source.section));
+      const group = store.createGroup(takeImportName(source.name, takenGroups), source.memberIds.map((id) => botIds.get(id)!), source.dm);
       groups.push(group);
       groupIds.set(source.key, group.id);
       const responder = source.defaultResponder;
@@ -251,9 +244,6 @@ export function importTeamBackup(store: Store, routines: RoutineManager, input: 
     // createBot/createGroup can throw after persisting, so every fresh ID is swept.
     for (const group of store.groups) if (!existingGroupIds.has(group.id)) store.deleteGroup(group.id);
     for (const bot of store.bots) if (!existingBotIds.has(bot.id)) store.deleteBot(bot.id);
-    for (const section of sections.values()) {
-      if (store.sections.includes(section)) store.changeEmptySection(section, null);
-    }
     throw error;
   }
 }

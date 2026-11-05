@@ -34,8 +34,6 @@ export interface UsageRow {
   costUsd: number | null;
   costSource?: CostSource;
   trigger: UsageTrigger;
-  /** The bot's department when the row was booked. */
-  section?: string;
   /** Trace fields, on rows booked since traces were recorded: older rows have none and show as untimed. */
   turnId?: string;
   startedAt?: string;
@@ -53,8 +51,8 @@ export interface UsageRow {
   usageStatus?: TraceUsageStatus;
 }
 
-export type UsageGroupBy = "bot" | "model" | "user" | "day" | "engine" | "routine" | "department";
-export const USAGE_GROUPINGS: readonly UsageGroupBy[] = ["bot", "model", "user", "day", "engine", "routine", "department"];
+export type UsageGroupBy = "bot" | "model" | "user" | "day" | "engine" | "routine";
+export const USAGE_GROUPINGS: readonly UsageGroupBy[] = ["bot", "model", "user", "day", "engine", "routine"];
 
 export interface UsageGroup {
   key: string;
@@ -264,8 +262,6 @@ function groupOf(row: UsageRow, groupBy: UsageGroupBy): { key: string; label: st
       return row.trigger.kind === "routine"
         ? { key: triggerKey(row.trigger), label: row.trigger.label ?? row.trigger.routineId ?? "unknown" }
         : { key: "manual", label: "Not from a routine" };
-    case "department":
-      return { key: `department:${row.section ?? ""}`, label: row.section ?? "" };
 
     default:
       return { key: `engine:${row.driverKind}`, label: row.driverKind };
@@ -330,7 +326,7 @@ export function csvCell(value: string | number | null): string {
 }
 
 export function usageCsv(rows: UsageRow[], prices: PriceList | null = null): string {
-  const header = ["time", "bot", "model", "engine", "triggered_by", "input_tokens", "output_tokens", "cached_input_tokens", "cost_usd", "cost_source", ...(prices ? ["billable_usd"] : []), "thread", "department", "person"];
+  const header = ["time", "bot", "model", "engine", "triggered_by", "input_tokens", "output_tokens", "cached_input_tokens", "cost_usd", "cost_source", ...(prices ? ["billable_usd"] : []), "thread", "person"];
   const lines = [header.join(",")];
   for (const row of rows) {
     lines.push([
@@ -346,7 +342,6 @@ export function usageCsv(rows: UsageRow[], prices: PriceList | null = null): str
       costSourceOf(row),
       ...(prices ? [billableFor(row, prices)] : []),
       row.threadId,
-      row.section ?? "",
       personOf(row.trigger) ?? "",
     ].map(csvCell).join(","));
   }

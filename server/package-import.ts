@@ -7,7 +7,6 @@ import type { Routine, RoutineInput, RoutineManager } from "./routines.ts";
 import type { SkillListing } from "./skills.ts";
 import type { BotRecord, GroupRecord, InstalledPackageMetadata, Store } from "./store.ts";
 import { importedMemberProfile, type ParsedTeamManifest, type TeamManifestMember } from "./team-manifest.ts";
-import { takeImportName } from "../shared/import-name.ts";
 import { decodeBase64, type PackageAgent, type PackageDocument } from "../shared/package-format.ts";
 import type { BotVisibility, ModelSelection } from "../shared/wire.ts";
 
@@ -49,7 +48,6 @@ export interface PackageImportDeps {
     servers(): Readonly<Record<string, unknown>>;
     persist(next: Record<string, unknown>): void;
   };
-  sections: { writeBrief(section: string, text: string): void };
   images: { save(bytes: Uint8Array, mime: string): string };
   broadcast?: (event: { kind: "bot"; bot: BotRecord } | { kind: "group"; group: GroupRecord }) => void;
   defaultSelection: () => ModelSelection;
@@ -67,7 +65,6 @@ export interface PackageImportOptions {
 export interface PackageImportResult {
   installId?: string;
   name: string;
-  section: string;
   bots: BotRecord[];
   groups: GroupRecord[];
   group?: GroupRecord;
@@ -78,6 +75,11 @@ export interface PackageImportResult {
   brief: boolean;
   notes: number;
   presets?: Array<{ id: string; key: string; name: string }>;
+}
+
+/** A package's shared instructions for its team, kept in every bot it brings. */
+function withTeamBrief(soul: string | undefined, brief: string): string {
+  return [soul?.trim(), `Shared instructions for this team:\n${brief}`].filter(Boolean).join("\n\n");
 }
 
 export function memberFromAgent(agent: PackageAgent): TeamManifestMember {
@@ -130,7 +132,7 @@ function importLibraryFile(document: PackageDocument, presets: PresetRegistry): 
   const installId = randomUUID();
   const registered = presets.register(document, installId);
   return {
-    installId, name: pkg.name, section: "", bots: [], groups: [], routines: [],
+    installId, name: pkg.name, bots: [], groups: [], routines: [],
     offeredSkills: (pkg.skills?.entries ?? []).map((skill) => skill.name), connections: [],
     skipped: registered.skipped, brief: false, notes: 0, presets: [...registered.added, ...registered.existing],
   };
@@ -148,7 +150,6 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
   const { store } = deps;
   const pkg = source.kind === "package" ? source.document.package : null;
   const name = pkg?.name ?? (source.kind === "manifest" ? source.manifest.team.name : "");
-  const teamName = pkg?.team?.name ?? name;
   const installId = pkg ? randomUUID() : undefined;
   const members = pkg
     ? pkg.agents.map((agent) => ({ member: memberFromAgent(agent), agent }))
@@ -163,17 +164,10 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
   const takenNames = new Set(store.bots.map((bot) => bot.name.trim().toLowerCase()));
   const botIds = new Map<string, string>();
   let group: GroupRecord | undefined;
-  let section: string | undefined;
   let notes = 0;
   try {
     const selection = deps.defaultSelection();
-    const existingSections = new Set(
-      [...store.sections, ...store.bots.map((bot) => bot.section), ...store.groups.map((candidate) => candidate.section)]
-        .filter((value): value is string => Boolean(value?.trim()))
-        .map((value) => value.trim().toLowerCase()),
-    );
-    // Always a new section: never merge into an existing one or replace its Chief.
-    section = takeImportName(teamName, existingSections, 60);
+    const brief = pkg?.team?.brief?.trim() ?? "";
 
     const serverForKey = new Map<string, string>();
     const connections: PackageImportResult["connections"] = [];
@@ -208,11 +202,12 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
     const skillByName = new Map((pkg?.skills?.entries ?? []).map((skill) => [skill.name, skill]));
     for (const { member, agent } of members) {
       // importedMemberProfile is the authority boundary: persona fields only.
+      const profile = importedMemberProfile(member, takenNames);
       const created = store.createBot(
         {
-          ...importedMemberProfile(member, takenNames),
+          ...profile,
+          ...(brief ? { soul: withTeamBrief(profile.soul, brief) } : {}),
           modelSelection: selection,
-          section,
           ...(options.visibility ? { visibility: options.visibility } : {}),
         },
         { seedMessages: false },
@@ -264,13 +259,10 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
       }
     }
 
-    const brief = Boolean(pkg?.team?.brief?.trim());
-    if (brief) deps.sections.writeBrief(section, pkg!.team!.brief!);
-
     const groupIds = new Map<string, string>();
     for (const room of pkg?.rooms ?? []) {
       const ids = room.members.map((key) => botIds.get(key)!);
-      let created = store.createGroup(room.name, ids, false, section);
+      let created = store.createGroup(room.name, ids, false);
       createdGroups.push(created);
       const responder = room.defaultResponder;
       const defaultResponder = responder.kind === "agent"
@@ -311,7 +303,8 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
       createdRoutines.push(created);
     }
 
-    if (pkg?.team?.leader) store.setChiefOfStaff(botIds.get(pkg.team.leader)!);
+    // The package's lead becomes the Chief only where there is none: one Chief for all the bots.
+    if (pkg?.team?.leader && !store.bots.some((bot) => bot.chiefOfStaff && !bot.hidden)) store.setChiefOfStaff(botIds.get(pkg.team.leader)!);
     let presets: PackageImportResult["presets"];
     if (source.kind === "package" && deps.presets && pkg?.presets?.length) {
       const registered = deps.presets.register(source.document, installId!);
@@ -322,7 +315,7 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
 
     if (!pkg && options.mode === "project" && importedBots.length > 0) {
       const roomName = options.room?.trim() || name;
-      group = store.createGroup(roomName, importedBots.map((bot) => bot.id), false, section);
+      group = store.createGroup(roomName, importedBots.map((bot) => bot.id), false);
       createdGroups.push(group);
       if (options.cwd) {
         group = store.patchGroup(group.id, { cwd: options.cwd }) ?? group;
@@ -336,7 +329,6 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
     return {
       ...(installId ? { installId } : {}),
       name,
-      section,
       bots,
       groups: createdGroups.map((created) => store.group(created.id) ?? created),
       ...(group ? { group } : {}),
@@ -344,7 +336,7 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
       offeredSkills: (pkg?.skills?.entries ?? []).filter((skill) => !referenced.has(skill.name)).map((skill) => skill.name),
       connections,
       skipped,
-      brief,
+      brief: Boolean(brief),
       notes,
       ...(presets ? { presets } : {}),
     };
@@ -358,7 +350,6 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
       for (const serverName of createdServers) delete next[serverName];
       deps.mcp.persist(next);
     }
-    if (section && store.sections.includes(section)) store.changeEmptySection(section, null);
     throw error;
   }
 }

@@ -154,7 +154,7 @@ describe("scopes", () => {
       ["POST", "/api/webhooks"], ["POST", "/api/webhooks/w/rotate"], ["POST", "/api/bots/x/skills"], ["PATCH", "/api/bots/x/skills/s"],
       ["PATCH", "/api/bots/x/model"], ["PATCH", "/api/groups/g/setup"], ["POST", "/api/teams/import"], ["GET", "/api/teams/scout"],
       ["POST", "/api/team-library/github"], ["GET", "/api/setup-import/grok"],
-      ["GET", "/api/bots/x/memory"], ["PUT", "/api/bots/x/memory"], ["PUT", "/api/section-context"], ["GET", "/api/threads/t/events"],
+      ["GET", "/api/bots/x/memory"], ["PUT", "/api/bots/x/memory"], ["GET", "/api/threads/t/events"],
       ["GET", "/api/mcp/servers"], ["POST", "/api/mcp/servers"], ["GET", "/api/bots/x/mcp-servers"], ["POST", "/api/connectors/slack/authorize"],
       ["POST", "/api/bots/x/slack-management"], ["GET", "/api/bots/x/slack-management/extra"],
       ["PUT", "/api/config"], ["POST", "/api/auth/pairing"], ["GET", "/api/auth/sessions"], ["DELETE", "/api/auth/sessions/abc"],
@@ -191,8 +191,8 @@ describe("scopes", () => {
   it("lets a bot's maker without the admin scope say who it is and how it looks, never what it may do or whom it directs", () => {
     const profile = { name: "Scout", title: "Trips", soul: "Plans trips.", color: "teal", avatarCrop: "square", voice: "alloy", modelSelection: { instanceId: "claude", model: "m" } };
     expect(adminOnlyBotSetting(profile)).toBeNull();
-    for (const field of ["approvalMode", "autoApprove", "alwaysAllow", "chiefOfStaff", "managedSections", "computer", "cwd", "peers", "approvePeerComms",
-      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "section", "visibility", "preset", "defaultBot", "installedPackage"]) {
+    for (const field of ["approvalMode", "autoApprove", "alwaysAllow", "chiefOfStaff", "computer", "cwd", "peers", "approvePeerComms",
+      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "visibility", "preset", "defaultBot", "installedPackage"]) {
       expect(adminOnlyBotSetting({ ...profile, [field]: true }), field).toBe(field);
     }
   });

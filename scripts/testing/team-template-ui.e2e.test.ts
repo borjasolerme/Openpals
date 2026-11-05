@@ -19,7 +19,7 @@ describe("additive template imports in the real renderer", () => {
   let child: ChildProcess | undefined;
   afterAll(async () => { await waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }); });
 
-  (enabled ? it : it.skip)("adds library and file templates as sections without losing existing chats", async () => {
+  (enabled ? it : it.skip)("adds library and file templates beside the bots there, without losing existing chats", async () => {
     let stdout = "";
     let stderr = "";
     let info: { ui: string; url: string; botId: string; logPath: string };
@@ -39,8 +39,8 @@ describe("additive template imports in the real renderer", () => {
     const snapshot = async () => (await ui("snapshot")).snapshot as string;
     const api = (path: string, method = "GET", body?: unknown) => request(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, info.url);
     const control = (...args: string[]) => runControlOmb([...args, "--url", info.url]);
-    await api(`/api/bots/${info!.botId}`, "PATCH", { section: "Existing work", chiefOfStaff: true });
-    await control("new-bot", "--name", "Personal helper", "--section", "Personal");
+    await api(`/api/bots/${info!.botId}`, "PATCH", { chiefOfStaff: true });
+    await control("new-bot", "--name", "Personal helper");
     await control("send", "--bot", info!.botId, "--text", "Keep this original conversation after importing templates.");
     expect(await control("wait", "--bot", info!.botId, "--timeout", "30")).toMatchObject({ status: "settled" });
     const original = await api("/api/bots");
@@ -76,18 +76,15 @@ describe("additive template imports in the real renderer", () => {
         // Exercise the file input's actual change handler, not the OS picker.
         await evaluate(`(() => { const input = document.querySelector('[role=dialog] input[type=file]'); const transfer = new DataTransfer(); transfer.items.add(new File([JSON.stringify(window.templateFixture)], 'sales.mausteam.json', { type: 'application/json' })); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
       }
-      await expect.poll(snapshot, { timeout: 10_000 }).toContain("Adds a new department for Sales crew");
+      await expect.poll(snapshot, { timeout: 10_000 }).toContain("Adds the bots of Sales crew as new copies");
       await click("Add team");
-      const section = source === "library" ? "Sales crew" : "Sales crew 2";
-      await expect.poll(snapshot, { timeout: 10_000 }).toContain(`button "${section}"`);
+      const copies = source === "library" ? 1 : 2;
+      await expect.poll(async () => (await api("/api/bots")).bots.filter((bot: { name: string }) => bot.name.startsWith("Lead finder")).length, { timeout: 10_000 }).toBe(copies);
       const current = await api("/api/bots");
-      expect(current.bots.filter((bot: { section?: string }) => bot.section === section)).toHaveLength(2);
       for (const bot of original.bots) expect(withoutReadState(current.bots.find((value: { id: string }) => value.id === bot.id))).toEqual(withoutReadState(bot));
       expect(withoutReadState(await control("messages", "--bot", info!.botId, "--limit", "10"))).toEqual(withoutReadState(transcript));
-      expect(await snapshot()).toContain('button "Existing work"');
-      expect(await snapshot()).toContain('button "Personal"');
     }
-    const evidence = join(ROOT, ".omb-scratch", "verify-evidence", "template-import-sections.png");
+    const evidence = join(ROOT, ".omb-scratch", "verify-evidence", "template-import.png");
     await ui("screenshot", "--out", evidence);
     process.stdout.write(`${JSON.stringify({ fixture: info!, screenshot: evidence, libraryAndFileImports: true, originalConversationUnchanged: true })}\n`);
   }, launchTimeout + 120_000);

@@ -60,10 +60,10 @@ async function scenario(test: (f: any) => Promise<void>) {
       return { status: response.status, body: parsed };
     };
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
-    const bot = async (name: string, section: string) => (await cli("new-bot", "--name", name, "--section", section)).bot;
-    const clive = await bot("Clive", "Leadership");
-    const mira = await bot("Mira", "Engineering");
-    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true })).status).toBe(200);
+    const bot = async (name: string) => (await cli("new-bot", "--name", name)).bot;
+    const clive = await bot("Clive");
+    const mira = await bot("Mira");
+    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true })).status).toBe(200);
     const planPath = join(dataDir, "room-plan.json");
     const plan: Record<string, { script: unknown[] }> = { [clive.id]: { script: [] }, [mira.id]: { script: [] } };
     const script = (botId: string, ...entries: unknown[]) => {

@@ -18,7 +18,6 @@ async function installation(options: { refuse?: (name: string) => string | undef
   const { RoutineManager } = await import("./routines.ts");
   const skills = await import("./skills.ts");
   const workspace = await import("./workspace.ts");
-  const sections = await import("./section-context.ts");
   const { saveImage } = await import("./attachments.ts");
   const { botAvatarUrlFromStoredPath } = await import("../shared/bot-avatar.ts");
   const importer = await import("./package-import.ts");
@@ -43,14 +42,13 @@ async function installation(options: { refuse?: (name: string) => string | undef
       refusal: (name: string) => options.refuse?.(name),
       persist: (next: Record<string, unknown>) => { mcp.servers = next; },
     },
-    sections: { writeBrief: (section: string, text: string) => void sections.writeSectionContext(section, text) },
     images: { save: (bytes: Uint8Array, mime: string) => botAvatarUrlFromStoredPath(saveImage(Buffer.from(bytes), mime).path)! },
     broadcast: (event: { kind: string }) => { events.push(event.kind); },
     defaultSelection: () => ({ instanceId: "claude", model: "default-model" }),
   };
   const snapshot = () => JSON.stringify({ bots: store.bots.map((bot) => bot.id), groups: store.groups.map((group) => group.id),
-    routines: routines.listRoutines().map((routine) => routine.id), sections: store.sections, servers: mcp.servers });
-  return { store, routines, skills, workspace, sections, importer, parsePackageDocument, deps, mcp, events, snapshot };
+    routines: routines.listRoutines().map((routine) => routine.id), servers: mcp.servers });
+  return { store, routines, skills, workspace, importer, parsePackageDocument, deps, mcp, events, snapshot };
 }
 
 afterEach(async () => {
@@ -68,10 +66,9 @@ describe("importing a whole team", () => {
     const byKey = new Map(result.bots.map((bot) => [bot.installedPackage!.agentKey, app.store.bot(bot.id)!]));
     const lead = byKey.get("lead")!;
     const scout = byKey.get("scout")!;
-    expect(result.section).toBe("Sales desk");
     expect(lead).toMatchObject({
-      name: "Morgan", title: "Sales lead", soul: "You coordinate the desk. Keep answers short and cite the price list.\n",
-      color: "purple", mascotExpression: "focused", section: "Sales desk", chiefOfStaff: true,
+      name: "Morgan", title: "Sales lead", soul: expect.stringMatching(/^You coordinate the desk\. Keep answers short and cite the price list\.\n\nShared instructions for this team:\nWe sell a team plan at 49 per seat\./),
+      color: "purple", mascotExpression: "focused", chiefOfStaff: true,
       composio: false, connectorTools: {}, avatarCrop: "circle", modelSelection: { instanceId: "claude", model: "default-model" },
       playbooks: [expect.objectContaining({ key: "qualify" })],
       installedPackage: { id: "sales-desk", release: "1.3.0", agentKey: "lead", suggestedApproval: "auto",
@@ -82,9 +79,9 @@ describe("importing a whole team", () => {
     expect(lead).not.toHaveProperty("autoApprove");
     expect(lead.installedPackage?.installId).toMatch(/^[0-9a-f-]{36}$/);
     expect(new Set(result.bots.map((bot) => bot.installedPackage?.installId)).size).toBe(1);
-    expect(app.sections.readSectionContext("Sales desk")?.text).toContain("49 per seat");
+    expect(scout.soul).toMatch(/^Shared instructions for this team:\nWe sell a team plan at 49 per seat\./);
     expect(result.groups).toEqual([expect.objectContaining({
-      name: "Deal desk", section: "Sales desk", bulletin: expect.stringContaining("Cite sources"),
+      name: "Deal desk", bulletin: expect.stringContaining("Cite sources"),
       defaultResponder: { kind: "member", botId: lead.id }, setupCompletedAt: expect.any(Number),
     })]);
     expect(result.groups[0]!.memberIds.sort()).toEqual(result.bots.map((bot) => bot.id).sort());
@@ -144,13 +141,13 @@ describe("importing a whole team", () => {
     expect(() => app.parsePackageDocument({ ...raw, package: { ...raw.package, agents: [{ ...raw.package.agents[0], recordBrowserSteps: "yes" }] } })).toThrow();
   });
 
-  it("imports the same file twice as two independent copies", async () => {
+  it("imports the same file twice as two independent copies, keeping the one Chief", async () => {
     const app = await installation();
     const document = app.parsePackageDocument(fixture("full-team.v2.json"));
     const first = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
     const second = app.importer.importPackageDocument(document, { mode: "add" }, app.deps);
-    expect(second.section).toBe("Sales desk 2");
     expect(second.bots[0]!.name).toBe("Morgan 2");
+    expect(app.store.bots.filter((bot) => bot.chiefOfStaff).map((bot) => bot.id)).toEqual([first.bots[0]!.id]);
     expect(second.installId).not.toBe(first.installId);
     expect(second.connections[0]!.name).toBe("crm-2");
   });
@@ -158,11 +155,10 @@ describe("importing a whole team", () => {
   it("leaves nothing behind when the last step fails", async () => {
     const app = await installation();
     const before = app.snapshot();
-    const failing = { ...app.deps, sections: { writeBrief: () => { throw new Error("disk full"); } } };
+    const failing = { ...app.deps, presets: { register: () => { throw new Error("disk full"); }, remove: () => {} } };
     expect(() => app.importer.importPackageDocument(app.parsePackageDocument(fixture("full-team.v2.json")), { mode: "add" }, failing))
       .toThrow("disk full");
     expect(app.snapshot()).toBe(before);
-    expect(app.sections.readSectionContext("Sales desk")).toBeNull();
   });
 
   it("refuses a library-only package when there is nowhere to keep its presets, creating nothing", async () => {

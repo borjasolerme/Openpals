@@ -1,13 +1,10 @@
 /** How the Team map names a computer's state. */
 export type MapComputerState = "starting" | "working" | "idle" | "asleep" | "off" | "problem";
 
-/** One computer drawn on the Team map. `id` is its owner: the bot's id, or the team computer's owner key. */
+/** One bot's cloud computer. `id` is its owner: the bot's id. */
 export interface MapComputer {
   id: string;
-  kind: "bot" | "team";
   name: string;
-  /** The team a shared computer belongs to; absent for a bot's own computer. */
-  section?: string;
   botIds: string[];
   state: MapComputerState;
   /** `data` (base64) comes only when the caller does not already hold this version; the event stream carries turn frames. */

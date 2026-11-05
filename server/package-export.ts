@@ -278,10 +278,9 @@ export class TeamExportError extends Error {
   readonly status = 400;
 }
 
-export const TEAM_TOO_LARGE_MESSAGE = "This department is too large to share (4 MB). Leave out pictures, starter notes or some skills and try again.";
+export const TEAM_TOO_LARGE_MESSAGE = "This team is too large to share (4 MB). Leave out pictures, starter notes or some skills and try again.";
 
 export interface TeamExportInput {
-  team: string;
   name?: string;
   tagline?: string;
   summary?: string;
@@ -291,7 +290,6 @@ export interface TeamExportInput {
   bots: readonly BotRecord[];
   groups: readonly GroupRecord[];
   routines: readonly Routine[];
-  brief?: string;
   published: PublishedTeam | null;
   skillsByBot?: ReadonlyMap<string, readonly ExportablePackageSkill[]>;
   skillSelection?: "all" | "chosen";
@@ -314,8 +312,6 @@ const KEY_PATTERN = /^[a-z0-9][a-z0-9_-]*$/;
 const CONNECTION_KEY = /^[a-z][a-z0-9_-]{0,27}$/;
 const SEMVER = /^(0|[1-9]\d{0,5})\.(0|[1-9]\d{0,5})\.(0|[1-9]\d{0,5})$/;
 const DATA_URL = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
-
-const teamOf = (section?: string) => section?.trim() ?? "";
 
 function stableKeys<T extends { id: string; name: string }>(
   records: readonly T[],
@@ -478,28 +474,28 @@ function refuseSkillConflicts(bots: readonly BotRecord[], skillsByBot: ReadonlyM
       const first = firstByName.get(skill.name);
       if (!first) firstByName.set(skill.name, skill);
       else if (!sameSkill(first, skill)) {
-        throw new TeamExportError(`Two bots in this department have different skills named "${skill.name}". Leave that skill out and try again.`);
+        throw new TeamExportError(`Two bots have different skills named "${skill.name}". Leave that skill out and try again.`);
       }
     }
   }
 }
 
-/** One team without its chat history; every text part is redacted and the result goes through the import parser. */
+/** Every visible bot, without its chat history; every text part is redacted and the result goes through the import
+ * parser. */
 export function createTeamPackageExport(input: TeamExportInput): TeamExportResult {
-  const team = teamOf(input.team);
-  const bots = input.bots.filter((bot) => !bot.hidden && teamOf(bot.section) === team);
-  if (!bots.length) throw new TeamExportError("Add a bot to this department before sharing it.");
+  const bots = input.bots.filter((bot) => !bot.hidden);
+  if (!bots.length) throw new TeamExportError("Add a bot before sharing your team.");
   const skipped: TeamExportSkip[] = [...(input.skipped ?? [])];
 
   const release = input.release?.trim() || nextPatchRelease(input.published?.lastRelease);
   if (!SEMVER.test(release)) throw new TeamExportError("Use a version like 1.2.3.");
   const notes = input.notes?.trim();
   if (notes && notes.length > RELEASE_NOTES_MAX) throw new TeamExportError(`Release notes must be at most ${RELEASE_NOTES_MAX} characters.`);
-  const displayName = input.name?.trim() || team || "General";
+  const displayName = input.name?.trim() || "My team";
 
   const installedIds = new Set(bots.map((bot) => bot.installedPackage?.id));
   const inherited = installedIds.size === 1 ? [...installedIds][0] : undefined;
-  const packageId = input.published?.packageId ?? inherited ?? portableKey(team || displayName, "team", new Set());
+  const packageId = input.published?.packageId ?? inherited ?? portableKey(displayName, "team", new Set());
   const recorded = input.published?.packageId === packageId ? input.published.keys : undefined;
 
   const botKeys = stableKeys(bots, recorded?.bots,
@@ -510,7 +506,7 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
   else refuseSkillConflicts(bots, skillsByBot);
   const { packageSkills, agentSkills } = assignSkills(bots, skillsByBot);
   if (packageSkills.size > PACKAGE_MAX_SKILLS) {
-    throw new TeamExportError(`A department can share at most ${PACKAGE_MAX_SKILLS} skills. Choose fewer skills and try again.`);
+    throw new TeamExportError(`A team can share at most ${PACKAGE_MAX_SKILLS} skills. Choose fewer skills and try again.`);
   }
   const crowded = bots.find((bot) => (agentSkills.get(bot.id)?.length ?? 0) > AGENT_MAX_SKILLS);
   if (crowded) throw new TeamExportError(`${crowded.name} has more than ${AGENT_MAX_SKILLS} skills. Choose fewer skills and try again.`);
@@ -608,7 +604,7 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
     return agent;
   });
 
-  const groups = input.groups.filter((group) => !group.dm && teamOf(group.section) === team);
+  const groups = input.groups.filter((group) => !group.dm);
   const roomKeys = stableKeys(groups, recorded?.rooms, () => undefined, "group-chat");
   const rooms: PackageRoom[] = [];
   const roomMembers = new Map<string, Set<string>>();
@@ -651,7 +647,6 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
   });
 
   const chief = bots.find((bot) => bot.chiefOfStaff);
-  const brief = input.brief?.trim() ? input.brief : undefined;
   const definition: PackageDefinition = {
     id: packageId,
     release,
@@ -667,8 +662,7 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
     setupMinutes: Math.min(240, Math.max(2, bots.length + requirements.size * 2 + connections.length * 2)),
     requirements: { apps: [...requirements.values()], capabilities: [] },
     team: {
-      name: (team || displayName).slice(0, 60).trim(),
-      ...(brief ? { brief } : {}),
+      name: displayName.slice(0, 60).trim(),
       ...(chief ? { leader: botKeys.get(chief.id)! } : {}),
     },
     agents,
@@ -688,7 +682,7 @@ export function createTeamPackageExport(input: TeamExportInput): TeamExportResul
     document = parsePackageDocument(redactedDocument);
   } catch (error) {
     if (error instanceof PackageFormatError && error.code === "too_large") throw new TeamExportError(TEAM_TOO_LARGE_MESSAGE);
-    throw new TeamExportError(error instanceof Error ? error.message : "This department could not be shared.");
+    throw new TeamExportError(error instanceof Error ? error.message : "This team could not be shared.");
   }
   const toRecord = (keys: ReadonlyMap<string, string>, include: (id: string) => boolean) =>
     Object.fromEntries([...keys].filter(([id]) => include(id)));

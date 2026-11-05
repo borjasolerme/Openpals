@@ -5,7 +5,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 import { removeTempDir } from "./testing/cleanup.ts";
 
-it("Clive sets up multi-provider teams at Ask with no card, keeps existing threads through setup and deletion, and adds a specialist it picked itself at once, with an Undo", async () => {
+it("Clive sets up a multi-provider team at Ask with no card, keeps existing threads through setup and deletion, and adds a specialist it picked itself at once, with an Undo", async () => {
   const gates = mkdtempSync(join(tmpdir(), "omb-team-setup-gates-"));
   const gate = join(gates, "finish");
   const fixture = await launchVerificationServer({ FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate }, undefined, undefined, undefined, undefined, undefined, ["codex"]);
@@ -29,7 +29,7 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
     const codex = catalog.find((item: any) => item.instanceId === "codex");
     expect(codex).toBeDefined();
     const selection = (instance: any) => ({ instanceId: instance.instanceId, model: instance.models.default });
-    const chief = (await api("POST", "/api/bots", { name: "Clive", title: "Chief of Staff", section: "Operations", modelSelection: selection(claude) }, 201)).bot;
+    const chief = (await api("POST", "/api/bots", { name: "Clive", title: "Chief of Staff", modelSelection: selection(claude) }, 201)).bot;
     // At Ask: team setup applies at once, since OpenMausBot adds no card of its own.
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true, approvalMode: "ask", connectorTools: { slack: { tools: ["SLACK_SEND_MESSAGE"] } } });
     const state = async () => (await api("GET", "/api/bots")).bots;
@@ -50,12 +50,12 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
       writeFileSync(gate, "finish");
       await expect.poll(async () => !(await state()).find((bot: any) => bot.id === chief.id).busy, { timeout: 20_000 }).toBe(true);
     };
-    const build = (name: string, team: string, modelSelection: unknown) => ({ action: "create", key: name, fields: {
-      name, title: `${team} specialist`, soul: `Own ${team.toLowerCase()} work. Return evidence and state uncertainty.`, section: team, modelSelection,
+    const build = (name: string, area: string, modelSelection: unknown) => ({ action: "create", key: name, fields: {
+      name, title: `${area} specialist`, soul: `Own ${area.toLowerCase()} work. Return evidence and state uncertainty.`, modelSelection,
     } });
-    const plan = { reason: "Set up Research, Engineering and Growth specialists as requested", newTeams: ["Research", "Engineering", "Growth"], operations: [
+    const plan = { reason: "Set up Research, Engineering and Growth specialists as requested", operations: [
       build("Mira", "Research", selection(claude)), build("Patch", "Engineering", selection(codex)), build("Quill", "Growth", selection(claude)),
-      { action: "create", key: "Patch", fields: { title: "Implementation and verification engineer", chiefOfStaff: true } },
+      { action: "create", key: "Patch", fields: { title: "Implementation and verification engineer" } },
     ] };
     const decisionReplies = async (requestId: string) => ((await api("GET", `/api/threads/${chief.threadId}/messages`)).messages as any[])
       .filter((message) => message.text?.includes(`team setup decision ${requestId}:`)).length;
@@ -70,26 +70,24 @@ it("Clive sets up multi-provider teams at Ask with no card, keeps existing threa
     const created = saved.filter((bot: any) => !initialBotIds.has(bot.id));
     expect(created.map((bot: any) => bot.name).sort()).toEqual(["Mira", "Patch", "Quill"]);
     const engineer = created.find((bot: any) => bot.name === "Patch");
-    expect(engineer).toMatchObject({ title: "Implementation and verification engineer", section: "Engineering", chiefOfStaff: true, modelSelection: selection(codex), approvalMode: "full", autoApprove: false });
+    expect(engineer).toMatchObject({ title: "Implementation and verification engineer", modelSelection: selection(codex), approvalMode: "full", autoApprove: false });
     for (const bot of created) expect(bot.connectorTools, bot.name).toEqual({ slack: { tools: ["SLACK_SEND_MESSAGE"] } });
-    expect(engineer.managedSections).toBeUndefined();
-    expect(saved.find((bot: any) => bot.id === chief.id).managedSections).toEqual(expect.arrayContaining(plan.newTeams));
+    expect(saved.filter((bot: any) => bot.chiefOfStaff).map((bot: any) => bot.id)).toEqual([chief.id]);
     const notice = saved.find((bot: any) => bot.id === chief.id).messages.find((message: any) => message.card?.requestId === applied.requestId).card;
     expect(notice).toMatchObject({ autoApplied: true, answered: "allow", options: [], teamSetupRequest: { undo: { created: expect.any(Array) } } });
-    expect(notice.subtitle).toContain("Authorize @Clive");
-    expect(notice.subtitle).toContain("Chief of Staff: No → Yes");
+    expect(notice.subtitle).toContain("Create @Patch (new bot)");
     await finish();
     expect(await decisionReplies(applied.requestId)).toBe(0);
 
-    token = await start("Move Patch to Growth and switch its default engine to Claude; retain its existing thread.");
-    const updated = await api("POST", "/api/internal/team-setup-requests", { plan: { reason: "Requested default and team change", operations: [
-      { action: "update", botId: engineer.id, fields: { section: "Growth", modelSelection: selection(claude) } },
+    token = await start("Switch Patch's default engine to Claude; retain its existing thread.");
+    const updated = await api("POST", "/api/internal/team-setup-requests", { plan: { reason: "Requested default change", operations: [
+      { action: "update", botId: engineer.id, fields: { modelSelection: selection(claude) } },
       { action: "update", botId: engineer.id, fields: { description: "Shared delivery specialist" } },
     ] } }, 201, token);
     expect(updated.state).toBe("applied");
     await finish();
     const changed = (await state()).find((bot: any) => bot.id === engineer.id);
-    expect(changed).toMatchObject({ section: "Growth", modelSelection: selection(claude), description: "Shared delivery specialist" });
+    expect(changed).toMatchObject({ modelSelection: selection(claude), description: "Shared delivery specialist" });
     expect(changed.tasks.find((task: any) => task.threadId === engineer.threadId))
       .toMatchObject({ modelSelection: selection(claude), followsBotModel: true });
     // Patch changed since the first setup, so its Undo changes nothing.

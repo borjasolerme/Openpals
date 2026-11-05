@@ -32,7 +32,6 @@ async function installation() {
     skills: { install: skills.installSkill },
     memory: { writeIndex: workspace.writeMemoryFile, writeTopic: workspace.writeMemoryTopic },
     mcp: { servers: () => mcp.servers, refusal: () => undefined, persist: (next: Record<string, unknown>) => { mcp.servers = next; } },
-    sections: { writeBrief: () => {} },
     images: { save: () => "" },
     defaultSelection: () => ({ instanceId: "claude", model: "default-model" }),
   };
@@ -90,9 +89,8 @@ describe("a moved Bot, through the real package path", () => {
 
   it("a second Bot with the same skill and routine names does not collide", async () => {
     const app = await installation();
-    const first = app.move(DESK);
-    const second = app.move({ ...DESK, name: "Lobby", apps: [] });
-    expect(first.section).not.toBe(second.section);
+    app.move(DESK);
+    app.move({ ...DESK, name: "Lobby", apps: [] });
     expect(app.store.bots.filter((bot) => ["Desk", "Lobby"].includes(bot.name)).map((bot) => bot.name).sort()).toEqual(["Desk", "Lobby"]);
     expect(app.routines.listRoutines().map((routine) => routine.name).sort()).toEqual(["Desk: Open up", "Lobby: Open up"]);
     expect(app.routines.listRoutines().map((routine) => routine.enabled)).toEqual([false, false]);

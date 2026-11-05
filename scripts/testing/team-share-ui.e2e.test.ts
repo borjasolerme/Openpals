@@ -19,7 +19,7 @@ describe("Share team in the real renderer", () => {
   let child: ChildProcess | undefined;
   afterAll(async () => { await waitForExit(child, { signal: "SIGINT", graceMs: 30_000 }); });
 
-  (enabled ? it : it.skip)("shows what a team's file holds, saves it, and adds it back as a new team", async () => {
+  (enabled ? it : it.skip)("shows what the team's file holds, saves it, and adds it back as new copies", async () => {
     let stdout = "";
     let stderr = "";
     let info: { ui: string; url: string; botId: string; logPath: string };
@@ -40,9 +40,8 @@ describe("Share team in the real renderer", () => {
     const api = (path: string, method = "GET", body?: unknown) => request(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }, info.url);
     const control = (...args: string[]) => runControlOmb([...args, "--url", info.url]) as Promise<Record<string, any>>;
 
-    await api(`/api/bots/${info!.botId}`, "PATCH", { section: "Sales desk", chiefOfStaff: true, soul: "Lead the desk. The portal password=UiFixture-Secret-1 stays private.\n" });
-    const scout = (await control("new-bot", "--name", "Scout", "--section", "Sales desk")).bot;
-    await api(`/api/section-context?section=${encodeURIComponent("Sales desk")}`, "PUT", { text: "Quote list prices only." });
+    await api(`/api/bots/${info!.botId}`, "PATCH", { chiefOfStaff: true, soul: "Lead the desk. The portal password=UiFixture-Secret-1 stays private.\n" });
+    const scout = (await control("new-bot", "--name", "Scout")).bot;
     await api(`/api/bots/${scout.id}/skill-template`, "POST", { name: "research-brief", description: "Write a prospect brief.", source: "fixture",
       text: "---\nname: research-brief\ndescription: Write a prospect brief.\n---\n\n# Brief\n", enabled: true });
     // 31 skills on one bot, more than a file carries per bot, and the first
@@ -68,12 +67,12 @@ describe("Share team in the real renderer", () => {
     await click("New or share");
     await click("Templates");
     await click("Share");
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Share the Sales desk department");
-    await click("Share the Sales desk department");
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Share…");
+    await click("Share…");
     // A refused first look is not a dead end: the sentence, no counts and no
     // Save, but every skill box is drawn from the refusal.
     const saveDisabled = () => evaluate(`[...document.querySelectorAll('[role=dialog] button')].find((button) => button.textContent === "Save file").disabled`);
-    await expect.poll(snapshot, { timeout: 20_000 }).toContain("This department is too large to share (4 MB).");
+    await expect.poll(snapshot, { timeout: 20_000 }).toContain("This team is too large to share (4 MB).");
     let dialog = await snapshot();
     for (const line of ["research-brief", "fill-01", "fill-30", "Starter notes are included", "Save file"]) expect(dialog).toContain(line);
     expect(dialog).not.toContain("What's in the file");
@@ -104,13 +103,15 @@ describe("Share team in the real renderer", () => {
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Removed what looked like a key or password from:");
     await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-dialog.png"));
     await click("Save file");
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Saved sales-desk-1.0.0.openmaus.json");
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Saved your-bots-1.0.0.openmaus.json");
     await evaluate("window.__shareBlob.text().then((text) => { window.__shareText = text; }); true");
     await expect.poll(async () => typeof (await evaluate("window.__shareText")), { timeout: 5_000 }).toBe("string");
     const saved = JSON.parse(await evaluate("window.__shareText") as string);
-    expect(await evaluate("window.__shareDownload")).toBe("sales-desk-1.0.0.openmaus.json");
-    expect(saved).toMatchObject({ format: "openmaus.package", version: 2, package: { id: "sales-desk", team: { name: "Sales desk", brief: "Quote list prices only." } } });
-    expect(saved.package.agents).toHaveLength(2);
+    expect(await evaluate("window.__shareDownload")).toBe("your-bots-1.0.0.openmaus.json");
+    expect(saved).toMatchObject({ format: "openmaus.package", version: 2, package: { id: "your-bots", team: { name: "Your bots" } } });
+    expect(saved.package.team).not.toHaveProperty("brief");
+    const savedNames: string[] = saved.package.agents.map((agent: { name: string }) => agent.name);
+    expect(savedNames).toContain("Scout");
     const savedScout = saved.package.agents.find((agent: { name: string }) => agent.name === "Scout");
     expect(savedScout.skills).toHaveLength(30);
     for (const name of ["research-brief", "fill-01", "fill-30"]) expect(savedScout.skills).toContain(name);
@@ -121,22 +122,24 @@ describe("Share team in the real renderer", () => {
 
     // Add the saved file back through Import: the preview names every part.
     await click("Import");
-    await evaluate(`(() => { const input = document.querySelector('[role=dialog] input[type=file]'); const transfer = new DataTransfer(); transfer.items.add(new File([window.__shareText], 'sales-desk-1.0.0.openmaus.json', { type: 'application/json' })); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain("2 bots · shared department");
+    await evaluate(`(() => { const input = document.querySelector('[role=dialog] input[type=file]'); const transfer = new DataTransfer(); transfer.items.add(new File([window.__shareText], 'your-bots-1.0.0.openmaus.json', { type: 'application/json' })); input.files = transfer.files; input.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain(`${savedNames.length} bots · shared team`);
     const preview = await snapshot();
-    for (const line of ["Shared instructions", "Routines: 1 · paused", "Starter notes: 1", "Included skills (added switched off)"]) {
+    expect(preview).not.toContain("Shared instructions");
+    for (const line of ["Routines: 1 · paused", "Starter notes: 1", "Included skills (added switched off)"]) {
       expect(preview).toContain(line);
     }
     expect(preview).not.toContain("Connections to finish");
     await ui("screenshot", "--out", join(ROOT, ".omb-scratch", "verify-evidence", "share-team-import-preview.png"));
     await click("Add team");
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain('button "Sales desk 2"');
-    const bots = (await api("/api/bots")).bots.filter((bot: { section?: string }) => bot.section === "Sales desk 2");
-    expect(bots).toHaveLength(2);
+    const copies = async () => ((await api("/api/bots")).bots as Array<{ id: string; name: string }>)
+      .filter((bot) => savedNames.some((name) => bot.name === `${name} 2`));
+    await expect.poll(async () => (await copies()).length, { timeout: 10_000 }).toBe(savedNames.length);
+    const bots = await copies();
     for (const bot of bots) {
       const skills = (await api(`/api/bots/${bot.id}/skills`)).skills as Array<{ enabled: boolean }>;
       expect(skills.every((skill) => !skill.enabled)).toBe(true);
     }
-    process.stdout.write(`${JSON.stringify({ fixture: info!, savedFile: true, importedSection: "Sales desk 2" })}\n`);
+    process.stdout.write(`${JSON.stringify({ fixture: info!, savedFile: true, imported: bots.map((bot) => bot.name) })}\n`);
   }, launchTimeout + 120_000);
 });

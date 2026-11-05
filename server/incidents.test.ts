@@ -5,24 +5,18 @@ import { chiefForBot, INCIDENT_HARD_LIMIT, INCIDENT_RETRY_LIMIT, IncidentLedger,
 import { withPeerProvenance } from "./peer-provenance.ts";
 
 const bots = [
-  { id: "clive", name: "Clive", section: "Ops", chiefOfStaff: true },
-  { id: "ada", name: "Ada", section: "Ops" },
-  { id: "ben", name: "Ben", section: "Research" },
-  { id: "rita", name: "Rita", section: "Research", chiefOfStaff: true, hidden: true },
-  { id: "maya", name: "Maya", section: "Sales", chiefOfStaff: true, managedSections: ["Research"] },
-  { id: "solo", name: "Solo", section: "Alone" },
+  { id: "rita", name: "Rita", chiefOfStaff: true, hidden: true },
+  { id: "clive", name: "Clive", chiefOfStaff: true },
+  { id: "ada", name: "Ada" },
 ];
 
 describe("chiefForBot", () => {
-  it("picks the Chief of the bot's own section first, then a Chief allowed to coordinate it", () => {
-    expect(chiefForBot(bots, bots[1]!)?.id).toBe("clive");
-    // Research's own Chief is hidden; Maya may coordinate Research
-    expect(chiefForBot(bots, bots[2]!)?.id).toBe("maya");
+  it("picks the one visible Chief, never a hidden one", () => {
+    expect(chiefForBot(bots, bots[2]!)?.id).toBe("clive");
   });
-  it("gives a Chief no Chief, and a section with none goes to the person", () => {
-    expect(chiefForBot(bots, bots[0]!)).toBeNull();
-    expect(chiefForBot(bots, bots[4]!)).toBeNull();
-    expect(chiefForBot(bots, bots[5]!)).toBeNull();
+  it("gives a Chief no Chief, and with no visible Chief the problem goes to the person", () => {
+    expect(chiefForBot(bots, bots[1]!)).toBeNull();
+    expect(chiefForBot([bots[0]!, bots[2]!], bots[2]!)).toBeNull();
   });
 });
 
@@ -80,7 +74,7 @@ describe("incidentRequest", () => {
 describe("incident wording", () => {
   const incident: Incident = {
     kind: "failed",
-    bot: { id: "ada", name: "Ada", section: "Ops" },
+    bot: { id: "ada", name: "Ada" },
     threadId: "t-ada",
     title: "Invoice reconciliation",
     detail: "exit_before_result",

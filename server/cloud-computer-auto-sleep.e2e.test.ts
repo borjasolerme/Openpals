@@ -26,7 +26,6 @@ type Call = { method: string; path: string; at: number };
 describe("a cloud computer goes to sleep after use and wakes on the next", () => {
   let home = "";
   let data = "";
-  let gate = "";
   let usesGate = "";
   let dockerLog = "";
   let base = "";
@@ -64,7 +63,6 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
   const rowOf = (name: string | undefined) => rows.find(row => row.name === name)!;
   const task = async (botId: string) => (await apiOk("GET", "/api/bots?messages=0")).bots.find((bot: any) => bot.id === botId);
   const idle = (botId: string) => until(() => task(botId), bot => bot?.busy === false);
-  const busy = (botId: string) => until(() => task(botId), bot => bot?.busy === true);
   const send = (botId: string, text: string) => apiOk("POST", `/api/bots/${botId}/messages`, { text });
   const newBot = async (name: string, patch: Record<string, unknown>) => {
     const { bot } = await apiOk("POST", "/api/bots", { name });
@@ -154,7 +152,6 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
 
     home = mkdtempSync(join(tmpdir(), "omb-cloud-sleep-"));
     data = join(home, "data");
-    gate = join(home, "finish");
     usesGate = join(home, "finish-uses");
     dockerLog = join(home, "docker.log");
     mkdirSync(data, { recursive: true });
@@ -164,8 +161,6 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
     writeFileSync(join(data, "config.json"), JSON.stringify({ instances: {
       // Every turn first takes one screenshot through the cloud computer's tools, as a model's first computer call does.
       uses: { driver: "claudeAgent", config: { cli: FAKE_CLAUDE }, environment: { FAKE_CLAUDE_USES_CLOUD_COMPUTER: "1" } },
-      // Works until the gate file exists, touching no computer.
-      slow: { driver: "claudeAgent", config: { cli: FAKE_CLAUDE }, environment: { FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate } },
       // One screenshot, then works until its own gate file exists.
       usesSlow: { driver: "claudeAgent", config: { cli: FAKE_CLAUDE }, environment: {
         FAKE_CLAUDE_USES_CLOUD_COMPUTER: "1", FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: usesGate,
@@ -258,44 +253,14 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
     expect(stops.at(-1)!.at - released).toBeGreaterThanOrEqual(IDLE_MS - 250);
   }, 60_000);
 
-  let teamBox = "";
-  let ada: { id: string; name: string; threadId: string };
-  let ben: { id: string; name: string; threadId: string };
-
-  it("a team's shared computer sleeps only once every bot on the team is idle", async () => {
-    const requestId = randomUUID();
-    await apiOk("POST", "/api/team-computers", { requestId, name: "Ops desktop", acknowledgeCost: true });
-    teamBox = rows.at(-1)!.id;
-    ada = await newBot("Ada", { ...model("uses"), section: "Ops" });
-    ben = await newBot("Ben", { ...model("slow"), section: "Ops", computer: "off" });
-    await apiOk("PATCH", `/api/team-computers/${requestId}`, { section: "Ops", acknowledgeSharedAccess: true });
-
-    rmSync(gate, { force: true });
-    await send(ben.id, "Draft the quarterly plan");
-    await busy(ben.id);
-    await send(ada.id, "Take a screenshot of the team desktop");
-    await idle(ada.id);
-    const quietFrom = stopsOf(teamBox).length;
-    expect(rows.find(row => row.id === teamBox)!.state).toBe("ready");
-
-    await pause(IDLE_MS * 3);
-    expect(stopsOf(teamBox)).toHaveLength(quietFrom);
-
-    writeFileSync(gate, "finish");
-    await idle(ben.id);
-    const teamIdle = Date.now();
-    const stops = await until(() => stopsOf(teamBox), found => found.length === quietFrom + 1);
-    expect(stops.at(-1)!.at - teamIdle).toBeGreaterThanOrEqual(IDLE_MS - 500);
-  }, 90_000);
-
   it("after a restart, every computer this installation left on gets the same idle window", async () => {
     await waitForExit(child!, { signal: "SIGTERM" });
     child = null;
-    for (const id of [workerBox, teamBox]) rows.find(row => row.id === id)!.state = "ready";
-    const before = { worker: stopsOf(workerBox).length, team: stopsOf(teamBox).length };
+    rows.find(row => row.id === workerBox)!.state = "ready";
+    const before = stopsOf(workerBox).length;
     const started = Date.now();
     await launch();
-    await until(() => [stopsOf(workerBox).length, stopsOf(teamBox).length], ([w, t]) => w === before.worker + 1 && t === before.team + 1);
+    await until(() => stopsOf(workerBox).length, count => count === before + 1);
     expect(stopsOf(workerBox).at(-1)!.at - started).toBeGreaterThanOrEqual(IDLE_MS);
     expect(rows.every(row => row.state === "archived")).toBe(true);
   }, 90_000);
@@ -333,22 +298,6 @@ describe("a cloud computer goes to sleep after use and wakes on the next", () =>
     expect(offStops.at(-1)!.at - off).toBeLessThan(IDLE_MS * 3);
     await apiOk("PATCH", `/api/bots/${worker.id}`, { computer: "cloud" });
     await apiOk("DELETE", `/api/routines/${routine.id}`);
-  }, 60_000);
-
-  it("a teammate's routine keeps the team's shared computer on; one for a teammate whose computer is off does not", async () => {
-    const cy = await newBot("Cy", { ...model("uses"), section: "Ops" });
-    const teammate = await routineAt(cy.id, 20 * 60_000);
-    const offline = await routineAt(ben.id, 20 * 60_000);
-    await send(ada.id, "Take a screenshot of the team desktop");
-    await idle(ada.id);
-    const before = stopsOf(teamBox).length;
-    expect(rows.find(row => row.id === teamBox)!.state).toBe("ready");
-    await pause(IDLE_MS * 3);
-    expect(stopsOf(teamBox)).toHaveLength(before);
-
-    await apiOk("DELETE", `/api/routines/${teammate.id}`);
-    await until(() => stopsOf(teamBox), found => found.length === before + 1);
-    await apiOk("DELETE", `/api/routines/${offline.id}`);
   }, 60_000);
 
   it.skipIf(process.platform === "win32")("never touches a VPS: its activity starts no idle stop of any kind", async () => {

@@ -290,12 +290,6 @@ async function main() {
   }));
   const kiwi = kiwiCreated.body.bot;
   if (!kiwi) throw new Error(`could not create Kiwi: ${JSON.stringify(kiwiCreated.body)}`);
-  const filed = await json(`${SIDECAR}/api/sidebar-sections`, asDevice({
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ name: "Fixtures", botIds: [kiwi.id] }),
-  }));
-  if (filed.status !== 200) throw new Error(`could not file Kiwi: ${JSON.stringify(filed.body)}`);
   const souled = await json(`${SIDECAR}/api/bots/${kiwi.id}/profile`, asDevice({
     method: "PATCH",
     headers: { "content-type": "application/json" },
@@ -333,14 +327,14 @@ async function main() {
     { kind: "decision", name: "Ship Android first", detail: "Decided in the Monday sync" },
     { kind: "term", name: "MCHQ", detail: "MissionControlHQ, the old name" },
   ]) {
-    const added = await json(`${SIDECAR}/api/team-memory?section=`, asDevice({
+    const added = await json(`${SIDECAR}/api/team-memory`, asDevice({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(entry),
     }));
     if (added.status !== 201) throw new Error(`could not add team memory: ${JSON.stringify(added.body)}`);
   }
-  const memory = await json(`${SIDECAR}/api/team-memory?section=`, asDevice());
+  const memory = await json(`${SIDECAR}/api/team-memory`, asDevice());
   if (memory.status !== 200) throw new Error(`could not read team memory: ${JSON.stringify(memory.body)}`);
   write("team-memory", memory.body);
 

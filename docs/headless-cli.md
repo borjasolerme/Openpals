@@ -218,44 +218,42 @@ machine). Changing keys needs a session with full access.
 
 ## The team file
 
-A team file says what the workspace should have: teams and their briefs, bots
-with their standing instructions, models, approval levels and computers,
+A team file says what the workspace should have: bots with their standing
+instructions, models, approval levels and computers,
 skills, rooms, and the engines they run on. Write it in YAML or JSON.
 
 ```sh
 openmausbot team apply launch-room.yaml             # plan, then apply
 openmausbot team apply launch-room.yaml --dry-run   # only the plan
 openmausbot team apply launch-room.yaml --check     # exit 6 if anything would change (CI)
-openmausbot team export --team "Launch Room" --out exported.yaml
+openmausbot team export --out exported.yaml
 ```
 
 Apply prints its plan, then makes the changes:
 
 ```text
-team "Launch Room": create · brief set (5 lines)
-bot "Room Lead": create (Chief of Launch Room · claude/claude-sonnet-5-5 · Full access · computer local)
+bot "Room Lead": create (Chief of Staff · claude/claude-sonnet-5-5 · Full access · computer local)
 bot "Priya": update title "Buyer" → "Skeptical procurement manager"; soul 3 lines changed
 bot "Old visitor": not in file (kept; --prune deletes it)
-Plan: 6 to create, 1 to change, 0 unchanged, 0 to delete.
-Applied: 6 created, 1 changed, 0 deleted.
+Plan: 5 to create, 1 to change, 0 unchanged, 0 to delete.
+Applied: 5 created, 1 changed, 0 deleted.
 ```
 
 Run it again and it prints `No changes.` and sends nothing: it compares the
 file with what the server holds, field by field. Bots are matched by name (any
-case), or by `was:` when you rename one; of two bots with one name, the one
-already in the file's team. A rename onto a name another bot has is refused.
-A field the file leaves out is left as it is (a new `model` on the same engine
-keeps the bot's effort). Teams are never deleted, nor skills the file does not
-list. Bots and rooms a team no longer lists are deleted only with `--prune`,
-and only in a team marked `prune: true`. Apply is not atomic: if a step is
+case), or by `was:` when you rename one. A rename onto a name another bot has
+is refused. A field the file leaves out is left as it is (a new `model` on the
+same engine keeps the bot's effort). Skills the file does not list are never
+deleted. Bots and rooms the file leaves out are deleted only with `--prune`,
+and only from a file marked `prune: true`; the workspace's default bot and
+hidden bots are never deleted. Apply is not atomic: if a step is
 refused it stops, says what it had already done, and exits 1; applying again
 carries on. A bot that is in the middle of a turn is changed once it is idle,
 waiting up to `--wait-idle` (2 minutes) and then reporting it.
 
 Every change goes through the same requests the app makes, with the same
 checks. Apply adds no confirmations of its own: where the server needs one
-(Auto on this computer, a Chief's access to other teams), the file saying so
-is the confirmation.
+(Auto on this computer), the file saying so is the confirmation.
 
 ### Fields
 
@@ -267,18 +265,13 @@ engines:                                    # optional; needs full access
   openaiCompatible: { key: SECRET, baseUrl: URL | SECRET }
   # SECRET is { env: NAME } or { file: PATH }. A key written in the file is refused.
 defaults: BOT FIELDS                        # every bot gets these unless it sets its own
-teams:
-  - name: Launch Room                       # 1-60 characters
-    brief: TEXT | { file: PATH }            # the team's shared instructions
-    prune: false                            # --prune may delete its bots and rooms the file leaves out
+prune: false                                # --prune may delete bots and rooms the file leaves out
 bots:                                       # at least one
   - name: Room Lead                         # 1-100 characters, unique
     was: Old name                           # rename that bot instead of making a new one
-    team: Launch Room
     title: Launch rehearsal lead
     description: TEXT
-    chief: true                             # Chief of Staff of its team (one per team); false removes it
-    manages: [Support]                      # other teams this Chief is also in charge of (every bot reaches every bot anyway)
+    chief: true                             # the Chief of Staff (one for all the bots); false removes it
     soul: TEXT | { file: PATH }             # standing instructions, at most 24,000 bytes
     model: claude/claude-sonnet-5-5         # INSTANCE/MODEL; openmausbot models lists them
     effort: none | low | medium | high | xhigh | max
@@ -291,20 +284,19 @@ bots:                                       # at least one
       - { file: skills/launch-report/SKILL.md, enabled: true }
 rooms:
   - name: Rehearsal
-    team: Launch Room
     members: [Room Lead, Priya]             # bot names
     brief: TEXT | { file: PATH }
     responder: everyone | mentions | BOT NAME
 ```
 
 Paths are relative to the team file. Apply refuses (exit 2), naming where:
-an unknown field, a duplicate name, two Chiefs in one team, `manages` without
-`chief`, a model not written as `INSTANCE/MODEL`, a `cwd` that is not a full
+an unknown field, a duplicate name, two Chiefs, a model not written as
+`INSTANCE/MODEL`, a `cwd` that is not a full
 path on the server (`/work/room`, or `C:\work\room` on a Windows server; `~`
 is refused too: it would not mean the same there), a missing file or
 environment variable, a key written into the file, and anything longer than
 the app takes (a name or title on more than one line or over 100 or 200
-characters, a soul or team brief over 24,000 bytes, a room brief over 12,000
+characters, a soul over 24,000 bytes, a room brief over 12,000
 characters, a skill over 256 KiB). It warns about a bot with no `computer`: on
 `auto` it may ask which computer to use, and nobody is there to answer a
 headless run. An engine's key, and a base URL kept as a secret, are read only
@@ -326,7 +318,7 @@ tool: the bot's selection is cleared.
 `team export` writes the workspace in this format, skills as `SKILL.md` files
 beside it and engine keys as `{ env: SET_ME }` placeholders, so applying an
 export to the same workspace prints `No changes.`. A key written into a soul,
-a brief or a skill is taken out (`«redacted N chars»`), as the app's own team
+a room brief or a skill is taken out (`«redacted N chars»`), as the app's own team
 export takes it out, and the export says where; apply leaves a field with that
 mark as it is, so the secret stays only on the server.
 
@@ -347,22 +339,13 @@ engines:
     install: true                            # install Claude Code if the sandbox lacks it
 
 defaults:
-  team: Launch Room
   model: claude/claude-haiku-5-5
   approval: full                             # nobody is there to answer a permission card
   computer: browser                          # works only in its own built-in browser
   browser: { enabled: true, profile: guest } # a fresh temporary profile per bot
   cwd: /work/visitors                        # where screenshots go (create it first)
 
-teams:
-  - name: Launch Room
-    prune: true
-    brief: |
-      We rehearse a product launch before it happens. Visitors use the site the way a
-      first-time visitor would. Never sign up with real details, pay, post or email anyone.
-      Never ask the person anything: if something blocks you, say exactly what and stop.
-      Save a screenshot at every step as <your-name>-<step>.png in your folder, and end
-      your report with a Markdown list linking each one.
+prune: true                                  # --prune deletes bots and rooms this file leaves out
 
 bots:
   - name: Room Lead
@@ -383,11 +366,17 @@ bots:
     soul: |
       You are Priya, 41, who buys software for a 200-person company. You distrust vague
       claims and look for pricing, security and who else uses it before anything else.
+      Never sign up with real details, pay, post or email anyone, and never ask the person
+      anything. Save a screenshot at every step as priya-<step>.png in your folder, and end
+      your report with a Markdown list linking each one.
   - name: Marcus
     title: Rushed founder on a phone-sized screen
     soul: |
       You are Marcus, 29, running a two-person startup. You give a site 30 seconds,
       skim headlines, and try the main button first. Use a 390x844 viewport.
+      Never sign up with real details, pay, post or email anyone, and never ask the person
+      anything. Save a screenshot at every step as marcus-<step>.png in your folder, and end
+      your report with a Markdown list linking each one.
 ```
 
 Then rehearse, wait for every visitor, and keep the report, transcripts and

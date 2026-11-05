@@ -166,34 +166,4 @@ describe("taking control never waits for the screen preview", () => {
     expect(shots, "two panels watching share one capture").toHaveLength(1);
     expect((await apiOk("POST", `/api/bots/${bot.id}/computer/control`, { action: "release" })).held).toBe(false);
   }, 60_000);
-
-  it("a team's shared computer: the same, from the bot and from the Team map", async () => {
-    const requestId = randomUUID();
-    await apiOk("POST", "/api/team-computers", { requestId, name: "Ops desktop", acknowledgeCost: true });
-    const box = rows.at(-1)!.id;
-    const ada = await newBot("Ada", { section: "Ops" });
-    await apiOk("PATCH", `/api/team-computers/${requestId}`, { section: "Ops", acknowledgeSharedAccess: true });
-    shots.length = 0;
-    hold();
-    const first = api("POST", `/api/bots/${ada.id}/computer/screenshot?threadId=${ada.threadId}`, {});
-    await until(() => shots.length, count => count === 1);
-    expect(shots).toEqual([box]);
-
-    const took = await api("POST", `/api/bots/${ada.id}/computer/control`, { action: "take" });
-    expect(took.status, `take control waited on the preview: ${JSON.stringify(took.body)}`).toBe(200);
-    const joined = await api("POST", `/api/bots/${ada.id}/computer/join?threadId=${ada.threadId}`, {});
-    expect(joined.status, `the desktop link waited on the preview: ${JSON.stringify(joined.body)}`).toBe(200);
-    expect((await apiOk("POST", `/api/bots/${ada.id}/computer/control`, { action: "release" })).held).toBe(false);
-    const lease = randomUUID();
-    const map = await api("POST", `/api/team-computers/${requestId}/control`, { action: "take", controlLeaseId: lease });
-    expect(map.status, `the Team map's take waited on the preview: ${JSON.stringify(map.body)}`).toBe(200);
-    expect(map.body.owned).toBe(true);
-    const mapJoined = await api("POST", `/api/team-computers/${requestId}/join`, {});
-    expect(mapJoined.status, `the Team map's desktop link waited on the preview: ${JSON.stringify(mapJoined.body)}`).toBe(200);
-    expect(mapJoined.body.joinUrl).toBe(`https://desktop.invalid/${box}`);
-    await apiOk("POST", `/api/team-computers/${requestId}/control`, { action: "release", controlLeaseId: lease });
-
-    releaseShots();
-    expect((await first).status).toBe(200);
-  }, 60_000);
 });

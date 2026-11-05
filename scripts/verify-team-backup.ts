@@ -18,9 +18,9 @@ export async function verifyTeamBackup(report: (event: unknown) => void = () => 
   try {
     const doctor = await command("doctor") as { ok: boolean };
     assert.equal(doctor.ok, true);
-    const { bot } = await command("new-bot", "--name", "Backup probe", "--section", "Original team") as { bot: { id: string } };
+    const { bot } = await command("new-bot", "--name", "Backup probe") as { bot: { id: string } };
     await request(`/api/bots/${bot.id}`, { method: "PATCH", body: JSON.stringify({ chiefOfStaff: true }) }, url);
-    await post("/api/groups", { name: "Existing room", memberIds: [bot.id], section: "Original team" });
+    await post("/api/groups", { name: "Existing room", memberIds: [bot.id] });
     const soul = "Keep the fixture's standing instructions. 🐭\n";
     await request(`/api/bots/${bot.id}/profile`, { method: "PATCH", body: JSON.stringify({ soul }) }, url);
     report({ command: "save standing instructions", botId: bot.id, soul });
@@ -35,7 +35,7 @@ export async function verifyTeamBackup(report: (event: unknown) => void = () => 
     assert.equal(imported.bots.length, before.bots.length);
     const added = imported.bots.find((candidate: { name: string }) => candidate.name === "Backup probe 2");
     assert.ok(added);
-    assert.equal(added.section, "Original team 2");
+    assert.ok(!added.chiefOfStaff);
     assert.equal(added.soul, soul);
     const after = await request("/api/bots", {}, url);
     for (const existing of before.bots) assert.deepEqual(after.bots.find((candidate: { id: string }) => candidate.id === existing.id), existing);
@@ -56,31 +56,28 @@ export async function verifyTeamBackup(report: (event: unknown) => void = () => 
     assert.equal(manifest.team.members.find((member: { name: string }) => member.name === "Backup probe").soul, soul);
     const fromManifest = await post("/api/teams/import?mode=add", manifest);
     assert.equal(fromManifest.bots.find((candidate: { name: string }) => candidate.name === "Backup probe 3").soul, soul);
-    assert.ok(fromManifest.bots.every((candidate: { section?: string }) => candidate.section === "Fixture manifest"));
     const packageExport = await post("/api/teams/export", { format: "package", name: "Fixture manifest" });
     // Older library files, repeated imports, project rooms and Markdown all
     // use the same additive path. Compare EVERY existing record each time,
-    // including previous imports, section Chiefs and room membership.
-    for (const [index, example] of [
+    // including previous imports, the Chief and room membership.
+    for (const example of [
       { format: "legacy v1", path: "/api/teams/import?mode=add", body: { ...manifest, version: 1, team: { ...manifest.team, room: { name: "Ignored legacy room", defaultResponder: { kind: "everyone" } } } } },
       { format: "legacy v2 project", path: "/api/teams/import?mode=project&room=Template%20room", body: manifest },
       { format: "Markdown package", path: "/api/teams/import?mode=add", body: packageExport.markdown },
       { format: "repeated Markdown package", path: "/api/teams/import?mode=add", body: packageExport.markdown },
-    ].entries()) {
+    ]) {
       const existing = await request("/api/bots", {}, url);
       const result = await post(example.path, example.body);
-      const section = `Fixture manifest ${index + 2}`;
       assert.ok(result.bots.length > 0);
-      assert.ok(result.bots.every((candidate: { section?: string; messages: unknown[] }) => candidate.section === section && candidate.messages.length === 0));
-      assert.ok(result.groups.every((candidate: { section?: string }) => candidate.section === section));
-      if (example.format.includes("project")) assert.equal(result.group.section, section);
+      assert.ok(result.bots.every((candidate: { chiefOfStaff?: boolean; messages: unknown[] }) => !candidate.chiefOfStaff && candidate.messages.length === 0));
+      if (example.format.includes("project")) assert.ok(result.group);
       const current = await request("/api/bots", {}, url);
       assert.equal(current.bots.length, existing.bots.length + result.bots.length);
       assert.equal(current.groups.length, existing.groups.length + result.groups.length);
       for (const value of existing.bots) assert.deepEqual(current.bots.find((candidate: { id: string }) => candidate.id === value.id), value);
       for (const value of existing.groups) assert.deepEqual(current.groups.find((candidate: { id: string }) => candidate.id === value.id), value);
       assert.deepEqual(await command("messages", "--bot", bot.id, "--limit", "10"), transcript);
-      report({ command: "import template", format: example.format, section, existingBotsKept: existing.bots.length, existingRoomsKept: existing.groups.length });
+      report({ command: "import template", format: example.format, existingBotsKept: existing.bots.length, existingRoomsKept: existing.groups.length });
     }
     await command("send", "--bot", fromManifest.bots[0].id, "--text", "Confirm the imported template is ready. Reply once.");
     assert.equal((await command("wait", "--bot", fromManifest.bots[0].id, "--timeout", "30") as { status: string }).status, "settled");
@@ -92,7 +89,7 @@ export async function verifyTeamBackup(report: (event: unknown) => void = () => 
     assert.equal(resumed.status, "settled");
     await command("messages", "--bot", added.id, "--limit", "10");
     assert.deepEqual(await command("messages", "--bot", bot.id, "--limit", "10"), transcript);
-    const result = { ok: true, existingBotsKept: before.bots.length, importedBots: imported.bots.length, originalConversationUnchanged: true, importedConversationContinued: true, standingInstructionsPreserved: true, templateSectionsIsolated: true, logPath: fixture.info.logPath };
+    const result = { ok: true, existingBotsKept: before.bots.length, importedBots: imported.bots.length, originalConversationUnchanged: true, importedConversationContinued: true, standingInstructionsPreserved: true, logPath: fixture.info.logPath };
     report(result);
     return result;
   } finally {

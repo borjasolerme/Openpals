@@ -13,7 +13,7 @@ import { Store } from "./store.ts";
 
 // Recorded with the real Claude CLI: the prompt each scenario was sent, and the 32 replies with the options shown.
 const evaluation = JSON.parse(readFileSync(new URL("./testing/fixtures/setup-suggestions-eval.json", import.meta.url), "utf8")) as {
-  scenarios: Array<{ id: string; ctx: { name?: string | null; title?: string; department?: string; apps?: string[]; about?: string; jobs?: string[];
+  scenarios: Array<{ id: string; ctx: { name?: string | null; title?: string; apps?: string[]; about?: string; jobs?: string[];
     language: string; code: string; canBrowse?: boolean } }>;
   prompts: Record<string, string>;
   replies: Array<{ scenario: string; text: string; shown: string[] | null }>;
@@ -22,7 +22,7 @@ const evaluation = JSON.parse(readFileSync(new URL("./testing/fixtures/setup-sug
 describe("the prompt", () => {
   it("is the one the recorded run used, for every scenario", () => {
     for (const { id, ctx } of evaluation.scenarios) {
-      const prompt = setupSuggestionPrompt({ name: ctx.name ?? undefined, title: ctx.title, department: ctx.department, apps: ctx.apps ?? [],
+      const prompt = setupSuggestionPrompt({ name: ctx.name ?? undefined, title: ctx.title, apps: ctx.apps ?? [],
         aboutMe: ctx.about || undefined, otherJobs: ctx.jobs ?? [], language: ctx.language, canBrowse: ctx.canBrowse ?? true });
       expect(prompt, id).toBe(evaluation.prompts[id]);
     }
@@ -102,14 +102,14 @@ describe("what is sent", () => {
     expect(worthAsking({ ...nothing, languageCode: "de" }, null)).toBe(true);
   });
 
-  it("sends a typed name, the title, the department and what the other bots do, and on a shared place no About me or other bots", () => {
+  it("sends a typed name, the title and what the other bots do, and on a shared place no About me or other bots", () => {
     const bot = (extra: Record<string, unknown>) => ({ id: "b", name: "Pesto", title: "", description: "", ...extra }) as unknown as BotRecord;
-    const made = bot({ id: "new", name: "Ledger", title: "Bookkeeper", section: "Finance" });
+    const made = bot({ id: "new", name: "Ledger", title: "Bookkeeper" });
     const bots = [made, bot({ id: "a", title: "Travel planner" }), bot({ id: "b", description: "Plans meals\nand shops" }),
       bot({ id: "c", title: "Hidden", hidden: true }), bot({ id: "d", title: "Default", defaultBot: {} }),
       bot({ id: "e", title: "Chief", chiefOfStaff: true })];
     const place = { bots, shared: false, aboutMe: "I keep the books for a bakery.", languageCode: "pt-BR", canBrowse: true };
-    expect(suggestionBasis(made, place)).toEqual({ name: "Ledger", title: "Bookkeeper", department: "Finance", aboutMe: "I keep the books for a bakery.",
+    expect(suggestionBasis(made, place)).toEqual({ name: "Ledger", title: "Bookkeeper", aboutMe: "I keep the books for a bakery.",
       otherJobs: ["Travel planner", "Plans meals"], language: "Brazilian Portuguese", languageCode: "pt-BR", canBrowse: true });
     expect(suggestionBasis(bot({ id: "new", name: "Pesto 2" }), { ...place, shared: true })).toEqual({ otherJobs: [], language: "Brazilian Portuguese",
       languageCode: "pt-BR", canBrowse: true });
@@ -294,7 +294,7 @@ describe("renaming a new bot before its card is answered", () => {
     ]);
   });
 
-  it("follows a rename by any path, and a new title or department too", async () => {
+  it("follows a rename by any path, and a new title too", async () => {
     const s = setup();
     s.store.patchBot(s.bot.id, { name: "Gardener" });
     await s.settle();
@@ -302,7 +302,7 @@ describe("renaming a new bot before its card is answered", () => {
     s.store.patchBotProfile(s.bot.id, { name: "Pepper", title: "Party Planner" });
     await s.settle();
     expect(s.calls.at(-1)!.name).toBe("");
-    s.store.patchBot(s.bot.id, { section: "Hiring" });
+    s.store.patchBotProfile(s.bot.id, { title: "Host" });
     await s.settle();
     expect(s.calls).toHaveLength(3);
     s.store.patchBotProfile(s.bot.id, { notifications: false });

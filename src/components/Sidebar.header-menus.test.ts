@@ -144,6 +144,5 @@ describe("sidebar header menu: New chat", () => {
     vi.stubGlobal("document", { body: {} });
     const tree = render();
     expect(tree.some((node) => node.type === SidebarNewChatPanel)).toBe(true);
-    expect(text(tree)).not.toContain("Create department");
   });
 });

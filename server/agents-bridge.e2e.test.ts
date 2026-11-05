@@ -177,7 +177,7 @@ it("keeps a turn on the whole catalog until the switch is on, then mounts the br
       // that refuses it, as it refuses the same call made directly.
       const other = { title: "Lead", reason: "asked", for_bot_id: teammate.id };
       const refused = await use(ask, "propose_profile", other);
-      expect(refusalOf(refused)).toContain("only a section's Chief of Staff can change another bot's profile");
+      expect(refusalOf(refused)).toContain("only the Chief of Staff can change another bot's profile");
       expect(refused.result).toEqual((await call(ask, "propose_profile", other)).result);
     });
     // A tool selection saved after this turn decided to bridge is the one in
@@ -257,7 +257,7 @@ it("leaves every gate and limit where it was: a tool selection, a Chief-only too
       const scout = { name: "Scout", role: "Ops", instructions: "Work." };
       const direct = await call(ask, "create_bot", scout);
       const throughBridge = await use(ask, "create_bot", scout);
-      expect(refusalOf(throughBridge)).toContain("only a section's Chief of Staff can create operator bots");
+      expect(refusalOf(throughBridge)).toContain("only the Chief of Staff can create operator bots");
       expect(throughBridge.result).toEqual(direct.result);
     });
 

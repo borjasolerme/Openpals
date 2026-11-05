@@ -108,9 +108,9 @@ async function launch() {
 it("reports an account's weekly limit with its reset to the person and the Chief, never as setup or an update", async () => {
   const { api, control, messages, play, told, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Tango", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Tango"])).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const pesto = (await control(["new-bot", "--name", "Pesto", "--section", "Ops"])).bot;
+    const pesto = (await control(["new-bot", "--name", "Pesto"])).bot;
     play(pesto.id, "usage-limit", weekly(Math.floor(Date.now() / 1000) + 3 * 86_400));
 
     await control(["send", "--bot", pesto.id, "--text", "Hey talk to @Tango"]);
@@ -137,8 +137,8 @@ it("reports an account's weekly limit with its reset to the person and the Chief
 it("tells a Chief whose teammate is past its weekly limit which limit it is and when it resets", async () => {
   const { control, handOff, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Tango", "--section", "Ops"])).bot;
-    const pesto = (await control(["new-bot", "--name", "Pesto", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Tango"])).bot;
+    const pesto = (await control(["new-bot", "--name", "Pesto"])).bot;
     const resumed = await handOff(chief.activeTaskId, chief, pesto, () => control(["send", "--bot", chief.id, "--text", "Have Pesto draft the launch note."]));
     expect(resumed).toMatch(LIMIT_WITH_RESET);
     expect(resumed).not.toMatch(/\bquota\b|stop_sequence|update_required/);
@@ -150,8 +150,8 @@ it("tells a Chief whose teammate is past its weekly limit which limit it is and 
 it("tells a room's coordinator that a teammate is past its weekly limit, with the reset", async () => {
   const { api, control, handOff, close } = await launch();
   try {
-    const chief = (await control(["new-bot", "--name", "Tango", "--section", "Ops"])).bot;
-    const pesto = (await control(["new-bot", "--name", "Pesto", "--section", "Ops"])).bot;
+    const chief = (await control(["new-bot", "--name", "Tango"])).bot;
+    const pesto = (await control(["new-bot", "--name", "Pesto"])).bot;
     const room = (await api("POST", "/api/groups", {
       name: "Launch", memberIds: [chief.id, pesto.id], setup: { bulletin: "", defaultResponder: { kind: "member", botId: chief.id } },
     })).group;

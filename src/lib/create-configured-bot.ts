@@ -26,13 +26,13 @@ export async function createConfiguredBot(
   visibility?: BotVisibility,
 ): Promise<{ bot: Bot; warnings: string[] }> {
   const template = await preparedBotTemplate(draft);
-  const { chiefOfStaff, managedSections, toolScope, modelSelection, ...profile } = template.profile;
+  const { chiefOfStaff, toolScope, modelSelection, ...profile } = template.profile;
   if (!profile.name?.trim()) throw new Error("Give the bot a name");
   const preset = draft.preset;
   const chosenAi = modelSelection?.instanceId && modelSelection.model ? { modelSelection, requireAvailableModel: true } : {};
   const response = await request<{ bot: Bot }>("/api/bots", {
     method: "POST", body: JSON.stringify({ name: profile.name, title: profile.title,
-      description: profile.description, ...chosenAi, section: profile.section,
+      description: profile.description, ...chosenAi,
       useDefaults: false, ...(visibility !== undefined ? { visibility } : {}),
       ...(Object.hasOwn(template.profile, "toolScope") ? { settings: { toolScope } } : {}),
       ...(preset ? { preset: preset.id } : {}) }),
@@ -87,7 +87,7 @@ export async function createConfiguredBot(
   if (chiefOfStaff) {
     try {
       const result = await request<{ bot: Bot }>(`/api/bots/${bot.id}`, {
-        method: "PATCH", body: JSON.stringify({ chiefOfStaff, managedSections, acknowledgePeerScope: true }),
+        method: "PATCH", body: JSON.stringify({ chiefOfStaff }),
       });
       bot = { ...bot, ...result.bot };
     } catch (error) {

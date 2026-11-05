@@ -18,7 +18,6 @@ export interface SuggestionFacts {
   /** As typed; absent when it is blank or the server picked it (isPickedBotName). */
   name?: string;
   title?: string;
-  department?: string;
   /** Display names of the connected apps this bot may use. */
   apps: readonly string[];
   /** Single-person installs only: aboutMeExcerpt(cfg.profile.aboutMe). */
@@ -46,14 +45,13 @@ export function setupSuggestionPrompt(facts: SuggestionFacts): string {
   const named = [
     ["Bot name", factLine(facts.name, 80)],
     ["Bot's title", factLine(facts.title, 120)],
-    ["Bot's department", factLine(facts.department, 60)],
   ].filter(([, value]) => value).map(([label, value]) => `${label}: ${value}`);
   const apps = facts.apps.map((app) => factLine(app, 40)).filter(Boolean).slice(0, 15);
   const about = factLine(facts.aboutMe, 1500);
   const jobs = facts.otherJobs.map((job) => factLine(job, 120)).filter(Boolean).slice(0, 12);
   const rules = [
     named.length
-      ? 'First look at what the bot is called: its name, and its title or department if given. If that names a job, a role or a department, in any language (like "Party Planner", "Sales" or "Jardinero"), all 5 options are tasks within that job. If it is only a name (like "Max"), offer 5 different kinds of everyday help.'
+      ? 'First look at what the bot is called: its name, and its title if given. If that names a job or a role, in any language (like "Party Planner", "Sales" or "Jardinero"), all 5 options are tasks within that job. If it is only a name (like "Max"), offer 5 different kinds of everyday help.'
       : "Nothing says what the bot's job is: offer 5 different kinds of everyday help.",
     "Write exactly 5 options that differ from each other. Put the most useful option first.",
     "Each option is one concrete job in 3 to 5 words: a plain verb (like find, check, sort, draft, remind or compare) and the thing it works on. No broad areas and no vague verbs (such as manage, organize, handle or monitor).",
@@ -166,7 +164,7 @@ export function aboutMeExcerpt(text: string | undefined, redact: (text: string) 
 /** The fixed answers are as good when there is nothing to go on, and they show without a wait. */
 export function worthAsking(facts: SuggestionBasis, apps: SuggestionApps): boolean {
   if (!hasSetupChoices(facts.languageCode)) return true;
-  return Boolean(facts.name || facts.title || facts.department || facts.aboutMe || facts.otherJobs.length
+  return Boolean(facts.name || facts.title || facts.aboutMe || facts.otherJobs.length
     || (apps && ("later" in apps || apps.known.length)));
 }
 
@@ -193,9 +191,9 @@ const sleep = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolv
 
 const typedName = (name: string): string | undefined => (name.trim() && !isPickedBotName(name) ? name : undefined);
 
-/** What the prompt reads first: the typed name, the title and the department. */
-const calledKey = (bot: Pick<BotRecord, "name" | "title" | "section">): string =>
-  JSON.stringify([factLine(typedName(bot.name), 80), factLine(bot.title, 120), factLine(bot.section, 60)]);
+/** What the prompt reads first: the typed name and the title. */
+const calledKey = (bot: Pick<BotRecord, "name" | "title">): string =>
+  JSON.stringify([factLine(typedName(bot.name), 80), factLine(bot.title, 120)]);
 
 /** One writing of a bot's card; a newer one for the same bot supersedes it. */
 interface CardJob {
@@ -368,7 +366,6 @@ export function suggestionBasis(bot: BotRecord, place: { bots: readonly BotRecor
   return {
     ...(typedName(bot.name) ? { name: bot.name } : {}),
     ...(bot.title ? { title: bot.title } : {}),
-    ...(bot.section ? { department: bot.section } : {}),
     ...(aboutMe ? { aboutMe } : {}),
     otherJobs: place.shared ? [] : place.bots
       .filter((other) => other.id !== bot.id && !other.hidden && !other.defaultBot && !other.chiefOfStaff)

@@ -86,15 +86,15 @@ async function chiefJob(test: (f: any) => Promise<void>) {
     };
     const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
     // The team works at Ask, as Claude Code does there, so its approvals are cards.
-    const bot = async (name: string, section: string) => {
-      const made = (await cli("new-bot", "--name", name, "--section", section)).bot;
+    const bot = async (name: string) => {
+      const made = (await cli("new-bot", "--name", name)).bot;
       expect((await api("PATCH", `/api/bots/${made.id}`, { approvalMode: "ask" })).status).toBe(200);
       return made;
     };
-    const clive = await bot("Clive", "Leadership");
-    const mira = await bot("Mira", "Engineering");
-    const eli = await bot("Eli", "Engineering");
-    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true, managedSections: ["Engineering"], acknowledgePeerScope: true })).status).toBe(200);
+    const clive = await bot("Clive");
+    const mira = await bot("Mira");
+    const eli = await bot("Eli");
+    expect((await api("PATCH", `/api/bots/${clive.id}`, { chiefOfStaff: true })).status).toBe(200);
     const compat = { key: "synthetic-fixture-key", url: `http://127.0.0.1:${(model.address() as AddressInfo).port}/v1`, model: "loop-model" };
     expect((await api("PATCH", "/api/config", { openaiCompat: compat })).status).toBe(200);
     await cli("set-model", "--bot", eli.id, "--instance", "openaiCompat", "--model", "loop-model");
@@ -518,7 +518,7 @@ it("tells a teammate the person's job is its task, and a routine's handoff is no
     mcpCommand: "/fixture/cua-driver", mcpArgs: ["mcp"], mcpEnv: {} }), { mode: 0o600 });
   // A call acts only if it got the computer within a second (production: 5).
   await f.restart("SIGTERM", { OMB_TEST_DESKTOP_CUA_CONNECTION: join(userData, "cua-connection.json"), OMB_COMPUTER_CALL_ACT_WITHIN_MS: "1000" });
-  const kai = await f.bot("Kai", "Engineering");
+  const kai = await f.bot("Kai");
   f.script(f.clive.id,
     { key: "S0", match: ["PHASE-SCREEN-MARCH"], steps: [{ arguments: { bot_ids: [f.mira.id], message: "EXPORT-MARCH: export March from the invoice app on screen." } }], reply: "S0: Mira is exporting March." },
     { key: "S1", match: [SETTLED, "PHASE-SCREEN-MARCH"], reply: "MARCH-FINAL: March is exported." },

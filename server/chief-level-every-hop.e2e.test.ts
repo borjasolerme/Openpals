@@ -36,11 +36,11 @@ it("carries a Chief's level down every hop it hands out, in threads and in a roo
   const plan = (botId: string, ...turns: any[]) => { (plans[botId] ??= { turns: [] }).turns.push(...turns); writeFileSync(planPath, JSON.stringify(plans)); };
   const turnOf = (botId: string, index = 0) => providerTurns().filter(turn => turn.botId === botId)[index];
   try {
-    const chief = (await cli("new-bot", "--name", "Clive", "--section", "Operations")).bot;
+    const chief = (await cli("new-bot", "--name", "Clive")).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const ada = (await cli("new-bot", "--name", "Ada", "--section", "Operations")).bot;
-    const bea = (await cli("new-bot", "--name", "Bea", "--section", "Operations")).bot;
-    const ola = (await cli("new-bot", "--name", "Ola", "--section", "Operations")).bot;
+    const ada = (await cli("new-bot", "--name", "Ada")).bot;
+    const bea = (await cli("new-bot", "--name", "Bea")).bot;
+    const ola = (await cli("new-bot", "--name", "Ola")).bot;
     // The person put Clive, and Ola, an ordinary bot, on Approve for me; Ada and Bea on Ask, below the Full default.
     for (const auto of [chief, ola]) await api("PATCH", `/api/bots/${auto.id}`, { approvalMode: "auto", acknowledgeLocalAuto: true, applyToAllThreads: true });
     for (const teammate of [ada, bea]) await api("PATCH", `/api/bots/${teammate.id}`, { approvalMode: "ask" });

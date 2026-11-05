@@ -459,7 +459,6 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
     };
   }
   if (member === "create_room") {
-    if (args.section !== undefined) return { text: "manage_room takes no section: leave it out and try again.", isError: true };
     const roomName = String(args.name ?? "").trim();
     const memberIds = Array.isArray(args.member_bot_ids)
       ? args.member_bot_ids.map((id) => String(id).trim()).filter(Boolean)
@@ -487,7 +486,6 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
     };
   }
   if (member === "manage_room") {
-    if (args.section !== undefined || args.action === "set_section") return { text: "manage_room takes no section and has no set_section action: leave them out and try again.", isError: true };
     const roomId = String(args.room_id ?? "").trim();
     const action = String(args.action ?? "").trim();
     if (!roomId || !action) {

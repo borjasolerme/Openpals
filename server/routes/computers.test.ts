@@ -25,13 +25,11 @@ beforeEach(() => {
 function fixture(bots: BotRecord[], cfg: AppConfig) {
   // Only what the VPS remove endpoint touches; any other dependency is absent, and a route that reached for one would throw.
   const deps = {
-    store: { bot: () => null, bots, sections: [] },
+    store: { bot: () => null, bots },
     cfg,
     computerProviderConfigTransitions: new Set(),
     managedBoatOwners: () => [],
     claimManagedVpsMutation: () => () => {},
-    teamComputers: { list: () => [] },
-    routines: () => null,
   } as unknown as ComputerRouteDeps;
   const handler = createComputerRoutes(deps);
   const postRemove = async (body: Record<string, unknown>) => {

@@ -11,11 +11,7 @@
     {
       "key": "chief",
       "name": "Clive",
-      "section": "Leadership",
       "chiefOfStaff": true,
-      "managedSections": [
-        "Engineering"
-      ],
       "acknowledgePeerScope": true,
       "turns": [
         {
@@ -43,7 +39,6 @@
     {
       "key": "lead",
       "name": "Engineering lead",
-      "section": "Engineering",
       "turns": [
         {
           "gate": "leadWork",

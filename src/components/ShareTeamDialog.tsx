@@ -115,15 +115,16 @@ export function ShareSkillChoices({ available, ticked, counted, onToggle }: {
   );
 }
 
-export function ShareTeamDialog({ team, onClose }: { team: string; onClose: () => void }) {
+/** Shares every visible bot as one team. */
+export function ShareTeamDialog({ onClose }: { onClose: () => void }) {
   const { state } = useStore();
   const dialogRef = useRef<HTMLDivElement>(null);
   const teamBots = useMemo(
-    () => state.bots.filter((bot) => !bot.hidden && (bot.section?.trim() ?? "") === team),
-    [state.bots, team],
+    () => state.bots.filter((bot) => !bot.hidden),
+    [state.bots],
   );
   const botNames = useMemo(() => new Map(teamBots.map((bot) => [bot.id, bot.name])), [teamBots]);
-  const [name, setName] = useState(team || t("teamLibrary.general"));
+  const [name, setName] = useState(t("teamLibrary.yourBots"));
   const [tagline, setTagline] = useState("");
   const [summary, setSummary] = useState("");
   const [release, setRelease] = useState("");
@@ -168,7 +169,6 @@ export function ShareTeamDialog({ team, onClose }: { team: string; onClose: () =
   }, [includePreset, presetPicture]);
 
   const choices = useCallback((dryRun: boolean): ShareChoices => ({
-    team,
     name,
     tagline,
     summary,
@@ -179,7 +179,7 @@ export function ShareTeamDialog({ team, onClose }: { team: string; onClose: () =
     ...(includePictures && pictures ? { avatars: pictures.avatars } : {}),
     ...(includePreset ? { includeDefaultsPreset: true, ...(includePictures && presetPicture?.dataUrl ? { presetAvatar: presetPicture.dataUrl } : {}) } : {}),
     dryRun,
-  }), [team, name, tagline, summary, release, notes, skillChoice, available, includeMemory, includePictures, pictures, includePreset, presetPicture]);
+  }), [name, tagline, summary, release, notes, skillChoice, available, includeMemory, includePictures, pictures, includePreset, presetPicture]);
 
   useEffect(() => {
     if (!pictures) return;
@@ -250,7 +250,7 @@ export function ShareTeamDialog({ team, onClose }: { team: string; onClose: () =
         }}>
         <header className="flex items-start justify-between gap-3 px-6 pb-2 pt-5">
           <div>
-            <h2 id="share-team-title" className="text-[17px] font-semibold">{t("teamShare.title", { name: team || t("teamLibrary.general") })}</h2>
+            <h2 id="share-team-title" className="text-[17px] font-semibold">{t("teamShare.title", { name: t("teamLibrary.yourBots") })}</h2>
             <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("teamShare.intro")}</p>
           </div>
           <button aria-label={t("teamShare.close")} disabled={saving} onClick={onClose} className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised"><X size={18} /></button>

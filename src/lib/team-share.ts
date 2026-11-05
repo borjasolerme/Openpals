@@ -17,7 +17,6 @@ export type ShareSkipReason =
 export interface ShareSkip { part: string; reason: ShareSkipReason | string }
 
 export interface ShareChoices {
-  team: string;
   name?: string;
   tagline?: string;
   summary?: string;
@@ -75,7 +74,6 @@ export function shareRequestBody(choices: ShareChoices): Record<string, unknown>
   return {
     format: "package",
     version: 2,
-    team: choices.team,
     name: text(choices.name),
     tagline: text(choices.tagline),
     summary: text(choices.summary),

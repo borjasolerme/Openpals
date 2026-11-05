@@ -48,10 +48,10 @@ skills are added switched off and they can be removed the same way.
 
 Two ways, both saving the same file format ([team-sharing.md](team-sharing.md)):
 
-- **With a department.** In **Share department…**, tick **Include my New bot defaults as
-  a preset**. It is off unless you tick it: your New bot defaults are yours
-  until you share them. The department's **Include starter notes** box also decides
-  whether the preset's notes go in.
+- **With your team.** In **Templates → Share → Share…**, tick **Include my New
+  bot defaults as a preset**. It is off unless you tick it: your New bot
+  defaults are yours until you share them. The **Include starter notes** box
+  also decides whether the preset's notes go in.
 - **On their own.** **Settings → General → Defaults for new bots → Share as
   preset…** saves a preset file: the preset and its skills, no team, no bots.
   Choose the preset's name, a description, the version and whether to include
@@ -91,10 +91,10 @@ All admin scope.
   are the request's own fields, as for any bot.
 - `POST /api/teams/export` with `includeDefaultsPreset: true` (and optionally
   `presetName`, `presetDescription`, `presetAvatar` as a data URL) adds the
-  New bot defaults preset to a team file. With `kind: "library"` instead of
-  `team`, it saves a preset file (`name`, `release`, `notes`, `includeMemory`,
-  `dryRun` as for a team).
+  New bot defaults preset to a team file. With `kind: "library"`, it saves a
+  preset file (`name`, `release`, `notes`, `includeMemory`, `dryRun` as for a
+  team).
 - `POST /api/teams/import` adds a preset file's presets and answers
-  `{presets: [{id, key, name}], offeredSkills, bots: [], section: ""}`.
+  `{presets: [{id, key, name}], offeredSkills, bots: []}`.
 
 See [verification/presets.md](verification/presets.md) for how this is tested.

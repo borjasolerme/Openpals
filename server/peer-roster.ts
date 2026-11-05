@@ -8,16 +8,12 @@ export interface RosterMember extends Pick<DefaultBotFields, "defaultBot"> {
   description?: string;
   busy?: boolean;
   hidden?: boolean;
-  section?: string;
   chiefOfStaff?: boolean;
-  managedSections?: string[];
   /** Unset: every visible bot; a list narrows to those ids; [] cuts the bot off from peers. */
   peers?: string[];
   activity?: BotActivity;
   visibility?: unknown;
 }
-
-const sectionKey = (section?: string): string => section?.trim() || "";
 
 export const PEER_ACCESS_HELP = "Every bot can reach every other bot, and list_bots shows each one with its exact id. A bot it does not show is archived or shared with different people, so it cannot be reached. Never use computer control to get around this.";
 
@@ -28,27 +24,9 @@ export function peerAccessHelp(from: Pick<RosterMember, "name" | "peers">): stri
   return `${name} is set to talk only to certain bots, so list_bots shows just those. Tell the person in one plain sentence; they can let ${name} talk to every bot in ${name}'s settings, under Permissions. Never use computer control to get around this.`;
 }
 
-// Authority (supervising, incidents, escalations, setup changes, automations, a person's brief) follows the stored section
-// and a Chief's managedSections. Reach below never widens it.
-
-/** A title, peer id, imported persona or room membership is not a grant; invalid saved grants fail closed. */
-export function hasTeamAuthority(
-  from: Pick<RosterMember, "section" | "chiefOfStaff" | "managedSections">,
-  section?: string,
-): boolean {
-  const target = sectionKey(section);
-  return target === sectionKey(from.section) || Boolean(from.chiefOfStaff &&
-    Array.isArray(from.managedSections) && from.managedSections.some(value =>
-      typeof value === "string" && sectionKey(value) === target));
-}
-
-export function hasAuthority(from: RosterMember, target: RosterMember): boolean {
-  return hasTeamAuthority(from, target.section);
-}
-
-/** May change `target`'s setup, automations or threads: authority, and never past what reach allows. */
+/** May change `target`'s setup, automations or threads: never past what reach allows. */
 export function canManage(from: RosterMember, target: RosterMember): boolean {
-  return canReach(from, target) && hasAuthority(from, target);
+  return canReach(from, target);
 }
 
 export type PeerStatus = "available" | "working" | "waiting-on-user" | "not-responding" | "unavailable";

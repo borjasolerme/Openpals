@@ -7,13 +7,13 @@ const BOB: Viewer = { kind: "member", email: "bob@example.test" };
 const NOBODY: Viewer = { kind: "member" };
 
 const bots = [
-  { id: "pub", threadId: "t-pub", section: "Ops", tasks: [{ threadId: "t-pub" }, { threadId: "t-pub-2" }] },
-  { id: "hr", threadId: "t-hr", section: "People", visibility: { people: ["ada@example.test"] }, avatarUrl: "/api/attachments/hr.png", tasks: [{ threadId: "t-hr" }] },
-  { id: "adm", threadId: "t-adm", section: "People", visibility: "admins" },
+  { id: "pub", threadId: "t-pub", tasks: [{ threadId: "t-pub" }, { threadId: "t-pub-2" }] },
+  { id: "hr", threadId: "t-hr", visibility: { people: ["ada@example.test"] }, avatarUrl: "/api/attachments/hr.png", tasks: [{ threadId: "t-hr" }] },
+  { id: "adm", threadId: "t-adm", visibility: "admins" },
   { id: "corp", threadId: "t-corp", visibility: { people: ["@example.test"] } },
 ];
 const groups = [
-  { id: "room-pub", threadId: "t-room-pub", memberIds: ["pub"], section: "Ops" },
+  { id: "room-pub", threadId: "t-room-pub", memberIds: ["pub"] },
   { id: "room-mixed", threadId: "t-room-mixed", memberIds: ["pub", "hr"], tasks: [{ threadId: "t-room-mixed-2" }] },
   { id: "room-empty", threadId: "t-room-empty", memberIds: ["gone"] },
 ];
@@ -104,17 +104,15 @@ describe("VisibleSet", () => {
     expect(admin.thread("t-hr")).toBe(true);
   });
 
-  it("answers bots, rooms, threads and sections for a member", () => {
+  it("answers bots, rooms and threads for a member", () => {
     const bob = new VisibleSet(bots, groups, BOB);
     expect(bob.everything).toBe(false);
     expect([bob.bot("pub"), bob.bot("hr"), bob.bot("adm"), bob.bot("corp"), bob.bot("unknown")]).toEqual([true, false, false, true, false]);
     expect([bob.group("room-pub"), bob.group("room-mixed"), bob.group("room-empty")]).toEqual([true, false, false]);
     expect([bob.thread("t-pub-2"), bob.thread("t-hr"), bob.thread("t-room-mixed-2"), bob.thread("t-unknown")]).toEqual([true, false, false, false]);
-    expect(bob.sections(["Ops", "People", "Empty"])).toEqual(["Ops"]);
 
     const ada = new VisibleSet(bots, groups, ADA);
     expect([ada.bot("hr"), ada.bot("adm"), ada.group("room-mixed"), ada.thread("t-room-mixed-2")]).toEqual([true, false, true, true]);
-    expect(ada.sections(["Ops", "People"])).toEqual(["Ops", "People"]);
   });
 
   it("refuses an attachment only when everything that uses it is hidden", () => {
@@ -203,7 +201,6 @@ describe("live frames for a member", () => {
     expect(frameForMember(message, ctx, seen())).toBe(message);
     const hook = { kind: "webhook.attempt", attempt: { webhookId: "hook-pub" } };
     expect(frameForMember(hook, ctx, seen())).toBe(hook);
-    expect(frameForMember({ kind: "sections", sections: ["Ops", "People"] }, ctx, seen())).toEqual({ kind: "sections", sections: ["Ops"] });
     expect(frameForMember({ kind: "bot.queued", queues: { "t-pub": [1], "t-hr": [2] } }, ctx, seen())).toEqual({ kind: "bot.queued", queues: { "t-pub": [1] } });
     expect(frameForMember({ kind: "bots.order", botIds: ["hr", "pub", "corp"] }, ctx, seen())).toEqual({ kind: "bots.order", botIds: ["pub", "corp"] });
     const config = { kind: "config", membership: {} };

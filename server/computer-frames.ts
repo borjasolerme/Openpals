@@ -3,7 +3,7 @@
 import type { MapComputerState } from "../shared/map-computer.ts";
 import { SLEEPING_BOAT_STATES } from "./boat.ts";
 
-/** A cloud computer this installation manages, keyed by its owner: a bot id, or a team computer's owner key. */
+/** A cloud computer this installation manages, keyed by its owner: a bot id. */
 export interface FrameMachine {
   owner: string;
   boxId: string;

@@ -5,7 +5,7 @@ import { CONNECTOR_SLUG_PATTERN, CONNECTOR_TOOL_NAME_PATTERN, MAUS_COLOR_NAMES }
 import { parseToolScope, type ToolScope } from "./tool-scope.ts";
 
 export const MAX_TEAM_BACKUP_BYTES = 50 * 1024 * 1024;
-export const TEAM_BACKUP_CONTENTS = "Bot profiles, instructions, sections, rooms, playbooks, routines, each bot's memory (MEMORY.md, topic notes and daily logs) and conversation text (all tasks and branches).";
+export const TEAM_BACKUP_CONTENTS = "Bot profiles, instructions, rooms, playbooks, routines, each bot's memory (MEMORY.md, topic notes and daily logs) and conversation text (all tasks and branches).";
 export const TEAM_BACKUP_EXCLUSIONS = "Files, images, custom avatars, account connections, model settings and permissions are not included. Action cards are saved as text. Memory is saved with secrets removed. Imported routines start paused.";
 
 const key = z.string().min(1).max(200);
@@ -43,7 +43,6 @@ const task = z.object({
 const owner = {
   key,
   name,
-  section: z.string().max(200).optional(),
   activeTask: key,
   tasks: z.array(task).min(1).max(10_000),
 };
@@ -161,14 +160,7 @@ export function parseTeamBackup(input: unknown): TeamBackup {
   };
   const bots = unique(backup.bots.map((bot) => bot.key), "bot key");
   const groups = unique(backup.groups.map((group) => group.key), "room key");
-  const chiefs = new Set<string>();
-  for (const bot of backup.bots) {
-    if (!bot.chiefOfStaff) continue;
-    // Persisted section identity is its exact trimmed display label.
-    const section = bot.section?.trim() ?? "";
-    if (chiefs.has(section) || bot.hidden) throw new Error("Invalid backup: a section must have at most one visible Chief of Staff");
-    chiefs.add(section);
-  }
+  if (backup.bots.some((bot) => bot.chiefOfStaff && bot.hidden)) throw new Error("Invalid backup: a Chief of Staff must be visible");
   for (const group of backup.groups) {
     if (group.memberIds.some((id) => !bots.has(id))) throw new Error("Invalid backup: unknown room member");
     unique(group.memberIds, "room member");

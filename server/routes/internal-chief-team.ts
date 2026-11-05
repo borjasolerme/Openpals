@@ -1,4 +1,4 @@
-import { hasTeamAuthority, peerAllowed } from "../peer-roster.ts"; import { chiefLevel } from "../chief-level.ts";
+import { peerAllowed } from "../peer-roster.ts"; import { chiefLevel } from "../chief-level.ts";
 import type { BotRecord } from "../store.ts";
 import { libraryTeamRoles } from "../team-library.ts";
 import { PASS, type RouteHandler } from "./table.ts";
@@ -19,7 +19,6 @@ export function createInternalChiefTeamRoutes(deps: {
   /** The calling bot as stored now; read again after every wait. */
   bot(): BotRecord | null;
   requireActive(): void;
-  teams(): string[];
   bots(): readonly BotRecord[];
   instances(): Promise<readonly CatalogInstance[]>;
   library?: typeof libraryTeamRoles;
@@ -46,12 +45,11 @@ export function createInternalChiefTeamRoutes(deps: {
     const current = chief();
     if (!current) return json(res, 403, { error: NOT_CHIEF });
     return json(res, 200, {
-      teams: deps.teams().filter((name) => hasTeamAuthority(current, name)),
-      bots: deps.bots().filter((bot) => !bot.hidden && hasTeamAuthority(current, bot.section) && (bot.id === current.id || peerAllowed(current, bot)))
-        .map((bot) => ({ id: bot.id, name: bot.name, title: bot.title, section: bot.section ?? "", modelSelection: bot.modelSelection, chiefOfStaff: Boolean(bot.chiefOfStaff) })),
+      bots: deps.bots().filter((bot) => !bot.hidden && (bot.id === current.id || peerAllowed(current, bot)))
+        .map((bot) => ({ id: bot.id, name: bot.name, title: bot.title, modelSelection: bot.modelSelection, chiefOfStaff: Boolean(bot.chiefOfStaff) })),
       instances: instances.map((instance) => ({ instanceId: instance.instanceId, driverKind: instance.driverKind, displayName: instance.displayName,
         state: instance.snapshot.state, models: instance.models, effortLevels: instance.capabilities?.effortLevels ?? [] })),
-      scope: "Bot model defaults apply to groups and new threads; existing threads retain their models. Requested team setup applies immediately, and the person can undo it. Existing unauthorized teams remain outside this Chief's scope.",
+      scope: "Bot model defaults apply to groups and new threads; existing threads retain their models. Requested team setup applies immediately, and the person can undo it.",
     });
   };
 }

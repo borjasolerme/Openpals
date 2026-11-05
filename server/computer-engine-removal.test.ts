@@ -1,10 +1,10 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BUILT_IN_DRIVERS } from "./drivers/builtIn.ts";
 import { computerEngineMoveText, removedComputerInstanceIds, writeComputerEngineMoveLines } from "./computer-engine-removal.ts";
 import { DATA_DIR, instanceConfigs, persistableInstanceConfigs, type AppConfig } from "./config.ts";
-import { SECTION_CONTEXTS_FILE } from "./section-context.ts";
 import { Store, type BotRecord } from "./store.ts";
 
 describe("the Computer engine is not offered", () => {
@@ -45,9 +45,8 @@ describe("moving saved bots off the engine", () => {
   const newBotDefault = () => ({ instanceId: "claude", model: "claude-model" });
   const replacement = { instanceId: "claude", model: "claude-model" };
   const removed = new Set(["computer"]);
-  /** This server has a Boat account, the bot's cloud backend is Boat, and no
-   * team computer serves its section: on Auto, the removed engine ran on the
-   * bot's own cloud computer. */
+  /** This server has a Boat account and the bot's cloud backend is Boat: on
+   * Auto, the removed engine ran on the bot's own cloud computer. */
   const boat = { driverKind: "claudeAgent", canWorkOnCloud: true, keepCloud: (bot: BotRecord) => bot.cloudBackend !== "vps" };
   const noBoat = { driverKind: "claudeAgent", canWorkOnCloud: true, keepCloud: () => false };
   /** The same server, but the engine a new bot gets has no computer tools:
@@ -246,15 +245,16 @@ describe("moving saved bots off the engine", () => {
   it("changes nothing when the save fails, so the next try moves the bot", () => {
     const store = new Store(newBotDefault);
     const bot = store.createBot({ modelSelection: { instanceId: "computer", model: "claude-fable-5" } }, { seedMessages: false });
-    // An unreadable teams file stops every bots save.
-    mkdirSync(DATA_DIR, { recursive: true });
-    writeFileSync(SECTION_CONTEXTS_FILE, "not json");
+    // A folder where bots.json belongs stops every bots save.
+    const botsFile = join(DATA_DIR, "bots.json");
+    rmSync(botsFile, { force: true });
+    mkdirSync(join(botsFile, "blocked"), { recursive: true });
 
     expect(() => store.retireInstances(removed, replacement, boat)).toThrow();
     expect(store.bot(bot.id)).toMatchObject({ modelSelection: { instanceId: "computer", model: "claude-fable-5" } });
     expect(store.bot(bot.id)?.computer).toBeUndefined();
 
-    rmSync(SECTION_CONTEXTS_FILE, { force: true });
+    rmSync(botsFile, { recursive: true, force: true });
     expect(store.retireInstances(removed, replacement, boat)).toEqual([
       { botId: bot.id, threadId: bot.threadId, scope: "bot", cloud: true, noComputer: false, askNow: false },
     ]);

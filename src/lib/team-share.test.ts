@@ -42,11 +42,11 @@ const leadOverLimit = { part: "agents[lead].skills[pricing-policy]", reason: "bo
 
 describe("share team request", () => {
   it("builds the v2 export body without empty text or empty pictures", () => {
-    expect(shareRequestBody({ team: "Sales desk", name: " Sales ", tagline: "  ", skills: "all", includeMemory: true, avatars: {}, dryRun: true }))
-      .toEqual({ format: "package", version: 2, team: "Sales desk", name: "Sales", tagline: undefined, summary: undefined, release: undefined,
+    expect(shareRequestBody({ name: " Sales ", tagline: "  ", skills: "all", includeMemory: true, avatars: {}, dryRun: true }))
+      .toEqual({ format: "package", version: 2, name: "Sales", tagline: undefined, summary: undefined, release: undefined,
         notes: undefined, skills: "all", includeMemory: true, dryRun: true });
-    expect(shareRequestBody({ team: "", skills: ["a"], includeMemory: false, avatars: { b1: "data:x" } }))
-      .toMatchObject({ team: "", skills: ["a"], includeMemory: false, avatars: { b1: "data:x" } });
+    expect(shareRequestBody({ skills: ["a"], includeMemory: false, avatars: { b1: "data:x" } }))
+      .toMatchObject({ skills: ["a"], includeMemory: false, avatars: { b1: "data:x" } });
   });
 });
 
@@ -94,7 +94,7 @@ describe("the dialog's state", () => {
 
   it("starts with pictures and starter notes included, and says so under the notes box", () => {
     expect(SHARE_DIALOG_DEFAULTS).toEqual({ includePictures: true, includeMemory: true });
-    expect(shareRequestBody({ team: "Desk", skills: "all", includeMemory: SHARE_DIALOG_DEFAULTS.includeMemory })).toMatchObject({ includeMemory: true });
+    expect(shareRequestBody({ skills: "all", includeMemory: SHARE_DIALOG_DEFAULTS.includeMemory })).toMatchObject({ includeMemory: true });
     expect(notesLine(SHARE_DIALOG_DEFAULTS.includeMemory)).toMatch(/^Starter notes are included/);
     expect(notesLine(false)).toMatch(/^Starter notes are not included/);
   });
@@ -169,6 +169,6 @@ describe("part names", () => {
     expect(describeSkip({ part: "agents[scout].skills[step-31]", reason: "bot_skill_limit" }, document))
       .toBe("Scout · skill · step-31 — a bot can share at most 30 skills (switched-on skills go first)");
     expect(describeSkip({ part: "skills[pricing]", reason: "skill_conflict" }, document)).toBe("pricing · skill — two bots have different skills with this name");
-    expect(describeSkip({ part: "skills[extra]", reason: "team_skill_limit" }, document)).toBe("extra · skill — a department can share at most 60 skills");
+    expect(describeSkip({ part: "skills[extra]", reason: "team_skill_limit" }, document)).toBe("extra · skill — a team can share at most 60 skills");
   });
 });

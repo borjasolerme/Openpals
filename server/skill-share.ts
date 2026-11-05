@@ -37,7 +37,6 @@ export function shareLearnedSkillsMode(cfg: AppConfig): ShareLearnedSkillsMode {
 export interface ShareBot {
   id: string;
   name: string;
-  section?: string;
   assignedSkills?: string[];
   /** Absent: everyone may see the bot. */
   visibility?: unknown;
@@ -61,12 +60,9 @@ const WIDER_AUDIENCE = "more people can see it than could see where the skill wa
 
 type PatchAssigned = (botId: string, assignedSkills: string[]) => void;
 
-const sectionKey = (section?: string | null): string => section?.trim() || "";
-
-/** Unsectioned bots form one team. */
+/** Every other bot is a teammate. */
 export function teammatesOf(author: ShareBot, bots: readonly ShareBot[]): ShareBot[] {
-  const team = sectionKey(author.section);
-  return bots.filter((bot) => bot.id !== author.id && sectionKey(bot.section) === team);
+  return bots.filter((bot) => bot.id !== author.id);
 }
 
 function sha256Hex(text: string): string {

@@ -100,8 +100,7 @@ The tools are `list_room_targets` and `coordinate_bots`. Discovery includes
 reachable bots as well as rooms. The latter addresses 1–4 existing bots in this
 room (default), or — in ordinary direct chat without a room — the sender's one
 thread with each recipient for that conversation. Every bot can reach every
-other bot, in any department; a Chief's authority over other departments is a
-separate grant ([Chief authority](team-access.md)).
+other bot; a bot's own peers list is the one setting that narrows that.
 A multi-recipient room request posts its brief once, addressed to all accepted
 recipients. Each recipient still has a separate execution and result. An
 identical retry does not post again; different briefs remain separate. Requests
@@ -262,13 +261,14 @@ with the second job queued in the first member's thread. After release it
 checks three result cards and three "Sent to" lines in the room, the
 first member's two turns in one thread, and one resume of the Lead.
 
-### Rooms that mix departments
+### Peers lists in rooms
 
-A room's members can come from any department, a Chief that manages none of
-them included: they list each other with `list_room_targets` and hand each
-other work with `coordinate_bots` like any room. A bot's own peers list still
-narrows what it can address, and a revoked peer is refused before queued work
-starts.
+Room members list each other with `list_room_targets` and hand each other work
+with `coordinate_bots`. A bot's own peers list narrows what it can address, and
+a revoked peer is refused before queued work starts. When a peers list is set
+(for example by a template), **Permissions** names the bots in it and offers
+**Let it talk to every bot**, and a bot it blocks is told to say so in plain
+words naming that setting.
 
 ```sh
 pnpm exec vitest run server/peer-roster.test.ts server/post-to-room.test.ts server/room-coordination.e2e.test.ts server/direct-coordination.e2e.test.ts server/runtime-coordinator.test.ts server/peer-allowlist.e2e.test.ts
@@ -278,8 +278,8 @@ The coordination suites use `launchVerificationServer`, `control-omb`, and the
 actual agents MCP proxy with a scripted provider and disposable HOME/data.
 They assert discovered targets, accepted or refused tool calls, durable
 handoff state, the destination conversation, and absence of dispatch after
-revocation. They cover both named-section and sectionless Chiefs; the posting
-suite independently checks room listing and transcript writes. These are
+revocation. The posting suite independently checks room listing and transcript
+writes. These are
 server workflow checks, not UI or live-model verification.
 
 ### Work for a bot outside the room
@@ -294,14 +294,13 @@ this room." (naming the room when sent from elsewhere), linking to that thread,
 the receipt says so, and the reply resumes the sender as any direct hand-off's
 does. A room whose setup is unfinished keeps its
 refusal, and a member who left a room's job thread still stops. Nothing asks
-the person to add the bot; `manage_room` stays limited to rooms in the Chief's
-own department.
+the person to add the bot; `manage_room` stays the Chief's tool.
 
 ```sh
 pnpm exec vitest run server/host/room-access.test.ts server/room-coordination.e2e.test.ts
 ```
 
-The e2e test has a Chief in a room create three bots in its department and hand
+The e2e test has a Chief in a room create three bots and hand
 them work with the room as `group_id`: each runs in a thread of its own without
 the room's bulletin, the room's members stay the same, the room shows the three
 notes and three result cards, the Chief resumes once, and no card waits on the
@@ -339,7 +338,7 @@ OMB_UI_E2E=1 pnpm exec vitest run scripts/testing/direct-coordination-ui.e2e.tes
 The integration suite launches the disposable control fixture and drives the
 actual injected agents MCP proxy with a scripted provider. It checks same-room
 multi-recipient consultation, cross-room work and return, busy peers, cancellation,
-provider failure, thread pinning, section changes, peer revocation, explicit
+provider failure, thread pinning, peer revocation, explicit
 approvals and validation. Multiple required approvals are presented together;
 no recipient starts until all are allowed. It does not claim model judgment or artifact correctness.
 The direct-chat suite exercises Clive → lead → specialist → lead → Clive with
@@ -416,7 +415,7 @@ preview/server processes afterward; retain evidence without credentials.
 
 ## Limits and safety
 
-Peer lists and peer approvals still apply; departments never limit who works with whom.
+Peer lists and peer approvals still apply.
 Every turn — a chat, a room, a routine run, a webhook run, a goal run, a
 standing external runtime — hands teammate work on with the
 one `coordinate_bots` tool (work, a question with `consult`, a one-way notice

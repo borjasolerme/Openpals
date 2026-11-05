@@ -207,14 +207,13 @@ export const TOOLS: McpToolDefinition[] = [
   },
   {
     name: "create_bot",
-    description: "Create a new bot and optionally configure its profile, section, and exact model selection.",
+    description: "Create a new bot and optionally configure its profile and exact model selection.",
     inputSchema: {
       type: "object",
       properties: {
         name: { type: "string", description: "Bot display name." },
         title: { type: "string", description: "Optional short role title." },
         description: { type: "string", description: "Optional persona or responsibility description." },
-        section: { type: "string", description: "Optional sidebar section." },
         instance_id: { type: "string", description: "Optional provider instance ID; model is required with it." },
         model: { type: "string", description: "Optional exact model ID; instance_id is required with it." },
         effort: { type: "string", enum: ["none", "low", "medium", "high", "xhigh", "max"] },
@@ -234,7 +233,6 @@ export const TOOLS: McpToolDefinition[] = [
         name: { type: "string", description: "Optional bot display name." },
         title: { type: "string", description: "Optional short role title." },
         description: { type: "string", description: "Optional persona or responsibility description." },
-        section: { type: ["string", "null"], description: "Optional sidebar section. Null clears it." },
       },
       required: ["bot_id"],
       additionalProperties: false,
@@ -290,7 +288,6 @@ export const TOOLS: McpToolDefinition[] = [
       properties: {
         name: { type: "string", description: "Channel name." },
         member_ids: { type: "array", items: { type: "string" }, minItems: 1, uniqueItems: true },
-        section: { type: "string", description: "Optional sidebar section." },
         bulletin: { type: "string", description: "Optional shared instructions for channel members." },
         default_responder: {
           oneOf: [
@@ -307,14 +304,13 @@ export const TOOLS: McpToolDefinition[] = [
   },
   {
     name: "update_channel",
-    description: "Update a channel's name, members, section, bulletin, or default responder.",
+    description: "Update a channel's name, members, bulletin, or default responder.",
     inputSchema: {
       type: "object",
       properties: {
         channel_id: { type: "string", description: "The ID of the channel." },
         name: { type: "string" },
         member_ids: { type: "array", items: { type: "string" }, minItems: 1, uniqueItems: true },
-        section: { type: ["string", "null"], description: "Null clears the section." },
         bulletin: { type: "string" },
         default_responder: {
           oneOf: [
@@ -615,7 +611,6 @@ function projectBot(bot: Record<string, any>) {
     name: bot.name,
     title: bot.title,
     description: bot.description,
-    section: bot.section ?? null,
     chiefOfStaff: Boolean(bot.chiefOfStaff),
     modelSelection: bot.modelSelection,
     busy: Boolean(bot.busy),
@@ -634,7 +629,6 @@ function projectChannel(channel: Record<string, any>) {
     memberIds: channel.memberIds,
     bulletin: channel.bulletin,
     defaultResponder: channel.defaultResponder,
-    section: channel.section ?? null,
     directMessage: Boolean(channel.dm),
     working: Boolean(channel.working),
     busyBotId: channel.busyBotId ?? null,
@@ -859,7 +853,6 @@ export async function handleToolCall(
       const name = stringArg(args, "name", { max: 100 });
       const title = optionalStringArg(args, "title", { trim: false, allowEmpty: true, max: 200 });
       const description = optionalStringArg(args, "description", { trim: false, allowEmpty: true, max: 4_000 });
-      const section = optionalStringArg(args, "section", { max: 60 });
       const wantsModel = args.instance_id !== undefined || args.model !== undefined || args.effort !== undefined;
       if (wantsModel && (args.instance_id === undefined || args.model === undefined)) {
         throw new ToolInputError("instance_id and model must be provided together");
@@ -871,7 +864,6 @@ export async function handleToolCall(
           name,
           ...(title !== undefined ? { title } : {}),
           ...(description !== undefined ? { description } : {}),
-          ...(section !== undefined ? { section } : {}),
           ...(selection ? { modelSelection: selection, requireAvailableModel: true } : {}),
         }),
       });
@@ -887,7 +879,6 @@ export async function handleToolCall(
       if (args.name !== undefined) patch.name = stringArg(args, "name", { max: 100 });
       if (args.title !== undefined) patch.title = stringArg(args, "title", { trim: false, allowEmpty: true, max: 200 });
       if (args.description !== undefined) patch.description = stringArg(args, "description", { trim: false, allowEmpty: true, max: 4_000 });
-      if ("section" in args) patch.section = args.section === null ? null : stringArg(args, "section", { max: 60 });
       if (!Object.keys(patch).length) throw new ToolInputError("provide at least one profile field to update");
       const result = await fetcher(`/api/bots/${encodeURIComponent(botId)}`, {
         method: "PATCH",
@@ -946,7 +937,6 @@ export async function handleToolCall(
     case "create_channel": {
       const name = stringArg(args, "name", { max: 100 });
       const memberIds = stringArrayArg(args, "member_ids");
-      const section = optionalStringArg(args, "section", { max: 60 });
       const bulletin = optionalStringArg(args, "bulletin", { trim: false, allowEmpty: true, max: 12_000 }) ?? "";
       const requestedResponder = normalizeResponder(args.default_responder);
       if (requestedResponder?.kind === "member" && !memberIds.includes(requestedResponder.botId)) {
@@ -958,7 +948,6 @@ export async function handleToolCall(
         body: JSON.stringify({
           name,
           memberIds,
-          ...(section ? { section } : {}),
           setup: { bulletin, defaultResponder: responder },
         }),
       });
@@ -973,7 +962,6 @@ export async function handleToolCall(
       const patch: Record<string, unknown> = {};
       if (args.name !== undefined) patch.name = stringArg(args, "name", { max: 100 });
       if (args.member_ids !== undefined) patch.memberIds = stringArrayArg(args, "member_ids");
-      if (args.section !== undefined) patch.section = args.section === null ? null : stringArg(args, "section", { max: 60 });
       if (args.bulletin !== undefined) patch.bulletin = stringArg(args, "bulletin", { trim: false, allowEmpty: true, max: 12_000 });
       if (args.default_responder !== undefined) patch.defaultResponder = normalizeResponder(args.default_responder);
       if (Object.keys(patch).length === 0) throw new ToolInputError("provide at least one channel field to update");

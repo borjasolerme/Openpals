@@ -74,7 +74,6 @@ Use only mapped, tested commands:
 - [Channels](channels.md)
 - [In-chat team coordination](room-coordination.md)
 - [Question cards: a teammate's question, in its chat and the person's inbox](question-cards.md)
-- [Chief authority over additional departments](team-access.md)
 - [Engines and Doctor](engines.md)
 - [Cline engine and native loopback qualification](cline.md)
 - [Claude coordination and turn-scoped tools](claude-tool-lifecycle.md)
@@ -85,7 +84,6 @@ Use only mapped, tested commands:
 - [Team backups](team-backups.md)
 - [Sharing a whole team](team-sharing.md)
 - [Preset bots](presets.md)
-- [Teams and shared instructions](teams.md)
 - [Full workspace backups](workspace-backups.md)
 - [Fleet: many workspaces on one server](fleet.md)
 - [Workspaces screen and the fleet agent](workspaces.md)
@@ -200,8 +198,7 @@ restart persistence, result history and the full renderer's 100,000-row grid
 in a disposable workspace with synthetic data.
 
 The [sidebar fixture](sidebar.md) checks archive and delete confirmations, their
-default focus, keyboard wrapping and focus return against two disposable bots;
-its departments recipe drags bots to reorder them and into new departments.
+default focus, keyboard wrapping and focus return against two disposable bots.
 
 The [avatar provider fixture](avatar-providers.md) checks image-provider settings,
 keyless local generation, saved-key handling, and safe errors with a local fake API.

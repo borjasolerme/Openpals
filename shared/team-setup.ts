@@ -7,7 +7,6 @@ export interface TeamSetupFields {
   soul?: string;
   /** Create only: the folder the new bot's tools work in. "" = private workspace. */
   cwd?: string;
-  section?: string;
   modelSelection?: ModelSelection;
   chiefOfStaff?: boolean;
 }
@@ -22,8 +21,7 @@ export interface TeamSetupOperation {
 
 export interface TeamSetupResult {
   state: "applied" | "denied" | "cancelled" | "failed";
-  bots: Array<{ id: string; name: string; action: "created" | "updated" | "deleted"; section?: string; modelSelection?: ModelSelection; chiefOfStaff?: boolean }>;
-  newTeams: string[];
+  bots: Array<{ id: string; name: string; action: "created" | "updated" | "deleted"; modelSelection?: ModelSelection; chiefOfStaff?: boolean }>;
   error?: string;
 }
 
@@ -37,7 +35,6 @@ export interface TeamSetupRequest {
   createdAt: number;
   requesterRevision: string;
   operations: TeamSetupOperation[];
-  newTeams: string[];
   deletion?: { botId: string; name: string; expectedRevision: string };
   result?: TeamSetupResult;
   resumed?: boolean;
@@ -45,10 +42,10 @@ export interface TeamSetupRequest {
   undo?: TeamSetupUndo;
 }
 
-/** Undo deletes the bots a setup created while still unused, gives each updated bot back the values the card showed and
- * the Chief its earlier teams; `revisions` pin every bot it touched as it applied, so a later change refuses Undo. */
+/** Undo deletes the bots a setup created while still unused and gives each updated bot back the values the card showed;
+ * `revisions` pin every bot it touched as it applied, so a later change refuses Undo. */
 export interface TeamSetupUndo {
   created: string[];
-  before: Array<{ botId: string; fields: TeamSetupFields; managedSections?: string[] | null }>;
+  before: Array<{ botId: string; fields: TeamSetupFields }>;
   revisions: Record<string, string>;
 }

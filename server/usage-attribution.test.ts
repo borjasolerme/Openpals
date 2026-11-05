@@ -5,19 +5,12 @@ import type { UsageTrigger } from "./usage-ledger.ts";
 const ADA = "ada@acme.test";
 
 function world(running: Record<string, UsageTrigger> = {}) {
-  const sections: Record<string, string> = { payroll: "Finance", helpdesk: " " };
-  return createUsageAttribution({ section: (botId) => sections[botId], threadTrigger: (threadId) => running[threadId] });
+  return createUsageAttribution({ threadTrigger: (threadId) => running[threadId] });
 }
 const row = (botId: string, trigger: UsageTrigger, turnId?: string, parent?: string, parentThread = "t") =>
   ({ botId, trigger, ...(turnId ? { turnId } : {}), ...(parent ? { parent: { threadId: parentThread, turnId: parent } } : {}) });
 
-describe("who and which department a usage row was spent for", () => {
-  it("stamps the bot's department as it is when booked, and none for a blank one", () => {
-    const attribute = world();
-    expect(attribute(row("payroll", { kind: "owner" }))).toMatchObject({ section: "Finance" });
-    expect(attribute(row("helpdesk", { kind: "owner" }))).not.toHaveProperty("section");
-  });
-
+describe("who a usage row was spent for", () => {
   it("leaves a routine's row as it was", () => {
     const attribute = world();
     expect(attribute(row("payroll", { kind: "routine", routineId: "digest" })).trigger).toEqual({ kind: "routine", routineId: "digest" });

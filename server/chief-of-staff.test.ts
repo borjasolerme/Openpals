@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 import { chiefOfStaffSystemPrompt, chiefTidies } from "./chief-of-staff.ts";
 
 describe("chiefTidies", () => {
-  const chief = { id: "chief", name: "Chief", section: "Work", chiefOfStaff: true };
-  const opener = { id: "opener", name: "Opener", section: "Work" };
-  const recipient = { id: "recipient", name: "Recipient", section: "Work" };
+  const chief = { id: "chief", name: "Chief", chiefOfStaff: true };
+  const opener = { id: "opener", name: "Opener" };
+  const recipient = { id: "recipient", name: "Recipient" };
   const task = { openedBy: { botId: opener.id, name: opener.name, threadId: "source", at: 1 } };
 
   it("allows only Chiefs and bot-opened, non-routine threads", () => {
@@ -15,14 +15,12 @@ describe("chiefTidies", () => {
     expect(chiefTidies(chief, { ...task, routineRunId: "run" }, opener, recipient)).toBe(false);
   });
 
-  it("needs authority over both the opener and the thread's own bot, which reach alone never gives", () => {
+  it("needs to reach both the opener and the thread's own bot", () => {
     expect(chiefTidies({ ...chief, peers: ["recipient"] }, task, opener, recipient)).toBe(false);
-    expect(chiefTidies(chief, task, { ...opener, section: "Private" }, recipient)).toBe(false);
-    expect(chiefTidies(chief, task, opener, { ...recipient, section: "Private" })).toBe(false);
+    expect(chiefTidies({ ...chief, peers: ["opener"] }, task, opener, recipient)).toBe(false);
     expect(chiefTidies(chief, task, { ...opener, hidden: true }, recipient)).toBe(false);
     expect(chiefTidies(chief, task, undefined, recipient)).toBe(false);
     expect(chiefTidies(chief, task, { ...opener, visibility: { people: ["person@example.test"] } }, recipient)).toBe(false);
-    expect(chiefTidies({ ...chief, managedSections: ["Private"] }, task, { ...opener, section: "Private" }, { ...recipient, section: "Private" })).toBe(true);
   });
 });
 
@@ -57,24 +55,24 @@ describe("chiefOfStaffSystemPrompt roster caps", () => {
 
 describe("chiefOfStaffSystemPrompt", () => {
   const bots = [
-    { id: "chief", name: "Atlas", title: "Operations", section: "Work" },
-    { id: "writer", name: "Quill", title: "Writer", description: "Drafts concise copy", section: "Work" },
-    { id: "coder", name: "Patch", title: "Engineer", busy: true, section: "Work" },
-    { id: "hidden", name: "Secret", hidden: true, section: "Work" },
-    { id: "personal", name: "Scout", title: "Travel planner", section: "Personal" },
+    { id: "chief", name: "Atlas", title: "Operations" },
+    { id: "writer", name: "Quill", title: "Writer", description: "Drafts concise copy" },
+    { id: "coder", name: "Patch", title: "Engineer", busy: true },
+    { id: "hidden", name: "Secret", hidden: true },
+    { id: "personal", name: "Scout", title: "Travel planner" },
   ];
 
   it("describes visible teammates and roles, but not who is busy", () => {
     const prompt = chiefOfStaffSystemPrompt("chief", bots, true);
 
     expect(prompt).toContain("their Chief of Staff: their one point of contact");
-    expect(prompt).not.toMatch(/department|Work|Personal/);
+    expect(prompt).not.toMatch(/department/);
     expect(prompt).toContain("Quill — Writer: Drafts concise copy [id: writer]");
     expect(prompt).toContain("Patch — Engineer [id: coder]");
     expect(prompt).not.toContain("working right now");
     expect(prompt).not.toContain("(available)");
     expect(prompt).not.toContain("Secret");
-    expect(prompt).toContain("so ask rather than direct):\n- Scout — Travel planner [id: personal]");
+    expect(prompt).toContain("- Scout — Travel planner [id: personal]");
     expect(prompt).not.toContain("Travel planner: ");
     expect(prompt).not.toContain("Atlas —");
     expect(prompt).toContain("Use coordinate_bots to assign actual teammates concrete work");
@@ -130,23 +128,13 @@ describe("chiefOfStaffSystemPrompt", () => {
         "Incidents: when a teammate's run fails, stalls or cannot start, Openpals reports it to you in your \"Problems to look at\" thread with a link to the thread. Read the report, then either call retry_thread to resume that thread where it stopped, coordinate_bots with a corrected brief when the request itself must change, or — when only the person can fix the cause (a sign-in, a missing credential, an unanswered question, a setting) — say so plainly and stop. Never retry the same thread more than twice; report what failed and what you did in one or two sentences.",
         "Use list_bots or list_room_targets for the live reachable roster. Use coordinate_bots to assign actual teammates concrete work, or with consult: true to ask them for advice. It returns immediately and keeps you available to the user; give clear, self-contained briefs, then end your turn — you resume automatically when their results return, success or failure. Say that work is assigned, not completed; only claim completion after the teammate's result has actually arrived, and if a teammate fails or stalls, tell the user plainly and decide the next step yourself. Leads can coordinate their own specialists. Do not poll or wait, send acknowledgements as new work, or substitute native helpers for named bots. On return, verify the requested outcome, resolve decisions within the user's scope, request concrete corrections with rework=true when necessary, and return one consolidated answer. Consultations are advice, not proof that work or tests ran. A refusal from coordinate_bots means nothing was sent: fix what it names (usually the id — copy it from list_bots or your roster; a unique teammate name also works) and retry, and never describe a handoff the tool did not accept.",
         "Housekeeping: list_threads also shows threads one teammate opened on another (marked \"opened by\"), and you may close_thread those once they are idle and their work is done. Threads the person started are theirs: never close them.",
-        "When the user asks you to assemble or configure a team, use list_team_setup for the exact authorized teams, bot IDs and model catalog, then propose_team_setup once with all named specialists and their profile/model changes. Include new teams explicitly; the plan covers their creation and your access. Existing thread models and other bots' execution permissions stay unchanged. Follow the tool result: the plan applies immediately at every access level and the person can undo it; after an applied result, continue already-requested work without another confirmation. Only if review is pending, end your turn: the user's decision automatically resumes you once with a structured result. Report failed or cancelled results honestly. Do not ask for another yes, poll, or repeat the proposal. After successful setup, use the available coordination tools for already requested work. For explicitly requested bot deletion, use propose_bot_deletion separately and follow its applied or pending result too.",
+        "When the user asks you to assemble or configure a team, use list_team_setup for the exact bot IDs and model catalog, then propose_team_setup once with all named specialists and their profile/model changes. Existing thread models and other bots' execution permissions stay unchanged. Follow the tool result: the plan applies immediately at every access level and the person can undo it; after an applied result, continue already-requested work without another confirmation. Only if review is pending, end your turn: the user's decision automatically resumes you once with a structured result. Report failed or cancelled results honestly. Do not ask for another yes, poll, or repeat the proposal. After successful setup, use the available coordination tools for already requested work. For explicitly requested bot deletion, use propose_bot_deletion separately and follow its applied or pending result too.",
         "Your team:",
         "- Quill — Writer: Drafts concise copy [id: writer]",
         "- Patch — Engineer [id: coder]",
-        "Other bots you can reach (you have no authority over these: their setup, threads and incidents stay with their own Chief, so ask rather than direct):",
         "- Scout — Travel planner [id: personal]",
       ].join("\n"),
     );
-  });
-
-  it("puts bots a Chief was given into its team without naming where they are filed", () => {
-    const given = [{ ...bots[0]!, chiefOfStaff: true, managedSections: ["Personal"] }, ...bots.slice(1)];
-    const prompt = chiefOfStaffSystemPrompt("chief", given, true);
-    expect(prompt).toContain("The owner also put more bots in your care; they are listed in your team below.");
-    expect(prompt).toContain("Your team:\n- Quill — Writer: Drafts concise copy [id: writer]\n- Patch — Engineer [id: coder]\n- Scout — Travel planner [id: personal]");
-    expect(prompt).not.toContain("Other bots you can reach");
-    expect(prompt).not.toMatch(/department|Personal/);
   });
 
   it("tells a place's MausBot that is not the Chief that the person's day and brief are its own", () => {

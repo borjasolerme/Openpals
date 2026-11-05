@@ -631,9 +631,7 @@ alone.
   its bots allow** (`PATCH /api/groups/:id` with `{"resetAudience": true}`),
   which resets the floor to what the room's current bots allow and is
   recorded in the admin activity log.
-- **Departments.** A department (sidebar section) is listed to a user only when it
-  holds a bot or room they can see.
-- **Bots working together.** A bot reaches any teammate, in any department
+- **Bots working together.** A bot reaches any teammate
   (`coordinate_bots`, its roster and `list_bots`, @mentions, a Chief's team),
   but only when exactly the same people can see both: otherwise one bot's
   thread could carry the other's answers to people who cannot see it. Bots nobody restricted all
@@ -738,7 +736,7 @@ its own, listed and revocable with `openmausbot sessions`. What it may do is
 the code's scope: a code from `openmausbot pair` carries `admin` and the app
 shows everything; a code from `openmausbot pair --client` (also what the
 guided phone setup mints) can chat, approve and read, and the app hides
-creating bots and sections, changing models, generating avatars, connecting
+creating bots, changing models, generating avatars, connecting
 apps and cloud desktops — those stay with the owner. A server reinstalled at
 the same address has a new identity; the app then asks to pair again rather
 than present the old session to it.

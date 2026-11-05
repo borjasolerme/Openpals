@@ -24,7 +24,7 @@ describe("parseCommand", () => {
 
   it("names team and engine actions as one verb", () => {
     expect(parseCommand(["team", "apply", "room.yaml", "--check"])).toMatchObject({ verb: "team apply", positionals: ["room.yaml"], flags: { check: true } });
-    expect(parseCommand(["team", "export", "--team", "A", "--team", "B", "--out", "t.yaml"]).flags).toMatchObject({ team: ["A", "B"], out: "t.yaml" });
+    expect(parseCommand(["team", "export", "--out", "t.yaml"])).toMatchObject({ verb: "team export", flags: { out: "t.yaml" } });
     expect(parseCommand(["engine", "set", "claude", "--key-env", "ANTHROPIC_API_KEY"])).toMatchObject({ verb: "engine set", positionals: ["claude"] });
     expect(parseCommand(["engine", "list"]).verb).toBe("engine list");
     expect(usage(() => parseCommand(["team", "destroy"]))).toEqual({ message: "team needs one of: apply, export", exitCode: EXIT.usage });

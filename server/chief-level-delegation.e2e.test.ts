@@ -38,10 +38,10 @@ it("starts a thread a Chief opens with a teammate at the Chief's level, and a Ch
     return providerTurns().find(turn => turn.botId === teammate.id)!;
   };
   try {
-    const chief = (await cli("new-bot", "--name", "Clive", "--section", "Operations")).bot;
+    const chief = (await cli("new-bot", "--name", "Clive")).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
-    const ada = (await cli("new-bot", "--name", "Ada", "--section", "Operations")).bot;
-    const bea = (await cli("new-bot", "--name", "Bea", "--section", "Operations")).bot;
+    const ada = (await cli("new-bot", "--name", "Ada")).bot;
+    const bea = (await cli("new-bot", "--name", "Bea")).bot;
     // Both teammates were set to Ask, below the Full access default.
     for (const teammate of [ada, bea]) await api("PATCH", `/api/bots/${teammate.id}`, { approvalMode: "ask" });
 

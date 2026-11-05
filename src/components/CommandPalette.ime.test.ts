@@ -19,7 +19,7 @@ import { CommandPalette, openCommandPalette } from "./CommandPalette";
 
 const bot: Bot = {
   id: "ime-bot", threadId: "ime-thread", name: "Shelby", title: "", description: "",
-  color: "blue", notifications: false, unread: false, busy: false, messages: [], section: "",
+  color: "blue", notifications: false, unread: false, busy: false, messages: [],
   modelSelection: { instanceId: "claude", model: "fake" },
 };
 const room = { id: "ime-room", name: "设计评审", memberIds: [bot.id] } as unknown as Group;

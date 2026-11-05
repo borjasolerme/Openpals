@@ -45,8 +45,8 @@ export const VERB_HELP: Record<string, string> = {
   ${T}`,
   interrupt: `openmausbot interrupt TARGET [--tree] [--dry-run]\n  Press Stop on a conversation. --tree also stops every teammate still working on its job.
   ${T}`,
-  "new-bot": "openmausbot new-bot NAME [--title T] [--team T] [--model INSTANCE/MODEL] [--effort E]\n  Make a bot.",
-  "new-channel": "openmausbot new-channel NAME --members A,B [--team T]\n  Make a room from bots, by name or id.",
+  "new-bot": "openmausbot new-bot NAME [--title T] [--model INSTANCE/MODEL] [--effort E]\n  Make a bot.",
+  "new-channel": "openmausbot new-channel NAME --members A,B\n  Make a room from bots, by name or id.",
   "set-model": "openmausbot set-model BOT --model INSTANCE/MODEL [--effort E] [--task ID] [--dry-run]\n  Change an idle bot's model (or one idle conversation's, with --task).",
   edit: "openmausbot edit BOT --message ID (TEXT | --text TEXT) [--task ID] [--dry-run]\n  Rewrite an earlier message of yours and have the bot answer again from there.",
   export: `openmausbot export TARGET --out DIR [--root ID] [--since MS] [--max-files 200] [--max-screens 100] [--max-bytes 500MB] [--force]
@@ -59,12 +59,12 @@ export const VERB_HELP: Record<string, string> = {
   --job follows the threads of one conversation's job; --until-settled ends with it.`,
   team: "openmausbot team apply FILE | team export --out FILE   (see help team apply, help team export)",
   "team apply": `openmausbot team apply FILE [--dry-run | --check] [--prune] [--rotate-secrets] [--wait-idle 2m]
-  Make the workspace match a team file (YAML or JSON): teams and briefs, bots, skills, Chiefs,
-  rooms and engines. Prints the plan, then applies it; a second apply prints "No changes.".
+  Make the workspace match a team file (YAML or JSON): bots, skills, the Chief of Staff, rooms
+  and engines. Prints the plan, then applies it; a second apply prints "No changes.".
   --dry-run only prints the plan; --check exits 6 if anything would change. --prune deletes bots
-  and rooms the file leaves out, in teams marked prune: true. Keys come from { env } or { file },
+  and rooms the file leaves out, when the file says prune: true. Keys come from { env } or { file },
   and a key already set is kept unless --rotate-secrets. docs/headless-cli.md has the format.`,
-  "team export": "openmausbot team export [--team NAME]… --out FILE\n  Write the workspace (or some teams) as a team file; skills go beside it, keys as placeholders,\n  and a key written into a soul, brief or skill is taken out.",
+  "team export": "openmausbot team export --out FILE\n  Write the workspace as a team file; skills go beside it, keys as placeholders,\n  and a key written into a soul, room brief or skill is taken out.",
   engine: "openmausbot engine set KIND … | engine list   (see help engine set)",
   "engine set": `openmausbot engine set KIND (--key-env VAR | --key-file FILE) [--base-url URL] [--only-claude-api] [--install] [--rotate] [--dry-run]
   Give the workspace an engine key: claude, openai, openrouter, openai-compatible, xai, groq, greenference, mistral or cerebras.

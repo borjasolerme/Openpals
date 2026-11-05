@@ -60,7 +60,7 @@ describe("threads follow their bot's model", () => {
     store.applyModelDefault(bot.id, { ...opus, effort: "high" });
     store.switchTaskModel(bot.id, follower.threadId, sonnet, true, false);
     store.applyTeamSetup({ version: 1, requestId: "setup", botId: bot.id, threadId: bot.threadId, reason: "Requested", createdAt: 1,
-      requesterRevision: "fixture", newTeams: [], operations: [{ action: "update", botId: bot.id, fields: { modelSelection: opus } }] } as TeamSetupRequest);
+      requesterRevision: "fixture", operations: [{ action: "update", botId: bot.id, fields: { modelSelection: opus } }] } as TeamSetupRequest);
     expect(runsOn(store, bot.id, picked.threadId)).toEqual(codex);
     expect(runsOn(store, bot.id, follower.threadId)).toEqual(opus);
     expect(ownModel(open(), bot.id, picked.threadId)).toEqual(codex);

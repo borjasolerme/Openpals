@@ -286,7 +286,7 @@ beforeAll(async () => {
       req.on("end", () => {
         lastCreateBody = JSON.parse(data);
         res.writeHead(201, { "content-type": "application/json" });
-        res.end(JSON.stringify({ id: "bot-designer", name: "Pixel", section: "Work", modelSelection: lastCreateBody.modelSelection }));
+        res.end(JSON.stringify({ id: "bot-designer", name: "Pixel", modelSelection: lastCreateBody.modelSelection }));
       });
       return;
     }
@@ -296,7 +296,7 @@ beforeAll(async () => {
       req.on("end", () => {
         lastCreateRoomBody = JSON.parse(data);
         res.writeHead(201, { "content-type": "application/json" });
-        res.end(JSON.stringify({ id: "room-dev", name: "Dev Team", section: "Work", memberCount: 2 }));
+        res.end(JSON.stringify({ id: "room-dev", name: "Dev Team", memberCount: 2 }));
       });
       return;
     }
@@ -543,7 +543,7 @@ describe("agents-proxy MCP surface", () => {
   });
 
   it.each(["failed", "cancelled", "denied"])("does not misreport a %s team result as applied or pending", async state => {
-    teamRequestResponse = { state, result: { state, error: "Fixture target changed", bots: [], newTeams: [] } };
+    teamRequestResponse = { state, result: { state, error: "Fixture target changed", bots: [] } };
     const response = await callTool("propose_team_setup", { reason: "Fixture plan", operations: [{ action: "update", botId: "bot-helper", fields: { title: "Fixture" } }] });
     expect(response.result.isError).toBe(true);
     expect(response.result.content[0].text).toContain("Fixture target changed");
@@ -552,7 +552,7 @@ describe("agents-proxy MCP surface", () => {
   });
 
   it("reports committed deletion cleanup attention without asking to apply deletion again", async () => {
-    teamRequestResponse = { state: "applied", result: { state: "applied", error: "Saved, but cleanup needs attention", bots: [{ id: "bot-helper", action: "deleted" }], newTeams: [] } };
+    teamRequestResponse = { state: "applied", result: { state: "applied", error: "Saved, but cleanup needs attention", bots: [{ id: "bot-helper", action: "deleted" }] } };
     const response = await callTool("propose_bot_deletion", { bot_id: "bot-helper" });
     expect(response.result.isError).toBeFalsy();
     expect(response.result.content[0].text).toContain("Applied the requested bot deletion");
@@ -818,7 +818,7 @@ describe("agents-proxy MCP surface", () => {
     agentsResponse = {
       bots: [
         { id: "bot-helper", name: "Helper", model: "fake-model", busy: true, status: "waiting-on-user", statusText: "waiting on the user" },
-        { id: "bot-quill", name: "Quill", model: "fake-model", busy: false, status: "available", statusText: "available", section: "Sales" },
+        { id: "bot-quill", name: "Quill", model: "fake-model", busy: false, status: "available", statusText: "available" },
         { id: "bot-old", name: "Old", model: "fake-model", busy: true },
       ],
     };
@@ -827,7 +827,6 @@ describe("agents-proxy MCP surface", () => {
       expect(text).toContain("[id: bot-helper, model: fake-model, waiting on the user]");
       expect(text).toContain("[id: bot-quill, model: fake-model]");
       expect(text).toContain("[id: bot-old, model: fake-model, busy]");
-      expect(text).not.toMatch(/department|Sales/);
     } finally {
       agentsResponse = DEFAULT_AGENTS;
     }
@@ -1086,15 +1085,8 @@ describe("agents-proxy MCP surface", () => {
 
   });
 
-  it("does not expose bot moves or silently accept room section reassignment", async () => {
-    for (const [name, args] of [
-      ["create_room", { name: "Elsewhere", member_bot_ids: ["bot-1"], section: "Foreign" }],
-      ["manage_room", { room_id: "room-dev", action: "set_section", section: "Foreign" }],
-    ] as const) {
-      const result = await callTool(name, args);
-      expect(result.result.isError).toBe(true);
-    }
-    expect((await callTool("move_bot", { bot_id: "bot-1", section: "Foreign" })).error.message).toContain("Unknown tool");
+  it("does not expose bot moves", async () => {
+    expect((await callTool("move_bot", { bot_id: "bot-1" })).error.message).toContain("Unknown tool");
   });
 
   it("requests an allowlisted credential without putting a secret in the request", async () => {

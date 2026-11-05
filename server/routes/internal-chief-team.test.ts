@@ -21,12 +21,11 @@ const bot = (id: string, extra: Partial<BotRecord> = {}): BotRecord => ({
 
 const TEAMS: LibraryTeamRoles[] = [{ name: "Inbox Follow-up", summary: "Recover quiet sales threads.", roles: [{ name: "Scout", title: "Researcher" }] }];
 
-async function serve(caller: BotRecord, library: () => Promise<LibraryTeamRoles[]>, team: { teams?: string[]; bots?: BotRecord[] } = {}) {
+async function serve(caller: BotRecord, library: () => Promise<LibraryTeamRoles[]>, team: { bots?: BotRecord[] } = {}) {
   const state = { caller: caller as BotRecord | null, active: true };
   const routes = [createInternalChiefTeamRoutes({
     bot: () => state.caller,
     requireActive: () => { if (!state.active) throw Object.assign(new Error("the internal turn capability has expired"), { status: 401 }); },
-    teams: () => team.teams ?? [""],
     bots: () => team.bots ?? [caller],
     instances: async () => [{ instanceId: "claude", driverKind: "claudeAgent", displayName: "Claude", snapshot: { state: "available" },
       models: { default: "sonnet", options: [] }, capabilities: { effortLevels: ["low", "high"] } }],
@@ -93,20 +92,21 @@ describe("what a Chief of Staff reads about its team", () => {
     expect((await demoted).status).toBe(403);
   });
 
-  it("lists the teams, reachable teammates and exact model choices a Chief plans team setup with", async () => {
-    const chief = bot("chief", { chiefOfStaff: true, section: "Work" });
+  it("lists the reachable teammates and exact model choices a Chief plans team setup with", async () => {
+    const chief = bot("chief", { chiefOfStaff: true, peers: ["writer", "gone"] });
     const { get } = await serve(chief, async () => TEAMS, {
-      teams: ["", "Work", "Private"],
-      bots: [chief, bot("writer", { section: "Work", title: "Writer" }), bot("gone", { section: "Work", hidden: true }), bot("other", { section: "Private" })],
+      bots: [chief, bot("writer", { title: "Writer" }), bot("gone", { hidden: true }), bot("other")],
     });
-    expect((await get("/api/internal/team-setup-catalog")).body).toMatchObject({
-      teams: ["Work"],
+    const { body } = await get("/api/internal/team-setup-catalog");
+    expect(body).toMatchObject({
       bots: [
-        { id: "chief", section: "Work", chiefOfStaff: true },
-        { id: "writer", title: "Writer", section: "Work", chiefOfStaff: false, modelSelection: { instanceId: "claude", model: "sonnet" } },
+        { id: "chief", chiefOfStaff: true },
+        { id: "writer", title: "Writer", chiefOfStaff: false, modelSelection: { instanceId: "claude", model: "sonnet" } },
       ],
       instances: [{ instanceId: "claude", driverKind: "claudeAgent", displayName: "Claude", state: "available", effortLevels: ["low", "high"] }],
     });
+    expect(body.bots).toHaveLength(2);
+    expect(body).not.toHaveProperty("teams");
   });
 
   it("leaves every other route to the next handler", async () => {
