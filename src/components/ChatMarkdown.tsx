@@ -17,7 +17,7 @@ import { markdownImageName, markdownImageOpenUrl } from "../lib/markdown-image";
 import { repairMarkdownTables } from "../lib/markdown-tables";
 import { TRANSCRIPT_WINDOW_SIZE } from "../lib/transcript-window";
 import { windowsPathDestinations } from "../../shared/markdown-windows-paths";
-import { GITHUB_REF_CLASS, isUseMyComputerUrl, LINK_CLASS, UseMyComputerLink } from "./ChatLinks";
+import { GITHUB_REF_CLASS, LINK_CLASS } from "./ChatLinks";
 import { githubRefFromProps, remarkGithubRefs } from "@/lib/github-refs";
 import { GITHUB_REF_ICONS, LinkHoverCard } from "@/components/LinkHoverCard";
 import { MarkdownImagePreview, MessageFolderFiles, OutsideWorkspaceFile, saveFailureText, useLocalFileSave, type MessageAttachmentContext } from "./AttachmentPreview";
@@ -62,7 +62,6 @@ export const localFilePath = (href?: string): string | null => {
 };
 
 export function chatUrlTransform(value: string, key = "href"): string {
-  if (isUseMyComputerUrl(value)) return value;
   // Markdown-to-HTML percent-encodes a destination's backslashes (C:%5CUsers…); restore them and leave other escapes
   // for the server's single decode.
   const url = /^[a-zA-Z]:%5C/i.test(value) ? value.replace(/%5C/gi, "\\") : value;
@@ -607,7 +606,6 @@ function MarkdownLink({ href, children, ...rest }: { href?: string; children?: R
   const props = rest as Record<string, unknown>;
   const { message, delivered } = useContext(MessageScopeContext);
   if (!href) return <span className="break-words">{children}</span>;
-  if (isUseMyComputerUrl(href)) return <UseMyComputerLink>{children}</UseMyComputerLink>;
   const localPath = localFilePath(href);
   if (localPath) {
     const copy = delivered && Object.hasOwn(delivered, fileName(localPath)) ? delivered[fileName(localPath)] : undefined;

@@ -121,7 +121,6 @@ export function resolveTeammate<T extends RosterMember>(
   bots: readonly T[],
   from: RosterMember,
   raw: string,
-  elsewhere: (name: string) => { where: string } | { hint: string } | null = () => null,
 ): { id: string; byName: boolean } | { error: string } {
   const wanted = raw.trim();
   if (bots.some(bot => bot.id === wanted)) return { id: wanted, byName: false };
@@ -144,9 +143,7 @@ export function resolveTeammate<T extends RosterMember>(
   if (offList) return { error: reachRefusal(from, offList)! };
   const apart = bots.find(bot => bot.id !== from.id && !bot.hidden && !bot.defaultBot && !sameAudience(from.visibility, bot.visibility) && (fold(bot.name) === name || loose(bot.name) === loose(wanted)));
   if (apart) return { error: reachRefusal(from, apart)! };
-  const away = bots.some(bot => fold(bot.name) === name || loose(bot.name) === loose(wanted)) ? null : elsewhere(wanted);
-  if (away && "where" in away) return { error: away.where };
-  return { error: `No bot with id or name "${shown}" — call list_bots and copy the exact id from the result.${teammateChoices(reachable)}${away ? ` ${away.hint}` : ""} ${peerAccessHelp(from)}` };
+  return { error: `No bot with id or name "${shown}" — call list_bots and copy the exact id from the result.${teammateChoices(reachable)} ${peerAccessHelp(from)}` };
 }
 
 const CHOICES_MAX = 12;

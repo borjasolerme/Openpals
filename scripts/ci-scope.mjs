@@ -49,7 +49,7 @@ export const VITEST_SUBSETS = {
       "server/server-lines.test.ts", "server/automation-reports.test.ts", "server/incidents.test.ts",
       "server/routine-run-card.test.ts", "server/host/chief-notices-retry.test.ts", "server/connector-card-text.test.ts", "server/host/secret-cards.test.ts",
       "server/notify.test.ts", "server/room-lines.test.ts", "server/post-to-room.test.ts",
-      "server/teammate-lines.test.ts", "server/cloud-send-arrived.test.ts"],
+      "server/teammate-lines.test.ts"],
     shards: 2,
     nodeTests: true,
   },
@@ -83,8 +83,8 @@ const AREAS = [
   [/^src\/locales\/(?:(?!en\.json$)[^/]+\.json|[^/]+\.test\.ts)$/, "locales"],
   [/^(?:src|public)\/|^[^/]+-preview\.html$/, "web"],
   [/^(?:server|shared|enterprise|companion|evals|skills|deploy)\/|^(?:Dockerfile|\.dockerignore|compose\.yaml)$/, "server"],
-  [/^electron\/(?:cua|cua-failure|cua-connection|capabilities|screen-status|shared-cua-connection|shared-computer-access|lent-screen-tools|lent-screen-failures|paced-typing)\.[cm]js$/, "windows-computer-control"],
-  [/^(?:electron|build)\/|^(?:electron-builder\.yml|index\.html|rail\.html)$/, "desktop"],
+  [/^electron\/(?:cua|cua-failure|cua-connection|capabilities|paced-typing)\.[cm]js$/, "windows-computer-control"],
+  [/^(?:electron|build)\/|^(?:electron-builder\.yml|index\.html)$/, "desktop"],
 ];
 
 export function areaOf(file) {

@@ -11,8 +11,9 @@ like a messaging app.
 
 ## How it differs from OpenMausBot
 
-- **One place.** Your bots live on one always-on server (for example a small cloud VM), not on your laptop. The
-  desktop app is a window onto that server, so your bots keep working when your computer is closed.
+- **One place.** Your bots live in one place: this computer, or one always-on server (for example a small cloud VM)
+  that the desktop app connects to with a one-time pairing link and shows as its window. On a server your bots keep
+  working when your computer is closed. Disconnecting goes back to this computer.
 - **One chat per bot.** No thread lists, conversation switching or separate routine run pages: routine results
   and bot replies arrive in the bot's single chat.
 - **A flat list of bots.** No departments or sidebar sections.

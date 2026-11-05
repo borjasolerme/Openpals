@@ -1,8 +1,8 @@
 import type { DesktopPrefs } from "./desktop-prefs.mjs";
 
 export declare const QUICK_ASKS_TITLE: "Quick asks";
-/** `starting`: this computer's server is not up yet; `moved`: its bots moved to the server, so it takes no asks. */
-export type TalkServerErrorCode = "server-down" | "starting" | "no-mausbot" | "refused" | "moved" | "lost";
+/** `starting`: this computer's server is not up yet. */
+export type TalkServerErrorCode = "server-down" | "starting" | "no-mausbot" | "refused" | "lost";
 export declare class TalkServerError extends Error {
   constructor(code: TalkServerErrorCode);
   readonly code: TalkServerErrorCode;
@@ -15,8 +15,8 @@ export type TalkUpdate =
   | { kind: "reply"; text: string }
   | { kind: "needs-you" }
   | { kind: "done"; ok: boolean; text: string };
-export interface TalkBot { id: string; defaultBot?: { person?: string }; chiefOfStaff?: boolean; hidden?: boolean }
-/** This computer's own MausBot (not a Team Cloud member's), else the Chief of Staff. */
+export interface TalkBot { id: string; defaultBot?: object; chiefOfStaff?: boolean; hidden?: boolean }
+/** This computer's own MausBot, else the Chief of Staff. */
 export declare function findMausBot<T extends TalkBot>(bots: readonly T[]): T | null;
 /** Server-sent events whose data is JSON; `signal` cancels the stream. */
 export declare function readFrames(body: ReadableStream<Uint8Array>, onFrame: (frame: object) => void, signal?: AbortSignal): Promise<void>;
@@ -33,9 +33,9 @@ export declare function createTalkServer(options: {
   /** This computer's server is on its way up, so a request that can't reach it says "starting". */
   starting?: () => boolean;
 }): {
-  /** Rejects with TalkServerError "server-down", "starting", "no-mausbot", "refused" or "moved". One call runs at a
+  /** Rejects with TalkServerError "server-down", "starting", "no-mausbot" or "refused". One call runs at a
    * time; a call while one runs gets the same promise. */
   prepare(): Promise<TalkChat>;
-  /** Rejects with TalkServerError "server-down", "starting", "refused", "moved" or "lost", or with `signal.reason`. */
+  /** Rejects with TalkServerError "server-down", "starting", "refused" or "lost", or with `signal.reason`. */
   ask(input: { chat: TalkChat; text: string; sendId: string; signal: AbortSignal; onUpdate: (update: TalkUpdate) => void }): Promise<"done" | "needs-you" | "failed">;
 };

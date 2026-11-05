@@ -211,12 +211,4 @@ describe("usePresence", () => {
     const pairs = (listeners: Listener[]) => listeners.map(({ scope, name, fn }) => [`${scope}:${name}`, fn] as const).sort(([a], [b]) => a.localeCompare(b));
     expect(pairs(dom.removed)).toEqual(pairs(dom.added));
   });
-
-  it("pings in companion client mode too, where the companion lets the route through", async () => {
-    stubDom({ ogb: { remoteClient: { active: true } } });
-    fixture.api.mockResolvedValue({ ok: true, returned: false });
-    render(loaded, vi.fn());
-    await flush();
-    expect(fixture.api).toHaveBeenCalledWith("/api/presence/active", expect.objectContaining({ method: "POST" }));
-  });
 });

@@ -5,7 +5,7 @@ import { useMenuMotion } from "./MenuMotion";
 import { MENU_HEADING, MENU_SHEET } from "./menu-recipe";
 import { t } from "@/lib/i18n";
 import { instanceSupportsLocalComputer, localComputerDisabledReason, localComputerSelectable } from "@/lib/local-computer";
-import { effectivePlace, PLACES, placeLabelKey, type Place } from "@/lib/place";
+import { effectivePlace, PLACES, placeLabelKey, type Place } from "@/lib/work-place";
 import { placeBlocked, placeFacts, placeHasIssue, placeViewFor, usePlaceSeat } from "@/lib/place-view";
 import { useStore, type Bot, type Task } from "@/state/store";
 import type { PlaceView } from "../../shared/place-view";

@@ -38,7 +38,6 @@ import { roomPin, useBotMessageMenu, userMessageMenu } from "./message-menu";
 import { RawMarkdownView, RawToggleAction } from "./RawMarkdownToggle";
 import { SpeakButton } from "./SpeakButton";
 import { useSpeech } from "@/lib/tts/useSpeech";
-import { localSystemVoiceActive } from "@/lib/local-voice";
 import { CancelledTurnRow } from "./CancelledTurnRow";
 import { isCancelledTranscriptRow } from "../../shared/client-cancel";
 import { roomRetryRequest } from "@/lib/room-retry";
@@ -174,7 +173,6 @@ function RoomTextMessage({
     messageId: m.id,
     voiceId: speakerBot?.voice,
     tts: state.config?.tts,
-    localVoice: localSystemVoiceActive(),
     canSpeak: true,
     viewRaw,
     onToggleRaw: () => setViewRaw((raw) => !raw),
@@ -189,7 +187,7 @@ function RoomTextMessage({
       {m.from && <ReactAction threadId={group.threadId} message={m} />}
       {botText && <CopyButton text={botText} className={messageActionClass} />}
       {botText && viewRaw && <RawToggleAction active onToggle={() => setViewRaw(false)} className={messageActionClass} />}
-      {botText && speaking && <SpeakButton text={botText} botId={speakerBot?.id} messageId={m.id} voiceId={speakerBot?.voice} tts={state.config?.tts} localVoice={localSystemVoiceActive()} className={cn(messageActionClass, "text-accent")} />}
+      {botText && speaking && <SpeakButton text={botText} botId={speakerBot?.id} messageId={m.id} voiceId={speakerBot?.voice} tts={state.config?.tts} className={cn(messageActionClass, "text-accent")} />}
     </MessageActions>
   );
   return (
@@ -860,7 +858,6 @@ function RoomSetup({ group, members }: { group: Group; members: Bot[] }) {
 }
 export function GroupView({ group }: { group: Group }) {
   const { state, dispatch } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const composerDockRef = useRef<HTMLDivElement>(null);
   const composerDock = useComposerDockPad(composerDockRef);
   const [folderOpen, setFolderOpen] = useState(false);
@@ -894,9 +891,9 @@ export function GroupView({ group }: { group: Group }) {
   const threadWorking = roomThreadWorking(group, group.threadId);
   const threadSpeakerId = roomThreadSpeakerId(group, group.threadId);
   const threadSpeaker = threadSpeakerId ? members.find((b) => b.id === threadSpeakerId) : undefined;
-  const setupPending = !remoteClient && roomNeedsSetup(group);
+  const setupPending = roomNeedsSetup(group);
   const advancedMode = useAdvancedMode();
-  const simpleHeader = simpleRoomHeader({ advanced: advancedMode, remoteClient, group, setupPending });
+  const simpleHeader = simpleRoomHeader({ advanced: advancedMode, group, setupPending });
 
   const lastGroupMessage = group.messages.at(-1);
   const toolInFlight = lastGroupMessage?.kind === "activity" && lastGroupMessage.tool?.ok === undefined;
@@ -983,18 +980,17 @@ export function GroupView({ group }: { group: Group }) {
   return (
     <main className="relative flex h-full min-w-0 flex-1 flex-col bg-app">
       <GroupCallOverlay group={group} members={members} />
-      {membersOpen && !remoteClient && !group.dm && (
+      {membersOpen && !group.dm && (
         <ManageMembersPanel group={group} onClose={closeMembers} triggerRef={membersTriggerRef} />
       )}
       <GlassScrollFrame className="flex-1 [--glass-tint:var(--color-app)]">
       {/* z-[25]: above the room set-up card (z-20), below the GroupCallOverlay (z-30). */}
-      <GlassBar edge="top" fade={!advancedMode && !remoteClient} className="z-[25]">
+      <GlassBar edge="top" fade={!advancedMode} className="z-[25]">
       <RoomHeader
         group={group}
         members={members}
         simple={simpleHeader}
         setupPending={setupPending}
-        remoteClient={remoteClient}
         findOpen={findOpen}
         onToggleFind={() => setFindOpen((open) => !open)}
         onToggleFolder={() => setFolderOpen((open) => !open)}
@@ -1007,7 +1003,7 @@ export function GroupView({ group }: { group: Group }) {
       <ChatNotice notice={state.notice} />
       {!setupPending && <RoomContextWarnings group={group} members={members} />}
 
-      {!setupPending && !group.dm && !remoteClient && state.config && group.defaultResponder.kind === "auto" && !jevRoomRoutingOn(state.config) && (
+      {!setupPending && !group.dm && state.config && group.defaultResponder.kind === "auto" && !jevRoomRoutingOn(state.config) && (
         <div className="w-full px-5">
           <p data-testid="room-jev-off" className="mb-1 px-2 text-[12px] text-ink-secondary">
             {t("room.responder.jevOffHint", { name: defaultResponderName(group, members) ?? t("room.responder.leadFallback") })}{" "}
@@ -1024,7 +1020,7 @@ export function GroupView({ group }: { group: Group }) {
 
       {!setupPending && !group.dm && <RoomHoldsBanner group={group} members={members} />}
 
-      {!setupPending && !simpleHeader && <RoomBulletin group={group} remoteClient={remoteClient} />}
+      {!setupPending && !simpleHeader && <RoomBulletin group={group} />}
 
       {!setupPending && folderOpen && !group.dm && (
         <div className="w-full px-5">
@@ -1055,7 +1051,7 @@ export function GroupView({ group }: { group: Group }) {
                 onClick={() => dispatch({ type: "patchGroup", groupId: group.id, patch: { pinnedMessageId: "" } })}
                 aria-label={t("chat.unpinMessage")}
                 title={t("chat.unpin")}
-                className={cn("shrink-0 rounded p-0.5 text-ink-secondary hover:bg-raised hover:text-ink", remoteClient && "hidden")}
+                className="shrink-0 rounded p-0.5 text-ink-secondary hover:bg-raised hover:text-ink"
               >
                 <X size={13} />
               </button>

@@ -81,12 +81,4 @@ describe("New bot", () => {
     expect(sent.at(-1)).toEqual({ type: "notice", notice: { kind: "note", botName: null,
       text: "Pixel will ask before acting. To let it act on this computer by itself, choose Approve for me in its settings." } });
   });
-
-  it("from a paired device, sends one request and leaves the defaults to the host", async () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    const { calls, request } = server();
-    const sent = await newBot(request);
-    expect(calls).toEqual([{ method: "POST", path: "/api/bots", body: {} }]);
-    expect(sent.map((action) => action.type)).toEqual(["botAdded"]);
-  });
 });

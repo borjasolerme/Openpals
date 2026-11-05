@@ -1,4 +1,4 @@
-import { api, useStore, type Bot } from "@/state/store";
+import { useStore, type Bot } from "@/state/store";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { t } from "@/lib/i18n";
 import { BotAvatar } from "./Avatar";
@@ -13,15 +13,7 @@ export function EmptyChat({ bot }: { bot: Bot }) {
       <BotAvatar bot={bot} state="idle" size={64} motion="none" motionKey={0} />
       {!advanced ? <div className="text-[17px] font-semibold text-ink">{bot.name}</div> : <RenameTitle
         value={bot.name}
-        onCommit={(name) => {
-          if (window.ogb?.remoteClient?.active) {
-            void api(`/api/bots/${bot.id}/profile`, { method: "PATCH", body: JSON.stringify({ name }) })
-              .then(({ bot: updated }) => dispatch({ type: "botPatched", bot: updated }))
-              .catch((cause) => dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }));
-          } else {
-            dispatch({ type: "updateBot", botId: bot.id, patch: { name } });
-          }
-        }}
+        onCommit={(name) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } })}
         className="text-[17px] font-semibold text-ink"
         inputClassName="rounded bg-inset px-1.5 py-0.5 text-center text-[17px] font-semibold"
       />}

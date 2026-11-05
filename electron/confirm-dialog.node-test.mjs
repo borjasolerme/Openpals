@@ -21,11 +21,11 @@ function fixture(response = 0) {
   const context = vm.createContext({
     ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
     localOnly: localOrigin.localOnly, workspaceSenderAllowed: environments.workspaceSenderAllowed,
-    mainWindow, rendererOrigin: () => ORIGIN, environmentsState: { activeId: "local", environments: [] },
+    mainWindow, rendererOrigin: () => ORIGIN, placeState: environments.LOCAL_PLACE,
     dialog: { showMessageBox: async (...args) => { calls.push(args); return { response }; } },
   });
-  vm.runInContext(section("const workspaceOnly =", "const savedWorkspace = ")
-    + section('ipcMain.handle("dialog:confirm"', 'ipcMain.handle("environments:state"'), context);
+  vm.runInContext(section("const workspaceOnly =", "const localServerRequest = ")
+    + section('ipcMain.handle("dialog:confirm"', "// The one place the window shows"), context);
   return { confirm: handlers.get("dialog:confirm"), calls, mainWindow, context, event: { sender: contents, senderFrame: frame } };
 }
 

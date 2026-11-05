@@ -3,7 +3,7 @@ export interface EnvironmentDescriptor {
   label: string;
   platform: string;
   version: string;
-  capabilities: { remoteSessions: true; selfUpdate: "desktop-managed" | "operator"; sharedComputers?: true };
+  capabilities: { remoteSessions: true; selfUpdate: "desktop-managed" | "operator" };
 }
 
 export type SessionState =

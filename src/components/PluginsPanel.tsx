@@ -84,10 +84,9 @@ export function hostedShown(app: HostedApp, search: string, filter: AppsFilter, 
 export function connectorSetupNotice(state: {
   configured: boolean;
   stale: boolean;
-  remoteClient: boolean;
 }): LocaleKey | null {
   if (state.configured || state.stale) return null;
-  return state.remoteClient ? "connectors.setupNeededRemote" : "connectors.setupNeeded";
+  return "connectors.setupNeeded";
 }
 
 export interface CatalogPagination {
@@ -114,7 +113,6 @@ export function botsUsingService(bots: Bot[], instances: InstanceInfo[], slug: s
 
 export function PluginsPanel() {
   const { state, dispatch } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const dialogRef = useRef<HTMLDivElement>(null);
   const surface = state.pluginsSurface;
   const [cards, setCards] = useState<ToolkitCard[] | null>(null);
@@ -400,7 +398,7 @@ export function PluginsPanel() {
   const connectedCount = Object.values(status).filter(hasActiveConnection).length + connectedHosted.length + Number(highLevelConnected === true) + Number(xConnected === true) + Number(postizConnected === true);
   const connectedEmptyCopy = connectedInventoryCopy(inventoryPhase);
   const close = () => dispatch({ type: "togglePlugins", open: false });
-  const setupNotice = connectorSetupNotice({ configured, stale, remoteClient });
+  const setupNotice = connectorSetupNotice({ configured, stale });
   const botsWithoutApps = hasUsableConnectedApps(configured, inventoryPhase, stale, status)
     ? botsMissingConnectedApps(state.bots, state.instances)
     : [];
@@ -584,7 +582,7 @@ export function PluginsPanel() {
                 ? t("hostedMcp.otherAppsSetup", { services: new Intl.ListFormat(activeLocale(), { style: "long", type: "conjunction" }).format(connectedHosted.map((app) => app.label)) })
                 : t(setupNotice)}{" "}
               <button
-                className={cn("font-medium text-ink underline underline-offset-2", remoteClient && "hidden")}
+                className="font-medium text-ink underline underline-offset-2"
                 onClick={() => { close(); dispatch(openKeySettings("composio")); }}
               >
                 {t("connectors.openSettings")}
@@ -609,7 +607,7 @@ export function PluginsPanel() {
               </div>
             </div>
           )}
-          {configured && !remoteClient && source === "curated" && filter !== "mcp" && (
+          {configured && source === "curated" && filter !== "mcp" && (
             <div className="mb-3 text-[12px] text-ink-secondary">
               {t("connectors.featuredBefore")}{" "}
               <button

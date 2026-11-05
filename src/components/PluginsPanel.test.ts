@@ -298,11 +298,10 @@ describe("an answer the server was not sure about", () => {
 });
 
 describe("connected apps setup notice", () => {
-  const base = { configured: false, stale: false, remoteClient: false };
+  const base = { configured: false, stale: false };
 
   it("tells a fresh install what to do", () => {
     expect(connectorSetupNotice(base)).toBe("connectors.setupNeeded");
-    expect(connectorSetupNotice({ ...base, remoteClient: true })).toBe("connectors.setupNeededRemote");
   });
 
   it("says nothing when apps work or the stale banner already explains", () => {

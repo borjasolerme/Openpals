@@ -10,7 +10,7 @@ const record = (value: unknown): value is Json => value !== null && typeof value
 
 /** Every switch on: each tool the catalog can list, in the form tools/list sends it. */
 const LISTED = availableTools(catalogProfileFromEnv({
-  OMB_BOT_ID: WATCHER_OPTIONS_CARD_BOT_ID, OMB_CHIEF_OF_STAFF: "1", OMB_SKILL_AUTHORING_ENABLED: "1", OMB_SHARED_COMPUTERS_ENABLED: "1",
+  OMB_BOT_ID: WATCHER_OPTIONS_CARD_BOT_ID, OMB_CHIEF_OF_STAFF: "1", OMB_SKILL_AUTHORING_ENABLED: "1",
   OMB_VOICE_NOTES: "1", OMB_X_RESEARCH: "1", OMB_RESEARCH: "1", OMB_ESCALATIONS: "1", OMB_TEAM_PEOPLE: "1", OMB_MAUSBOT: "1",
 }));
 
@@ -74,8 +74,7 @@ function recordingContext(): { context: ToolCallContext; calls: string[] } {
   return {
     calls,
     context: {
-      botId: "bot-schema", threadId: "thread-schema", depth: 0, externalRuntime: false, sharedComputers: true,
-      client: {
+      botId: "bot-schema", threadId: "thread-schema", depth: 0, externalRuntime: false,       client: {
         api: async (path) => { calls.push(path); return {}; },
         apiResponse: async (path) => { calls.push(path); return { ok: true, status: 200, body: {} }; },
       },

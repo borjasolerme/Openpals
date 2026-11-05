@@ -413,8 +413,7 @@ export function MessageFolderFiles({ folderPath, listing, message }: {
 
 const REVEALABLE_PATH = /^(?:\/(?!\/)|[a-zA-Z]:[\\/])/;
 function revealBridge(): NonNullable<Window["ogb"]>["revealInFolder"] {
-  const ogb = typeof window === "undefined" ? undefined : window.ogb;
-  return ogb?.remoteClient?.active ? undefined : ogb?.revealInFolder;
+  return typeof window === "undefined" ? undefined : window.ogb?.revealInFolder;
 }
 
 export function OutsideWorkspaceFile({ filePath }: { filePath: string }) {

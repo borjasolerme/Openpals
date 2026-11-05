@@ -19,7 +19,7 @@ function harness(envState) {
   const handlers = appPermissionHandlers({
     rendererOrigin: () => LOCAL,
     mainContents: () => ctx.main,
-    activeRemoteOrigin: () => environments.activeEnvironment(ctx.state)?.origin ?? null,
+    activeRemoteOrigin: () => environments.activeServer(ctx.state)?.origin ?? null,
   });
   const request = (permission, url, details = { isMainFrame: true }, contents = mainContents) => {
     let granted;
@@ -31,9 +31,8 @@ function harness(envState) {
   return { ctx, request, check, mainContents, handlers };
 }
 
-let state = environments.withEnvironment({ environments: [], activeId: environments.LOCAL_ID }, { origin: VPS, name: "VPS" }, () => "vps");
-state = environments.withEnvironment(state, { origin: OTHER, name: "Other" }, () => "other");
-const viewing = (id) => environments.withActive(state, id);
+const SERVERS = { vps: { origin: VPS, name: "VPS" }, other: { origin: OTHER, name: "Other" } };
+const viewing = (id) => (id === "local" ? environments.LOCAL_PLACE : environments.withServer(environments.LOCAL_PLACE, SERVERS[id]));
 
 test("the local page keeps clipboard read and write", () => {
   const h = harness(viewing("local"));
@@ -100,22 +99,20 @@ test("the main-window guard is explicit: no main contents, missing or foreign co
   assert.deepEqual(ask(undefined), [false, false], "undefined never matches a null main");
 });
 
-test("switching or forgetting the server withdraws the old origin at once", () => {
+test("connecting elsewhere or disconnecting withdraws the old origin at once", () => {
   const h = harness(viewing("vps"));
   assert.equal(h.request("clipboard-sanitized-write", `${VPS}/`), true);
   h.ctx.state = viewing("other");
-  assert.equal(h.request("clipboard-sanitized-write", `${VPS}/`), false, "previous remote after switch");
+  assert.equal(h.request("clipboard-sanitized-write", `${VPS}/`), false, "the previous server");
   assert.equal(h.check("clipboard-sanitized-write", VPS), false);
   assert.equal(h.request("clipboard-sanitized-write", `${OTHER}/`), true, "the new active one");
   h.ctx.state = viewing("local");
-  assert.equal(h.request("clipboard-sanitized-write", `${OTHER}/`), false, "back on Local");
-  assert.equal(h.request("clipboard-sanitized-write", `${LOCAL}/`), true, "Local still works");
-  h.ctx.state = environments.withoutEnvironment(viewing("vps"), "vps");
-  assert.equal(h.request("clipboard-sanitized-write", `${VPS}/`), false, "forgotten server");
+  assert.equal(h.request("clipboard-sanitized-write", `${OTHER}/`), false, "disconnected");
+  assert.equal(h.request("clipboard-sanitized-write", `${LOCAL}/`), true, "this computer still works");
 });
 
-test("main installs the active environment's origin into the shared handlers, with no second handler registration", () => {
-  assert.match(mainSource, /activeRemoteOrigin: \(\) => activeEnvironment\(environmentsState\)\?\.origin \?\? null,\n/);
+test("main installs the server's origin into the shared handlers, with no second handler registration", () => {
+  assert.match(mainSource, /activeRemoteOrigin: \(\) => activeServer\(placeState\)\?\.origin \?\? null,\n/);
   assert.equal(mainSource.match(/setPermissionRequestHandler\(appPermissions\.request\)/g)?.length, 1);
   assert.equal(mainSource.match(/setPermissionCheckHandler\(appPermissions\.check\)/g)?.length, 1);
   assert.doesNotMatch(mainSource, /remoteClipboardWrite\b/, "no parallel permission handler left in main");

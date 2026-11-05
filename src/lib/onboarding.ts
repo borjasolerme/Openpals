@@ -43,9 +43,8 @@ export function welcomeViewer(session: unknown): WelcomeViewer {
 
 export function welcomeDue(
   config: { onboarding?: OnboardingStatus } | null | undefined,
-  options: { remoteClient: boolean; hosted?: boolean; canSave?: boolean },
+  options: { hosted?: boolean; canSave?: boolean } = {},
 ): boolean {
-  if (options.remoteClient) return false;
   if (options.canSave === false) return false;
   if (options.hosted && options.canSave !== true) return false;
   if (!config) return false;

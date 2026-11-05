@@ -4,10 +4,6 @@ declare global {
 /** The package.json version, inlined by Vite's define at build time. */
 const __APP_VERSION__: string;
 
-  type DesktopSharedFolder = import("../../electron/computer-sharing.mjs").SharedFolder;
-  type DesktopComputerSharing = import("../../electron/computer-sharing.mjs").SharingState;
-  type DesktopLendingActivity = import("../../electron/computer-sharing.mjs").LendingActivityEntry;
-
   type DesktopCapabilities = {
     host: {
       platform: "darwin" | "linux" | "win32" | "other";
@@ -89,113 +85,30 @@ const __APP_VERSION__: string;
     at: number | null;
     onBattery: boolean;
   }
-  interface DesktopRemoteClientState {
-    active: boolean;
-    endpoint?: string;
-    serverName?: string;
-    deviceId?: string;
-  }
 
   interface Window {
     ogb?: {
       platform: NodeJS.Platform;
-      /** This app's own version, and whether this page is this app's own: false on a server added in the Server menu,
-       * whose page carries that server's version. Absent in desktop builds before it. */
+      /** This app's own version, and whether this page is this app's own: false on the paired server's page, which
+       * carries that server's version. Absent in desktop builds before it. */
       app?: { version: string; ownPage: boolean };
-      /** This computer's page: the one-time move's line (on its way, what arrived). */
-      cloudSendPage?: import("../../electron/cloud-send.mjs").CloudSendPageBridge;
-      /** This computer's page only: bots in two places, and the one tap that brings them together on one (electron/two-places.mjs). */
-      twoPlaces?: {
-        state(): Promise<{ suggest: import("../lib/two-places").TwoPlacesSuggestion | null }>;
-        accept(key: string): Promise<{ suggest: import("../lib/two-places").TwoPlacesSuggestion | null }>;
-        dismiss(key: string): Promise<{ suggest: import("../lib/two-places").TwoPlacesSuggestion | null }>;
-        onChanged(callback: () => void): () => void;
+      /** Where the bots live: this computer's own server, or the one always-on server it is paired with. */
+      place?: {
+        /** Where the bots live now. */
+        current(): Promise<{ kind: "local" } | { kind: "server"; url: string; label: string }>;
+        /** Pairs with an always-on server from its one-time pairing link (https://host/pair#code=…) and opens it. */
+        connect(link: string): Promise<{ ok: true } | { ok: false; error: string }>;
+        /** Forgets the server and goes back to this computer. */
+        disconnect(): Promise<void>;
+        onChanged(callback: (place: { kind: "local" } | { kind: "server"; url: string; label: string }) => void): () => void;
       };
       desktopNotices?: import("../../electron/desktop-prefs.mjs").DesktopNoticesBridge;
       /** This computer's own page only: the account's full name, for a first run's profile (system-name.mjs). */
       desktopProfile?: { systemName(): Promise<string | null> };
       desktopLanguage?: import("../../electron/desktop-prefs.mjs").DesktopLanguageBridge;
-      /** The window's own rail of places: its page at /rail (a sheet of its own covers the window while open; the skin of
-       * the page beside it comes from main), and the button on the page beside it that hides and shows it. */
-      rail?: import("../../electron/chrome-rail.mjs").ChromeRailBridge;
-      workspaces?: {
-        /** `color`: a saved server's colour name; `localPath`: a local workspace's folder, absent for This computer's own. */
-        state: () => Promise<{ local: boolean; name: string; origin?: string; color?: string; localPath?: string }>;
-        /** The native server menu; resolves when it closes. */
-        menu: () => Promise<void>;
-        /** The rail's circles, for this app's page only (empty elsewhere, and with fewer than two places). */
-        places?: () => Promise<import("../../electron/cloud-rail.mjs").RailState>;
-        /** Opens a circle main listed, by its id, through main's own switch: only from the person's click. */
-        open?: (id: string) => Promise<unknown>;
-        /** ＋'s fixed choices: a server's pairing link (`link`: the one pasted on the sheet; without it, the clipboard's), or
-         * type its address. Resolves false when the person cancels Connect. */
-        add?: (choice: "link" | "address", link?: string) => Promise<unknown>;
-        /** The colour of the place this page is (This computer's too). */
-        look?: () => Promise<import("../../electron/place-look.mjs").PlaceLook | null>;
-        /** That place's colour, from the person's click: one of the six swatches, or null for none. */
-        color?: (swatch: import("../../electron/place-look.mjs").PlaceSwatch | null) => Promise<{ outcome: import("../../electron/place-look.mjs").PlaceColorOutcome; look: import("../../electron/place-look.mjs").PlaceLook | null }>;
-        /** The colour of a place the window's rail lists, by its circle's id, from the person's click on the rail's own
-         * page (refused on any other page). */
-        recolor?: (id: string, swatch: import("../../electron/place-look.mjs").PlaceSwatch | null) => Promise<{ outcome: import("../../electron/place-look.mjs").PlaceColorOutcome; look: import("../../electron/place-look.mjs").PlaceLook | null }>;
-        /** Remove from list: a server the window's rail lists as `removable`, by its circle's id, once the person said yes on
-         * the rail's own page (refused on any other page). */
-        remove?: (id: string) => Promise<{ outcome: "removed" | "failed" }>;
-        /** Make a server of the person's own, which the rail lists with `makeHome`, their bots' home: the move starts. */
-        makeHome?: (id: string) => Promise<{ started: true }>;
-        /** Main's word that the places changed: read them again. */
-        onChanged?: (callback: () => void) => () => void;
-      };
-      /** Saved servers and the active one (desktop Server menu). Present on
-       * the local server's UI; a remote server's page sees a reduced bridge. */
-      environments?: {
-        state: () => Promise<{
-          localOrigin: string;
-          remote: boolean;
-          /** Named local environments exist only in a packaged build. */
-          packaged: boolean;
-          activeId: string;
-          environments: Array<{
-            id: string;
-            kind?: "local" | "remote";
-            name: string;
-            origin?: string;
-            dataDir?: string;
-            missing?: boolean;
-            /** One of the six place colours (environments.cjs ENTRY_COLORS). */
-            color?: string;
-          }>;
-        }>;
-        /** Local targets answer {ok, error?} (error strings are an open set); remote ones answer nothing. */
-        switch: (id: string) => Promise<{ ok: boolean; error?: string } | void>;
-        addFromLink: (link: string, name?: string) => Promise<boolean | void>;
-        /** Register a named local environment; an omitted dataDir lands beside the app's own. */
-        create: (name: string, dataDir?: string) => Promise<{ ok: boolean; error?: string; state: unknown }>;
-        /** Native folder chooser for the create form; { ok: false } on cancel. */
-        pickDir: () => Promise<{ ok: boolean; path?: string }>;
-        /** {ok:false} when main refused (active local, failed folder delete); a
-         * cancelled remote confirm and remote success answer nothing. */
-        forget: (id: string, purge?: boolean) => Promise<{ ok: boolean; error?: string } | void>;
-        /** `panel` "copy": that server's Copy this computer here panel; otherwise its Computer access. */
-        onOpenSettings?: (callback: (computerId?: string | null) => void) => () => void;
-      };
-      /** Local main-window only. Hosted renderers cannot grant themselves access. */
-      computerSharing?: {
-        state(id: string): Promise<DesktopComputerSharing>;
-        chooseFolder(): Promise<DesktopSharedFolder | null>;
-        save(id: string, grant: Pick<DesktopComputerSharing, "folders" | "terminal" | "computer">): Promise<DesktopComputerSharing | null>;
-        revoke(id: string): Promise<DesktopComputerSharing>;
-        /** This computer's own record of what that server's bots did here, newest first. */
-        activity(id: string): Promise<DesktopLendingActivity[]>;
-      };
       confirm(message: string): Promise<boolean>;
       getCapabilities(): Promise<DesktopCapabilities>;
       onCapabilitiesChanged(cb: (capabilities: DesktopCapabilities) => void): () => void;
-      remoteClient?: {
-        active: boolean;
-        state(): Promise<DesktopRemoteClientState>;
-        pair(endpoint: string, code: string): Promise<DesktopRemoteClientState>;
-        disconnect(): Promise<DesktopRemoteClientState>;
-      };
       /** Keep this computer awake for scheduled routines; absent on remote
        * server pages and in older desktop builds. */
       routines?: {

@@ -1,6 +1,5 @@
 // Audio comes from the harness, which holds the voice keys: the renderer never sees them or calls a voice provider.
 
-import { localSystemVoiceActive, remoteSystemVoice, resolveLocalSystemVoice } from "@/lib/local-voice";
 import { recordBlockTiming, recordPrepared, recordSpeakEnter } from "../voice-latency-probe";
 
 export type SpeechStatus = "idle" | "preparing" | "speaking";
@@ -53,8 +52,6 @@ export class Speaker {
   private objectUrl: string | null = null;
   private settlePlayback: ((finished: boolean) => void) | null = null;
   private request: AbortController | null = null;
-  private localUtterance: SpeechSynthesisUtterance | null = null;
-  private settleLocalSpeech: ((finished: boolean) => void) | null = null;
   /** Identity is the claim object, not the callback, so an older release cannot clear a newer claim. */
   private externalClaim: { pause: () => void } | null = null;
 
@@ -85,10 +82,6 @@ export class Speaker {
     external?.pause();
     this.request?.abort();
     this.request = null;
-    this.settleLocalSpeech?.(false);
-    this.settleLocalSpeech = null;
-    this.localUtterance = null;
-    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     // Pausing or removing an <audio> source does not reliably fire `ended` or `error`.
     if (this.settlePlayback) this.settlePlayback(false);
     else this.teardownAudio();
@@ -141,9 +134,7 @@ export class Speaker {
     const live = () => this.token === mine && !controller.signal.aborted;
 
     this.set({ status: "preparing", botId: opts.botId, messageId: opts.messageId });
-    return localSystemVoiceActive()
-      ? this.localStream(opts, live, controller)
-      : this.networkStream(opts, live, controller);
+    return this.networkStream(opts, live, controller);
   }
 
   /** The completed frame's message id must reach the snapshot and the probe
@@ -151,39 +142,6 @@ export class Speaker {
   private adoptMessageId(opts: SpeakOptions, live: () => boolean, messageId: string | undefined): void {
     opts.messageId = messageId;
     if (live() && this.snapshot.status !== "idle") this.set({ ...this.snapshot, messageId });
-  }
-
-  /** The system voice has no splitter round trip: one utterance per block, the
-   * whole text for a completed reply, so streaming degrades to speaking at the
-   * authoritative frame. */
-  private localStream(opts: SpeakOptions, live: () => boolean, controller: AbortController): SpeechStream {
-    let chain: Promise<void> = Promise.resolve();
-    let closed = false;
-    let pushed = false;
-    return {
-      push: (block) => {
-        if (closed || !block || !live()) return;
-        pushed = true;
-        chain = chain.then(() => (live() ? this.speakWithLocalSystem(block, opts, live) : undefined));
-      },
-      end: async () => {
-        closed = true;
-        await chain;
-        if (!pushed && live()) this.set(IDLE);
-        if (this.request === controller) this.request = null;
-      },
-      prepare: async (text) => [text],
-      identify: (messageId) => this.adoptMessageId(opts, live, messageId),
-      cancel: () => { if (live()) this.stop(); },
-      fail: (error) => {
-        closed = true;
-        if (live()) {
-          controller.abort();
-          this.set({ ...IDLE, error });
-        }
-        if (this.request === controller) this.request = null;
-      },
-    };
   }
 
   private networkStream(opts: SpeakOptions, live: () => boolean, controller: AbortController): SpeechStream {
@@ -299,61 +257,6 @@ export class Speaker {
         finish();
       },
     };
-  }
-
-  private speakWithLocalSystem(
-    text: string,
-    opts: SpeakOptions,
-    live: () => boolean,
-  ): Promise<void> {
-    if (!live()) return Promise.resolve();
-    const value = text.trim();
-    if (!value) {
-      this.set(IDLE);
-      return Promise.resolve();
-    }
-
-    const synth = window.speechSynthesis;
-    const utterance = new window.SpeechSynthesisUtterance(value);
-    const selected = resolveLocalSystemVoice(remoteSystemVoice(opts.botId));
-    if (selected) utterance.voice = selected;
-    this.localUtterance = utterance;
-
-    return new Promise((resolve) => {
-      let settled = false;
-      const finish = (finished: boolean, error?: string) => {
-        if (settled) return;
-        settled = true;
-        utterance.onstart = null;
-        utterance.onend = null;
-        utterance.onerror = null;
-        if (this.localUtterance === utterance) this.localUtterance = null;
-        if (this.settleLocalSpeech === finish) this.settleLocalSpeech = null;
-        if (live()) this.set(finished ? IDLE : { ...IDLE, ...(error ? { error } : {}) });
-        resolve();
-      };
-      this.settleLocalSpeech = finish;
-      utterance.onstart = () => {
-        if (live()) {
-          this.set({
-            status: "speaking",
-            botId: opts.botId,
-            messageId: opts.messageId,
-            caption: value,
-          });
-        }
-      };
-      utterance.onend = () => finish(true);
-      utterance.onerror = (event) => {
-        const interrupted = event.error === "canceled" || event.error === "interrupted";
-        finish(false, interrupted ? undefined : "This Mac could not play its selected voice.");
-      };
-      try {
-        synth.speak(utterance);
-      } catch {
-        finish(false, "This Mac could not start its selected voice.");
-      }
-    });
   }
 
   private async prepare(text: string, voiceId: string | undefined, signal: AbortSignal): Promise<string[]> {

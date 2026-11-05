@@ -18,7 +18,6 @@ const COPY: Record<SpotlightId, { key: "onboarding.spot.composer" | "onboarding.
 export function FirstConversationTour({ quiet = false }: { quiet?: boolean }) {
   const { state, dispatch } = useStore();
   const advanced = useAdvancedMode();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const record = state.config?.onboarding;
   const [dismissed, setDismissed] = useState<string[]>([]);
   const seen = useMemo(() => [...(record?.hintsSeen ?? []), ...dismissed, "spot.composer", "spot.model"], [record?.hintsSeen, dismissed]);
@@ -37,11 +36,10 @@ export function FirstConversationTour({ quiet = false }: { quiet?: boolean }) {
   const eligible =
     advanced &&
     !quiet &&
-    !remoteClient &&
     !state.welcomeOpen &&
     Boolean(record?.completedAt) &&
     !state.tourOpen &&
-    !welcomeDue(state.config, { remoteClient }) &&
+    !welcomeDue(state.config) &&
     !tourComplete(seen);
 
   const observation: ChatObservation = {

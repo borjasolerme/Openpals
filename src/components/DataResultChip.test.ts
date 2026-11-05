@@ -134,11 +134,7 @@ describe("Data result receipt", () => {
       expect(container.querySelector("canvas,table,iframe")).toBeNull();
       flushSync(() => root.render(createElement(DataResultChip, { message: { ...message, dataResult: { ...message.dataResult!, botId: "deleted" } } })));
       expect(container.querySelector("button")!.disabled).toBe(true);
-      vi.stubGlobal("ogb", { remoteClient: { active: true } });
-      flushSync(() => root.render(createElement(DataResultChip, { message })));
-      expect(container.querySelector("button")!.disabled).toBe(true);
-      expect(container.querySelector("button")!.title).toContain("companion");
-    } finally { root.unmount(); vi.unstubAllGlobals(); }
+    } finally { root.unmount(); }
   });
 
   it("is never read as a status row, a failed turn or a bare tool name, whatever the result is called", () => {

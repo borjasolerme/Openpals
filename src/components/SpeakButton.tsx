@@ -13,13 +13,12 @@ type SpeakArgs = {
   messageId: string;
   voiceId?: string;
   tts: ConfigStatus["tts"];
-  localVoice: boolean;
 };
 
-export function useSpeakAction({ text, botId, messageId, voiceId, tts, localVoice }: SpeakArgs) {
+export function useSpeakAction({ text, botId, messageId, voiceId, tts }: SpeakArgs) {
   const speech = useSpeech();
-  const configured = localVoice || Boolean(tts?.configured);
-  const ready = localVoice || (configured && Boolean(voiceId || tts?.voice));
+  const configured = Boolean(tts?.configured);
+  const ready = configured && Boolean(voiceId || tts?.voice);
   const mine = speech.messageId === messageId && speech.status !== "idle";
   const preparing = mine && speech.status === "preparing";
   const label = !configured

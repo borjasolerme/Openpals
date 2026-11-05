@@ -9,7 +9,7 @@ import { CalendarClock, ChevronRight, Columns2, Box, Check, Cloud, Sparkles, Glo
 import { api, ApiError, currentTaskBot, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { setAdvancedMode, useAdvancedMode } from "@/lib/interface-mode";
 import { ComputerFilesPane } from "./ComputerFilesPane";
-import { effectivePlace, isComputerPlace, placeLabelKey } from "@/lib/place";
+import { effectivePlace, isComputerPlace, placeLabelKey } from "@/lib/work-place";
 import type { CloudBackend } from "../../shared/wire";
 import { KeyRow } from "./keys/KeyRow"; import { openKeySettings } from "./keys/key-focus";
 import { cn } from "@/lib/cn";

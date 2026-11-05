@@ -1,27 +1,26 @@
-import { toolSurfaceKind } from "../../shared/tool-surface";
-import type { Bot, Task } from "@/state/store";
-import type { LocaleKey } from "@/locales";
+type PlaceBridge = NonNullable<NonNullable<Window["ogb"]>["place"]>;
 
-export type Place = "cloud" | "vm" | "local" | "browser";
-export const PLACES: readonly Place[] = ["cloud", "vm", "local", "browser"];
-export type EffectivePlace = Place | "auto" | "off";
+export type BotsPlace = Awaited<ReturnType<PlaceBridge["current"]>>;
 
-export function effectivePlace(bot: Pick<Bot, "computer">, task?: Pick<Task, "surface"> | null): EffectivePlace {
-  if (bot.computer === "off") return "off";
-  return task?.surface ?? bot.computer ?? "auto";
+const bridge = (): PlaceBridge | undefined => (typeof window === "undefined" ? undefined : window.ogb?.place);
+
+export function placeAvailable(): boolean {
+  return Boolean(bridge());
 }
 
-export function isComputerPlace(place: EffectivePlace): place is "cloud" | "vm" | "local" {
-  return place === "cloud" || place === "vm" || place === "local";
+/** Where the bots live; null in a browser, where the page itself is the place. */
+export function currentPlace(): Promise<BotsPlace | null> {
+  return bridge()?.current() ?? Promise.resolve(null);
 }
 
-export function placeLabelKey(place: EffectivePlace): LocaleKey {
-  return `place.${place}` as LocaleKey;
+export function connectServer(link: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  return bridge()?.connect(link) ?? Promise.resolve({ ok: false, error: "desktop-only" });
 }
 
-export function toolPlace(toolName: string, effective: EffectivePlace): Place | null {
-  const kind = toolSurfaceKind(toolName);
-  if (kind === "browser") return "browser";
-  if (kind === "computer") return isComputerPlace(effective) ? effective : null;
-  return null;
+export function disconnectServer(): Promise<void> {
+  return bridge()?.disconnect() ?? Promise.resolve();
+}
+
+export function onPlaceChanged(callback: (place: BotsPlace) => void): () => void {
+  return bridge()?.onChanged(callback) ?? (() => {});
 }

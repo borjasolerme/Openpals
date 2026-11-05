@@ -63,11 +63,10 @@ describe("looking for another AI tool's setup without holding up the welcome flo
   });
 
   it("looks only from the desktop app's own window on its own server", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: false } } });
+    vi.stubGlobal("window", { ogb: { app: { version: "1.0.0", ownPage: true } } });
     expect(localSetupImport()).toBe(true);
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
+    vi.stubGlobal("window", { ogb: { app: { version: "1.0.0", ownPage: false } } });
     expect(localSetupImport()).toBe(false);
-    // A server page the desktop app opened gets a bridge without remoteClient, like a browser.
     vi.stubGlobal("window", { ogb: {} });
     expect(localSetupImport()).toBe(false);
     vi.stubGlobal("window", {});

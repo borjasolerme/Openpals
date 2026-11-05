@@ -129,15 +129,8 @@ describe("first-reply rescue row", () => {
     expect(headerBot!.busy).toBe(true);
   });
 
-  it.each([
-    ["a remote client in Advanced mode, whose header has no model chip", () => {
-      setAdvancedMode(true);
-      (window as { ogb?: unknown }).ogb = { remoteClient: { active: true } };
-      render(row());
-    }],
-    ["a room, whose header has no model chip", () => render(row({ ...rescue, groupId: "room-1" }), { groups: [{ id: "room-1", busyBotId: "bot-1", turnStartedAt: AT - 1 }] })],
-  ])("offers no Switch AI for %s", (_label, show) => {
-    show();
+  it("offers no Switch AI for a room, whose header has no model chip", () => {
+    render(row({ ...rescue, groupId: "room-1" }), { groups: [{ id: "room-1", busyBotId: "bot-1", turnStartedAt: AT - 1 }] });
     expect(button("Switch AI")).toBeUndefined();
     expect(button("Connect your subscription")).toBeDefined();
   });

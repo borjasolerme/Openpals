@@ -5,12 +5,12 @@ import { callTool, type ToolCallContext } from "./agents-call.ts";
 import { availableTools, type CatalogProfile } from "./agents-catalog.ts";
 import type { HarnessClient } from "./agents-client.ts";
 
-const PROFILE: CatalogProfile = { skillAuthoring: false, sharedComputers: false, voiceNotes: false, chief: false, botId: "bot-scout" };
+const PROFILE: CatalogProfile = { skillAuthoring: false, voiceNotes: false, chief: false, botId: "bot-scout" };
 
 function harness(answer: { ok: boolean; status: number; body: Record<string, unknown> } = { ok: true, status: 201, body: { messageId: "m42" } }) {
   const api = vi.fn<HarnessClient["api"]>(async () => ({}));
   const apiResponse = vi.fn<HarnessClient["apiResponse"]>(async () => answer);
-  const context: ToolCallContext = { botId: "bot-scout", threadId: "thread-scout", depth: 0, externalRuntime: false, sharedComputers: false, client: { api, apiResponse } };
+  const context: ToolCallContext = { botId: "bot-scout", threadId: "thread-scout", depth: 0, externalRuntime: false, client: { api, apiResponse } };
   return { api, apiResponse, context };
 }
 
@@ -18,7 +18,7 @@ describe("the widget tools in the catalog", () => {
   it("are offered to every bot that gets the agents catalog, whatever the turn mounts", () => {
     const profiles: CatalogProfile[] = [
       PROFILE,
-      { ...PROFILE, chief: true, skillAuthoring: true, sharedComputers: true, voiceNotes: true },
+      { ...PROFILE, chief: true, skillAuthoring: true, voiceNotes: true },
       { ...PROFILE},
       { ...PROFILE, memoryEnabled: false },
     ];
@@ -148,7 +148,7 @@ describe("update_widget", () => {
 
 describe("the chat-app tools", () => {
   it("are in every catalog, after the widget tools, with schemas a model can fill and no read-only annotation", () => {
-    for (const profile of [PROFILE, { ...PROFILE, chief: true, skillAuthoring: true, sharedComputers: true, voiceNotes: true }]) {
+    for (const profile of [PROFILE, { ...PROFILE, chief: true, skillAuthoring: true, voiceNotes: true }]) {
       const names = availableTools(profile).map((tool) => tool.name);
       expect(names.slice(names.indexOf("show_widget"), names.indexOf("show_widget") + 2)).toEqual(["show_widget", "show_html"]);
     }

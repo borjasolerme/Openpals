@@ -34,7 +34,6 @@ export function TriggersPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
   const [botFilter, setBotFilter] = useState(focus?.botId ?? "all");
   const [newText, setNewText] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ kind: SetUpKind; id?: string; botId?: string } | null>(null);
-  const routinesOnly = window.ogb?.remoteClient?.active === true;
   const visibleBots = state.bots.filter((bot) => !bot.hidden);
   const botName = (botId: string) => state.bots.find((bot) => bot.id === botId)?.name ?? t("routines.unavailableBot");
 
@@ -45,8 +44,8 @@ export function TriggersPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
   }, [focus]);
   useEffect(() => { backButtonRef.current?.focus({ preventScroll: true }); }, []);
 
-  const all = useMemo(() => automationsFrom({ routines: state.routines, webhooks: routinesOnly ? [] : state.webhooks, runs: state.routineRuns, bots: state.bots }),
-    [state.routines, state.webhooks, state.routineRuns, state.bots, routinesOnly]);
+  const all = useMemo(() => automationsFrom({ routines: state.routines, webhooks: state.webhooks, runs: state.routineRuns, bots: state.bots }),
+    [state.routines, state.webhooks, state.routineRuns, state.bots]);
   const showFilter = all.length >= FILTER_FROM && new Set(all.map((automation) => automation.botId)).size > 1;
   const listed = orderAutomations(all.filter((automation) => !showFilter || botFilter === "all" || automation.botId === botFilter));
   const open = all.find((automation) => automation.id === openId) ?? null;

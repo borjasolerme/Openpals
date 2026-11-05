@@ -23,7 +23,6 @@ export function SecretRequestCard({
 }) {
   const { dispatch } = useStore();
   const secret = message.secret!;
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedLocally, setSavedLocally] = useState(false);
@@ -189,48 +188,42 @@ export function SecretRequestCard({
       onDismiss={dismiss}
       dismissLabel="Not now"
     >
-      {remoteClient ? (
-        <div className="text-[13px] leading-relaxed text-ink-secondary">
-          This key must be saved on the host computer. Open this conversation on the host to continue securely.
+      <form onSubmit={(event) => void save(event)}>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="password"
+            autoComplete="new-password"
+            spellCheck={false}
+            dir="ltr"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            placeholder={secret.placeholder}
+            disabled={saving || savedLocally}
+            aria-label={secret.label}
+            className={cn(ASK_FIELD, "min-w-[10rem] flex-1")}
+          />
+          <button type="submit" disabled={saving || (!value.trim() && !savedLocally)} {...askPrimary(color)}>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <LockKeyhole size={14} />}
+            {savedLocally ? "Continue task" : "Save securely"}
+          </button>
         </div>
-      ) : (
-        <form onSubmit={(event) => void save(event)}>
-          <div className="flex flex-wrap gap-2">
-            <input
-              type="password"
-              autoComplete="new-password"
-              spellCheck={false}
-              dir="ltr"
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              placeholder={secret.placeholder}
-              disabled={saving || savedLocally}
-              aria-label={secret.label}
-              className={cn(ASK_FIELD, "min-w-[10rem] flex-1")}
-            />
-            <button type="submit" disabled={saving || (!value.trim() && !savedLocally)} {...askPrimary(color)}>
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <LockKeyhole size={14} />}
-              {savedLocally ? "Continue task" : "Save securely"}
-            </button>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-tertiary">
-            <span className="flex items-center gap-1">
-              <LockKeyhole size={11} />{" "}
-              {!custom ? `Stored securely by ${productName()} and never added to chat.` : secret.delivery === "file" ? t("secretCard.file") : t("secretCard.ref")}
-            </span>
-            {secret.helpUrl && (
-              <a
-                href={secret.helpUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-accent-text hover:underline"
-              >
-                Where to get this key <ExternalLink size={11} />
-              </a>
-            )}
-          </div>
-        </form>
-      )}
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-tertiary">
+          <span className="flex items-center gap-1">
+            <LockKeyhole size={11} />{" "}
+            {!custom ? `Stored securely by ${productName()} and never added to chat.` : secret.delivery === "file" ? t("secretCard.file") : t("secretCard.ref")}
+          </span>
+          {secret.helpUrl && (
+            <a
+              href={secret.helpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-accent-text hover:underline"
+            >
+              Where to get this key <ExternalLink size={11} />
+            </a>
+          )}
+        </div>
+      </form>
       {error && <p role="alert" className="mt-2 text-[12px] text-danger">{error}</p>}
     </AskCard>
   );

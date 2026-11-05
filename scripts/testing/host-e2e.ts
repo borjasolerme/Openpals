@@ -18,7 +18,6 @@ export const HOST_E2E: Readonly<Record<string, string>> = {
   "server/saved-login.e2e.test.ts": "a sign-in started on the person's own desktop screen, which only macOS and Windows have",
   "server/session-credentials.e2e.test.ts": "Auto on this computer, macOS and Windows only",
   "server/setup-import.e2e.test.ts": "importing through links, which Windows makes as junctions",
-  "server/shared-computers.e2e.test.ts": "PowerShell commands and Windows process trees on a shared computer",
   "server/surface-pins.e2e.test.ts": "the desktop's own computer connection, validated per OS and absent on Linux",
   "server/voice-notes.e2e.test.ts": "the built-in Mac voices",
 };

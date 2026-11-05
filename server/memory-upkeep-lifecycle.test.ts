@@ -6,8 +6,7 @@ import { DATA_DIR } from "./config.ts";
 import { DREAM_MARKER } from "./memory-dream.ts";
 import { ORGANIZE_MARKER } from "./memory-organize.ts";
 import { TIDY_MARKER } from "./memory-tidy.ts";
-import { createMemoryUpkeep, TIDY_CHECK_MS, type MemoryUpkeep } from "./memory-upkeep.ts";
-import { createMoveFreeze } from "./move-freeze.ts";
+import { createMemoryUpkeep, type MemoryUpkeep } from "./memory-upkeep.ts";
 import { ensureWorkspace, readMemoryTopic, workspaceDir, writeMemoryFile, writeMemoryTopic } from "./workspace.ts";
 
 const BOT = { id: "upkeep-lifecycle", name: "Scout" };
@@ -34,20 +33,6 @@ describe("scheduled memory upkeep", () => {
     await loop.idle();
     vi.restoreAllMocks();
     vi.useRealTimers();
-  });
-
-  it("keeps a moved desktop's memory unchanged when frozen before the first tick", async () => {
-    const freeze = createMoveFreeze({ dataDir: DATA_DIR });
-    freeze.hold(() => loop.start(), () => loop.stop());
-    freeze.freeze("https://fixture.example");
-    await vi.advanceTimersByTimeAsync(TIDY_CHECK_MS);
-    expect(memory()).toBe(NOTEBOOK);
-    expect(readMemoryTopic(BOT.id, "archive.md")).toBeNull();
-    expect(loop.status(BOT.id).lastTidy).toBeUndefined();
-    freeze.unfreeze();
-    await vi.advanceTimersByTimeAsync(60_000);
-    expect(memory()).not.toContain("Trip");
-    expect(loop.status(BOT.id).lastTidy?.expired).toBe(1);
   });
 
   it("waits a full startup delay again after restarting", async () => {
@@ -118,7 +103,7 @@ describe("scheduled memory upkeep", () => {
     }
   });
 
-  describe.each(["freeze", "restart"] as const)("%s during a scheduled model call", (action) => {
+  describe("restart during a scheduled model call", () => {
     it.each(["organize", "notebook", "topic", "dream"] as const)("discards the active %s continuation and the rest of its tick", async (step) => {
       const other = { id: "next-bot", name: "Pixel" };
       ensureWorkspace(other.id);
@@ -138,8 +123,7 @@ describe("scheduled memory upkeep", () => {
         dreamer: () => BOT.id,
         conversations: () => ["a", "b"].map((threadId) => ({ threadId, lines: [{ by: "person", text: "Keep project updates brief." }] })),
       });
-      const freeze = createMoveFreeze({ dataDir: DATA_DIR });
-      freeze.hold(() => loop.start(), () => loop.stop());
+      loop.start();
       await vi.advanceTimersByTimeAsync(60_000);
       expect(generateText).toHaveBeenCalledTimes(1);
       expect(generateText.mock.calls[0]![0]).toContain(marker);
@@ -158,8 +142,8 @@ describe("scheduled memory upkeep", () => {
         state: savedState(),
       });
       const before = snapshot();
-      if (action === "freeze") freeze.freeze("https://fixture.example");
-      else { loop.stop(); loop.start(); }
+      loop.stop();
+      loop.start();
       release(step === "organize" ? '{"moves":[{"i":0,"topic":"project"}]}' : step === "dream"
         ? '{"learned":[{"text":"Prefers brief project updates","from":[1,2],"confidence":0.9}]}' : '{"pairs":[]}');
       await vi.advanceTimersByTimeAsync(0);
@@ -167,7 +151,6 @@ describe("scheduled memory upkeep", () => {
       expect(snapshot()).toEqual(before);
       expect(readFileSync(join(workspaceDir(other.id), "MEMORY.md"), "utf8")).toBe(NOTEBOOK);
       expect(generateText).toHaveBeenCalledTimes(1);
-      if (action === "freeze") freeze.unfreeze();
       await vi.advanceTimersByTimeAsync(60_000);
       await loop.idle();
       expect(loop.status(BOT.id).lastTidy).toBeDefined();

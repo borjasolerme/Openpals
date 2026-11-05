@@ -5,7 +5,6 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const f = vi.hoisted(() => ({ effects: [] as EffectCallback[], pair: vi.fn() }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(), useEffect: (effect: EffectCallback) => { f.effects.push(effect); } }));
 vi.mock("../lib/session", async original => ({ ...await original<typeof import("../lib/session")>(), pairWithCode: f.pair, readSessionState: vi.fn().mockResolvedValue({ kind: "unauthenticated", error: "" }) }));
-vi.mock("../components/DesktopWorkspaceSwitcher", () => ({ DesktopWorkspaceSwitcher: () => null }));
 import { PAIR_INTRO, PairPage, pairsAutomatically, pairTitle } from "./PairPage";
 
 const code = "ABCD-EFGH-JK23";
@@ -26,7 +25,7 @@ it("in the desktop app, a code the link carried connects at once; a browser stil
 });
 
 it("opening a paired server from the app needs no click and no code to type", async () => {
-  vi.stubGlobal("window", { ogb: { workspaces: {} } });
+  vi.stubGlobal("window", { ogb: { place: {} } });
   f.pair.mockResolvedValue({ ok: true });
   const html = render(code);
   expect(html).toContain("Connecting to this Openpals…");
@@ -37,7 +36,7 @@ it("opening a paired server from the app needs no click and no code to type", as
 });
 
 it("a code that no longer works falls back to the form, with the reason", async () => {
-  vi.stubGlobal("window", { ogb: { workspaces: {} } });
+  vi.stubGlobal("window", { ogb: { place: {} } });
   f.pair.mockResolvedValue({ ok: false, error: "That pairing code has expired." });
   render(code); f.effects[0](); await flush();
   expect(replaced).toEqual([]);
@@ -48,6 +47,13 @@ it("a browser keeps the code in the form for the person to confirm", () => {
   const html = render(code);
   expect(html).toContain(`value="${code}"`); expect(html).toContain(">Connect</button>");
   f.effects[0]?.(); expect(f.pair).not.toHaveBeenCalled();
+});
+
+it("in the desktop app, offers the way back to this computer; a browser has none", () => {
+  vi.stubGlobal("window", { ogb: { place: {} } });
+  expect(render(null)).toContain(">Back to this computer</button>");
+  vi.stubGlobal("window", {});
+  expect(render(null)).not.toContain("Back to this computer");
 });
 
 it("asks for the code shown on the server", () => {

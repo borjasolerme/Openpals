@@ -8,12 +8,10 @@ import { copyText } from "@/lib/copy-text";
 import { ReactAction, ReactionChips } from "@/components/Reactions";
 import { useBotMessageMenu, userMessageMenu } from "@/components/message-menu";
 import { useSpeech } from "@/lib/tts/useSpeech";
-import { localSystemVoiceActive } from "@/lib/local-voice";
 import { computerStartLine, useScreensWhile } from "@/lib/computer-start";
 import { rememberComputerPanelOpen } from "@/lib/computer-panel-focus";
 import { useCaptionChrome, useDesktopCapabilities } from "@/components/DesktopCapabilities";
 import {
-  api,
   currentTaskBot,
   useStore,
   formatTime,
@@ -93,7 +91,7 @@ import { SpeakButton } from "./SpeakButton";
 import { CallOverlay } from "./CallView";
 import { LiveCallBar } from "./LiveCallBar";
 import { LiveCallChip } from "./LiveCallPill";
-import { effectivePlace, toolPlace, type EffectivePlace } from "@/lib/place";
+import { effectivePlace, toolPlace, type EffectivePlace } from "@/lib/work-place";
 import { cn } from "@/lib/cn";
 import { activeLocale, t } from "@/lib/i18n";
 import { COMPACT_BUBBLE } from "@/lib/compact-chip";
@@ -130,7 +128,7 @@ const USER_COLLAPSE_LINES = 8;
 
 interface ChatRows {
   botId: string; threadId: string; botName: string; botColor: Bot["color"]; voiceId?: string;
-  tts: ConfigStatus["tts"]; localVoice: boolean;
+  tts: ConfigStatus["tts"];
   hasMore: boolean; bots: readonly Bot[];
   mentionPeers: readonly MentionPeer[]; mentionPerson: { profileName?: string };
   focus: AppState["focusMessage"];
@@ -321,8 +319,7 @@ const Bubble = memo(function Bubble({
   replyTarget?: Message;
   onReply: (message: Message) => void;
 }) {
-  const { botId, threadId, botName, voiceId, tts, localVoice, bots, mentionPeers, mentionPerson, focus, dispatch, onBranch, bubbleStyle, conversational, simple, openedAt } = useChatRows(), busy = onRegenerate || versions ? use(ChatBusyContext) : false;
-  const remoteClient = window.ogb?.remoteClient?.active === true;
+  const { botId, threadId, botName, voiceId, tts, bots, mentionPeers, mentionPerson, focus, dispatch, onBranch, bubbleStyle, conversational, simple, openedAt } = useChatRows(), busy = onRegenerate || versions ? use(ChatBusyContext) : false;
   const peer = peerLine(message) ?? peerRequest(message, botId);
   const user = message.role === "user" && !peer;
   const ownBubbleStyle = bubbleStyle;
@@ -339,12 +336,11 @@ const Bubble = memo(function Bubble({
     messageId: message.id,
     voiceId,
     tts,
-    localVoice,
     canSpeak: message.kind === "text" && !peer,
     viewRaw,
     onToggleRaw: () => setViewRaw((raw) => !raw),
     onRegenerate: !busy ? onRegenerate : undefined,
-    pin: remoteClient ? undefined : {
+    pin: {
       pinned,
       onToggle: () => dispatch({ type: "updateTask", botId, threadId, patch: { pinnedMessageId: pinned ? "" : message.id } }),
     },
@@ -404,7 +400,7 @@ const Bubble = memo(function Bubble({
       {!peer && <ReactAction threadId={threadId} message={message} />}
       {!simple && text && <CopyButton text={text} className={messageActionClass} />}
       {text && viewRaw && <RawToggleAction active onToggle={() => setViewRaw(false)} className={messageActionClass} />}
-      {text && speaking && <SpeakButton text={text} botId={botId} messageId={message.id} voiceId={voiceId} tts={tts} localVoice={localVoice} className={cn(messageActionClass, "text-accent")} />}
+      {text && speaking && <SpeakButton text={text} botId={botId} messageId={message.id} voiceId={voiceId} tts={tts} className={cn(messageActionClass, "text-accent")} />}
     </MessageActions>
   );
 
@@ -421,7 +417,7 @@ const Bubble = memo(function Bubble({
                 messageId: message.id,
                 onEdit: message.kind === "text" && !webhookView && !hasAttachments && !message.id.startsWith("optimistic-")
                   ? () => onStartEdit(message.id) : undefined,
-                pin: remoteClient ? undefined : { pinned, onToggle: togglePin },
+                pin: { pinned, onToggle: togglePin },
               }),
             ]}
           >
@@ -792,14 +788,12 @@ const CHATHEAD_PILL = `flex min-w-0 items-center gap-2 rounded-full py-0.5 pl-1.
 export function ChatView({ bot: profile }: { bot: Bot }) {
   const bot = useMemo(() => currentTaskBot(profile), [profile]);
   const { state, dispatch } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const { dragProps: headerDragProps, noDragStyle: headerNoDragStyle } = useCaptionChrome();
   const composerDockRef = useRef<HTMLDivElement>(null);
   const composerDock = useComposerDockPad(composerDockRef);
   const advanced = useAdvancedMode();
   const phone = useMediaQuery(PHONE_LAYOUT);
-  const phoneMenu = phone && !remoteClient;
-  const simpleHead = !advanced && !remoteClient;
+  const simpleHead = !advanced;
 
   const computerStarting = computerStartLine(state.computerStarts[bot.id], bot.name); useScreensWhile(Boolean(computerStarting));
   const mascotMotion = state.mascotMotion?.botId === bot.id ? state.mascotMotion : null;
@@ -869,7 +863,6 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
   const focus = state.focusMessage?.threadId === bot.threadId ? state.focusMessage : null;
   const showToolCalls = showToolCallsEnabled(state.config);
   const tts = state.config?.tts;
-  const localVoice = localSystemVoiceActive();
   const locale = activeLocale();
   const busy = Boolean(bot.busy);
   const stoppedAt = useStoppedAt(bot.threadId);
@@ -883,8 +876,8 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
   const bubbleStyle = useMemo(() => (colorMine ? userBubbleStyle(bot.color, { flat: !advanced }) : undefined), [colorMine, bot.color, advanced]);
   const hasMore = Boolean(bot.hasMore);
   const rows = useMemo<ChatRows>(
-    () => ({ botId: bot.id, threadId: bot.threadId, botName: bot.name, botColor: bot.color, voiceId: bot.voice, tts, localVoice, hasMore, bots, mentionPeers, mentionPerson: { profileName: state.config?.profile?.name }, focus, showToolCalls, locale, dispatch, onBranch, bubbleStyle, conversational: isConversational(bot.replyStyle), simple: !advanced, openedAt }),
-    [bot.id, bot.threadId, bot.name, bot.color, bot.voice, tts, localVoice, hasMore, bots, mentionPeers, state.config?.profile?.name, focus, showToolCalls, locale, dispatch, onBranch, bubbleStyle, bot.replyStyle, advanced, openedAt],
+    () => ({ botId: bot.id, threadId: bot.threadId, botName: bot.name, botColor: bot.color, voiceId: bot.voice, tts, hasMore, bots, mentionPeers, mentionPerson: { profileName: state.config?.profile?.name }, focus, showToolCalls, locale, dispatch, onBranch, bubbleStyle, conversational: isConversational(bot.replyStyle), simple: !advanced, openedAt }),
+    [bot.id, bot.threadId, bot.name, bot.color, bot.voice, tts, hasMore, bots, mentionPeers, state.config?.profile?.name, focus, showToolCalls, locale, dispatch, onBranch, bubbleStyle, bot.replyStyle, advanced, openedAt],
   );
   const currentTask = bot.tasks?.find((task) => task.threadId === bot.threadId), place = effectivePlace(bot, currentTask);
 
@@ -969,7 +962,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
       <CallOverlay bot={bot} />
       <GlassScrollFrame className="flex-1 [--glass-tint:var(--color-app)]">
       {/* z-[25]: above the room set-up card (z-20), below the CallOverlay (z-30). */}
-      <GlassBar edge="top" fade={!remoteClient} className="z-[25]">
+      <GlassBar edge="top" fade className="z-[25]">
       <div
         {...headerDragProps}
         className={cn(
@@ -1006,15 +999,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
               </button>
               <RenameTitle
                 value={bot.name}
-                onCommit={(name) => {
-                  if (window.ogb?.remoteClient?.active) {
-                    void api(`/api/bots/${bot.id}/profile`, { method: "PATCH", body: JSON.stringify({ name }) })
-                      .then(({ bot: updated }) => dispatch({ type: "botPatched", bot: updated }))
-                      .catch((cause) => dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }));
-                  } else {
-                    dispatch({ type: "updateBot", botId: bot.id, patch: { name } });
-                  }
-                }}
+                onCommit={(name) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } })}
                 onActivate={() => dispatch({ type: "toggleSettings", open: true })}
                 showEditButton
                 className="truncate text-[14px] font-semibold text-ink"
@@ -1064,7 +1049,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
           {/* The model and the bot's computer stay in view in both modes; Simple mode moves only ⋯ into the bot panel. */}
           {!phone && <ModelPicker key={bot.threadId} bot={bot} threadId={bot.threadId} />}
           <LiveCallChip currentBotId={bot.id} onOpen={(botId, threadId) => openThread(dispatch, { botId, threadId }, state)} />
-          {!phoneMenu && <button
+          {!phone && <button
             data-tour="computer"
             onClick={(event) => { if (!state.computerOpen) rememberComputerPanelOpen({ botId: bot.id, opener: event.currentTarget, tabs: event.detail === 0 }); dispatch({ type: "toggleComputer" }); }}
             className={cn(
@@ -1076,7 +1061,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
           >
             <Monitor size={18} />{busy && place === "browser" && <span aria-hidden="true" className="absolute right-1 top-1 size-1.5 animate-pulse rounded-full bg-success" data-testid="computer-button-live" />}
           </button>}
-          {phoneMenu ? <ChatMoreMenu bot={bot} phoneHeader /> : (advanced || remoteClient) && <ChatHeaderMenu key={`menu:${bot.threadId}`} bot={bot} />}
+          {phone ? <ChatMoreMenu bot={bot} phoneHeader /> : advanced && <ChatHeaderMenu key={`menu:${bot.threadId}`} bot={bot} />}
         </div>
         </div>
       </div>
@@ -1093,7 +1078,7 @@ export function ChatView({ bot: profile }: { bot: Bot }) {
         onJump={(messageId) =>
           dispatch({ type: "focusMessage", threadId: bot.threadId, messageId })
         }
-        onUnpin={remoteClient ? undefined : () =>
+        onUnpin={() =>
           dispatch({ type: "updateTask", botId: bot.id, threadId: bot.threadId, patch: { pinnedMessageId: "" } })
         }
       />

@@ -20,15 +20,14 @@ function harness(envState) {
   const handlers = appPermissionHandlers({
     rendererOrigin: () => LOCAL,
     mainContents: () => ctx.main,
-    activeRemoteOrigin: () => environments.activeEnvironment(ctx.state)?.origin ?? null,
-    activeRemoteMicrophone: () => environments.activeEnvironment(ctx.state)?.microphone === true,
+    activeRemoteOrigin: () => environments.activeServer(ctx.state)?.origin ?? null,
+    activeRemoteMicrophone: () => environments.activeServer(ctx.state)?.microphone === true,
     askRemoteMicrophone: (origin) => {
       ctx.asked.push(origin);
       if (ctx.answer === null) return null;
       return Promise.resolve().then(() => {
         if (typeof ctx.beforeAnswer === "function") ctx.beforeAnswer();
-        const env = environments.activeEnvironment(ctx.state);
-        if (ctx.answer === "allow" && env?.origin === origin) ctx.state = environments.withMicrophone(ctx.state, env.id);
+        if (ctx.answer === "allow" && environments.activeServer(ctx.state)?.origin === origin) ctx.state = environments.withMicrophone(ctx.state);
       });
     },
   });
@@ -42,9 +41,8 @@ function harness(envState) {
   return { ctx, request, check, pageMic, mainContents };
 }
 
-let state = environments.withEnvironment({ environments: [], activeId: environments.LOCAL_ID }, { origin: VPS, name: "VPS" }, () => "vps");
-state = environments.withEnvironment(state, { origin: OTHER, name: "Other" }, () => "other");
-const viewing = (id, s = state) => environments.withActive(s, id);
+const SERVERS = { vps: { origin: VPS, name: "VPS" }, other: { origin: OTHER, name: "Other" } };
+const viewing = (id, s = environments.LOCAL_PLACE) => (id === "local" ? environments.LOCAL_PLACE : environments.withServer(s, SERVERS[id]));
 
 test("a saved server's page is refused the microphone until the person allows it", async () => {
   const h = harness(viewing("vps"));
@@ -54,14 +52,12 @@ test("a saved server's page is refused the microphone until the person allows it
   h.ctx.answer = "deny";
   assert.equal(await h.request(`${VPS}/chat`), false, "Don't Allow");
   assert.deepEqual(h.ctx.asked, [VPS, VPS], "asked for the exact active origin");
-  assert.equal(environments.activeEnvironment(h.ctx.state).microphone, undefined, "nothing remembered");
+  assert.equal(environments.activeServer(h.ctx.state).microphone, undefined, "nothing remembered");
 });
 
 test("an address typed before pairing gets no microphone on its own (the review's repro)", async () => {
   const typed = environments.parseHostedWorkspaceLink("stranger-server.example.com");
-  let s = environments.withEnvironment({ environments: [], activeId: environments.LOCAL_ID }, { origin: typed.origin }, () => "typed");
-  s = environments.withActive(s, "typed");
-  const h = harness(s);
+  const h = harness(environments.withServer(environments.LOCAL_PLACE, { origin: typed.origin }));
   assert.equal(await h.request(`${typed.origin}/`), false);
   assert.equal(h.check(typed.origin), false);
 });
@@ -89,45 +85,41 @@ test("once allowed, the active server hears the microphone: main frame, main win
   assert.equal(await h.request(`${VPS}/`, AUDIO, h.mainContents, "camera"), false, "never another permission");
 });
 
-test("the answer belongs to one server: no carry-over on a switch, and forgetting takes it back", async () => {
+test("the answer belongs to one server: another server does not inherit it, and disconnecting takes it back", async () => {
   const h = harness(viewing("vps"));
   h.ctx.answer = "allow";
   assert.equal(await h.request(`${VPS}/`), true);
   h.ctx.answer = null;
-  h.ctx.state = environments.withActive(h.ctx.state, "other");
+  assert.equal(environments.withServer(h.ctx.state, SERVERS.vps).server.microphone, true, "the same server, connected again, keeps it");
+  h.ctx.state = viewing("other", h.ctx.state);
   assert.equal(await h.request(`${OTHER}/`), false, "the other server is not allowed by VPS's answer");
-  assert.equal(await h.request(`${VPS}/`), false, "nor VPS while it is not active");
-  h.ctx.state = environments.withActive(h.ctx.state, environments.LOCAL_ID);
-  assert.equal(await h.request(`${LOCAL}/`), true, "Local keeps its microphone");
-  h.ctx.state = environments.withActive(h.ctx.state, "vps");
-  assert.equal(await h.request(`${VPS}/`), true, "back on VPS: still allowed");
-  h.ctx.state = environments.withoutEnvironment(h.ctx.state, "vps");
-  assert.equal(await h.request(`${VPS}/`), false, "forgotten");
-  h.ctx.state = environments.withActive(environments.withEnvironment(h.ctx.state, { origin: VPS }, () => "vps2"), "vps2");
-  assert.equal(await h.request(`${VPS}/`), false, "re-added: not remembered");
+  assert.equal(await h.request(`${VPS}/`), false, "nor VPS once it is not shown");
+  h.ctx.state = viewing("local");
+  assert.equal(await h.request(`${LOCAL}/`), true, "this computer keeps its microphone");
+  h.ctx.state = viewing("vps", h.ctx.state);
+  assert.equal(await h.request(`${VPS}/`), false, "connected again after a disconnect: not remembered");
 });
 
-test("a switch while the dialog is open refuses the waiting request", async () => {
+test("connecting elsewhere while the dialog is open refuses the waiting request", async () => {
   const h = harness(viewing("vps"));
   h.ctx.answer = "allow";
-  h.ctx.beforeAnswer = () => { h.ctx.state = environments.withActive(h.ctx.state, "other"); };
+  h.ctx.beforeAnswer = () => { h.ctx.state = viewing("other", h.ctx.state); };
   assert.equal(await h.request(`${VPS}/`), false);
 });
 
 test("the answer is saved with the server and survives a restart, only as true", () => {
-  const allowed = environments.withMicrophone(viewing("vps"), "vps");
-  const restored = environments.parseEnvironments(environments.serializeEnvironments(allowed));
-  assert.equal(environments.activeEnvironment(restored).microphone, true);
-  assert.equal(restored.environments.find((e) => e.id === "other").microphone, undefined);
-  const damaged = environments.parseEnvironments({ environments: [{ id: "vps", origin: VPS, microphone: "yes" }], activeId: "vps" });
-  assert.equal(environments.activeEnvironment(damaged).microphone, undefined, "anything but true is no");
-  assert.equal(environments.withMicrophone(allowed, "missing"), allowed, "unknown id changes nothing");
+  const allowed = environments.withMicrophone(viewing("vps"));
+  const restored = environments.parsePlace(environments.serializePlace(allowed));
+  assert.equal(environments.activeServer(restored).microphone, true);
+  const damaged = environments.parsePlace({ version: 3, server: { origin: VPS, microphone: "yes" }, active: "server" });
+  assert.equal(environments.activeServer(damaged).microphone, undefined, "anything but true is no");
+  assert.equal(environments.withMicrophone(environments.LOCAL_PLACE), environments.LOCAL_PLACE, "no server changes nothing");
 });
 
 test("main asks through its dialog, remembers on the record and clears a refusal on forget", () => {
-  assert.match(mainSource, /activeRemoteMicrophone: \(\) => activeEnvironment\(environmentsState\)\?\.microphone === true,/);
+  assert.match(mainSource, /activeRemoteMicrophone: \(\) => activeServer\(placeState\)\?\.microphone === true,/);
   assert.match(mainSource, /\n    askRemoteMicrophone,\n/);
-  assert.match(mainSource, /persistEnvironments\(withMicrophone\(environmentsState, env\.id\)\)/);
-  assert.match(mainSource, /sharingController\(\)\.forget\(env\);\n  remoteMicrophoneRefused\.delete\(env\.origin\);/);
-  assert.match(mainSource, /defaultId: 1,\n        cancelId: 1,\n        message: `Allow “\$\{env\.name\}” to use the microphone\?`/, "Don't Allow is the default");
+  assert.match(mainSource, /if \(activeServer\(placeState\)\?\.origin === origin\) savePlace\(withMicrophone\(placeState\)\);/);
+  assert.match(mainSource, /async function forgetServer\(server\) \{\n  remoteMicrophoneRefused\.delete\(server\.origin\);/);
+  assert.match(mainSource, /defaultId: 1,\n        cancelId: 1,\n        message: `Allow “\$\{server\.name\}” to use the microphone\?`/, "Don't Allow is the default");
 });

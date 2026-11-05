@@ -60,7 +60,7 @@ export function loadChecks(value: unknown): RoutineCheck[] | undefined {
 }
 
 /** A routine's checks, access and delivery as it may hold them; a field out of range is left out. */
-export function withCheckFields<T extends Pick<Routine, "target" | "checks" | "access" | "deliver">>(routine: T): T {
+function withCheckFields<T extends Pick<Routine, "target" | "checks" | "access" | "deliver">>(routine: T): T {
   const clean = { ...routine, checks: routine.target === "bot" ? loadChecks(routine.checks) : undefined,
     access: routine.access === "read-and-draft" ? "read-and-draft" as const : undefined,
     deliver: routine.target === "bot" && routine.deliver === "brief" ? "brief" as const : undefined };

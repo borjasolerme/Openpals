@@ -160,7 +160,7 @@ describe("Move from Grok Bot", () => {
   });
 
   it("on the desktop app looks once it is open, and offers what it found in one tap", async () => {
-    vi.stubGlobal("ogb", { remoteClient: { active: false } });
+    vi.stubGlobal("ogb", { app: { version: "1.0.0", ownPage: true } });
     f.api.mockImplementation(async (path: string) => (path === "/api/setup-import/grok"
       ? { files: [{ name: "grok-bot-export-drew.json", modifiedAt: 1, text: EXPORT }], bots: ["Job Search", "Scout"] }
       : path === "/api/mcp/servers" ? { servers: [] } : {}));

@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useLiveMedia } from "@/lib/live-call-media";
 import { stateForBot } from "@/lib/mascot";
-import { api, openBot, useStore, type Bot } from "@/state/store";
+import { openBot, useStore, type Bot } from "@/state/store";
 import { useChiefStepOpen } from "@/lib/default-bot";
 
 import { BotAvatar } from "./Avatar";
@@ -25,7 +25,6 @@ type TileProps = BotRowProps & PinnedCircleDragProps & { primary?: boolean };
 export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, drag, dragging, drop, prevId, nextId, ...row }: TileProps) {
   const { bot, selected, deleting, mascotMotion, pendingQueued, instances, liveCall, dispatch, onMenu, renameRequest } = row;
   const liveMedia = useLiveMedia();
-  const remoteClient = typeof window !== "undefined" && window.ogb?.remoteClient?.active === true;
   const [renaming, setRenaming] = useState(false);
   const visible = useVisibleMessages(bot);
   const { waiting, working, teammateWait, queued } = sidebarBotStatus(bot, pendingQueued);
@@ -36,12 +35,7 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
   const label = [bot.name, bot.chiefOfStaff ? t("sidebar.bot.chiefOfStaff") : "", onLiveCall ? t("call.live.badge") : "", status, unread ? t("task.unread") : ""].filter(Boolean).join(" · ");
   const reorder = pinnedCircleDragHandlers(bot.id, { drag, dragging, prevId, nextId });
   const open = () => openBot(dispatch, bot);
-  const rename = (name: string) => {
-    if (!remoteClient) return dispatch({ type: "updateBot", botId: bot.id, patch: { name } });
-    void api(`/api/bots/${bot.id}/profile`, { method: "PATCH", body: JSON.stringify({ name }) })
-      .then(({ bot: updated }) => dispatch({ type: "botPatched", bot: updated }))
-      .catch((cause) => dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }));
-  };
+  const rename = (name: string) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } });
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (renaming) return;
     if (event.key === "Enter" || event.key === " ") {

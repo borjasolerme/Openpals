@@ -14,7 +14,6 @@ const completed = (threadId, ok, turnId) => ({ kind: "runtime", event: { type: "
 const HELLO = { kind: "hello", cursor: "s:1", resumed: false };
 const CHAT = { botId: "m", threadId: "t1" };
 
-const MOVED = { error: "This bot lives on your server now.", code: "moved" };
 
 function fakeServer({ bots, saved = null, sendStatus = 202, sendBody = { ok: true }, made = null, starting }) {
   const encoder = new TextEncoder();
@@ -44,9 +43,9 @@ const asking = (server, { signal = new AbortController().signal, onUpdate = () =
   server.talk.ask({ chat: CHAT, text: "hi", sendId: "s1", signal, onUpdate });
 
 test("findMausBot picks this computer's MausBot, else the Chief of Staff", () => {
-  const mine = { id: "m", defaultBot: {} }, member = { id: "p", defaultBot: { person: "a@b.test" } }, chief = { id: "c", chiefOfStaff: true };
-  assert.equal(findMausBot([member, chief, mine]).id, "m");
-  assert.equal(findMausBot([member, chief]).id, "c");
+  const mine = { id: "m", defaultBot: {} }, chief = { id: "c", chiefOfStaff: true };
+  assert.equal(findMausBot([chief, mine]).id, "m");
+  assert.equal(findMausBot([chief]).id, "c");
   assert.equal(findMausBot([{ id: "x" }, { ...chief, hidden: true }]), null);
 });
 
@@ -96,20 +95,6 @@ test("a server still on its way up says starting, not down", async () => {
   await assert.rejects(server.talk.prepare(), { code: "starting" });
   starting = false;
   await assert.rejects(server.talk.prepare(), { code: "server-down" });
-});
-
-test("a computer whose bots moved to a server of the person's own says so, on making the chat and on sending", async () => {
-  const frozen = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], made: { status: 409, body: MOVED } });
-  await assert.rejects(frozen.talk.prepare(), { name: "TalkServerError", code: "moved" });
-  assert.deepEqual(frozen.saves, []);
-  await assert.rejects(fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], made: { status: 409, body: { code: "thread_busy" } } }).talk.prepare(), { code: "refused" });
-
-  const sending = fakeServer({ bots: [], sendStatus: 409, sendBody: MOVED });
-  const refusing = asking(sending);
-  await flush();
-  sending.events.push(HELLO);
-  await assert.rejects(refusing, { name: "TalkServerError", code: "moved" });
-  assert.equal(sending.events.cancelled, true);
 });
 
 test("the reply tracker follows only this ask", () => {

@@ -15,7 +15,7 @@ export interface HarnessClient {
 }
 
 /** Node's fetch (undici 7.29 in Electron 43) fails a call after 300 s without response headers, whatever its signal
- * allows; node:http waits as long as the harness works, such as a lent computer's command of up to 900 s. */
+ * allows; node:http waits as long as the harness works, such as a Local VM command of up to 300 s. */
 function send(url: URL, init: HarnessRequest): Promise<{ status: number; text: string }> {
   return new Promise((resolve, reject) => {
     const request = (url.protocol === "https:" ? httpsRequest : httpRequest)(url, { method: init.method ?? "GET", headers: init.headers, signal: init.signal }, (response) => {

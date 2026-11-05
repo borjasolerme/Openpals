@@ -81,17 +81,13 @@ page, then the four public bot-test pages, read-only.
 
 Each built-in browser lists its signed-in sites (Settings → Browser profiles,
 or a bot's Browser panel) with Sign out per site and Sign out of all. It works
-the same on desktop, a server and Cloud, for an open or a closed browser. A
+the same on desktop and on a server, for an open or a closed browser. A
 shared profile can instead use **My Chrome**, the person's own running Chrome,
 for sites that refuse the automated one, such as Google sign-in. That needs
-Chrome 144+ with remote debugging on at `chrome://inspect/#remote-debugging`,
-and either the desktop app or My Cloud with a Mac or PC that lends its Chrome.
-That computer lends Chrome only by its own **Your Chrome** switch, off by
-default and dropped when lending is turned off; Chrome then travels over the
-device link, to the DevTools port the computer finds itself, and only the
-person's own conversations and routines use it. My Chrome works only on a
-personal Cloud home: on a Team Cloud and on self-hosted servers profiles stay
-built-in. Details: [the browser engine plan, step 5](plans/browser-engine.md).
+Chrome 144+ with remote debugging on at `chrome://inspect/#remote-debugging`
+and the desktop app showing this computer's own server. On a self-hosted
+server profiles stay built-in, unless `browserEngine.attachCdpUrl` says where
+a Chrome is. Details: [the browser engine plan, step 5](plans/browser-engine.md).
 
 ## What a bot's browser can reach
 
@@ -159,7 +155,7 @@ Each built-in browser is an agent-browser daemon and the Chrome it starts.
 agent-browser starts the daemon in a session of its own and Chrome in a
 process group of its own, so neither stops with OpenMausBot, and a daemon
 nothing closes keeps its Chrome for the engine's one-hour idle timeout. The
-same rules hold on the desktop, a server and Cloud:
+same rules hold on the desktop and on a server:
 
 - **Closing waits for the processes.** `close` answers before the daemon
   has exited (about 150 ms later on a Mac). A browser counts as closed once

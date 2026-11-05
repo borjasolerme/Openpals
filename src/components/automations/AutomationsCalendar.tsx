@@ -23,7 +23,6 @@ export function AutomationsCalendar({ botFilter, selectedAutomationId, onOpenAut
   onOpenRoom: (id: string) => void;
 }) {
   const { state, dispatch } = useStore();
-  const routinesOnly = window.ogb?.remoteClient?.active === true;
   const [days, setDays] = useState<1 | 7>(() => (window.innerWidth < 640 ? 1 : 7));
   const [anchor, setAnchor] = useState(() => startOfDay(Date.now()));
   const [calls, setCalls] = useState<CalendarCall[]>([]);
@@ -41,7 +40,7 @@ export function AutomationsCalendar({ botFilter, selectedAutomationId, onOpenAut
     try { setCalls((await api("/api/calendar-calls")).calls ?? []); }
     catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
   }, []);
-  useEffect(() => { if (!routinesOnly) void loadCalls(); }, [loadCalls, routinesOnly]);
+  useEffect(() => { void loadCalls(); }, [loadCalls]);
 
   const items = useMemo<CalendarEventItem[]>(() => {
     const botIds = new Set(state.bots.map((bot) => bot.id));
@@ -151,8 +150,8 @@ export function AutomationsCalendar({ botFilter, selectedAutomationId, onOpenAut
           </div>
         )}
       </div>
-      {quick && <><div className="fixed inset-0 z-40 bg-black/25" onMouseDown={() => setQuick(null)} /><QuickComposer seed={quick} bots={visibleBots} routinesOnly={routinesOnly} onClose={() => setQuick(null)} onMore={(seed) => { setQuick(null); setEditor(seed); }} onSavedRoutine={(routine) => dispatch({ type: "routinePatched", routine })} onSavedCall={upsertCall} /></>}
-      {editor && <EventEditor seed={editor} bots={visibleBots} routinesOnly={routinesOnly} onClose={() => setEditor(null)} onSavedCall={upsertCall} />}
+      {quick && <><div className="fixed inset-0 z-40 bg-black/25" onMouseDown={() => setQuick(null)} /><QuickComposer seed={quick} bots={visibleBots} onClose={() => setQuick(null)} onMore={(seed) => { setQuick(null); setEditor(seed); }} onSavedRoutine={(routine) => dispatch({ type: "routinePatched", routine })} onSavedCall={upsertCall} /></>}
+      {editor && <EventEditor seed={editor} bots={visibleBots} onClose={() => setEditor(null)} onSavedCall={upsertCall} />}
     </div>
   );
 }

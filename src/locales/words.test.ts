@@ -13,8 +13,8 @@ it("English copy says Organization and installation, not Organisation or workspa
 
 // Identifiers, IPC channels and error codes keep "workspace", so the guard names retired phrases, not the word.
 const HARDCODED = [
-  "electron/environments.cjs", "electron/main.mjs", "electron/computer-sharing.mjs", "electron/shared-computer-access.mjs",
-  "src/components/DesktopWorkspaceSwitcher.tsx", "src/components/ConnectedWorkspacesSettings.tsx", "src/components/LocalVmWorkspace.tsx",
+  "electron/environments.cjs", "electron/main.mjs",
+  "src/components/LocalVmWorkspace.tsx",
   "src/components/VoiceSettings.tsx", "src/components/bot-settings/AccessSection.tsx",
   "src/components/BrowserPanel.tsx", "src/lib/call-capability.ts", "server/container-computer.ts",
 ];

@@ -156,8 +156,6 @@ export interface WaitRouteContext {
   sourceRefusal: () => string | null;
   hostRefusal: () => string | null;
   peer: (nameOrId: string) => { id: string; name: string } | "self" | null;
-  /** Why no bot here has that name: where it lives among the person's other places, or that bots work as one place. */
-  elsewhere?: (name: string) => { where: string } | { hint: string } | null;
 }
 
 export function createWaitRoutes(deps: { waits: Pick<WaitManager, "create" | "list" | "cancel">; home?: () => string }) {
@@ -197,10 +195,7 @@ export function createWaitRoutes(deps: { waits: Pick<WaitManager, "create" | "li
     if (request.kind === "bot_idle") {
       const peer = ctx.peer(request.bot!);
       if (peer === "self") return void json(res, 400, { error: WAIT_MESSAGES.self });
-      if (!peer) {
-        const away = ctx.elsewhere?.(request.bot!) ?? null;
-        return void json(res, 400, { error: !away ? WAIT_MESSAGES.noPeer : "where" in away ? away.where : `${WAIT_MESSAGES.noPeer} ${away.hint}` });
-      }
+      if (!peer) return void json(res, 400, { error: WAIT_MESSAGES.noPeer });
       condition = { kind: "bot_idle", botId: peer.id, botName: peer.name };
     } else if (request.kind === "url_contains" || request.kind === "url_missing") {
       condition = { kind: request.kind, url: request.url!, text: request.text! };

@@ -15,7 +15,7 @@ import { SIDEBAR_AND_PANEL_FIT, TWO_SIDE_PANELS_FIT, useMediaQuery } from "@/lib
 import { preloadConnectedApps } from "@/lib/connected-apps";
 import {
   ActivityPanel, BotSettingsDialog, ComputerPanel, InspectorPanel, KeyboardShortcutsModal, LocalVmWorkspace,
-  PluginsPanel, preloadScreens, RemoteAgentSettingsPanel, RemoteDesktopPanel, RoomPanel, SettingsModal, TriggersPage,
+  PluginsPanel, preloadScreens, RoomPanel, SettingsModal, TriggersPage,
 } from "@/components/lazy-screens";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { useRoomPanelShown } from "@/lib/room-panel";
@@ -24,7 +24,6 @@ import { NotificationRail, NotificationsPanel } from "@/components/Notifications
 import { useNotificationFeed } from "@/lib/notification-preferences";
 import { AppNotices } from "@/components/AppNotices";
 import { LiveConnectionStrip } from "@/components/LiveConnectionStrip";
-import { PlacesRail } from "@/components/PlacesRail";
 import { DesktopCapabilitiesProvider, useCaptionChrome, useDesktopCapabilities, WindowDragStrip, windowFramed } from "@/components/DesktopCapabilities";
 import { WindowCaptionButtons } from "@/components/WindowCaptionButtons";
 import { WindowFrameBar } from "@/components/WindowFrameBar";
@@ -57,28 +56,8 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const unreadCount =
     state.bots.filter((bot) => !bot.hidden && botShowsUnread(bot)).length +
     state.groups.filter((group) => group.unread).length;
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const twoSidePanelsFit = useMediaQuery(TWO_SIDE_PANELS_FIT, true);
   const sidebarAndPanelFit = useMediaQuery(SIDEBAR_AND_PANEL_FIT, true);
-  useEffect(() => {
-    if (!window.ogb?.environments) return;
-    const open = (computerId?: string | null) => {
-      if (computerId) {
-        const target = new URL(window.location.href);
-        target.searchParams.set("share-computer", computerId);
-        window.history.replaceState(null, "", `${target.pathname}${target.search}${target.hash}`);
-      }
-      dispatch({ type: "toggleAppSettings", open: true, section: "desktopWorkspaces" });
-    };
-    const url = new URL(window.location.href);
-    const requestedSettings = url.searchParams.get("desktop-settings");
-    if (requestedSettings === "workspaces") {
-      url.searchParams.delete("desktop-settings");
-      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-      open();
-    }
-    return window.ogb.environments.onOpenSettings?.(open);
-  }, [dispatch]);
   useEffect(() => {
     const rest = takePhonePairingRequest(window.location.href);
     if (rest === null) return;
@@ -98,9 +77,9 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const group = state.groups.find((g) => g.id === state.selectedId);
   const chiefStep = useChiefStepOpen();
   const bot = group || chiefStep ? undefined : (state.bots.find((b) => b.id === state.selectedId) ?? state.bots[0]);
-  const notificationFeed = useNotificationFeed() && !remoteClient;
+  const notificationFeed = useNotificationFeed();
   const advanced = useAdvancedMode();
-  const roomPanelOpen = useRoomPanelShown({ group, state, simple: !advanced && !remoteClient });
+  const roomPanelOpen = useRoomPanelShown({ group, state, simple: !advanced });
   const sidePanelOpen = (Boolean(bot) && (state.settingsOpen || state.computerOpen || state.inspectorOpen || state.activityOpen)) || roomPanelOpen || (notificationFeed && state.notificationsOpen);
   const collapseSidebar = sidePanelOpen && !sidebarAndPanelFit;
   const calendarFocus = state.activeView === "routines" && state.routinesFocus.view === "calendar";
@@ -263,7 +242,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           className="absolute inset-0 z-30 bg-black/50 md:hidden"
         />
       )}
-      {!calendarFocus && <PlacesRail />}
       {/* A framed window shows the app, its sidebar and the chat or page, as one square pane under the top bar and beside
           the window's rail, running to the window's right and bottom edges. */}
       <div data-window-card={framed ? "" : undefined}
@@ -282,7 +260,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         <WebPanelPage />
       ) : state.activeView === "routines" ? (
         <TriggersPage onBack={closeCalendar} onOpenRoom={openCalendarRoom} />
-      ) : !remoteClient && localVmWorkspaceBotId ? (
+      ) : localVmWorkspaceBotId ? (
         <LocalVmWorkspace
           primaryBotId={localVmWorkspaceBotId}
           overlayOpen={nativeViewOverlayOpen}
@@ -312,26 +290,20 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       )}
       {/* Sibling panels need distinct keys: two keyed `bot.id` collide in React's keyed reconciliation. */}
       {state.settingsOpen && bot && (
-        remoteClient
-          ? <RemoteAgentSettingsPanel bot={bot} overlay={state.computerOpen && !twoSidePanelsFit} />
-          : <BotSettingsDialog key={`settings:${bot.id}`} bot={bot} overlay={(state.inspectorOpen || state.computerOpen || (notificationFeed && state.notificationsOpen)) && !twoSidePanelsFit} />
+        <BotSettingsDialog key={`settings:${bot.id}`} bot={bot} overlay={(state.inspectorOpen || state.computerOpen || (notificationFeed && state.notificationsOpen)) && !twoSidePanelsFit} />
       )}
       {state.computerOpen && bot && (
-        remoteClient ? (
-          <RemoteDesktopPanel key={`computer:${bot.id}`} bot={bot} />
-        ) : (
-          <ComputerPanel
-            key={`computer:${bot.id}`}
-            bot={bot}
-            onOpenVmWorkspace={openLocalVmWorkspace}
-          />
-        )
+        <ComputerPanel
+          key={`computer:${bot.id}`}
+          bot={bot}
+          onOpenVmWorkspace={openLocalVmWorkspace}
+        />
       )}
       {roomPanelOpen && group && (
         <RoomPanel key={`room:${group.id}`} group={group} overlay={notificationFeed && state.notificationsOpen && !twoSidePanelsFit} />
       )}
-      {!remoteClient && state.inspectorOpen && bot && <InspectorPanel key={bot.threadId} bot={bot} />}
-      {!remoteClient && state.activityOpen && bot && <ActivityPanel key={`activity:${bot.id}`} bot={bot} />}
+      {state.inspectorOpen && bot && <InspectorPanel key={bot.threadId} bot={bot} />}
+      {state.activityOpen && bot && <ActivityPanel key={`activity:${bot.id}`} bot={bot} />}
       {notificationFeed && !calendarFocus && state.notificationsOpen && <NotificationsPanel />}
       {notificationFeed && !calendarFocus && <NotificationRail />}
       </div>

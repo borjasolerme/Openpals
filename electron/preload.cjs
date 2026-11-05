@@ -1,8 +1,5 @@
 // contextIsolation stays on: the renderer sees only window.ogb, never Node or ipcRenderer.
-const { contextBridge, ipcRenderer, webFrame, webUtils } = require("electron");
-
-// Sandboxed preloads get Electron's restricted `require`, which cannot load sibling CommonJS files.
-const desktopRemoteClient = process.argv.includes("--openmausbot-remote-client");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 let pendingPackageInstallUrl = null;
 const packageInstallListeners = new Set();
@@ -33,32 +30,7 @@ ipcRenderer.on("app:open-settings", () => {
 const localOrigin = process.argv.find((arg) => arg.startsWith("--omb-local-origin="))?.slice("--omb-local-origin=".length) ?? null;
 const isLocalPage = !localOrigin || location.origin === localOrigin;
 
-// The window's own rail of places stands at its left edge (electron/chrome-rail.mjs): main says how wide, and every page
-// beside it, whatever server it comes from, moves over by that much, at any zoom (a zoom change resizes the page). The
-// page reads how far in `--rail-beside`, which changes with the move itself.
-let railBeside = 0, railRoom = null;
-function leaveRailRoom() {
-  if (typeof document === "undefined" || !document.documentElement) return;
-  const zoom = Number(webFrame?.getZoomFactor?.()) || 1;
-  if (!railBeside) { railRoom?.remove(); railRoom = null; return; }
-  railRoom ??= document.createElement("style");
-  const room = `${Math.round((railBeside / zoom) * 100) / 100}px`;
-  railRoom.textContent = `html { box-sizing: border-box !important; padding-left: ${room} !important; --rail-beside: ${room}; }`;
-  if (!railRoom.isConnected) (document.head ?? document.documentElement).append(railRoom);
-}
-const railState = (state) => ({ available: state?.available === true, hidden: state?.hidden === true });
-ipcRenderer.on("rail:beside", (_event, width) => { railBeside = Math.max(0, Math.min(200, Number(width) || 0)); leaveRailRoom(); });
-// The rail's own page keeps its size whatever the zoom of this app's page: Chromium gives every page of a host the same
-// zoom, the rail's included, so the rail takes it back out and stays as wide as its strip.
-function railKeepsItsSize() {
-  if (!isLocalPage || location.pathname !== "/rail" || typeof document === "undefined" || !document.documentElement) return;
-  const zoom = Number(webFrame?.getZoomFactor?.()) || 1;
-  document.documentElement.style.zoom = zoom === 1 ? "" : String(Math.round((1 / zoom) * 10000) / 10000);
-}
-if (typeof window !== "undefined") {
-  for (const type of ["resize", "DOMContentLoaded"]) window.addEventListener(type, () => { leaveRailRoom(); railKeepsItsSize(); });
-}
-const REMOTE_SAFE = new Set(["platform", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "workspaces", "rail", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
+const REMOTE_SAFE = new Set(["platform", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "place", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
 function savedLanguageChoice() {
   try { const saved = ipcRenderer.sendSync("desktop-language:read"); return typeof saved === "string" ? saved : null; } catch { return null; }
 }
@@ -74,64 +46,27 @@ const appVersion = (process.argv.find((arg) => arg.startsWith("--omb-app-version
 
 const bridge = {
   platform: process.platform,
-  /** This app's version, and whether this page is this app's own (served by this computer, not a server from the Server menu). */
+  /** This app's version, and whether this page is this app's own (served by this computer, not the server it is connected to). */
   app: { version: appVersion, ownPage: isLocalPage },
-  // Safe on a server's page: the person chooses in a native menu, or a circle of the rail main listed (only for the rail's
-  // own page, never addresses), and only from their click; no saved-list reads, host files or secrets.
-  workspaces: {
-    state: () => ipcRenderer.invoke("workspaces:state"),
-    menu: () => ipcRenderer.invoke("workspaces:menu"),
-    places: () => ipcRenderer.invoke("workspaces:places"),
-    open: (id) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:open", String(id)) : Promise.reject(new Error("Choose a place to open it.")),
-    add: (choice, link) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:add", String(choice), ...(typeof link === "string" ? [link] : [])) : Promise.reject(new Error("Choose what to add.")),
-    // The colour of the place this page is (never another's): read, and changed only from the person's click.
-    look: () => ipcRenderer.invoke("workspaces:look"),
-    color: (swatch) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:color", swatch === null ? null : String(swatch)) : Promise.reject(new Error("Choose a color.")),
-    // The colour of a place the window's rail lists, from a click on the rail's own page (main refuses any other page).
-    recolor: (id, swatch) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:recolor", String(id), swatch === null ? null : String(swatch)) : Promise.reject(new Error("Choose a color.")),
-    // Remove from list, for a server the window's rail lists, from a click on the rail's own page (main refuses any other page).
-    remove: (id) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:remove", String(id)) : Promise.reject(new Error("Choose Remove from list.")),
-    // Make a server of the person's own their bots' home, from a click on the rail's own page (main refuses any other page).
-    makeHome: (id) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("workspaces:make-home", String(id)) : Promise.reject(new Error("Choose Make my home.")),
+  /**
+   * Where the bots live: this computer, or the one always-on server this window shows. Safe on that server's page: it
+   * learns only itself, and connects or disconnects only from the person's click.
+   */
+  place: {
+    /** Where the bots live now: `{ kind: "local" }` or `{ kind: "server", url, label }`. */
+    current: () => ipcRenderer.invoke("place:current"),
+    /** Pairs with an always-on server from its one-time pairing link (https://host/pair#code=…) and opens it. Resolves
+     * `{ ok: true }`, or `{ ok: false, error }` with "cancelled" when the person declined main's confirmation. */
+    connect: (link) => isLocalPage || navigator.userActivation?.isActive === true
+      ? ipcRenderer.invoke("place:connect", String(link)) : Promise.reject(new Error("Choose Connect to connect to a server.")),
+    /** Forgets the server and goes back to this computer. */
+    disconnect: () => isLocalPage || navigator.userActivation?.isActive === true
+      ? ipcRenderer.invoke("place:disconnect").then(() => undefined) : Promise.reject(new Error("Choose Disconnect to go back to this computer.")),
     onChanged: (cb) => {
-      const handler = () => cb();
-      ipcRenderer.on("workspaces:changed", handler);
-      return () => ipcRenderer.removeListener("workspaces:changed", handler);
+      const handler = (_event, place) => cb(place);
+      ipcRenderer.on("place:changed", handler);
+      return () => ipcRenderer.removeListener("place:changed", handler);
     },
-  },
-  // The window's own rail (this app's page at /rail, beside every place's page): while a sheet of its own is open it
-  // covers the window; the skin of the page beside it comes from main, and whether that page draws the window's frame.
-  // The page beside it, from whichever server, offers the button that hides and shows it, and learns only whether there
-  // is one to hide, never its places; it says when it draws the frame, so main puts the traffic lights in its top bar.
-  rail: {
-    state: () => ipcRenderer.invoke("rail:offer").then(railState),
-    drawsFrame: (drawn) => ipcRenderer.invoke("rail:draws-frame", drawn !== false),
-    setHidden: (hidden) => isLocalPage || navigator.userActivation?.isActive === true
-      ? ipcRenderer.invoke("rail:hide", hidden === true).then(railState) : Promise.reject(new Error("Choose to hide or show your computers.")),
-    onState: (cb) => {
-      const handler = (_event, state) => cb(railState(state));
-      ipcRenderer.on("rail:state", handler);
-      return () => ipcRenderer.removeListener("rail:state", handler);
-    },
-    ...(isLocalPage ? {
-      expand: (on) => ipcRenderer.invoke("rail:expand", on === true),
-      onSkin: (cb) => {
-        const handler = (_event, skin) => cb(String(skin));
-        ipcRenderer.on("rail:skin", handler);
-        return () => ipcRenderer.removeListener("rail:skin", handler);
-      },
-      onFramed: (cb) => {
-        const handler = (_event, framed) => cb(framed === true);
-        ipcRenderer.on("rail:framed", handler);
-        return () => ipcRenderer.removeListener("rail:framed", handler);
-      },
-    } : {}),
   },
   // The window's own frame, this desktop's choice for every page of its window; a server's page changes it only from the
   // person's click.
@@ -145,13 +80,6 @@ const bridge = {
     const handler = (_event, capabilities) => cb(capabilities);
     ipcRenderer.on("desktop:capabilities-changed", handler);
     return () => ipcRenderer.removeListener("desktop:capabilities-changed", handler);
-  },
-  /** The bearer stays in the main process and is never returned over this bridge. */
-  remoteClient: {
-    active: desktopRemoteClient,
-    state: () => ipcRenderer.invoke("desktop-remote:state"),
-    pair: (endpoint, code) => ipcRenderer.invoke("desktop-remote:pair", endpoint, code),
-    disconnect: () => ipcRenderer.invoke("desktop-remote:disconnect"),
   },
   companion: {
     state: () => ipcRenderer.invoke("companion:state"),
@@ -297,49 +225,6 @@ const bridge = {
   },
   setCredential: (name, value) => ipcRenderer.invoke("credential:set", name, value),
 
-  /** A remote page may read the list but never change where this window goes. */
-  environments: {
-    state: () => ipcRenderer.invoke("environments:state"),
-    switch: (id) => ipcRenderer.invoke("environments:switch", id),
-    addFromLink: (link, name) => ipcRenderer.invoke("environments:add-from-link", link, name),
-    create: (name, dataDir) => ipcRenderer.invoke("environments:create", name, dataDir),
-    pickDir: () => ipcRenderer.invoke("environments:pick-dir"),
-    forget: (id, purge) => ipcRenderer.invoke("environments:forget", id, purge === true),
-    onOpenSettings: (cb) => {
-      const handler = (_event, computerId) => cb(computerId);
-      ipcRenderer.on("workspaces:open-settings", handler);
-      return () => ipcRenderer.removeListener("workspaces:open-settings", handler);
-    },
-  },
-  // This computer's page only (main refuses any other): the one-time move to a server of the person's own, its line.
-  cloudSendPage: {
-    notice: () => ipcRenderer.invoke("cloud-send:notice"),
-    dismiss: signature => ipcRenderer.invoke("cloud-send:dismiss", String(signature)),
-    moveRetry: () => ipcRenderer.invoke("cloud-send:move-retry"),
-    onNotice: cb => {
-      const handler = (_event, notice) => cb(notice);
-      ipcRenderer.on("cloud-send:notice-changed", handler);
-      return () => ipcRenderer.removeListener("cloud-send:notice-changed", handler);
-    },
-  },
-  // This computer's page only (never in REMOTE_SAFE, and main refuses any other): bots in two places, brought together on one.
-  twoPlaces: {
-    state: () => ipcRenderer.invoke("two-places:state"),
-    accept: key => ipcRenderer.invoke("two-places:accept", String(key)),
-    dismiss: key => ipcRenderer.invoke("two-places:dismiss", String(key)),
-    onChanged: cb => {
-      const handler = () => cb();
-      ipcRenderer.on("two-places:changed", handler);
-      return () => ipcRenderer.removeListener("two-places:changed", handler);
-    },
-  },
-  computerSharing: {
-    state: id => ipcRenderer.invoke("sharing:state", id),
-    chooseFolder: () => ipcRenderer.invoke("sharing:folder"),
-    save: (id, grant) => ipcRenderer.invoke("sharing:save", id, grant),
-    revoke: id => ipcRenderer.invoke("sharing:revoke", id),
-    activity: id => ipcRenderer.invoke("sharing:activity", id),
-  },
   confirm: message => ipcRenderer.invoke("dialog:confirm", message),
   desktopProfile: {
     systemName: () => ipcRenderer.invoke("desktop-profile:system-name"),

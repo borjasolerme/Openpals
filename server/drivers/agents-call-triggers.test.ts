@@ -11,7 +11,7 @@ function context(answers: { api?: unknown; response?: { ok: boolean; status: num
       return answers.response ?? { ok: true, status: 201, body: { resultId: "t-1" } };
     },
   };
-  return { calls, context: { botId: "scout", threadId: "thread-1", depth: 0, externalRuntime: false, sharedComputers: false, client } as unknown as ToolCallContext };
+  return { calls, context: { botId: "scout", threadId: "thread-1", depth: 0, externalRuntime: false, client } as unknown as ToolCallContext };
 }
 
 describe("a schedule's confirmation, in the person's words", () => {

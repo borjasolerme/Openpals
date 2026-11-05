@@ -501,9 +501,6 @@ const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, sni
     ["server/index.ts", "Queued follow-up interrupted by restart or restore — it may have alrea"],
     ["shared/first-reply-rescue.ts", "notice:  …  hasn't heard back from  …  yet."],
   ],
-  "moves to the Cloud": [
-    ["server/cloud-send-arrived.ts", "I'm back on this computer, so my webhook \" … \" has an address here aga"],
-  ],
   "calls": [
     ["shared/live-call.ts", "Call with  …  ·  …"],
   ],

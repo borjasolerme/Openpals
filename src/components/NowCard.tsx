@@ -52,8 +52,7 @@ export function useTurnNow(bot: Pick<Bot, "id" | "name" | "threadId">, messages:
   const quiet = status && "quiet" in status ? status.quiet : undefined;
   const tail = status?.activity === "command" && "tail" in status ? status.tail : undefined;
   const turnId = live.turnId ?? lastMessage?.turnId;
-  const remote = typeof window !== "undefined" && window.ogb?.remoteClient?.active === true;
-  const openActivity = remote ? undefined : () => {
+  const openActivity = () => {
     focusActivityRun({ botId: bot.id, threadId: bot.threadId, ...(turnId ? { turnId } : {}) });
     dispatch({ type: "toggleActivity", open: true });
   };

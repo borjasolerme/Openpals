@@ -33,9 +33,6 @@ export interface DesktopPrefs {
   /** The Quick asks chat made on this server (keyed by its data folder), null until one is saved. */
   quickAsksChat(server: string): { botId: string; threadId: string } | null;
   setQuickAsksChat(server: string, chat: { botId: string; threadId: string }): void;
-  /** False until the person hides the window's rail of places. */
-  railHidden(): boolean;
-  setRailHidden(hidden: boolean): void;
   /** True until the person turns the window's frame off. */
   windowFrame(): boolean;
   setWindowFrame(on: boolean): void;

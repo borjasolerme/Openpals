@@ -541,25 +541,6 @@ describe("app thread links in markdown", () => {
   });
 });
 
-describe("a Use my Mac link in an older bot message", () => {
-  const text = "To let me use your apps, press [Use my Mac](openmausbot://use-my-computer).";
-
-  it("is plain text everywhere, even in this app with an older Cloud's bridge: this computer is lent by itself", () => {
-    const offer = vi.fn(async () => {});
-    window.ogb = { platform: "darwin", cloudLending: { open: async () => {}, offer } } as unknown as typeof window.ogb;
-    try {
-      const markup = renderToStaticMarkup(createElement(ChatMarkdown, { text }));
-      expect(markup).toContain(">Use my Mac<");
-      expect(markup).not.toContain("<button");
-      expect(markup).not.toContain('href="openmausbot://');
-      expect(offer).not.toHaveBeenCalled();
-    } finally {
-      delete window.ogb;
-    }
-    expect(chatUrlTransform("openmausbot://use-my-computer")).toBe("openmausbot://use-my-computer");
-  });
-});
-
 describe("application and rejected Markdown links", () => {
   it.each([
     ["[Open Chief](obsidian://open?vault=botbrain&file=agents%2Fchief)", "obsidian://open?vault=botbrain&file=agents%2Fchief"],
@@ -806,24 +787,13 @@ describe("ChatMarkdown attachments", () => {
     const revealInFolder = vi.fn(async () => "shown" as const);
 
     it("offers Show in folder in the local desktop app, without printing the path", () => {
-      vi.stubGlobal("window", { ogb: { revealInFolder, remoteClient: { active: false } } });
+      vi.stubGlobal("window", { ogb: { revealInFolder } });
       try {
         const html = render(true);
         expect(html).toContain("This file is outside this chat&#x27;s working folder, so it can&#x27;t be saved from here");
         expect(html).not.toContain("the linked file is outside");
         expect(html).toContain("Show in folder");
         expect(html).not.toContain("<code");
-      } finally {
-        vi.unstubAllGlobals();
-      }
-    });
-
-    it("shows the full path as selectable text to a remote client instead", () => {
-      vi.stubGlobal("window", { ogb: { revealInFolder, remoteClient: { active: true } } });
-      try {
-        const html = render(true);
-        expect(html).not.toContain("Show in folder");
-        expect(html).toMatch(/<code[^>]*select-all[^>]*>C:\\Users\\Maus\\_draft\\ollama-gen\.js<\/code>/);
       } finally {
         vi.unstubAllGlobals();
       }
@@ -840,7 +810,7 @@ describe("ChatMarkdown attachments", () => {
     });
 
     it("leaves other failures alone", () => {
-      vi.stubGlobal("window", { ogb: { revealInFolder, remoteClient: { active: false } } });
+      vi.stubGlobal("window", { ogb: { revealInFolder } });
       try {
         const html = render(false);
         expect(html).toContain("the linked file is outside this conversation&#x27;s workspace");

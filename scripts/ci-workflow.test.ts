@@ -263,14 +263,6 @@ describe("CI concurrency", () => {
     expect(uses.length).toBeGreaterThan(0);
     for (const action of uses) expect(action).toMatch(/^[\w.-]+\/[\w./-]+@[0-9a-f]{40}$/);
   });
-
-  it("keeps the redundant Windows workflow available only for manual debugging", () => {
-    const smoke = parse(readFileSync(new URL("../.github/workflows/shared-terminal-smoke.yml", import.meta.url), "utf8"));
-    expect(smoke.on).toEqual({ workflow_dispatch: null });
-    const commands = smoke.jobs.windows.steps.map((step: { run?: string }) => step.run);
-    expect(commands).toContain("node --test electron/shared-computer-access.node-test.mjs");
-    expect(commands).toContain("pnpm exec vitest run server/shared-computers.e2e.test.ts");
-  });
 });
 
 type Step = { id?: string; name?: string; if?: string; run?: string; uses?: string; shell?: string; env?: Record<string, string> };

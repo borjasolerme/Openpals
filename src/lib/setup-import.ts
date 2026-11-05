@@ -17,8 +17,7 @@ export const setupImportApi: SetupImportClient = {
 
 /** The desktop app's own window on its own server: never a hosted server, another server it connects to, or a browser. */
 export function localSetupImport(): boolean {
-  const remote = globalThis.window?.ogb?.remoteClient;
-  return remote !== undefined && remote.active !== true;
+  return globalThis.window?.ogb?.app?.ownPage === true;
 }
 
 export const DETECT_TIME_BOX_MS = 2_000;

@@ -102,11 +102,6 @@ describe("bot menu bulk reads", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("does not expose bulk sibling reads to thread-pinned remote clients", () => {
-    window.ogb = { remoteClient: { active: true } } as typeof window.ogb;
-    draw(); expect(button()).toBeUndefined();
-  });
-
   it("offers Simple mode one toggle: Mark as read while anything is unread, Mark as unread once nothing is", async () => {
     mode.advanced = false;
     const fetch = vi.fn(async (_url: unknown, init?: RequestInit) => response(JSON.parse(String(init?.body)).threadId));

@@ -45,11 +45,6 @@ describe("Settings → Remote access: server pairing card visibility", () => {
     expect(render()).toContain("SERVER_PAIRING_CARD_MARKER");
   });
 
-  it("is offered when this desktop is a remote client of a hosted workspace, whose phones pair only here", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    expect(render()).toContain("SERVER_PAIRING_CARD_MARKER");
-  });
-
 });
 
 describe("Settings → Remote access opened by Connect your phone", () => {
@@ -61,14 +56,10 @@ describe("Settings → Remote access opened by Connect your phone", () => {
     expect(html).toContain("SERVER_PAIRING_CARD_MARKER focus=0");
   });
 
-  it("on another server, in a browser or as a remote client, reveals that server's pairing code", () => {
+  it("on another server or in a browser, reveals that server's pairing code", () => {
     fixture.phonePairing = 1;
     vi.stubGlobal("window", {});
     expect(render()).toContain("SERVER_PAIRING_CARD_MARKER focus=1");
-    vi.stubGlobal("window", { ogb: { companion: {}, remoteClient: { active: true } } });
-    const html = render();
-    expect(html).toContain("SERVER_PAIRING_CARD_MARKER focus=1");
-    expect(html).not.toContain("COMPANION_SECTION");
   });
 
   it("a plain visit reveals nothing", () => {

@@ -86,24 +86,6 @@ describe("the header's right side", () => {
     }
   });
 
-  it("keeps the model, the computer and ⋯ in a remote client's Simple header, whose settings panel has no room for them", () => {
-    fixture.advanced = false;
-    window.ogb = { remoteClient: { active: true } } as NonNullable<Window["ogb"]>;
-    try {
-      const { markup } = header();
-      // The host checks the model against its own catalog, so a paired desktop can change it like the phone can.
-      expect(markup).toContain("data-test-model-control");
-      expect(fixture.model).toMatchObject({ bot: { id: "bot" }, threadId: "selected" });
-      expect(markup).toContain('data-tour="computer"');
-      expect(markup).toContain('data-testid="chat-more"');
-      const more = fixture.menus.find((menu) => menu.ariaLabel === "More")!;
-      expect(more.items.map((item) => item.key)).toEqual(["find", "copy", "download"]);
-    } finally {
-      delete window.ogb;
-      fixture.advanced = true;
-    }
-  });
-
   it("moves Stop out of the Simple header into the composer's round button while a turn runs", () => {
     fixture.advanced = false;
     try {
@@ -593,19 +575,6 @@ describe("thread control placement", () => {
     expect(fixture.approval).toMatchObject({ approvalMode: "ask", busy: true });
     fixture.approval!.onSelect("full");
     expect(fixture.dispatch).toHaveBeenLastCalledWith({ type: "updateTask", botId: "bot", threadId: "selected", patch: { approvalMode: "full" } });
-  });
-
-  it("offers remote clients the model picker but keeps approval changes on the host", () => {
-    window.ogb = { remoteClient: { active: true } } as NonNullable<Window["ogb"]>;
-    try {
-      fixture.model = null;
-      const markup = renderToStaticMarkup(createElement(ChatView, { bot }));
-      expect(markup).toContain("data-test-model-control");
-      expect(fixture.model).toMatchObject({ bot: { id: "bot" }, threadId: "selected" });
-      expect(markup).not.toContain("data-test-approval-control");
-    } finally {
-      delete window.ogb;
-    }
   });
 
   it.each([true, false])("pins a place per conversation from the composer only in Advanced (advanced: %s)", (advanced) => {

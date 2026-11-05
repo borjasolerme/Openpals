@@ -32,7 +32,6 @@ export function AppCopyNotice({ instance, className }: { instance: InstanceInfo;
 /** Installed but not signed in. Only OpenCode ships such a build today, and its free models need no account. */
 export function AppCopySetup({ instance, className, unframed }: { instance: InstanceInfo; className?: string; unframed: boolean }) {
   const { dispatch } = useStore();
-  const remote = window.ogb?.remoteClient?.active === true;
   return (
     <div data-engine-setup-app-copy className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
       <div className="flex items-start gap-2.5">
@@ -42,22 +41,20 @@ export function AppCopySetup({ instance, className, unframed }: { instance: Inst
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-ink">{t("engineSetup.appCopy.title", { name: instance.displayName })}</div>
           <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
-            {t(remote ? "engineSetup.appCopy.remote" : "engineSetup.appCopy.description", { name: instance.displayName })}
+            {t("engineSetup.appCopy.description", { name: instance.displayName })}
           </p>
         </div>
       </div>
       <AppCopyNotice instance={instance} className="mt-2" />
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {!remote && (
-          <button
-            type="button"
-            onClick={() => dispatch(openKeySettings(keyForInstance(instance.instanceId)))}
-            className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-raised-hover"
-          >
-            <KeyRound size={13} aria-hidden="true" />
-            {t("engineSetup.apiKey.open")}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => dispatch(openKeySettings(keyForInstance(instance.instanceId)))}
+          className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-raised-hover"
+        >
+          <KeyRound size={13} aria-hidden="true" />
+          {t("engineSetup.apiKey.open")}
+        </button>
         <RefreshEngines key={instance.instanceId} />
       </div>
     </div>

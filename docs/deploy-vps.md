@@ -181,7 +181,7 @@ open or scan:  https://maus.example.com/pair#code=RR8Y-BLR6-H939
 ```
 
 - **A browser:** open the link. The code is filled in; press **Connect**. That browser is paired for 30 days, renewed on use as above.
-- **The desktop app:** copy the link, then in the app's **Server** menu choose **Add Server from Copied Pairing Link…**. The menu switches between your own machine and every server you added.
+- **The desktop app:** copy the link, then in the app's **Server** menu choose **Connect to a Server from Copied Pairing Link…** (or paste it in **Settings → Remote access** and choose **Connect to server**). The window then shows the server and its bots. The app shows one server at a time: **Server → Disconnect from “name”…** forgets it and goes back to your own machine.
 - **The phone:** scan the QR code from the iOS app's pairing screen, or paste the whole link into its address field. The phone can chat, approve, and read; creating bots, changing models, and connecting apps stay with you in the server's UI.
 
 Worth knowing: a code works **once** and expires after **five minutes**; the link only works on that address (typing the code by hand: open `…/pair` and enter it); ten wrong codes in a minute from one address pause pairing for that address for a minute; `--client` mints a code for a device that may chat and approve but not change settings or pair others.

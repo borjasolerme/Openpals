@@ -155,7 +155,7 @@
   --color-hairline: #383838;
   /* the 0.5px line where two panes meet: the sidebar and the chat */
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
-  /* the window's frame: its top bar and the rail of places, around the
+  /* the window's frame: its top bar, around the
      app's pane (the sidebar and the chat). The app's own colour a step darker, so it
      stays in the skin's family: --frame-shade of black. */
   --color-frame: color-mix(in oklab, var(--color-app), black var(--frame-shade));
@@ -1593,52 +1593,6 @@ body {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   mask-image: none;
-}
-/* The colour of the place on screen (PlaceTint), faint, from the very top of the sidebar to just below its head, under
-   everything there: the head's words and controls stay on what is still almost the plain panel. Dark skins take a
-   little more of it to show at all. Reduced transparency: a thin solid line at the top instead; forced colours: none. */
-.place-tint {
-  height: calc(var(--glass-top, 48px) + 16px);
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--place-tint) var(--place-tint-strength, 16%), transparent), transparent);
-}
-@container style(--code-color-scheme: dark) {
-  .place-tint { --place-tint-strength: 26%; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .place-tint { height: 3px; background: var(--place-tint); }
-}
-@media (forced-colors: active) {
-  .place-tint { display: none; }
-}
-/* The workspace's banner picture (PlaceTint), in place of its colour's tint: faded into the panel from the top of the
-   sidebar, dimmed and lightly blurred, so the head's words and controls stay readable over any picture. Without a
-   picture (or before it loads) the colour's tint shows; with reduced transparency or forced colours the picture never
-   does, and the tint's own rules apply. */
-.place-banner {
-  /* Its head's height and a little more, as the tint: the list's own fade band never cuts through it. */
-  height: calc(var(--glass-top, 48px) + 16px);
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, black, rgb(0 0 0 / 0.6) 60%, transparent);
-  mask-image: linear-gradient(to bottom, black, rgb(0 0 0 / 0.6) 60%, transparent);
-}
-.place-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: var(--place-banner-strength, 0.3);
-  filter: blur(1.5px) saturate(0.85);
-  transform: scale(1.04);
-}
-@container style(--code-color-scheme: dark) {
-  .place-banner img { --place-banner-strength: 0.26; filter: blur(1.5px) saturate(0.85) brightness(0.8); }
-}
-.place-tint[data-under-banner] { display: none; }
-@media (prefers-reduced-transparency: reduce) {
-  .place-banner { display: none; }
-  .place-tint[data-under-banner] { display: block; }
-}
-@media (forced-colors: active) {
-  .place-banner { display: none; }
 }
 /* The frame publishes its bars' heights. Rows rest clear of the glass,
    keyboard focus scrolls them clear, and the scrollbar runs only between the

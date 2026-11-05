@@ -24,20 +24,16 @@ vi.mock("./lazy-screens", async original => ({ ...await original<typeof import("
 vi.mock("@/components/EngineLibrary", () => ({ engineReady: (instance: { snapshot: { state: string; authenticated?: boolean } }) =>
   instance.snapshot.state === "available" && instance.snapshot.authenticated !== false }));
 import { AppNotices } from "./AppNotices";
-import { TwoPlacesCard } from "./TwoPlacesCard";
 import { GROK_MOVE_NOTICE, launchNotice } from "@/lib/notices";
 import { ADVANCED_MODE_KEY, setAdvancedMode } from "@/lib/interface-mode";
 import { SIMPLE_MODE_PROMPT_KEY } from "@/lib/simple-mode-prompt";
 import { api } from "@/state/store";
 
-const NOW = new Date(2026, 9, 9, 12).getTime();
-
 let storage: Map<string, string>;
 let viewer: WelcomeViewer | null;
-let now: number;
 
 const PRELOAD = readFileSync(join(process.cwd(), "electron", "preload.cjs"), "utf8").replace(/\r\n/g, "\n");
-const LOCAL_ORIGIN = "http://127.0.0.1:8799", OTHER = "https://other.example.test", VPS = "https://bots.example.test";
+const LOCAL_ORIGIN = "http://127.0.0.1:8799", VPS = "https://bots.example.test";
 type Page = "local" | "server";
 type Handler = (event: { page: Page; returnValue?: unknown }, ...args: unknown[]) => unknown;
 interface Desktop {
@@ -74,7 +70,7 @@ const showWindow = (origin: string, options?: { click?: boolean }) => {
 };
 
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
-const render = () => { f.index = 0; f.effects = []; return renderToStaticMarkup(createElement(AppNotices, { viewer, now: () => now })); };
+const render = () => { f.index = 0; f.effects = []; return renderToStaticMarkup(createElement(AppNotices, { viewer })); };
 async function settle(rounds = 4) { for (let i = 0; i < rounds; i++) { render(); f.effects.forEach(effect => effect()); await flush(); } return render(); }
 const launch = () => { f.values = []; return settle(); };
 /** The app opened again: a new window session, so nothing this launch showed holds the next one back. */
@@ -86,7 +82,7 @@ const nodes = (value: ReactNode): Node[] => {
   if (typeof node.type === "function") return nodes((node.type as (props: unknown) => ReactNode)(node.props));
   return [node, ...Children.toArray(node.props.children).flatMap(nodes)];
 };
-const tree = () => { f.index = 0; f.effects = []; return nodes(AppNotices({ viewer, now: () => now })); };
+const tree = () => { f.index = 0; f.effects = []; return nodes(AppNotices({ viewer })); };
 const press = (label: string) => {
   const button = tree().find(node => node.type === "button" && (renderToStaticMarkup(node).includes(`>${label}<`) || node.props["aria-label"] === label));
   expect(button, label).toBeTruthy(); button!.props.onClick();
@@ -100,7 +96,7 @@ const hints = () => f.state.config.onboarding.hintsSeen as string[];
 
 beforeEach(() => {
   vi.clearAllMocks(); vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-  storage = new Map(); f.values = []; f.index = 0; f.effects = []; f.brand = "default"; f.dispatch = vi.fn(); now = NOW; desk = desktopMachine();
+  storage = new Map(); f.values = []; f.index = 0; f.effects = []; f.brand = "default"; f.dispatch = vi.fn(); desk = desktopMachine();
   setLocale("en"); viewer = LOCAL_VIEWER;
   session = new Map();
   vi.stubGlobal("sessionStorage", { getItem: (key: string) => session.get(key) ?? null, setItem: (key: string, value: string) => session.set(key, value) });
@@ -205,7 +201,7 @@ describe("the Move from Grok Bot popup", () => {
     expect(await relaunch()).not.toContain(TITLE);
   });
 
-  it("never during a bot's turn, a dialog, a call or while a move is starting up; it comes when they end", async () => {
+  it("never during a bot's turn, a dialog or a call; it comes when they end", async () => {
     returning();
     f.state.bots = [{ busy: true, tasks: [{ threadId: "t", createdAt: 1, usage: { turns: 2 } }] }];
     expect(await launch(), "a turn").toBe("");
@@ -313,114 +309,5 @@ describe("the Simple mode popup after the update", () => {
     session.clear();
     expect(await launch()).toContain(TITLE);
     expect(storage.has(SIMPLE_MODE_PROMPT_KEY)).toBe(false);
-  });
-});
-
-describe("bots in two places", () => {
-  const GARAGE = { key: "server:https://garage.example.test", name: "Garage server", kind: "server" as const };
-  const BODY = "Your bots live in two places, so they can&#x27;t work together. Bring them together on Garage server?";
-  let suggest: { key: string; name: string; kind: "server" } | null;
-  let accepted: string[], dismissed: string[];
-  beforeEach(() => {
-    suggest = GARAGE; accepted = []; dismissed = [];
-    desk.handlers.set("two-places:state", async () => ({ suggest }));
-    desk.handlers.set("two-places:accept", async (_event, key) => { accepted.push(String(key)); suggest = null; return { suggest }; });
-    desk.handlers.set("two-places:dismiss", async (_event, key) => { dismissed.push(String(key)); suggest = null; return { suggest }; });
-  });
-
-  it("one plain card on this computer's page, before any promotion; bots move there only after the person confirms (#4192)", async () => {
-    returning();
-    const html = await launch();
-    expect(html).toContain('data-notice="two-places"');
-    expect(html).toContain("Bring your bots together");
-    expect(html).toContain(BODY);
-    press("Bring them together");
-    const asking = await settle();
-    expect(accepted, "one tap never moves anyone").toEqual([]);
-    expect(asking).toContain("Move this computer&#x27;s bots to Garage server?");
-    press("Move bots");
-    await flush();
-    expect(accepted).toEqual([GARAGE.key]);
-    expect(await settle()).not.toContain('data-notice="two-places"');
-  });
-
-  it("Cancel on the confirm step moves nothing and keeps the card (#4192)", async () => {
-    returning();
-    await launch();
-    press("Bring them together");
-    await settle();
-    press("Cancel");
-    const after = await settle();
-    expect(accepted).toEqual([]);
-    expect(dismissed).toEqual([]);
-    expect(after).toContain('data-notice="two-places"');
-    expect(after).not.toContain("Move bots");
-    expect(after).toContain("Bring them together");
-    expect(tree().find(node => node.props["data-two-places-bring"])?.props.autoFocus, "focus returns to the button Cancel brought back").toBe(true);
-  });
-
-  it("Escape on the confirm step works as Cancel and never dismisses the card", async () => {
-    returning();
-    await launch();
-    press("Bring them together");
-    await settle();
-    const escape = { key: "Escape", preventDefault: vi.fn(), stopPropagation: vi.fn() };
-    tree().find(node => node.props.role === "group")!.props.onKeyDown(escape);
-    expect(escape.stopPropagation, "the card's own Escape never sees it").toHaveBeenCalled();
-    const after = await settle();
-    expect(dismissed).toEqual([]);
-    expect(accepted).toEqual([]);
-    expect(after).toContain('data-notice="two-places"');
-    expect(after).not.toContain("Move bots");
-  });
-
-  it("a different suggested place starts a fresh card, so a confirm never carries over to it", async () => {
-    returning();
-    await launch();
-    // Children.toArray would re-key, so walk the elements as rendered.
-    const find = (value: unknown): Node | undefined => {
-      if (Array.isArray(value)) return value.map(find).find(Boolean);
-      if (!isValidElement(value)) return undefined;
-      const node = value as Node;
-      if (node.type === TwoPlacesCard) return node;
-      return typeof node.type === "function" ? find((node.type as (props: unknown) => ReactNode)(node.props)) : find(node.props.children);
-    };
-    f.index = 0; f.effects = [];
-    expect(find(AppNotices({ viewer, now: () => now }))?.key).toBe(GARAGE.key);
-  });
-
-  it("Not now hands main the place to remember, and the card goes", async () => {
-    returning();
-    expect(await launch()).toContain(BODY);
-    press("Not now");
-    await flush();
-    expect(dismissed).toEqual([GARAGE.key]);
-    expect(await settle()).not.toContain('data-notice="two-places"');
-    expect(await launch(), "main remembers it: never asked again").not.toContain('data-notice="two-places"');
-  });
-
-  it("never during the welcome or the tour, on a server's page, or when main suggests nothing", async () => {
-    returning();
-    f.state.welcomeOpen = true;
-    expect(await launch()).not.toContain('data-notice="two-places"');
-    f.state.welcomeOpen = false; f.state.tourOpen = true;
-    expect(await launch()).not.toContain('data-notice="two-places"');
-    f.state.tourOpen = false;
-    for (const origin of [OTHER, VPS]) {
-      showWindow(origin);
-      expect(await launch(), origin).not.toContain('data-notice="two-places"');
-    }
-    showWindow(LOCAL_ORIGIN);
-    suggest = null;
-    expect(await launch()).not.toContain('data-notice="two-places"');
-  });
-
-  it("is this computer's page's alone: no other page gets the bridge, and none would show it", async () => {
-    returning();
-    expect(windowOn(LOCAL_ORIGIN).twoPlaces).toBeDefined();
-    for (const origin of [OTHER, VPS]) expect(windowOn(origin).twoPlaces, origin).toBeUndefined();
-    const ask = vi.fn(async () => ({ suggest: GARAGE }));
-    vi.stubGlobal("window", { ogb: { ...windowOn(OTHER), twoPlaces: { state: ask, accept: ask, dismiss: ask, onChanged: () => () => {} } }, addEventListener: vi.fn(), removeEventListener: vi.fn() });
-    expect(await launch(), "a server's page handed the bridge anyway").not.toContain('data-notice="two-places"');
   });
 });

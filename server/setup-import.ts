@@ -389,13 +389,6 @@ function skillInput(machine: SetupMachine, skill: FoundSkill, budget: { bytes: n
   };
 }
 
-/** The person's own Claude Code skills, read as an import reads them, for a server that cannot see this computer's
- * ~/.claude/skills: it keeps them as imported skills. */
-export function claudeCodeSkillInputs(machine: SetupMachine = thisMachine()): ImportedSkillInput[] {
-  const budget = { bytes: 0 };
-  return findSkills(machine).filter((skill) => skill.source === "claudeCode").map((skill) => skillInput(machine, skill, budget).input);
-}
-
 /** One copy for every bot, made once however many bots there are or will be. One the scan flags comes in switched off:
  * a person switches it on for a bot after reading it, as with any other import. */
 function importSkills(machine: SetupMachine): NonNullable<SetupImportResult["skills"]> {

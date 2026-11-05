@@ -42,25 +42,22 @@ function profiles(): Record<string, Record<string, string>> {
   const all: Record<string, Record<string, string>> = {};
   for (const chief of [true, false]) {
     for (const skills of [false, true]) {
-      for (const shared of [false, true]) {
-        for (const voice of [false, true]) {
-          const name = [skills && "skills", shared && "shared", voice && "voice", !chief && "non-chief"]
-            .filter(Boolean).join("+") || "default";
-          all[name] = {
-            OMB_SKILL_AUTHORING_ENABLED: flag(skills),
-            OMB_SHARED_COMPUTERS_ENABLED: flag(shared),
-            OMB_VOICE_NOTES: flag(voice),
-            OMB_CHIEF_OF_STAFF: flag(chief),
-            OMB_COMPUTER_SELECTION: "1",
-          };
-        }
+      for (const voice of [false, true]) {
+        const name = [skills && "skills", voice && "voice", !chief && "non-chief"]
+          .filter(Boolean).join("+") || "default";
+        all[name] = {
+          OMB_SKILL_AUTHORING_ENABLED: flag(skills),
+          OMB_VOICE_NOTES: flag(voice),
+          OMB_CHIEF_OF_STAFF: flag(chief),
+          OMB_COMPUTER_SELECTION: "1",
+        };
       }
     }
   }
-  all["skills+shared+voice+escalations"] = { ...all["skills+shared+voice"]!, OMB_ESCALATIONS: "1" };
-  all["skills+shared+voice+escalations+x"] = { ...all["skills+shared+voice+escalations"]!, OMB_X_RESEARCH: "1", OMB_RESEARCH: "1" };
+  all["skills+voice+escalations"] = { ...all["skills+voice"]!, OMB_ESCALATIONS: "1" };
+  all["skills+voice+escalations+x"] = { ...all["skills+voice+escalations"]!, OMB_X_RESEARCH: "1", OMB_RESEARCH: "1" };
   all["default+legacy-switches"] = { ...all.default!, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1", OMB_ACTIVE_WAITS: "0" };
-  for (const name of ["default", "skills+shared+voice"]) all[`${name}+mausbot`] = { ...all[name]!, OMB_MAUSBOT: "1" };
+  for (const name of ["default", "skills+voice"]) all[`${name}+mausbot`] = { ...all[name]!, OMB_MAUSBOT: "1" };
   all["default+no-computer-pick"] = { ...all.default!, OMB_COMPUTER_SELECTION: "0" };
   for (const name of ["default", "non-chief"]) all[`${name}+room`] = { ...all[name]!, OMB_COMPUTER_SELECTION: "0", OMB_ROOM: "1" };
   return all;
@@ -70,7 +67,7 @@ const PROFILES = profiles();
 /** Refused by the server to every bot that is not a Chief of Staff. */
 const CHIEF_ONLY_TOOLS = ["create_bot", "list_team_setup", "propose_team_setup", "propose_bot_deletion", "manage_room", "retry_thread"];
 /** The profile that mounts the most: its bridged list is checked in whole. */
-const FULL = "skills+shared+voice+escalations+x";
+const FULL = "skills+voice+escalations+x";
 
 /** Bytes of each bridged list when its budget was last set. A list may not
  * exceed this by more than 2%, and may not undercut it by more than 2%
@@ -79,25 +76,17 @@ const FULL = "skills+shared+voice+escalations+x";
 const BUDGET_BASELINE: Record<string, number> = {
   "default": 15824,
   "voice": 16605,
-  "shared": 15864,
-  "shared+voice": 16645,
   "skills": 15851,
   "skills+voice": 16632,
-  "skills+shared": 15891,
-  "skills+shared+voice": 16672,
   "non-chief": 15707,
   "voice+non-chief": 16488,
-  "shared+non-chief": 15747,
-  "shared+voice+non-chief": 16528,
   "skills+non-chief": 15734,
   "skills+voice+non-chief": 16515,
-  "skills+shared+non-chief": 15774,
-  "skills+shared+voice+non-chief": 16555,
-  "skills+shared+voice+escalations": 16690,
-  "skills+shared+voice+escalations+x": 16751,
+  "skills+voice+escalations": 16596,
+  "skills+voice+escalations+x": 16657,
   "default+legacy-switches": 15824,
   "default+mausbot": 15876,
-  "skills+shared+voice+mausbot": 16724,
+  "skills+voice+mausbot": 16630,
   "default+no-computer-pick": 14618,
   "default+room": 14557,
   "non-chief+room": 14440,
@@ -258,7 +247,7 @@ describe("agents proxy tools/list golden with the tool bridge on", () => {
     }
     // So a bot that is not a Chief is not told the Chief-only tools exist.
     const nonChief = Object.keys(PROFILES).filter((name) => PROFILES[name]!.OMB_CHIEF_OF_STAFF === "0");
-    expect(nonChief).toHaveLength(9);
+    expect(nonChief).toHaveLength(5);
     for (const name of nonChief) {
       for (const tool of CHIEF_ONLY_TOOLS) expect(wires[name], `${name}: ${tool}`).not.toContain(tool);
       const chiefTwin = name.startsWith("non-chief") ? name.replace("non-chief", "default") : name.replace("+non-chief", "");

@@ -286,7 +286,7 @@ function taskFromPayload(payload: JsonValue): string {
   return task.trim().slice(0, 20_000);
 }
 
-export const WEBHOOK_EVENT_DATA = "[UNTRUSTED WEBHOOK EVENT DATA]";
+const WEBHOOK_EVENT_DATA = "[UNTRUSTED WEBHOOK EVENT DATA]";
 export const webhookNote = (name: string): string => fromNote(webhookWho(name), "event", AUTHORITY.info);
 
 function eventPrompt(trigger: StoredWebhookTrigger, event: WebhookEvent, receivedAt: number, deliveryId: string): string {

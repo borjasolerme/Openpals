@@ -29,16 +29,13 @@ afterEach(() => {
 
 describe("where Connect your phone pairs", () => {
   it("pairs with this computer only in the desktop app's own window", () => {
-    expect(phonePairingTarget({ companion: true, remoteClient: false })).toBe("computer");
-    expect(phonePairingTarget({ companion: false, remoteClient: false })).toBe("server");
-    expect(phonePairingTarget({ companion: true, remoteClient: true })).toBe("server");
+    expect(phonePairingTarget({ companion: true })).toBe("computer");
+    expect(phonePairingTarget({ companion: false })).toBe("server");
   });
 
   it("reads the window's bridges", () => {
     vi.stubGlobal("window", { ogb: { companion: {} } });
     expect(currentPhonePairingTarget()).toBe("computer");
-    vi.stubGlobal("window", { ogb: { companion: {}, remoteClient: { active: true } } });
-    expect(currentPhonePairingTarget()).toBe("server");
     vi.stubGlobal("window", {});
     expect(currentPhonePairingTarget()).toBe("server");
   });

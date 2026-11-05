@@ -175,44 +175,22 @@ describe("cloud preview recovery in the real renderer", () => {
     await select("Screenshot response", "connected");
     await expect.poll(frameVisible, { timeout: 15_000 }).toBe(true);
 
-    // Desktop join/control owns the UI while it is pending. Neither panel
-    // should continue issuing screenshot polls into that operation.
-    for (const panel of ["computer", "remote"]) {
-      if (panel === "remote") {
-        await select("Panel", "remote");
-        await expect.poll(frameVisible, { timeout: 5000 }).toBe(true);
-        await select("Screenshot response", "held");
-        await expect.poll(() => stat("capturing"), { timeout: 6000 }).toBe(true);
-        const aborted = await stat("aborted");
-        const requested = await stat("requests");
-        await click("Busy: true");
-        await pause(200);
-        expect(await stat("aborted")).toBe(aborted);
-        expect(await stat("requests")).toBe(requested);
-        await click("Reconnect panel");
-        await expect.poll(() => stat("aborted"), { timeout: 3000 }).toBe(aborted + 1);
-        expect(await snapshot()).not.toContain("Preview unavailable");
-        await select("Screenshot response", "connected");
-        await click("Release held capture");
-        await expect.poll(frameVisible, { timeout: 5000 }).toBe(true);
-        await click("Busy: false");
-      }
-      await expect.poll(frameVisible, { timeout: 5000 }).toBe(true);
-      const state = await ui("snapshot", "--interactive");
-      const target = Object.entries(state.refs as Record<string, { role: string; name: string }>)
-        .find(([, entry]) => entry.role === "button" && entry.name.startsWith("Open ") && entry.name.endsWith("live desktop"));
-      expect(target).toBeDefined();
-      await ui("click", "--ref", `@${target![0]}`);
-      await expect.poll(() => stat("joining"), { timeout: 5000 }).toBe(true);
-      const before = await stat("requests");
-      await pause(4500);
-      expect(await stat("requests")).toBe(before);
-      expect(await stat("duringJoin")).toBe(0);
-      await click("Release desktop join");
-      await expect.poll(() => stat("joining")).toBe(false);
-    }
-    // Keyboard entry and hand-off, on both panel shapes: the tab row when the
-    // panel has one, otherwise its close button.
+    // Desktop join/control owns the UI while it is pending. The panel should
+    // not continue issuing screenshot polls into that operation.
+    await expect.poll(frameVisible, { timeout: 5000 }).toBe(true);
+    const state = await ui("snapshot", "--interactive");
+    const target = Object.entries(state.refs as Record<string, { role: string; name: string }>)
+      .find(([, entry]) => entry.role === "button" && entry.name.startsWith("Open ") && entry.name.endsWith("live desktop"));
+    expect(target).toBeDefined();
+    await ui("click", "--ref", `@${target![0]}`);
+    await expect.poll(() => stat("joining"), { timeout: 5000 }).toBe(true);
+    const before = await stat("requests");
+    await pause(4500);
+    expect(await stat("requests")).toBe(before);
+    expect(await stat("duringJoin")).toBe(0);
+    await click("Release desktop join");
+    await expect.poll(() => stat("joining")).toBe(false);
+    // Keyboard entry lands on the tab row, and closing hands focus back.
     const entryFocus = () => evaluate(`(() => {
       const active = document.activeElement;
       const tabs = document.querySelector('[data-testid="computer-tabs"]');
@@ -235,13 +213,10 @@ describe("cloud preview recovery in the real renderer", () => {
     };
     expect(await panelIsOpen()).toBe(true);
     await closeFromItsX();
-    for (const panel of ["computer", "remote"]) {
-      await select("Panel", panel);
-      await openFromItsButton();
-      await expect.poll(entryFocus, { timeout: 5000 }).toMatchObject(panel === "remote" ? { tab: false, close: true } : { tab: true, close: false });
-      await closeFromItsX();
-      await expect.poll(entryFocus, { timeout: 5000 }).toMatchObject({ opener: true, tab: false, close: false });
-    }
+    await openFromItsButton();
+    await expect.poll(entryFocus, { timeout: 5000 }).toMatchObject({ tab: true, close: false });
+    await closeFromItsX();
+    await expect.poll(entryFocus, { timeout: 5000 }).toMatchObject({ opener: true, tab: false, close: false });
 
     process.stdout.write(`${JSON.stringify({ fixture: info!, previewUrl: preview.previewUrl, transport: "simulated; panels and browser real" })}\n`);
     await waitForExit(child, { signal: "SIGINT", graceMs: 30_000 });

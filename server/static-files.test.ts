@@ -8,9 +8,8 @@ import { serveStatic } from "./static-files.ts";
 
 const dir = mkdtempSync(join(tmpdir(), "omb-static-"));
 writeFileSync(join(dir, "index.html"), "app");
-writeFileSync(join(dir, "rail.html"), "rail");
 mkdirSync(join(dir, "assets"));
-writeFileSync(join(dir, "assets", "rail-1a2b.js"), "js");
+writeFileSync(join(dir, "assets", "app-1a2b.js"), "js");
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 function get(path: string, staticDir: string = dir) {
@@ -23,16 +22,11 @@ function get(path: string, staticDir: string = dir) {
 }
 
 describe("serveStatic", () => {
-  it("answers the window's rail with its own small page, never cached", () => {
-    const rail = get("/rail");
-    expect(rail.body).toBe("rail");
-    expect(rail.headers).toMatchObject({ "content-type": "text/html", "cache-control": "no-cache", "x-frame-options": "DENY" });
-  });
-
-  it("answers the app's paths with the app, and keeps hashed assets for good", () => {
-    expect(get("/").body).toBe("app");
+  it("answers the app's paths with the app, never cached, and keeps hashed assets for good", () => {
+    const app = get("/");
+    expect(app.body).toBe("app");
+    expect(app.headers).toMatchObject({ "content-type": "text/html", "cache-control": "no-cache", "x-frame-options": "DENY" });
     expect(get("/settings").body).toBe("app");
-    expect(get("/rail/more").body).toBe("app");
-    expect(get("/assets/rail-1a2b.js").headers["cache-control"]).toBe("public, max-age=31536000, immutable");
+    expect(get("/assets/app-1a2b.js").headers["cache-control"]).toBe("public, max-age=31536000, immutable");
   });
 });

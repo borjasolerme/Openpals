@@ -8,7 +8,6 @@ export const TALK_TEXT = Object.freeze({
   serverDown: "Open Openpals to talk",
   starting: "Openpals is still starting. Try again in a moment.",
   noMausbot: "Set up Pal first, then try again.",
-  moved: "Pal lives on your server now — talk to it there",
   permission: "Talking needs Microphone + Speech Recognition access — System Settings → Privacy & Security.",
   dictationOff: "Turn on Dictation in System Settings → Keyboard, then try again.",
   unavailable: "Talking couldn't start. Try again.",
@@ -29,7 +28,6 @@ const SERVER_NOTICES = new Map([
   ["server-down", TALK_TEXT.serverDown],
   ["starting", TALK_TEXT.starting],
   ["no-mausbot", TALK_TEXT.noMausbot],
-  ["moved", TALK_TEXT.moved],
 ]);
 
 const UNDER_WAY = new Set(["listening", "sending", "thinking"]);

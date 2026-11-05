@@ -26,7 +26,6 @@ export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: Si
   const advanced = useAdvancedMode();
   const findOpen = useChatFindOpen(bot.threadId);
   const [copyStatus, setCopyStatus] = useState<"copied" | "failed" | null>(null);
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const usage = usageSummary(bot, state.instances);
   const hasMessages = messages.length > 0;
   const transcript = () => formatTranscriptMarkdown({ title: bot.name, messages, botName: bot.name, isGroup: false });
@@ -44,13 +43,13 @@ export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: Si
     },
   ] : [];
   const phoneScreen: SidebarMenuItem[] = phoneHeader ? [
-    ...(remoteClient ? [] : [{
+    {
       key: "model",
       label: t("model.simple.model"),
       icon: <Cpu size={16} />,
       value: modelName,
       onSelect: () => openBotSettings(dispatch, "model"),
-    } satisfies SidebarMenuItem]),
+    },
     {
       key: "computer",
       label: t("chat.computer"),
@@ -96,14 +95,15 @@ export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: Si
       trailing: <span title={usage.detail} data-testid="usage-chip" className={cn("tabular-nums text-[12px]", usage.tone === "danger" ? "text-danger" : usage.tone === "warning" ? "text-warning" : "text-ink-secondary")}>{usage.short}</span>,
       onSelect: () => advanced ? openBotSettings(dispatch, "usage") : dispatch({ type: "toggleAppSettings", open: true, section: "usage" }),
     } satisfies SidebarMenuItem] : []),
-    ...(remoteClient ? [] : [{
+    {
       key: "activity",
       label: t("activity.panel.title"),
       icon: <ListChecks size={16} />,
       active: state.activityOpen,
       separatorBefore: !usage,
       onSelect: () => dispatch({ type: "toggleActivity" }),
-    } satisfies SidebarMenuItem, {
+    },
+    {
       key: "inspector",
       label: t("chat.inspector"),
       icon: <Bug size={16} />,
@@ -111,7 +111,7 @@ export function useChatMoreItems(profile: Bot, phoneHeader = false): { items: Si
       // Simple mode keeps Activity and Inspector together, as the panel's menu draws them.
       separatorBefore: advanced,
       onSelect: () => dispatch({ type: "toggleInspector" }),
-    } satisfies SidebarMenuItem]),
+    },
   ];
   return { items, on: findOpen || state.inspectorOpen || state.activityOpen };
 }

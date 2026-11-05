@@ -185,11 +185,11 @@ test("the loading screen says what the app waits on, before its page has loaded 
     constructor(options) { super(options); this.webContents.executeJavaScript = async (code) => { ran.push(code); }; }
   }
   const { splash } = fixture({ BrowserWindow: Said });
-  splash.status("Waking My Cloud…");
+  splash.status("Opening the server…");
   splash.window.webContents.emit("did-finish-load");
   assert.equal(ran.length, 2);
-  for (const code of ran) { assert.match(code, /document\.querySelector\('\.status'\)/); assert.ok(code.includes(JSON.stringify("Waking My Cloud…"))); }
+  for (const code of ran) { assert.match(code, /document\.querySelector\('\.status'\)/); assert.ok(code.includes(JSON.stringify("Opening the server…"))); }
   splash.dispose();
-  splash.status("Opening My Cloud…");
+  splash.status("Opening the server again…");
   assert.equal(ran.length, 2, "nothing after it is gone");
 });

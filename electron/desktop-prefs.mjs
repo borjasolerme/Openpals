@@ -1,6 +1,5 @@
 // What this desktop keeps whatever page its window shows, whichever port its own page is served on: the notices someone
-// closed, the app's language, whether the person hid the window's rail of places and whether
-// they turned the window's frame off.
+// closed, the app's language and whether they turned the window's frame off.
 import fs from "node:fs";
 import { DEFAULT_TALK_KEY, isTalkKey } from "./talk-keys.mjs";
 import { accountFullName } from "./system-name.mjs";
@@ -44,7 +43,6 @@ function parse(raw) {
     ...(isLanguage(record.language) ? { language: record.language } : {}),
     ...(typeof record.talkShortcut === "boolean" ? { talkShortcut: record.talkShortcut } : {}),
     ...(isTalkKey(record.talkKey) ? { talkKey: record.talkKey } : {}),
-    ...(typeof record.railHidden === "boolean" ? { railHidden: record.railHidden } : {}),
     ...(typeof record.windowFrame === "boolean" ? { windowFrame: record.windowFrame } : {}),
     ...(Object.keys(quickAsks).length ? { quickAsks } : {}) };
 }
@@ -87,12 +85,6 @@ export function createDesktopPrefs({ read, write }) {
     setQuickAsksChat(server, chat) {
       const parsed = typeof server === "string" ? parseChat(chat) : null;
       if (parsed) save({ ...current(), quickAsks: { ...current().quickAsks, [server]: parsed } });
-    },
-    /** The window's rail of places is shown until the person hides it. */
-    railHidden: () => current().railHidden === true,
-    setRailHidden(hidden) {
-      const railHidden = hidden === true;
-      if ((current().railHidden === true) !== railHidden) save({ ...current(), railHidden });
     },
     /** The window draws its own frame until the person turns it off. */
     windowFrame: () => current().windowFrame !== false,

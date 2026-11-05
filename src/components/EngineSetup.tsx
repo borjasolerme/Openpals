@@ -29,7 +29,7 @@ export function needsCli(instance: InstanceInfo | undefined): boolean {
 }
 
 export function serverTerminal(): boolean {
-  return Boolean(window.ogb?.openInstallTerminal) && window.ogb?.remoteClient?.active !== true;
+  return Boolean(window.ogb?.openInstallTerminal);
 }
 
 export function grokKeyInstead(instance: InstanceInfo): boolean {
@@ -417,7 +417,7 @@ export const openKeysFor = (instance?: InstanceInfo) =>
   openKeySettings(instance ? keyForInstance(instance.instanceId) ?? (instance.driverKind === "openai-compat" ? "openaiCompat" : undefined) : undefined);
 
 export function ApiKeyHint({ instance }: { instance: InstanceInfo }) {
-  const key = window.ogb?.remoteClient?.active === true ? undefined : inlineKey(instance);
+  const key = inlineKey(instance);
   return (
     <>
       <div className="mt-0.5 text-[12px] leading-4 text-ink-tertiary">{t("model.apiKeyHint")}</div>
@@ -427,7 +427,6 @@ export function ApiKeyHint({ instance }: { instance: InstanceInfo }) {
 }
 
 function GrokKeyInstead({ className, unframed }: { className?: string; unframed: boolean }) {
-  const remote = window.ogb?.remoteClient?.active === true;
   return (
     <div data-engine-setup-key-instead className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
       <div className="flex items-start gap-2.5">
@@ -436,18 +435,17 @@ function GrokKeyInstead({ className, unframed }: { className?: string; unframed:
         </span>
         <p className="min-w-0 text-[13px] leading-relaxed text-ink">{t("engineSetup.grok.notInstalled")}</p>
       </div>
-      {!remote && <KeyRow id="xai" bare className="mt-2 px-0 pb-0" />}
+      <KeyRow id="xai" bare className="mt-2 px-0 pb-0" />
     </div>
   );
 }
 
 function ApiKeyEngineSetup({ instance, className, unframed, configured = false }: { instance: InstanceInfo; className?: string; unframed: boolean; configured?: boolean }) {
   const { dispatch } = useStore();
-  const remote = window.ogb?.remoteClient?.active === true;
-  const inline = remote ? undefined : inlineKey(instance);
+  const inline = inlineKey(instance);
   const copy = configured
-    ? { title: "engineSetup.apiKey.configuredTitle", description: remote ? "engineSetup.apiKey.configuredRemote" : inline ? null : "engineSetup.apiKey.configuredDescription", action: "engineSetup.apiKey.change" } as const
-    : { title: "engineSetup.apiKey.title", description: remote ? "engineSetup.apiKey.remote" : inline ? "engineSetup.apiKey.inline" : "engineSetup.apiKey.description", action: "engineSetup.apiKey.open" } as const;
+    ? { title: "engineSetup.apiKey.configuredTitle", description: inline ? null : "engineSetup.apiKey.configuredDescription", action: "engineSetup.apiKey.change" } as const
+    : { title: "engineSetup.apiKey.title", description: inline ? "engineSetup.apiKey.inline" : "engineSetup.apiKey.description", action: "engineSetup.apiKey.open" } as const;
   return (
     <div data-engine-setup-api-key={configured ? "configured" : ""} className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
       <div className="flex items-start gap-2.5">
@@ -464,7 +462,7 @@ function ApiKeyEngineSetup({ instance, className, unframed, configured = false }
       {!inline && isApiKeyEngine(instance) && needsSignIn(instance) && (
         <p role="alert" className="mt-2 text-[12px] leading-relaxed text-danger">{t("engineSetup.apiKey.rejected")}</p>
       )}
-      {inline ? <KeyRow id={inline} bare rejected={isApiKeyEngine(instance) && needsSignIn(instance)} className="mt-2 px-0 pb-0" /> : !remote && (
+      {inline ? <KeyRow id={inline} bare rejected={isApiKeyEngine(instance) && needsSignIn(instance)} className="mt-2 px-0 pb-0" /> : (
         <button
           type="button"
           onClick={() => dispatch(openKeysFor(instance))}
@@ -490,7 +488,6 @@ export function EngineSetup({
   unframed = false,
   description: descriptionOverride,
   quiet = false,
-  onHost = false,
 }: {
   instance: InstanceInfo;
   className?: string;
@@ -498,8 +495,6 @@ export function EngineSetup({
   unframed?: boolean;
   description?: string;
   quiet?: boolean;
-  /** A paired desktop: sign-in and setup happen on the host, whose AIs it uses. */
-  onHost?: boolean;
 }) {
   const install = instance.install;
   const installCommand = installCommandFor(install);
@@ -532,16 +527,6 @@ export function EngineSetup({
       : signInCommand
         ? t("engineSetup.installDescSignIn")
         : t("engineSetup.installDesc"));
-
-  // The host does not open its sign-in and setup calls to a paired desktop, so point the person there instead.
-  if (onHost) {
-    return (
-      <div data-engine-setup-on-host className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
-        <div className="text-[13px] font-semibold text-ink">{title}</div>
-        <p className="mt-1 text-[12px] leading-relaxed text-ink-secondary">{t("remote.client.setUpOnHost", { name: instance.displayName })}</p>
-      </div>
-    );
-  }
 
   if (apiKeySetup(instance)) {
     return <ApiKeyEngineSetup instance={instance} className={className} unframed={unframed} />;

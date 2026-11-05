@@ -26,10 +26,9 @@ export function FirstReplyRescueRow({ rescue, text, at }: { rescue: FirstReplyRe
   useAiSwitchRow({ threadId: rescue.threadId, turnId: rescue.turnId, live });
   if (rescue.settled) return null;
   const ai = state.instances.find((instance) => instance.instanceId === rescue.instanceId)?.displayName || rescue.ai;
-  // Where this bot's AI is chosen: the bot panel in Simple mode, the chat header in Advanced. A room's header and a
-  // remote client's Advanced header have no model chip.
-  const remote = window.ogb?.remoteClient?.active === true;
-  const canSwitch = live && !rescue.groupId && !(advanced && remote);
+  // Where this bot's AI is chosen: the bot panel in Simple mode, the chat header in Advanced. A room's header has no
+  // model chip.
+  const canSwitch = live && !rescue.groupId;
   const switchAi = () => {
     requestAiSwitch({ botId: rescue.botId, threadId: rescue.threadId, turnId: rescue.turnId, requestMessageId: rescue.requestMessageId, place: advanced ? "header" : "panel" });
     if (!advanced) openBotSettings(dispatch, "model", { botId: rescue.botId });

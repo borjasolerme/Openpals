@@ -25,36 +25,31 @@ const done = { completedAt: "2026-09-09T10:00:00.000Z", version: WELCOME_VERSION
 
 describe("welcomeDue", () => {
   it("waits for the server before deciding", () => {
-    expect(welcomeDue(null, { remoteClient: false })).toBe(false);
-    expect(welcomeDue(undefined, { remoteClient: false })).toBe(false);
+    expect(welcomeDue(null)).toBe(false);
+    expect(welcomeDue(undefined)).toBe(false);
   });
 
   it("shows the tour to a fresh workspace", () => {
-    expect(welcomeDue({}, { remoteClient: false })).toBe(true);
-    expect(welcomeDue({ onboarding: EMPTY_ONBOARDING }, { remoteClient: false })).toBe(true);
-  });
-
-  it("never shows it to a paired remote client", () => {
-    expect(welcomeDue({}, { remoteClient: true })).toBe(false);
+    expect(welcomeDue({})).toBe(true);
+    expect(welcomeDue({ onboarding: EMPTY_ONBOARDING })).toBe(true);
   });
 
   it("respects a completion at the current version", () => {
-    expect(welcomeDue({ onboarding: done }, { remoteClient: false })).toBe(false);
+    expect(welcomeDue({ onboarding: done })).toBe(false);
   });
 
   it("re-shows a flow completed at an older version", () => {
-    expect(welcomeDue({ onboarding: { ...done, version: WELCOME_VERSION - 1 } }, { remoteClient: false })).toBe(true);
+    expect(welcomeDue({ onboarding: { ...done, version: WELCOME_VERSION - 1 } })).toBe(true);
   });
 
   it("decides who gets the tour on a fresh workspace", () => {
     const fresh = { onboarding: EMPTY_ONBOARDING };
     const cases = [
-      { who: "local desktop", options: { remoteClient: false, ...LOCAL_VIEWER }, due: true },
-      { who: "remote client", options: { remoteClient: true, ...LOCAL_VIEWER }, due: false },
-      { who: "hosted admin", options: { remoteClient: false, hosted: true, canSave: true }, due: true },
-      { who: "hosted member", options: { remoteClient: false, hosted: true, canSave: false }, due: false },
-      { who: "member of a self-hosted server", options: { remoteClient: false, hosted: false, canSave: false }, due: false },
-      { who: "hosted, scope unknown", options: { remoteClient: false, hosted: true }, due: false },
+      { who: "local desktop", options: LOCAL_VIEWER, due: true },
+      { who: "hosted admin", options: { hosted: true, canSave: true }, due: true },
+      { who: "hosted member", options: { hosted: true, canSave: false }, due: false },
+      { who: "member of a self-hosted server", options: { hosted: false, canSave: false }, due: false },
+      { who: "hosted, scope unknown", options: { hosted: true }, due: false },
     ];
     for (const { who, options, due } of cases) expect(welcomeDue(fresh, options), who).toBe(due);
   });

@@ -23,7 +23,7 @@ export type TeamPart = typeof TEAM_PARTS[number];
 
 export const sha256Hex = (bytes: Uint8Array | string): string => createHash("sha256").update(bytes).digest("hex");
 
-export function partHash(value: unknown): string {
+function partHash(value: unknown): string {
   return sha256Hex(canonicalJson(value ?? null));
 }
 

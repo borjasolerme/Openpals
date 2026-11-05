@@ -36,7 +36,7 @@ export function useBulletinEditor(group: Group) {
   return { open, draft, setDraft, start, save, cancel, onKeyDown };
 }
 
-export function RoomBulletin({ group, remoteClient }: { group: Group; remoteClient: boolean }) {
+export function RoomBulletin({ group }: { group: Group }) {
   const bulletin = useBulletinEditor(group);
   return (
     <div className="w-full px-5">
@@ -57,14 +57,13 @@ export function RoomBulletin({ group, remoteClient }: { group: Group; remoteClie
         </div>
       ) : (
         <button
-          disabled={remoteClient}
-          onClick={() => { if (!remoteClient) bulletin.start(); }}
-          className={cn("mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left", !remoteClient && "hover:bg-raised/40")}
+          onClick={bulletin.start}
+          className="mb-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-raised/40"
           title={t("room.bulletin.title")}
         >
           <Pin size={12} className="shrink-0 text-ink-secondary" />
           <span dir="auto" className={cn("truncate text-[13px]", group.bulletin ? "text-ink-secondary" : "text-ink-tertiary")}>
-            {group.bulletin.split("\n")[0] || (remoteClient ? t("room.bulletin.none") : t("room.bulletin.add"))}
+            {group.bulletin.split("\n")[0] || t("room.bulletin.add")}
           </span>
         </button>
       )}

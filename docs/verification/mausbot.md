@@ -18,7 +18,7 @@ pnpm exec vitest run server/default-bot.test.ts server/default-bot.e2e.test.ts \
   existing install gets one once on update and its Chief is untouched; a new
   install's renamed MausBot is adopted, not duplicated; the intro shows once,
   not after it was answered or dismissed; delete and archive are refused; a
-  move to a server of the person's own leaves exactly one.
+  restored backup has exactly the one MausBot the backup had.
 - `server/default-bot.e2e.test.ts`: on a real fixture server, `DELETE
   /api/bots/:id` answers 409, the switch hides and shows it, and a MausBot that
   is not the Chief creates a bot with `create_bot`.

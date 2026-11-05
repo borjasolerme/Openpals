@@ -13,12 +13,12 @@ export const phonePairingSettingsAction = (): Extract<Action, { type: "toggleApp
 });
 
 export function currentPhonePairingTarget(): PhonePairingTarget {
-  const ogb = typeof window === "undefined" ? undefined : (window.ogb as { companion?: unknown; remoteClient?: { active?: boolean } } | undefined);
-  return phonePairingTarget({ companion: Boolean(ogb?.companion), remoteClient: ogb?.remoteClient?.active === true });
+  const ogb = typeof window === "undefined" ? undefined : (window.ogb as { companion?: unknown } | undefined);
+  return phonePairingTarget({ companion: Boolean(ogb?.companion) });
 }
 
-export function phonePairingTarget(input: { companion: boolean; remoteClient: boolean }): PhonePairingTarget {
-  return input.companion && !input.remoteClient ? "computer" : "server";
+export function phonePairingTarget(input: { companion: boolean }): PhonePairingTarget {
+  return input.companion ? "computer" : "server";
 }
 
 export interface PhonePairingAccess {

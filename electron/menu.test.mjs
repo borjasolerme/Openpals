@@ -19,29 +19,33 @@ describe("buildApplicationMenu", () => {
     }
   }
 
-  const environments = [{ id: "x", name: "X", origin: "http://localhost" }];
   const build = (platform, overrides = {}) =>
     withPlatform(platform, () =>
       buildApplicationMenu({
-        environments,
-        activeId: "x",
-        onSwitch: vi.fn(),
-        onAddFromClipboard: vi.fn(),
-        onForget: vi.fn(),
+        server: null,
+        onConnectFromClipboard: vi.fn(),
+        onDisconnect: vi.fn(),
         ...overrides,
       }),
     );
+  const serverItems = (template) => template.find((entry) => entry.label === "Server").submenu;
 
-  it.each(["darwin", "linux", "win32"])("lists a saved local environment by its folder, so switching servers never fails on %s", platform => {
-    const onSwitch = vi.fn();
-    const local = { id: "e1", kind: "local", name: "Work", dataDir: "/Users/me/.openmausbot-work" };
-    const tailnet = { id: "t1", name: "Mac mini", origin: "https://mac-mini.tail1f3f14.ts.net" };
-    const template = build(platform, { environments: [local, tailnet], activeId: "t1", onSwitch });
-    const items = template.find(entry => entry.label === "Server").submenu;
-    expect(items.find(entry => entry.label === "Work — /Users/me/.openmausbot-work")).toMatchObject({ checked: false });
-    expect(items.find(entry => entry.label === "Mac mini — mac-mini.tail1f3f14.ts.net")).toMatchObject({ checked: true });
-    items.find(entry => entry.label.startsWith("Work")).click();
-    expect(onSwitch).toHaveBeenCalledWith("e1");
+  it.each(["darwin", "linux", "win32"])("offers to connect from a copied pairing link while the window shows this computer on %s", (platform) => {
+    const onConnectFromClipboard = vi.fn();
+    const items = serverItems(build(platform, { onConnectFromClipboard }));
+    expect(items.map((entry) => entry.id)).toEqual(["server-connect"]);
+    items[0].click();
+    expect(onConnectFromClipboard).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["darwin", "linux", "win32"])("offers only to disconnect from the server the window shows on %s, never a list to switch between", (platform) => {
+    const onDisconnect = vi.fn();
+    const items = serverItems(build(platform, { server: { name: "Mac mini", origin: "https://mac-mini.tail1f3f14.ts.net" }, onDisconnect }));
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ id: "server-disconnect", label: "Disconnect from “Mac mini”…" });
+    expect(items[0].type).toBeUndefined();
+    items[0].click();
+    expect(onDisconnect).toHaveBeenCalledTimes(1);
   });
 
   it.each(["darwin", "linux", "win32"])("offers Open at Login on %s, in the app menu on macOS and the File menu elsewhere", (platform) => {

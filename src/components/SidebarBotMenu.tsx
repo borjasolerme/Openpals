@@ -50,7 +50,6 @@ export function BotContextMenu({
   const shown = motion.value;
   const { state, dispatch } = useStore();
   const member = useOwnerOrAdmin() === false;
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const bot = shown ? state.bots.find((b) => b.id === shown.botId) : undefined;
   const menuRef = useRef<HTMLDivElement>(null);
   const latestMenu = useRef(menu);
@@ -217,7 +216,7 @@ export function BotContextMenu({
         { disabled: readingBotId !== null, keepOpen: true },
       )
       : item(<BellDot size={16} className="text-ink-secondary" />, t("sidebar.bot.simple.markUnread"), () => dispatch({ type: "markUnread", botId: bot.id }));
-    const moreItems = remoteClient ? [editProfile] : [
+    const moreItems = [
       editProfile,
       chiefItem(),
       member ? null : item(<Copy size={16} className="text-ink-secondary" />, t("sidebar.bot.duplicate"), () => dispatch({ type: "duplicateBot", botId: bot.id })),
@@ -254,7 +253,7 @@ export function BotContextMenu({
         style={{ top: shown.y, left: shown.x }}
         className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[198px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
       >
-        {remoteClient ? [...(rename ? [rename] : []), divider("copy"), copyId, moreRow] : [
+        {[
           item(
             bot.pinned ? <PinOff size={16} className="text-ink-secondary" /> : <Pin size={16} className="text-ink-secondary" />,
             bot.pinned ? t("sidebar.bot.unpin") : t("sidebar.bot.pin"),
@@ -313,15 +312,7 @@ export function BotContextMenu({
       style={{ top: shown.y, left: shown.x }}
       className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[198px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
     >
-      {remoteClient ? [
-        item(<Pencil size={16} className="text-ink-secondary" />, t("sidebar.bot.editProfile"), () => {
-          openForSettings();
-          if (!state.settingsOpen) dispatch({ type: "toggleSettings", open: true });
-        }),
-        item(<ClipboardCopy size={16} className="text-ink-secondary" />, t("sidebar.copyConversationId"), () => {
-          void copyText(bot.threadId);
-        }),
-      ] : [
+      {[
         item(
           bot.pinned ? <PinOff size={16} className="text-ink-secondary" /> : <Pin size={16} className="text-ink-secondary" />,
           bot.pinned ? t("sidebar.bot.unpin") : t("sidebar.bot.pin"),

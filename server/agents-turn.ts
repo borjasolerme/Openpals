@@ -14,7 +14,7 @@ export interface AgentsConversation {
   /** The bot works on its team's cloud computer, so it has no computer of its own to pick. */
   teamComputer: boolean;
   /** `x`: a treg key is held. */
-  host: { skillAuthoring: boolean; sharedComputers: boolean; escalations: boolean; voiceNotes: boolean; x: boolean };
+  host: { skillAuthoring: boolean; escalations: boolean; voiceNotes: boolean; x: boolean };
 }
 
 /** What one turn may do. Its bearer carries this to the harness, which checks it on every call. */
@@ -40,7 +40,6 @@ export function agentsServerEnv(conversation: AgentsConversation, turn: AgentsTu
     OMB_TURN_DEPTH: String(turn.depth),
     OMB_SKILL_AUTHORING_ENABLED: flag(host.skillAuthoring),
     OMB_MEMORY_ENABLED: flag(bot.memoryEnabled !== false),
-    OMB_SHARED_COMPUTERS_ENABLED: flag(host.sharedComputers),
     OMB_ROOM: flag(conversation.room),
     OMB_VOICE_NOTES: flag(host.voiceNotes),
     OMB_X_RESEARCH: flag(host.x && bot.xResearch !== false),

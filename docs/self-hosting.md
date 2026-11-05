@@ -175,9 +175,8 @@ address for **new server pairing links**. Removing it restores that fallback
 address, if any; neither action changes DNS, the proxy, bots, conversations, or
 existing sessions. A different browser origin needs its own pairing, so keep
 your original tab open until the new one works. The setting does not change
-`OMB_WEBHOOK_PUBLIC_URL`, existing webhook URLs, or the desktop companion's
-managed connection. This feature is for self-hosted servers, not the desktop
-app's managed phone endpoint.
+`OMB_WEBHOOK_PUBLIC_URL` or existing webhook URLs. This feature is for
+self-hosted servers, not the desktop app's managed phone endpoint.
 
 ## Docker (with HTTPS on your own domain)
 
@@ -403,78 +402,30 @@ gets a session cookie (30 days, renewed on use up to 180 days from pairing, revo
 listed and revoked at `GET`/`DELETE /api/auth/sessions` for now; a Settings
 screen follows.
 
-From the **desktop app**, use the server dropdown above Search → **Connect
-to a server…**, or **Settings → Servers**. Enter the server's
-HTTPS address or full pairing link, with an optional name. Custom domains and
-Cloudflare tunnel addresses work; Tailscale is not required. Generate a fresh
-link for each device: `openmausbot pair --label "My desktop"` creates an
-owner link without the phone wizard; add `--client` for chat-only access.
-A code already used by your phone cannot also pair your desktop.
+From the **desktop app**, copy a fresh pairing link and choose **Server →
+Connect to a Server from Copied Pairing Link…** (on Windows and Linux press Alt
+to show the menu bar), or open **Settings → Remote access**, paste the full
+link with its 12-character code and choose **Connect to server**. Custom
+domains and Cloudflare tunnel addresses work; Tailscale is not required.
+Generate a fresh link for each device: `openmausbot pair --label "My desktop"`
+creates an owner link without the phone wizard; add `--client` for chat-only
+access. A code already used by your phone cannot also pair your desktop.
 
 Confirm the server address in the app's connection dialog, then finish pairing
-on the server page. The app stays signed in across restarts. The workspace
-dropdown switches between **This computer** and saved hosted workspaces, without
-moving bots or chats. The **Server** menu and **Add Server from Copied Pairing
-Link…** remain available there too (on Windows and Linux press Alt to show
-the menu bar). The separate **Desktop companion** option in Settings is for
-the six-digit code from another desktop app, not a self-hosted server's
-12-character code. Older hosted UIs may not show the dropdown; use the native
-Server menu to switch back until the server is updated.
+on the server page. The window then shows the server's own UI and its bots,
+and the app stays signed in across restarts. The desktop app shows one place
+at a time: this computer's own server, or the one server it is connected to.
+Connecting to another server replaces the first. To go back to this computer,
+choose **Server → Disconnect from “name”…** or **Disconnect and use this
+computer** in Settings → Remote access. That signs this desktop out and
+forgets the server, without deleting the server's bots or conversations; the
+server keeps running by itself. Pair again to reconnect.
 
-After pairing, **Share this computer?** offers **Choose access** or **Not now**.
-Nothing is shared automatically, unless you make the server your bots' home
-(below). In **Settings → Servers → Computer
-access**, choose read-only folders and optionally allow edits. Unrestricted
-terminal and screen/app control are separate opt-ins, confirmed in a native
-dialog. They can access information outside the selected folders. Share only
-with a workspace you trust; its bots and AI providers may receive shared content.
-A folder read takes a file of up to 2 MiB and a write at most 256 KiB;
-transfers do not follow links or delete files. Local screen control also needs OS permissions and a supported
-desktop driver. Microphone access is not included.
-
-**Make the server your bots' home.** Bots work together only within one
-place: bots on this computer can't reach bots on the server. To bring them
-together, right-click the server's circle at the window's left edge and choose
-**Make <server> my home**. The app moves this computer's bots, chats, memory,
-skills, logins, apps and keys, and routines there the way it moves them to My
-Cloud: everything is copied while you keep working, then at a quiet moment this
-computer stops for good, the rest goes, both sides are checked, and the server
-switches on what was on here, so no routine ever runs twice. The account area
-says how it goes, and after a day of failing it says the move needs you, with
-Try again. Afterwards the server is what the window opens, and this computer
-works for it by itself: no access dialog, only the
-menu bar's item with Pause.
-
-Until then, a bot that asks for a teammate living in your other place says where
-that teammate lives and how to bring them together, instead of only that it
-can't reach it: the app tells each place of yours the names of the bots your
-other places have, and nothing more.
-
-This is offered only for a server that is yours alone: you paired with it as an
-admin, and its sign-in list names no members and no other admin (Settings →
-People). A server other people sign in to keeps the explicit **Share this
-computer?** flow above, and its bots stay where they are. Both sides need this
-release: an older server says to update it first.
-
-To move by hand instead, export a backup from this computer in **Settings →
-Backups → Export backup**, then import it on the server in **Settings → Backups
-→ Import backup**. API keys, engine sign-ins and paired devices stay where they
-are on both sides; routines arrive paused. An older desktop app's **Copy this
-computer here** is answered with "Update OpenMausBot to bring your bots here by
-itself."
-
-Only conversations you start yourself on that server can use what you share;
-other people's bots, routines and webhooks there cannot. Keys and sign-in
-stores (`~/.ssh`, cloud CLIs, browser profiles, keychains) and `.git`
-internals stay out of reach of any shared folder, and the desktop keeps a log
-of every request under **Computer access**.
-
-Sharing works while this desktop is awake and running, including when viewing
-another workspace. **Stop sharing** revokes access; closing the app stops the
-connector. An action already sent to a local app may still finish. **Forget**
-also stops sharing and signs this desktop out, without deleting the server's
-bots or conversations. If sign-out cannot reach the server, the app warns you;
-revoke its session there when reachable again, or if the device is gone.
+Bots on this computer and bots on the server are separate and can't reach each
+other. To bring this computer's bots to the server, export a backup in
+**Settings → Backups → Export full backup**, then import it on the server in
+**Settings → Backups → Import backup**. API keys, engine sign-ins and paired
+devices stay where they are on both sides; routines arrive paused.
 
 What this changes about the trust model: the server still binds loopback
 and still trusts programs on loopback as the owner, though never a browser
@@ -492,8 +443,8 @@ event stream, because `EventSource` cannot set headers:
 
 `GET /.well-known/openmausbot/environment` is public and tells a client what
 it is talking to: a stable `environmentId`, the label, the version and
-capabilities. Saved connections check the id so a reused address that now
-points at a different server is refused loudly.
+capabilities. A client that saves a connection checks the id, so a reused
+address that now points at a different server is refused loudly.
 
 An SSH tunnel still works, and is the right answer when the server has no
 address of its own:
@@ -860,8 +811,8 @@ no AI to carry on, it says the bot waits instead. Nobody is asked.
   when it named none or named one already past; the next turn after that hour
   checks it again. One model's own limit holds that model alone, and for at
   most six hours before it is tried again. The holds are saved
-  (`limit-holds.json`, `limit-takeover-holds.json`), so a restart, an update or
-  a sleep the Cloud was stopped for keeps them. A conversation that moved goes
+  (`limit-holds.json`, `limit-takeover-holds.json`), so a restart or an update
+  keeps them. A conversation that moved goes
   back once its AI's limit has reset, with one line saying so.
 
 An engine that posts the provider's raw error as its whole reply instead of
@@ -881,7 +832,7 @@ has no setting in `config.json` yet.
 
 When a turn stops because its AI is signed out (its sign-in expired or was
 revoked), the person hears it once, in that conversation and as a
-notification: "Claude is signed out on the Cloud. Sign in again in Settings →
+notification: "Claude is signed out on this computer. Sign in again in Settings →
 AI to keep using it.", with a Sign in button that opens those settings. Each
 later refused turn still shows that it failed, with no second notice; its
 Chief gets one incident, not one a turn. An account out of credit, which some

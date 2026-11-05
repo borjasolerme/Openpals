@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { DesktopWorkspaceSwitcher } from "../components/DesktopWorkspaceSwitcher";
 import { productName } from "../lib/brand";
+import { disconnectServer, placeAvailable } from "../lib/place";
 
 import {
   defaultDeviceLabel,
@@ -19,7 +19,7 @@ const button = "mt-5 w-full rounded-md bg-accent px-4 py-2 text-[14px] font-medi
 const fieldLabel = "mt-4 block text-[12px] font-medium text-ink-secondary";
 
 /** Only the desktop app pairs from a link at once; a browser asks, so a sent link cannot sign it in unseen. */
-export function pairsAutomatically(initialCode: string | null, desktop = typeof window !== "undefined" && Boolean(window.ogb?.workspaces)): boolean {
+export function pairsAutomatically(initialCode: string | null, desktop = placeAvailable()): boolean {
   return Boolean(initialCode) && desktop;
 }
 
@@ -77,7 +77,8 @@ export function PairPage({ initialCode, reason }: { initialCode: string | null; 
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-app px-6 text-ink">
-      <div className="absolute left-3 top-12 max-w-[280px]"><DesktopWorkspaceSwitcher /></div>
+      {placeAvailable() && <button type="button" onClick={() => void disconnectServer()}
+        className="absolute left-3 top-12 rounded-md px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink">Back to this computer</button>}
       <div className="w-full max-w-[420px]">
         {opening ? (
           <p role="status" className="text-[20px] font-semibold">{`Connecting to ${environment?.label ?? `this ${productName()}`}…`}</p>

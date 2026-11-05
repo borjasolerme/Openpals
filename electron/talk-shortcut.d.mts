@@ -26,8 +26,6 @@ export declare function createTalkShortcut(options: {
 }): {
   state(): TalkShortcutState;
   set(change: { enabled?: unknown; key?: unknown }): TalkShortcutState;
-  /** Takes or lets go of the key when `available()` changed since the key was last set up. */
-  refresh(): void;
   releaseModifiers(): string[];
   close(): void;
 };

@@ -19,8 +19,6 @@ import { SettingRow, SettingsDisclosureRow, SettingsGroup, SettingsRows } from "
 import { UsageSection } from "./UsageSection";
 import { PlanUsageSummary } from "./PlanUsage";
 import { SkinPicker } from "./SkinPicker";
-import { PlaceLookRows } from "./PlaceLookCard";
-import { ChromeRailRow } from "./ChromeRailToggle";
 import { WindowFrameRow } from "./WindowFrameRow";
 import { ProfileSummaryRow } from "./ProfileSettings";
 import { ImportSettings } from "./ImportSettings";
@@ -56,8 +54,6 @@ export function SimpleGeneralPage({ has, peopleOpen, onLooks }: { has: Has; peop
         <SettingsGroup label={t("settings.section.appearance")} block="appearance">
           <SettingsRows>
             <ThemeRow simple />
-            <PlaceLookRows />
-            <ChromeRailRow />
             <WindowFrameRow />
             <ColorUserBubblesRow simple />
             <LanguageRow simple />
@@ -119,7 +115,7 @@ export function SimpleAiPage({ has, disclose, connections }: { has: Has; disclos
 
 export type RemoteAccessCards = Record<"client" | "domain" | "pairing" | "companion", ReactNode>;
 
-export function SimpleComputerPage({ has, remoteAccess, servers, disclose }: { has: Has; remoteAccess: RemoteAccessCards; servers: ReactNode; disclose: Disclose }) {
+export function SimpleComputerPage({ has, remoteAccess, disclose }: { has: Has; remoteAccess: RemoteAccessCards; disclose: Disclose }) {
   return (
     <>
       {has("computer") && <SettingsGroup label={t("settings.simple.computer.bots")} block="computer"><AdminOnly><LocalComputerSection /></AdminOnly></SettingsGroup>}
@@ -136,10 +132,9 @@ export function SimpleComputerPage({ has, remoteAccess, servers, disclose }: { h
         </SettingsGroup>
       )}
       {has("logins") && <div data-settings-block="logins" className="scroll-mt-4"><LoginsSettings /></div>}
-      {(has("companion") || has("desktopWorkspaces")) && (
+      {has("companion") && (
         <SettingsDisclosureRow title={t("settings.simple.computer.elsewhere")} block="elsewhere" {...disclose("computer-elsewhere")}>
-          {has("companion") && <div data-settings-block="remote" className="flex scroll-mt-4 flex-col gap-4 empty:hidden">{remoteAccess.client}{remoteAccess.domain}</div>}
-          {has("desktopWorkspaces") && <div data-settings-block="desktopWorkspaces" className="flex scroll-mt-4 flex-col gap-4">{servers}</div>}
+          <div data-settings-block="remote" className="flex scroll-mt-4 flex-col gap-4 empty:hidden">{remoteAccess.client}{remoteAccess.domain}</div>
         </SettingsDisclosureRow>
       )}
     </>
@@ -163,12 +158,12 @@ export function SimpleBillingPage({ has, disclose }: { has: Has; disclose: Discl
 
 const versionTitle = () => `${productName()} ${appVersion()}`;
 
-export function SimpleAboutPage({ remoteActive }: { remoteActive: boolean }) {
+export function SimpleAboutPage() {
   return (
     <SettingsGroup block="about">
       <SettingsRows>
         <SettingRow title={versionTitle()}>{null}</SettingRow>
-        {!remoteActive && <ReplayTourRow />}
+        <ReplayTourRow />
         <DiagnosticsRow simple />
       </SettingsRows>
     </SettingsGroup>

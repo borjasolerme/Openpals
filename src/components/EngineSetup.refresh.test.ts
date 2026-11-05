@@ -70,14 +70,6 @@ it("uses the verified install response instead of relying on another status requ
   expect(host.textContent).toContain("Installation verified. Sign in if requested.");
 });
 
-it("never opens a local terminal to install on a paired remote server", () => {
-  vi.stubGlobal("window", Object.assign(window, { ogb: { platform: "win32", openInstallTerminal: vi.fn(), remoteClient: { active: true } } }));
-  mount(createElement(EngineSetup, { instance: engine }));
-  expect(host.textContent).not.toContain("Open install in Terminal");
-  expect(host.textContent).toContain("fixture-install");
-  expect(host.textContent).toContain("the machine it runs on, not this device");
-});
-
 it("says plainly when the engine now runs the copy the app installed", async () => {
   const opencode: InstanceInfo = {
     ...engine, instanceId: "opencode", driverKind: "opencodeGo", displayName: "OpenCode",

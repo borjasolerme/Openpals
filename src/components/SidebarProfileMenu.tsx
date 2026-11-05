@@ -1,34 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Archive,
-  ArrowLeftRight,
   Bug,
-  Check,
   Gauge,
   Info,
   HelpCircle,
   Keyboard,
-  Laptop,
   LifeBuoy,
-  Server,
   Settings as SettingsIcon,
   Smartphone,
   UserRound,
   Zap,
 } from "lucide-react";
 
-import { AccountMoveStatus, useAccountMove, type AccountMoveKind } from "./AccountMove";
 import { InitialsAvatar } from "./Avatar";
 import { AboutDialog } from "./AboutDialog";
-import { PlaceTile } from "./PlaceTile";
-import type { WorkspacePlace } from "./DesktopWorkspaceSwitcher";
-import { railShown, usePlaces } from "@/lib/places";
 import { useAutomationsNeedYou } from "./SidebarFooterNav";
 import { SidebarPopoverMenu, type SidebarMenuItem } from "./SidebarPopoverMenu";
 import { ShortcutHint } from "./ShortcutHint";
 import { useSidebarPhoneStatus } from "./SidebarPhoneButton";
 import { api, useStore } from "@/state/store";
-import { placeColor } from "@/lib/place-colors";
 import { cn } from "@/lib/cn";
 import { activeLocale, t } from "@/lib/i18n";
 import { FEEDBACK_URL, HELP_CENTER_URL, openExternalLink } from "@/lib/app-links";
@@ -103,34 +94,16 @@ export function toolMenuItems({ activeView, automationsNeedYou, onAutomations, a
   ];
 }
 
-/** The account button's name: the person, then whatever its dot is raised for, then the move while it goes.
- * A failing move and automations that need the person share one segment. */
-export function accountLabel(name: string, { automationsNeedYou, move = null }: { automationsNeedYou: boolean; move?: AccountMoveKind | null }): string {
-  const needsYou = move === "failed"
-    ? t(automationsNeedYou ? "sidebar.account.moveAndAutomationsNeedYou" : "sidebar.account.moveNeedsYou")
-    : automationsNeedYou ? t("sidebar.account.automationsNeedYou") : "";
-  return [name, needsYou, move === "sending" ? t("sidebar.account.moving") : ""].filter(Boolean).join(" · ");
+/** The account button's name: the person, then whatever its dot is raised for. */
+export function accountLabel(name: string, { automationsNeedYou }: { automationsNeedYou: boolean }): string {
+  return automationsNeedYou ? `${name} · ${t("sidebar.account.automationsNeedYou")}` : name;
 }
 
 export type AccountDot = "danger";
 const DOT_COLOR: Record<AccountDot, string> = { danger: "bg-danger" };
 
-/** The avatar's dot: red while automations or the failing move need the person; none for the move on its way. */
-export function accountDot({ automationsNeedYou, move }: { automationsNeedYou: boolean; move: AccountMoveKind | null }): AccountDot | null {
-  return automationsNeedYou || move === "failed" ? "danger" : null;
-}
-
-/** `besideRail`: the window's rail of places stands beside the page and switches places, so Switch to… isn't offered twice. */
-export function placeMenuItems(place: Pick<WorkspacePlace, "current" | "openMenu" | "switchable">, { besideRail = false }: { besideRail?: boolean } = {}): SidebarMenuItem[] {
-  if (!place.switchable) return [];
-  const here = <Check size={15} aria-hidden="true" className="shrink-0 text-ink-secondary" />;
-  const current = place.current;
-  const icon = placeColor(current?.color) ? <PlaceTile color={current?.color} size={16} />
-    : current?.local === false ? <Server size={16} /> : <Laptop size={16} />;
-  return [
-    ...(current ? [{ key: "place", label: current.name, icon, trailing: here, onSelect: place.openMenu }] : []),
-    ...(besideRail ? [] : [{ key: "switch-place", label: t("sidebar.menu.switchTo"), icon: <ArrowLeftRight size={16} />, onSelect: place.openMenu }]),
-  ];
+export function accountDot({ automationsNeedYou }: { automationsNeedYou: boolean }): AccountDot | null {
+  return automationsNeedYou ? "danger" : null;
 }
 
 type PlanWindowUse = { available: boolean; usedPercent: number | null; resetsAt: string | null };
@@ -177,9 +150,7 @@ function usePlanUsageSummary(enabled: boolean): UsageSummary | null {
 
 export function profileMenuItems({
   phone,
-  usage,
   usageSummary = null,
-  move = [],
   simple,
   onUsage,
   onSettings,
@@ -189,11 +160,8 @@ export function profileMenuItems({
   onFeedback,
 }: {
   phone: SidebarMenuItem[];
-  usage: boolean;
   usageSummary?: UsageSummary | null;
-  /** the move's own rows, first of all (AccountMove) */
-  move?: SidebarMenuItem[];
-  simple?: { tools: SidebarMenuItem[]; places: SidebarMenuItem[] };
+  simple?: { tools: SidebarMenuItem[] };
   onUsage: () => void;
   onSettings: () => void;
   onShortcuts: () => void;
@@ -213,7 +181,7 @@ export function profileMenuItems({
     },
     { key: "about", label: t("sidebar.menu.about"), icon: <Info size={18} />, separatorBefore: true, onSelect: onAbout },
   ];
-  const usageItem: SidebarMenuItem | null = usage ? {
+  const usageItem: SidebarMenuItem = {
     key: "usage",
     label: usageSummary?.weekly ? t("sidebar.menu.weeklyUsage") : t("settings.section.usage"),
     ...(usageSummary ? { value: usageSummary.value } : {}),
@@ -221,20 +189,12 @@ export function profileMenuItems({
     ...(simple ? { chevron: true } : {}),
     icon: <Gauge size={18} />,
     onSelect: onUsage,
-  } : null;
+  };
   const support: SidebarMenuItem = { key: "support", label: t("sidebar.menu.support"), icon: <LifeBuoy size={18} />, submenu: help, onSelect: () => {} };
   const settings: SidebarMenuItem = { key: "settings", label: t("sidebar.menu.settings"), icon: <SettingsIcon size={18} />, onSelect: onSettings };
-  const present = (...items: Array<SidebarMenuItem | null | false>) => items.filter((item): item is SidebarMenuItem => Boolean(item));
-  if (!simple) {
-    const rest = [...present(usageItem), ...phone, support, settings];
-    return [...move, ...rest.map((item, index) => (move.length && index === 0 ? { ...item, separatorBefore: true } : item))];
-  }
-  const groups = [
-    move,
-    [...present(usageItem), ...phone, support, settings],
-    simple.tools,
-    simple.places,
-  ].filter((group) => group.length > 0);
+  const main = [usageItem, ...phone, support, settings];
+  if (!simple) return main;
+  const groups = [main, simple.tools].filter((group) => group.length > 0);
   return groups.flatMap((group, at) => group.map((item, index) => (at > 0 && index === 0 ? { ...item, separatorBefore: true } : item)));
 }
 
@@ -244,13 +204,12 @@ export interface ArchivedBots {
 }
 
 export interface SimpleAccount {
-  place: WorkspacePlace;
   automationsNeedYou: boolean;
   archived?: ArchivedBots;
 }
 
-export function useSimpleAccount(place: WorkspacePlace, archived?: ArchivedBots): SimpleAccount {
-  return { place, automationsNeedYou: useAutomationsNeedYou(), archived };
+export function useSimpleAccount(archived?: ArchivedBots): SimpleAccount {
+  return { automationsNeedYou: useAutomationsNeedYou(), archived };
 }
 
 /** `circle` is the phone's round avatar button at the top of the bot list. */
@@ -260,7 +219,7 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
   const { state, dispatch } = useStore();
   const simple = account !== undefined;
   const [menuOpen, setMenuOpen] = useState(false);
-  const engineUsage = usePlanUsageSummary(simple && menuOpen && window.ogb?.remoteClient?.active !== true);
+  const engineUsage = usePlanUsageSummary(simple && menuOpen);
   const phone = useSidebarPhoneStatus();
   const connectPhone = useConnectPhoneEntry();
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -277,15 +236,9 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
 
   const profile = profileForSession(state.config?.profile, session);
   const name = profileLabel(profile);
-  const remote = window.ogb?.remoteClient?.active === true;
-  const besideRail = railShown(usePlaces());
-  const move = useAccountMove({ onOpen: () => dispatch({ type: "toggleAppSettings", open: true, section: "desktopWorkspaces" }) });
-
   const items = profileMenuItems({
     phone: phoneMenuItems({ entry: connectPhone, connected: phone.kind === "connected", onConnect: () => dispatch(phonePairingSettingsAction()) }),
-    usage: !remote,
     usageSummary: engineUsage,
-    move: move.items,
     ...(account ? { simple: {
       tools: toolMenuItems({
         activeView: state.activeView,
@@ -293,7 +246,6 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
         onAutomations: () => dispatch({ type: "showRoutines", view: "list" }),
         archived: account.archived,
       }),
-      places: placeMenuItems(account.place, { besideRail }),
     } } : {}),
     onUsage: () => dispatch({ type: "toggleAppSettings", open: true, section: "usage" }),
     onSettings: () => dispatch({ type: "toggleAppSettings" }),
@@ -308,9 +260,8 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
   const needsYou = account?.automationsNeedYou === true;
   const initials = profileInitials(profile);
   const nameless = simple && initials === "?" ? <UserRound size={18} strokeWidth={1.75} aria-hidden /> : undefined;
-  const label = accountLabel(name, { automationsNeedYou: needsYou, move: move.kind });
-  const dot = accountDot({ automationsNeedYou: needsYou, move: move.kind });
-  const moveDot = accountDot({ automationsNeedYou: false, move: move.kind });
+  const label = accountLabel(name, { automationsNeedYou: needsYou });
+  const dot = accountDot({ automationsNeedYou: needsYou });
 
   return (
     <>
@@ -351,14 +302,8 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
               open ? "bg-raised" : "hover:bg-raised/50",
             )}
           >
-            <span className="relative flex shrink-0">
-              <InitialsAvatar initials={profileInitials(profile)} avatarUrl={profile?.avatarUrl} size={28} />
-              {moveDot && <span aria-hidden data-account-dot={moveDot} className={cn("absolute -right-0.5 -top-0.5 size-2 rounded-full ring-2 ring-app", DOT_COLOR[moveDot])} />}
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[14px] font-medium leading-5 text-ink">{name}</span>
-              <AccountMoveStatus kind={move.kind} place={move.place} />
-            </span>
+            <InitialsAvatar initials={profileInitials(profile)} avatarUrl={profile?.avatarUrl} size={28} />
+            <span className="min-w-0 flex-1 truncate text-[14px] font-medium leading-5 text-ink">{name}</span>
           </span>
         )}
       />

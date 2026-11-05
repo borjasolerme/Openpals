@@ -269,7 +269,7 @@ export function clearSessionCookie(name: string): string {
 }
 
 /** What a `client` session may do. Default deny: a new route is admin-only until listed here. */
-export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: RegExp; feature?: "sharedComputers" }> = [
+export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: RegExp }> = [
   { methods: ["GET"], path: /^\/api\/auth\/session$/ },
   { methods: ["GET"], path: /^\/api\/notifications$/ },
   { methods: ["POST"], path: /^\/api\/notifications\/read-all$/ },
@@ -278,11 +278,6 @@ export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: Reg
   { methods: ["GET"], path: /^\/api\/updates\/check$/ },
   { methods: ["POST"], path: /^\/api\/auth\/stream-ticket$/ },
   { methods: ["POST"], path: /^\/api\/auth\/logout$/ },
-  // Own desktop connector, bound to a private secret; listed only while features.sharedComputers is on.
-  { methods: ["POST"], path: /^\/api\/shared-computers\/(?:connect|[\w-]+\/(?:poll|lease|result|disconnect))$/, feature: "sharedComputers" },
-  { methods: ["GET"], path: /^\/api\/shared-computers$/, feature: "sharedComputers" },
-  // The same desktop's device link: a WebSocket bound to that secret too.
-  { methods: ["GET"], path: /^\/api\/shared-computers\/[\w-]+\/link$/, feature: "sharedComputers" },
   // This phone's own apps, keyed by its session (routes/phones.ts): register, poll, lease, answer.
   { methods: ["GET", "PUT", "DELETE"], path: /^\/api\/phones\/self$/ },
   { methods: ["GET"], path: /^\/api\/phones\/self\/jobs$/ },
@@ -379,14 +374,11 @@ export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: Reg
   { methods: ["POST"], path: /^\/api\/presence\/active$/ },
   // what a bot asks of this person: their own questions and approvals only
   { methods: ["GET"], path: /^\/api\/needs-you$/ },
-  // the workspace's banner picture: everyone signed in here sees it; changing it (PUT, DELETE) is an admin's
-  { methods: ["GET"], path: /^\/api\/workspace\/banner$/ },
 ];
 
-export function requiredScope(method: string, path: string, features: { sharedComputers?: boolean } = {}): Scope {
+export function requiredScope(method: string, path: string): Scope {
   const upper = method.toUpperCase();
   for (const rule of CLIENT_ALLOW) {
-    if (rule.feature && features[rule.feature] !== true) continue;
     if (rule.path.test(path) && rule.methods.includes(upper)) return "client";
   }
   return "admin";
@@ -432,7 +424,6 @@ export interface ResolveOptions {
   /** Desktop capability over Electron's private child port: with it, every public loopback mutation must come through the desktop's web session. */
   loopbackMutationToken?: string;
   companionMutationToken?: string;
-  features?: { sharedComputers?: boolean };
   /** Absent is `owner`; ignored while loopbackMutationToken is in force. */
   loopbackTrust?: LoopbackTrust;
   /** Under `service`: a per-launch secret from `openmausbot serve` over stdin (never env, which other children read); it opens only pairing codes. */
@@ -500,7 +491,7 @@ export function resolveRequestAuth(req: IncomingMessage, options: ResolveOptions
 
   if (session && via) {
     if (via === "cookie" && !isSameOrigin(req)) return deny(403, "forbidden: cross-origin request");
-    const needed = requiredScope(method, path, options.features ?? {});
+    const needed = requiredScope(method, path);
     if (!session.scopes.includes(needed)) {
       return deny(403, `forbidden: this session lacks the ${needed} scope`);
     }

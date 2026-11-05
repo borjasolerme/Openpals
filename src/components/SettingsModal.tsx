@@ -26,9 +26,6 @@ import { CustomDomainSettings } from "./CustomDomainSettings";
 import { BuiltInBrowserRow, ServerSitesRow } from "./BrowserSettingsRows";
 import { LoginsSettings } from "./LoginsSettings";
 import { RemoteComputerSection } from "./RemoteComputerSection";
-import { ConnectedWorkspacesSettings } from "./ConnectedWorkspacesSettings";
-import { PlaceLookCard } from "./PlaceLookCard";
-import { ChromeRailRow } from "./ChromeRailToggle";
 import { WindowFrameRow } from "./WindowFrameRow";
 import { Card, SettingsGroup, SIMPLE_BUTTONS } from "./SettingsPrimitives";
 import { shortcutLabel } from "./ShortcutHint";
@@ -79,13 +76,12 @@ export const SECTIONS: Array<{
   keywords: string[];
 }> = [
   { id: "general", group: "you", labelKey: "settings.section.general", icon: User, keywords: ["profile", "pinned panels", "web panel", "dashboard", "pin a page", "name", "email", "about me", "suggestions", "suggested", "memory", "analytics", "effort", "new bots", "reasoning", "threads", "parallel", "concurrency", "cleanup", "retention", "attachments", "clear attachments", "event log", "event-log", "log size", "automatic recovery", "backup model", "fallback", "routines", "conversation", "schedule", "usage", "limit", "plan", "upgrade", "cloud desktop hours", "storage", "saved steps", "repeat", "replay", "computer tasks", "without ai", "forget", ...talkShortcutKeywords()] },
-  { id: "appearance", group: "you", labelKey: "settings.section.appearance", icon: Palette, keywords: ["skin", "theme", "appearance", "chat width", "width", "wide", "full width", "bubble", "bubbles", "tools", "tool calls", "threads", "show threads", "hide threads", "sidebar", "display", "run", "this run", "run card", "commands", "notifications", "sound", "sounds", "mute", "silent", "chime", "pinned", "circles", "universal", "groups", "top", "send", "enter", "return", "shift+enter", "ctrl+enter", "cmd+enter", "⌘+enter", "new line", "keyboard", "ime", "japanese", "message color", "my messages", "toolbar", "tools layout", "footer", "routines", "triggers", "team map", "color", "colour", "cloud color", "server color", "tint", "sidebar color", "sidebar picture", "picture", "image", "banner", "background", "computers", "your computers", "rail", "strip", "frame", "window frame", "title bar"] },
-  { id: "companion", group: "you", labelKey: "settings.section.companion", icon: TabletSmartphone, keywords: ["companion", "device", "phone", "desktop", "client", "host", "pair", "pairing", "mobile", "https", "secure", "tailscale", "wifi", "remote", "advanced", "domain", "dns", "self-hosted", "server", "caddy"] },
+  { id: "appearance", group: "you", labelKey: "settings.section.appearance", icon: Palette, keywords: ["skin", "theme", "appearance", "chat width", "width", "wide", "full width", "bubble", "bubbles", "tools", "tool calls", "threads", "show threads", "hide threads", "sidebar", "display", "run", "this run", "run card", "commands", "notifications", "sound", "sounds", "mute", "silent", "chime", "pinned", "circles", "universal", "groups", "top", "send", "enter", "return", "shift+enter", "ctrl+enter", "cmd+enter", "⌘+enter", "new line", "keyboard", "ime", "japanese", "message color", "my messages", "toolbar", "tools layout", "footer", "routines", "triggers", "team map", "color", "colour", "frame", "window frame", "title bar"] },
+  { id: "companion", group: "you", labelKey: "settings.section.companion", icon: TabletSmartphone, keywords: ["companion", "device", "phone", "desktop", "client", "host", "pair", "pairing", "mobile", "https", "secure", "tailscale", "wifi", "remote", "advanced", "domain", "dns", "self-hosted", "server", "vps", "connect", "caddy"] },
   { id: "engines", group: "ai", labelKey: "settings.section.engines", icon: Terminal, keywords: ["models", "model providers", "engines", "claude", "codex", "grok", "providers", "cli", "sign in", "subscription"] },
   { id: "connections", group: "ai", labelKey: "settings.section.connections", icon: KeyRound, keywords: ["keys", "api", "api key", "api keys", "connections", "composio", "box", "xai", "mistral", "cerebras", "meta", "muse", "vps", "router", "openrouter", "base url", "openai", "anthropic", "groq", "greenference", "opencode", "deepseek", "provider", "lm studio", "lmstudio", "llm studio", "llmstudio", "bionic"] },
   { id: "decisionModel", group: "ai", labelKey: "settings.section.decisionModel", icon: Zap, keywords: ["decision", "extraction", "jev", "typesafe", "cloudflare", "workers ai", "clef", "clairic", "email", "routing", "auto", "rooms", "who answers"] },
   { id: "skills", group: "ai", labelKey: "settings.section.skills", icon: BookOpen, keywords: ["skills", "library", "assign", "agent skills", "skill md"] },
-  { id: "desktopWorkspaces", group: "computers", labelKey: "settings.section.desktopWorkspaces", icon: Building2, keywords: ["workspace", "cloud", "hosted", "vps", "server", "servers", "connect", "pair", "switch", "local"] },
   { id: "computer", group: "computers", labelKey: "settings.section.computer", icon: Monitor, keywords: ["vm", "virtual", "desktop", "browser", "built-in browser", "profiles", "browser profiles"] },
   { id: "logins", group: "computers", labelKey: "settings.section.logins", icon: LockKeyhole, keywords: ["logins", "login", "passwords", "password", "sign in", "2fa", "one-time code", "totp", "fill_login", "1password", "vault"] },
   { id: "usage", group: "account", labelKey: "settings.section.usage", icon: Coins, keywords: ["tokens", "cost", "billing", "plan", "quota", "remaining", "weekly", "5-hour", "model", "used"] },
@@ -109,7 +105,7 @@ export const SIMPLE_PAGES: SimpleSettingsPage[] = [
   { id: "general", labelKey: "settings.section.general", icon: Settings, sections: ["general", "appearance", "people", "import", "activity"],
     keywords: ["account", "theme", "looks", "open at login", "startup", "advanced mode"] },
   { id: "ai", labelKey: "settings.group.ai", icon: Sparkles, sections: ["engines", "connections"] },
-  { id: "computer", labelKey: "settings.simple.page.computer", icon: Monitor, sections: ["companion", "desktopWorkspaces", "computer", "logins"] },
+  { id: "computer", labelKey: "settings.simple.page.computer", icon: Monitor, sections: ["companion", "computer", "logins"] },
   { id: "billing", labelKey: "settings.simple.page.billing", icon: ChartNoAxesColumn, sections: ["usage"], keywords: ["billing", "plan", "quota", "weekly"] },
   { id: "about", labelKey: "settings.simple.page.about", icon: Info, sections: ["about"],
     keywords: ["about", "version", "welcome", "tour", "diagnostics", "logs", "support"] },
@@ -121,7 +117,6 @@ export const SIMPLE_HIDDEN_SECTIONS: readonly AppSettingsSection[] = ["backups",
 export const SIMPLE_FOLDED: Partial<Record<AppSettingsSection, SimpleDisclosureId>> = {
   connections: "ai-keys",
   remote: "computer-elsewhere",
-  desktopWorkspaces: "computer-elsewhere",
 };
 
 export function simpleSettingsPages(available: ReadonlySet<AppSettingsSection>, open: AppSettingsSection): SimpleSettingsPage[] {
@@ -167,29 +162,25 @@ export const openKeyResult = (entry: KeyEntry) => entry.uses ? openKeySettings(e
 export function SettingsModal() {
   const { state, dispatch } = useStore();
   const advanced = useAdvancedMode();
-  const remoteActive = window.ogb?.remoteClient?.active === true;
   const requested = state.appSettingsSection;
   const section: AppSettingsSection =
-    (remoteActive && !["appearance", "desktopWorkspaces"].includes(requested)) || requested === "remote"
+    requested === "remote"
       ? "companion"
       : advanced && requested === "about" ? "general" : requested;
   const dialogRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchFirst = useRef(advanced);
   const [query, setQuery] = useState("");
-  useEffect(() => window.ogb?.environments?.onOpenSettings?.(() => setQuery("")), []);
   useEffect(() => window.ogb?.onOpenAppSettings?.(() => setQuery("")), []);
   const q = query.trim().toLowerCase();
   const ownerOrAdmin = useOwnerOrAdmin();
-  const baseSections = SECTIONS.filter((entry) => !remoteActive || entry.id === "companion" || entry.id === "appearance" || entry.id === "desktopWorkspaces")
-    .filter((entry) => entry.id !== "desktopWorkspaces" || Boolean(window.ogb?.environments))
-    .filter((entry) => entry.id !== "workspaces" || workspacesAvailable(state.config))
+  const baseSections = SECTIONS.filter((entry) => entry.id !== "workspaces" || workspacesAvailable(state.config))
     .filter((entry) => entry.id !== "people" || !window.ogb)
     .filter((entry) => entry.id !== "activity" || (!window.ogb && ownerOrAdmin === true));
   const availableSections = baseSections.filter((entry) => entry.id !== "skills" || skillsLibraryEnabled(state.config));
   const visibleSections = availableSections.filter((entry) => sectionMatches(entry, q));
 
-  const simpleAvailable = new Set<AppSettingsSection>([...availableSections.map((entry) => entry.id), ...(remoteActive ? [] : ["about" as const])]);
+  const simpleAvailable = new Set<AppSettingsSection>([...availableSections.map((entry) => entry.id), "about" as const]);
   const simplePages = advanced ? [] : simpleSettingsPages(simpleAvailable, section);
   const visiblePages = simplePages.filter((page) => simplePageMatches(page, q));
   const currentPage = simplePages.find((page) => page.sections.includes(section));
@@ -217,7 +208,7 @@ export function SettingsModal() {
   const [looks, setLooks] = useState(false);
   const [reveal, setReveal] = useState<string | null>(null);
   const advancedMatches = advanced || !q ? [] : SIMPLE_ADVANCED_ONLY.filter((key) => t(key).toLowerCase().includes(q));
-  const keyResults = remoteActive || !availableSections.some((entry) => entry.id === "connections") ? [] : keySearchResults(q);
+  const keyResults = !availableSections.some((entry) => entry.id === "connections") ? [] : keySearchResults(q);
   const keyResultButtons = (className: string) => keyResults.map((entry) => (
     <button key={entry.id} type="button" data-settings-key-result={entry.id} className={className}
       onClick={() => { setQuery(""); setLooks(false); dispatch(openKeyResult(entry)); }}>
@@ -298,16 +289,14 @@ export function SettingsModal() {
   const computerPairs = currentPhonePairingTarget() === "computer";
   const remoteAccess = {
     client: <RemoteComputerSection hideWhenUnavailable={!advanced} />,
-    domain: remoteActive ? null : <CustomDomainSettings />,
+    domain: <CustomDomainSettings />,
     // Security: the server decides who may pair (an owner or admin session), not this gate.
     pairing: <ServerPairingCard focusRequest={computerPairs ? 0 : phoneFocus} simple={!advanced} />,
-    companion: remoteActive ? null : <CompanionSection focusRequest={computerPairs ? phoneFocus : 0} />,
+    companion: <CompanionSection focusRequest={computerPairs ? phoneFocus : 0} />,
   };
 
   const renderSection = (id: AppSettingsSection) => {
     switch (id) {
-      case "desktopWorkspaces":
-        return <ConnectedWorkspacesSettings />;
       case "general":
         return (
           <>
@@ -339,7 +328,7 @@ export function SettingsModal() {
             <AttachmentStorageSettings />
             <PinnedPanelsSettings />
 
-            {!remoteActive && <ReplayTourRow />}
+            <ReplayTourRow />
             <DiagnosticsRow />
           </>
         );
@@ -350,21 +339,17 @@ export function SettingsModal() {
             <Card title={t("settings.skin.title")} subtitle={t("settings.skin.subtitle")}>
               <SkinPicker />
             </Card>
-            <PlaceLookCard />
-            {remoteActive && <AdvancedModeRow />}
-            {remoteActive && <LanguageRow />}
             <FontRow />
             <ChatWidthRow />
             <ColorUserBubblesRow />
             <SendKeyRow />
             <FollowUpRow />
             <SidebarToolsLayoutRow />
-            <ChromeRailRow />
             <WindowFrameRow />
             <PinnedCirclesRow />
             <UniversalPinsRow />
             <NotificationRows />
-            {!remoteActive && <ToolCallsRow />}
+            <ToolCallsRow />
             <RunCardRow />
           </>
         );
@@ -404,9 +389,9 @@ export function SettingsModal() {
         ? <SimpleLooksPage onBack={() => { setLooks(false); setReveal("appearance"); }} />
         : <SimpleGeneralPage has={has} peopleOpen={section === "people"} onLooks={() => setLooks(true)} />;
       case "ai": return <SimpleAiPage has={has} disclose={disclose} connections={renderSection("connections")} />;
-      case "computer": return <SimpleComputerPage has={has} remoteAccess={remoteAccess} servers={renderSection("desktopWorkspaces")} disclose={disclose} />;
+      case "computer": return <SimpleComputerPage has={has} remoteAccess={remoteAccess} disclose={disclose} />;
       case "billing": return <SimpleBillingPage has={has} disclose={disclose} />;
-      case "about": return <SimpleAboutPage remoteActive={remoteActive} />;
+      case "about": return <SimpleAboutPage />;
       default:
         return page.sections.map((id) => <section key={id} data-settings-block={id} className="flex scroll-mt-4 flex-col gap-4">{renderSection(id)}</section>);
     }

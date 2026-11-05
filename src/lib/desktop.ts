@@ -77,8 +77,7 @@ export function cacheDesktopCapabilities(capabilities: DesktopCapabilities): Des
   return capabilities;
 }
 
-/** The desktop bridge that saves a switch with its approval reset to Ask. A paired desktop has none: its own app runs no
- * server behind that bridge, so the host takes the switch over HTTP. */
+/** The desktop bridge that saves a switch with its approval reset to Ask. */
 export function askResetBridge() {
-  return typeof window === "undefined" || window.ogb?.remoteClient?.active ? undefined : window.ogb?.approvals;
+  return typeof window === "undefined" ? undefined : window.ogb?.approvals;
 }

@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { AudioLines, Check, ChevronDown, Loader2, Phone, PhoneOff, X } from "lucide-react";
 
-import { openBot, useStore, visibleMessages, type Bot } from "@/state/store";
+import { useStore, visibleMessages, type Bot } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { useMenuMotion } from "./MenuMotion";
 import { currentCall, deferCallCleanup, endCall, startCall, useOnCall } from "@/lib/call";
@@ -13,7 +13,6 @@ import { NO, YES } from "../../shared/call-consent";
 import { dismissStartPrompt, hangUpLiveCall, isLiveCallRunning, startLiveCall, useLiveMedia } from "@/lib/live-call-media";
 import { t } from "@/lib/i18n";
 import { speaker } from "@/lib/tts";
-import { localSystemVoiceActive } from "@/lib/local-voice";
 import { useSpeech } from "@/lib/tts/useSpeech";
 import { usePushToTalk } from "@/lib/push-to-talk";
 import { BotAvatar } from "./Avatar";
@@ -24,7 +23,6 @@ import { useDesktopCapabilities } from "./DesktopCapabilities";
 import { callCapabilityHelp, type CallCapabilityHelp } from "@/lib/call-capability";
 import { onCallStartRequest } from "@/lib/call-start-request";
 import { VoiceSetupDialog } from "./VoiceSetupDialog";
-import { openBotSettings } from "./bot-panel/panel-link";
 import { MENU_SHEET, navigateMenu } from "./menu-recipe";
 
 type Phase = "listening" | "sending" | "working" | "speaking";
@@ -80,7 +78,7 @@ export function CallTargetButton({
   requireExplicitVoices: boolean;
   liveCapable?: boolean;
 }) {
-  const { state, dispatch } = useStore();
+  const { state } = useStore();
   const { capabilities, ready: capabilitiesReady } = useDesktopCapabilities();
   const media = useLiveMedia();
   const liveThreadId = liveCapable ? threadId : undefined;
@@ -91,17 +89,13 @@ export function CallTargetButton({
   const liveElsewhere = liveRunning && media.botId !== targetId;
   const onCall = useOnCall() === targetId;
   const active = onCall || onLiveCall;
-  const remoteClient = globalThis.window?.ogb?.remoteClient?.active === true;
   const capabilityHelp = capabilitiesReady
     ? callCapabilityHelp(capabilities, Boolean(window.ogb?.speechStart))
     : null;
   const supported = capabilitiesReady && !capabilityHelp;
-  const localVoice = localSystemVoiceActive();
-  const configured = localVoice || Boolean(state.config?.tts?.configured);
+  const configured = Boolean(state.config?.tts?.configured);
   const everyTargetHasVoice = voices.length > 0 && voices.every((voice) => Boolean(voice));
-  const voiceReady =
-    localVoice ||
-    (configured && (requireExplicitVoices ? everyTargetHasVoice : Boolean(state.config?.tts?.ready || everyTargetHasVoice)));
+  const voiceReady = configured && (requireExplicitVoices ? everyTargetHasVoice : Boolean(state.config?.tts?.ready || everyTargetHasVoice));
   const turnsHere = !capabilitiesReady || capabilities.dictation.available;
   const mode = effectiveCallMode(useCallMode(), { turnsHere, canLive });
   const liveMode = canLive && mode === "live";
@@ -348,15 +342,10 @@ export function CallTargetButton({
           {voiceSetupRequired && setupBot && (
             <button
               type="button"
-              aria-haspopup={remoteClient ? undefined : "dialog"}
+              aria-haspopup="dialog"
               data-voice-setup-open
               onClick={() => {
                 setHelpOpen(false);
-                if (remoteClient) {
-                  if (setupBot.id !== targetId) openBot(dispatch, setupBot);
-                  openBotSettings(dispatch, "voice");
-                  return;
-                }
                 setVoiceSetupOpen(true);
               }}
               className="mt-2.5 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-accent-ink hover:brightness-110"

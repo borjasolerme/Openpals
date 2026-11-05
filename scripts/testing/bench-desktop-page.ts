@@ -57,8 +57,6 @@ class Cdp {
 
 export interface ProbeOptions {
   storage: Record<string, string>;
-  /** A stand-in desktop bridge with only the rail's entry point, for loading the rail's page. */
-  railBridge?: boolean;
 }
 
 /** Runs in the page before any of its scripts. Kept free of TypeScript-only syntax: it is sent as source. */
@@ -78,7 +76,6 @@ function probe(options: ProbeOptions): void {
   };
   (window as unknown as { __bench: typeof bench }).__bench = bench;
   for (const [key, value] of Object.entries(options.storage)) { try { localStorage.setItem(key, value); } catch { /* storage is optional */ } }
-  if (options.railBridge) (window as unknown as { ogb: unknown }).ogb = { rail: { expand() {}, onSkin() { return () => {}; } } };
   try {
     new PerformanceObserver((list) => { for (const entry of list.getEntries()) bench.longTasks.push([Math.round(entry.startTime), Math.round(entry.duration)]); })
       .observe({ type: "longtask", buffered: true });

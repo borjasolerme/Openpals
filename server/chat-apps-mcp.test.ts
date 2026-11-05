@@ -10,6 +10,7 @@ import { APP_WRITE_DECLINED, createChatAppsMcp, type ChatAppsMcp, type ChatAppsM
 import { createAgentCard } from "./chat-widgets.ts";
 import type { McpServerSpec } from "./contracts.ts";
 import { McpOAuthManager, withMcpSignIn } from "./mcp-oauth.ts";
+import { McpOAuthStore } from "./mcp-oauth-store.ts";
 import { probeMcpServer, SIGN_IN_CHECK_TOOL } from "./mcp-probe.ts";
 import type { McpRpcRequest } from "./routes/chat-apps.ts";
 import type { BotRecord, Message } from "./store.ts";
@@ -377,7 +378,7 @@ describe("a server that lists tools before anyone signs in", () => {
     cleanup.push(() => removeTempDir(dataDir));
     const oauth = new McpOAuthManager({ file: join(dataDir, "mcp-oauth.json") });
     cleanup.push(() => oauth.dispose());
-    oauth.adopt("agentcard", fake.url, { url: fake.url, state: "signed-in", tokens: { access: "at_refused", expiresAt: Date.now() + 3_600_000 } });
+    new McpOAuthStore(join(dataDir, "mcp-oauth.json")).put("agentcard", { url: fake.url, state: "signed-in", tokens: { access: "at_refused", expiresAt: Date.now() + 3_600_000 } });
     const probe = vi.fn(probeMcpServer);
     const { mcp } = setup({ servers: { agentcard: { type: "http", url: fake.url, enabled: true } }, oauth, probe });
     mcp.serverChanged("agentcard");

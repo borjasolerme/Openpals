@@ -18,6 +18,12 @@ For a Linux service, the VPS guide covers [account setup](/docs/self-hosting/dep
 
 Stop the server before a filesystem backup. Application state under `.openmausbot` is only part of a complete backup: preserve the service user's engine credentials, browser state, and external workspaces too. See [Data and backups](/docs/self-hosting/data-and-backups).
 
+## Connect the desktop app to your server
+
+The desktop app shows the bots of one place at a time: your own computer, or one always-on server you run (`openmausbot serve` on a VPS or another machine). To show a server, run `openmausbot pair` on it for a fresh, single-use pairing link, copy the link, and in the app choose **Server → Connect to a Server from Copied Pairing Link…**, or paste it in **Settings → Remote access** and choose **Connect to server**. Confirm the server's address, then finish pairing on its page.
+
+To go back to your own computer, choose **Server → Disconnect from “name”…** or **Disconnect and use this computer** in **Settings → Remote access**. The app signs out and forgets the server; the server's bots and chats stay on the server, which keeps running. Bots on your computer and bots on the server are separate: to bring your computer's bots to the server, use a [backup](/docs/self-hosting/data-and-backups).
+
 ## What is still third party
 
 Self-hosting OpenMausBot does not self-host every optional provider:

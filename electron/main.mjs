@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildErrorPage, desktopViewerErrorPage } from "./error-pages.mjs";
-import { startCua, stopCua, registerCuaIpc, requestComputerUse, setCuaStateListener, grantLocalComputer } from "./cua.mjs";
+import { startCua, stopCua, registerCuaIpc, setCuaStateListener, grantLocalComputer } from "./cua.mjs";
 import { createAndroidDeviceController } from "./android-device.mjs";
 import { finishSpeech, speechBusy, startSpeech, stopSpeech } from "./speech.mjs";
 import { installTalk, isTalkPanel } from "./talk-main.mjs";
@@ -33,11 +33,6 @@ import { windowBackground, windowChromeOptions } from "./window-chrome.mjs";
 import { createAllWindowsClosedQuit } from "./window-all-closed.mjs";
 import { createStartupScreen } from "./startup-screen.mjs";
 import { createSystemTray } from "./system-tray.mjs";
-import { createLendingIndicator } from "./lending-indicator.mjs";
-import { createLendingDialogs } from "./lending-dialogs.mjs";
-import { createActivityWindow } from "./lending-activity-window.mjs";
-import { missingPermissions } from "./lent-screen-failures.mjs";
-import { createScreenControl } from "./screen-control.mjs"; import { createAskPrompt } from "./ask-prompt.mjs";
 let startupScreen = null;
 let desktopTray = null;
 import { collisionFreeDownloadPath, defaultSaveName, openLogsFolder, revealDownloadWhenDone, revealInFolder, withSavableFile } from "./save-file.mjs";
@@ -54,31 +49,18 @@ import {
   readPhoneSecretIdentity,
   withPhoneSecretIdentity,
 } from "./phone-secret-identity.mjs";
-import {
-  desktopCompanionAccess,
-  desktopCompanionRendererArguments,
-  pairDesktopCompanion,
-  startDesktopCompanionRelay,
-  withDesktopCompanionAccess,
-  withoutDesktopCompanionAccess,
-} from "./desktop-companion-client.mjs";
 import { isKnownSkin, skinChrome } from "./skin-overlay.cjs";
 import { readSecureCredentials } from "./secure-credentials.mjs";
 import capabilitiesModule from "./capabilities.cjs";
 import environmentsModule from "./environments.cjs";
 import localOriginModule from "./local-origin.cjs";
 import { buildApplicationMenu } from "./menu.mjs";
-import { createComputerSharing, isHomeFolder, validateSharedFolders } from "./computer-sharing.mjs";
-import { createHostScreenLease } from "./host-screen-lease.mjs";
 import { acquireDataDirLease } from "./data-dir-lease.mjs";
-import { switchLocalEnvironment } from "./environment-switch.mjs";
 import { createDesktopPrefs, DESKTOP_PORTS, jsonFile, registerDesktopPrefs } from "./desktop-prefs.mjs";
-import { createLendingTarget } from "./lending-target.mjs"; import { createOpenAtLogin, installOpenAtLogin } from "./open-at-login.mjs";
-import { handSaved, installOwnHome } from "./own-home-main.mjs"; import { serverOpens } from "./saved-server.mjs"; import { installTwoPlacesMain } from "./two-places-main.mjs";
+import { createOpenAtLogin, installOpenAtLogin } from "./open-at-login.mjs";
 import { askForMicrophone, openPrivacySettings } from "./privacy-settings.mjs";
-import { installCloudRail, railPlaces } from "./cloud-rail.mjs"; import { installPlaceLook } from "./place-look.mjs"; import { CHROME_RAIL_PATH, createChromeRail } from "./chrome-rail.mjs";
 import { createWindowStateFile } from "./window-state-file.mjs";
-import { createEnvironmentsFile } from "./environments-file.mjs";
+import { createPlaceFile } from "./environments-file.mjs";
 import { installServerSessions, reportOwnListeners } from "./server-session.mjs";
 
 const { desktopCapabilities, nativeDesktopActions } = capabilitiesModule;
@@ -141,15 +123,12 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0);
 }
 
-/** To this computer's page; another server's page is first left for that page. */
+/** To this computer's page only: while the window shows a server, the link waits. */
 function sendToPage(win, channel, value) {
   if (!win || win.isDestroyed() || win.webContents.isLoadingMainFrame()) return false;
   let shown = null;
   try { shown = new URL(win.webContents.getURL()).origin; } catch {}
-  if (shown !== rendererOrigin()) {
-    if (activeRemote(environmentsState)) void workspaceMenuAction(() => switchEnvironment(LOCAL_ID));
-    return false;
-  }
+  if (shown !== rendererOrigin()) return false;
   win.webContents.send(channel, value);
   return true;
 }
@@ -210,10 +189,7 @@ let serverReady = !app.isPackaged;
 let secureCredentials = {};
 let secureCredentialState = null;
 let desktopDataDirLease = null;
-// The folder this process leases; environmentsState.activeId can name a remote server instead.
-let runningDataDir = null;
-let localSwitchInFlight = false;
-let desktopPrefs = null, ownHome = null, twoPlaces = null, windowFrameMade = null;
+let desktopPrefs = null, windowFrameMade = null;
 const utilityServerExits = new WeakMap();
 const UTILITY_SERVER_STOP_TIMEOUT_MS = 6_500;
 const trustedApprovalMode = createTrustedApprovalModeCoordinator({ randomId: randomUUID });
@@ -228,11 +204,10 @@ const serverSupervisor = createServerSupervisor({
     serverReady = true;
     serverStartConflictOnly = false;
     slog(`server ready pid=${proc.pid} port=${SERVER_PORT}`);
-    railChanged();
     reportOwnListeners(proc);
     routineWake.start();
     for (const win of appWindows()) {
-      if (!serverUnavailableWindows.has(win) || activeRemote(environmentsState)) continue;
+      if (!serverUnavailableWindows.has(win) || activeServer(placeState)) continue;
       void win.loadURL(`http://127.0.0.1:${SERVER_PORT}`).then(() => {
         serverUnavailableWindows.delete(win);
       }).catch((error) => {
@@ -279,8 +254,6 @@ async function stopUtilityServer(proc, timeoutMs = UTILITY_SERVER_STOP_TIMEOUT_M
   ]).finally(() => clearTimeout(timer));
 }
 let phoneSecretIdentity = null;
-let desktopRemoteAccess = null;
-let desktopCompanionRelay = null;
 
 const CREDENTIALS_FILE = path.join(app.getPath("userData"), "credentials.bin");
 
@@ -526,14 +499,6 @@ setCompanionLifecycleListener(({ expected, pid }) => {
   syncCompanionKeepAwake(false, false);
 });
 
-function installationDisplayName() {
-  const hostname = [...os.hostname()]
-    .filter((character) => character.codePointAt(0) >= 32 && character.codePointAt(0) !== 127)
-    .join("")
-    .trim();
-  return hostname.slice(0, 80) || "This computer";
-}
-
 // Everything the bug-report bundle needs: config is booleans only and the log is redacted, since it is pasted into public issues.
 async function gatherDiagnostics() {
   const serverStatus = await fetch(`http://127.0.0.1:${SERVER_PORT}/api/config`, {
@@ -601,7 +566,7 @@ function receivePhoneSecretSave(proc, rawMessage) {
   return true;
 }
 
-async function startServerOn(port, dataDir = runningDataDir ?? startupEnvironmentDir(environmentsState, desktopDataDir())) {
+async function startServerOn(port) {
   if (desktopShutdownStarted) return { proc: null, abort: true };
   const { entry, compileCacheDir } = serverChildLaunch({
     resourcesPath: process.resourcesPath,
@@ -611,7 +576,7 @@ async function startServerOn(port, dataDir = runningDataDir ?? startupEnvironmen
     ...process.env,
     // The parent owns the data-dir lease; a child only validates it, so fallback-port children never replace it.
     ...desktopDataDirLease.utilityServerLeaseEnvironment(),
-    OMB_DATA_DIR: dataDir,
+    OMB_DATA_DIR: desktopDataDir(),
     // Fail-closed until this process sends the private connection; never a descriptor inherited from the shell.
     OMB_DESKTOP_PARENT: "1",
     OMB_DESKTOP_LAUNCH_ID: desktopLaunchId,
@@ -649,7 +614,7 @@ async function startServerOn(port, dataDir = runningDataDir ?? startupEnvironmen
     if (!serverSupervisor.isCurrent(proc)) return;
     try {
       if (trustedApprovalMode.receive(proc, message)) return;
-      if (receivePhoneSecretSave(proc, message) || ownHome?.receive(proc, message)) return;
+      receivePhoneSecretSave(proc, message);
     } catch (error) {
       slog(`desktop private sync rejected: ${error?.message ?? error}`);
     }
@@ -710,7 +675,7 @@ const displayMediaGuard = createDisplayMediaGuard();
 let displayMediaRequestCount = 0;
 
 function rendererOrigin() {
-  return new URL(app.isPackaged || desktopRemoteAccess ? `http://127.0.0.1:${SERVER_PORT}` : DEV_URL).origin;
+  return new URL(app.isPackaged ? `http://127.0.0.1:${SERVER_PORT}` : DEV_URL).origin;
 }
 
 function respondToDisplayMediaRequest(callback, response) {
@@ -888,126 +853,44 @@ ipcMain.on("desktop:unread-count", (event, value) => {
   applyUnreadBadge(sender);
 });
 
-const { LOCAL_ID, activeEnvironment, activeRemote, allowedOrigins, bootEnvironmentDir, parseHostedWorkspaceLink, savedPlace, startupEnvironmentDir, withActive, withEnvironment, withLocalEnvironment, withMicrophone, withPlaceColor, withoutEnvironment, workspaceMenuTemplate, workspaceNavigationAllowed, workspaceSenderAllowed, workspaceSummary, workspaceWindowTitle } = environmentsModule;
-let environmentsState = { environments: [], activeId: LOCAL_ID };
-let computerSharing;
-const sharingPrompts = new Set();
+const { LOCAL_PLACE, activeServer, guardedOrigins, parseHostedWorkspaceLink, placeView, withMicrophone, withServer, workspaceNavigationAllowed, workspaceSenderAllowed, workspaceWindowTitle } = environmentsModule;
+let placeState = LOCAL_PLACE;
+const placeFile = createPlaceFile({ file: () => path.join(app.getPath("userData"), "environments.json"), fs, path, log: slog });
 
-let sharedComputersAllowed = false;
-
-async function refreshSharedComputersAllowed() {
-  sharedComputersAllowed = await fetch(`http://127.0.0.1:${SERVER_PORT}/api/config`, { signal: AbortSignal.timeout(3_000) })
-    .then((res) => (res.ok ? res.json() : null))
-    .then((status) => status?.features?.sharedComputers === true)
-    .catch(() => false);
-  return sharedComputersAllowed;
-}
-
-async function requireSharedComputers() {
-  if (await refreshSharedComputersAllowed()) return;
-  throw new Error("Computer sharing is turned off on this server.");
-}
-
-function sharingController() {
-  computerSharing ??= createComputerSharing({
-    file: path.join(app.getPath("userData"), "computer-sharing.json"),
-    // Holds provider API keys and sessions.json: a broad share must never reach it.
-    protectedPaths: [desktopDataDir()],
-    fetch: (...args) => session.defaultSession.fetch(...args),
-    environments: () => environmentsState.environments,
-    enabled: refreshSharedComputersAllowed,
-    cloud: lendingTarget.cloud, homeServer: lendingTarget.environment, ownClouds: lendingTarget.places, screen: screenControl.now, askForScreen,
-    prompt: createAskPrompt({ dialog, window: () => mainWindow, idleSeconds: () => powerMonitor.getSystemIdleState(1) === "unknown" ? null : powerMonitor.getSystemIdleTime() }), startScreen: screenControl.start, confirmTerminal: () => lendingDialogs.lendTerminal(true, () => sharingController().lendTerminal(true)), log: slog,
-    linkHeaders: async env => ({ cookie: (await session.defaultSession.cookies.get({ url: env.origin })).map(cookie => `${cookie.name}=${cookie.value}`).join("; ") }),
-    onChange: summary => { lendingIndicator().update(summary); loginItem.follow(summary.lending.length > 0); },
-    cuaConnection: () => cuaReady, screenLocked: () => powerMonitor.getSystemIdleState(1) === "locked", idleSeconds: () => powerMonitor.getSystemIdleState(1) === "unknown" ? null : powerMonitor.getSystemIdleTime(),
-    hostControl: createHostScreenLease({ url: () => `http://127.0.0.1:${SERVER_PORT}/api/desktop/shared-computer-control`, headers: () => desktopServerHeaders({}, { packaged: app.isPackaged, token: desktopMutationToken }) }),
-  });
-  return computerSharing;
-}
-
-const lendingTarget = createLendingTarget({ environments: () => environmentsState.environments, ownHome: () => ownHome?.home() ?? null });
-const screenControl = createScreenControl({ connection: () => cuaReady, remote: () => Boolean(desktopRemoteAccess), request: requestComputerUse, log: slog });
-let screenAskedAt = -Infinity;
-/** Computer control starts again, as Settings' Retry does, which asks macOS for what it never asked; at most every 10 minutes. */
-function askForScreen(connection) {
-  if (process.platform !== "darwin" || desktopRemoteAccess || !missingPermissions(connection?.reason).length || Date.now() - screenAskedAt < 10 * 60_000) return;
-  screenAskedAt = Date.now();
-  void requestComputerUse().catch(error => slog(`computer control: ${error?.message ?? error}`));
-}
-const loginItem = createOpenAtLogin({ app, file: path.join(app.getPath("userData"), "open-at-login.json"), home: os.homedir() });
+const loginItem = createOpenAtLogin({ app, home: os.homedir() });
 installOpenAtLogin({ ipcMain, guard: localOnly, loginItem, changed: refreshApplicationMenu });
-let hiddenStart = false;
-
-const lendingActivity = createActivityWindow({ BrowserWindow, icon: APP_ICON, background: () => windowBackground(nativeTheme.shouldUseDarkColors),
-  entries: () => sharingController().activity(undefined, 200),
-  locale: () => { try { return jsonFile(path.join(app.getPath("userData"), "desktop-prefs.json")).read()?.language || app.getLocale(); } catch { return app.getLocale(); } } });
-let lendingTray = null;
-function lendingIndicator() {
-  lendingTray ??= createLendingIndicator({
-    Tray, Menu, nativeImage, iconPath: APP_ICON, onPause: () => sharingController().pause(), onActivity: () => lendingActivity.show(),
-    onResume: () => void sharingController().resume()?.catch(error => slog(`lending resume: ${error?.message ?? error}`)), onStartScreen: () => void screenControl.start(),
-    onTerminal: on => void lendingDialogs.lendTerminal(on, () => sharingController().lendTerminal(on)).catch(error => slog(`lending terminal: ${error?.message ?? error}`)),
-  });
-  return lendingTray;
-}
-
-async function offerComputerSharing(win) {
-  const env = activeEnvironment(environmentsState);
-  if (!env || sharingPrompts.has(env.id) || win.isDestroyed()) return;
-  if (env.origin === ownHome?.home()?.origin) return;
-  if (!(await refreshSharedComputersAllowed()) || win.isDestroyed()) return;
-  sharingPrompts.add(env.id);
-  try {
-    const info = await sharingController().observe(env);
-    if (!info || win.isDestroyed() || activeEnvironment(environmentsState)?.id !== env.id || new URL(win.webContents.getURL()).origin !== env.origin) return;
-    const choice = await dialog.showMessageBox(win, {
-      type: "question", message: `Share this computer with ${env.name}?`,
-      detail: "Let this server’s bots use folders and capabilities you choose while this desktop app is running. Nothing is shared unless you enable it. You can change this later in Settings → Servers.",
-      buttons: ["Choose access", "Not now"], defaultId: 1, cancelId: 1,
-    });
-    sharingController().decline(env, info);
-    if (choice.response === 0) openWorkspaceSettings(env.id);
-  } catch {}
-  finally { sharingPrompts.delete(env.id); }
-}
-
-function environmentsFile() {
-  return path.join(app.getPath("userData"), "environments.json");
-}
-
-const environmentsStore = createEnvironmentsFile({ file: environmentsFile, fs, path, log: slog });
-
-function activeOrigin() {
-  return activeEnvironment(environmentsState)?.origin ?? rendererOrigin();
-}
 
 function refreshApplicationMenu() {
   Menu.setApplicationMenu(
     buildApplicationMenu({
-      environments: environmentsState.environments,
-      activeId: environmentsState.activeId,
-      onSwitch: (id) => void workspaceMenuAction(() => switchEnvironment(id)),
-      onAddFromClipboard: () => void addServerFromClipboard(),
-      onConnect: () => void workspaceMenuAction(openWorkspaceSettings),
-      onForget: (id) => void workspaceMenuAction(() => forgetEnvironment(id)),
+      server: activeServer(placeState),
+      onConnectFromClipboard: () => void menuAction(connectFromClipboard),
+      onDisconnect: () => void menuAction(disconnectFromMenu),
       onOpenSettings: () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("app:open-settings"); },
       openAtLogin: loginItem.available() ? { checked: loginItem.chosen(), onToggle: on => { loginItem.choose(on); refreshApplicationMenu(); } } : null,
     }),
   );
 }
 
-function persistEnvironments(next) {
-  environmentsStore.write(next);
-  environmentsState = next;
-  refreshApplicationMenu();
-  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(workspaceWindowTitle(environmentsState, desktopRemoteAccess));
-  try { railChanged(); } catch {}
+async function menuAction(action) {
+  try { await action(); } catch (error) {
+    await dialog.showMessageBox({ type: "error", message: "Could not update the server connection", detail: error.message });
+  }
 }
 
-async function workspaceMenuAction(action) {
-  try { await action(); } catch (error) {
-    await dialog.showMessageBox({ type: "error", message: "Could not update servers", detail: error.message });
+function showMessage(options) {
+  const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+  return parent ? dialog.showMessageBox(parent, options) : dialog.showMessageBox(options);
+}
+
+/** Where the bots live, saved, and told to the window's page. */
+function savePlace(next) {
+  placeFile.write(next);
+  placeState = next;
+  refreshApplicationMenu();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setTitle(workspaceWindowTitle(placeState));
+    mainWindow.webContents.send("place:changed", placeView(placeState));
   }
 }
 
@@ -1016,273 +899,128 @@ function navigateMainWindow(url) {
   return mainWindow.loadURL(url).then(() => true, () => false);
 }
 
-function acquireDataDirLeaseFor(dir) {
-  return dir === desktopDataDir()
-    ? acquireDataDirLease(dir, { legacyDataDir: path.join(app.getPath("home"), ".opengrokbot") })
-    : acquireDataDirLease(dir);
-}
-
-/** Pause the supervisor first, or its recovery forks on the wrong data dir; resume() stays in the finally. */
-async function switchLocalEnvironmentTo(targetDir, targetId, quiet = false) {
-  if (!app.isPackaged) return { ok: false, error: "dev" };
-  // A second switch would be un-paused by the first's finally mid-handoff.
-  if (localSwitchInFlight) return { ok: false, error: "busy" };
-  const previousDir = runningDataDir ?? startupEnvironmentDir(environmentsState, desktopDataDir());
-  let startedProc = null;
-  let switchSucceeded = false;
-  const failedSwitch = () => {
-    if (!quiet) dialog.showErrorBox(
-      "Could not switch environments",
-      "Openpals could not switch to that environment. The app log has the details.",
-    );
-    return { ok: false, error: "switch-failed" };
-  };
-  localSwitchInFlight = true;
-  serverSupervisor.pause();
-  try {
-    const result = await switchLocalEnvironment({
-      targetDir,
-      targetId,
-      port: SERVER_PORT,
-      deps: {
-        stopChild: async () => {
-          // A child that will not die still writes to its folder: abort with the lease still held.
-          const proc = serverProc;
-          if (proc && !(await stopUtilityServer(proc))) throw new Error("the server child did not stop");
-        },
-        releaseLease: async () => {
-          desktopDataDirLease?.release();
-          desktopDataDirLease = null;
-        },
-        acquireLease: async (dir) => {
-          desktopDataDirLease = acquireDataDirLeaseFor(dir);
-          runningDataDir = dir;
-        },
-        createDir: async (dir) => {
-          await fs.promises.mkdir(dir, { recursive: true });
-        },
-        startChild: async (port) => {
-          const started = await startServerOn(port, targetDir);
-          if (!started.proc) return null;
-          startedProc = started.proc;
-          serverSupervisor.ready(started.proc);
-          return started.proc;
-        },
-        probeReady: async () => "ready",
-        rollback: async () => {
-          if (startedProc) await stopUtilityServer(startedProc);
-          try {
-            desktopDataDirLease?.release();
-          } catch (error) {
-            slog(`switch rollback lease release failed: ${error?.message ?? error}`);
-          }
-          desktopDataDirLease = null;
-          desktopDataDirLease = acquireDataDirLeaseFor(previousDir);
-          runningDataDir = previousDir;
-          const restored = await startServerOn(SERVER_PORT, previousDir);
-          // startServerOn only watches; without ready() the rolled-back child has no owner.
-          if (restored.proc) serverSupervisor.ready(restored.proc);
-          else {
-            const error = new Error(`could not restart the server on ${previousDir}`);
-            slog(`switch rollback ${error.message}`);
-            throw error;
-          }
-        },
-        persistActive: (id) => persistEnvironments(withActive(environmentsState, id)),
-        log: slog,
-      },
-    });
-    if (!result.ok) {
-      slog(`environment switch to ${targetDir} failed (${result.error})`);
-      return failedSwitch();
-    }
-    switchSucceeded = true;
-    navigateMainWindow(rendererOrigin());
-    return { ok: true };
-  } catch (error) {
-    slog(`environment switch to ${targetDir} failed (${error?.message ?? error})`);
-    return failedSwitch();
-  } finally {
-    localSwitchInFlight = false;
-    serverSupervisor.resume();
-    if (!switchSucceeded && (!serverProc || !serverSupervisor.isCurrent(serverProc))) {
-      slog(`environment switch to ${targetDir} left no server child; restarting the active environment`);
-      try {
-        const revived = await startServerOn(SERVER_PORT);
-        if (revived.proc) serverSupervisor.ready(revived.proc);
-        else slog(`could not restart the server after the failed environment switch`);
-      } catch (error) {
-        slog(`restart after failed environment switch threw (${error?.message ?? error})`);
-      }
-    }
-  }
-}
-
-async function switchEnvironment(id) {
-  if (id === environmentsState.activeId || (id !== LOCAL_ID && !environmentsState.environments.some((entry) => entry.id === id))) return;
-  const entry = environmentsState.environments.find((candidate) => candidate.id === id);
-  if (entry?.kind === "local") return await switchLocalEnvironmentTo(entry.dataDir, entry.id);
-  if (id === LOCAL_ID && (runningDataDir ?? desktopDataDir()) !== desktopDataDir()) {
-    return await switchLocalEnvironmentTo(desktopDataDir(), LOCAL_ID);
-  }
-  if (entry && handSaved(entry) && !(await serverOpens(entry, { fetch: (...args) => session.defaultSession.fetch(...args), dialog, forget: (gone) => forgetEnvironment(gone, false, true) }))) return;
-  persistEnvironments(withActive(environmentsState, id)); navigateMainWindow(activeOrigin());
-}
-
-function createLocalEnvironment(name, dataDir) {
-  if (!app.isPackaged) return { ok: false, error: "dev", state: environmentsState };
-  const state = environmentsState;
-  let candidateDir;
-  if (dataDir === undefined || dataDir === null || dataDir === "") {
-    const slug = typeof name === "string"
-      ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
-      : "";
-    if (typeof name !== "string" || !name.trim()) return { ok: false, error: "name", state };
-    candidateDir = path.join(os.homedir(), `.openmausbot-${slug && slug !== "clean" ? slug : randomUUID().slice(0, 8)}`);
-  } else {
-    candidateDir = typeof dataDir === "string" ? dataDir.trim() : "";
-    if (
-      !candidateDir
-      || candidateDir.split("/").some((segment) => segment === "." || segment === "..")
-      || candidateDir !== path.normalize(candidateDir)
-    ) {
-      return { ok: false, error: "path", state };
-    }
-  }
-  const result = withLocalEnvironment(state, { name, dataDir: candidateDir }, randomUUID, desktopDataDir());
-  if (!result.ok) return { ok: false, error: result.error, state };
-  persistEnvironments(result.state);
-  return { ok: true, state: environmentsState };
-}
-
-function openWorkspaceSettings(computerId) {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  const id = typeof computerId === "string" ? computerId : null;
-  if (senderIsLocal({ sender: mainWindow.webContents })) {
-    mainWindow.webContents.send("workspaces:open-settings", id);
-  } else {
-    persistEnvironments(withActive(environmentsState, LOCAL_ID));
-    navigateMainWindow(`${rendererOrigin()}/?desktop-settings=workspaces${id ? `&share-computer=${encodeURIComponent(id)}` : ""}`);
-  }
-}
-
-async function addServerFromClipboard() {
-  try {
-    return await connectHostedWorkspace(clipboard.readText());
-  } catch (error) {
-    await dialog.showMessageBox({ type: "info", message: "Could not connect to the server", detail: `${error.message}\nYou can also choose Connect to a server to enter an address in Settings.` });
-    return false;
-  }
-}
-
-async function connectHostedWorkspace(input, name) {
+/** Security: a page asks to connect, but the person confirms the destination here, in a native dialog. */
+async function connectServer(input) {
   const link = parseHostedWorkspaceLink(input);
   if (!link) {
-    throw new Error("Enter an HTTPS server address or a full pairing link. Keep the pairing code after #, not in the URL query.");
+    return { ok: false, error: "Enter an HTTPS server address or a full pairing link. Keep the pairing code after #, not in the URL query." };
   }
-  const host = new URL(link.origin).host;
-  const { response } = await dialog.showMessageBox({
+  const { response } = await showMessage({
     type: "question",
     buttons: ["Connect", "Cancel"],
     defaultId: 0,
     cancelId: 1,
-    message: `Connect to ${host}?`,
+    message: `Connect to ${new URL(link.origin).host}?`,
     detail: link.code
       ? "The pairing code in the link is used once, then this app stays signed in to that server."
       : "The link has no pairing code; the server will ask for one.",
   });
-  if (response !== 0) return false;
-  let next = withEnvironment(environmentsState, { origin: link.origin, name }, () => randomUUID());
-  const added = next.environments.find((e) => e.origin === link.origin);
-  next = withActive(next, added.id);
-  persistEnvironments(next);
-  navigateMainWindow(link.url);
-  return true;
+  if (response !== 0) return { ok: false, error: "cancelled" };
+  const previous = activeServer(placeState);
+  try {
+    savePlace(withServer(placeState, { origin: link.origin }));
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+  void navigateMainWindow(link.url);
+  if (previous && previous.origin !== link.origin) void forgetServer(previous);
+  return { ok: true };
 }
 
-// Per-server microphone consent; "Don't Allow" holds until quit or forget, so a page cannot keep re-asking.
+async function connectFromClipboard() {
+  const result = await connectServer(clipboard.readText());
+  if (!result.ok && result.error !== "cancelled") {
+    await dialog.showMessageBox({ type: "info", message: "Could not connect to the server", detail: result.error });
+  }
+}
+
+async function disconnectServer() {
+  const server = activeServer(placeState);
+  if (!server) return;
+  savePlace(LOCAL_PLACE);
+  void navigateMainWindow(rendererOrigin());
+  await forgetServer(server);
+}
+
+async function disconnectFromMenu() {
+  const server = activeServer(placeState);
+  if (!server) return;
+  const { response } = await showMessage({
+    type: "warning",
+    buttons: ["Disconnect", "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+    message: `Disconnect from “${server.name}”?`,
+    detail: "This app signs out of that server and shows this computer's bots. The server keeps its own session list; revoke it there too if the device is gone.",
+  });
+  if (response === 0) await disconnectServer();
+}
+
+/** Signs this app out of a server it no longer shows. Chromium keeps cookies per host, not per port: a host this app
+ * still shows keeps its cookies. */
+async function forgetServer(server) {
+  remoteMicrophoneRefused.delete(server.origin);
+  try {
+    const response = await session.defaultSession.fetch(`${server.origin}/api/auth/logout`, { method: "POST", credentials: "include", headers: { origin: server.origin }, signal: AbortSignal.timeout(5_000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  } catch (error) {
+    slog(`forget server: logout skipped (${error?.message ?? error})`);
+  }
+  const host = new URL(server.origin).hostname;
+  const hostInUse = [rendererOrigin(), activeServer(placeState)?.origin].some((origin) => origin && new URL(origin).hostname === host);
+  try {
+    await session.defaultSession.clearStorageData({
+      origin: server.origin,
+      storages: [...(hostInUse ? [] : ["cookies"]), "localstorage", "indexdb", "serviceworkers", "cachestorage"],
+    });
+  } catch (error) {
+    slog(`forget server: storage clear failed: ${error?.message ?? error}`);
+  }
+}
+
+let unreachableAsked = false;
+async function serverUnreachable(server, description) {
+  if (unreachableAsked) return;
+  unreachableAsked = true;
+  try {
+    const { response } = await showMessage({
+      type: "warning",
+      buttons: ["Try again", "Disconnect"],
+      defaultId: 0,
+      cancelId: 0,
+      message: `${server.name} isn't answering`,
+      detail: `${description}. Try again once it is back, or disconnect to use this computer's bots instead.`,
+    });
+    if (activeServer(placeState)?.origin !== server.origin) return;
+    if (response === 1) await disconnectServer();
+    else void navigateMainWindow(server.origin);
+  } finally {
+    unreachableAsked = false;
+  }
+}
+
+// Per-server microphone consent; "Don't Allow" holds until quit or disconnect, so a page cannot keep re-asking.
 const remoteMicrophoneAsks = new Map();
 const remoteMicrophoneRefused = new Set();
 function askRemoteMicrophone(origin) {
-  const env = activeEnvironment(environmentsState);
-  if (!env || env.origin !== origin || env.microphone === true || remoteMicrophoneRefused.has(origin)) return null;
+  const server = activeServer(placeState);
+  if (!server || server.origin !== origin || server.microphone === true || remoteMicrophoneRefused.has(origin)) return null;
   if (!remoteMicrophoneAsks.has(origin)) {
     const ask = (async () => {
-      const options = {
+      const { response } = await showMessage({
         type: "question",
         buttons: ["Allow", "Don’t Allow"],
         defaultId: 1,
         cancelId: 1,
-        message: `Allow “${env.name}” to use the microphone?`,
-        detail: `${new URL(origin).host} wants to hear you for a Live call. Allow only a server you trust; this app remembers your answer for this server until you forget it.`,
-      };
-      const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
-      const { response } = parent ? await dialog.showMessageBox(parent, options) : await dialog.showMessageBox(options);
+        message: `Allow “${server.name}” to use the microphone?`,
+        detail: `${new URL(origin).host} wants to hear you for a Live call. Allow only a server you trust; this app remembers your answer for this server until you disconnect from it.`,
+      });
       if (response !== 0) return void remoteMicrophoneRefused.add(origin);
-      if (environmentsState.environments.some((e) => e.id === env.id && e.origin === origin)) persistEnvironments(withMicrophone(environmentsState, env.id));
+      if (activeServer(placeState)?.origin === origin) savePlace(withMicrophone(placeState));
     })().finally(() => remoteMicrophoneAsks.delete(origin));
     remoteMicrophoneAsks.set(origin, ask);
   }
   return remoteMicrophoneAsks.get(origin);
-}
-
-async function forgetEnvironment(id, purge = false, confirmed = false) {
-  const env = environmentsState.environments.find((e) => e.id === id);
-  if (!env) return;
-  if (env.kind === "local" && environmentsState.activeId === id) return { ok: false, error: "active" };
-  if (env.kind !== "local" && !confirmed) {
-    const { response } = await dialog.showMessageBox({
-      type: "warning",
-      buttons: ["Forget", "Cancel"],
-      defaultId: 1,
-      cancelId: 1,
-      message: `Forget “${env.name}”?`,
-      detail: "This app signs out of that server. The server keeps its own session list; revoke it there too if the device is gone.",
-    });
-    if (response !== 0) return;
-  }
-  sharingController().forget(env);
-  remoteMicrophoneRefused.delete(env.origin);
-  const wasActive = environmentsState.activeId === id;
-  if (purge === true && env.kind === "local") {
-    // Never rm -rf "This computer"'s dir; the entry stays until the delete has actually happened.
-    if (localSwitchInFlight) return { ok: false, error: "busy" };
-    const resolved = path.resolve(env.dataDir);
-    const root = path.resolve(desktopDataDir());
-    // realpath, so a symlink named like a data dir cannot fool the guard.
-    const canonical = (dir) => { try { return fs.realpathSync(dir); } catch { return dir; } };
-    const resolvedCanon = canonical(resolved);
-    const rootCanon = canonical(root);
-    if (runningDataDir && canonical(runningDataDir) === resolvedCanon) return { ok: false, error: "active" };
-    if (path.basename(resolved).startsWith(".openmausbot") && resolvedCanon !== rootCanon && !resolvedCanon.startsWith(rootCanon + path.sep)) {
-      try {
-        await fs.promises.rm(resolved, { recursive: true, force: true });
-      } catch (error) {
-        slog(`forget environment: purge failed (${error?.message ?? error})`);
-        return { ok: false, error: "purge" };
-      }
-    } else {
-      slog(`forget environment: purge skipped for ${env.dataDir}`);
-    }
-  }
-  persistEnvironments(withoutEnvironment(environmentsState, id));
-  if (wasActive) navigateMainWindow(activeOrigin());
-  if (!env.origin) return { ok: true };
-  try {
-    // Revoke the session on the server while the cookie is still here.
-    const response = await session.defaultSession.fetch(`${env.origin}/api/auth/logout`, { method: "POST", credentials: "include", headers: { origin: env.origin }, signal: AbortSignal.timeout(5_000) });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  } catch (error) {
-    slog(`forget server: logout skipped (${error?.message ?? error})`);
-    await dialog.showMessageBox({ type: "warning", message: "Connection forgotten; server sign-out could not be confirmed", detail: "Computer sharing is stopped. Revoke this desktop’s session on that server when it is reachable again." });
-  }
-  try {
-    // Not cookies: Chromium's cookie storage is host-wide, not port-scoped, so other saved servers would sign out.
-    await session.defaultSession.clearStorageData({ origin: env.origin, storages: ["localstorage", "indexdb", "serviceworkers", "cachestorage"] });
-  } catch (error) {
-    slog(`forget server: storage clear failed: ${error?.message ?? error}`);
-  }
-  return { ok: true };
 }
 
 function showContextMenu(win, params) {
@@ -1317,7 +1055,7 @@ function showContextMenu(win, params) {
   Menu.buildFromTemplate(menuItems).popup({ window: win, frame: params.frame });
 }
 
-function createWindow({ deferNavigation = false } = {}) {
+function createWindow() {
   const waitsForSkinSync = process.platform === "win32";
   const primary = screen.getPrimaryDisplay();
   const displays = [primary, ...screen.getAllDisplays().filter((display) => display.id !== primary.id)];
@@ -1334,10 +1072,10 @@ function createWindow({ deferNavigation = false } = {}) {
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, "preload.cjs"),
-      additionalArguments: [...desktopCompanionRendererArguments(rendererOrigin(), desktopRemoteAccess), `--omb-app-version=${app.getVersion()}`],
+      additionalArguments: [`--omb-local-origin=${rendererOrigin()}`, `--omb-app-version=${app.getVersion()}`],
     },
   });
-  mainWindow = win; hiddenStart = false; chromeRail.attach(win);
+  mainWindow = win;
   win.on("show", () => desktopTray?.windowShown(win));
   win.on("close", (event) => {
     if (process.platform === "win32" && !desktopShutdownStarted && desktopTray) {
@@ -1345,10 +1083,10 @@ function createWindow({ deferNavigation = false } = {}) {
       desktopTray.hide(win);
     }
   });
-  const title = () => workspaceWindowTitle(environmentsState, desktopRemoteAccess);
+  const title = () => workspaceWindowTitle(placeState);
   win.setTitle(title());
   win.webContents.on("page-title-updated", event => {
-    if (!desktopRemoteAccess && !activeEnvironment(environmentsState)) return;
+    if (!activeServer(placeState)) return;
     event.preventDefault();
     win.setTitle(title());
   });
@@ -1383,13 +1121,13 @@ function createWindow({ deferNavigation = false } = {}) {
     try {
       origin = new URL(url).origin;
     } catch {}
-    if (workspaceNavigationAllowed(url, environmentsState, rendererOrigin())) return;
+    if (workspaceNavigationAllowed(url, placeState, rendererOrigin())) return;
     event.preventDefault();
     slog(`blocked navigation to ${origin ?? "an invalid address"}`);
   };
   win.webContents.on("will-navigate", guardNavigation);
   win.webContents.on("will-redirect", guardNavigation);
-  // No page may embed the local server, or any saved server, in this preload-bearing window.
+  // No page may embed the local server, or the server, in this preload-bearing window.
   win.webContents.on("will-frame-navigate", (details) => {
     if (details.isMainFrame) return;
     if (!appFrameNavigationAllowed(details)) return void details.preventDefault();
@@ -1400,34 +1138,28 @@ function createWindow({ deferNavigation = false } = {}) {
       page = new URL(win.webContents.getURL()).origin;
     } catch {}
     if (!target || !page || target === page) return;
-    if (target === rendererOrigin() || allowedOrigins(environmentsState, rendererOrigin()).has(target)) {
+    if (guardedOrigins(placeState, rendererOrigin()).has(target)) {
       details.preventDefault();
       slog(`blocked subframe navigation to ${details.url}`);
     }
   });
   win.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     if (!isMainFrame || errorCode === -3) return; // -3: aborted by a newer navigation
-    const remote = activeRemote(environmentsState);
-    if (!remote) return;
+    const server = activeServer(placeState);
+    if (!server) return;
     let origin = null;
     try {
       origin = new URL(validatedURL).origin;
     } catch {}
-    if (origin !== remote.origin) return;
-    slog(`remote server unreachable (${errorDescription}); back to Local`);
-    void dialog.showMessageBox({
-      type: "warning",
-      message: `${remote.name} is not reachable`,
-      detail: `${errorDescription}. Showing the local server instead; choose it again from the Server menu when it is back.`,
-    });
-    void workspaceMenuAction(() => switchEnvironment(LOCAL_ID));
+    if (origin !== server.origin) return;
+    slog(`server unreachable (${errorDescription})`);
+    void serverUnreachable(server, errorDescription);
   });
   // Not did-finish-load: Electron still reports the main frame as loading then.
   win.webContents.on("did-stop-loading", () => {
     deliverPackageInstall(win);
     deliverChatLink(win);
   });
-  win.webContents.on("did-finish-load", () => void offerComputerSharing(win));
 
   // Electron has no default context menu.
   win.webContents.on("context-menu", (_event, params) => {
@@ -1540,13 +1272,10 @@ function createWindow({ deferNavigation = false } = {}) {
     });
   }
 
-  const remote = activeRemote(environmentsState);
-  if (!serverReady && (desktopRemoteAccess || (app.isPackaged && !remote))) serverUnavailableWindows.add(win);
-  if (deferNavigation) return win;
-  if (desktopRemoteAccess) {
-    win.loadURL(serverReady ? `http://127.0.0.1:${SERVER_PORT}` : buildErrorPage({ allPortsOccupied: serverStartConflictOnly, logDir: LOG_DIR }));
-  } else if (remote) {
-    void win.loadURL(remote.origin).catch(() => {});
+  const server = activeServer(placeState);
+  if (!serverReady && app.isPackaged && !server) serverUnavailableWindows.add(win);
+  if (server) {
+    void win.loadURL(server.origin).catch(() => {});
   } else if (app.isPackaged) {
     win.loadURL(serverReady ? `http://127.0.0.1:${SERVER_PORT}` : buildErrorPage({ allPortsOccupied: serverStartConflictOnly, logDir: LOG_DIR }));
   } else {
@@ -1629,20 +1358,17 @@ ipcMain.handle("desktop:save-file", localOnly("desktop:save-file", async (event,
 }));
 
 ipcMain.handle("desktop:reveal-file", localOnly("desktop:reveal-file", async (_event, rawPath) => {
-  if (desktopRemoteAccess) throw new Error("That file is on the computer this app is connected to");
   return revealInFolder(rawPath, { reveal: (target) => shell.showItemInFolder(target) });
 }));
 ipcMain.handle("desktop:open-logs", localOnly("desktop:open-logs", () => openLogsFolder(LOG_DIR, { open: (folder) => shell.openPath(folder) })));
 ipcMain.handle("desktop:skin", (event, skin) => {
   if (!isKnownSkin(skin)) return false;
-  if (chromeRail.owns(event)) return true;
   try {
     talk.skin(skin); const { color } = skinChrome(skin);
     const win = BrowserWindow.fromWebContents(event.sender) ?? mainWindow;
     if (win && !win.isDestroyed()) {
       try { win.setBackgroundColor(color); } catch {}
     }
-    if (mainWindow && event.sender === mainWindow.webContents) chromeRail.send("rail:skin", skin);
   } catch {}
   return true;
 });
@@ -1725,7 +1451,7 @@ ipcMain.handle("perm:open-settings", localOnly("perm:open-settings", (_event, pa
 
 ipcMain.handle("desktop:relaunch", localOnly("desktop:relaunch", (event) => {
   requireMainWindowSender(event);
-  relaunchAfterDesktopRemoteChange();
+  relaunchApp();
   return true;
 }));
 
@@ -1758,26 +1484,15 @@ ipcMain.handle("companion:revoke", localOnly("companion:revoke", (_event, device
   companionRevoke(deviceId).then(() => desktopCompanionState()),
 ));
 
-function publicDesktopRemoteState() {
-  return desktopRemoteAccess
-    ? {
-        active: true,
-        endpoint: desktopRemoteAccess.endpoint,
-        serverName: desktopRemoteAccess.serverName,
-        deviceId: desktopRemoteAccess.deviceId,
-      }
-    : { active: false };
-}
-
 function requireMainWindowSender(event) {
   const sender = BrowserWindow.fromWebContents(event.sender);
   if (!sender || sender !== mainWindow || sender.isDestroyed() ||
       !event.senderFrame || event.senderFrame !== event.sender.mainFrame) {
-    throw new Error("The desktop client window is unavailable");
+    throw new Error("The Openpals window is unavailable");
   }
 }
 
-function relaunchAfterDesktopRemoteChange() {
+function relaunchApp() {
   if (desktopShutdownStarted) return;
   desktopShutdownStarted = true;
   const timer = setTimeout(() => {
@@ -1788,98 +1503,16 @@ function relaunchAfterDesktopRemoteChange() {
   timer.unref?.();
 }
 
-ipcMain.handle("desktop-remote:state", () => publicDesktopRemoteState());
-ipcMain.handle("desktop-remote:pair", localOnly("desktop-remote:pair", async (event, endpoint, code) => {
-  requireMainWindowSender(event);
-  const access = await pairDesktopCompanion({
-    endpoint,
-    code,
-    deviceName: `${installationDisplayName()} desktop`,
-  });
-  await updateSecureCredentialDocument((credentials) => withDesktopCompanionAccess(credentials, access));
-  desktopRemoteAccess = access;
-  relaunchAfterDesktopRemoteChange();
-  return publicDesktopRemoteState();
-}));
-ipcMain.handle("desktop-remote:disconnect", localOnly("desktop-remote:disconnect", async (event) => {
-  requireMainWindowSender(event);
-  await updateSecureCredentialDocument(withoutDesktopCompanionAccess);
-  desktopRemoteAccess = null;
-  relaunchAfterDesktopRemoteChange();
-  return { active: false };
-}));
-
 const workspaceOnly = (handler) => (event, ...args) => {
-  if (!workspaceSenderAllowed(event, mainWindow?.webContents, environmentsState, rendererOrigin())) throw new Error("These controls are only available in the main desktop window");
+  if (!workspaceSenderAllowed(event, mainWindow?.webContents, placeState, rendererOrigin())) throw new Error("These controls are only available in the main desktop window");
   return handler(event, ...args);
 };
 const localWorkspaceOnly = (channel, handler) => localOnly(channel, workspaceOnly(handler));
-const savedWorkspace = id => {
-  const env = environmentsState.environments.find(entry => entry.id === id);
-  if (!env) throw new Error("This server is no longer connected");
-  return env;
-};
 const localServerRequest = (route, init = {}) => (serverProc && serverReady ? fetch(`http://127.0.0.1:${SERVER_PORT}${route}`, { ...init, redirect: "error", credentials: "omit", headers: { ...init.headers, [DESKTOP_MUTATION_HEADER]: desktopMutationToken } }) : Promise.reject(new Error("not running")));
-/** This computer's own page in the main window. */
-const ownPage = event => senderIsLocal(event) && workspaceSenderAllowed(event, mainWindow?.webContents, environmentsState, rendererOrigin());
-ownHome = installOwnHome({ ipcMain, page: ownPage, server: () => serverProc, window: () => (desktopRemoteAccess ? null : mainWindow), localOrigin: rendererOrigin,
-  localRequest: localServerRequest, fetch: (...args) => session.defaultSession.fetch(...args), environments: () => environmentsState.environments,
-  journal: jsonFile(path.join(app.getPath("userData"), "own-home.json")), choice: jsonFile(path.join(app.getPath("userData"), "own-home-choice.json")), sendState: jsonFile(path.join(app.getPath("userData"), "own-home-send.json")),
-  lend: (projects, place) => sharingController().lendProjects(projects, place),
-  phone: { paired: () => companionEnabledAtRest(), stop: () => stopDesktopCompanion({ remember: false }).then(() => {}), start: () => startDesktopCompanion({ remember: false }).then(() => {}) },
-  openHome: place => void workspaceMenuAction(() => switchEnvironment(place.id)), version: app.getVersion(), log: slog,
-  onChange: () => { computerSharing?.cloudChanged(); railChanged(); talk.homeChanged(); } });
-twoPlaces = installTwoPlacesMain({ ipcMain, guard: localWorkspaceOnly, localRequest: localServerRequest, fetch: (...args) => session.defaultSession.fetch(...args), environments: () => environmentsState.environments,
-  ownHome, dismissed: jsonFile(path.join(app.getPath("userData"), "two-places.json")), log: slog,
-  tell: () => { if (mainWindow && !mainWindow.isDestroyed() && senderIsLocal({ sender: mainWindow.webContents })) mainWindow.webContents.send("two-places:changed"); } });
 /** Every path that shows the window: the one there is, or a new one. */
 function showHome() {
   if (!mainWindow || mainWindow.isDestroyed()) createWindow();
 }
-const railList = () => { ownHome.refresh(); return railPlaces({ saved: environmentsState, home: ownHome.origin(), offers: entry => !desktopRemoteAccess && ownHome.offers(entry) }); };
-// The rail as the window's own chrome (chrome-rail.mjs): this app's page beside every place's page, the one that lists.
-const chromeRail = createChromeRail({ createView: options => new WebContentsView(options), preload: path.join(__dirname, "preload.cjs"), log: slog, prefs: () => desktopPrefs, changed: () => rail.changed(),
-  args: () => [...desktopCompanionRendererArguments(rendererOrigin(), desktopRemoteAccess), `--omb-app-version=${app.getVersion()}`],
-  url: () => `${rendererOrigin()}${CHROME_RAIL_PATH}`, wanted: () => !desktopRemoteAccess && serverReady && railList().length > 0 });
-chromeRail.install(ipcMain);
-function railChanged() { chromeRail.refresh(); rail.changed(); }
-const rail = installCloudRail({
-  guard: handler => (event, ...args) => (chromeRail.owns(event) ? handler(event, ...args) : workspaceOnly(handler)(event, ...args)), ipcMain,
-  lists: event => chromeRail.owns(event), beside: () => chromeRail.shown(),
-  targets: () => [mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null, { send: channel => chromeRail.send(channel), isDestroyed: () => false }],
-  places: railList, open: id => workspaceMenuAction(() => switchEnvironment(id)), makeHome: id => ownHome.start(id), forget: id => forgetEnvironment(id, false, true),
-  add: { choices: () => ({ link: !desktopRemoteAccess, address: !desktopRemoteAccess }),
-    run: (choice, link) => (choice === "link" ? (link ? connectHostedWorkspace(link) : addServerFromClipboard()) : openWorkspaceSettings()) } });
-// A place's colour (place-look.mjs), changed on the place's own page or from the window's rail.
-installPlaceLook({ ipcMain, guard: workspaceOnly, place: () => savedPlace(environmentsState), save: (id, color) => persistEnvironments(withPlaceColor(environmentsState, id, color)),
-  rail: { owns: event => chromeRail.owns(event), places: railList, saved: id => savedPlace(environmentsState, id) } });
-ipcMain.handle("sharing:state", localWorkspaceOnly("sharing:state", async (_event, id) => {
-  await requireSharedComputers();
-  return sharingController().state(savedWorkspace(id).id);
-}));
-const lendingDialogs = createLendingDialogs({ dialog, window: () => mainWindow, validate: validateSharedFolders, isHome: isHomeFolder });
-ipcMain.handle("sharing:folder", localWorkspaceOnly("sharing:folder", async () => {
-  await requireSharedComputers();
-  return lendingDialogs.chooseFolder("Choose a folder or drive to share");
-}));
-ipcMain.handle("sharing:revoke", localWorkspaceOnly("sharing:revoke", async (_event, id) => {
-  await requireSharedComputers();
-  return sharingController().revoke(savedWorkspace(id));
-}));
-// What that server's bots did here: the local log, never a server's claim.
-ipcMain.handle("sharing:activity", localWorkspaceOnly("sharing:activity", async (_event, id) => {
-  await requireSharedComputers();
-  return sharingController().activity(savedWorkspace(id).id, 50);
-}));
-ipcMain.handle("sharing:save", localWorkspaceOnly("sharing:save", async (_event, id, input) => {
-  await requireSharedComputers();
-  const env = savedWorkspace(id);
-  const info = await sharingController().identity(env);
-  const grant = { folders: await validateSharedFolders(input?.folders), terminal: input?.terminal === true, computer: input?.computer === true };
-  if (!(await lendingDialogs.confirmServerAccess(env, grant))) return null;
-  savedWorkspace(id);
-  return sharingController().save(env, grant, info);
-}));
 
 // window.confirm() has no parent window, so (tiling) window managers cannot center it over the app.
 ipcMain.handle("dialog:confirm", localWorkspaceOnly("dialog:confirm", async (_event, message) => {
@@ -1894,46 +1527,10 @@ ipcMain.handle("dialog:confirm", localWorkspaceOnly("dialog:confirm", async (_ev
   return response === 0;
 }));
 
-ipcMain.handle("environments:state", localWorkspaceOnly("environments:state", (event) => ({
-  localOrigin: rendererOrigin(),
-  remote: !senderIsLocal(event),
-  packaged: app.isPackaged,
-  activeId: environmentsState.activeId,
-  environments: environmentsState.environments,
-})));
-ipcMain.handle("environments:switch", localWorkspaceOnly("environments:switch", (_event, id) => switchEnvironment(typeof id === "string" ? id : LOCAL_ID)));
-ipcMain.handle("environments:create", localWorkspaceOnly("environments:create", (_event, name, dataDir) => createLocalEnvironment(
-  typeof name === "string" ? name : "",
-  typeof dataDir === "string" ? dataDir : undefined,
-)));
-ipcMain.handle("environments:pick-dir", localWorkspaceOnly("environments:pick-dir", async () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return { ok: false };
-  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, { properties: ["openDirectory", "createDirectory"] });
-  const chosen = canceled ? null : filePaths[0];
-  return chosen ? { ok: true, path: chosen } : { ok: false };
-}));
-ipcMain.handle("environments:add-from-link", localWorkspaceOnly("environments:add-from-link", (_event, link, name) => {
-  return connectHostedWorkspace(link, typeof name === "string" ? name : undefined);
-}));
-ipcMain.handle("environments:forget", localWorkspaceOnly("environments:forget", (_event, id, purge) => forgetEnvironment(typeof id === "string" ? id : "", purge === true)));
-
-// A server's page may open the native chooser, never choose a destination or edit the saved list.
-ipcMain.handle("workspaces:state", workspaceOnly(() => workspaceSummary(environmentsState)));
-let workspaceMenuOpen = false;
-ipcMain.handle("workspaces:menu", workspaceOnly(async () => {
-  if (workspaceMenuOpen) return;
-  workspaceMenuOpen = true;
-  try {
-    const menu = Menu.buildFromTemplate(workspaceMenuTemplate(environmentsState, {
-      onSwitch: (id) => void workspaceMenuAction(() => switchEnvironment(id)),
-      onConnect: () => void workspaceMenuAction(openWorkspaceSettings),
-      onForget: (id) => void workspaceMenuAction(() => forgetEnvironment(id)),
-    }));
-    await new Promise((resolve) => menu.popup({ window: mainWindow, callback: resolve }));
-  } finally {
-    workspaceMenuOpen = false;
-  }
-}));
+// The one place the window shows: read on any page of it, changed only from the person's click (preload) on that page.
+ipcMain.handle("place:current", workspaceOnly(() => placeView(placeState)));
+ipcMain.handle("place:connect", workspaceOnly((_event, link) => connectServer(link)));
+ipcMain.handle("place:disconnect", workspaceOnly(() => disconnectServer()));
 
 ipcMain.handle("desktop:capabilities", async (event) =>
   desktopCapabilities({
@@ -2001,7 +1598,6 @@ async function broadcastDesktopCapabilities() {
   const build = (remote) =>
     desktopCapabilities({ remote, platform: process.platform, env: process.env, packaged: app.isPackaged, localConnection, frame: windowFrameNow() });
   const local = build(false);
-  chromeRail.send("desktop:capabilities-changed", local);
   let redacted = null;
   for (const window of appWindows()) {
     if (window.isDestroyed()) continue;
@@ -2015,9 +1611,7 @@ async function broadcastDesktopCapabilities() {
 }
 
 setCuaStateListener((connection) => {
-  screenControl.changed(connection);
   cuaReady = Promise.resolve(connection);
-  void computerSharing?.screenChanged();
   void broadcastDesktopCapabilities().catch((error) => {
     console.error("[desktop] capability broadcast failed:", error);
   });
@@ -2041,8 +1635,7 @@ app.whenReady().then(async () => {
       slog(`system tray unavailable: ${error?.message ?? error}`);
     }
   }
-  hiddenStart = loginItem.startedHidden();
-  startupScreen = hiddenStart ? null : createStartupScreen({
+  startupScreen = createStartupScreen({
     BrowserWindow, iconPath: APP_ICON, isQuitting: () => desktopShutdownStarted,
     onQuit: () => app.quit(),
     onHide: desktopTray ? (win) => desktopTray.hide(win) : undefined,
@@ -2056,28 +1649,13 @@ app.whenReady().then(async () => {
     item.setSavePath(collisionFreeDownloadPath(app.getPath("downloads"), item.getFilename()));
     revealDownloadWhenDone(item, (filePath) => shell.showItemInFolder(filePath));
   });
-  // Registry before lease: the lease and the child's OMB_DATA_DIR both follow a named environment.
-  environmentsState = environmentsStore.read();
-  let bootDataDir = desktopDataDir();
-  if (app.isPackaged) {
-    const boot = bootEnvironmentDir(environmentsState, desktopDataDir());
-    if (boot.fellBack) {
-      slog(`boot environment ${boot.missingDir} is missing; falling back to the default data dir`);
-      persistEnvironments({ ...environmentsState, activeId: LOCAL_ID });
-      dialog.showErrorBox(
-        "The environment's folder is missing",
-        `${boot.missingDir} is not there anymore, so Openpals came up on this computer's default data folder instead. Restore or remount that folder, then choose the environment again from the Server menu.`,
-      );
-    }
-    bootDataDir = boot.dataDir;
-  }
+  placeState = placeFile.read();
   if (app.isPackaged) {
     try {
       // Acquire before either plaintext credential migration touches config.json.
-      desktopDataDirLease = acquireDataDirLease(bootDataDir, {
+      desktopDataDirLease = acquireDataDirLease(desktopDataDir(), {
         legacyDataDir: path.join(app.getPath("home"), ".opengrokbot"),
       });
-      runningDataDir = bootDataDir;
     } catch (error) {
       dialog.showErrorBox(
         "Openpals could not start safely",
@@ -2112,7 +1690,6 @@ app.whenReady().then(async () => {
   });
   secureCredentials = secureCredentialState.read();
   if (app.isPackaged) await ensurePhoneSecretIdentity();
-  desktopRemoteAccess = desktopCompanionAccess(secureCredentials);
   // Display capture needs a one-shot renderer intent from the same frame/origin, no audio, and a user gesture.
   if (process.platform === "darwin" || process.platform === "linux") {
     session.defaultSession.setDisplayMediaRequestHandler(
@@ -2168,91 +1745,35 @@ app.whenReady().then(async () => {
     frame: { made: () => windowFrameMade, restarts: process.platform === "win32", changed: () => void broadcastDesktopCapabilities() },
     languageChanged: (language, sender) => {
       for (const win of appWindows()) if (!win.isDestroyed() && win.webContents !== sender) win.webContents.send("desktop-language:changed", language);
-      chromeRail.send("desktop-language:changed", language);
     },
-    page: event => senderIsLocal(event) ? "local" : workspaceSenderAllowed(event, mainWindow?.webContents, environmentsState, rendererOrigin()) ? "server" : null });
-  talk.start({ globalShortcut, screen, prefs: desktopPrefs, remote: () => Boolean(desktopRemoteAccess), away: () => ownHome.away(), starting: () => !serverReady, localRequest: localServerRequest, dataDir: () => runningDataDir });
+    page: event => senderIsLocal(event) ? "local" : workspaceSenderAllowed(event, mainWindow?.webContents, placeState, rendererOrigin()) ? "server" : null });
+  talk.start({ globalShortcut, screen, prefs: desktopPrefs, starting: () => !serverReady, localRequest: localServerRequest, dataDir: desktopDataDir });
   // Before the window, so the harness has the CUA descriptor on first render.
   cuaReady =
-    !desktopRemoteAccess && (process.platform === "darwin" || process.platform === "linux" || process.platform === "win32")
+    process.platform === "darwin" || process.platform === "linux" || process.platform === "win32"
       ? startCua().catch((e) => {
           console.error("[cua] start failed:", e);
           return { mode: "unavailable", reason: String(e) };
         })
       : Promise.resolve({ mode: "unavailable", reason: "unsupported-platform" });
-  if (desktopRemoteAccess) {
-    try {
-      desktopCompanionRelay = await startDesktopCompanionRelay({
-        access: desktopRemoteAccess,
-        staticDir: app.isPackaged
-          ? path.join(process.resourcesPath, "ui")
-          : path.join(app.getAppPath(), "dist"),
-      });
-      SERVER_PORT = desktopCompanionRelay.port;
-      serverReady = true;
-    } catch (error) {
-      serverReady = false;
-      slog(`desktop companion relay failed: ${error?.message ?? error}`);
-    }
-  } else if (app.isPackaged) {
-    const booted = await startServerPackaged();
-    if (!booted && !desktopShutdownStarted && bootDataDir !== desktopDataDir()) {
-      slog(`boot environment ${bootDataDir} did not start; falling back to the default data dir`);
-      persistEnvironments({ ...environmentsState, activeId: LOCAL_ID });
-      try {
-        desktopDataDirLease?.release();
-      } catch (error) {
-        slog(`boot fallback lease release failed: ${error?.message ?? error}`);
-      }
-      desktopDataDirLease = null;
-      try {
-        desktopDataDirLease = acquireDataDirLease(desktopDataDir(), {
-          legacyDataDir: path.join(app.getPath("home"), ".opengrokbot"),
-        });
-        runningDataDir = desktopDataDir();
-      } catch (error) {
-        dialog.showErrorBox(
-          "Openpals could not start safely",
-          error?.message ?? "Another process is using this Openpals data folder.",
-        );
-        app.quit();
-        return;
-      }
-      const retried = await startServerPackaged();
-      if (retried) {
-        dialog.showErrorBox(
-          "The environment was unhealthy",
-          `Openpals could not start on ${bootDataDir} and came up on this computer's default data folder instead. Choose that environment again from the Server menu once it is available.`,
-        );
-      } else {
-        dialog.showErrorBox(
-          "Openpals could not start",
-          `Openpals could not start on ${bootDataDir} or on this computer's default data folder. Check that both folders are readable, then start the app again.`,
-        );
-        app.quit();
-      }
-    }
-  }
+  if (app.isPackaged) await startServerPackaged();
   if (desktopShutdownStarted) return;
-  void ownHome.kick();
-  if (!desktopRemoteAccess && serverReady && companionEnabledAtRest() && !ownHome.away()) {
+  if (serverReady && companionEnabledAtRest()) {
     // Retries stop once the person turns the phone off, starts it by hand or quits.
-    const wanted = () => !desktopShutdownStarted && companionEnabledAtRest() && !companionRunning() && !ownHome.away();
+    const wanted = () => !desktopShutdownStarted && companionEnabledAtRest() && !companionRunning();
     void autoStartCompanion({ start: () => startDesktopCompanion({ remember: false }), wanted, log: slog });
   }
   setLocalOrigin(rendererOrigin());
   appPermissions = appPermissionHandlers({
     rendererOrigin,
     mainContents: () => (mainWindow && !mainWindow.isDestroyed() ? mainWindow.webContents : null),
-    activeRemoteOrigin: () => activeEnvironment(environmentsState)?.origin ?? null,
-    activeRemoteMicrophone: () => activeEnvironment(environmentsState)?.microphone === true,
+    activeRemoteOrigin: () => activeServer(placeState)?.origin ?? null,
+    activeRemoteMicrophone: () => activeServer(placeState)?.microphone === true,
     askRemoteMicrophone,
   });
   session.defaultSession.setPermissionRequestHandler(appPermissions.request);
   session.defaultSession.setPermissionCheckHandler(appPermissions.check);
-  // Maintainer grants never start while computer sharing is off.
-  void refreshSharedComputersAllowed().then((allowed) => sharingController().start({ maintainer: allowed }));
-  if (!hiddenStart) showHome();
+  showHome();
   refreshApplicationMenu();
   openWindowForLink = showHome;
   app.on("activate", () => {
@@ -2263,7 +1784,7 @@ app.whenReady().then(async () => {
 
 const allWindowsClosedQuit = createAllWindowsClosedQuit({
   app,
-  allWindows: () => appWindows(), stayOpen: () => hiddenStart,
+  allWindows: () => appWindows(),
 });
 
 // The embedded CUA daemon's async cleanup cannot run after the host exits, so the first quit waits for it (capped).
@@ -2285,18 +1806,12 @@ app.on("before-quit", (e) => {
   talk.close();
   desktopShutdownStarted = true;
   startupScreen?.dispose();
-  ownHome.close(); twoPlaces.close();
-  computerSharing?.close();
-  lendingTray?.destroy();
   if (cuaCleanedUp) return;
   e.preventDefault();
   // Cancel a scheduled recovery before yielding.
   const stoppingServer = serverSupervisor.shutdown();
   syncCompanionKeepAwake(false, false);
   routineWake.stop();
-  try {
-    desktopCompanionRelay?.close?.();
-  } catch {}
   if (nativeActions.appleSpeech) stopSpeech();
   const ownedHelperCleanup = Promise.race([
     Promise.all([

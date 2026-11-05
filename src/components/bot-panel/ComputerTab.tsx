@@ -3,7 +3,7 @@ import { KeyRound, Monitor } from "lucide-react";
 
 import { writeComputerPanelView, type ComputerPanelView } from "@/lib/computer-panel-view";
 import { t } from "@/lib/i18n";
-import type { Place } from "@/lib/place";
+import type { Place } from "@/lib/work-place";
 import { placeHasIssue, worksOnSimpleLabel } from "@/lib/place-view";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { api, useStore, type Bot } from "@/state/store";

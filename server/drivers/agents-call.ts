@@ -6,7 +6,7 @@ import { CREDENTIAL_TARGETS, isCredentialTargetId } from "../../shared/credentia
 import { peerName } from "../peer-roster.ts";
 import { callCardTool, CARD_TOOL_NAMES } from "./agents-call-cards.ts";
 import { callTriggerTool, TRIGGER_TOOL_NAMES } from "./agents-call-triggers.ts";
-import { catalogProfileFromEnv, fullInputSchema, SHARED_COMPUTER_TOOL_NAMES } from "./agents-catalog.ts";
+import { catalogProfileFromEnv, fullInputSchema } from "./agents-catalog.ts";
 import { harnessClientFromEnv } from "./agents-client.ts";
 import type { HarnessClient, Json } from "./agents-client.ts";
 import { memorySearchText } from "./memory-search-text.ts";
@@ -24,15 +24,12 @@ export interface ToolCallContext {
   depth: number;
   /** A standing external runtime: its capability cannot reach the result cache, so big results are cut. */
   externalRuntime: boolean;
-  // Presentation only: the server still authenticates and scopes every call.
-  sharedComputers: boolean;
   client: HarnessClient;
 }
 
 export interface ToolCallResult {
   text: string;
   isError?: boolean;
-  passthrough?: Json;
 }
 
 export function toolCallContextFromEnv(env: NodeJS.ProcessEnv): ToolCallContext {
@@ -42,7 +39,6 @@ export function toolCallContextFromEnv(env: NodeJS.ProcessEnv): ToolCallContext 
     threadId: env.OMB_THREAD_ID ?? "",
     depth: Number(env.OMB_TURN_DEPTH ?? "0") || 0,
     externalRuntime: env.OMB_EXTERNAL_RUNTIME === "1",
-    sharedComputers: profile.sharedComputers,
     client: harnessClientFromEnv(env),
   };
 }
@@ -214,19 +210,6 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
   if (TRIGGER_TOOL_NAMES.has(name)) return callTriggerTool(name, args, context);
   if (WAIT_TOOL_NAMES.has(name)) return callWaitTool(name, args, context);
   if (name === USAGE_LIMITS_TOOL) return callUsageLimitsTool(context);
-  // Second lock: with sharing off the catalog already omits these tools.
-  if (SHARED_COMPUTER_TOOL_NAMES.has(name) && !context.sharedComputers) {
-    return { text: "Computer sharing is turned off in this workspace. There are no shared computers to use.", isError: true };
-  }
-  if (name === "list_shared_computers") {
-    return { text: JSON.stringify(await api("/api/internal/shared-computers")) };
-  }
-  if (name === "shared_computer") {
-    const response = await api("/api/internal/shared-computers", { method: "POST", body: JSON.stringify(args) });
-    const result = response.result as Json;
-    if (Array.isArray(result?.content)) return { text: "", passthrough: result };
-    return { text: JSON.stringify(result) };
-  }
   if (name === "tool_result_read") {
     if (typeof args.id !== "string" || !/^r-[0-9a-f-]{36}$/.test(args.id) ||
       (args.offset !== undefined && (!Number.isSafeInteger(args.offset) || Number(args.offset) < 0))) {

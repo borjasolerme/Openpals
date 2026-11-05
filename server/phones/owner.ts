@@ -1,12 +1,12 @@
-// Whose turn may use the desktop owner's phones: the owner test (server/cloud-lending.ts) with the desktop's owner. The owner is whoever works at this machine or holds an admin session;
+// Whose turn may use the desktop owner's phones: the owner test (server/owner-turn.ts) with the desktop's owner. The owner is whoever works at this machine or holds an admin session;
 // a bot's ask counts only as this turn's own request, and only while the work it carries came from the user; a routine's
 // run and its reports are the owner's only while the owner wrote it and nobody else has changed it since; a webhook's
 // payload and an outside event's run stay someone else's words.
-import type { CloudLendingTurn } from "../cloud-lending.ts";
+import type { OwnerTurn } from "../owner-turn.ts";
 import type { LoopbackTrust } from "../request-auth.ts";
 
-type Line = CloudLendingTurn["thread"][number];
-/** The lines as the store keeps them: what they say about where their words came from, beyond the lending test's fields. */
+type Line = OwnerTurn["thread"][number];
+/** The lines as the store keeps them: what they say about where their words came from, beyond the owner test's fields. */
 export type DesktopLine = Line & {
   kind?: string;
   webhookPost?: boolean;
@@ -15,7 +15,7 @@ export type DesktopLine = Line & {
   automation?: { routineId?: string };
   routineRun?: { routineId?: string };
 };
-export type DesktopTurn = Omit<CloudLendingTurn, "thread" | "ownerPerson"> & { thread: readonly DesktopLine[] };
+export type DesktopTurn = Omit<OwnerTurn, "thread" | "ownerPerson"> & { thread: readonly DesktopLine[] };
 
 export interface DesktopOwnerDeps {
   /** Person keys of the live admin sessions: the owner's own paired devices. */
@@ -54,7 +54,7 @@ export function adoptExistingRoutines<R extends { id: string }>(input: {
 const routineOf = (line: DesktopLine): string | undefined =>
   line.automation?.routineId ?? (line.kind === "routine.run" ? line.routineRun?.routineId : undefined);
 
-export function desktopLendingTurn(base: DesktopTurn, deps: DesktopOwnerDeps): CloudLendingTurn {
+export function desktopOwnerTurn(base: DesktopTurn, deps: DesktopOwnerDeps): OwnerTurn {
   let admins: ReadonlySet<string> | undefined;
   const ownerPerson = (person: string | undefined) => person === undefined || (admins ??= deps.adminPersons()).has(person);
   // A bot's ask names no person, so only the work's origin can vouch for it, and only for this turn's own request: an

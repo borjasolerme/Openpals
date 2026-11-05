@@ -63,8 +63,6 @@ export interface ProactiveDeps {
   dataDir: string;
   /** A hosted team workspace. */
   team: boolean;
-  /** This computer's bots moved to another server: nothing here is changed. */
-  frozen?: () => boolean;
   routines(): RoutineManager | null;
   mainThread: BriefDeps["mainThread"];
   threadBusy: BriefDeps["threadBusy"];
@@ -216,7 +214,7 @@ export function createProactive(deps: ProactiveDeps) {
   function ensureWatch(): Routine | null {
     const manager = deps.routines();
     const bot = owner();
-    if (deps.team || deps.frozen?.() || !manager || !bot) return null;
+    if (deps.team || !manager || !bot) return null;
     try {
       handOver(manager, bot);
     } catch (error) {

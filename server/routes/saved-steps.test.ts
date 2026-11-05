@@ -65,7 +65,6 @@ describe("DELETE /api/bots/:botId/saved-steps/:recipeId", () => {
 
   it("is an owner and admin action, never a client's", () => {
     expect(requiredScope("DELETE", "/api/bots/b1/saved-steps/r1")).toBe("admin");
-    expect(requiredScope("DELETE", "/api/bots/b1/saved-steps/r1", { sharedComputers: true })).toBe("admin");
   });
 
   it("passes other methods and paths", async () => {

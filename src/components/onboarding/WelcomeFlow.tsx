@@ -18,7 +18,7 @@ type Config = ReturnType<typeof useStore>["state"]["config"];
 async function nameFromComputer(config: Config, done: (config: NonNullable<Config>) => void): Promise<void> {
   const bridge = window.ogb;
   if (!config || config.onboarding?.completedAt || config.profile?.name?.trim()) return;
-  if (!localDesktopPage() || bridge?.remoteClient?.active) return;
+  if (!localDesktopPage()) return;
   const name = await bridge?.desktopProfile?.systemName().catch(() => null);
   if (!name) return;
   try {

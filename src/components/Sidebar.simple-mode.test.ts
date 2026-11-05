@@ -398,16 +398,6 @@ describe("bot-first sidebar", () => {
     render();
     editProfile().props.onClick!({} as MouseEvent);
     expect(fixture.dispatch.mock.calls).toEqual([[{ type: "select", id: bot.id }]]);
-
-    vi.stubGlobal("window", { innerWidth: 1024, innerHeight: 768, ogb: { remoteClient: { active: true } } });
-    fixture.dispatch.mockClear();
-    fixture.state.settingsOpen = false;
-    render();
-    editProfile().props.onClick!({} as MouseEvent);
-    expect(fixture.dispatch.mock.calls).toEqual([
-      [{ type: "select", id: bot.id }],
-      [{ type: "toggleSettings", open: true }],
-    ]);
   });
 
   it.each(densities)("lists the bot with no thread tree in Simple mode, only a row for each thread that waits on the person, keeping its dots, in %s density", (density) => {

@@ -7,8 +7,7 @@ import { useSpeakAction } from "@/components/SpeakButton";
 
 export type PinAction = { pinned: boolean; onToggle: () => void; hint?: string };
 
-export function roomPin(group: Group, message: Message, dispatch: ReturnType<typeof useStore>["dispatch"]): PinAction | undefined {
-  if (window.ogb?.remoteClient?.active) return undefined;
+export function roomPin(group: Group, message: Message, dispatch: ReturnType<typeof useStore>["dispatch"]): PinAction {
   const pinned = group.pinnedMessageId === message.id;
   return {
     pinned,
@@ -38,7 +37,6 @@ export function useBotMessageMenu({
   messageId,
   voiceId,
   tts,
-  localVoice,
   canSpeak,
   viewRaw,
   onToggleRaw,
@@ -50,14 +48,13 @@ export function useBotMessageMenu({
   messageId: string;
   voiceId?: string;
   tts: ConfigStatus["tts"];
-  localVoice: boolean;
   canSpeak: boolean;
   viewRaw: boolean;
   onToggleRaw: () => void;
   onRegenerate?: () => void;
   pin?: PinAction;
 }): MessageMenuItem[] {
-  const speak = useSpeakAction({ text, botId, messageId, voiceId, tts, localVoice });
+  const speak = useSpeakAction({ text, botId, messageId, voiceId, tts });
   const items: MessageMenuItem[] = [];
   if (canSpeak && text) {
     items.push({

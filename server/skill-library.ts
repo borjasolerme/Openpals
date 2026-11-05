@@ -136,7 +136,7 @@ export function renderSkillInstructions(
 
 export type LibraryReviewState = "approved" | "disabled";
 
-export interface SkillLibraryEntry {
+interface SkillLibraryEntry {
   name: string;
   description: string;
   source: string;

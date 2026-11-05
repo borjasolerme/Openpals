@@ -93,19 +93,19 @@ describe("Settings rail groups", () => {
     expect(SETTINGS_GROUPS.map((group) => group.id)).toEqual(["you", "ai", "computers", "account"]);
     const ids = SECTIONS.map((entry) => entry.id);
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toHaveLength(17); // 14 + the shared Skills library (AI group) + Logins (Devices) + Import (Account)
+    expect(ids).toHaveLength(16); // 13 + the shared Skills library (AI group) + Logins (Devices) + Import (Account)
     for (const entry of SECTIONS) expect(SETTINGS_GROUPS.map((group) => group.id)).toContain(entry.group);
   });
 
   it("shows every desktop page under its labelled group", () => {
-    vi.stubGlobal("window", { ogb: { environments: {} } });
+    vi.stubGlobal("window", { ogb: { place: {} } });
     const html = render();
     for (const label of ["You", "AI", "Devices", "Account"]) expect(html).toContain(`>${label}</div>`);
     expect(html).toContain("glass-surface");
     expect(rail(html)).toEqual({
       you: ["general", "appearance", "companion"],
       ai: ["engines", "connections", "decisionModel"],
-      computers: ["desktopWorkspaces", "computer", "logins"],
+      computers: ["computer", "logins"],
       account: ["usage", "backups", "import", "experimental"],
     });
     expect(html).toContain('<optgroup label="AI">');
@@ -115,16 +115,11 @@ describe("Settings rail groups", () => {
     fixture.ownerOrAdmin = true;
     const groups = rail(render());
     expect(groups.account).toEqual(["usage", "backups", "import", "people", "activity", "experimental"]);
-    expect(Object.values(groups).flat()).not.toContain("desktopWorkspaces");
   });
 
-  it("shows a paired remote client only Appearance, Remote access and Servers", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true }, environments: {} } });
-    expect(rail(render())).toEqual({ you: ["appearance", "companion"], computers: ["desktopWorkspaces"] });
-  });
 
   it("keeps the old deep links landing on the same page", () => {
-    vi.stubGlobal("window", { ogb: { environments: {} } });
+    vi.stubGlobal("window", { ogb: { place: {} } });
     fixture.section = "remote" as AppSettingsSection;
     expect(render()).toContain('data-settings-section="companion" aria-current="page"');
     fixture.section = "connections";

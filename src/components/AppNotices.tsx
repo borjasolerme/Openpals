@@ -2,37 +2,27 @@ import { useEffect, useState } from "react";
 import { api, useStore } from "@/state/store";
 import { brandStatus } from "@/lib/brand";
 import { cornerPopupWaits, firstChatQuiet, firstReplyPending } from "@/lib/corner-popup";
-import { dismissNotice, GROK_MOVE_NOTICE, launchNotice, markLaunchNotice, nextNotice, noticeSeen, SIMPLE_MODE_NOTICE, TWO_PLACES_NOTICE } from "@/lib/notices";
-import { useTwoPlaces } from "@/lib/two-places";
+import { dismissNotice, GROK_MOVE_NOTICE, launchNotice, markLaunchNotice, nextNotice, noticeSeen, SIMPLE_MODE_NOTICE } from "@/lib/notices";
 import { useSimpleModePromptSeen } from "@/lib/simple-mode-prompt";
 import { welcomeFinishedThisLaunch, type WelcomeViewer } from "@/lib/onboarding";
 import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
-import { useMoveQuiet } from "./move-notice";
 import { GrokMovePopup, type GrokMovePopupAction } from "./GrokMovePopup";
 import { GrokMoveDialog } from "./lazy-screens";
 import { useDesktopNotices, useOtherDialogOpen } from "./notice-dialogs";
-import { localDesktopPage } from "./onboarding/WelcomeGate";
 import { useMausBotWelcomeDue } from "./MausBotWelcome";
 import { SimpleModePrompt } from "./SimpleModePrompt";
-import { TwoPlacesCard } from "./TwoPlacesCard";
 
 /** A first run lands in its Chief's chat, whose first messages arrive one at a time; the Grok Bot popup follows them. */
 const FIRST_MESSAGES_MS = 6_000;
 
-export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { quiet?: boolean; viewer?: WelcomeViewer | null; now?: () => number }) {
+export function AppNotices({ quiet = false, viewer = null }: { quiet?: boolean; viewer?: WelcomeViewer | null }) {
   const { state, dispatch } = useStore();
-  const remote = window.ogb?.remoteClient?.active === true;
-  const local = localDesktopPage();
-  const desktop = remote ? undefined : window.ogb?.desktopNotices;
+  const desktop = window.ogb?.desktopNotices;
   const desktopState = useDesktopNotices(desktop);
   const [closed, setClosed] = useState(false);
   const [grokOpen, setGrokOpen] = useState(false);
   const [grokLanded, setGrokLanded] = useState(false);
-  const moving = useMoveQuiet(now);
   const mausBot = useMausBotWelcomeDue(viewer);
-  // Bots in two places: this computer's page only, where main knows what lives here.
-  const two = useTwoPlaces();
-  const twoFact = !local || two.suggest === null ? false : two.suggest === undefined ? null : true;
   const record = state.config?.onboarding;
   // Every page with the app's chrome, desktop or server, new install or not: once per browser, as the mode is.
   const simpleDue = !useSimpleModePromptSeen();
@@ -44,7 +34,7 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
   const mausBotFirst = mausBot.due;
   // The Grok Bot popup: once for everyone who can add a bot, the one thing a first chat may be interrupted by. Nothing reads
   // this computer for it: GrokMoveDialog does that, once opened.
-  const grokDue = !remote && viewer?.canSave !== false && brandStatus().source !== "file" && moving !== true
+  const grokDue = viewer?.canSave !== false && brandStatus().source !== "file"
     && launchDialogShown() !== "mausbot" && !noticeSeen(record, GROK_MOVE_NOTICE) && !desktopState?.seen.includes(GROK_MOVE_NOTICE);
   const grokBlocked = useOtherDialogOpen(grokDue) || Boolean(state.liveCall && state.liveCall.status !== "ended");
   const grokLanding = welcomeFinishedThisLaunch() && !grokLanded;
@@ -54,7 +44,7 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
     return () => clearTimeout(timer);
   }, [grokDue, grokLanding, waits]);
   const grokNow = !grokDue ? false
-    : !viewer || (desktop && !desktopState) || firstChat === null || mausBotFirst || moving === null || grokLanding || grokBlocked ? null : true;
+    : !viewer || (desktop && !desktopState) || firstChat === null || mausBotFirst || grokLanding || grokBlocked ? null : true;
   const launch = launchNotice();
   // After a closed popup nothing else follows in this launch.
   const notice = waits || closed ? null
@@ -63,7 +53,6 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
     [GROK_MOVE_NOTICE]: grokNow,
     // Never in the launch whose welcome just finished, nor over MausBot's first-launch card.
     [SIMPLE_MODE_NOTICE]: !simpleDue || afterWelcome === true ? false : afterWelcome === null || mausBotFirst || simpleBlocked ? null : true,
-    [TWO_PLACES_NOTICE]: twoFact,
   }, () => false, launch);
 
   useEffect(() => {
@@ -91,13 +80,5 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
     return <GrokMovePopup onDone={done} />;
   }
 
-  if (notice === SIMPLE_MODE_NOTICE) return <SimpleModePrompt onClose={close} />;
-
-  if (notice === TWO_PLACES_NOTICE && two.suggest) {
-    const { key } = two.suggest;
-    return <TwoPlacesCard key={key} suggest={two.suggest}
-      onBring={() => two.accept(key).then(close)}
-      onDismiss={() => { two.dismiss(key); close(); }} />;
-  }
-  return null;
+  return <SimpleModePrompt onClose={close} />;
 }

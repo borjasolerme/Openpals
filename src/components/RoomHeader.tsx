@@ -6,7 +6,7 @@ import { roomContextWarnings } from "@/lib/context-warning";
 import { effectiveDefaultResponder, jevRoomRoutingOn } from "@/lib/group-routing";
 import { t } from "@/lib/i18n";
 import { normalizeState } from "@/lib/mascot";
-import { effectivePlace, placeLabelKey } from "@/lib/place";
+import { effectivePlace, placeLabelKey } from "@/lib/work-place";
 import { openRoomPanel } from "@/lib/room-panel";
 import { chosenResponder, responderChoice, responderTitle } from "@/lib/room-responder";
 import { roomSpeakerIds } from "@/lib/room-threads";
@@ -127,7 +127,6 @@ export function RoomHeader({
   members,
   simple,
   setupPending,
-  remoteClient,
   findOpen,
   onToggleFind,
   onToggleFolder,
@@ -138,7 +137,6 @@ export function RoomHeader({
   members: Bot[];
   simple: boolean;
   setupPending: boolean;
-  remoteClient: boolean;
   findOpen: boolean;
   onToggleFind: () => void;
   onToggleFolder: () => void;
@@ -240,9 +238,9 @@ export function RoomHeader({
           {!setupPending && <ConversationTurnLimit group={group} />}
           <RoomHeaderCallButton group={group} members={members} />
           <GroupUsageChip usage={group.usage} />
-          {!remoteClient && !setupPending && !group.dm && <RoomWorkingFolderChip group={group} onToggle={onToggleFolder} />}
-          {!remoteClient && !setupPending && !group.dm && <DefaultResponderSelect group={group} members={members} />}
-          {group.dm || remoteClient ? (
+          {!setupPending && !group.dm && <RoomWorkingFolderChip group={group} onToggle={onToggleFolder} />}
+          {!setupPending && !group.dm && <DefaultResponderSelect group={group} members={members} />}
+          {group.dm ? (
             faces
           ) : (
             <button

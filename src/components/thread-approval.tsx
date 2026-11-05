@@ -16,11 +16,10 @@ export function useThreadApproval(bot: Bot | undefined): { choice: ApprovalChoic
   const { state, dispatch } = useStore();
   const { capabilities } = useDesktopCapabilities();
   const ownerOrAdmin = useOwnerOrAdmin();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const [warning, setWarning] = useState<{ botId: string; threadId: string } | null>(null);
   const [allowlist, setAllowlist] = useState<{ botId: string; botName: string; threadId: string } | null>(null);
   const engine = bot ? state.instances.find((instance) => instance.instanceId === bot.modelSelection.instanceId) : undefined;
-  const trusted = Boolean(!remoteClient && window.ogb?.approvals && capabilities.host.packaged);
+  const trusted = Boolean(window.ogb?.approvals && capabilities.host.packaged);
   const onSelect = (mode: ApprovalMode) => {
     if (!bot || mode === approvalModeFor(bot)) return;
     if (mode === "custom" && !trusted) return;
@@ -30,7 +29,7 @@ export function useThreadApproval(bot: Bot | undefined): { choice: ApprovalChoic
     }
     dispatch({ type: "updateTask", botId: bot.id, threadId: bot.threadId, patch: { approvalMode: mode } });
   };
-  const choice: ApprovalChoice | undefined = bot && engine && !remoteClient ? {
+  const choice: ApprovalChoice | undefined = bot && engine ? {
     approvalMode: bot.approvalMode,
     autoApprove: bot.autoApprove,
     providerName: engine.displayName,

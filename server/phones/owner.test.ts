@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { cloudHomeLendingRefusal, type CloudLendingTurn } from "../cloud-lending.ts";
-import { adoptExistingRoutines, desktopLendingTurn, desktopPhonesOffered, NOT_THE_OWNER, type DesktopTurn } from "./owner.ts";
+import { ownerTurnRefusal, type OwnerTurn } from "../owner-turn.ts";
+import { adoptExistingRoutines, desktopOwnerTurn, desktopPhonesOffered, NOT_THE_OWNER, type DesktopTurn } from "./owner.ts";
 
 const ADMIN = "p_admin", MEMBER = "p_member", ROUTINE = "routine-1", WEBHOOK = "webhook-1";
 const said = (id: string, extra: Record<string, unknown> = {}) => ({ id, role: "user", ...extra });
 const reply = (id: string, extra: Record<string, unknown> = {}) => ({ id, role: "bot", ...extra });
 const card = (answeredBy?: { kind: string; person?: string; name?: string }) =>
   reply("c1", { card: { requestId: "q1", answered: "answer", answeredText: "Yes", ...(answeredBy ? { answeredBy } : {}) } });
-/** What server/index.ts hands over: the lending test's own owner, which knows nobody here. */
+/** What server/index.ts hands over: the owner test's own owner, which knows nobody here. */
 const base = (overrides: Partial<DesktopTurn> = {}): DesktopTurn => ({
   request: { messageId: "m1", generations: new Set(["g1"]) }, generation: "g1", thread: [said("m1"), reply("r1")],
   cardAnswerer: (c) => (c.answeredBy?.kind === "session" ? c.answeredBy.person : undefined),
@@ -19,7 +19,7 @@ const deps = (overrides: { originIsUser?: boolean; written?: string[] } = {}) =>
   adminPersons: () => new Set([ADMIN]), originIsUser: () => overrides.originIsUser ?? true,
   ownerWrote: (id: string) => (overrides.written ?? [ROUTINE]).includes(id),
 });
-const owners = (turn: DesktopTurn, d = deps()) => cloudHomeLendingRefusal(desktopLendingTurn(turn, d)) === null;
+const owners = (turn: DesktopTurn, d = deps()) => ownerTurnRefusal(desktopOwnerTurn(turn, d)) === null;
 
 describe("whose turn may use the desktop owner's phones", () => {
   it("a line typed at this machine, with no person on it, is the owner's", () => {
@@ -39,7 +39,7 @@ describe("whose turn may use the desktop owner's phones", () => {
     expect(owners(base({ thread: [said("m0", { relayed: true }), reply("r0"), said("m1")] }))).toBe(false);
     // Whatever sender it carries: the relay vouches for nobody here.
     expect(owners(base({ thread: [said("m1", { relayed: true, sender: { id: ADMIN } })] }))).toBe(false);
-    expect(desktopLendingTurn(base({ thread: [said("m1", { relayed: true })] }), deps()).thread[0]).toMatchObject({ sender: { id: NOT_THE_OWNER } });
+    expect(desktopOwnerTurn(base({ thread: [said("m1", { relayed: true })] }), deps()).thread[0]).toMatchObject({ sender: { id: NOT_THE_OWNER } });
   });
 
   it("a bot's ask is the owner's only as this turn's request, and only while the work it carries came from the user", () => {
@@ -79,24 +79,24 @@ describe("whose turn may use the desktop owner's phones", () => {
 
   it("a routine's run is the owner's only when the owner wrote it, unchanged, and a schedule, a restart or the owner started it", () => {
     type Trigger = "schedule" | "manual" | "startup" | "webhook";
-    const runTurn = (triggerSource: Trigger, record: { ownerStarted: boolean; ownerAuthored: boolean }) => desktopLendingTurn(base({
+    const runTurn = (triggerSource: Trigger, record: { ownerStarted: boolean; ownerAuthored: boolean }) => desktopOwnerTurn(base({
       request: { messageId: "m1", generations: new Set(["g1"]), automation: triggerSource },
       routineRun: () => ({ triggerSource, ...record }),
     }), deps());
     for (const trigger of ["schedule", "startup"] as const) {
       expect(runTurn(trigger, { ownerStarted: false, ownerAuthored: true }).routineRun()).toEqual({ triggerSource: trigger, ownerStarted: true, ownerAuthored: true });
-      expect(cloudHomeLendingRefusal(runTurn(trigger, { ownerStarted: false, ownerAuthored: true }))).toBeNull();
+      expect(ownerTurnRefusal(runTurn(trigger, { ownerStarted: false, ownerAuthored: true }))).toBeNull();
       // Someone else wrote it, or changed it since: never the owner's, however it started.
-      expect(cloudHomeLendingRefusal(runTurn(trigger, { ownerStarted: true, ownerAuthored: false }))).toBe("not-owner");
+      expect(ownerTurnRefusal(runTurn(trigger, { ownerStarted: true, ownerAuthored: false }))).toBe("not-owner");
     }
     // By hand, only the owner's own start counts.
-    expect(cloudHomeLendingRefusal(runTurn("manual", { ownerStarted: true, ownerAuthored: true }))).toBeNull();
+    expect(ownerTurnRefusal(runTurn("manual", { ownerStarted: true, ownerAuthored: true }))).toBeNull();
     expect(runTurn("manual", { ownerStarted: false, ownerAuthored: true }).routineRun()).toEqual({ triggerSource: "manual", ownerStarted: false, ownerAuthored: true });
-    expect(cloudHomeLendingRefusal(runTurn("manual", { ownerStarted: false, ownerAuthored: true }))).toBe("not-owner");
-    expect(cloudHomeLendingRefusal(runTurn("manual", { ownerStarted: true, ownerAuthored: false }))).toBe("not-owner");
+    expect(ownerTurnRefusal(runTurn("manual", { ownerStarted: false, ownerAuthored: true }))).toBe("not-owner");
+    expect(ownerTurnRefusal(runTurn("manual", { ownerStarted: true, ownerAuthored: false }))).toBe("not-owner");
     expect(runTurn("webhook", { ownerStarted: true, ownerAuthored: true }).routineRun()).toMatchObject({ ownerStarted: false });
-    expect(cloudHomeLendingRefusal(runTurn("webhook", { ownerStarted: true, ownerAuthored: true }))).toBe("not-owner");
-    const none: CloudLendingTurn = desktopLendingTurn(base(), deps());
+    expect(ownerTurnRefusal(runTurn("webhook", { ownerStarted: true, ownerAuthored: true }))).toBe("not-owner");
+    const none: OwnerTurn = desktopOwnerTurn(base(), deps());
     expect(none.routineRun()).toBeNull();
   });
 });

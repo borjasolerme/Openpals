@@ -25,7 +25,7 @@ export const MODEL_TIMEOUT_MS = 60_000;
 /** A dream reads up to twenty chats at once, so it gets longer than a capture call. */
 export const DREAM_TIMEOUT_MS = 180_000;
 export const MAX_TOPIC_CHECKS = 4;
-export const TIDY_CHECK_MS = 10 * 60_000;
+const TIDY_CHECK_MS = 10 * 60_000;
 export const MIN_ENTRIES_FOR_CONTRADICTIONS = 5;
 const ARCHIVE_PATH = `memory/${ARCHIVE_TOPIC}`;
 export const MAX_PENDING_THREADS = 50;

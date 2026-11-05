@@ -12,8 +12,7 @@ function context(overrides: Partial<ToolCallContext> = {}): ToolCallContext {
     threadId: "thread-voice",
     depth: 0,
     externalRuntime: false,
-    sharedComputers: false,
-    client: {
+        client: {
       api: async () => ({}),
       apiResponse: async () => ({ ok: true, status: 200, body: {} }),
     },

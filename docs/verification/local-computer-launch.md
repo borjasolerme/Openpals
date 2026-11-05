@@ -78,18 +78,6 @@ custom `CUA_DRIVER_PATH` executables. An explicit override remains untouched;
 an incomplete installed package reports a missing-driver error rather than
 silently falling back to the console binary.
 
-`pnpm smoke:cua-win-lend`, which CI's Windows CUA job runs after that smoke,
-copies Electron under the installed app's name, so `app.isPackaged` is true,
-and places the staged files where `electron-builder.yml` puts them. In
-Electron's main process it runs `electron/cua.mjs`'s packaged start unchanged,
-then a server's first look at the PC through the lend path: the tool list, the
-screen's size and the list of apps, over the proxy a lent screen starts with
-the environment it gets. It sends no input. It prints computer control's mode,
-the reason Windows gave when it did not start, and whether apps and screen
-would be lent. On a pull request it first runs the base branch's `electron/`
-the same way, so one run shows what the change does; only this branch's result
-decides the job.
-
 How Windows Security treats the real installer is the job of the Windows
 Defender check (`.github/workflows/windows-defender-check.yml`), run by hand
 or by the `defender-check` label on a pull request. On a fresh GitHub Windows
@@ -105,21 +93,6 @@ worked; the `defender-check` artifact holds the rest. It is Windows Server,
 not Windows 10 or 11: SmartScreen's "Windows protected your PC" screen and
 Smart App Control still need a person's PC.
 
-### When a server of your own can't use this computer
-
-The icon's menu says what the person's own server can't use and why, with the
-one fix ("Screen control isn't running on this PC" and Start screen control).
-
-```sh
-node --test electron/screen-status.node-test.mjs electron/computer-asks.node-test.mjs
-```
-
-`node --experimental-strip-types scripts/verify-windows-lend.ts --shots <dir>`
-photographs the taskbar icon's menu as the real module builds it, the card in
-the real chat (`computer-ask-preview.html`) and the PC's own screen-control
-status, in a light and a dark look; `docs/verification/evidence/windows-lend/`
-holds the current set.
-
 ### Foreground typing and menu clicks
 
 The bundled Windows driver (0.28.2) sends a foreground `type_text` as one burst
@@ -129,15 +102,14 @@ driver older than 0.35.0, OpenMausBot types such text one character at a time
 and tells the bot that the click was sent:
 
 ```sh
-node --test electron/paced-typing.node-test.mjs electron/shared-computer-access.node-test.mjs
+node --test electron/paced-typing.node-test.mjs
 pnpm exec vitest run server/local-computer-proxy.test.ts server/mcp-bridge.test.ts \
-  server/local-computer-guidance.test.ts server/unconfirmed-click.test.ts \
-  server/lent-screen-guidance.test.ts
+  server/local-computer-guidance.test.ts server/unconfirmed-click.test.ts
 ```
 
 A fake driver scrambles a burst the way the report showed (" Zeile Drei"
-became " iiiiiiiiii"); the proxy test runs the real local proxy against it, and
-the shared-access test the lent-screen path. No Windows app is driven. A
+became " iiiiiiiiii"); the proxy test runs the real local proxy against it. No
+Windows app is driven. A
 driver of 0.35.0 or later types one character at a time itself, and these
 calls then reach it unchanged.
 

@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   phoneMenuItems,
-  placeMenuItems,
   planUsageSummary,
   profileInitials,
   profileMenuItems,
@@ -19,8 +18,6 @@ import { APP_REPOSITORY, DOCS_URL, FEEDBACK_URL, HELP_CENTER_URL } from "@/lib/a
 import { profileForSession } from "@/lib/session";
 import { connectPhoneEntry, type PhonePairingAccess, type PhonePairingTarget } from "@/lib/phone-pairing";
 import type { SidebarMenuItem } from "./SidebarPopoverMenu";
-import { moveMenuItems } from "./AccountMove";
-import { moveLine } from "@/lib/cloud-send";
 import { InitialsAvatar } from "./Avatar";
 
 describe("profileInitials", () => {
@@ -112,7 +109,6 @@ describe("profileMenuItems", () => {
   const noop = () => {};
   const build = (patch: Partial<Parameters<typeof profileMenuItems>[0]> = {}) => profileMenuItems({
     phone: [{ key: "connect-phone", label: "Connect your phone", onSelect: noop }],
-    usage: true,
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop,
     ...patch,
   });
@@ -124,9 +120,6 @@ describe("profileMenuItems", () => {
     expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).toEqual(["help", "feedback", "shortcuts", "about"]);
   });
 
-  it("only offers usage where this window has it", () => {
-    expect(build({ usage: false }).map((item) => item.key)).toEqual(["connect-phone", "support", "settings"]);
-  });
 
   it("opens the Usage page of Settings, and Send Feedback", () => {
     const onUsage = vi.fn(), onFeedback = vi.fn();
@@ -141,16 +134,9 @@ describe("profileMenuItems", () => {
 describe("Simple mode's account menu", () => {
   const noop = () => {};
   const tools = toolMenuItems({ activeView: "routines", automationsNeedYou: true, onAutomations: noop });
-  const place = (patch: Partial<Parameters<typeof placeMenuItems>[0]> = {}) => ({
-    current: { local: true, name: "This computer" },
-    openMenu: vi.fn(),
-    switchable: true,
-    ...patch,
-  });
   const build = (patch: Partial<Parameters<typeof profileMenuItems>[0]> = {}) => profileMenuItems({
     phone: [{ key: "connect-phone", label: "Connect your phone", onSelect: noop }],
-    usage: true,
-    simple: { tools, places: placeMenuItems(place()) },
+    simple: { tools },
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop,
     ...patch,
   });
@@ -160,11 +146,10 @@ describe("Simple mode's account menu", () => {
     return all;
   }, []);
 
-  it("leads with usage, the phone, support and Settings, then Automations, then where this window is", () => {
+  it("leads with usage, the phone, support and Settings, then Automations", () => {
     expect(groups(build())).toEqual([
       ["usage", "connect-phone", "support", "settings"],
       ["automations"],
-      ["place", "switch-place"],
     ]);
   });
 
@@ -195,25 +180,11 @@ describe("Simple mode's account menu", () => {
     expect(accountLabel("Ada", { automationsNeedYou: true })).toBe("Ada · Automations need you");
   });
 
-  it("raises the avatar's dot red for a failing move like automations, and none on its way", () => {
-    expect(accountDot({ automationsNeedYou: false, move: "failed" })).toBe("danger");
-    expect(accountDot({ automationsNeedYou: false, move: "sending" })).toBeNull();
-    expect(accountDot({ automationsNeedYou: false, move: null })).toBeNull();
-    expect(accountDot({ automationsNeedYou: true, move: null })).toBe("danger");
+  it("raises the avatar's dot red while automations need the person", () => {
+    expect(accountDot({ automationsNeedYou: false })).toBeNull();
+    expect(accountDot({ automationsNeedYou: true })).toBe("danger");
   });
 
-  it("puts the move's row first, in its own group, shaped like Settings", () => {
-    const shape = (item: SidebarMenuItem) => ({ lines: [item.subtitle, item.note].filter(Boolean).length, wrap: item.wrap === true, icon: Boolean(item.icon) });
-    const place = "Garage server";
-    const failing = moveMenuItems(moveLine({ phase: "copy", place, failing: { error: "Garage server did not answer." } }), { onOpen: noop, onRetry: noop });
-    const moving = moveMenuItems(moveLine({ phase: "copy", place, chats: { done: 3, total: 9 } }), { onOpen: noop, onRetry: noop });
-    for (const move of [failing, moving]) {
-      const items = build({ move });
-      expect(groups(items)[0]).toEqual(["cloud-move"]);
-      expect(shape(items[0]!)).toEqual(shape(items.find((item) => item.key === "settings")!));
-    }
-    expect(groups(build({ simple: undefined, move: moving }))).toEqual([["cloud-move"], ["usage", "connect-phone", "support", "settings"]]);
-  });
 
   it("draws a person instead of a question mark for someone with no name, at the trigger's own size", () => {
     const glyph = createElement("svg", { "data-glyph": "" });
@@ -227,17 +198,6 @@ describe("Simple mode's account menu", () => {
     expect(tools.map((item) => [item.key, item.active, item.attention])).toEqual([["automations", true, true]]);
   });
 
-  it("ticks the current place and switches through the same native menu as the server pill, and offers nothing it can't switch", () => {
-    const here = place();
-    const items = placeMenuItems(here);
-    expect(items.map((item) => [item.key, item.label])).toEqual([["place", "This computer"], ["switch-place", "Switch to…"]]);
-    expect(items[0]!.trailing).toBeTruthy();
-    items[0]!.onSelect();
-    items[1]!.onSelect();
-    expect(here.openMenu).toHaveBeenCalledTimes(2);
-    expect(placeMenuItems(here, { besideRail: true }).map((item) => item.key)).toEqual(["place"]);
-    expect(placeMenuItems(place({ switchable: false }))).toEqual([]);
-  });
 });
 
 describe("the usage meta", () => {

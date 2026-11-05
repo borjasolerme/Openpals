@@ -16,7 +16,7 @@ const kimi = (snapshot: InstanceInfo["snapshot"]): InstanceInfo => ({
   install: { command: { darwin: CURL, linux: CURL }, signInCommand: "kimi login", platform: "linux", server: { package: "@moonshot-ai/kimi-code" } },
 });
 const signedOut = kimi({ state: "available", authenticated: false, version: "2.4.1" });
-const desktop = { platform: "darwin", openInstallTerminal: vi.fn(async () => true), remoteClient: { active: false } };
+const desktop = { platform: "darwin", openInstallTerminal: vi.fn(async () => true) };
 
 let host: HTMLDivElement;
 let root: Root;

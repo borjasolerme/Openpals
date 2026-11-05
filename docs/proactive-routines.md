@@ -2,13 +2,13 @@
 
 MausBot keeps an eye on the person's day with one ordinary routine,
 "Keep an eye on my day". It is made once, with no button, on a personal install
-or Cloud that can reach connected apps, and it is built from four upgrades every
+or server that can reach connected apps, and it is built from four upgrades every
 routine can use, plus the helper models for the inbox.
 The bot that is proactive is the one `proactiveOwner` names
 (`server/host/proactive-owner.ts`): the place's MausBot, shown in the sidebar or
 not, and the main Chief only where there is no MausBot. There is no second bot and no separate watcher: the
 routine engine (`server/routines.ts`) runs it like any other routine, on the
-desktop, headless and on a Cloud.
+desktop, headless and on an always-on server.
 
 ## Who owns it
 
@@ -26,9 +26,9 @@ desktop, headless and on a Cloud.
   queued or working. `watch.json` records which bot each briefing routine was
   handed to, so it happens once: a routine the person later puts back on the
   Chief stays there. A restart between the steps finishes them at the next
-  start, and a computer frozen by a move to My Cloud hands nothing over.
-- **One on at a time.** When a briefing routine lands on MausBot, handed over
-  or arrived with it in a move, it is the one. Every other briefing routine is
+  start.
+- **One on at a time.** When a briefing routine lands on MausBot, it is the
+  one. Every other briefing routine is
   paused, never deleted, so the inbox is never read twice and a paused routine
   stays paused.
 - **Hidden from the sidebar.** MausBot keeps working: the brief is posted to its
@@ -97,7 +97,7 @@ there is no brief at all. Its row says
    says so in the brief, and still does what needs no AI.
 5. **Helper models sort the inbox** (`server/host/inbox-triage.ts`). With a
    decision model set up (Settings → Decision and extraction: the person's own
-   Cloudflare Workers AI or Jev key, or Cloud's included one), new mail is
+   Cloudflare Workers AI or Jev key), new mail is
    sorted with no AI turn, on every engine: Clairic reads each email (sender,
    the ask, any deadline or amount, whether it waits on a reply, what kind of
    mail it is) and Clef decides important, needs a reply, or skip, hearing the
@@ -123,7 +123,7 @@ there is no brief at all. Its row says
 - **Throttle.** At most 24 AI runs in any 24 hours; then items wait.
 - **Boot.** The first checks wait two minutes after start.
 - **Wake.** Only the checks' next on-time job (a reminder, a prep) keeps the
-  desktop awake or wakes a sleeping Cloud. Plain mail checks run whenever the
+  desktop awake. Plain mail checks run whenever the
   machine is awake anyway.
 - Every other routine keeps main's rules: one quick automatic retry, usage
   limits waited out, one notice per owner cause.
@@ -133,7 +133,7 @@ there is no brief at all. Its row says
 - `routine-checks.json`: per routine, cursors, judged ids, meetings prepped and
   reminded, and the items a run holds. Ids and times only.
 - `brief.json`: the brief's home chat and today's card, presence, the zone of
-  record (from the person's device, so a Cloud is not stuck on UTC), the
+  record (from the person's device, so a server is not stuck on UTC), the
   important rows by id, and recent dismissals with the sender's address. The
   senders and subjects it shows are read back from Gmail by id after a restart.
 - `watch.json`: that the default routine was made, so it is never made again,
@@ -145,15 +145,11 @@ there is no brief at all. Its row says
 - A hosted team workspace gets no watch and no brief. Presence is
   recorded for the owner only.
 - An install that can't reach connected apps gets no watch, and so no brief,
-  until it can. It checks once a minute, since a Cloud's access arrives after
+  until it can. It checks once a minute, since that access can arrive after
   start. A scripted test install without the fake connected-apps service
   behaves as before.
-- Routines carry `checks`, `access` and `deliver` through Cloud moves and team
-  backups. The watch moves to My Cloud with MausBot. A move carries MausBot
-  when it has a routine the person set up, paused or changed, even if nobody
-  has opened MausBot; the watch exactly as the server made it does not count.
-  On My Cloud the arrived watch pauses My Cloud's own. The move freeze pauses the watch like any routine, so two
-  homes never watch the same inbox. MausBot never moves into a team.
+- Routines carry `checks`, `access` and `deliver` through team backups.
+  MausBot never moves into a team.
 
 ## Not in v1
 

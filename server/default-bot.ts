@@ -107,26 +107,3 @@ export function ensureDefaultBot(store: DefaultBotStore, options: { dataDir: str
   remember(options.dataDir, bot.id);
   return bot;
 }
-
-/** A move brought this place's MausBot from another computer: it becomes the one MausBot here, and the one this place
- * had becomes an ordinary bot (retireUnusedStarter archives it when nobody used it). */
-export function takeArrivingDefaultBot(store: Pick<Store, "bots" | "patchBot">, id: string): void {
-  const arriving = store.bots.find((bot) => bot.id === id);
-  if (!arriving) return;
-  for (const bot of store.bots) {
-    if (bot.id !== id && bot.defaultBot) store.patchBot(bot.id, { defaultBot: undefined, sidebarHidden: undefined });
-  }
-  if (!arriving.defaultBot) store.patchBot(id, { defaultBot: {} });
-}
-
-/** After a bot arrives by a move: the MausBot this place made for itself (by id, from the ledger), once it is neither
- * the MausBot nor the Chief and nobody has used it, is archived, so the move leaves one MausBot and nothing of the
- * person's is lost. */
-export function retireUnusedStarter(store: Pick<Store, "bot" | "patchBot" | "messagesFor">, dataDir: string): void {
-  const own = ledger(dataDir)[""];
-  const seed = own ? store.bot(own) : null;
-  if (!seed || seed.defaultBot || seed.chiefOfStaff || seed.hidden) return;
-  if (seed.soul?.trim() || seed.title || seed.description || seed.avatarUrl || (seed.tasks?.length ?? 1) > 1) return;
-  if (store.messagesFor(seed.threadId).some((message) => message.role === "user")) return;
-  store.patchBot(seed.id, { hidden: true, pinned: undefined });
-}

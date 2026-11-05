@@ -51,8 +51,8 @@ Verify these transitions with computer use:
    becomes an actionable error, but retries continue: select **connected** to
    recover without clicking Retry again.
 11. Open the live desktop. The fixture holds its join until **Release desktop
-    join**; screenshot polling must pause throughout that wait. Repeat with
-    **Panel → Remote desktop**. The viewer is simulated, never a native window.
+    join**; screenshot polling must pause throughout that wait. The viewer is
+    simulated, never a native window.
 12. Select **unconfigured** while **Busy** is on. Its permanent HTTP409 must
     show **VPS is not configured** with Retry, not an endless connecting state.
 13. Focus the tab row with **Tab**: **Left**/**Right** and **Home**/**End**
@@ -62,8 +62,7 @@ Verify these transitions with computer use:
     control.
 14. Close the panel with **Enter** on its focused X, then open it again with
     **Enter** on **Open computer panel**: the Computer panel focuses its active
-    tab, the **Remote desktop** panel focuses its own X, and closing either
-    returns focus to that opener button. By hand, a pointer click on the opener
+    tab, and closing it returns focus to that opener button. By hand, a pointer click on the opener
     must leave focus out of the panel entirely; the chat header's own button
     covers that in the computer panel focus recipe.
 

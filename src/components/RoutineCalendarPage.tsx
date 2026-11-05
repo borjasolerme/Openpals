@@ -286,7 +286,6 @@ export function EventEditor({
   bots,
   lockedBotId,
   defaultRunOn,
-  routinesOnly = false,
   plain = false, onClose,
   onSavedCall,
 }: {
@@ -294,7 +293,7 @@ export function EventEditor({
   bots: Bot[];
   lockedBotId?: string;
   defaultRunOn?: RoutineRunOn;
-  routinesOnly?: boolean; plain?: boolean;
+  plain?: boolean;
   onClose: () => void;
   onSavedCall: (call: CalendarCall) => void;
 }) {
@@ -302,7 +301,7 @@ export function EventEditor({
   const existingRoutine = seed.routine;
   const { request: editorRequest } = useBotEditor();
   const existingCall = seed.call;
-  const [kind, setKind] = useState<EventKind>(routinesOnly ? "routine" : seed.kind);
+  const [kind, setKind] = useState<EventKind>(seed.kind);
   const [editorOpenedAt] = useState(() => Date.now());
   const [name, setName] = useState(existingRoutine?.name ?? existingCall?.name ?? seed.name ?? "");
   const [description, setDescription] = useState(existingRoutine?.prompt ?? existingCall?.description ?? seed.description ?? "");
@@ -468,7 +467,7 @@ export function EventEditor({
     setSaving(true);
     setError("");
     try {
-      if (kind === "routine" || routinesOnly) {
+      if (kind === "routine") {
         const savedAt = Date.now();
         const intervalAnchorAt = intervalAnchorForSave(savedAt, intervalMinutes, existingIntervalSchedule);
         if (recurrence === "interval" && intervalEndsAt != null && intervalEndsAt < nextIntervalForSave(savedAt, intervalMinutes, existingIntervalSchedule)) {
@@ -541,7 +540,7 @@ export function EventEditor({
     && !intervalEndInvalid
     && !cron?.error,
   );
-  const canSwitchKind = !routinesOnly && !existingRoutine && !existingCall && !lockedBotId;
+  const canSwitchKind = !existingRoutine && !existingCall && !lockedBotId;
   const advanced = useAdvancedMode() && !plain;
   const [moreOpen, setMoreOpen] = useState(() => !(["none", "daily", "weekdays", "weekly"] as RecurrenceChoice[]).includes(recurrence)
     || routineTarget === "room-goal"
@@ -1001,7 +1000,6 @@ export function EventEditor({
 export function QuickComposer({
   seed,
   bots,
-  routinesOnly = false,
   onClose,
   onMore,
   onSavedRoutine,
@@ -1009,14 +1007,13 @@ export function QuickComposer({
 }: {
   seed: EventSeed;
   bots: Bot[];
-  routinesOnly?: boolean;
   onClose: () => void;
   onMore: (seed: EventSeed) => void;
   onSavedRoutine: (routine: Routine) => void;
   onSavedCall: (call: CalendarCall) => void;
 }) {
   const { dispatch } = useStore();
-  const [kind, setKind] = useState<EventKind>(routinesOnly || seed.limitReset ? "routine" : seed.kind);
+  const [kind, setKind] = useState<EventKind>(seed.limitReset ? "routine" : seed.kind);
   const [name, setName] = useState(seed.name ?? "");
   const [description, setDescription] = useState(seed.description ?? "");
   const [botIds, setBotIds] = useState(seed.botIds.length ? seed.botIds : bots[0] ? [bots[0].id] : []);
@@ -1054,7 +1051,7 @@ export function QuickComposer({
     setWorking(true);
     setError("");
     try {
-      if (kind === "routine" || routinesOnly) {
+      if (kind === "routine") {
         const response = await api("/api/routines", {
           method: "POST",
           body: JSON.stringify({
@@ -1099,7 +1096,7 @@ export function QuickComposer({
       </div>
       <div className="space-y-3 p-4">
         <input autoFocus value={name} onChange={(event) => setName(event.target.value)} aria-label={t("routines.editor.titleLabel")} placeholder="Add title" onKeyDown={(event) => { if (event.key === "Enter" && valid) void save(); }} className="w-full border-b border-hairline/60 bg-transparent pb-2 text-[18px] font-medium text-ink outline-none placeholder:text-ink-tertiary focus:border-accent" />
-        {!routinesOnly && !seed.limitReset && (
+        {!seed.limitReset && (
           <div className="flex items-center gap-1 border-b border-hairline/35 pb-2">
             <button type="button" onClick={() => { setKind("routine"); setBotIds((ids) => ids.slice(0, 1)); }} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "routine" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>{t("routines.kind.routine")}</button>
             <button type="button" onClick={() => setKind("call")} className={cn("rounded-lg px-3 py-1.5 text-[12px] font-medium", kind === "call" ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised hover:text-ink")}>{t("routines.kind.call")}</button>

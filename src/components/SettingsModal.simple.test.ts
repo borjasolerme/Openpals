@@ -15,8 +15,6 @@ const fixture = vi.hoisted(() => ({
   dispatch: vi.fn(),
   switches: [] as ComponentProps<typeof Switch>[],
   ownerOrAdmin: null as boolean | null,
-  rail: null as { available: boolean; hidden: boolean } | null,
-  railHidden: [] as boolean[],
 }));
 
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: {} }) }));
@@ -30,7 +28,6 @@ vi.mock("@/lib/interface-mode", () => ({
   setAdvancedMode: vi.fn(),
 }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.ownerOrAdmin }));
-vi.mock("@/lib/chrome-rail", () => ({ useChromeRail: () => fixture.rail, setChromeRailHidden: (hidden: boolean) => fixture.railHidden.push(hidden) }));
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
   const original = await importOriginal<typeof import("./SettingsPrimitives")>();
   return {
@@ -52,7 +49,6 @@ vi.mock("./RemoteComputerSection", () => ({ RemoteComputerSection: marker("compa
 vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: () => null }));
 vi.mock("./CompanionSection", () => ({ CompanionSection: () => null }));
 vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: () => null }));
-vi.mock("./ConnectedWorkspacesSettings", () => ({ ConnectedWorkspacesSettings: marker("desktopWorkspaces") }));
 vi.mock("./LocalComputerSection", () => ({ LocalComputerSection: marker("computer") }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: marker("people") }));
 vi.mock("./ActivitySection", () => ({ ActivitySection: marker("activity") }));
@@ -61,7 +57,7 @@ vi.mock("./WorkspaceBackupSettings", () => ({ WorkspaceBackupSettings: marker("b
 vi.mock("./RoomTurnTimeoutSettings", () => ({ RoomTurnTimeoutSettings: () => null }));
 vi.mock("./ImportSettings", () => ({ ImportSettings: marker("import") }));
 
-const desktop = { ogb: { environments: {} } };
+const desktop = { ogb: { place: {} } };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -70,8 +66,6 @@ beforeEach(() => {
   fixture.config = { features: { browser: false }, browserEngine: { kind: "bundled", installable: true }, composio: { mode: "self" } };
   fixture.switches = [];
   fixture.ownerOrAdmin = null;
-  fixture.rail = null;
-  fixture.railHidden = [];
   fixture.api.mockResolvedValue({});
   vi.stubGlobal("window", desktop);
   vi.stubGlobal("document", { documentElement: { dataset: {} } });
@@ -129,33 +123,17 @@ describe("Settings in Simple mode", () => {
     expect(html).toMatch(/aria-expanded="false" aria-controls="[^"]+"[^>]*>Add<\/button>/);
   });
 
-  it("puts the sidebar's colour and picture right under Theme in General, the switch for the window's rail beside them, and only the skins behind More looks", () => {
-    fixture.rail = { available: true, hidden: false };
+  it("puts Theme first in General's Appearance, and only the skins behind More looks", () => {
     const html = render();
     const appearance = html.slice(html.indexOf('data-settings-block="appearance"'), html.indexOf(">Notifications<"));
-    const order = ['role="radiogroup" aria-label="Theme"', ">Sidebar picture<", 'aria-label="Show your computers"', 'aria-label="Color my messages with the bot&#x27;s color"', ">More looks<"]
+    const order = ['role="radiogroup" aria-label="Theme"', 'aria-label="Color my messages with the bot&#x27;s color"', ">More looks<"]
       .map((needle) => appearance.indexOf(needle));
     expect(order.every((at) => at > -1), String(order)).toBe(true);
     expect(order).toEqual([...order].sort((a, b) => a - b));
-    expect(appearance).toContain("A circle for each place your bots live, at the window&#x27;s left edge.");
-    const toggle = fixture.switches.find((props) => props["aria-label"] === "Show your computers")!;
-    expect(toggle.checked).toBe(true);
-    toggle.onClick!({} as never);
-    expect(fixture.railHidden).toEqual([true]);
     const looks = renderToStaticMarkup(createElement(SimpleLooksPage, { onBack: () => {} }));
     expect(looks).toContain('data-settings-block="looks"');
-    expect(looks).not.toContain("data-place-picture");
   });
 
-  it("shows the rail's switch only where this window has a rail to hide", () => {
-    for (const rail of [null, { available: false, hidden: true }]) {
-      fixture.rail = rail;
-      expect(render()).not.toContain("Show your computers");
-    }
-    fixture.rail = { available: true, hidden: true };
-    render();
-    expect(fixture.switches.find((props) => props["aria-label"] === "Show your computers")?.checked).toBe(false);
-  });
 
   it("keeps the everyday rows and leaves the fourteen builder controls to Advanced, where search still points", () => {
     const general = open("general");
@@ -179,13 +157,12 @@ describe("Settings in Simple mode", () => {
     expect(html).not.toContain("Check for updates");
   });
 
-  it("opens the fold that holds a linked setting: API keys, Servers or this app as a client", () => {
+  it("opens the fold that holds a linked setting: API keys or connecting to a server", () => {
     expect(placement(open("connections"), "MARKER:apiKey;")).toBe("shown");
     expect(placement(open("engines"), "MARKER:apiKey;")).toBe("folded");
-    expect(placement(open("desktopWorkspaces"), "MARKER:desktopWorkspaces;")).toBe("shown");
     expect(placement(open("remote"), "MARKER:companion;")).toBe("shown");
     expect(placement(open("companion"), "MARKER:companion;")).toBe("folded");
-    expect(SIMPLE_FOLDED).toEqual({ connections: "ai-keys", remote: "computer-elsewhere", desktopWorkspaces: "computer-elsewhere" });
+    expect(SIMPLE_FOLDED).toEqual({ connections: "ai-keys", remote: "computer-elsewhere" });
   });
 
   it("shows the AI page as Your AI, then API keys", () => {
@@ -202,7 +179,7 @@ describe("Settings in Simple mode", () => {
     fixture.section = "companion";
     const html = render();
     expect(currentPage(html)).toBe("computer");
-    expect(blocks(html)).toEqual(["computer", "companion", "browser", "logins", "elsewhere", "remote", "desktopWorkspaces"]);
+    expect(blocks(html)).toEqual(["computer", "companion", "browser", "logins", "elsewhere", "remote"]);
     expect(groupLabels(html)).toEqual(["Your bots’ computers", "Your devices", "Built-in browser"].map((label) => label.replace("’", "&#x27;")));
     expect(html).toContain('aria-label="Enable the built-in browser"');
   });
@@ -227,21 +204,6 @@ describe("Settings in Simple mode", () => {
     expect(groupLabels(html)).toContain("Activity");
   });
 
-  it("keeps a paired remote client's reduced set: General for appearance, and Computer with your devices and Connect from elsewhere", () => {
-    vi.stubGlobal("window", { ogb: { ...desktop.ogb, remoteClient: { active: true } } });
-    fixture.section = "desktopWorkspaces";
-    const html = render();
-    expect(pages(html)).toEqual(["general", "computer"]);
-    expect(currentPage(html)).toBe("computer");
-    expect(blocks(html)).toEqual(["companion", "elsewhere", "remote", "desktopWorkspaces"]);
-    expect(html).not.toContain('aria-label="Enable the built-in browser"');
-    fixture.section = "appearance";
-    const general = render();
-    expect(currentPage(general)).toBe("general");
-    expect(general).not.toContain("Add your name");
-    expect(general).toContain('aria-label="App language"');
-    expect(general).toContain('aria-label="Advanced mode"');
-  });
 
   it.each<[AppSettingsSection, string]>([
     ["general", "general"],
@@ -251,7 +213,6 @@ describe("Settings in Simple mode", () => {
     ["connections", "ai"],
     ["companion", "computer"],
     ["remote", "computer"],
-    ["desktopWorkspaces", "computer"],
     ["computer", "computer"],
     ["logins", "computer"],
     ["usage", "billing"],

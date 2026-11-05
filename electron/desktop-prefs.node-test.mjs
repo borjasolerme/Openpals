@@ -43,8 +43,8 @@ test("a write that fails leaves the last whole record on disk", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "desktop-prefs-"));
   try {
     const file = path.join(dir, "desktop-prefs.json");
-    createDesktopPrefs(jsonFile(file)).setRailHidden(true);
-    assert.deepEqual(JSON.parse(readFileSync(file, "utf8")), { seen: [], railHidden: true });
+    createDesktopPrefs(jsonFile(file)).setWindowFrame(false);
+    assert.deepEqual(JSON.parse(readFileSync(file, "utf8")), { seen: [], windowFrame: false });
     // As a full disk or a file-size limit does: the file is opened and emptied, then the write fails.
     const full = { ...fs, writeFileSync: target => { fs.writeFileSync(target, ""); throw Object.assign(new Error("file too large"), { code: "EFBIG" }); } };
     const launch = createDesktopPrefs({ ...jsonFile(file, full) });
@@ -53,7 +53,7 @@ test("a write that fails leaves the last whole record on disk", () => {
     assert.throws(() => jsonFile(file, full).write({ seen: [] }), /file too large/);
     assert.deepEqual(readdirSync(dir), ["desktop-prefs.json"], "no temporary file is left behind");
     const next = createDesktopPrefs(jsonFile(file));
-    assert.equal(next.railHidden(), true, "the last whole record survives");
+    assert.equal(next.windowFrame(), false, "the last whole record survives");
     assert.deepEqual(next.seen(), []);
     assert.deepEqual(createDesktopPrefs(jsonFile(path.join(dir, "missing.json"))).seen(), [], "no file yet");
     const notepad = path.join(dir, "config.json");
@@ -177,7 +177,7 @@ test("the preload gives every page of the window the app language this computer 
   assert.ok(safe.includes('"desktopLanguage"'));
 });
 
-test("production wiring: main answers this computer's page and the active saved server's own page, and no other", async () => {
+test("production wiring: main answers this computer's page and the server's own page, and no other", async () => {
   const main = readFileSync(new URL("./main.mjs", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   assert.match(main, /for \(const port of DESKTOP_PORTS\)/, "main tries the ports this module names, in order");
   assert.deepEqual([...DESKTOP_PORTS], [8799, 18799, 28799]);
@@ -186,23 +186,18 @@ test("production wiring: main answers this computer's page and the active saved 
   let options = null;
   const localFrame = { url: `${LOCAL}/` }, serverFrame = { url: `${VPS}/` };
   const contents = { mainFrame: serverFrame };
-  const calls = [];
   localOrigin.setLocalOrigin(LOCAL);
   const sent = [], window = name => ({ isDestroyed: () => name === "closed", webContents: { send: (...message) => sent.push([name, ...message]) } });
   const windows = [window("team"), window("home"), window("closed")];
-  let switched = async id => { calls.push(["switch", id]); }, loads = true, broadcasts = 0;
+  let broadcasts = 0;
   const context = vm.createContext({
     registerDesktopPrefs: value => { options = value; }, createDesktopPrefs: store => ({ store }), jsonFile: file => ({ read: () => file, write: () => {} }), ipcMain: {},
     path: { join: (...parts) => parts.join("/") }, app: { getPath: () => "/user-data" }, desktopDataDir: () => "/home/.openmausbot",
-    navigateMainWindow: async url => { calls.push(["navigate", url]); return loads; },
     senderIsLocal: localOrigin.isLocalSender, workspaceSenderAllowed: environments.workspaceSenderAllowed,
-    mainWindow: { webContents: contents }, environmentsState: { environments: [{ id: "vps", name: "VPS", origin: VPS }], activeId: "vps" },
-    appWindows: () => windows, BrowserWindow: { getAllWindows: () => windows }, chromeRail: { send: (...told) => sent.push(["rail", ...told]) },
+    mainWindow: { webContents: contents }, placeState: environments.withServer(environments.LOCAL_PLACE, { origin: VPS, name: "VPS" }),
+    appWindows: () => windows, BrowserWindow: { getAllWindows: () => windows },
     rendererOrigin: () => LOCAL,
-    serverReady: true, LOCAL_ID: "local", switchEnvironment: id => switched(id),
     process: { platform: "win32" }, windowFrameMade: false, broadcastDesktopCapabilities: async () => { broadcasts++; },
-    // main's own: a failed switch shows its dialog and resolves.
-    workspaceMenuAction: async action => { try { await action(); } catch { calls.push("dialog"); } },
   });
   vm.runInContext(main.slice(start, end), context);
   assert.equal(options.prefs.store.read(), "/user-data/desktop-prefs.json");
@@ -214,27 +209,14 @@ test("production wiring: main answers this computer's page and the active saved 
   assert.equal(options.page({ sender: contents, senderFrame: { url: `${VPS}/` } }), null, "a frame inside the server's page");
   assert.equal(options.page({ sender: {}, senderFrame: serverFrame }), null, "another window");
   const evil = { url: "https://evil.example.test/" };
-  assert.equal(options.page({ sender: { mainFrame: evil }, senderFrame: evil }), null, "a page that is not the active server");
+  assert.equal(options.page({ sender: { mainFrame: evil }, senderFrame: evil }), null, "a page that is not the server");
   assert.equal(options.cloudOffered, undefined);
   options.languageChanged("en", windows[0].webContents);
-  assert.deepEqual(sent, [["home", "desktop-language:changed", "en"], ["rail", "desktop-language:changed", "en"]], "every other open window hears the pick, and the window's rail");
+  assert.deepEqual(sent, [["home", "desktop-language:changed", "en"]], "every other open window hears the pick");
   const navigate = main.slice(main.indexOf("function navigateMainWindow(url) {"), main.indexOf("\n}\n", main.indexOf("function navigateMainWindow(url) {")) + 3);
   const load = vm.runInNewContext(`${navigate}; navigateMainWindow`, { mainWindow: { isDestroyed: () => false, loadURL: async url => { if (url.endsWith("fail")) throw new Error("ERR_CONNECTION_REFUSED"); } } });
   assert.equal(await load(`${LOCAL}/ok`), true); assert.equal(await load(`${LOCAL}/fail`), false, "a failed load answers false, never throws");
   assert.equal(await vm.runInNewContext(`${navigate}; navigateMainWindow`, { mainWindow: null })(`${LOCAL}/`), false, "no window");
-});
-
-test("the window's rail of places is shown until the person hides it, and the choice survives a restart", () => {
-  let saved = null, writes = 0;
-  const prefs = createDesktopPrefs({ read: () => saved, write: value => { saved = structuredClone(value); writes++; } });
-  assert.equal(prefs.railHidden(), false);
-  prefs.setRailHidden(false);
-  assert.equal(writes, 0, "showing a rail that shows writes nothing");
-  prefs.setRailHidden(true);
-  assert.equal(createDesktopPrefs({ read: () => saved, write: () => {} }).railHidden(), true);
-  prefs.setRailHidden("no");
-  assert.equal(createDesktopPrefs({ read: () => saved, write: () => {} }).railHidden(), false, "only true hides it");
-  assert.equal(createDesktopPrefs({ read: () => ({ railHidden: "yes" }), write: () => {} }).railHidden(), false);
 });
 
 test("the talk shortcut is on with ⌃⌥Space until changed, and the choice survives a restart", () => {

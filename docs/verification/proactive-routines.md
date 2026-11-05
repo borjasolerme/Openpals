@@ -69,15 +69,10 @@ Expected:
   followed finishes the handover with no second watch.
 - With a watch already on MausBot, the Chief's is kept and MausBot's own is
   paused; a paused watch stays paused and nothing else is left on. A queued run
-  holds the handover until it ends. A frozen computer hands nothing over.
+  holds the handover until it ends.
 - MausBot hidden from the sidebar gets the brief card, its notification, the
   first-open answer and the add-a-key card; today's earlier card stays in the
   Chief's chat.
-- A move to My Cloud leaves an untouched MausBot behind while its watch is
-  exactly as the server made it, and carries MausBot with the watch once the
-  person changed it, even when nobody opened MausBot. A send that carries no
-  routines is unchanged. On My Cloud the arrived watch is the only one on, and
-  My Cloud's own is paused.
 
 ## Unit tests
 

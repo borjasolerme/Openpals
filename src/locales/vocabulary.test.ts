@@ -62,7 +62,6 @@ const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = 
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
   { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
   { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },
-  { file: "electron/open-at-login.mjs", snippet: "X-OpenMausBot-Lending", why: "the marker that finds autostart entries already written" },
   { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },
   { file: "server/extractor/contract.ts", snippet: "OpenMausBot is checking", why: "the key-check contract the Cloud relay expects" },
   { file: "server/browser-engine-release.ts", snippet: "OpenMausBot", why: "upstream OpenMausBot's repository: its Windows browser engine release" },
@@ -158,10 +157,6 @@ describe("one name per thing", () => {
 
   it("copy that points at a control names it exactly as the control is labelled", () => {
     const e = en as Record<string, string>;
-    const source = (file: string) => readFileSync(join(ROOT, file), "utf8");
-    const thisComputer = /id: "workspace-local", label: "([^"]+)"/.exec(source("electron/environments.cjs"))?.[1];
-    const serverMenuLocal = /\{ label: "([^"]+)", type: "radio", checked: !active/.exec(source("electron/menu.mjs"))?.[1];
-    expect([thisComputer, serverMenuLocal]).toEqual([e["place.local"], e["place.local"]]);
     const pointers: Array<[string, string[]]> = [
       ["computer.routines.offWarning", [e["routines.runsOn.boat"]!]],
     ];

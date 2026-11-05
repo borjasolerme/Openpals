@@ -3,8 +3,6 @@ import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { Notification } from "../../shared/notification.ts";
-import { cloudSendSummary, type CloudSendSources } from "../cloud-send.ts";
-import { automatedBot, kindRecord, MOVE_BOT_FIELDS, moveItems, moveKindsRoute, type MoveKindsDeps } from "../cloud-send-kinds.ts";
 import { DATA_DIR, type AppConfig } from "../config.ts";
 import type { EmailHeader } from "../connected-reads.ts";
 import { ensureDefaultBot } from "../default-bot.ts";
@@ -21,15 +19,14 @@ import { CHECKS_FILE } from "./routine-checks.ts";
 // `start()` reads the store, the routines and the proactive files from disk, as the server does when it starts.
 const selection = () => ({ instanceId: "claude", model: "claude-sonnet-5" });
 const ada: EmailHeader = { id: "m1", threadId: "t1", at: 0, from: "Ada <ada@x.test>", subject: "Q3 numbers", preview: "Can you send them?" };
-const OWNER = { person: "p_owner0000000000000000", name: "Amit" };
 
-function start(options: { team?: boolean; frozen?: boolean } = {}) {
+function start(options: { team?: boolean } = {}) {
   const store = new Store(selection);
   const notified: Notification[] = [];
   const reads: string[] = [];
   let routines: RoutineManager | null = null;
   const proactive = createProactive({
-    store, cfg: {} as AppConfig, dataDir: DATA_DIR, team: options.team ?? false, frozen: () => options.frozen ?? false, routines: () => routines,
+    store, cfg: {} as AppConfig, dataDir: DATA_DIR, team: options.team ?? false, routines: () => routines,
     composio: {
       configured: () => true,
       connectedServices: async () => ({ gmail: { connected: true }, googlecalendar: { connected: true } }),
@@ -201,14 +198,6 @@ describe("MausBot keeps an eye on the day", () => {
     expect(idle.briefing().map((routine) => routine.botId)).toEqual([maus.id]);
   });
 
-  it("hands nothing over on a computer whose bots moved to another server", () => {
-    const { first, clive } = existingInstall();
-    ensureDefaultBot(first.store, { dataDir: DATA_DIR });
-    const frozen = start({ frozen: true });
-    expect(frozen.proactive.ensureWatch()).toBeNull();
-    expect(frozen.briefing().map((routine) => routine.botId)).toEqual([clive.id]);
-  });
-
   it("posts the brief, its notification, the presence answer and the add-a-key card to MausBot hidden from the sidebar", async () => {
     const { first, clive, watch } = existingInstall();
     await first.proactive.brief.report({ routine: watch, at: Date.now(), picked: [{ email: { ...ada, id: "m0" }, why: "Earlier today.", needsReply: false }] });
@@ -245,66 +234,5 @@ describe("MausBot keeps an eye on the day", () => {
     expect(first.routines.listRoutines().find((routine) => routine.id === restored.id)?.botId).toBe(chief.id);
     expect(await first.proactive.checks.check(restored, { manual: true })).toEqual({});
     expect(first.reads).toEqual([]);
-  });
-
-  it("moves to another server with MausBot, untouched as it looks, once the person changed the watch, and is the only watch on there", async () => {
-    // This computer: the watch was handed to a MausBot nobody has opened yet.
-    const { first, clive, watch } = existingInstall();
-    const maus = ensureDefaultBot(first.store, { dataDir: DATA_DIR })!;
-    const here = start();
-    here.proactive.ensureWatch();
-    const deps = (place: ReturnType<typeof start>): MoveKindsDeps => ({ dataDir: DATA_DIR, store: place.store, routines: () => place.routines, calls: () => null, webhooks: () => null,
-      claudeCodeSkills: () => [], instanceExists: () => true, owner: () => OWNER, ownRoutine: () => {} } as unknown as MoveKindsDeps);
-    const sources = (withRoutines: boolean): CloudSendSources => ({
-      appVersion: "0.0.0", bots: () => here.store.bots, skills: () => [], picture: () => null, logins: () => [], onePassword: () => null, settings: () => ({}),
-      greetingOnly: (threadId, name) => {
-        const rows = here.store.messagesFor(threadId);
-        return rows.length === 1 && rows[0]!.role === "bot" && Boolean(rows[0]!.text?.includes(name));
-      },
-      ...(withRoutines ? { automated: (botId: string) => automatedBot(deps(here), botId) } : {}),
-      move: { items: (bots, only) => moveItems(deps(here), bots, only), botParts: () => ({}) },
-    });
-    const carries = (key: string, options: { move: boolean }) => cloudSendSummary(sources(true), options).items.some((item) => item.key === key);
-    expect(carries(`bot:${maus.id}`, { move: true }), "the watch as the server made it is nobody's use").toBe(false);
-    here.routines.update(watch.id, { prompt: "Watch for Ada." });
-    expect(carries(`bot:${maus.id}`, { move: false }), "a send without the routines leaves it as it was").toBe(false);
-    const carried = cloudSendSummary(sources(true), { move: true }).items;
-    expect(carried.some((item) => item.key === `bot:${maus.id}`)).toBe(true);
-    expect(carried.find((item) => item.key === `routine:${watch.id}`)).toMatchObject({ bot: maus.id });
-    expect(cloudSendSummary(sources(false), { move: true }).items.some((item) => item.key === `routine:${watch.id}`), "without its routines it looked unused").toBe(false);
-    const pick = (bot: BotRecord) => Object.fromEntries(MOVE_BOT_FIELDS.map((name) => [name, (bot as unknown as Record<string, unknown>)[name] ?? null]));
-    const mausFields = pick(here.store.bot(maus.id)!), cliveFields = pick(here.store.bot(clive.id)!);
-    const routine = kindRecord(deps(here), "routine", watch.id)!;
-
-    // The other server: its own MausBot and its own watch, then this computer's bots, then its automations, as a move sends them.
-    closeMessageDb();
-    rmSync(DATA_DIR, { recursive: true, force: true });
-    const cloud = start();
-    cloud.store.seedIfEmpty();
-    const starter = ensureDefaultBot(cloud.store, { dataDir: DATA_DIR })!;
-    const own = cloud.proactive.ensureWatch()!;
-    expect(own.botId).toBe(starter.id);
-    const take = async (key: string, record: unknown, runs?: unknown) => {
-      let status = 0;
-      await moveKindsRoute(deps(cloud), { path: "/api/cloud-send/kind", method: "PUT", url: new URL("http://127.0.0.1/api/cloud-send/kind"), auth: {} as never, req: {} as never,
-        res: { setHeader() {} } as never, json: ((_res: unknown, code: number) => { status = code; }) as never,
-        readBody: (async () => ({ v: 1, key, dataDir: "/Users/amit/.openmausbot", record, ...(runs ? { runs } : {}) })) as never });
-      return status;
-    };
-    cloud.store.createBot({ name: "Clive" }, { id: clive.id, seedMessages: false });
-    cloud.store.createBot({ name: "MausBot" }, { id: maus.id, seedMessages: false });
-    expect(await take(`bot:${clive.id}`, cliveFields)).toBe(200);
-    expect(await take(`bot:${maus.id}`, mausFields)).toBe(200);
-    cloud.proactive.ensureWatch();
-    expect(proactiveOwner(cloud.store)?.id).toBe(maus.id);
-    expect(await take(`routine:${watch.id}`, routine.record, routine.runs)).toBe(200);
-    cloud.routines.update(watch.id, { enabled: true });
-    cloud.proactive.ensureWatch();
-    cloud.proactive.ensureWatch();
-
-    expect(cloud.on().map((one) => [one.id, one.botId, one.prompt])).toEqual([[watch.id, maus.id, "Watch for Ada."]]);
-    expect(cloud.briefing().find((one) => one.id === own.id)).toMatchObject({ botId: starter.id, enabled: false });
-    expect(cloud.briefing()).toHaveLength(2);
-    expect(json(BRIEF_FILE).home).toEqual({ botId: maus.id, threadId: cloud.store.bot(maus.id)!.threadId });
   });
 });

@@ -4,7 +4,7 @@ import { api } from "@/state/api";
 import type { Message } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { placeLabelKey, type Place } from "@/lib/place";
+import { placeLabelKey, type Place } from "@/lib/work-place";
 import { nameIsCommand } from "@/lib/verify-steps";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { toolStepLabel } from "@/lib/tool-step-label";

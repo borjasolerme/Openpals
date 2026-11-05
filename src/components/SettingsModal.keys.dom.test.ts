@@ -40,7 +40,6 @@ vi.mock("./RemoteComputerSection", () => ({ RemoteComputerSection: marker("compa
 vi.mock("./CustomDomainSettings", () => ({ CustomDomainSettings: () => null }));
 vi.mock("./CompanionSection", () => ({ CompanionSection: () => null }));
 vi.mock("./ServerPairingCard", () => ({ ServerPairingCard: () => null }));
-vi.mock("./ConnectedWorkspacesSettings", () => ({ ConnectedWorkspacesSettings: marker("desktopWorkspaces") }));
 vi.mock("./LocalComputerSection", () => ({ LocalComputerSection: marker("computer") }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: marker("people") }));
 vi.mock("./ActivitySection", () => ({ ActivitySection: marker("activity") }));

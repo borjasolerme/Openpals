@@ -11,6 +11,7 @@ import { createMcpConfig } from "../host/mcp-config.ts";
 import { addBotMcpServer, keepForBot } from "../mcp-bot-servers.ts";
 import { botListing, mcpOwner } from "../mcp-bot-rules.ts";
 import { McpOAuthManager } from "../mcp-oauth.ts";
+import { McpOAuthStore } from "../mcp-oauth-store.ts";
 import * as probeModule from "../mcp-probe.ts";
 import { listMcpServers, parseStoredMcpServer, type StoredMcpServer } from "../mcp-registry.ts";
 import { SecretVault } from "../secret-vault.ts";
@@ -45,6 +46,7 @@ function fixture(options: Options = {}) {
   const dataDir = mkdtempSync(join(tmpdir(), "omb-internal-mcp-"));
   const cfg: Pick<AppConfig, "mcpServers" | "postiz"> = { mcpServers: structuredClone(options.servers ?? {}) };
   const mcpOAuth = new McpOAuthManager({ file: join(dataDir, "mcp-oauth.json") });
+  const signIn = (name: string, url: string) => new McpOAuthStore(join(dataDir, "mcp-oauth.json")).put(name, { url, state: "signed-in", tokens: { access: "token" } });
   let busy = false;
   const config = createMcpConfig({
     cfg, sessions: { isLive: () => true }, mcpOAuth,
@@ -132,7 +134,7 @@ function fixture(options: Options = {}) {
   const later = (ms: number) => { clock += ms; };
   /** A fresh request service over the same chat, as after OpenMausBot restarts. */
   const restart = () => { cards = service(); };
-  return { cfg, config, mcpOAuth, deps, sender, call, post, stored, ref, listedOn, decided, lines, dataDir, setBusy, chat, card, respond, answers, decisions, later, signIns, restart };
+  return { cfg, config, mcpOAuth, signIn, deps, sender, call, post, stored, ref, listedOn, decided, lines, dataDir, setBusy, chat, card, respond, answers, decisions, later, signIns, restart };
 }
 
 async function createInternalMcpRoutesCall(deps: InternalMcpDeps, payload: Record<string, unknown>) {
@@ -211,7 +213,7 @@ describe("internal mcp_server route, Full access", () => {
   it("a new address drops the sign-in only when there was one to drop", async () => {
     probeWith({ ok: true, tools: [] });
     const signedIn = fixture({ servers: { linear } });
-    signedIn.mcpOAuth.adopt("linear", linear.url, { url: linear.url, state: "signed-in", tokens: { access: "token" } });
+    signedIn.signIn("linear", linear.url);
     const moved = await signedIn.post({ action: "update", name: "linear", url: "https://mcp.linear.app/v2" });
     expect(moved.body.dropped).toEqual(["sign-in"]);
     expect(signedIn.mcpOAuth.authState("linear", "https://mcp.linear.app/v2")).toBe("none");
@@ -237,8 +239,8 @@ describe("internal mcp_server route, Full access", () => {
   });
 
   it("sign_out applies when not Full access", async () => {
-    const { post, mcpOAuth } = fixture({ full: false, servers: { linear } });
-    mcpOAuth.adopt("linear", linear.url, { url: linear.url, state: "signed-in", tokens: { access: "token" } });
+    const { post, mcpOAuth, signIn } = fixture({ full: false, servers: { linear } });
+    signIn("linear", linear.url);
     const { status } = await post({ action: "sign_out", name: "linear" });
     expect(status).toBe(200);
     expect(mcpOAuth.authState("linear", linear.url)).toBe("none");
@@ -261,8 +263,8 @@ describe("internal mcp_server route, Full access", () => {
   });
 
   it("remove deletes the server and forgets its sign-in", async () => {
-    const { post, cfg, mcpOAuth } = fixture({ servers: { linear } });
-    mcpOAuth.adopt("linear", linear.url, { url: linear.url, state: "signed-in", tokens: { access: "token" } });
+    const { post, cfg, mcpOAuth, signIn } = fixture({ servers: { linear } });
+    signIn("linear", linear.url);
     const { status, body } = await post({ action: "remove", name: "linear" });
     expect(status).toBe(200);
     expect(cfg.mcpServers).toEqual({});
@@ -391,8 +393,8 @@ describe("internal mcp_server route, Full access", () => {
 
   it("an update that sends back the address list showed keeps the saved address, headers and sign-in; a new address drops them", async () => {
     probeWith({ ok: true, tools: [] });
-    const { call, post, stored, mcpOAuth } = fixture({ servers: { zap: zapier } });
-    mcpOAuth.adopt("zap", zapier.url, { url: zapier.url, state: "signed-in", tokens: { access: "token" } });
+    const { call, post, stored, mcpOAuth, signIn } = fixture({ servers: { zap: zapier } });
+    signIn("zap", zapier.url);
     const listed = await call("GET");
     const shown = (JSON.parse(listed.body.text!.slice(listed.body.text!.indexOf("\n") + 1)) as Array<{ url: string }>)[0]!.url;
 
@@ -673,11 +675,11 @@ describe("internal mcp_server route, below Full access", () => {
   });
 
   it("sign_in refuses what no card could sign in to, and passes on the card's own refusal", async () => {
-    const { post, signIns, mcpOAuth, lines } = fixture({ servers: { linear, notes, far: { ...linear, runsOn: MAC } } });
+    const { post, signIns, signIn, lines } = fixture({ servers: { linear, notes, far: { ...linear, runsOn: MAC } } });
     expect(await post({ action: "sign_in", name: "notes" })).toEqual({ status: 400, body: { error: "Only servers reached by URL can be signed in to." } });
     expect(await post({ action: "sign_in", name: "far" })).toEqual({ status: 409, body: { error: "This server runs on Ada's Mac, so it isn't started here." } });
     expect(await post({ action: "sign_in", name: "gone" })).toEqual({ status: 404, body: { error: "gone no longer exists. Call mcp_server with action list to see the servers." } });
-    mcpOAuth.adopt("linear", linear.url, { url: linear.url, state: "signed-in", tokens: { access: "token" } });
+    signIn("linear", linear.url);
     expect(await post({ action: "sign_in", name: "linear" })).toEqual({ status: 200, body: { text: "linear is already signed in. Call mcp_server with action test to check it." } });
     expect(signIns).toEqual([]);
     expect(lines).toEqual([]);

@@ -52,7 +52,6 @@ test("the box's words and timings are fixed", () => {
     serverDown: "Open Openpals to talk",
     starting: "Openpals is still starting. Try again in a moment.",
     noMausbot: "Set up Pal first, then try again.",
-    moved: "Pal lives on your server now — talk to it there",
     permission: "Talking needs Microphone + Speech Recognition access — System Settings → Privacy & Security.",
     dictationOff: "Turn on Dictation in System Settings → Keyboard, then try again.",
     unavailable: "Talking couldn't start. Try again.",
@@ -179,12 +178,11 @@ test("permission and setup problems say what to fix, in the composer's words: on
   }
 });
 
-test("a server that can't take asks says why and stops listening: down, still starting, no Pal, or moved to your server", async () => {
+test("a server that can't take asks says why and stops listening: down, still starting, or no Pal", async () => {
   const notices = [
     ["server-down", "Open Openpals to talk"],
     ["starting", TALK_TEXT.starting],
     ["no-mausbot", TALK_TEXT.noMausbot],
-    ["moved", "Pal lives on your server now — talk to it there"],
   ];
   for (const [code, text] of notices) {
     const h = harness({ prepare: async () => { throw new TalkServerError(code); } });
@@ -214,11 +212,6 @@ test("a server that goes away as the words are sent says Open Openpals to talk",
   gone.session.press(); say(gone, "hello"); release(gone); await flush();
   assert.deepEqual(gone.views.at(-1), { state: "error", text: TALK_TEXT.serverDown });
   mock.timers.tick(TALK_TIMING.noticeHideMs); assert.equal(gone.closed, 1);
-
-  const moved = harness({ ask: async () => { throw new TalkServerError("moved"); } });
-  moved.session.press(); say(moved, "hello"); release(moved); await flush();
-  assert.deepEqual(moved.views.at(-1), { state: "error", text: TALK_TEXT.moved });
-  mock.timers.tick(TALK_TIMING.noticeHideMs); assert.equal(moved.closed, 1);
 });
 
 test("a box that fails to close or to say where the pointer is still hides, and the next press works", async () => {

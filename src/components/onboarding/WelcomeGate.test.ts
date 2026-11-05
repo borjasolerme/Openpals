@@ -55,9 +55,9 @@ function storage() {
 }
 
 const fresh = { onboarding: EMPTY_ONBOARDING };
-const LOCAL_PAGE = { ogb: { platform: "darwin", remoteClient: { active: false }, workspaces: {} } };
+const LOCAL_PAGE = { ogb: { platform: "darwin", app: { version: "1.0.0", ownPage: true } } };
 // A hosted workspace the desktop app opened: preload exposes only its remote-safe subset, still truthy.
-const REMOTE_PAGE = { ogb: { platform: "darwin", workspaces: {}, getCapabilities: () => ({}) } };
+const REMOTE_PAGE = { ogb: { platform: "darwin", app: { version: "1.0.0", ownPage: false }, getCapabilities: () => ({}) } };
 beforeEach(() => {
   fixture.values = [];
   fixture.index = 0;
@@ -186,11 +186,8 @@ describe("who gets the welcome flow", () => {
     expect(admin.props.hosted).toBe(true);
   });
 
-  it("shows nothing to a remote client member or while a browser's session is unknown", () => {
+  it("shows nothing while a browser's session is unknown", () => {
     expect(gate(null).tree).toBeNull();
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    expect(gate({ hosted: true, canSave: false }).tree).toBeNull();
-    expect(gate(LOCAL_VIEWER).tree).toBeNull();
   });
 
   it("stays closed after the admin finished it", () => {
@@ -211,13 +208,6 @@ describe("who gets the welcome flow", () => {
     expect(localStorage.getItem(WELCOME_DRAFT_KEY)).toBeNull();
   });
 
-  it("steps aside while Settings is open on the servers it lets someone connect, and is back after", () => {
-    vi.stubGlobal("window", LOCAL_PAGE);
-    store.state = { ...store.state, appSettingsOpen: true, appSettingsSection: "desktopWorkspaces" };
-    expect(gate(LOCAL_VIEWER).tree).toBeNull();
-    store.state = { ...store.state, appSettingsOpen: false };
-    expect(gate(LOCAL_VIEWER).tree?.type).toBe(WelcomeFlow);
-  });
 });
 
 describe("useWelcomeViewer", () => {

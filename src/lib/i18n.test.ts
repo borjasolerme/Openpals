@@ -200,10 +200,10 @@ describe("loading a language", () => {
     });
     const page = await import("./i18n");
     expect(await page.loadLocale("fr")).toBe("en");
-    expect(page.t("rail.thisComputer")).toBe("This computer");
+    expect(page.t("common.cancel")).toBe("Cancel");
     offline = false;
     expect(await page.loadLocale("fr")).toBe("fr");
-    expect(page.t("rail.thisComputer")).toBe("Cet ordinateur");
+    expect(page.t("common.cancel")).toBe("Annuler");
   });
 });
 

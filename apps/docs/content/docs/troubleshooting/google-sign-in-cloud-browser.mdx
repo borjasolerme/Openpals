@@ -39,9 +39,9 @@ If you saved a login for the account, with its 2FA setup key, the bot can do thi
 
 For a Microsoft account, choose **Other ways to sign in** instead.
 
-### 3. Let the bot use the browser on your own PC
+### 3. Use your own Chrome (My Chrome)
 
-Your passkey works in the browser on your own computer. While the desktop app is open there and lends itself to your server, with apps and screen working (on a Mac, once it allows OpenMausBot Accessibility and Screen Recording), a bot can open Google in your own browser there and work in it. You approve the passkey at the computer when it asks. This route is slower than a connected app, and the computer must stay awake and unlocked while the bot works.
+Your passkey works in the Chrome on your own computer. When the desktop app runs your bots on this computer, a browser profile can use **My Chrome** instead of the built-in browser (**Settings → Browser profiles**): the bots then work inside your own running Chrome, signed in as you. It needs Chrome 144 or later with remote debugging turned on at `chrome://inspect/#remote-debugging`, and Chrome asks before it accepts the connection. You approve the passkey at the computer when it asks. A self-hosted server has no Chrome of yours, so there every profile uses the built-in browser.
 
 ## Still stuck
 

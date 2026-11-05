@@ -106,20 +106,10 @@ built-in browser panel—is still not proven by the harness. Use
 the relevant Electron/package smoke test and state that limitation. Add a map
 entry only after the shared control surface can really drive it.
 
-The [switchable local environments recipe](local-environments.md) verifies
-creating, switching between and recovering named local environments by hand on
-a packaged desktop install; the control surface cannot drive it, so it is not
-in the map above.
-
 The [talk shortcut recipe](talk-shortcut.md) checks hold-to-talk from any app, the
 reply box and the Quick asks chat by hand on a packaged side-by-side build; the
 control surface cannot drive a global shortcut or the microphone, so it is not
 in the map above.
-
-The [server of the person's own as home fixture](own-home.md) runs this
-computer's server and servers of the person's own with main's wiring for
-**Make <server> my home**: the move, routines that run once, this computer then
-lent to that server by itself, and none of it for a server shared with others.
 
 The [MCP sign-in fixture](mcp-sign-in.md) checks remote sign-in, callback URL
 paste-back, MCP tools and logout cancellation through the real settings panel
@@ -143,8 +133,9 @@ The [Connected Apps OAuth fixture](connected-apps-oauth.md) checks blocked-popup
 recovery, safe authorization links and abandoned-account retries through real
 renderer components and isolated HTTP routes.
 
-The [desktop server connection smoke](desktop-server-connection.md) mounts the
-real Settings connection component in disposable Electron windows.
+The [desktop server connection checks](desktop-server-connection.md) cover
+connecting the desktop app to one server with a pairing link and disconnecting
+to go back to this computer.
 
 The [loading screen and tray smoke](startup-tray.md) checks the startup close
 button, hidden handoff, tray restore, and Quit in a disposable Electron profile.

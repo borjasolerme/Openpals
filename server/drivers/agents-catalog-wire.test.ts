@@ -29,31 +29,28 @@ function profiles(): Record<string, Profile> {
   const all: Record<string, Profile> = {};
   for (const chief of [true, false]) {
     for (const skills of [false, true]) {
-      for (const shared of [false, true]) {
-        for (const voice of [false, true]) {
-          const name = [skills && "skills", shared && "shared", voice && "voice", !chief && "non-chief"]
-            .filter(Boolean).join("+") || "default";
-          all[name] = {
-            env: {
-              OMB_SKILL_AUTHORING_ENABLED: flag(skills),
-              OMB_SHARED_COMPUTERS_ENABLED: flag(shared),
-              OMB_VOICE_NOTES: flag(voice),
-              OMB_CHIEF_OF_STAFF: flag(chief),
-              OMB_COMPUTER_SELECTION: "1",
-            },
-          };
-        }
+      for (const voice of [false, true]) {
+        const name = [skills && "skills", voice && "voice", !chief && "non-chief"]
+          .filter(Boolean).join("+") || "default";
+        all[name] = {
+          env: {
+            OMB_SKILL_AUTHORING_ENABLED: flag(skills),
+            OMB_VOICE_NOTES: flag(voice),
+            OMB_CHIEF_OF_STAFF: flag(chief),
+            OMB_COMPUTER_SELECTION: "1",
+          },
+        };
       }
     }
   }
-  all["skills+shared+voice+escalations"] = { env: { ...all["skills+shared+voice"]!.env, OMB_ESCALATIONS: "1" } };
+  all["skills+voice+escalations"] = { env: { ...all["skills+voice"]!.env, OMB_ESCALATIONS: "1" } };
   // Research is on only with a treg key and the bot's switch; the fullest profile carries it.
-  all["skills+shared+voice+escalations+x"] = { env: { ...all["skills+shared+voice+escalations"]!.env, OMB_X_RESEARCH: "1", OMB_RESEARCH: "1" } };
+  all["skills+voice+escalations+x"] = { env: { ...all["skills+voice+escalations"]!.env, OMB_X_RESEARCH: "1", OMB_RESEARCH: "1" } };
   all["default+legacy-switches"] = {
     env: { ...all.default!.env, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1", OMB_ACTIVE_WAITS: "0" },
   };
   // The person's MausBot holds a Chief's powers and adds its notification pair; MAUSBOT_ADDS bounds what that costs.
-  for (const name of ["default", "skills+shared+voice"]) all[`${name}+mausbot`] = { env: { ...all[name]!.env, OMB_MAUSBOT: "1" } };
+  for (const name of ["default", "skills+voice"]) all[`${name}+mausbot`] = { env: { ...all[name]!.env, OMB_MAUSBOT: "1" } };
   // A chat that can never pick its computer: its Works on is Off, or it works on its team's computer. A room is one too.
   all["default+no-computer-pick"] = { env: { ...all.default!.env, OMB_COMPUTER_SELECTION: "0" } };
   for (const name of ["default", "non-chief"]) all[`${name}+room`] = { env: { ...all[name]!.env, OMB_COMPUTER_SELECTION: "0", OMB_ROOM: "1" } };
@@ -70,31 +67,23 @@ const MAUSBOT_TOOLS = ["list_unread_notifications", "mark_notifications_read"];
 const MAUSBOT_ADDS = 0.02;
 const RESEARCH_TOOLS = ["x_search", "research_search", "research_endpoint", "research_call"];
 /** The fullest profile, checked in whole; every other one is pinned by tool names, bytes and sha256. */
-const FULL = "skills+shared+voice+escalations+x";
+const FULL = "skills+voice+escalations+x";
 
 /** Bytes when the budget was last set; a profile may move at most 2% either way (lower it to lock in a win). */
 const BUDGET_BASELINE: Record<string, number> = {
   "default": 55291,
   "voice": 56072,
-  "shared": 57556,
-  "shared+voice": 58337,
   "skills": 58104,
   "skills+voice": 58885,
-  "skills+shared": 60369,
-  "skills+shared+voice": 61150,
   "non-chief": 46087,
   "voice+non-chief": 46868,
-  "shared+non-chief": 48352,
-  "shared+voice+non-chief": 49133,
   "skills+non-chief": 48900,
   "skills+voice+non-chief": 49681,
-  "skills+shared+non-chief": 51165,
-  "skills+shared+voice+non-chief": 51946,
   "default+legacy-switches": 55291,
   "default+mausbot": 55942,
-  "skills+shared+voice+mausbot": 61801,
-  "skills+shared+voice+escalations": 61980,
-  "skills+shared+voice+escalations+x": 65808,
+  "skills+voice+mausbot": 59373,
+  "skills+voice+escalations": 59552,
+  "skills+voice+escalations+x": 63380,
   "default+no-computer-pick": 54085,
   "default+room": 47167,
   "non-chief+room": 37963,
@@ -225,7 +214,7 @@ describe("agents proxy tools/list golden", () => {
 
   it("mounts raise_escalation only where chief escalations are on", () => {
     const names = (wire: string) => toolsOf(wire).map((tool) => tool.name);
-    expect(names(wires["skills+shared+voice+escalations"]!).filter((tool) => tool !== "raise_escalation")).toEqual(names(wires["skills+shared+voice"]!));
+    expect(names(wires["skills+voice+escalations"]!).filter((tool) => tool !== "raise_escalation")).toEqual(names(wires["skills+voice"]!));
     for (const [name, profile] of Object.entries(PROFILES)) {
       expect(names(wires[name]!).includes("raise_escalation"), name).toBe(profile.env.OMB_ESCALATIONS === "1");
     }
@@ -244,7 +233,7 @@ describe("agents proxy tools/list golden", () => {
   it("shows only a Chief of Staff the Chief-only tools, and for_bot_id on another bot's profile or model", () => {
     type SchemaTool = Tool & { description: string; inputSchema: { properties: Record<string, unknown> } };
     const nonChief = Object.keys(PROFILES).filter((name) => PROFILES[name]!.env.OMB_CHIEF_OF_STAFF === "0");
-    expect(nonChief).toHaveLength(9);
+    expect(nonChief).toHaveLength(5);
     for (const name of nonChief) {
       const chiefTools = toolsOf(wires[name.startsWith("non-chief") ? name.replace("non-chief", "default") : name.replace("+non-chief", "")]!) as SchemaTool[];
       const tools = new Map((toolsOf(wires[name]!) as SchemaTool[]).map((tool) => [tool.name, tool]));
@@ -346,7 +335,7 @@ describe("agents proxy tools/list from the packaged bundle", () => {
 
 describe("agents proxy tools/list wire size", () => {
   it("prints per-tool and total UTF-8 bytes", () => {
-    const shown = [FULL, "skills+shared+voice+non-chief"];
+    const shown = [FULL, "skills+voice+non-chief"];
     const perTool = new Map<string, Record<string, number>>();
     for (const name of shown) {
       for (const tool of toolsOf(wires[name]!)) {

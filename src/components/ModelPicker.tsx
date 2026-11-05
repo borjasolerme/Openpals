@@ -522,7 +522,6 @@ export function ModelPicker({
       {t("model.lookingLocal")}
     </div>
   );
-  const remote = window.ogb?.remoteClient?.active === true;
 
   const levels = active?.capabilities?.effortLevels ?? [];
   const writeEffort = (effort: EffortLevel | undefined) => {
@@ -695,7 +694,7 @@ export function ModelPicker({
       )}
       <div className="flex min-h-0 min-w-0 flex-1">
         {pickerInstances.length > 0 && <ModelEngineRail instances={pickerInstances} selectedInstance={railInstance} claudeInstance={claudeRailInstance} openaiInstance={openaiRailInstance} onSelect={selectRail}
-          onAddApiKeys={remote ? undefined : openApiKeys} />}
+          onAddApiKeys={openApiKeys} />}
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
           {threadId && (
@@ -787,8 +786,8 @@ export function ModelPicker({
 
               {blocked ? (
                 <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3 pt-1">
-                  <EngineSetup instance={railInstance} intent={pane === "custom" ? "inject" : "cloud"} quiet={!advanced} onHost={remote} />
-                  {!remote && railInstance.claudeAccount && needsSignIn(railInstance) && pane !== "custom" && (
+                  <EngineSetup instance={railInstance} intent={pane === "custom" ? "inject" : "cloud"} quiet={!advanced} />
+                  {railInstance.claudeAccount && needsSignIn(railInstance) && pane !== "custom" && (
                     <p className="mt-2 px-1.5 text-[12px] leading-4 text-ink-tertiary">
                       {railInstance.claudeAccount.signInShell === "powershell" && `${t("engines.account.powershell")} `}
                       {t("engines.account.signInHint")}
@@ -915,19 +914,17 @@ export function ModelPicker({
           ) : (
             <div className="px-3.5 py-5 text-[13px] leading-[18px] text-ink-secondary">{t("model.noProviders")}</div>
           )}
-          {!remote && (
-            <div className="flex h-9 shrink-0 items-center gap-1 border-t-[0.5px] border-ink/10 px-1.5">
-              <button type="button" onClick={openEngines}
-                className="h-7 min-w-0 flex-1 truncate rounded-md px-2 text-left text-[12px] leading-4 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink">
-                {t("settings.engines.title")}
-              </button>
-              <button type="button" data-model-add-api-keys onClick={openApiKeys}
-                className="flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] leading-4 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink">
-                <KeyRound size={14} strokeWidth={MENU_STROKE} aria-hidden="true" />
-                {apiKeysLabel(pickerInstances)}
-              </button>
-            </div>
-          )}
+          <div className="flex h-9 shrink-0 items-center gap-1 border-t-[0.5px] border-ink/10 px-1.5">
+            <button type="button" onClick={openEngines}
+              className="h-7 min-w-0 flex-1 truncate rounded-md px-2 text-left text-[12px] leading-4 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink">
+              {t("settings.engines.title")}
+            </button>
+            <button type="button" data-model-add-api-keys onClick={openApiKeys}
+              className="flex h-7 shrink-0 items-center gap-1.5 rounded-md px-2 text-[12px] leading-4 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink">
+              <KeyRound size={14} strokeWidth={MENU_STROKE} aria-hidden="true" />
+              {apiKeysLabel(pickerInstances)}
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -981,7 +978,7 @@ export function ModelPicker({
           }}
           onSetUp={openFull}
           onCheckAgain={(instance) => refreshModels(instance.instanceId)}
-          onManage={remote ? undefined : openEngines}
+          onManage={openEngines}
           onResetVariant={resetVariant}
         />
       ) : fullPane}

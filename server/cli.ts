@@ -24,7 +24,6 @@ import { appendAdminAction, flushAdminActivity, sharedSignIn } from "./admin-act
 import { bindDecisionRetention, decisionRetentionDays } from "./decision-log.ts";
 import { hostedWorkspaceConfigured } from "./enterprise.ts";
 import { resolveLoopbackTrust } from "./request-auth.ts";
-import { restartPolicy } from "./restart.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import { ensureCaddy, normalizeDomainOption, startCaddy, type RunningCaddy } from "./caddy.ts";
 import { runServiceCommand } from "./service-cli.ts";
@@ -255,7 +254,7 @@ export async function isWorkspaceRunning(options: CliOptions): Promise<boolean> 
 }
 
 /** No shell commands, credentials or remote URLs go to the OS URL opener. */
-export async function openDashboard(port: number, env = process.env): Promise<boolean> {
+async function openDashboard(port: number, env = process.env): Promise<boolean> {
   if (env.SSH_CONNECTION || env.SSH_TTY || (process.platform === "linux" && !env.DISPLAY && !env.WAYLAND_DISPLAY)) return false;
   const url = `http://127.0.0.1:${port}`;
   const command = process.platform === "darwin" ? "open" : process.platform === "win32" ? "rundll32.exe" : "xdg-open";
@@ -733,23 +732,11 @@ export async function runServe(options: CliOptions, log: (line: string) => void 
   }
 }
 
-/** A server exiting with RESTART_EXIT_CODE is started again here at the same address, without a second pairing code. */
-export async function serveUntilStopped(options: CliOptions, run: (options: CliOptions) => Promise<number> = runServe, now: () => number = Date.now): Promise<number> {
-  const policy = restartPolicy(now);
-  let launch = options;
-  for (;;) {
-    const code = await run(launch);
-    if (!policy.again(code)) return code;
-    console.log("\nOpenpals is starting again to finish installing a copy from the desktop app…");
-    launch = { ...options, pair: false, open: false };
-  }
-}
-
 /** Setup imports stay behind the data-dir override: config binds its paths when first imported. */
 export async function runOnboardingCommand(
   options: CliOptions,
   io: CliIo = defaultIo(),
-  startServer: (options: CliOptions) => Promise<number> = serveUntilStopped,
+  startServer: (options: CliOptions) => Promise<number> = runServe,
   flow: { prompts?: SetupIo; phoneSetup?: typeof runPhoneSetup; running?: typeof isWorkspaceRunning; open?: typeof openDashboard } = {},
 ): Promise<number> {
   const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true;
@@ -820,7 +807,7 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
     case "start":
       return runOnboardingCommand(options);
     case "serve":
-      return serveUntilStopped(options);
+      return runServe(options);
     case "pair":
       return runPair(options);
     case "sessions":

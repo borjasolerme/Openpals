@@ -155,7 +155,7 @@ describe("preloadScreens", () => {
   it("a page on this machine fetches nothing ahead: each screen loads when it opens", () => {
     vi.useFakeTimers();
     const preloads = stubPreloads();
-    expect(preloads.length).toBe(16);
+    expect(preloads.length).toBe(14);
     for (const host of ["127.0.0.1", "localhost", "[::1]"]) preloadScreens(host);
     vi.runAllTimers();
     for (const preload of preloads) expect(preload).not.toHaveBeenCalled();
@@ -206,23 +206,6 @@ describe("preloadScreens", () => {
     expect(preloads.length).toBe(stubbed.length);
   });
 
-  it("a window opened onto Settings fetches Settings at once, not when idle", async () => {
-    let settingsFetched = false;
-    vi.resetModules();
-    vi.doMock("./SettingsModal", () => {
-      settingsFetched = true;
-      return { SettingsModal: () => null };
-    });
-    window.history.replaceState(null, "", "/?desktop-settings=workspaces");
-    try {
-      await import("./lazy-screens");
-      await vi.dynamicImportSettled();
-      expect(settingsFetched).toBe(true);
-    } finally {
-      vi.doUnmock("./SettingsModal");
-      window.history.replaceState(null, "", "/");
-    }
-  });
 });
 
 // Rollup splits a module out only when nothing on the launch path imports it.
@@ -262,7 +245,7 @@ describe("launch bundle", () => {
     expect(reached.has("components/Sidebar.tsx")).toBe(true);
     const deferred = [
       "ActivityPanel", "BotSettingsDialog", "ComputerPanel", "InspectorPanel", "KeyboardShortcutsModal",
-      "LocalVmWorkspace", "NewBotDialog", "PhoneSetupFlow", "PluginsPanel", "RemoteAgentSettingsPanel", "remote-desktop-panel", "RoutineCalendarPage",
+      "LocalVmWorkspace", "NewBotDialog", "PhoneSetupFlow", "PluginsPanel", "RoutineCalendarPage",
       "RoutinesPage", "SettingsModal", "ShareTeamDialog", "TeamLibraryPanel", "TriggersPage", "WebhookTrigger", "room-panel/RoomPanel",
     ].map((name) => `components/${name}.tsx`);
     expect(deferred.filter((file) => reached.has(file))).toEqual([]);
@@ -279,11 +262,4 @@ describe("launch bundle", () => {
     expect([...launchModules()].filter((file) => file.startsWith("locales/")).sort()).toEqual(["locales/en.json", "locales/index.ts"]);
   });
 
-  it("gives the window's rail a page of its own that leaves the app out", () => {
-    const rail = launchModules("rail.tsx");
-    expect(rail.has("components/PlacesRail.tsx")).toBe(true);
-    expect(rail.has("components/PlaceAddSheet.tsx")).toBe(true);
-    expect(["App.tsx", "state/store.tsx", "components/Sidebar.tsx", "components/ChatView.tsx"].filter((file) => rail.has(file))).toEqual([]);
-    expect([...rail].filter((file) => file.startsWith("locales/")).sort()).toEqual(["locales/en.json", "locales/index.ts"]);
-  });
 });

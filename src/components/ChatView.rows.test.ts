@@ -52,7 +52,6 @@ vi.mock("./ModelPicker", () => ({ ModelPicker: () => null }));
 
 const { ChatView } = await import("./ChatView");
 const { BotEditorStore, initialState, reducer } = await import("@/state/store");
-const { setRemoteVoiceProvider } = await import("@/lib/local-voice");
 const { t } = await import("@/lib/i18n");
 
 const message = (id: string, parentId: string | undefined, fields: Partial<Message>): Message =>
@@ -182,28 +181,5 @@ describe("chat transcript rows", () => {
     expect(await regenerate()).toEqual([]);
     await rowRendersAfter(busy(false));
     expect(await regenerate()).toEqual(["m5"]);
-  });
-
-  it("follows this device's voice choice at the next store event", async () => {
-    const bridge = window.ogb;
-    window.ogb = { ...bridge, platform: "darwin", remoteClient: { active: true } } as typeof window.ogb;
-    const kept = new Map<string, string>();
-    vi.stubGlobal("localStorage", { getItem: (key: string) => kept.get(key) ?? null, setItem: (key: string, value: string) => kept.set(key, value) });
-    vi.stubGlobal("speechSynthesis", { getVoices: () => [] });
-    vi.stubGlobal("SpeechSynthesisUtterance", class {});
-    const speak = async () => (await menusWith(t("chat.speak.read"))).map((item) => `${item.title}${item.disabled ? " (off)" : ""}`);
-    const switchTo = async (provider: "host" | "system") => {
-      await rowRendersAfter((current) => reducer(current, { type: "toggleSettings", open: true }));
-      setRemoteVoiceProvider(provider);
-      await rowRendersAfter((current) => reducer(current, { type: "toggleSettings", open: false }));
-    };
-    try {
-      await switchTo("system");
-      expect(await speak()).toEqual([t("chat.speak.read"), t("chat.speak.read")]);
-      await switchTo("host");
-      expect(await speak()).toEqual([`${t("chat.speak.needsKey")} (off)`, `${t("chat.speak.needsKey")} (off)`]);
-    } finally {
-      window.ogb = bridge;
-    }
   });
 });

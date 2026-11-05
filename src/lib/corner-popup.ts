@@ -6,7 +6,7 @@ export function cornerPopupWaits(state: AppState,
   const busy = idle && (state.bots.some(bot => bot.busy || bot.tasks?.some(task => task.busy))
     || state.groups.some(group => group.working || group.busyBotId));
   const setup = state.welcomeOpen || state.tourOpen
-    || welcomeDue(state.config, { remoteClient: false, ...(viewer ? { hosted: viewer.hosted, canSave: viewer.canSave } : {}) });
+    || welcomeDue(state.config, viewer ? { hosted: viewer.hosted, canSave: viewer.canSave } : {});
   return !state.connected || !state.config || setup || busy || quiet || (!duringFirstChat && firstChatQuiet(state))
     || state.appSettingsOpen || state.settingsOpen || state.pluginsOpen || state.shortcutsOpen;
 }

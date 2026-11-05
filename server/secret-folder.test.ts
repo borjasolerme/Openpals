@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { uploadableFiles } from "./browser-upload.ts";
-import { listBotFiles } from "./cloud-send-files.ts";
 import { listMessageFolder, openMessageFile } from "./message-file.ts";
 import { botFileSource, readPageBundle } from "./pages/bundle.ts";
 import { SECRET_FILE_REFUSAL, SECRET_FOLDER } from "./secret-folder.ts";
@@ -30,16 +29,13 @@ beforeEach(() => {
 afterEach(() => rmSync(data, { recursive: true, force: true }));
 
 describe("a bot's private secret files", () => {
-  it("never go into a workspace backup or a move to another server", async () => {
+  it("never go into a workspace backup", () => {
     for (const path of [`workspaces/atlas/${SECRET_FOLDER}`, `workspaces/atlas/${SECRET_FOLDER}/thread-1/card-1`,
       `workspaces/atlas--member-ab12/${SECRET_FOLDER}/t/c`, `vm-home/${SECRET_FOLDER}/t/c`, `vm-homes/0123456789abcdef/${SECRET_FOLDER}/t/c`]) {
       expect(excludedWorkspaceAuthPath(path), path).toBe(true);
       expect(omittedFromWorkspaceBackup(path), path).toBe(true);
     }
     expect(excludedWorkspaceAuthPath("workspaces/atlas/notes.txt")).toBe(false);
-    const moved = (await listBotFiles(data, ["atlas"])).map((file) => file.path);
-    expect(moved).toContain("workspaces/atlas/notes.txt");
-    expect(moved.some((path) => path.includes(SECRET_FOLDER))).toBe(false);
   });
 
   it("cannot be opened or listed through a chat link, which attach_file uses too", async () => {

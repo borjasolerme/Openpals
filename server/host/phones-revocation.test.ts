@@ -31,7 +31,7 @@ async function fixture() {
     store: { bot: () => bot, groupByThread: () => undefined, messagesFor: () => [ASKED], appendMessage: (_thread, message) => ({ ...message, id: "message-1", at: message.at ?? Date.now() }) },
     sessions, routines: () => null, ownerOrAdmin: () => true,
     // The owner's own request on this computer: the turn the phone job runs for.
-    cloudLendingTurn: () => ({ request: { messageId: ASKED.id, generations: new Set(["gen-1"]) }, generation: "gen-1", thread: [], cardAnswerer: () => undefined, routineRun: () => null }),
+    ownerTurn: () => ({ request: { messageId: ASKED.id, generations: new Set(["gen-1"]) }, generation: "gen-1", thread: [], cardAnswerer: () => undefined, routineRun: () => null }),
     originIsUser: () => true, request: () => undefined, nudge: () => {}, mint: () => "fixture-token", harnessUrl: "http://127.0.0.1:1", active: () => true,
   });
   let pollStarted!: () => void;

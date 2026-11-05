@@ -9,7 +9,7 @@ export class TalkServerError extends Error {
 }
 
 export function findMausBot(bots) {
-  return bots.find(bot => bot.defaultBot && !bot.defaultBot.person?.trim())
+  return bots.find(bot => bot.defaultBot)
     ?? bots.find(bot => bot.chiefOfStaff && !bot.hidden)
     ?? null;
 }
@@ -95,11 +95,9 @@ export function createReplyTracker({ threadId, sendId }) {
 
 const JSON_HEADERS = { "content-type": "application/json" };
 
-/** A computer whose bots moved to a server of the person's own refuses every change with 409 `{ code: "moved" }`. */
 async function refusal(response) {
-  const body = response.status === 409 ? await response.json().catch(() => null) : null;
-  if (!body) void response.body?.cancel().catch(() => {});
-  return new TalkServerError(body?.code === "moved" ? "moved" : "refused");
+  void response.body?.cancel().catch(() => {});
+  return new TalkServerError("refused");
 }
 
 export function createTalkServer({ request, prefs, serverKey, starting = () => false }) {

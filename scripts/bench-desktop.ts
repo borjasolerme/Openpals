@@ -8,7 +8,7 @@
 // server: fixture server spawn to /api/health, from source and as the packaged bundle with its compile cache; timer
 //   callbacks and CPU with no page open; child processes each engine-list read (a window focus) starts.
 // start: page load to the sidebar and the last chat drawn; JavaScript the page downloads.
-// idle: CPU, timer and frame callbacks, React commits and server work with nothing happening (and the rail's page).
+// idle: CPU, timer and frame callbacks, React commits and server work with nothing happening.
 // stream: one long streamed reply with tool calls: commits, components rendered per commit, main-thread time per
 //   server frame, long tasks, server frames and file writes, on a React profiling build of the same app.
 // big: a seeded workspace (bots, threads, one long conversation): start-up routes, page load, scrolling, memory,
@@ -630,17 +630,8 @@ async function main() {
       result.screens = { firstOpenMs: firstOpen, signInPage: signIn };
     }
     if (only.has("idle")) {
-      const rail = await chrome.newPage({ storage: STORAGE, railBridge: true }, 72, 900);
-      await rail.send("Page.navigate", { url: `${fixture.url}/rail` });
-      await sleep(5_000);
-      const railMetrics = await rail.metrics();
-      const railLoad = await rail.evaluate<Record<string, number>>(`(() => ({
-        scriptKb: Math.round(performance.getEntriesByType("resource").filter((e) => /\\.js$/.test(e.name)).reduce((t, e) => t + (e.decodedBodySize || 0), 0) / 1024),
-        domNodes: document.getElementsByTagName("*").length, commits: window.__bench.commits }))()`);
       log(`idle ${IDLE_MS / 1000}s, small workspace`);
-      result.idle = { small: await idleWindow(chrome, { app: page, rail }, fixture),
-        railPage: { ...railLoad, jsHeapMb: round(railMetrics.JSHeapUsedSize! / 1048576), scriptMs: Math.round(railMetrics.ScriptDuration! * 1000) } };
-      await rail.close();
+      result.idle = { small: await idleWindow(chrome, { app: page }, fixture) };
     }
     await page.close();
     if (only.has("stream")) {

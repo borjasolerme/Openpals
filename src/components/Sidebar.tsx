@@ -49,7 +49,6 @@ import { PhoneHero } from "./SidebarPhoneHero";
 import { SidebarProfileMenu } from "./SidebarProfileMenu";
 import { PHONE_LAYOUT, useMediaQuery } from "@/lib/use-media-query";
 import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
-import { DesktopWorkspaceSwitcher } from "./DesktopWorkspaceSwitcher"; import { PlaceTint } from "./PlaceTint"; import { ChromeRailToggle } from "./ChromeRailToggle";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 
 import { MENU_ITEM, MENU_SHEET, navigateMenu } from "./menu-recipe";
@@ -205,7 +204,6 @@ function RoomContextMenu({
   const motion = useHeldMenuMotion(menu);
   const shown = motion.value;
   const { state, dispatch } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const group = shown ? state.groups.find((g) => g.id === shown.groupId) : undefined;
   const [renaming, setRenaming] = useState(false);
   const [describing, setDescribing] = useState(false);
@@ -261,7 +259,7 @@ function RoomContextMenu({
       style={{ top, left }}
       className={cn("fixed z-40 w-[228px] overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}
     >
-      {!remoteClient && describing ? (
+      {describing ? (
         <div className="flex items-center gap-1 px-2 py-1">
           <input
             autoFocus
@@ -302,7 +300,7 @@ function RoomContextMenu({
             <X size={15} />
           </button>
         </div>
-      ) : !remoteClient && (renaming ? (
+      ) : renaming ? (
         <div className="flex items-center gap-1 px-2 py-1">
           <input
             autoFocus
@@ -354,8 +352,8 @@ function RoomContextMenu({
           <Pencil size={16} className="text-ink-secondary" />
           {isBotChat ? t("sidebar.room.renameChat") : t("sidebar.room.renameChannel")}
         </button>
-      ))}
-      {!remoteClient && !renaming && !isBotChat && (
+      )}
+      {!renaming && !isBotChat && (
         <button
           role="menuitem"
           onClick={() => {
@@ -379,7 +377,7 @@ function RoomContextMenu({
         <ClipboardCopy size={16} className="text-ink-secondary" />
         {t("sidebar.copyConversationId")}
       </button>
-      {!remoteClient && <button
+      <button
         role="menuitem"
         onClick={() => {
           onClose();
@@ -389,7 +387,7 @@ function RoomContextMenu({
       >
         <Trash2 size={16} />
         {isBotChat ? t("sidebar.room.deleteChat") : t("sidebar.room.deleteChannel")}
-      </button>}
+      </button>
     </div>,
     document.body,
   );
@@ -450,7 +448,6 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   const advanced = useAdvancedMode();
   const { bot, selected, deleting, mascotMotion, pendingQueued, instances, liveCall, density, dispatch, onMenu, renameRequest, botDrag: drag, botDrop: drop, botDragging: dragging } = props;
   const liveMedia = useLiveMedia();
-  const remoteClient = typeof window !== "undefined" && window.ogb?.remoteClient?.active === true;
   const [renaming, setRenaming] = useState(false);
   const iconOnly = density === "icons";
   useEffect(() => { if (iconOnly) setRenaming(false); }, [iconOnly]);
@@ -529,15 +526,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               value={bot.name}
               editRequest={renameRequest}
               title={tooltip}
-              onCommit={(name) => {
-                if (remoteClient) {
-                  void api(`/api/bots/${bot.id}/profile`, { method: "PATCH", body: JSON.stringify({ name }) })
-                    .then(({ bot: updated }) => dispatch({ type: "botPatched", bot: updated }))
-                    .catch((cause) => dispatch({ type: "error", message: cause instanceof Error ? cause.message : String(cause) }));
-                } else {
-                  dispatch({ type: "updateBot", botId: bot.id, patch: { name } });
-                }
-              }}
+              onCommit={(name) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } })}
               onEditingChange={setRenaming}
               className="truncate"
               inputClassName={cn("w-full rounded bg-inset px-1 py-0.5", simpleRow ? "text-[14px] font-medium" : "text-[15px] font-semibold")}
@@ -656,7 +645,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   collapseToIcons?: boolean;
 }) {
   const { state, dispatch } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const { capabilities } = useDesktopCapabilities();
   const phone = useMediaQuery(PHONE_LAYOUT, false);
   const importReturnRef = useRef<HTMLButtonElement>(null);
@@ -722,13 +710,10 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const plusMenuRef = useRef<HTMLDivElement>(null);
   usePopoverDismiss(plusOpen, plusMenuRef, () => setPlusOpen(false));
 
-  useEffect(() => {
-    if (remoteClient) return;
-    return window.ogb?.onPackageInstall?.((url) => {
-      setTeamInstallUrl(url);
-      setTeamLibraryOpen(true);
-    });
-  }, [remoteClient]);
+  useEffect(() => window.ogb?.onPackageInstall?.((url) => {
+    setTeamInstallUrl(url);
+    setTeamLibraryOpen(true);
+  }), []);
 
   useEffect(() => {
     if (!teamFeedback) return;
@@ -764,7 +749,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     }
   };
 
-  // A framed window (WindowFrameBar) holds the traffic lights and the rail's button in its top bar, so the top row keeps
+  // A framed window (WindowFrameBar) holds the traffic lights in its top bar, so the top row keeps
   // no room for them; in Simple it is only the corner holding Search and New, with the bot tiles beside it. With the
   // frame off on macOS, the traffic lights sit in the top row's corner.
   const framed = windowFramed(capabilities), corner = framed && simpleDesk;
@@ -810,7 +795,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const tiles = simpleDesk && (primary !== null || pinnedBots.length > 0);
   const { interactive: layoutInteractive, collapsed: sectionCollapsed, toggle: toggleSection } = sections;
   const archivedBots = state.bots.filter((bot) => bot.hidden);
-  const archivedEntry = remoteClient ? undefined : { count: archivedBots.length, open: () => setArchivedBotsOpen(true) };
+  const archivedEntry = { count: archivedBots.length, open: () => setArchivedBotsOpen(true) };
   const pendingBotUndo = teamFeedback?.restoreBot;
   const botRow = (bot: Bot) => botRowProps(state, dispatch, bot, { density, onMenu: setMenu, renameRequest: renameRequest?.botId === bot.id ? renameRequest.nonce : 0, ...drops.row(bot.id) });
   const railSearch = () => {
@@ -824,18 +809,18 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     <button
       ref={importReturnRef}
       onClick={() => setPlusOpen((o) => !o)}
-      aria-label={remoteClient ? t("sidebar.new") : t("sidebar.newOrShare")}
+      aria-label={t("sidebar.newOrShare")}
       className={phone ? PHONE_TOP_BUTTON : corner ? SIMPLE_CORNER_BUTTON : rail || simple ? SIMPLE_TOP_BUTTON : cn(
         "flex items-center justify-center text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         density === "icons" ? "size-[46px] shrink-0 rounded-xl" : "size-8 rounded-full",
       )}
-      title={remoteClient ? t("sidebar.new") : t("sidebar.newOrShare")}
+      title={t("sidebar.newOrShare")}
     >
       <Plus size={corner ? 18 : phone || simple || density === "icons" ? 20 : 18} strokeWidth={phone ? 2 : 1.5} />
     </button>
     {plusMotion.shown && (
       <>
-        <div role="menu" aria-label={remoteClient ? t("sidebar.new") : t("sidebar.newOrShare")} onKeyDown={navigateMenu} className={cn(
+        <div role="menu" aria-label={t("sidebar.newOrShare")} onKeyDown={navigateMenu} className={cn(
           "absolute z-40 w-max min-w-[200px] overflow-hidden", MENU_SHEET,
           rail ? "left-full top-0 ml-4" : cn("top-full", advanced ? "mt-1" : "mt-1.5", density === "icons" ? "left-0" : "right-0"),
           plusMotion.className,
@@ -871,7 +856,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             <Users size={16} className="text-ink-secondary" />
             {t("sidebar.newChannel.title")}
           </button>
-          {!remoteClient && <>
           <button
             onClick={() => { setPlusOpen(false); setTeamLibraryOpen(true); }}
             role="menuitem"
@@ -894,7 +878,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
               <span className="text-[12px] text-ink-secondary">{archivedBots.length}</span>
             </button>
           )}
-          </>}
         </div>
       </>
     )}
@@ -925,7 +908,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         open ? "max-md:translate-x-0" : "max-md:-translate-x-full",
       )}
     >
-      <GlassScrollFrame className="flex-1" fade><PlaceTint />
+      <GlassScrollFrame className="flex-1" fade>
       <GlassBar edge="top">
       <div
         data-sidebar-top-row={corner ? "corner" : true}
@@ -940,24 +923,16 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         {phone ? (
           <div className="shrink-0" style={windowNoDragStyle}><SidebarProfileMenu iconOnly circle /></div>
         ) : lights ? (
-          // The traffic lights span 16-76px of the window; nothing clickable starts before 88px, with the window's rail
-          // beside the page or not.
-          <div aria-hidden="true" data-traffic-light-space className={density === "icons" ? "h-5 w-full" : "w-[72px] shrink-0 md:w-[calc(72px_-_var(--rail-beside,0px))]"} />
-        ) : null}{!phone && !framed && <ChromeRailToggle advanced={advanced} icons={density === "icons"} style={windowNoDragStyle} />}
+          // The traffic lights span 16-76px of the window; nothing clickable starts before 88px.
+          <div aria-hidden="true" data-traffic-light-space className={density === "icons" ? "h-5 w-full" : "w-[72px] shrink-0"} />
+        ) : null}
         {rail && <div data-sidebar-rail-top className="flex flex-col items-center gap-2 pt-1" style={windowNoDragStyle}>
           <button type="button" onClick={railSearch} aria-label={t("sidebar.searchAria")} title={t("sidebar.searchAria")} className={SIMPLE_TOP_BUTTON}>
             <Search size={18} strokeWidth={1.5} aria-hidden="true" />
           </button>
           <div className="relative flex">{plusControl}</div>
         </div>}
-        {density !== "icons" && (simpleDesk ? <div data-sidebar-top-slot className="min-w-0 flex-1" /> : (
-          <div data-sidebar-top-slot className={cn("@container/sidebar-top flex min-w-0 flex-1 items-center", simple && "justify-end")}>
-            {!simple && <div data-sidebar-top-spacer className="min-w-0 flex-1 @min-[96px]/sidebar-top:min-w-6" />}
-            <div data-sidebar-top-switcher className={simple ? "flex min-w-0 items-center" : "flex min-w-0 max-w-[140px] items-center"}>
-              <DesktopWorkspaceSwitcher inline pill={simple} />
-            </div>
-          </div>
-        ))}
+        {density !== "icons" && <div data-sidebar-top-slot className="min-w-0 flex-1" />}
         {!rail && <div
           data-sidebar-top-buttons
           className={cn("relative flex shrink-0 items-center", density === "icons" ? "flex-col gap-1" : corner ? "pointer-events-auto" : simpleDesk ? "gap-2" : simple ? "gap-1 pl-0.5" : "ml-0.5 gap-0.5")}
@@ -977,7 +952,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         </div>}
       </div>
 
-      {density === "icons" && !rail && <DesktopWorkspaceSwitcher compact />}
       {phone ? null : simple ? searchShown && <SidebarSearchPill query={query} onQuery={setQuery} onClose={closeSearch} /> : <div className={cn("pt-1 pb-3", density === "icons" ? "hidden" : "px-3")}>
         <div className={cn("flex h-8 items-center gap-2 rounded-full px-3 focus-within:ring-focus", ELEVATED_CONTROL)}>
           <Search size={15} className="shrink-0 text-ink-secondary" />
@@ -1155,14 +1129,14 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         />,
         document.body,
       )}
-      {!remoteClient && archivedBotsOpen && (
+      {archivedBotsOpen && (
         <ArchivedBotsPanel
           bots={archivedBots}
           onClose={() => setArchivedBotsOpen(false)}
           onRestored={(message) => setTeamFeedback({ error: false, text: message })}
         />
       )}
-      {!remoteClient && teamLibraryOpen && (
+      {teamLibraryOpen && (
         <TeamLibraryPanel
           returnFocusRef={importReturnRef}
           initialUrl={teamInstallUrl ?? undefined}
@@ -1191,7 +1165,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           <div
             role="status"
             className={cn(
-              "fixed bottom-4 left-[calc(var(--rail-beside,0px)_+_1rem)] z-[60] max-w-[300px] rounded-xl border px-3.5 py-2.5 text-[13px] shadow-xl",
+              "fixed bottom-4 left-4 z-[60] max-w-[300px] rounded-xl border px-3.5 py-2.5 text-[13px] shadow-xl",
               teamFeedback.error
                 ? "border-danger/30 bg-card text-danger"
                 : "border-hairline/50 bg-card text-ink",

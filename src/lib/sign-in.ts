@@ -10,5 +10,5 @@ export async function answerSignIn(ref: Pick<ComputerHelpRef, "botId" | "threadI
 }
 
 export function signInHostIsHere(): boolean {
-  return Boolean(window.ogb) && window.ogb?.remoteClient?.active !== true;
+  return Boolean(window.ogb);
 }

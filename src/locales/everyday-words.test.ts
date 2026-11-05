@@ -9,10 +9,8 @@ const EVERYDAY_PREFIXES: Record<string, readonly string[]> = {
     "chat.", "composer.", "attach.", "toolStep.", "approval.", "question.", "signIn.", "limits.", "call.", "task.", "room.",
   ],
   "notifications and alerts": ["notifications.", "error.", "readyBots.", "app.loading."],
-  "the sidebar and the switcher": ["sidebar."],
+  "the sidebar": ["sidebar."],
   "moving from Grok Bot": ["grokMove."],
-  "the rail of Clouds and its ＋": ["rail."],
-  "a place's color, in Settings": ["placeLook."],
   "the bot panel": [
     "botPanel.", "botSettings.simple.", "botAccess.tools.", "botAccess.browser.", "memory.learnFromRooms.", "memory.upkeep.",
   ],
@@ -20,7 +18,7 @@ const EVERYDAY_PREFIXES: Record<string, readonly string[]> = {
     "place.", "computer.tab.", "computer.simple.", "computer.phase.", "computer.cloud.", "computer.badge.", "computer.problem.",
     "computer.screen.", "vm.cloud.", "browser.",
   ],
-  "signing in, connecting a phone and lending this computer": ["cloudSignIn.", "cloudPhone.", "lending."],
+  "signing in": ["cloudSignIn."],
   "routines and automations": ["routines.", "automations."],
   "a computer's steps": ["mapComputer."],
   "Apps": ["apps.", "connectors."],
@@ -77,11 +75,6 @@ const PENDING_WORDS: readonly Word[] = [
 ];
 
 const ALLOWED: Record<string, string> = {
-  "settings.section.desktopWorkspaces": "the Servers page shares its name with the app menu's Server menu; both change with the one-workspace switcher",
-  "sidebar.servers": "the switcher's own Servers list, renamed with the one-workspace switcher",
-  "sidebar.switchServer": "the switcher's own Servers list, renamed with the one-workspace switcher",
-  "sidebar.switchServerError": "points at the app menu's Server menu",
-  "cloudPhone.step1": "points at the app menu's Server menu, entry by entry",
   "botAccess.tools.syntax": "the tool names people type, such as mcp:SERVER:NAME",
 };
 

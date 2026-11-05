@@ -176,8 +176,8 @@ describe("Settings full backups", () => {
     expect(window.location.reload).not.toHaveBeenCalled();
   });
 
-  it.each([undefined, { relaunch: vi.fn(), remoteClient: { active: true } }])("never restarts the local app for a browser or remote workspace", bridge => {
-    window.ogb = bridge as Window["ogb"];
+  it("never restarts the local app for a browser workspace", () => {
+    window.ogb = undefined;
     const view = render("restart");
     expect(view.html).toContain("restart the server process");
     expect(view.html).not.toContain("Restart and restore");

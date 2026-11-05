@@ -8,10 +8,6 @@ import { botFolder } from "../bot-folder.ts";
 
 export const SHEET_FILE = "sheet.json";
 
-export function sheetFile(botId: string): string {
-  return join(botFolder(botId), SHEET_FILE);
-}
-
 /** Card ids and result tables draw from one counter: an old id can never answer with another card. */
 type StoredSheet = DataSheet & { seq: number };
 

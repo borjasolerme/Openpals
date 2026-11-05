@@ -26,8 +26,6 @@ const fixture = vi.hoisted(() => ({
   api: vi.fn(),
   dispatch: vi.fn(),
   switches: [] as ComponentProps<typeof Switch>[],
-  rail: null as { available: boolean; hidden: boolean } | null,
-  railHidden: [] as boolean[],
 }));
 vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({ capabilities: { host: { platform: "darwin" } } }) }));
 
@@ -67,7 +65,6 @@ vi.mock("@/lib/interface-mode", () => ({
   setAdvancedMode: fixture.setAdvancedMode,
 }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: () => null }));
-vi.mock("@/lib/chrome-rail", () => ({ useChromeRail: () => fixture.rail, setChromeRailHidden: (hidden: boolean) => fixture.railHidden.push(hidden) }));
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
   const original = await importOriginal<typeof import("./SettingsPrimitives")>();
   return {
@@ -90,8 +87,6 @@ beforeEach(() => {
   // these pin the Advanced rail; Simple has its own suite (SettingsModal.simple.test.ts)
   fixture.advancedMode = true;
   fixture.switches = [];
-  fixture.rail = null;
-  fixture.railHidden = [];
   vi.stubGlobal("window", {});
   vi.stubGlobal("document", { documentElement: { dataset: {} } });
   setLocale("en");
@@ -121,28 +116,15 @@ describe("Settings → Appearance", () => {
     expect(fixture.dispatch).not.toHaveBeenCalled();
   });
 
-  it("keeps the Advanced mode switch reachable from a paired remote client", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    expect(render()).toContain('aria-label="Advanced mode"');
-  });
 
   it("does not repeat the Advanced mode switch in Appearance on this computer", () => {
     expect(render()).not.toContain('aria-label="Advanced mode"');
   });
 
-  it.each([true, false])("keeps the app language reachable from a paired remote client (Advanced %s)", (advanced) => {
-    fixture.advancedMode = advanced;
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    const html = render();
-    expect(html).not.toContain('<option value="general">');
-    expect(html).toContain('aria-label="App language"');
-    expect(html).toContain('<option value="en">English</option>');
-  });
 
   it("does not repeat the app language in Appearance on this computer", () => {
     expect(render()).not.toContain('aria-label="App language"');
   });
-
 
   it("groups skins, pinned bots and tool-call display, with no thread switch", () => {
     const html = render();
@@ -157,18 +139,6 @@ describe("Settings → Appearance", () => {
     expect(html).not.toContain("Stop after no progress for");
   });
 
-  it("keeps the switch for the window's rail of places with the sidebar's rows, where this window has one", () => {
-    expect(render()).not.toContain("Show your computers");
-    fixture.rail = { available: true, hidden: true };
-    const html = render();
-    const at = html.indexOf('aria-label="Show your computers"');
-    expect(at).toBeGreaterThan(html.indexOf('aria-label="Choose tools layout"'));
-    expect(at).toBeLessThan(html.indexOf('aria-label="Pinned bots as circles"'));
-    const toggle = fixture.switches.find((props) => props["aria-label"] === "Show your computers")!;
-    expect(toggle.checked).toBe(false);
-    toggle.onClick!({} as never);
-    expect(fixture.railHidden).toEqual([false]);
-  });
 
   it.each([true, false])("mutes notification sounds on this computer only when the switch is %s", (enabled) => {
     fixture.notificationSounds = enabled;
@@ -324,21 +294,6 @@ describe("Settings → Appearance", () => {
     expect(html).not.toContain("Midnight");
   });
 
-  it("makes local appearance available remotely without exposing server settings", () => {
-    vi.stubGlobal("window", { ogb: { remoteClient: { active: true } } });
-    const html = render();
-    expect(html).toContain('<option value="appearance" selected="">Appearance</option>');
-    expect(html).toContain('<option value="companion">Remote access</option>');
-    expect(html).not.toContain('<option value="general">');
-    expect(html).not.toContain('<option value="connections">');
-    expect(html).not.toContain('<option value="engines">');
-    expect(html).not.toContain('<option value="backups">');
-    expect(html).toContain("Midnight");
-    expect(html).toContain('aria-label="Pinned bots as circles"');
-    expect(html).toContain('aria-label="Notification sounds"');
-    expect(html).toContain('aria-label="Choose tools layout"');
-    expect(html).not.toContain('aria-label="Show tool calls in chat"');
-  });
 
   it("offers full backups in local Settings", () => {
     fixture.section = "backups";
@@ -379,18 +334,5 @@ describe("Settings → Appearance", () => {
     }
   });
 
-  it("offers desktop connections as a top-level page without exposing the list remotely", () => {
-    fixture.section = "desktopWorkspaces";
-    vi.stubGlobal("window", { ogb: { environments: {} } });
-    const local = render();
-    expect(local).toContain('<option value="desktopWorkspaces" selected="">Servers</option>');
-    expect(local).toContain("Server address or pairing link");
-    expect(local).toContain("Name (optional)");
-    expect(local).toContain("Your servers");
-    expect(local).toContain("npx openmausbot pair --label");
-    fixture.section = "general";
-    vi.stubGlobal("window", { ogb: { workspaces: {} } });
-    expect(render()).not.toContain('<option value="desktopWorkspaces"');
-  });
 
 });

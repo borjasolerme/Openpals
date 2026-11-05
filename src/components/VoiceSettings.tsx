@@ -6,15 +6,6 @@ import { api, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { useDesktopCapabilities } from "@/components/DesktopCapabilities";
 import { speaker } from "@/lib/tts";
 import { useSpeech } from "@/lib/tts/useSpeech";
-import {
-  listLocalSystemVoices,
-  localSystemVoicesAvailable,
-  remoteSystemVoice,
-  remoteVoiceProvider,
-  setRemoteSystemVoice,
-  setRemoteVoiceProvider,
-  type RemoteVoiceProvider,
-} from "@/lib/local-voice";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import { voiceKeyDraftValue, type VoiceKeyDraft } from "@/lib/voice-key-draft";
@@ -61,12 +52,8 @@ export function VoiceSettings({
   const { capabilities } = useDesktopCapabilities();
   const speech = useSpeech();
   const preparingSample = speech.status === "preparing" && speech.botId === bot.id && !speech.messageId;
-  const localMacClient = workspaceConfigurationLocked && localSystemVoicesAvailable();
-  const [deviceProvider, setDeviceProvider] = useState<RemoteVoiceProvider>(() => remoteVoiceProvider());
-  const [deviceVoice, setDeviceVoice] = useState(() => remoteSystemVoice(bot.id));
-  const usesLocalSystem = localMacClient && deviceProvider === "system";
   const provider = tts?.provider ?? "elevenlabs";
-  const searchable = (provider === "fish" || provider === "elevenlabs") && !usesLocalSystem;
+  const searchable = provider === "fish" || provider === "elevenlabs";
   const voiceSearch = searchable ? searchedQuery : "";
   const pickedVoice = searchable ? (bot.voice ?? "") : "";
   const cloudProvider = provider === "fish"
@@ -89,26 +76,13 @@ export function VoiceSettings({
         }
       : null;
   const key = cloudProvider ? voiceKeyDraftValue(keyDraft, cloudProvider.id) : "";
-  const hostProviderLabel = provider === "fish"
-    ? t("voice.hostLabel", { provider: t("voice.fish.label") })
-    : provider === "elevenlabs"
-      ? t("voice.hostLabel", { provider: t("voice.elevenlabs.label") })
-      : provider === "chatterbox"
-        ? t("voice.hostLabel", { provider: t("voice.chatterboxLabel") })
-        : provider === "xai" ? t("voice.grok.host") : t("voice.host");
   const systemVoicesAvailable = capabilities.host.platform === "darwin";
-  const hostConfigured = Boolean(tts?.configured);
-  const configured = usesLocalSystem || hostConfigured;
+  const configured = Boolean(tts?.configured);
 
-  useEffect(() => {
-    setDeviceVoice(remoteSystemVoice(bot.id));
-  }, [bot.id]);
-
-  const sampleVoice = usesLocalSystem ? deviceVoice : bot.voice;
   useEffect(() => () => {
     const playing = speaker.state;
     if (playing.status !== "idle" && playing.botId === bot.id && !playing.messageId) speaker.stop();
-  }, [bot.id, sampleVoice, provider]);
+  }, [bot.id, bot.voice, provider]);
 
   useEffect(() => {
     const timer = setTimeout(() => setSearchedQuery(voiceQuery.trim()), 300);
@@ -128,16 +102,10 @@ export function VoiceSettings({
     setKeyDraft({ provider: null, value: "" });
   }, [provider]);
 
-  useEffect(() => setVoices([]), [provider, usesLocalSystem]);
+  useEffect(() => setVoices([]), [provider]);
 
   useEffect(() => {
-    if (usesLocalSystem) {
-      const load = () => setVoices(listLocalSystemVoices());
-      load();
-      window.speechSynthesis.addEventListener("voiceschanged", load);
-      return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
-    }
-    if (!hostConfigured) {
+    if (!configured) {
       setVoices([]);
       return;
     }
@@ -158,22 +126,9 @@ export function VoiceSettings({
     return () => {
       alive = false;
     };
-  }, [hostConfigured, provider, usesLocalSystem, voiceSearch, pickedVoice]);
+  }, [configured, provider, voiceSearch, pickedVoice]);
 
-  const chooseDeviceProvider = (next: RemoteVoiceProvider) => {
-    setRemoteVoiceProvider(next);
-    setDeviceProvider(next);
-    setError(null);
-  };
-
-  const chooseVoice = (voiceId: string) => {
-    if (usesLocalSystem) {
-      setRemoteSystemVoice(bot.id, voiceId);
-      setDeviceVoice(voiceId);
-      return;
-    }
-    onPatch({ voice: voiceId });
-  };
+  const chooseVoice = (voiceId: string) => onPatch({ voice: voiceId });
 
   // An add that settles after the bot or the provider changed belongs to neither: it must not set this voice.
   useEffect(() => {
@@ -255,17 +210,15 @@ export function VoiceSettings({
 
   if (!tts) return null;
 
-  const selectedVoice = usesLocalSystem ? deviceVoice : (bot.voice ?? "");
-  const ready = usesLocalSystem || (hostConfigured && Boolean(selectedVoice || tts.voice));
+  const selectedVoice = bot.voice ?? "";
+  const ready = configured && Boolean(selectedVoice || tts.voice);
   const selectedDescription = voices.find((voice) => voice.id === selectedVoice)?.description;
 
   return (
     <div className="rounded-xl bg-card p-4">
       <div className="text-[15px] font-medium text-ink">{t("voice.title")}</div>
       <div className="mt-0.5 text-[13px] text-ink-secondary">
-        {localMacClient
-          ? t("voice.macChoice")
-          : workspaceConfigurationLocked
+        {workspaceConfigurationLocked
             ? t("voice.agentChoice")
             : <>{t("voice.description")}
               {provider === "system"
@@ -278,34 +231,6 @@ export function VoiceSettings({
                   ? ` ${t("voice.chatterboxShared")}`
                   : ` ${t("voice.providerShared", { provider: cloudProvider?.name ?? t("voice.provider") })}`}</>}
       </div>
-
-      {localMacClient && (
-        <div className="mt-4">
-          <div className="mb-2 text-[13px] text-ink-secondary">{t("voice.macOutput")}</div>
-          <div className="inline-flex rounded-xl bg-inset p-1" role="radiogroup" aria-label={t("voice.macOutput")}>
-            {([
-              { value: "system", label: t("voice.macBuiltIn"), available: true },
-              { value: "host", label: hostProviderLabel, available: hostConfigured },
-            ] as const).map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={deviceProvider === option.value}
-                disabled={!option.available}
-                title={!option.available ? t("voice.hostNotConfigured") : undefined}
-                onClick={() => chooseDeviceProvider(option.value)}
-                className={cn(
-                  "rounded-lg px-3.5 py-1.5 text-[13px] transition-colors disabled:opacity-50",
-                  deviceProvider === option.value ? "bg-raised text-ink shadow" : "text-ink-secondary hover:text-ink",
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {!workspaceConfigurationLocked && (
         <div className="mt-4">
@@ -401,7 +326,7 @@ export function VoiceSettings({
 
       {provider === "xai" && (
         <p className="mt-4 text-[13px] text-ink-secondary">
-          {hostConfigured ? t("voice.grok.ready") : <>{t("voice.grok.missingKey")} <KeysLink id="xai" /></>}
+          {configured ? t("voice.grok.ready") : <>{t("voice.grok.missingKey")} <KeysLink id="xai" /></>}
         </p>
       )}
 
@@ -485,9 +410,7 @@ export function VoiceSettings({
                 <option value="">
                   {loadingVoices
                     ? t("voice.loading")
-                    : usesLocalSystem
-                      ? t("voice.macDefault")
-                      : tts.voice
+                    : tts.voice
                         ? t("voice.installDefault")
                         : t("voice.pick")}
                 </option>

@@ -40,8 +40,8 @@ const room = (patch: Partial<Group> = {}): Group => ({
   ...patch,
 });
 
-const view = (group: Group, ogb?: unknown) => {
-  vi.stubGlobal("window", { ...globalThis.window, ogb });
+const view = (group: Group) => {
+  vi.stubGlobal("window", { ...globalThis.window, ogb: undefined });
   try {
     return renderToStaticMarkup(createElement(GroupView, { group }));
   } finally {
@@ -99,14 +99,6 @@ describe("the room header in Simple mode", () => {
     expect(markup).toContain(BULLETIN);
   });
 
-  it("keeps today's header on a remote client, which cannot open the Room panel", () => {
-    const markup = view(room(), { remoteClient: { active: true } });
-    // A remote client never had the folder chip, the responder picker or Manage members.
-    expect(shown(header(markup))).toEqual(["threads", "find", "export", "turnLimit", "usage"]);
-    expect(header(markup)).not.toContain("data-room-name");
-    expect(markup).toContain(BULLETIN);
-  });
-
   it("leaves a DM's header as it is", () => {
     const markup = view(room({ dm: true, memberIds: ["bot-0"], name: "Desk Manager" }));
     expect(shown(header(markup))).toEqual(["find", "export", "turnLimit", "usage"]);
@@ -131,7 +123,7 @@ describe("the Simple header's buttons", () => {
   const onOpenMembers = vi.fn();
   const draw = () => flushSync(() => root.render([
     createElement(RoomHeader, {
-      key: "header", group: room(), members: bots, simple: true, setupPending: false, remoteClient: false, findOpen: false,
+      key: "header", group: room(), members: bots, simple: true, setupPending: false, findOpen: false,
       onToggleFind: vi.fn(), onToggleFolder: vi.fn(), onOpenMembers, membersTriggerRef: { current: null },
     }),
     createElement(Probe, { key: "probe" }),
@@ -158,7 +150,7 @@ describe("the Simple header's buttons", () => {
     fixture.chrome = captionChrome("mac-inset");
     // Read off the markup: happy-dom's CSSStyleDeclaration drops the Electron-only property.
     const markup = renderToStaticMarkup(createElement(RoomHeader, {
-      group: room(), members: bots, simple: true, setupPending: false, remoteClient: false, findOpen: false,
+      group: room(), members: bots, simple: true, setupPending: false, findOpen: false,
       onToggleFind: vi.fn(), onToggleFolder: vi.fn(), onOpenMembers, membersTriggerRef: { current: null },
     }));
     expect(markup).toMatch(/^<div data-window-drag="" style="-webkit-app-region:drag"/);

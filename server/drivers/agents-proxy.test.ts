@@ -458,7 +458,6 @@ beforeAll(async () => {
       OMB_COMMS_TOKEN: TOKEN,
       OMB_TURN_DEPTH: "0",
       OMB_SKILL_AUTHORING_ENABLED: "1",
-      OMB_SHARED_COMPUTERS_ENABLED: "1",
       // A Chief's turn, so the Chief-only team tools are mounted too.
       OMB_CHIEF_OF_STAFF: "1",
       // A person's own request, which may pick its computer.
@@ -622,8 +621,6 @@ describe("agents-proxy MCP surface", () => {
     const list = await rpc("tools/list");
     expect(list.result.tools.map((t: { name: string }) => t.name)).toEqual([
       "tool_result_read",
-      "list_shared_computers",
-      "shared_computer",
       "list_room_targets",
       "coordinate_bots",
       "assignment_status",
@@ -745,7 +742,6 @@ describe("agents-proxy MCP surface", () => {
     const list = await rpc("tools/list");
     const readNames = [
       "tool_result_read",
-      "list_shared_computers",
       "assignment_status", "list_bots", "usage_limits", "list_rooms", "list_threads",
       "list_team_setup",
       "session_search", "trigger_info", "list_waits", "skills_list",
@@ -2074,7 +2070,7 @@ describe("standing external runtime", () => {
       env: { ...childEnv(), OMB_HARNESS_URL: `http://127.0.0.1:${stubPort}`, OMB_BOT_ID: "bot-asker",
         OMB_THREAD_ID: "thread-asker-routine", OMB_COMMS_TOKEN: TOKEN, OMB_TURN_DEPTH: "0",
         OMB_EXTERNAL_RUNTIME: "1", OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1",
-        OMB_SKILL_AUTHORING_ENABLED: "1", OMB_SHARED_COMPUTERS_ENABLED: "1" },
+        OMB_SKILL_AUTHORING_ENABLED: "1" },
       stdio: ["pipe", "pipe", "inherit"],
     });
     let buffer = "";
@@ -2148,7 +2144,7 @@ describe("standing external runtime", () => {
 });
 
 // A separate child is the only honest check: the tool list is frozen at module load.
-describe("with computer sharing off and no Chief of Staff (the defaults)", () => {
+describe("with no Chief of Staff (the default)", () => {
   let gated: ChildProcess;
   const gatedPending = new Map<number, (msg: any) => void>();
   let gatedId = 500;
@@ -2172,7 +2168,7 @@ describe("with computer sharing off and no Chief of Staff (the defaults)", () =>
         OMB_COMMS_TOKEN: TOKEN,
         OMB_TURN_DEPTH: "0",
         OMB_SKILL_AUTHORING_ENABLED: "1",
-        // deliberately no OMB_SHARED_COMPUTERS_ENABLED or OMB_CHIEF_OF_STAFF
+        // deliberately no OMB_CHIEF_OF_STAFF
       },
       stdio: ["pipe", "pipe", "inherit"],
     });
@@ -2194,22 +2190,6 @@ describe("with computer sharing off and no Chief of Staff (the defaults)", () =>
 
   afterAll(() => {
     gated?.kill();
-  });
-
-  it("does not advertise the shared-computer tools at all", async () => {
-    const list = await gatedRpc("tools/list");
-    const names = list.result.tools.map((tool: { name: string }) => tool.name);
-    expect(names).not.toContain("list_shared_computers");
-    expect(names).not.toContain("shared_computer");
-    expect(names).toContain("list_bots");
-    expect(names).toContain("skills_list");
-  });
-
-  it("refuses the handlers if a model calls them by name anyway", async () => {
-    for (const name of ["list_shared_computers", "shared_computer"]) {
-      const refused = await gatedRpc("tools/call", { name, arguments: { computer_id: "x", action: "list_files" } });
-      expect(refused.error?.message ?? refused.result?.content?.[0]?.text).toMatch(/unknown tool|turned off/i);
-    }
   });
 
   it("shows a bot that is not a Chief none of the Chief-only tools or parameters", async () => {
@@ -2350,8 +2330,8 @@ describe("tool bridge", () => {
     });
   }
 
-  /** The main child's switches: a Chief with skills and shared computers. */
-  const CHIEF = { OMB_SKILL_AUTHORING_ENABLED: "1", OMB_SHARED_COMPUTERS_ENABLED: "1", OMB_CHIEF_OF_STAFF: "1", OMB_COMPUTER_SELECTION: "1" };
+  /** The main child's switches: a Chief with skills. */
+  const CHIEF = { OMB_SKILL_AUTHORING_ENABLED: "1", OMB_CHIEF_OF_STAFF: "1", OMB_COMPUTER_SELECTION: "1" };
   const CHIEF_ONLY = ["create_bot", "list_team_setup", "propose_team_setup", "propose_bot_deletion", "manage_room", "retry_thread"];
   const HOT = ["tool_result_read", "list_room_targets", "coordinate_bots", "list_bots", "list_rooms", "select_computer", "attach_file", "post_to_room", "request_credential", "request_sign_in", "fill_login", "memory_update"];
   let chief: Rpc;
@@ -2443,8 +2423,8 @@ describe("tool bridge", () => {
   });
 
   it("find_tool never returns a tool outside this turn's profile", async () => {
-    const profile = new Set((await listed(off)).map((tool) => tool.name).filter((name) => !CHIEF_ONLY.includes(name) && !["skills_list", "skill_manage", "list_shared_computers", "shared_computer"].includes(name)));
-    for (const query of ["create a new specialist bot", "delete a teammate", "set up the team", "save a reusable skill", "use the desktop the user shared", ...CHIEF_ONLY, "skill_manage", "shared_computer"]) {
+    const profile = new Set((await listed(off)).map((tool) => tool.name).filter((name) => !CHIEF_ONLY.includes(name) && !["skills_list", "skill_manage"].includes(name)));
+    for (const query of ["create a new specialist bot", "delete a teammate", "set up the team", "save a reusable skill", ...CHIEF_ONLY, "skill_manage"]) {
       const matches = matchesOf(await find(plain, query));
       for (const match of matches) {
         expect(profile.has(match.name), `${query} → ${match.name}`).toBe(true);
@@ -2477,7 +2457,7 @@ describe("tool bridge", () => {
   });
 
   it("use_tool refuses a name outside the profile in the words a direct call to it is refused with, as a failed call the model can read", async () => {
-    for (const name of ["made_up", "skill_manage", "shared_computer", "send_voice_note", "find_tool", "use_tool"]) {
+    for (const name of ["made_up", "skill_manage", "send_voice_note", "find_tool", "use_tool"]) {
       // find_tool and use_tool are this proxy's own, so only the bridged form is unknown
       if (name !== "find_tool" && name !== "use_tool") {
         const direct = await plain("tools/call", { name, arguments: {} });

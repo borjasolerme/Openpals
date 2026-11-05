@@ -44,10 +44,6 @@ vi.mock("@/lib/call", async (importOriginal) => ({
   endCall: fixture.endCall,
   useOnCall: () => fixture.onCall,
 }));
-vi.mock("@/lib/local-voice", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@/lib/local-voice")>(),
-  localSystemVoiceActive: () => false,
-}));
 // No exit animation, so the help card shows exactly while it is open.
 vi.mock("./MenuMotion", async (importOriginal) => ({
   ...await importOriginal<typeof import("./MenuMotion")>(),
@@ -196,62 +192,6 @@ describe("setting up a voice from the call button", () => {
     expect(fixture.dialog).toMatchObject({ bot: basil, ready: true });
     (fixture.dialog!.onStartCall as () => void)();
     expect(fixture.startCall).toHaveBeenCalledWith("room-1");
-  });
-
-  it("opens the remote agent settings instead on a desktop paired to another computer", () => {
-    vi.stubGlobal("window", { ogb: { speechStart: () => {}, remoteClient: { active: true } } });
-    fixture.config = { tts: { configured: true, ready: false } };
-    click(find(render(), "data-call-button"));
-    const help = render();
-    expect(help.html).toContain("Set up voice");
-    const setUp = find(help, "data-voice-setup-open");
-    expect(setUp.props["aria-haspopup"]).toBeUndefined();
-    click(setUp);
-    expect(fixture.dispatch.mock.calls).toEqual([[{ type: "toggleSettings", open: true, section: "voice" }]]);
-    const after = render();
-    expect(after.html).not.toContain("data-voice-setup-stub");
-    expect(after.html).not.toContain("Call unavailable");
-    expect(fixture.dialog).toBeNull();
-    expect(fixture.startCall).not.toHaveBeenCalled();
-  });
-
-  it("opens the member's chat first from a room on a paired desktop", () => {
-    vi.stubGlobal("window", { ogb: { speechStart: () => {}, remoteClient: { active: true } } });
-    fixture.config = { tts: { configured: true, ready: true } };
-    const room: Props = {
-      targetId: "room-1",
-      targetName: "Standup",
-      voices: ["voice-1", undefined],
-      setupBotId: "pepper",
-      requireExplicitVoices: true,
-    };
-    click(find(render(room), "data-call-button"));
-    click(find(render(room), "data-voice-setup-open"));
-    expect(fixture.dispatch.mock.calls).toEqual([
-      [{ type: "select", id: "pepper" }],
-      [{ type: "toggleSettings", open: true, section: "voice" }],
-    ]);
-    expect(render(room).html).not.toContain("data-voice-setup-stub");
-  });
-
-  it("opens the member's chat as its row does with threads hidden: at its main thread", () => {
-    vi.stubGlobal("window", { ogb: { speechStart: () => {}, remoteClient: { active: true } } });
-    fixture.config = { tts: { configured: true, ready: true } };
-    fixture.showThreads = false;
-    fixture.bots = [{ ...pepper, mainThreadId: "main", tasks: [{ threadId: "t", title: "Report", createdAt: 1 }, { threadId: "main", title: "Chat", createdAt: 2 }] }, basil];
-    const room: Props = {
-      targetId: "room-1",
-      targetName: "Standup",
-      voices: ["voice-1", undefined],
-      setupBotId: "pepper",
-      requireExplicitVoices: true,
-    };
-    click(find(render(room), "data-call-button"));
-    click(find(render(room), "data-voice-setup-open"));
-    expect(fixture.dispatch.mock.calls).toEqual([
-      [{ type: "switchTask", botId: "pepper", threadId: "main" }],
-      [{ type: "toggleSettings", open: true, section: "voice" }],
-    ]);
   });
 
   it("starts the Live call, not voice set-up, where the device can't take turns", () => {

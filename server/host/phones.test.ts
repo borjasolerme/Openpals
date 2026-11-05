@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { CloudLendingTurn } from "../cloud-lending.ts";
+import type { OwnerTurn } from "../owner-turn.ts";
 import { PHONE_PLACE_PROMPT } from "../phones/instructions.ts";
 import type { RequestAuth } from "../request-auth.ts";
 import type { SessionRecord } from "../sessions.ts";
@@ -39,8 +39,8 @@ function world(overrides: Partial<PhonesDeps> = {}) {
     dataDir: dir, shared: false, loopbackTrust: "owner", sharedMembership: () => false,
     store: { messagesFor: () => lines, bot: () => chief, groupByThread: () => undefined, appendMessage: () => {} } as unknown as PhonesDeps["store"],
     sessions: { list: () => [], isLive: () => true, onSessionRevoked: () => () => {} }, routines: () => null, ownerOrAdmin: (auth) => auth.scopes.includes("admin"), 
-    cloudLendingTurn: () => ({ thread: lines, request: { ...requests.get(THREAD), generations: new Set([TURN.generation]) }, generation: TURN.generation, starters: [], reportsFromOthers: false,
-      ownerPerson: () => true, cardAnswerer: () => undefined, routineRun: () => null }) as unknown as CloudLendingTurn,
+    ownerTurn: () => ({ thread: lines, request: { ...requests.get(THREAD), generations: new Set([TURN.generation]) }, generation: TURN.generation, starters: [], reportsFromOthers: false,
+      ownerPerson: () => true, cardAnswerer: () => undefined, routineRun: () => null }) as unknown as OwnerTurn,
     originIsUser: () => true, request: (threadId) => requests.get(threadId), nudge: () => {}, mint: () => "turn-token",
     harnessUrl: "http://127.0.0.1:1", active: () => true,
     ...overrides,

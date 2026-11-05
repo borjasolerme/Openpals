@@ -404,7 +404,7 @@ export type { BrowserEngineSummary, BrowserProfile, ConfigStatus };
 // A section left out here is wiped from state.config whenever a config frame lands.
 export type ConfigStatusFrame = Pick<
   ConfigStatus,
-  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing" | "workspaceBanner"
+  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing"
 >;
 
 export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
@@ -442,7 +442,6 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
     edition: frame.edition,
     budgets: frame.budgets,
     billing: frame.billing,
-    ...(frame.workspaceBanner ? { workspaceBanner: frame.workspaceBanner } : {}),
   };
 }
 
@@ -500,7 +499,6 @@ export interface InstanceInfo {
 
 export type AppSettingsSection =
   | "general"
-  | "desktopWorkspaces"
   | "appearance"
   | "experimental"
   | "connections"
@@ -554,7 +552,6 @@ export interface AppState {
   liveCallLookupSeq: number;
   selectedId: string;
   activeView: "chat" | "routines" | "web-panel";
-  /** Folders a finished move left on this computer, for Files to offer sharing. */
   webPanelId?: string;
   routines: Routine[];
   routineRuns: RoutineRun[];
@@ -2609,9 +2606,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             body: JSON.stringify({
               memberIds: action.memberIds,
               name: action.name,
-              ...(window.ogb?.remoteClient?.active
-                ? { setup: { bulletin: "", defaultResponder: { kind: "mentions" } } }
-                : {}),
             }),
           })
             .then(({ group }) => {
@@ -2842,14 +2836,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           return () => rawDispatch({ type: "notificationsHydrated", notifications: Array.isArray(notifications) ? notifications : [] });
         },
       },
-      ...(window.ogb?.remoteClient?.active ? [] : [{
+      {
         key: "webhooks",
         request: async () => {
           const { webhooks, attempts, ingress } = await api("/api/webhooks");
           return () =>
             rawDispatch({ type: "webhooksHydrated", webhooks, attempts: attempts ?? [], ingress });
         },
-      } satisfies PeripheralPart]),
+      },
     ];
     const partByKey = new Map(peripheralParts.map((part) => [part.key, part]));
     const schedulePeripheralRetry = (part: PeripheralPart, error?: Error) => {

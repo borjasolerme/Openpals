@@ -583,27 +583,6 @@ export function setActiveLeaf(threadId: string, leafId: string | null): void {
   prepared("INSERT INTO thread_state (thread_id, active_leaf_id) VALUES (?, ?) ON CONFLICT(thread_id) DO UPDATE SET active_leaf_id = excluded.active_leaf_id").run(threadId, leafId);
 }
 
-/** Each conversation's newest stored row, by its row number, and how many rows it has: what Send to My Cloud compares with what it sent. */
-export function threadHeads(): Map<string, { last: number; lastId: string; rows: number }> {
-  const rows = db().prepare("SELECT m.thread_id AS threadId, m.rowid AS last, m.id AS lastId, h.rows AS rows FROM messages m " +
-    "JOIN (SELECT thread_id, MAX(rowid) AS head, COUNT(*) AS rows FROM messages GROUP BY thread_id) h ON m.rowid = h.head").all() as Array<{ threadId: string; last: number; lastId: string; rows: number }>;
-  return new Map(rows.map((row) => [row.threadId, { last: Number(row.last), lastId: row.lastId, rows: Number(row.rows) }]));
-}
-
-/** A conversation's rows numbered past `after`, oldest first, each with its stored size: `limit` of them, or all up to `through`. */
-export function threadRowsFrom(threadId: string, after: number, upTo: { limit: number } | { through: number }): Array<{ at: number; bytes: number; message: Message }> {
-  const rows = ("limit" in upTo
-    ? db().prepare("SELECT rowid AS at, json FROM messages WHERE thread_id = ? AND rowid > ? ORDER BY rowid LIMIT ?").all(threadId, after, upTo.limit)
-    : db().prepare("SELECT rowid AS at, json FROM messages WHERE thread_id = ? AND rowid > ? AND rowid <= ? ORDER BY rowid").all(threadId, after, upTo.through)) as Array<{ at: number; json: string }>;
-  return rows.map((row) => ({ at: Number(row.at), bytes: Buffer.byteLength(row.json, "utf8"), message: rowToMessage(row) }));
-}
-
-/** Each of a conversation's stored rows by id, with its row number. */
-export function threadRowNumbers(threadId: string): Map<string, number> {
-  const rows = db().prepare("SELECT rowid AS at, id FROM messages WHERE thread_id = ?").all(threadId) as Array<{ at: number; id: string }>;
-  return new Map(rows.map((row) => [row.id, Number(row.at)]));
-}
-
 export function latestMessageAts(threadIds: readonly string[], forOrdering = false): Map<string, number> {
   return forOrdering
     ? newestAts(threadIds, "AND ((role = 'user' AND json_extract(json, '$.peerAsk') IS NULL) OR (role = 'bot' AND kind = 'text' AND (json_extract(json, '$.turnTerminal') = 1 OR json_extract(json, '$.turnId') IS NULL)))", "COALESCE(json_extract(json, '$.turnCompletedAt'), at)")

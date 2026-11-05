@@ -1,45 +1,40 @@
-import { describe, expect, it } from "vitest";
-import { effectivePlace, isComputerPlace, placeLabelKey, toolPlace } from "./place";
-import { toolSurfaceKind } from "../../shared/tool-surface";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { connectServer, currentPlace, disconnectServer, onPlaceChanged } from "./place";
 
-describe("where a conversation works", () => {
-  it("lets the conversation's pin win over the bot's Works on, except Off", () => {
-    expect(effectivePlace({ computer: "cloud" }, { surface: "browser" })).toBe("browser");
-    expect(effectivePlace({ computer: undefined }, { surface: "vm" })).toBe("vm");
-    expect(effectivePlace({ computer: "browser" }, { surface: "local" })).toBe("local");
-    expect(effectivePlace({ computer: "off" }, { surface: "browser" })).toBe("off");
-    expect(effectivePlace({ computer: "cloud" }, null)).toBe("cloud");
-    expect(effectivePlace({ computer: undefined }, undefined)).toBe("auto");
+afterEach(() => { vi.unstubAllGlobals(); });
+
+describe("where the bots live", () => {
+  it("has no place of its own in a browser, where the page is the place", async () => {
+    vi.stubGlobal("window", {});
+    expect(await currentPlace()).toBeNull();
+    expect(await connectServer("https://bots.example.com/pair#code=ABCD")).toEqual({ ok: false, error: "desktop-only" });
+    await expect(disconnectServer()).resolves.toBeUndefined();
+    expect(onPlaceChanged(() => {})()).toBeUndefined();
   });
 
-  it("names places with one label key each", () => {
-    expect(placeLabelKey("cloud")).toBe("place.cloud");
-    expect(placeLabelKey("auto")).toBe("place.auto");
-    expect(isComputerPlace("vm")).toBe(true);
-    expect(isComputerPlace("browser")).toBe(false);
-    expect(isComputerPlace("auto")).toBe(false);
-  });
+  it("asks the desktop app, which pairs, forgets and says when the place changed", async () => {
+    const server = { kind: "server", url: "https://bots.example.com", label: "Bots" } as const;
+    let listener: ((place: { kind: "local" } | typeof server) => void) | undefined;
+    const stop = vi.fn();
+    const place = {
+      current: vi.fn(async () => server),
+      connect: vi.fn(async () => ({ ok: true as const })),
+      disconnect: vi.fn(async () => {}),
+      onChanged: vi.fn((callback: typeof listener) => { listener = callback; return stop; }),
+    };
+    vi.stubGlobal("window", { ogb: { place } });
 
-  it("gives browser tools the browser, computer tools the conversation's computer, and other tools nothing", () => {
-    expect(toolPlace("agent_browser_snapshot", "cloud")).toBe("browser");
-    expect(toolPlace("mcp__browser__browser_click", "vm")).toBe("browser");
-    expect(toolPlace("mcp__computer__screenshot", "cloud")).toBe("cloud");
-    expect(toolPlace("click", "local")).toBe("local");
-    expect(toolPlace("computer_exec", "vm")).toBe("vm");
-    expect(toolPlace("browser_click", "cloud")).toBe("cloud");
-    expect(toolPlace("screenshot", "auto")).toBeNull();
-    expect(toolPlace("screenshot", "browser")).toBeNull();
-    for (const name of ["Bash", "Read", "list_bots", "recall", "propose_routine", "mcp__agents__ask_bot"]) {
-      expect(toolPlace(name, "cloud"), name).toBeNull();
-    }
-  });
+    expect(await currentPlace()).toEqual(server);
+    expect(await connectServer("https://bots.example.com/pair#code=ABCD")).toEqual({ ok: true });
+    expect(place.connect).toHaveBeenCalledWith("https://bots.example.com/pair#code=ABCD");
+    await disconnectServer();
+    expect(place.disconnect).toHaveBeenCalledOnce();
 
-  it("classifies tool names without guessing computer for unrelated tools", () => {
-    expect(toolSurfaceKind("agent_browser_open")).toBe("browser");
-    expect(toolSurfaceKind("browser__snapshot")).toBe("browser");
-    expect(toolSurfaceKind("computer__click")).toBe("computer");
-    expect(toolSurfaceKind("hotkey")).toBe("computer");
-    expect(toolSurfaceKind("Bash")).toBeNull();
-    expect(toolSurfaceKind("mcp__agents__list_bots")).toBeNull();
+    const seen: unknown[] = [];
+    const unsubscribe = onPlaceChanged((next) => seen.push(next));
+    listener?.({ kind: "local" });
+    unsubscribe();
+    expect(seen).toEqual([{ kind: "local" }]);
+    expect(stop).toHaveBeenCalledOnce();
   });
 });

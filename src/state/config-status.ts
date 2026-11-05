@@ -10,8 +10,6 @@ export type NestedKeyName = "ttsKey" | "fishAudioKey" | "jevApiKey" | "openroute
 
 /** GET /api/config — configured flags only; secrets are never echoed. */
 export interface ConfigStatus {
-  /** The workspace's banner picture (GET /api/workspace/banner), by a version that changes with it; null without one. */
-  workspaceBanner?: import("@/lib/place-banner").BannerSummary | null;
   xai?: SavedKey;
   mistral?: SavedKey;
   cerebras?: SavedKey;
@@ -114,7 +112,7 @@ export interface ConfigStatus {
   /** What a paired phone calls this computer; "" uses the default. */
   computerName?: string;
   /** Opt-in flags. Absent means off. */
-  features?: { skillAuthoring: boolean; skillReview?: boolean; skillReviewSteps?: number; showToolCalls?: boolean; browser?: boolean; sharedComputers?: boolean; claudeUserMcp?: boolean; llmThreadTitles?: boolean; skillsLibrary?: boolean; shareLearnedSkills?: "off" | "ask" | "auto"; roomMemoryCapture?: boolean; savedSteps?: boolean; savedStepsHere?: boolean };
+  features?: { skillAuthoring: boolean; skillReview?: boolean; skillReviewSteps?: number; showToolCalls?: boolean; browser?: boolean; claudeUserMcp?: boolean; llmThreadTitles?: boolean; skillsLibrary?: boolean; shareLearnedSkills?: "off" | "ask" | "auto"; roomMemoryCapture?: boolean; savedSteps?: boolean; savedStepsHere?: boolean };
   /** First-run progress: whether the welcome tour was finished and which
    * one-time hints were dismissed. Server-owned so it follows the workspace. */
   onboarding?: OnboardingStatus;

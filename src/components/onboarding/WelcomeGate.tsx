@@ -6,11 +6,11 @@ import { SharedWorkspaceHint } from "./SharedWorkspaceHint";
 import { WelcomeFlow } from "./WelcomeFlow";
 
 /**
- * Security: a remote page the desktop app loads gets a reduced but truthy window.ogb without remoteClient, and is no
- * more the owner than a browser.
+ * Security: a remote page the desktop app loads gets a reduced but truthy window.ogb whose app.ownPage is false, and is
+ * no more the owner than a browser.
  */
 export function localDesktopPage(): boolean {
-  return window.ogb?.remoteClient !== undefined;
+  return window.ogb?.app?.ownPage === true;
 }
 
 export function useWelcomeViewer(): WelcomeViewer | null {
@@ -36,17 +36,16 @@ export function useWelcomeViewer(): WelcomeViewer | null {
 export function WelcomeGate({ viewer }: { viewer: WelcomeViewer | null }) {
   const { state, dispatch } = useStore();
   const [dismissed, setDismissed] = useState(false);
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   // A welcome finished elsewhere (another window, an older version's record) leaves no draft behind to resume later.
   const finished = Boolean(viewer && state.config) && !welcomeDue(state.config, {
-    remoteClient, hosted: viewer?.hosted, canSave: viewer?.canSave,
+    hosted: viewer?.hosted, canSave: viewer?.canSave,
   });
   useEffect(() => {
     if (finished) clearWelcomeDraft();
   }, [finished]);
   if (!viewer) return null;
   if (hostedMember(viewer)) {
-    return remoteClient ? null : (
+    return (
       <SharedWorkspaceHint
         replay={state.welcomeOpen}
         onClose={() => {
@@ -58,11 +57,9 @@ export function WelcomeGate({ viewer }: { viewer: WelcomeViewer | null }) {
   const due =
     !dismissed &&
     welcomeDue(state.config, {
-      remoteClient,
       hosted: viewer.hosted,
       canSave: viewer.canSave,
     });
-  if (state.appSettingsOpen && state.appSettingsSection === "desktopWorkspaces") return null;
   if (!state.welcomeOpen && !due) return null;
   const fallback = state.bots.find((b) => !b.hidden && b.chiefOfStaff) ?? state.bots.find((b) => !b.hidden) ?? null;
   const replay = state.welcomeOpen && !due;

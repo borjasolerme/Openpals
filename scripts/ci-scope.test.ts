@@ -123,13 +123,13 @@ describe("CI path scope", () => {
     expect(selectCiScope([file])).toEqual({ areas: ["server"], checks: checks("server") });
   });
 
-  it.each([["electron/cua.mjs"], ["electron/shared-computer-access.mjs"], ["electron/capabilities.cjs"], ["electron/screen-status.mjs"]])(
+  it.each([["electron/cua.mjs"], ["electron/capabilities.cjs"], ["electron/paced-typing.mjs"]])(
     "runs the Windows computer-control smokes too for %j, which they start as the installed app does", (file) => {
       expect(selectCiScope([file])).toEqual({ areas: ["windows-computer-control"], checks: checks("server", "windows-computer-control") });
       expect(selectCiScope([file]).checks).toContain("windows-cua");
     });
 
-  it.each([["electron/main.mjs"], ["build/icon.icns"], ["electron-builder.yml"], ["index.html"], ["rail.html"]])("runs the server's checks for the desktop's %j", (file) => {
+  it.each([["electron/main.mjs"], ["build/icon.icns"], ["electron-builder.yml"], ["index.html"]])("runs the server's checks for the desktop's %j", (file) => {
     expect(selectCiScope([file])).toEqual({ areas: ["desktop"], checks: checks("server") });
   });
 
@@ -307,7 +307,7 @@ describe("Windows on a pull request", () => {
 
   it.each([
     "server/index.ts", "src/components/WindowFrame.tsx", "server/darwin.ts", "server/twin.ts", "scripts/verify-sidebar.ts",
-    "scripts/testing/rail-preview.tsx", "scripts/control-omb.ts", ".github/workflows/boat.yml", "tsconfig.json", "server/delta-context.e2e.test.ts",
+    "scripts/control-omb.ts", ".github/workflows/boat.yml", "tsconfig.json", "server/delta-context.e2e.test.ts",
   ])("waits for main for %s alone", (file) => {
     expect(reason([file])).toBeNull();
   });

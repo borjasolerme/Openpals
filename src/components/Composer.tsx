@@ -132,7 +132,6 @@ export function Composer({
   const simpleDock = !advanced && !singleRow;
   const sendKey = useSendKey(); const followUpDefault = useFollowUpDefault();
   const sendLabel = sendKeyLabel(sendKey);
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const threadId = group?.threadId ?? bot?.threadId ?? "";
   const currentGroupTask = group?.tasks?.find((task) => task.threadId === threadId);
   const groupBusyBotId = currentGroupTask?.busyBotId ?? (currentGroupTask?.working ? group?.busyBotId : (group?.threadId === threadId ? group?.busyBotId : null));
@@ -767,7 +766,7 @@ export function Composer({
               teach={canLearn ? teachTask : undefined}
               approval={approvalChoice && modeBot && { name: modeBot.name, choice: approvalChoice }}
               callBotId={bot && !group ? bot.id : undefined}
-              place={modeBot && !remoteClient && advanced ? {
+              place={modeBot && advanced ? {
                 bot: modeBot,
                 task: composerTask,
                 disabled: Boolean(modeBot.busy),
@@ -807,7 +806,7 @@ export function Composer({
               {goal && (advanced || goal.on) && <GoalToggle {...goal} compact={simpleDock} />}
               {advanced && approvalChoice && <ApprovalModeSelector {...approvalChoice} />}
               {simpleDock && approvalChoice && profile && bot && approvalModeFor(bot) !== approvalModeFor(profile) && <ApprovalChip choice={approvalChoice} />}
-              {modeBot && !remoteClient && advanced && (
+              {modeBot && advanced && (
                 <PlaceChip
                   bot={modeBot}
                   task={composerTask}

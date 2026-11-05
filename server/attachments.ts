@@ -501,48 +501,6 @@ export async function saveFile(
   });
 }
 
-/** An attachment another computer's chats name, kept under that name: counted against the store's limit like any
- * upload (507 when it is full), written under a partial name cleanup knows, never over a file already here, and never
- * leaving a partial file behind. `stored`: false when the same file was here already. */
-export async function saveNamedAttachment(name: string, chunks: AsyncIterable<Uint8Array>, expectedBytes?: number): Promise<{ stored: boolean }> {
-  if (expectedBytes !== undefined && expectedBytes > FILE_MAX_BYTES) throw statusError(413, `attachments are limited to ${FILE_MAX_BYTES} bytes`);
-  ensureAttachmentsDir();
-  const path = join(ATTACHMENTS_DIR, name);
-  const partialPath = join(ATTACHMENTS_DIR, `.openmaus-upload-${randomUUID()}-${randomUUID()}.partial`);
-  const reservation = new AttachmentReservation();
-  activePartials.add(partialPath);
-  let file: Awaited<ReturnType<typeof open>> | undefined;
-  let partialCleanupFailed = false;
-  try {
-    if (expectedBytes) reservation.reserve(expectedBytes);
-    file = await open(partialPath, "wx", 0o600);
-    let bytes = 0;
-    for await (const value of chunks) {
-      const chunk = Buffer.isBuffer(value) ? value : Buffer.from(value.buffer, value.byteOffset, value.byteLength);
-      if (bytes + chunk.byteLength > FILE_MAX_BYTES) throw statusError(413, `attachments are limited to ${FILE_MAX_BYTES} bytes`);
-      reservation.ensure(bytes + chunk.byteLength);
-      await file.write(chunk);
-      bytes += chunk.byteLength;
-    }
-    await file.close();
-    file = undefined;
-    const accountingVersion = attachmentAccountingVersion;
-    try { await link(partialPath, path); }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "EEXIST") return { stored: false };
-      throw error;
-    }
-    addCommittedBytes(bytes, accountingVersion);
-    return { stored: true };
-  } finally {
-    if (file) await file.close().catch(() => undefined);
-    await unlink(partialPath).catch(() => { partialCleanupFailed = true; });
-    activePartials.delete(partialPath);
-    if (partialCleanupFailed) invalidateAttachmentAccounting();
-    reservation.release();
-  }
-}
-
 /** The UUID filename is never attacker-controlled and never collides. */
 export function saveImage(bytes: Buffer, mime: string, requestedUploadId?: string): SavedAttachment {
   const ext = extensionForMime(mime);

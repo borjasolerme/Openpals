@@ -12,7 +12,6 @@ import { openKeySettings } from "./keys/key-focus";
 
 export function NoEngines() {
   const { state, dispatch, refreshInstances } = useStore();
-  const remoteClient = window.ogb?.remoteClient?.active === true;
   const [rechecking, setRechecking] = useState(false);
   const recheck = async () => {
     setRechecking(true);
@@ -22,23 +21,6 @@ export function NoEngines() {
       setRechecking(false);
     }
   };
-
-  if (remoteClient) {
-    return (
-      <main className="relative flex h-full min-w-0 flex-1 items-center justify-center bg-app px-6">
-        <WindowDragStrip />
-        <div className="max-w-[520px] rounded-2xl border border-hairline/40 bg-card p-6 text-center">
-          <h1 className="text-[20px] font-semibold text-ink">The host needs an AI</h1>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
-            Set up Claude or another supported AI in {productName()} on the host computer, then come back here.
-          </p>
-          <button onClick={() => void recheck()} disabled={rechecking} className="mt-5 rounded-lg bg-raised px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-60">
-            {rechecking ? "Checking…" : "Check again"}
-          </button>
-        </div>
-      </main>
-    );
-  }
 
   const engines = state.instances
     .filter((i) => i.install)
@@ -77,7 +59,7 @@ export function NoEngines() {
               <>
                 {subscription.length > 0 && <EngineGroupLabel className="px-1">{t("engines.cloud")}</EngineGroupLabel>}
                 {subscription.map(card)}
-                {api.length > 0 && window.ogb?.remoteClient?.active !== true && (
+                {api.length > 0 && (
                   <button
                     type="button"
                     data-no-engines-api-keys

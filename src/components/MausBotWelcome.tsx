@@ -51,10 +51,7 @@ export function useMausBotWelcomeDue(viewer: WelcomeViewer | null): { bot: Bot |
   const bot = defaultBotIn(state.bots);
   // The app tour runs only when Settings starts it; one never taken does not hold this back.
   const touring = state.tourOpen;
-  const onboardingDue = !viewer || welcomeDue(state.config, {
-    remoteClient: window.ogb?.remoteClient?.active === true,
-    hosted: viewer.hosted, canSave: viewer.canSave,
-  });
+  const onboardingDue = !viewer || welcomeDue(state.config, { hosted: viewer.hosted, canSave: viewer.canSave });
   const due = Boolean(state.config) && mausBotWelcomeDue({ bot, onboardingDue, welcomeOpen: state.welcomeOpen, tourOpen: touring })
     && firstReplyPending(state) === false && !welcomeFinishedThisLaunch() && launchDialogShown() !== "notices";
   return { bot, due };
