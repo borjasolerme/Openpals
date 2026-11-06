@@ -76,7 +76,7 @@ import { groupTurnCwd } from "./room-cwd.ts";
 import { RoomTurnDeadline, RoomTurnStallRegistry, effectiveRoomTurnTimeoutMinutes, parseConversationTurnTimeout, roomTurnTimeoutMessage } from "./room-turn-timeout.ts";
 import { roomTurnEnd, type RoomClaimEnd } from "./room-turn-end.ts";
 import { applyHoldDirective, classifyHoldDirective, heldMemberLine, rememberHeldMessage, stopWordPlacement } from "./room-holds.ts";
-import { createPersonStop } from "./host/person-stop.ts"; import { settleParkedFiles, type ParkedTurnAttachment } from "./host/turn-attachments.ts"; import type { DirectSendInput, DirectSendReceipt } from "./direct-send.ts";
+import { createPersonStop } from "./host/person-stop.ts"; import { landTurnFiles, settleParkedFiles, type ParkedTurnAttachment } from "./host/turn-attachments.ts"; import type { DirectSendInput, DirectSendReceipt } from "./direct-send.ts";
 import { finishedWithoutSummaryLine, ROOM_SUMMARY_REASK, roomTurnNarrationIds, roomTurnReply } from "./room-reply.ts";
 import { pickComputer } from "./computer-selection.ts";
 import * as boat from "./boat.ts"; import { keyHint, keyStatus, nestedKeyStatus, withoutKeyHints } from "./key-hint.ts";
@@ -5757,15 +5757,12 @@ bus.subscribe((event: RuntimeEvent) => {
     pushMessage({ role: "bot", kind: "text", text: spoken.text, turnId });
     lastReply.set(event.threadId, spoken.text);
   };
-  const landParkedFiles = (stopped: boolean) => {
+  const landParkedFiles = () => {
     const key = turnAttachmentKey(event.threadId, event.turnId);
-    const { land, discard } = settleParkedFiles(turnAttachmentsByTurn.get(key) ?? [], stopped, redactSecretsInText);
+    const { land, discard } = settleParkedFiles(turnAttachmentsByTurn.get(key) ?? [], redactSecretsInText);
     turnAttachmentsByTurn.delete(key);
     for (const file of discard) deleteAttachment(file.path);
-    if (!land.length) return;
-    const response = store.messagesFor(event.threadId).findLast((message) => message.role === "bot" && message.kind === "text" && message.turnId === completedTurnId);
-    if (response) store.patchMessage(event.threadId, response.id, { attachments: [...(response.attachments ?? []), ...land] });
-    else pushMessage({ role: "bot", kind: "text", text: "", attachments: land, turnId: completedTurnId });
+    landTurnFiles(store, { threadId: event.threadId, turnId: completedTurnId, ...(speaker ? { from: speaker } : {}) }, land, pushMessage);
   };
 
   if (coordinatorVisibleText) pushAssistantText(coordinatorVisibleText, completedTurnId);
@@ -6048,7 +6045,7 @@ bus.subscribe((event: RuntimeEvent) => {
         pushStoppedTurn(event.turnId);
         break;
       }
-      landParkedFiles(false); // above the failure row, which stays the last, retryable line
+      landParkedFiles(); // above the failure row, which stays the last, retryable line
       pushMessage({ role: "bot", kind: "activity", tool: failedTurnTool(event.message, event) });
       if (event.setup && bot) store.setTaskActivity(bot.id, event.threadId, "dead");
       break;
@@ -6067,7 +6064,7 @@ bus.subscribe((event: RuntimeEvent) => {
       const clientStopped = personStops.stopped(event.threadId, completedTurnId) || (stoppedTurns.has(event.threadId)
         && (stoppedTurnId === undefined || completedTurnId === undefined || stoppedTurnId === completedTurnId));
       const stopped = event.stopReason === "interrupted" || clientStopped;
-      landParkedFiles(!event.ok && stopped);
+      landParkedFiles();
       if (completedTurnId) {
         const terminal = store.markTerminalAssistantMessage(event.threadId, completedTurnId);
         if (terminal) store.patchMessage(event.threadId, terminal.id, { turnSucceeded: event.ok });
