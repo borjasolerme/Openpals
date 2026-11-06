@@ -1015,6 +1015,7 @@
   "chat.rescue.connect": "サブスクリプションを接続",
   "chat.rescue.connectHint": "すでに支払っている AI プランでサインイン",
   "chat.error.signedOut": "{name} にまだサインインしていません。下でサインインしてから、メッセージをもう一度送信してください。",
+  "chat.error.pastUsageLimit": "過去の利用制限通知（リセット時刻は経過しています。現在の利用状況を確認）",
   "chat.error.details": "詳細",
   "chat.error.requestTooLarge": "このメッセージは {model} には大きすぎます。新しいチャットを始めるか、より多くを受け付けるモデルを選んでください。",
   "chat.error.dismiss": "閉じる",

@@ -990,6 +990,7 @@
   "chat.rescue.connect": "Conectar sua assinatura",
   "chat.rescue.connectHint": "Entre com um plano de IA que você já paga",
   "chat.error.signedOut": "{name} ainda não está conectado. Entre abaixo e envie sua mensagem de novo.",
+  "chat.error.pastUsageLimit": "Aviso antigo de limite de uso (horário de redefinição já passou; confira o uso atual)",
   "chat.error.details": "Detalhes",
   "chat.error.requestTooLarge": "Esta mensagem é grande demais para {model}. Comece uma nova conversa ou escolha um modelo que aceite mais.",
   "chat.error.dismiss": "Dispensar",
