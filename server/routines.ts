@@ -6,7 +6,7 @@ import { DATA_DIR } from "./config.ts";
 import type { RuntimeEvent } from "./contracts.ts";
 import { OwnedFile } from "./atomic.ts"; import { saveSoon } from "./save-batch.ts";
 import { redactSecretsInText } from "./redact.ts";
-import { schedulerDueOf, wakeHoldOf } from "./routine-due.ts";
+import { activeRunsOf, schedulerDueOf, wakeHoldOf } from "./routine-due.ts";
 import { startDueTimer, type DueTimer } from "./due-timer.ts";
 import type { GroupGoalRunStatus } from "../shared/group-goal-run.ts";
 import type { RoutineRequestOperation } from "../shared/routine-request.ts";
@@ -417,6 +417,8 @@ export class RoutineManager {
   }
 
   wakeHold(horizonMs = WAKE_HORIZON_MS) { return wakeHoldOf(this.routines, this.runs, this.now(), horizonMs); }
+
+  hasActiveRuns(): boolean { return activeRunsOf(this.runs, this.now()); }
 
   listRuns(from?: number, to?: number): RoutineRun[] {
     return this.runs

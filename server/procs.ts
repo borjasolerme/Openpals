@@ -150,6 +150,19 @@ function rememberEngineSession(child: ChildProcess): void {
   });
 }
 
+const liveSpawns = new Set<readonly string[]>();
+
+/** The command line of every process spawnCli started that has not exited yet. */
+export function liveCliCommands(): Iterable<readonly string[]> {
+  return liveSpawns;
+}
+
+function rememberLiveSpawn(child: ChildProcess, line: readonly string[]): void {
+  if (!child.pid) return;
+  liveSpawns.add(line);
+  child.once("exit", () => liveSpawns.delete(line));
+}
+
 /** `bot`: an engine running bots' turns, whose own servers that bot's browser may open on a server host.
  * `openmausbot`: everything else (logins, probes, the browser engine itself). */
 export type CliOwner = "bot" | "openmausbot";
@@ -195,6 +208,7 @@ export function spawnCli(
   } finally {
     for (const fd of boxed?.extraFds ?? []) try { closeSync(fd); } catch {}
   }
+  rememberLiveSpawn(child, [resolved.command, ...resolved.args]);
   // The broker token minted for this process dies with it.
   if (boxed?.token) child.once("exit", boxed.release);
   if (process.platform !== "win32") cliGroups.add(child);

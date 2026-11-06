@@ -18,6 +18,10 @@ export function wakeHoldOf(routines: readonly Due[], runs: readonly Run[], now: 
   return due === undefined ? { hold: false } : { hold: true, reason: "due", at: due };
 }
 
+/** A run queued to start now, or running: work an engine update must not cut under. One waiting for a person does not
+ * count: their answer starts it again. */
+export const activeRunsOf = (runs: readonly Run[], now: number) => runs.some((run) => run.status === "running" || (run.status === "queued" && !startsLater(run, now)));
+
 type Started = Run & Pick<RoutineRun, "startedAt" | "timeoutMinutes" | "waitedMs" | "asked">;
 /** When this process's scheduler next has work: a routine's next run, or its checks once `checksFrom` has passed; a queued
  * run (now, or its retry); a started run reaching its time limit. `skip` leaves out routines whose target is gone. */
