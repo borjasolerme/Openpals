@@ -3,6 +3,7 @@ import { CloudOff, Loader2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { retryLiveEvents } from "@/lib/live-events";
 import { Button } from "./ui/Button";
+import { noteRefusedRequest } from "@/lib/session-ended";
 
 export const RECONNECTING_AFTER_MS = 4_000;
 export const CONNECTION_HELP_AFTER_MS = 20_000;
@@ -25,11 +26,15 @@ export function LiveConnectionStrip({ connected, hydrated }: { connected: boolea
   useEffect(() => {
     setLate(false);
     setHelp(false);
-    if (connected) return;
+    if (connected || !online) return;
+    // The stream is a browser EventSource, so a refused handshake looks like any other drop. Ask the session endpoint
+    // once it is late: an ended sign-in then shows the pairing page instead of "Connecting…" forever. An offline device
+    // is not asked.
+    const probe = setTimeout(() => noteRefusedRequest(), RECONNECTING_AFTER_MS);
     const timer = setTimeout(() => setLate(true), RECONNECTING_AFTER_MS);
-    const helpTimer = setTimeout(() => setHelp(true), CONNECTION_HELP_AFTER_MS);
-    return () => { clearTimeout(timer); clearTimeout(helpTimer); };
-  }, [connected]);
+    const helpTimer = setTimeout(() => { setHelp(true); noteRefusedRequest(); }, CONNECTION_HELP_AFTER_MS);
+    return () => { clearTimeout(probe); clearTimeout(timer); clearTimeout(helpTimer); };
+  }, [connected, online]);
   const notice = !online ? "offline" : !connected && late && (hydrated || help) ? "reconnecting" : null;
   if (!notice) return null;
   return <div role="status" data-live-connection={notice} className="flex flex-wrap items-center justify-center gap-2 border-b border-hairline/40 bg-panel px-3 py-1.5 text-base text-ink-secondary">
