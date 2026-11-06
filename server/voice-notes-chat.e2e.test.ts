@@ -130,6 +130,8 @@ async function withChatVoice(test: (f: {
   }
 }
 
+/** The note as the bot wrote it in the turn that lost one. */
+const NOTE = "Hi there, it is your assistant. Here is your voice note, sent fresh with this message, so you can hear it right away.";
 const audioOf = (messages: any[]) => messages.flatMap((message) => (message.attachments ?? []).filter((file: any) => file.kind === "audio").map((file: any) => ({ message, file })));
 /** The thread as the chat reads it: from its newest line back along each line's parent. */
 const inOrder = (messages: any[]) => {
@@ -213,7 +215,7 @@ it("delivers a recorded note when the person stops the turn after it", async () 
   expect(f.audioFiles()).toHaveLength(1);
 }), 90_000);
 
-it("attaches the note to the final reply of a long turn: folded first, said in between, two failed calls", async () => withChatVoice(async (f) => {
+it("records a note only with its audio on disk in a long turn: folded first, said in between, two failed calls", async () => withChatVoice(async (f) => {
   const bot = await f.newBot("Long turn voice bot");
   await f.api("PATCH", "/api/config", { context: { compactAt: 1 } });
   f.script(() => say("Noted."));
@@ -222,13 +224,15 @@ it("attaches the note to the final reply of a long turn: folded first, said in b
     frame({ content: text, tool_calls: [{ index: 0, id, type: "function", function: { name, arguments: JSON.stringify(args) } }] }, "tool_calls") + "data: [DONE]\n\n";
   f.script((request) => {
     const done = toolResults(request).length;
-    if (done === 0) return step("c1", "Voice note on its way…", "agents_send_voice_note", { text: "Here is the weekly summary." });
+    if (done === 0) return step("c1", "Voice note on its way…", "agents_send_voice_note", { text: NOTE });
     if (done === 1) return step("c2", "Looking at the numbers.", "agents_send_voice_note", { text: "" });
     if (done === 2) return step("c3", "Trying another way.", "agents_list_bots", { unexpected: true });
     if (done === 3) return step("c4", "Almost there.", "agents_list_bots", {});
     return say("Voice note is attached to this reply.");
   });
-  await f.settle(bot, "Summarise the week and send it as a voice note.");
+  await f.settle(bot, "hi send vouse message");
+  const recorded = JSON.parse(toolResults(f.requests.at(-1)!)[0]!);
+  expect(recorded).toEqual({ ok: true, result: expect.stringMatching(/^Voice note recorded\. /) });
   const messages = await f.messages(bot.activeTaskId);
   expect(messages.filter((message) => message.kind === "compaction").length).toBeGreaterThan(0);
   const turn = messages.find((message) => message.text === "Voice note is attached to this reply.")?.turnId;
@@ -237,5 +241,7 @@ it("attaches the note to the final reply of a long turn: folded first, said in b
   expect(lines.length).toBeGreaterThan(1);
   const failed = messages.filter((message) => message.kind === "activity" && message.turnId === turn && message.tool?.ok === false);
   expect(failed.length).toBeGreaterThanOrEqual(1);
-  expect(audioOf(messages).filter((note) => note.message.turnId === turn).map((note) => [note.message.text, note.file.text])).toEqual([["Voice note is attached to this reply.", "Here is the weekly summary."]]);
+  const notes = audioOf(messages).filter((note) => note.message.turnId === turn);
+  expect(notes.map((note) => [note.message.text, note.file.text])).toEqual([["Voice note is attached to this reply.", NOTE]]);
+  expect(f.audioFiles()).toContain(notes[0]!.file.path.split(/[\\/]/).pop());
 }), 120_000);

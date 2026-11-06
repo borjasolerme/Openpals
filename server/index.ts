@@ -13376,11 +13376,12 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             return json(res, 409, { error: "this turn has not started yet or already ended" });
           }
           const saved = saveAudio(Buffer.from(audio.bytes), audio.mime);
+          if (!existsSync(saved.path)) throw new Error("the voice note's audio file was not saved");
           const key = turnAttachmentKey(internalCapability.threadId, turnId);
           const current = turnAttachmentsByTurn.get(key) ?? [];
           current.push({ kind: "audio", path: saved.path, mime: saved.mime, text });
           turnAttachmentsByTurn.set(key, current); console.info(`[voice-note] parked thread=${internalCapability.threadId} turn=${turnId} file=${basename(saved.path)}`);
-          return json(res, 201, { attached: true });
+          return json(res, 201, { attached: true, file: basename(saved.path) });
         } catch (error) {
           if (error instanceof tts.NoVoiceConfigured) return json(res, 409, { error: error.message });
           const status = (error as { status?: number }).status;
