@@ -778,7 +778,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   }) };
   const { botChats, rooms } = partitionSidebarGroups(visibleGroups);
 
-  const drops = botDrag.arrange({ enabled: sections.interactive && !phone, list: saved.bots, bots: state.bots });
+  const drops = botDrag.arrange({ enabled: (sections.interactive || density === "icons") && !phone, list: saved.bots, bots: state.bots });
   const naturalSectionIds = [
     ...(pinnedBots.length > 0 && !universalPins && !simpleDesk ? [PINNED_SECTION_ID] : []),
     ...(rooms.length > 0 ? [CHANNELS_SECTION_ID] : []),
