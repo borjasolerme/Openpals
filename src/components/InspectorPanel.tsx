@@ -38,6 +38,7 @@ export function InspectorPanel({ bot }: { bot: Bot }) {
       const next = (await res.json()) as InspectorPage;
       if (controller.signal.aborted) return;
       setPage({ ...next, entries: boundInspectorEntries(next.entries) });
+      setExpanded((previous) => new Set([...previous].filter((key) => key.startsWith("runtime:"))));
       setError(null);
     } catch (e) {
       if (controller.signal.aborted) return;
@@ -126,7 +127,7 @@ export function InspectorPanel({ bot }: { bot: Bot }) {
 
   useEffect(() => {
     const retained = new Set(["runtime", "native"].flatMap((kind) =>
-      toRows(page?.entries.filter((entry) => entry.kind === kind) ?? []).map((row) => row.key)));
+      toRows(page?.entries.filter((entry) => entry.kind === kind) ?? []).map((row) => `${row.kind}:${row.key}`)));
     setExpanded((previous) => {
       const next = new Set([...previous].filter((key) => retained.has(key)));
       return next.size === previous.size ? previous : next;
@@ -218,7 +219,7 @@ export function InspectorPanel({ bot }: { bot: Bot }) {
           </div>
         )}
         {rows.map((row) => (
-          <Row key={row.key} row={row} open={expanded.has(row.key)} onToggle={() => toggle(row.key)} />
+          <Row key={row.key} row={row} open={expanded.has(`${row.kind}:${row.key}`)} onToggle={() => toggle(`${row.kind}:${row.key}`)} />
         ))}
       </div>}
       </div>
