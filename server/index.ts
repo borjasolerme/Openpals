@@ -404,7 +404,6 @@ import { profileRevision, profileSnapshot } from "./profile-revision.ts";
 import { flushAllProfileHistory, flushProfileHistory, readHistory, recordProfileChange } from "./profile-versions.ts";
 import { TeamMemory, TEAM_MEMORY_KINDS, type TeamMemoryKind } from "./team-memory.ts";
 import { describeTool } from "./activity.ts";
-import { OutboundCounts } from "./outbound-counts.ts";
 import { OutboundRequestService } from "./outbound-requests.ts";
 import { createOutboundHold, OUTBOUND_HOLD_MS, type OutboundHoldAnswer } from "./outbound-hold.ts";
 import { connectorCallsIn, outboundCallsIn } from "../shared/outbound.ts";
@@ -8536,8 +8535,7 @@ const validateModelProposal = (selection: ModelSelection, current?: BotRecord): 
 const teamMemory = new TeamMemory(join(DATA_DIR, "team-memory.json"));
 const teamMemoryRequests = createTeamMemoryRequests({ teamMemory, store, decide: (row) => appendDecision(DATA_DIR, row) });
 const outboundRequests = new OutboundRequestService();
-const outboundCounts = new OutboundCounts(join(DATA_DIR, "outbound-counts.json"));
-const outboundHold = createOutboundHold({ store, dataDir: DATA_DIR, outboundRequests, outboundCounts, holdMs: OUTBOUND_HOLD_MS, connectorThread, activeGroupTurnForBot, notify });
+const outboundHold = createOutboundHold({ store, dataDir: DATA_DIR, outboundRequests, holdMs: OUTBOUND_HOLD_MS, connectorThread, activeGroupTurnForBot, notify });
 
 function resolveAndSendTrust(res: ServerResponse, threadId: string, requestId: string, behavior: "allow" | "deny" | "answer"): boolean {
   const remembered = teamMemoryRequests.resolve(threadId, requestId, behavior);
@@ -11559,7 +11557,7 @@ ROUTES.push(createComputerRoutes({
   claimBoatInventoryRequest, claimManagedBoatMutation, claimManagedVpsMutation,
 }));
 ROUTES.push(createStatusRoutes({
-  store, cfg, outboundCounts,
+  store, cfg,
   staticDir: STATIC_DIR,
   adminActivityRecording, configStatus, broadcast, threadShown,
   browserEngineInstall: { get: () => browserEngineInstall, set: (install) => { browserEngineInstall = install; } },
@@ -13538,7 +13536,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         }
         const opaque = connectorCalls.some(call => call.slug === "COMPOSIO_PROXY_EXECUTE");
         if (opaque && currentSender.connectorTools !== undefined) return refuseOutbound("Openpals cannot verify this code against this bot's tool grants. Use a direct app tool.");
-        // At Full access a send asks nobody (outbound-hold.ts sets its daily cap). A room turn can run at a Chief's delegated level, which only the room handoff carries.
+        // A room turn can run at a Chief's delegated level, which only the room handoff carries.
         const sendsFreely = () => roomTurnLevels.forRequest(internalCapability.threadId, internalCapability.botId,
           () => sourceApprovalMode(internalCapability.botId, internalCapability.threadId)) === "full";
         const fullAccess = outboundTool !== null && sendsFreely();
@@ -13579,8 +13577,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             if (draftReservation) refuseDispatch(draftReservation);
             if (outboundTool) {
               try {
-                outboundHold.reserve({
-                  bot: fresh, threadId: internalCapability.threadId, tool: outboundTool, calls: outboundCalls, opaque,
+                outboundHold.beforeDispatch({
+                  bot: fresh, threadId: internalCapability.threadId, tool: outboundTool, opaque,
                   fullAccess: fullAccess && sendsFreely(), approved: outboundApproved,
                 });
               } catch (error) {

@@ -1,4 +1,3 @@
-import { DEFAULT_OUTBOUND_POLICY } from "../../shared/outbound.ts";
 import { readBotActivity } from "../activity.ts";
 import { activityCsv, activityEntries, parseActivityWhat, readAdminActivityRange } from "../admin-activity.ts";
 import { loadBrand } from "../brand.ts";
@@ -8,7 +7,6 @@ import { boundRetentionDays, decisionsCsv, readDecisionRange, readDecisions, typ
 import { flushNativeLog } from "../drivers/native.ts";
 import { fleetAvailable, fleetRequest, fleetSocketPath } from "../fleet-client.ts";
 import { noteKeyAccepted, noteKeyRejected } from "../key-rejections.ts";
-import type { OutboundCounts } from "../outbound-counts.ts";
 import { loadPlanUsage, planAccountsFromInstances } from "../plan-usage.ts";
 import { tregProviderApi } from "../service-credentials.ts";
 import { checkProviderKey, PROVIDER_KEY_KINDS, providerBaseUrl, type ProviderKeyKind } from "../provider-key-check.ts";
@@ -23,7 +21,6 @@ import { PASS, type RouteHandler } from "./table.ts";
 export interface StatusRouteDeps {
   store: Pick<Store, "bot" | "bots" | "tasks" | "groupByThread">;
   cfg: AppConfig;
-  outboundCounts: Pick<OutboundCounts, "today">;
   staticDir: string | null;
   adminActivityRecording(): boolean;
   configStatus(): ConfigStatus;
@@ -42,7 +39,7 @@ function readable(rows: DecisionRow[], shown: (threadId: string) => boolean): De
 
 export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
   const {
-    store, cfg, outboundCounts, staticDir: STATIC_DIR, adminActivityRecording,
+    store, cfg, staticDir: STATIC_DIR, adminActivityRecording,
     configStatus, broadcast, browserEngineInstall, browserEngineInstallError,
   } = deps;
   return async ({ req, res, url, path, method, auth, json, readBody }) => {
@@ -231,13 +228,6 @@ export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
       return json(res, 200, {
         rows: readBotActivity({ dataDir: DATA_DIR, eventsDir: EVENTS_DIR, botId: bot.id, threadIds, limit: parsedLimit ?? 300 }),
       });
-    }
-
-    m = path.match(/^\/api\/bots\/([\w-]+)\/outbound$/);
-    if (m && method === "GET") {
-      const bot = store.bot(m[1]);
-      if (!bot) return json(res, 404, { error: "no such bot" });
-      return json(res, 200, { policy: bot.outbound ?? DEFAULT_OUTBOUND_POLICY, today: outboundCounts.today(bot.id) });
     }
     return PASS;
   };

@@ -4,7 +4,7 @@ import { join } from "node:path"; import { isDeepStrictEqual } from "node:util";
 import { OwnedFile, writeFileAtomic } from "./atomic.ts"; import { saveSoon } from "./save-batch.ts"; import { discardNativeLog } from "./drivers/native.ts";
 import { commitRegistryChange, keptRevocation, saveRegistryFor, touchesPermissions } from "./registry-save.ts";
 import { parseToolScope, toolScopeWidens } from "../shared/tool-scope.ts"; import { grantScopedApps } from "../shared/connector-scopes.ts";
-import { reorderStable } from "../shared/bot-order.ts";
+import { reorderStable } from "../shared/bot-order.ts"; import { trimOutboundPolicy } from "../shared/outbound.ts";
 import { removeBotFolder, soulFile, soulHash, writeSoulMirror } from "./bot-folder.ts";
 import type { BotProfilePatch } from "./bot-profile.ts";
 import { peerAllowKey, type PeerAction } from "./peer-approval-key.ts";
@@ -348,7 +348,7 @@ export class Store {
     for (const b of this.bots) {
       if (b.busy || (b.activity !== undefined && b.activity !== "idle")) botsMigrated = true;
       b.busy = false;
-      b.activity = "idle"; if (grantScopedApps(b)) botsMigrated = true;
+      b.activity = "idle"; if (grantScopedApps(b)) botsMigrated = true; if (trimOutboundPolicy(b)) botsMigrated = true;
       if (typeof b.soul !== "string") {
         b.soul = "";
         botsMigrated = true;
