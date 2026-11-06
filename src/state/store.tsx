@@ -1,4 +1,4 @@
-import { api, ApiError, snapshotArrays } from "./api";
+import { api, ApiError, retryRequest, snapshotArrays } from "./api";
 import {
   createContext,
   useCallback,
@@ -2148,17 +2148,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (bot) rawDispatch({ type: "botPatched", bot: withTaskWrites(bot) });
       }).catch((error) => {
         showError(error);
-        // Keep blocking sends while reconciliation fails or a newer write owns this lane.
+        // Keep blocking sends while reconciliation fails (it is asked again) or a newer write owns this lane.
         if (taskWrites.get(threadId) === pending) {
           pending.patch = {};
-          void api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then(({ bots }) => {
-            if (taskWrites.get(threadId) !== pending) return;
-            const bot = bots.find((candidate: Bot) => candidate.id === botId);
+          retryRequest(() => taskWrites.get(threadId) === pending, () => api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then(({ bots }) => {
+            const bot = taskWrites.get(threadId) === pending ? bots.find((candidate: Bot) => candidate.id === botId) : undefined;
             if (bot) {
               rawDispatch({ type: "botPatched", bot: withTaskWrites(bot) });
               taskWrites.delete(threadId);
             }
-          }).catch(() => {});
+          }));
         }
       });
     };
@@ -2702,7 +2701,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             : `/api/bots/${action.botId}/tasks/${action.threadId}${action.whole ? "" : `?messages=${MESSAGE_PAGE_SIZE}`}`, { method: "POST", body: "{}" }))
             .then((r) => {
               settle();
-              if (!r?.bot || navigation.get(action.botId) !== revision) return;
+              if (navigation.get(action.botId) !== revision) return;
+              if (!r?.bot) { if (action.type === "switchTask") rawDispatch({ type: "switchTaskFailed", botId: action.botId, threadId: action.threadId }); return; }
               dispatch({ type: "taskSwitched", bot: r.bot });
             })
             .catch((error) => {
