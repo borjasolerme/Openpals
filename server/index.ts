@@ -7,7 +7,7 @@ import { homedir } from "node:os";
 import { rm as removeDirectory } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { ToolResults, TOOL_RESULT_MAX_CHARS } from "./tool-results.ts";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { authorizeExternalRuntime, externalRuntimeIsActive, type ExternalRuntimeGrant } from "./external-runtime.ts";
 import { z } from "zod";
 import { selectReplay, replayToolCalls, DEFAULT_REBUILD_BYTES, MAX_SUMMARY_BYTES } from "./context-rebuild.ts";
@@ -76,7 +76,7 @@ import { groupTurnCwd } from "./room-cwd.ts";
 import { RoomTurnDeadline, RoomTurnStallRegistry, effectiveRoomTurnTimeoutMinutes, parseConversationTurnTimeout, roomTurnTimeoutMessage } from "./room-turn-timeout.ts";
 import { roomTurnEnd, type RoomClaimEnd } from "./room-turn-end.ts";
 import { applyHoldDirective, classifyHoldDirective, heldMemberLine, rememberHeldMessage, stopWordPlacement } from "./room-holds.ts";
-import { createPersonStop } from "./host/person-stop.ts"; import { landTurnFiles, settleParkedFiles, type ParkedTurnAttachment } from "./host/turn-attachments.ts"; import type { DirectSendInput, DirectSendReceipt } from "./direct-send.ts";
+import { createPersonStop } from "./host/person-stop.ts"; import { landTurnFiles, parkedFilesKey, settleParkedFiles, takeParkedFiles, type ParkedTurnAttachment } from "./host/turn-attachments.ts"; import type { DirectSendInput, DirectSendReceipt } from "./direct-send.ts";
 import { finishedWithoutSummaryLine, ROOM_SUMMARY_REASK, roomTurnNarrationIds, roomTurnReply } from "./room-reply.ts";
 import { pickComputer } from "./computer-selection.ts";
 import * as boat from "./boat.ts"; import { keyHint, keyStatus, nestedKeyStatus, withoutKeyHints } from "./key-hint.ts";
@@ -1873,9 +1873,7 @@ const pendingCancelledProviderHandshakes = new PendingTurnCancellations();
 
 const turnAttachmentsByTurn = new Map<string, Array<ParkedTurnAttachment>>();
 
-function turnAttachmentKey(threadId: string, turnId?: string): string {
-  return `${threadId}:${turnId ?? "active"}`;
-}
+const turnAttachmentKey = parkedFilesKey;
 
 function purgeTurnAttachmentsForThread(threadId: string): void {
   for (const [key, attachments] of turnAttachmentsByTurn) {
@@ -5756,9 +5754,9 @@ bus.subscribe((event: RuntimeEvent) => {
     lastReply.set(event.threadId, spoken.text);
   };
   const landParkedFiles = () => {
-    const key = turnAttachmentKey(event.threadId, event.turnId);
-    const { land, discard } = settleParkedFiles(turnAttachmentsByTurn.get(key) ?? [], redactSecretsInText);
-    turnAttachmentsByTurn.delete(key);
+    const { files, strays } = takeParkedFiles(turnAttachmentsByTurn, event.threadId, event.turnId);
+    if (strays.length) console.warn(`[turn-files] thread=${event.threadId} turn=${event.turnId ?? "none"} took files parked under ${strays.join(", ")}`);
+    const { land, discard } = settleParkedFiles(files, redactSecretsInText);
     for (const file of discard) deleteAttachment(file.path);
     landTurnFiles(store, { threadId: event.threadId, turnId: completedTurnId, ...(speaker ? { from: speaker } : {}) }, land, pushMessage);
   };
@@ -13381,7 +13379,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           const key = turnAttachmentKey(internalCapability.threadId, turnId);
           const current = turnAttachmentsByTurn.get(key) ?? [];
           current.push({ kind: "audio", path: saved.path, mime: saved.mime, text });
-          turnAttachmentsByTurn.set(key, current);
+          turnAttachmentsByTurn.set(key, current); console.info(`[voice-note] parked thread=${internalCapability.threadId} turn=${turnId} file=${basename(saved.path)}`);
           return json(res, 201, { attached: true });
         } catch (error) {
           if (error instanceof tts.NoVoiceConfigured) return json(res, 409, { error: error.message });
