@@ -114,6 +114,19 @@ describe("ACP threads sharing one agent process", () => {
     expect(g.spawned).toHaveLength(2);
   });
 
+  it("gives each folder in a process to one thread for the process's life, since the agent keeps MCP servers per folder", async () => {
+    const f = await fixture();
+    const shared = join(f.scratch, "project");
+    mkdirSync(shared, { recursive: true });
+    await Promise.all([f.run("thread-a", { cwd: shared }), f.run("thread-b", { cwd: shared })]);
+    expect(f.spawned).toHaveLength(2);
+    await f.run("thread-c", { cwd: shared });
+    expect(f.spawned).toHaveLength(3);
+    await f.run("thread-a", { cwd: shared });
+    await f.run("thread-d");
+    expect(f.spawned).toHaveLength(3);
+  });
+
   it("closes only the leaving thread's session while others use the process, and ends the process with the last one", async () => {
     const f = await fixture();
     await f.run("thread-a");
