@@ -32,8 +32,8 @@ describe("a slow cloud computer start", () => {
   const requests: string[] = [];
   /** Boat keeps a new computer "provisioning" while this is set, never
    * answers a desktop link request while `desktop` is set, and cuts off this
-   * many computer listings before answering, as a dropped connection does. */
-  const hold = { provisioning: false, desktop: false, dropLists: 0 };
+   * many computer listings before answering, as a dropped connection does, and refuses every create while `refuseCreate` is set. */
+  const hold = { provisioning: false, desktop: false, dropLists: 0, refuseCreate: false };
   const held: ServerResponse[] = [];
 
   const api = async (method: string, path: string, body?: unknown) => {
@@ -100,6 +100,7 @@ describe("a slow cloud computer start", () => {
         }
         if (path === "/sandboxes" && req.method === "GET" && hold.dropLists > 0) { hold.dropLists--; return void req.socket.destroy(); }
         if (path === "/sandboxes" && req.method === "GET") return send(200, { ok: true, sandboxes: rows, pageInfo: { nextCursor: null } });
+        if (path === "/sandboxes" && req.method === "POST" && hold.refuseCreate) return send(422, { ok: false, message: "the sandbox image is unavailable" });
         if (path === "/sandboxes" && req.method === "POST") {
           const row = { id: `bx_${"23456789abcdefgh"[rows.length]}3456789`, state: "provisioning" };
           rows.push(row);
@@ -243,4 +244,21 @@ describe("a slow cloud computer start", () => {
       hold.desktop = false;
     }
   }, 60_000);
+
+  it("a start that fails while a call waits on it answers that call with the reason, not a refusal for an ended turn", async () => {
+    hold.refuseCreate = true;
+    try {
+      const bot = await cloudBot("Refused starter");
+      const sent = await startTurn(bot.id, "Open the cloud desktop");
+      const answer = await screenshot(sent);
+      expect(answer.isError).toBe(true);
+      expect(answer.content[0]?.text).toMatch(/^The cloud computer could not be started: .*the sandbox image is unavailable.*\. This call was not performed\./);
+      const [row] = await until(() => failedRows(bot.id), found => found.length > 0);
+      expect(row.tool.place).toMatchObject({ params: { bot: "Refused starter" } });
+      await until(() => task(bot.id), current => current?.busy === false, 20_000);
+      await api("DELETE", `/api/bots/${bot.id}`);
+    } finally {
+      hold.refuseCreate = false;
+    }
+  }, 45_000);
 });
