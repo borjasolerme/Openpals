@@ -1,8 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { effectivePlace, isComputerPlace, placeLabelKey, toolPlace } from "./work-place";
+import { effectivePlace, isComputerPlace, liveScreenPlace, placeLabelKey, toolPlace } from "./work-place";
 import { toolSurfaceKind } from "../../shared/tool-surface";
 
 describe("where a conversation works", () => {
+  it("knows when a running tool call is using the bot's screen", () => {
+    const messages = [
+      { id: "old-click", tool: { name: "mcp__computer__click" } },
+      { id: "text" },
+      { id: "bash", tool: { name: "Bash" } },
+      { id: "snap", tool: { name: "mcp__browser__browser_snapshot" } },
+      { id: "shot", tool: { name: "screenshot" } },
+      { id: "done", tool: { name: "mcp__browser__browser_navigate", ok: true } },
+    ];
+    expect(liveScreenPlace(messages, new Set(), "cloud")).toBeNull();
+    expect(liveScreenPlace(messages, new Set(["bash"]), "cloud")).toBeNull();
+    expect(liveScreenPlace(messages, new Set(["bash", "snap"]), "auto")).toBe("browser");
+    expect(liveScreenPlace(messages, new Set(["shot"]), "cloud")).toBe("cloud");
+    expect(liveScreenPlace(messages, new Set(["shot"]), "auto")).toBeNull();
+    expect(liveScreenPlace(messages, new Set(["text"]), "cloud")).toBeNull();
+    expect(liveScreenPlace(messages, new Set(["done", "bash"]), "cloud")).toBeNull();
+  });
+
   it("lets the conversation's pin win over the bot's Works on, except Off", () => {
     expect(effectivePlace({ computer: "cloud" }, { surface: "browser" })).toBe("browser");
     expect(effectivePlace({ computer: undefined }, { surface: "vm" })).toBe("vm");
