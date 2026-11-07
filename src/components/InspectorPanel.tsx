@@ -14,9 +14,7 @@ import { appendInspectorRuntime, mergeInspectorSnapshot, INSPECTOR_WINDOW_LIMIT 
 type Lens = "run" | "events" | "raw";
 
 /**
- * Displays one thread's Inspector snapshot and live event window.
- * Snapshot requests share the live subscription's buffering lifecycle, including
- * the initial request, because disk persistence can lag behind live delivery.
+ * Disk persistence can lag behind live delivery, even for equal-time events.
  * Native expansion resets on a loaded snapshot: its positional keys are not identities.
  */
 export function InspectorPanel({ bot }: { bot: Bot }) {
