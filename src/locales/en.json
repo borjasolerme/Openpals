@@ -4991,6 +4991,7 @@
   "apiInstances.editModels": "Change model IDs for {name}",
   "apiInstances.modelsFor": "Model IDs for {name}",
   "apiInstances.editModelsHint": "Separate model IDs with commas or spaces. Leave empty to detect them from the server again.",
+  "apiInstances.modelsLimit": "Use at most {count} model IDs, each up to {length} characters.",
   "apiInstances.empty": "No other servers yet.",
   "apiInstances.failed": "Couldn't save the server. Check the fields and try again.",
   "apiInstances.replyWaitFor": "How long to wait for {name} to reply",

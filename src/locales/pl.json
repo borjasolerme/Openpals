@@ -4456,6 +4456,7 @@
   "apiInstances.editModels": "Zmień identyfikatory modeli dla {name}",
   "apiInstances.modelsFor": "Identyfikatory modeli dla {name}",
   "apiInstances.editModelsHint": "Oddziel identyfikatory modeli przecinkami lub spacjami. Zostaw puste, aby ponownie wykryć je z serwera.",
+  "apiInstances.modelsLimit": "Użyj najwyżej {count} identyfikatorów modeli, każdy do {length} znaków.",
   "apiInstances.empty": "Brak innych serwerów.",
   "apiInstances.failed": "Nie udało się zapisać serwera. Sprawdź pola i spróbuj ponownie.",
   "botOverview.loading": "Wczytywanie…",

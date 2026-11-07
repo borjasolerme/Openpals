@@ -3743,6 +3743,7 @@
   "apiInstances.editModels": "Đổi ID mô hình của {name}",
   "apiInstances.modelsFor": "ID mô hình của {name}",
   "apiInstances.editModelsHint": "Phân tách ID mô hình bằng dấu phẩy hoặc dấu cách. Để trống để phát hiện lại từ máy chủ.",
+  "apiInstances.modelsLimit": "Dùng tối đa {count} ID mô hình, mỗi ID tối đa {length} ký tự.",
   "apiInstances.empty": "Chưa có máy chủ nào khác.",
   "apiInstances.failed": "Không lưu được máy chủ. Hãy kiểm tra các trường rồi thử lại.",
   "botOverview.line.privateWorkspace": "Làm việc trong thư mục riêng của mình.",

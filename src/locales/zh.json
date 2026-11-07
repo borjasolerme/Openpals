@@ -4935,6 +4935,7 @@
   "apiInstances.editModels": "更改 {name} 的模型 ID",
   "apiInstances.modelsFor": "{name} 的模型 ID",
   "apiInstances.editModelsHint": "用逗号或空格分隔模型 ID。留空则重新从服务器检测。",
+  "apiInstances.modelsLimit": "最多使用 {count} 个模型 ID，每个最多 {length} 个字符。",
   "apiInstances.empty": "还没有其他服务器。",
   "apiInstances.failed": "无法保存该服务器。请检查各项后重试。",
   "apiInstances.replyWaitFor": "等待 {name} 回复的时间上限",

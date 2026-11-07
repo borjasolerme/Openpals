@@ -2138,6 +2138,7 @@
   "apiInstances.editModels": "Змінити ID моделей для {name}",
   "apiInstances.modelsFor": "ID моделей для {name}",
   "apiInstances.editModelsHint": "Розділяйте ID моделей комами або пробілами. Залиште порожнім, щоб знову визначити їх із сервера.",
+  "apiInstances.modelsLimit": "Використовуйте щонайбільше {count} ID моделей, кожен до {length} символів.",
   "room.holds.banner": "Зупинені вами: {names}. Згадайте бота через @ або напишіть resume, щоб повернути його.",
   "room.holds.resume": "Відновити {name}",
   "room.holds.stop": "Зупинити {name}",

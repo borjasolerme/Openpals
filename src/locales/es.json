@@ -4040,6 +4040,7 @@
   "apiInstances.editModels": "Cambiar los ID de modelo de {name}",
   "apiInstances.modelsFor": "ID de modelo de {name}",
   "apiInstances.editModelsHint": "Separa los ID de modelo con comas o espacios. Déjalo vacío para volver a detectarlos desde el servidor.",
+  "apiInstances.modelsLimit": "Usa como máximo {count} ID de modelo, de hasta {length} caracteres cada uno.",
   "apiInstances.empty": "Aún no hay otros servidores.",
   "apiInstances.failed": "No se pudo guardar el servidor. Revisa los campos e inténtalo de nuevo.",
   "keys.treg.label": "Clave de treg",

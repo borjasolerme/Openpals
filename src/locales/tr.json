@@ -3743,6 +3743,7 @@
   "apiInstances.editModels": "{name} için model kimliklerini değiştir",
   "apiInstances.modelsFor": "{name} için model kimlikleri",
   "apiInstances.editModelsHint": "Model kimliklerini virgül veya boşlukla ayır. Sunucudan yeniden algılamak için boş bırak.",
+  "apiInstances.modelsLimit": "En fazla {count} model kimliği kullan, her biri en çok {length} karakter.",
   "apiInstances.empty": "Henüz başka sunucu yok.",
   "apiInstances.failed": "Sunucu kaydedilemedi. Alanları kontrol edip tekrar deneyin.",
   "botOverview.line.privateWorkspace": "Kendi özel klasöründe çalışır.",

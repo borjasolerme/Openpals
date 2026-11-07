@@ -4320,6 +4320,7 @@
   "apiInstances.editModels": "Cambia gli ID dei modelli di {name}",
   "apiInstances.modelsFor": "ID dei modelli di {name}",
   "apiInstances.editModelsHint": "Separa gli ID dei modelli con virgole o spazi. Lascia vuoto per rilevarli di nuovo dal server.",
+  "apiInstances.modelsLimit": "Usa al massimo {count} ID di modello, ciascuno fino a {length} caratteri.",
   "apiInstances.empty": "Ancora nessun altro server.",
   "apiInstances.failed": "Impossibile salvare il server. Controlla i campi e riprova.",
   "botOverview.loading": "Caricamento…",

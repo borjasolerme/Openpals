@@ -1735,6 +1735,7 @@
   "apiInstances.editModels": "{name} के मॉडल ID बदलें",
   "apiInstances.modelsFor": "{name} के मॉडल ID",
   "apiInstances.editModelsHint": "मॉडल ID को कॉमा या स्पेस से अलग करें। सर्वर से उन्हें फिर से पहचानने के लिए खाली छोड़ दें।",
+  "apiInstances.modelsLimit": "अधिकतम {count} मॉडल ID इस्तेमाल करें, हर एक {length} अक्षरों तक।",
   "task.workingElsewhere": "अन्य थ्रेड में काम चल रहा है: {count}",
   "room.holds.banner": "आपके द्वारा रोके गए: {names}. किसी बॉट को वापस लाने के लिए उसे @mention करें या resume लिखें।",
   "room.holds.resume": "{name} को फिर शुरू करें",

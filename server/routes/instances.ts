@@ -351,6 +351,10 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
           if (!isAddedEndpoint(instanceId, entry)) return json(res, 400, { error: "Model IDs can be changed for added OpenAI-compatible servers only." });
           const { managedModels: _previous, ...rest } = (entry.config ?? {}) as Record<string, unknown>;
           const models = [...new Set(body.models)];
+          const defaultModel = cfg.defaultModelSelection?.instanceId === instanceId ? cfg.defaultModelSelection.model : undefined;
+          if (models.length && defaultModel && !models.includes(defaultModel)) {
+            return json(res, 409, { error: `${defaultModel} is the default model. Choose another default model before removing it from this server.` });
+          }
           entry.config = models.length ? { ...rest, managedModels: models } : rest;
         }
         if (body.displayName !== undefined) entry.displayName = body.displayName;

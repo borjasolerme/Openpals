@@ -4849,6 +4849,7 @@
   "apiInstances.editModels": "{name}의 모델 ID 변경",
   "apiInstances.modelsFor": "{name}의 모델 ID",
   "apiInstances.editModelsHint": "모델 ID는 쉼표나 공백으로 구분하세요. 비워 두면 서버에서 다시 감지합니다.",
+  "apiInstances.modelsLimit": "모델 ID는 최대 {count}개, 각각 {length}자 이내로 사용하세요.",
   "apiInstances.empty": "아직 다른 서버가 없어요.",
   "apiInstances.failed": "서버를 저장하지 못했어요. 입력란을 확인하고 다시 시도하세요.",
   "apiInstances.replyWaitFor": "{name}의 답변을 기다릴 시간",

@@ -3246,6 +3246,7 @@
   "apiInstances.editModels": "變更 {name} 的模型 ID",
   "apiInstances.modelsFor": "{name} 的模型 ID",
   "apiInstances.editModelsHint": "以逗號或空格分隔模型 ID。留空則重新從伺服器偵測。",
+  "apiInstances.modelsLimit": "最多使用 {count} 個模型 ID，每個最多 {length} 個字元。",
   "botOverview.line.privateWorkspace": "在它自己的私人資料夾中工作。",
   "botOverview.line.computer": "執行位置：{preference}。",
   "botOverview.line.talksToAll": "可以與其他所有 {count} 個機器人交談。",

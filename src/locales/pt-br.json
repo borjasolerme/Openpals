@@ -4344,6 +4344,7 @@
   "apiInstances.editModels": "Alterar os IDs de modelo de {name}",
   "apiInstances.modelsFor": "IDs de modelo de {name}",
   "apiInstances.editModelsHint": "Separe os IDs de modelo com vírgulas ou espaços. Deixe vazio para detectá-los novamente pelo servidor.",
+  "apiInstances.modelsLimit": "Use no máximo {count} IDs de modelo, cada um com até {length} caracteres.",
   "apiInstances.empty": "Nenhum outro servidor ainda.",
   "apiInstances.failed": "Não foi possível salvar o servidor. Verifique os campos e tente novamente.",
   "botOverview.loading": "Carregando…",

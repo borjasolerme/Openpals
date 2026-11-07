@@ -1761,6 +1761,7 @@
   "apiInstances.editModels": "Modell-IDs für {name} ändern",
   "apiInstances.modelsFor": "Modell-IDs für {name}",
   "apiInstances.editModelsHint": "Trenne Modell-IDs mit Kommas oder Leerzeichen. Lass das Feld leer, um sie wieder vom Server zu ermitteln.",
+  "apiInstances.modelsLimit": "Verwende höchstens {count} Modell-IDs mit jeweils bis zu {length} Zeichen.",
   "task.workingElsewhere": "Arbeitet in anderen Threads: {count}",
   "room.holds.banner": "Von dir gestoppt: {names}. Erwähne einen Bot mit @ oder schreib resume, um ihn zurückzuholen.",
   "room.holds.resume": "{name} fortsetzen",
