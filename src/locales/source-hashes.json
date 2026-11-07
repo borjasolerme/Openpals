@@ -2156,7 +2156,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6459,7 +6461,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8564,7 +8568,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10669,7 +10675,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15686,7 +15694,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20578,7 +20588,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -26119,7 +26131,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29668,7 +29682,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -32144,7 +32160,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -36179,7 +36197,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -40214,7 +40234,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -45169,7 +45191,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50165,7 +50189,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -55008,7 +55034,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -60459,7 +60487,9 @@
       "chat.error.pastUsageLimit": "7c63a440471f4d20b5ce89b6e9c83547db02d840c79cbe7a4913b06e5a57c381",
       "attach.previewTooLarge": "df69c38cd9e10e3bfd396c4fabbfcc23a1b9615f2f85abccf0d1a9a41de3bfe9",
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
-      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65"
+      "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
+      "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
     }
   }
 }

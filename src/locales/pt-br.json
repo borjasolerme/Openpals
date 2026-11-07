@@ -3301,6 +3301,8 @@
   "computer.tab.files": "Arquivos",
   "computer.tabsAria": "Visualização do painel do bot",
   "computer.fullScreen": "Tela cheia",
+  "computer.watchFullScreenTitle": "Ver a tela inteira; o bot continua trabalhando",
+  "computer.watchingBotWorks": "Assistindo · o bot continua trabalhando",
   "computer.browserOff.title": "O navegador está desligado",
   "computer.browserOff.body": "Ative o navegador integrado para ver {name} navegar na web e assumir o controle quando quiser.",
   "computer.browserOff.turnOn": "Ativar o navegador",
