@@ -9,7 +9,7 @@ import type { RuntimeEvent } from "../../shared/runtime-events";
 import { RunLog } from "./RunLog";
 import { timelineEvents } from "@/lib/taskTimeline";
 import { t } from "@/lib/i18n";
-import { appendInspectorRuntime, boundInspectorEntries, INSPECTOR_WINDOW_LIMIT } from "@/lib/inspector-window";
+import { appendInspectorRuntime, mergeInspectorSnapshot, INSPECTOR_WINDOW_LIMIT } from "@/lib/inspector-window";
 
 type Lens = "run" | "events" | "raw";
 
@@ -37,7 +37,7 @@ export function InspectorPanel({ bot }: { bot: Bot }) {
       // SAFETY: the same-version harness's typed inspector endpoint; malformed transport data is handled by catch.
       const next = (await res.json()) as InspectorPage;
       if (controller.signal.aborted) return;
-      setPage({ ...next, entries: boundInspectorEntries(next.entries) });
+      setPage((previous) => mergeInspectorSnapshot(previous, next));
       setExpanded((previous) => new Set([...previous].filter((key) => key.startsWith("runtime:"))));
       setError(null);
     } catch (e) {
