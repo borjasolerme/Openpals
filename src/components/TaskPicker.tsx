@@ -10,6 +10,7 @@ import { localizedTaskTitle } from "@/lib/task-title";
 import { COMPACT_BUBBLE } from "@/lib/compact-chip";
 import { formatTaskTokens, headlineTokens, usageDetail } from "@/lib/usage";
 import { nextRename } from "@/lib/rename";
+import { imeComposing } from "@/lib/send-key";
 import { formatUpdatedAt, orderedThreadList, threadByline, threadRecency, threadUpdatedLabel, useRelativeNow } from "./SidebarThreadRow";
 
 export const TASK_PICKER_DISMISS_MS = 500;
@@ -33,8 +34,9 @@ export function filterTasks<T extends { title: string }>(tasks: readonly T[], qu
   const substring: T[] = [];
   for (const task of tasks) {
     const title = task.title.toLowerCase();
-    if (title.startsWith(needle)) prefix.push(task);
-    else if (title.includes(needle)) substring.push(task);
+    const displayed = localizedTaskTitle(task.title).toLowerCase();
+    if (title.startsWith(needle) || displayed.startsWith(needle)) prefix.push(task);
+    else if (title.includes(needle) || displayed.includes(needle)) substring.push(task);
   }
   return [...prefix, ...substring];
 }
@@ -232,6 +234,7 @@ function ConversationTaskPicker({
                 onClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
+                  if (imeComposing(e.nativeEvent)) { e.stopPropagation(); return; }
                   if (e.key === "Escape") {
                     e.preventDefault();
                     e.stopPropagation();
@@ -239,7 +242,7 @@ function ConversationTaskPicker({
                     else closeMenu();
                     return;
                   }
-                  if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     const first = visible[0];
                     if (!first) return;
@@ -279,7 +282,8 @@ function ConversationTaskPicker({
                       onMouseDown={(e) => e.stopPropagation()}
                       onBlur={() => commitRename(task.threadId, true)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                        if (imeComposing(e.nativeEvent)) { e.stopPropagation(); return; }
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           e.stopPropagation();
                           commitRename(task.threadId, true);
