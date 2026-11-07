@@ -13,7 +13,7 @@ export interface StepProgress {
 }
 
 /** One screen of the first run: where it is, a picture, a title and one line, what the step asks, then Back and the
- * step's own actions. The first and last screens are centered. */
+ * step's own actions. Centered while it fits; a long step scrolls with room above and below. */
 export function StepFrame({ progress, art, title, line, centered = false, onBack, actions, children }: {
   progress?: StepProgress | null;
   art?: ReactNode;
@@ -25,7 +25,7 @@ export function StepFrame({ progress, art, title, line, centered = false, onBack
   children?: ReactNode;
 }) {
   return (
-    <div className={cn("animate-fade-in mx-auto flex min-h-full w-full max-w-[540px] flex-col justify-center px-4 py-12 sm:px-6", centered && "items-center text-center")}>
+    <div className={cn("animate-fade-in m-auto flex w-full max-w-[540px] flex-col px-4 py-14 sm:px-6", centered && "items-center text-center")}>
       {progress && (
         <p data-welcome-progress="" className="mb-3 text-[12px] leading-4 text-ink-tertiary">
           {t("onboarding.tour.progress", { current: progress.current, total: progress.total })}

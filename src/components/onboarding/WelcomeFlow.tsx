@@ -148,9 +148,9 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
       tabIndex={-1}
       onKeyDown={onKeyDown}
       data-welcome={beat}
-      className={cn("welcome-screen flex overflow-y-auto bg-app outline-none", embedded ? "relative h-full w-full" : "fixed inset-0 z-50")}
+      className={cn("welcome-screen flex flex-col overflow-y-auto bg-app outline-none", embedded ? "relative h-full w-full" : "fixed inset-0 z-50")}
     >
-      <div key={beat} className="flex min-h-full w-full">
+      <div key={beat} className="flex w-full flex-1 shrink-0 flex-col">
         {beat === "welcome" ? <WelcomeStep hosted={hosted} onNext={next} />
           : beat === "place" ? <PlaceStep progress={progress} onBack={back} onNext={next} />
           : beat === "ai" ? <SignInStep progress={progress} onBack={back} onNext={next} />
