@@ -431,10 +431,10 @@ export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLine
     tokensBefore: number;
     by: "person" | "harness";
   };
-  /** Renderers receive only the allowlisted /api/attachments URL. `file`
-   * entries are opened through the message-scoped file route, never by path. */
+  /** Renderers receive only the allowlisted /api/attachments URL. `file` entries are opened through the message-scoped
+   * file route, never by path. `fromTool`: an image a tool's result returned while the bot worked, which it did not make or send. */
   attachments?: Array<
-    | { kind: "image"; path: string; mime: string; name?: string }
+    | { kind: "image"; path: string; mime: string; name?: string; fromTool?: true }
     | { kind: "file"; path: string; mime: string; name: string }
     /** `text` is the words the note speaks (secret-redacted when stored): clients show it behind a
      * collapsed transcript, never as message body, and the model's replay folds it back after `text`. */
