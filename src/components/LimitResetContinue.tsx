@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Hourglass } from "lucide-react";
 
 import { t } from "@/lib/i18n";
 import { limitLine, loadLimits, nearLimit, resetTime, useEngineLimits } from "@/lib/limit-resets";
 import type { Routine } from "@/lib/routines";
-import { api, useStore } from "@/state/store";
+import { failedTurnCause } from "@/lib/failed-turn";
+import { api, useStore, type Message } from "@/state/store";
+import { codexUsageLimitReached } from "../../shared/codex-usage-limit";
 
 /** The stopped turn's "Continue at 3:40 PM when your limit resets": one click sets up a one-time automation in this
  * conversation that picks up where it stopped. Undefined when there is nothing to offer. */
@@ -44,5 +46,35 @@ export function EngineLimitNotice({ engine }: { engine: string | undefined }) {
       <Hourglass size={13} className={checking ? "shrink-0 animate-pulse text-warning" : "shrink-0 text-warning"} aria-hidden="true" />
       <span className="tabular-nums">{limitLine(limit)}</span>
     </button>
+  );
+}
+
+/** A usage-limit refusal whose reset time has passed stays in the transcript as evidence, collapsed, not as a current
+ * blocker: the reset passing does not prove today's quota is available again. Null while the refusal is still current. */
+export function usePastLimitNotice(tool: NonNullable<Message["tool"]>, messageAt: number | undefined) {
+  const at = tool.limitResetsAt;
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => {
+    if (typeof at !== "number" || !Number.isFinite(at)) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const arm = () => {
+      const remaining = at - Date.now();
+      if (remaining <= 0) {
+        setClock(Date.now());
+        return;
+      }
+      timer = setTimeout(arm, Math.min(remaining + 1_000, 2_147_483_647));
+    };
+    arm();
+    return () => { if (timer) clearTimeout(timer); };
+  }, [at]);
+  if (typeof at !== "number" || !Number.isFinite(at) || typeof messageAt !== "number" || messageAt > at || clock < at) return null;
+  const cause = failedTurnCause(tool.name) ?? tool.name;
+  if (!codexUsageLimitReached(cause)) return null;
+  return (
+    <details className="my-1 w-fit max-w-[min(var(--chat-bubble-max),var(--chat-bubble-pct))] rounded-lg border border-hairline/40 bg-raised px-3 py-2 text-sm text-ink-secondary">
+      <summary className="cursor-pointer">{t("chat.error.pastUsageLimit")}</summary>
+      <p className="mt-2 break-words">{cause}</p>
+    </details>
   );
 }

@@ -69,7 +69,7 @@ import { RichMessageRow, UserLineNote, richRowKind } from "./RichMessageRow"; im
 import { Composer } from "./Composer";
 import { ChatErrorBanner, ChatNotice } from "./ChatErrorBanner";
 import { ThreadContextWarning } from "./ContextWarning";
-import { EngineLimitNotice, useLimitResetContinue } from "./LimitResetContinue";
+import { EngineLimitNotice, useLimitResetContinue, usePastLimitNotice } from "./LimitResetContinue";
 import { ChatFindBar } from "./ChatFindBar";
 import { ReplyQuote } from "./ReplyQuote";
 import { ConnectorCard } from "./ConnectorCard";
@@ -252,49 +252,13 @@ function PlaceFailedRow({ place, botId, threadId, onRetry }: {
   return <ErrorRow message={view.line} action={view.action && onClick ? { label: view.action.label, onClick } : null} />;
 }
 
-export function FailedTurnRow({ tool, engine, onRetry, botId, threadId, messageAt }: {
-  tool: NonNullable<Message["tool"]>;
-  engine: InstanceInfo | undefined;
-  onRetry?: () => void;
-  botId?: string;
-  threadId?: string;
-  messageAt?: number;
-}) {
+export function FailedTurnRow({ tool, engine, onRetry, botId, threadId, messageAt }: { tool: NonNullable<Message["tool"]>; engine: InstanceInfo | undefined; onRetry?: () => void; botId?: string; threadId?: string; messageAt?: number }) {
   const resume = useLimitResetContinue(botId, threadId, tool.limitResetsAt);
-  const [clock, setClock] = useState(Date.now);
-  useEffect(() => {
-    const at = tool.limitResetsAt;
-    if (typeof at !== "number" || !Number.isFinite(at)) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const arm = () => {
-      const remaining = at - Date.now();
-      if (remaining <= 0) {
-        setClock(Date.now());
-        return;
-      }
-      timer = setTimeout(arm, Math.min(remaining + 1_000, 2_147_483_647));
-    };
-    arm();
-    return () => { if (timer) clearTimeout(timer); };
-  }, [tool.limitResetsAt]);
+  const past = usePastLimitNotice(tool, messageAt);
   if (tool.place && botId) return <PlaceFailedRow place={tool.place} botId={botId} threadId={threadId} onRetry={onRetry} />;
   const cause = failedTurnCause(tool.name) ?? tool.name;
   if (tool.partial) return <PartlyDoneRow cause={cause} onRetry={onRetry} />;
-  // A past refusal remains in the transcript for evidence, not as a current blocker.
-  // The reset time passing does not prove today's quota is available again.
-  const expired = codexUsageLimitReached(cause) && typeof tool.limitResetsAt === "number" &&
-    Number.isFinite(tool.limitResetsAt) &&
-    typeof messageAt === "number" &&
-    messageAt <= tool.limitResetsAt &&
-    clock >= tool.limitResetsAt;
-  if (expired) {
-    return (
-      <details className="my-1 w-fit max-w-[min(var(--chat-bubble-max),var(--chat-bubble-pct))] rounded-lg border border-hairline/40 bg-raised px-3 py-2 text-sm text-ink-secondary">
-        <summary className="cursor-pointer">{t("chat.error.pastUsageLimit")}</summary>
-        <p className="mt-2 break-words">{cause}</p>
-      </details>
-    );
-  }
+  if (past) return past;
   const signedOut = signedOutEngine(tool, engine);
   return (
     <ErrorRow
@@ -760,8 +724,7 @@ const MessagesList = memo(function MessagesList({
               if (m.tool && failedTurnCause(m.tool.name) !== null) {
                 return (
                   <FailedTurnRow
-                    tool={m.tool}
-                    messageAt={m.at}
+                    tool={m.tool} messageAt={m.at}
                     engine={engine}
                     botId={botId}
                     threadId={threadId}
