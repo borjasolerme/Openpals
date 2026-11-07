@@ -347,6 +347,12 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
           const { replyWaitMinutes: _previous, ...rest } = (entry.config ?? {}) as Record<string, unknown>;
           entry.config = body.replyWaitMinutes === null ? rest : { ...rest, replyWaitMinutes: body.replyWaitMinutes };
         }
+        if (body.models !== undefined) {
+          if (!isAddedEndpoint(instanceId, entry)) return json(res, 400, { error: "Model IDs can be changed for added OpenAI-compatible servers only." });
+          const { managedModels: _previous, ...rest } = (entry.config ?? {}) as Record<string, unknown>;
+          const models = [...new Set(body.models)];
+          entry.config = models.length ? { ...rest, managedModels: models } : rest;
+        }
         if (body.displayName !== undefined) entry.displayName = body.displayName;
         if (body.configDir !== undefined) {
           let previousDir: string | undefined;

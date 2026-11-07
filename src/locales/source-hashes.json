@@ -2098,7 +2098,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6344,7 +6347,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8391,7 +8397,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10438,7 +10447,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15403,7 +15415,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20242,7 +20257,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25731,7 +25749,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29223,7 +29244,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31642,7 +31666,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35620,7 +35647,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39598,7 +39628,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44501,7 +44534,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49445,7 +49481,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54236,7 +54275,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59635,7 +59677,10 @@
       "backup.serverRestarting": "87acdeac7f4a0d79c9991c75c303459ab5fe9ab8171d762f0a92a8368c447ad8",
       "backup.serverRestartSlow": "6c3051a9ea04b2e6157c376b2359866c0038915ce7f77064b3e792d38d3cfb9c",
       "model.unconfirmed": "304c991919d54f330524bf40d133e6fee894eb1dfe7e607274850c9b92f7c658",
-      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336"
+      "accounts.addChatgptWorkspaceNote": "3725519ac5f9c7db6504b9dcd66b263e51abc028c240cecc9ec55ecb95fad336",
+      "apiInstances.editModels": "6289535b3751b28360962c140a14f124af1368871e0ebaa7968d2676a99948d6",
+      "apiInstances.modelsFor": "928aa8803b92765b315905a8bec2d9c8d1712c506ab62e1a39e9fa2d12f2c8a1",
+      "apiInstances.editModelsHint": "417c86a79ae13950d99588cb9c63e6981978aa80263e24458e1fde3097ea9e49"
     }
   }
 }
