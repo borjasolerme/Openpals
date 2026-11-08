@@ -3310,6 +3310,7 @@
   "routines.view.list": "Lista",
   "routines.drawer.label": "Szczegóły rutyny",
   "routines.drawer.close": "Zamknij szczegóły",
+  "routines.drawer.cancelRun": "Anuluj uruchomienie",
   "routines.drawer.bot": "Bot",
   "routines.drawer.lead": "Prowadzący",
   "routines.drawer.guests": "Zaproszone boty",

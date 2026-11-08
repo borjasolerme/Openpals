@@ -2787,6 +2787,7 @@
   "routines.view.list": "Danh sách",
   "routines.drawer.label": "Chi tiết tác vụ định kỳ",
   "routines.drawer.close": "Đóng chi tiết",
+  "routines.drawer.cancelRun": "Hủy lượt chạy",
   "routines.drawer.bot": "Bot",
   "routines.drawer.lead": "Phụ trách",
   "routines.drawer.guests": "Bot được mời",

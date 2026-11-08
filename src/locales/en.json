@@ -3744,6 +3744,7 @@
   "routines.view.list": "List",
   "routines.drawer.label": "Routine details",
   "routines.drawer.close": "Close details",
+  "routines.drawer.cancelRun": "Cancel run",
   "routines.drawer.bot": "Bot",
   "routines.drawer.lead": "Lead",
   "routines.drawer.guests": "Bots invited",

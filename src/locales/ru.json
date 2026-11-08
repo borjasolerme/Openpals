@@ -3317,6 +3317,7 @@
   "routines.view.list": "Список",
   "routines.drawer.label": "Подробности рутины",
   "routines.drawer.close": "Закрыть подробности",
+  "routines.drawer.cancelRun": "Отменить запуск",
   "routines.drawer.bot": "Бот",
   "routines.drawer.lead": "Ведущий",
   "routines.drawer.guests": "Приглашённые боты",

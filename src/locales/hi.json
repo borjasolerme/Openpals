@@ -1365,6 +1365,7 @@
   "routines.retried.stalled": "AI अटकने के बाद फिर कोशिश की गई · {status}",
   "routines.retried.failed": "विफल होने के बाद फिर कोशिश की गई · {status}",
   "automations.editor.app.cloud": "क्लाउड डेस्कटॉप",
+  "routines.drawer.cancelRun": "रन रद्द करें",
   "routines.runsOn.botCloud": "बॉट का क्लाउड डेस्कटॉप",
   "routines.runsOn.botVm": "बॉट का निजी डेस्कटॉप",
   "routines.runsOn.boat": "क्लाउड डेस्कटॉप",

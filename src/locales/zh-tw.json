@@ -2411,6 +2411,7 @@
   "routines.view.list": "清單",
   "routines.drawer.label": "例行工作詳細資料",
   "routines.drawer.close": "關閉詳細資料",
+  "routines.drawer.cancelRun": "取消執行",
   "routines.drawer.bot": "機器人",
   "routines.drawer.lead": "主導",
   "routines.drawer.guests": "受邀機器人",

@@ -2122,7 +2122,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6392,7 +6393,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8463,7 +8465,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10534,7 +10537,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15518,7 +15522,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20377,7 +20382,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "permissions.outbound.help": "f50c72c7db31cb4c0b7f71e2b5d96fc570aaa96c5fc3d26330ec94db681d21b3"
+      "permissions.outbound.help": "f50c72c7db31cb4c0b7f71e2b5d96fc570aaa96c5fc3d26330ec94db681d21b3",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -25885,7 +25891,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29401,7 +29408,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31844,7 +31852,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35846,7 +35855,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39848,7 +39858,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -44770,7 +44781,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -49733,7 +49745,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -54543,7 +54556,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -59961,7 +59975,8 @@
       "server.rooms.sameName.many": "e04c6cb1f46867fe53f0cc92905526cce0e61b423236429d24be85a94f94a523",
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
-      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c"
+      "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
     }
   }
 }

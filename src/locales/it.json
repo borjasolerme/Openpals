@@ -3245,6 +3245,7 @@
   "routines.view.list": "Elenco",
   "routines.drawer.label": "Dettagli della routine",
   "routines.drawer.close": "Chiudi dettagli",
+  "routines.drawer.cancelRun": "Annulla esecuzione",
   "routines.drawer.lead": "Responsabile",
   "routines.drawer.guests": "Bot invitati",
   "routines.drawer.group": "Gruppo",

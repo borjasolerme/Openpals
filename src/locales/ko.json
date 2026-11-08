@@ -3633,6 +3633,7 @@
   "routines.view.list": "목록",
   "routines.drawer.label": "루틴 세부 정보",
   "routines.drawer.close": "세부 정보 닫기",
+  "routines.drawer.cancelRun": "실행 취소",
   "routines.drawer.bot": "봇",
   "routines.drawer.lead": "리더",
   "routines.drawer.guests": "초대된 봇",

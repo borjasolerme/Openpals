@@ -3,6 +3,7 @@ import { useState } from "react";
 
 import type { Automation } from "@/lib/automations";
 import { copyText } from "@/lib/copy-text";
+import type { RoutineRun } from "@/lib/routines";
 import { loadWebhookCredentials, removeWebhookCredential, saveWebhookCredential, webhookCredentialStore } from "@/lib/webhook-credentials";
 import type { WebhookCredential } from "@/lib/webhooks";
 import { api, openBot, useStore } from "@/state/store";
@@ -80,5 +81,11 @@ export function useAutomationActions() {
     if (bot) openBot(dispatch, bot);
   };
 
-  return { busy, error, errorFor, setError, copied, toggle, runNow, remove, copyAddress, openChat };
+  /** Stops a run that waits on the person, for when the question it waits on was settled somewhere else. */
+  const cancelRun = (automation: Automation, run: RoutineRun) => attempt(`cancel:${automation.id}`, async () => {
+    const response = await api(`/api/routine-runs/${run.id}/cancel`, { method: "POST" });
+    if (response.run) dispatch({ type: "routineRunPatched", run: response.run });
+  });
+
+  return { busy, error, errorFor, setError, copied, toggle, runNow, remove, copyAddress, openChat, cancelRun };
 }

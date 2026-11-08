@@ -1678,6 +1678,7 @@
   "routines.goal.stopped": "Зупинено",
   "routines.goal.failed": "Не вдалося",
   "automations.editor.app.cloud": "Хмарний робочий стіл",
+  "routines.drawer.cancelRun": "Скасувати запуск",
   "routines.runsOn.botCloud": "Хмарний робочий стіл бота",
   "routines.runsOn.botVm": "Приватний робочий стіл бота",
   "routines.runsOn.boat": "Хмарний робочий стіл",

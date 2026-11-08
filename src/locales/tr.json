@@ -2787,6 +2787,7 @@
   "routines.view.list": "Liste",
   "routines.drawer.label": "Rutin ayrıntıları",
   "routines.drawer.close": "Ayrıntıları kapat",
+  "routines.drawer.cancelRun": "Çalıştırmayı iptal et",
   "routines.drawer.bot": "Bot",
   "routines.drawer.lead": "Lider",
   "routines.drawer.guests": "Davet edilen botlar",

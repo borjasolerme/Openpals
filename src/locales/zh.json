@@ -3702,6 +3702,7 @@
   "routines.view.list": "列表",
   "routines.drawer.label": "例行任务详情",
   "routines.drawer.close": "关闭详情",
+  "routines.drawer.cancelRun": "取消运行",
   "routines.drawer.bot": "机器人",
   "routines.drawer.lead": "负责人",
   "routines.drawer.guests": "受邀机器人",

@@ -1365,6 +1365,7 @@
   "routines.retried.stalled": "Nouvel essai après un blocage de l'IA · {status}",
   "routines.retried.failed": "Nouvel essai après un échec · {status}",
   "automations.editor.app.cloud": "Bureau cloud",
+  "routines.drawer.cancelRun": "Annuler l'exécution",
   "routines.runsOn.botCloud": "Le bureau cloud du bot",
   "routines.runsOn.botVm": "Le bureau privé du bot",
   "routines.runsOn.boat": "Bureau cloud",

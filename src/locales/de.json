@@ -1378,6 +1378,7 @@
   "routines.retried.stalled": "Erneut versucht, nachdem die KI hing · {status}",
   "routines.retried.failed": "Erneut versucht nach einem Fehler · {status}",
   "automations.editor.app.cloud": "Cloud-Desktop",
+  "routines.drawer.cancelRun": "Ausführung abbrechen",
   "routines.runsOn.botCloud": "Der Cloud-Desktop des Bots",
   "routines.runsOn.botVm": "Der private Desktop des Bots",
   "routines.runsOn.boat": "Cloud-Desktop",
