@@ -29,7 +29,7 @@ export { defaultRunner, type VpsCommandOptions, type VpsCommandRunner } from "./
 import { prepareVpsSsh } from "./vps-ssh.ts";
 import { loadEnvironmentId } from "./environment.ts";
 import { SPAWNED_PROXIES } from "./proxy-paths.ts";
-import { dockerCliMissing, dockerCliMissingProblem, dockerCliStartMessage } from "./vps-hints.ts";
+import { dockerCliMissing, dockerCliMissingProblem } from "./vps-hints.ts";
 
 export const VPS_IMAGE = CUA_IMAGE;
 export const VPS_MANAGED_LABEL = "com.openmausbot.vps";
