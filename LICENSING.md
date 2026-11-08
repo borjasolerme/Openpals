@@ -5,8 +5,8 @@ Openpals is open source under the [Apache License 2.0](LICENSE). It is a modifie
 project and of bundled third-party work are kept in [NOTICE](NOTICE).
 
 OpenMausBot's `enterprise/` folder is published under a separate, source-available license that does not allow
-redistribution, so it has been removed from Openpals. What remains is OpenMausBot's open-source edition plus the
-changes in this fork.
+redistribution, so it has been removed from Openpals, along with the hooks that loaded it and its licence keys.
+What remains is OpenMausBot's open-source code plus the changes in this fork.
 
 ## Contributions
 

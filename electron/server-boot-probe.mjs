@@ -4,7 +4,7 @@ export const BOOT_PROBE_INTERVAL_MS = 500;
 
 export const SERVER_BOOT_TIMEOUT_MS = 60_000;
 export const SERVER_LISTENING_GRACE_MS = 180_000;
-const LISTENING_LINE = "openmausbot server on ";
+const LISTENING_LINE = "Openpals server on ";
 
 export function listeningSignal() {
   let tail = "";

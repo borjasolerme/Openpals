@@ -3729,8 +3729,6 @@
   "botAccess.recordSteps.off": "Os passos do navegador não são salvos.",
   "botAccess.recordSteps.needsBrowser": "Ative o navegador primeiro.",
   "botAccess.recordSteps.myChrome": "Este bot usa o seu próprio Chrome, então as capturas de tela mostram o seu Chrome.",
-  "botSlack.body": "Dê a este agente o próprio app do Slack, com nome e foto próprios, para sua equipe mandar mensagens direto para ele.",
-  "botSlack.manage": "Gerenciar no Admin",
   "skills.learned.hintOn": "Salve a execução de verificação de um bot como habilidade pelo cartão de verificação, ou importe uma abaixo. Cada habilidade nova ou alterada aparece no chat com “Desfazer”.",
   "skills.learned.hintOff": "A criação de habilidades está desligada, mas as habilidades que você já ativou continuam sob seu controle aqui.",
   "skills.origin.imported": "este computador",

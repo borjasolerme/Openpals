@@ -1,4 +1,4 @@
-import { hostedWorkspaceConfiguration } from "../enterprise.ts";
+import { hostedWorkspaceConfiguration } from "../hosted-workspace.ts";
 import { runsElsewhere, type McpConfig, type McpConfigDeps, type McpConfigResult } from "../host/mcp-config.ts";
 import { McpOAuthError, McpSignInError, mcpCallbackOrigin } from "../mcp-oauth.ts";
 import { isRemoteMcpServer, mcpServerBody, mcpServerServes, parseMcpServerMutation, parseMcpServersImport, parseStoredMcpServer } from "../mcp-registry.ts";

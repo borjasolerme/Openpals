@@ -147,7 +147,6 @@ import { adminAuditPlan, type AuditPlan } from "./admin-audit-plan.ts";
 import { onKeyRejectionChange } from "./key-rejections.ts";
 import { assertWithinBudget, noteSpend, spendAlertText, spendState, takeSpendAlert } from "./spend.ts";
 import { fleetAvailable, fleetSocketPath } from "./fleet-client.ts";
-import { HOSTED_CONTRACT_HEADER, HOSTED_CONTRACT_METADATA, HOSTED_CONTRACT_VERSION } from "./hosted-contract.ts";
 import { cliProbeEnvironment, testCliBinary } from "./cli-probe.ts";
 import { buildMentionNotification, buildNoticeNotification, buildNotification, buildSpendNotification, type Notification } from "./notify.ts";
 import {
@@ -451,7 +450,7 @@ import {
 } from "./turn-dispatch-guard.ts";
 import { createGracefulShutdown } from "./graceful-shutdown.ts";
 import { acquireDataDirLeaseForProcess } from "./data-dir-lease.ts";
-import { createWorkspaceAccess, describeEdition, editionForSettings, editionStatus, entitled, hostedWorkspaceConfiguration, hostedWorkspaceConfigured, licenseWarning, sharedWorkspaceFullAccessConfigured, loadEnterpriseLayer, workspaceMembership, type WorkspaceAccess } from "./enterprise.ts";
+import { hostedWorkspaceConfiguration, hostedWorkspaceConfigured, workspaceMembership } from "./hosted-workspace.ts";
 import { environmentDescriptor, loadEnvironmentId, serverVersion } from "./environment.ts";
 import { WorkspaceBackupMaintenance } from "./workspace-backup-maintenance.ts";
 import { createWorkspaceBackupRoutes, isWorkspaceBackupSessionControl } from "./workspace-backup-http.ts";
@@ -507,7 +506,6 @@ import { PhoneSecretBridge, PhoneSecretSubmissionRegistry } from "./phone-secret
 // Keep these two last, so loading the route table leaves module start-up order as is.
 import { json, onJsonBody, parsedBodyOf, readBody } from "./harness/http.ts";
 import { PASS, ROUTES, dispatchRoutes } from "./routes/table.ts"; import { createSecretCards } from "./host/secret-cards.ts"; import { createInternalCredentialRequestRoutes, createSecretCardRoutes } from "./routes/secret-cards.ts"; import { createInternalToolRoutes } from "./routes/internal-tools.ts"; import { createHelperSuggestionRoutes } from "./routes/helper-suggestion.ts"; import { createXConnectorRoutes } from "./routes/x-connector.ts";
-import { createHostedSlackRoutes } from "./routes/hosted-slack.ts";
 import { createBotPresetRoutes } from "./routes/bot-presets.ts";
 import { createBotMemoryRoutes } from "./routes/bot-memory.ts";
 import { createBotCreateRoutes } from "./routes/bots-create.ts";
@@ -636,10 +634,7 @@ if (logins.onePasswordToken()) void onePassword.refresh();
 const botLogins = new BotLogins(logins, onePassword);
 const SESSION_COOKIE = sessionCookieName(PORT, ENVIRONMENT_ID);
 const HOSTED_WORKSPACE = hostedWorkspaceConfigured();
-let workspaceAccess: WorkspaceAccess | null = null;
 const DESKTOP_MANAGED = process.env.OMB_DESKTOP_PARENT === "1";
-const SHARED_WORKSPACE_FULL_ACCESS = sharedWorkspaceFullAccessConfigured();
-const sharedWorkspaceFullAccessEnabled = () => SHARED_WORKSPACE_FULL_ACCESS && Boolean(workspaceAccess) && entitled("admin");
 const HOSTED_FULL_ACCESS_REFUSAL = "On a shared company workspace Full access comes only from the operator's dedicated policy";
 if (HOSTED_WORKSPACE) setDefaultApprovalMode("ask");
 // On a shared workspace loopback is a service, not the owner: every bot's shell is a loopback caller too.
@@ -1078,7 +1073,7 @@ function adminAuditRows(
 
 
 function operatorPrices(): PriceList | null {
-  return entitled("billing") && cfg.billing?.prices && Object.keys(cfg.billing.prices).length ? cfg.billing.prices : null;
+  return cfg.billing?.prices && Object.keys(cfg.billing.prices).length ? cfg.billing.prices : null;
 }
 
 const attributeUsage = createUsageAttribution({ threadTrigger: (threadId) => turnTriggers.get(threadId) }); function bookTurnUsage(row: Omit<UsageRow, "at" | "costSource">, tokensReported = true, notificationThreadId = row.threadId): void {
@@ -8869,10 +8864,10 @@ try {
     claimRequest: () => workspaceMaintenance.request(),
   });
   const advertised = WEBHOOK_PUBLIC_URL ? ` (advertised as ${webhookIngress.baseUrl})` : "";
-  console.log(`openmausbot webhook receiver on http://${webhookIngress.host}:${webhookIngress.port}${advertised}`);
+  console.log(`Openpals webhook receiver on http://${webhookIngress.host}:${webhookIngress.port}${advertised}`);
 } catch (error) {
   webhookIngressError = error instanceof Error ? error.message : String(error);
-  console.error(`openmausbot webhook receiver unavailable: ${webhookIngressError}`);
+  console.error(`Openpals webhook receiver unavailable: ${webhookIngressError}`);
 }
 
 const webhookIngressStatus = () => ({
@@ -11059,7 +11054,6 @@ function configStatus() {
     openai: keyStatus(cfg.openai?.key),
     openrouter: keyStatus(cfg.openrouter?.key),
     fleet: { available: fleetAvailable(fleetSocketPath()) },
-    edition: editionForSettings(editionStatus()),
     budgets: {
       ...(cfg.budgets?.monthlyUsd !== undefined ? { monthlyUsd: cfg.budgets.monthlyUsd } : {}),
       ...(cfg.budgets?.warnAtPercent !== undefined ? { warnAtPercent: cfg.budgets.warnAtPercent } : {}),
@@ -11133,7 +11127,6 @@ function configForAccess(status: ReturnType<typeof configStatus>, admin: boolean
   // Client sessions get configured-or-not only: no SSH alias, email, browser partition id or sign-in list.
   return {
     ...withoutKeyHints(status),
-    edition: { edition: status.edition.edition, features: status.edition.features },
     signIn: { admins: [], members: [] },
     vps: { configured: status.vps.configured, sshAlias: "" },
     opencodeGo: { configured: status.opencodeGo.configured, providerKeys: [] },
@@ -11316,8 +11309,6 @@ const workspaceBackupAccess = {
 const workspaceCopyAccess = { dataDir: DATA_DIR, appVersion: serverVersion(), readBody, restored: workspaceRestore, ...workspaceBackupAccess };
 const workspaceBackupRoutes = createWorkspaceBackupRoutes(workspaceCopyAccess);
 
-// `workspaceAccess` is assigned at boot, after this line: read it per request.
-ROUTES.push(createHostedSlackRoutes({ bot: (id) => store.bot(id), hostedReady: () => Boolean(workspaceAccess) && entitled("admin") }));
 ROUTES.push(createBotPresetRoutes({ presets: presetStore }));
 // `routines` is assigned at boot, so it is read per request.
 ROUTES.push(createBotMessageRoutes({
@@ -11348,7 +11339,6 @@ ROUTES.push(createReactionRoutes({ react, reactorFor }), savedSteps.routes);
 ROUTES.push(createThreadRoutes({
   store, userName: ownerName, sessions, groupUsageReader,
   hostedWorkspace: HOSTED_WORKSPACE, sessionCookie: SESSION_COOKIE, loopback: LOOPBACK, defaultPage: DEFAULT_PAGE,
-  workspaceAccess: () => workspaceAccess,
   desktopMutationToken: () => desktopMutationToken,
   companionMutationToken: () => companionMutationToken,
   cliOwnerToken: () => cliOwnerToken,
@@ -11471,7 +11461,6 @@ const taskRoutes = createTaskRoutes({
   titleRegenerations,
   directTurnGenerationByThread,
   actorKey,
-  sharedWorkspaceFullAccessEnabled,
   supportsApprovalMode,
   threadBusy, broadcast,
   publicBot,
@@ -11594,7 +11583,7 @@ ROUTES.push(createComputerRoutes({
 ROUTES.push(createStatusRoutes({
   store, cfg, outboundCounts,
   staticDir: STATIC_DIR,
-  sharedWorkspaceFullAccessEnabled, adminActivityRecording, configStatus, broadcast, threadShown,
+  adminActivityRecording, configStatus, broadcast, threadShown,
   browserEngineInstall: { get: () => browserEngineInstall, set: (install) => { browserEngineInstall = install; } },
   browserEngineInstallError: { set: (error) => { browserEngineInstallError = error; } },
 }));
@@ -11609,8 +11598,7 @@ ROUTES.push(createBrowserViewerRoutes({
     const browser = await browserIntegration(bot.id, bot.browserProfile);
     return browser ? { botId: bot.id, session: browser.session, spec: browser.spec } : { status: 503, error: "Install the browser first." };
   },
-  authorize: async (req, auth) => !HOSTED_WORKSPACE || auth.kind !== "session" ? null
-    : workspaceAccess ? workspaceAccess.authorize(req, auth) : { status: 503, error: "Workspace sign-in is unavailable." },
+  authorize: async (_req, auth) => !HOSTED_WORKSPACE || auth.kind !== "session" ? null : { status: 503, error: "Workspace sign-in is unavailable." },
   current: (botId, session, auth) => {
     const current = store.bot(botId);
     return !!current && current.browser !== false && builtInBrowserEnabled(cfg) && currentBrowserSession(current.id, current.browserProfile) === session
@@ -11736,23 +11724,12 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
   let m: RegExpMatchArray | null = null;
   let releaseWorkspaceRequest: (() => void) | undefined;
   try {
-    if (method === "GET" && path === "/api/health/hosted") {
-      res.setHeader("cache-control", "no-store");
-      const hosted = hostedWorkspaceConfiguration();
-      if (!hosted?.portalMembership || !workspaceAccess || !entitled("admin")) {
-        return json(res, 503, { error: "Hosted workspace readiness is unavailable." });
-      }
-      res.setHeader(HOSTED_CONTRACT_HEADER, String(HOSTED_CONTRACT_VERSION));
-      return json(res, 200, { ok: true, service: "openmausbot", membershipAuthority: "portal", workspace: hosted.workspace, ...HOSTED_CONTRACT_METADATA });
-    }
     // Hosted workspaces have one sign-in authority: a missing optional layer must never reactivate email/QR credential minting.
     if (HOSTED_WORKSPACE) {
       if (method === "POST" && ["/api/auth/pair", "/api/pair", "/api/auth/pairing"].includes(path)) {
         return json(res, 403, { error: "Sign in through the workspace portal." });
       }
-      if (workspaceAccess) {
-        if (await workspaceAccess.handlePublic(req, res, url)) return;
-      } else if (path.startsWith("/api/auth/hosted/") || path === "/pair" || (path === "/" && (!isLoopbackHost(req.headers.host) || isProxied(req)))) {
+      if (path.startsWith("/api/auth/hosted/") || path === "/pair" || (path === "/" && (!isLoopbackHost(req.headers.host) || isProxied(req)))) {
         return json(res, 503, { error: "Workspace sign-in is unavailable." });
       }
     }
@@ -11857,10 +11834,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
     if (!gate.auth) return json(res, gate.status, { error: gate.error });
       const auth = gate.auth;
     if (HOSTED_WORKSPACE && auth.kind === "session") {
-      const failure = workspaceAccess
-        ? await workspaceAccess.authorize(req, auth)
-        : { status: 503, error: "Workspace sign-in is unavailable." };
-      if (failure) return json(res, failure.status, { error: failure.error });
+      return json(res, 503, { error: "Workspace sign-in is unavailable." });
     }
     // A member reaches a restricted bot, its threads, rooms, routines and files exactly as an id that does not exist.
     const viewer = viewerFor(auth), visible = visibleTo(viewer);
@@ -14404,10 +14378,6 @@ upgrades.attach(server, handleRequest);
 
 calendarCalls.start();
 
-// Resolve the edition before accepting requests so /api/edition is never a guess.
-console.log(describeEdition(await loadEnterpriseLayer()));
-const startupLicenseWarning = licenseWarning(editionStatus());
-if (startupLicenseWarning) console.warn(startupLicenseWarning);
 console.log(LOOPBACK.trust === "service"
   ? `local requests: service trust (${LOOPBACK.reason}); without a session, loopback may use only health, the Slack worker's guarded routes and bot capability routes`
   : `local requests: owner trust (${LOOPBACK.reason})`);
@@ -14420,12 +14390,6 @@ const pruneDecisionLog = () => {
 };
 pruneDecisionLog();
 setInterval(pruneDecisionLog, 6 * 60 * 60_000).unref();
-workspaceAccess = createWorkspaceAccess({ sessions, cookieName: SESSION_COOKIE, closeSessionStreams });
-// With the bridge's five-second deadline, this bounds stale portal access on quiet streams to fifteen seconds.
-const workspaceAccessTimer = workspaceAccess ? setInterval(() => {
-  void workspaceAccess!.revalidate().catch((error) => console.warn("workspace access revalidation failed", error));
-}, 10_000) : null;
-workspaceAccessTimer?.unref();
 console.log(describeBrand(loadBrand()));
 
 // Before any row below settles: an interrupted dispatch's words come back with a review notice, never to a model a second time.
@@ -14470,7 +14434,7 @@ restoreChannelMessages();
 }
 
 server.listen(PORT, "127.0.0.1", async () => {
-  console.log(`openmausbot server on http://127.0.0.1:${PORT}`);
+  console.log(`Openpals server on http://127.0.0.1:${PORT}`);
   browserSweep.start(); 
   void afterFirstEngineRead().then(() => { if (builtInBrowserEnabled(cfg)) chromeLauncher.start(); });
   followupsReady = true;
@@ -14519,7 +14483,6 @@ const gracefulShutdown = createGracefulShutdown({
       // Before any provider is torn down, so what the teardown fails stays cut for the next start.
       coordinator.close();
       noteTurnsCutByShutdown();
-      if (workspaceAccessTimer) clearInterval(workspaceAccessTimer);
       // Invalidate turn bearers before any cleanup reaches an await: child MCP processes and the listener may outlive it.
       revokeAllInternalCapabilities();
       phones.close();

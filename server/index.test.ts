@@ -1678,12 +1678,10 @@ describe("harness HTTP API", () => {
     expect(await statusWithHeaders({ origin: `http://[::1]:${PORT}` })).toBe(200);
   });
 
-  it("keeps the fleet screen behind the admin entitlement on the open-source edition", async () => {
+  it("has no fleet screen without a fleet agent on the server", async () => {
     const fleet = await api("GET", "/api/fleet");
-    expect(fleet.status).toBe(403);
-    expect(fleet.body.error).toContain("enterprise");
-    expect((await api("POST", "/api/fleet/workspaces", { slug: "acme", admins: ["a@b.test"] })).status).toBe(403);
-    expect((await api("DELETE", "/api/fleet/workspaces/acme")).status).toBe(403);
+    expect(fleet.status).toBe(404);
+    expect(fleet.body.error).toContain("No fleet agent");
   });
 
   it("identifies itself on /api/health", async () => {

@@ -464,7 +464,7 @@ export async function launchUi(
     const { binary, chrome } = await ensureUiBrowser(parentEnv, note);
     checkpoint();
     fixture = await launchVerificationServer({ ...parentEnv, ...fakeEnv }, startup.signal, undefined,
-      { binaryPath: binary, executablePath: chrome ?? "" }, undefined, undefined, values.engine === "codex" ? ["codex"] : [], fixtureOptions.boatFixtureApi);
+      { binaryPath: binary, executablePath: chrome ?? "" }, undefined, values.engine === "codex" ? ["codex"] : [], fixtureOptions.boatFixtureApi);
     checkpoint();
     const api = fixtureApi(fixture.info.url);
     await api("PATCH", "/api/config", { language: "en" });

@@ -39,7 +39,6 @@ export interface TaskRouteDeps {
   titleRegenerations: Pick<Set<string>, "has" | "add" | "delete">;
   directTurnGenerationByThread: ReadonlyMap<string, string>;
   actorKey(auth: RequestAuth & { kind: "session" }): string;
-  sharedWorkspaceFullAccessEnabled(): boolean;
   supportsApprovalMode(selection: ModelSelection, mode: ApprovalMode): boolean;
   threadBusy(botId: string, threadId: string): boolean;
   broadcast(payload: Record<string, unknown>): void;
@@ -66,7 +65,7 @@ export interface TaskRouteDeps {
 export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler {
   const {
     store, coordinator, handoffs, skillReview, threadStarters, phoneSecretSubmissions, titleRegenerations,
-    directTurnGenerationByThread, actorKey, sharedWorkspaceFullAccessEnabled,
+    directTurnGenerationByThread, actorKey,
     supportsApprovalMode, threadBusy, broadcast, publicBot, wireBot, wireTask, pageSize, messagePage, checkedModelSelection,
     checkedTaskModelSwitch, threadTitleGate, generateThreadTitle, settleDirectFollowup, clearTurnDigestState,
     revokeInternalCapabilitiesForThread, stagedSkillCleanupsForThread, rejectDeletedThreadSkillStages,
@@ -168,10 +167,7 @@ export function createTaskRoutes(deps: TaskRouteDeps): RouteHandler {
         return json(res, 400, { error: "new task approvalMode must be ask or full" });
       }
       if (body.approvalMode === "full") {
-        if (auth.kind !== "loopback" || !sharedWorkspaceFullAccessEnabled()) {
-          return json(res, 403, { error: "New Full tasks require the operator's dedicated shared-workspace policy" });
-        }
-        if (bot.approvalGrant) return json(res, 409, { error: "the bot's approval mode is still being confirmed" });
+        return json(res, 403, { error: "New Full tasks require the operator's dedicated shared-workspace policy" });
       }
       if (phoneSecretSubmissions.hasBot(bot.id)) {
         return json(res, 409, { error: "this bot is securely saving a credential — try again when it finishes" });

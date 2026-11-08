@@ -1,15 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
-import { removeTempDir } from "./testing/cleanup.ts";
 import { openSse } from "./testing/sse.ts";
 
-async function launch(enterprise?: { dir: string; licenseKey: string }) {
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, enterprise);
+async function launch() {
+  const fixture = await launchVerificationServer(process.env);
   const { url, dataDir } = fixture.info;
   const api = async (method: string, path: string, body?: unknown, token?: string, expectedStatus = 200) => {
     const response = await fetch(url + path, {
@@ -375,11 +373,7 @@ it("never parks a report behind work the Chief handed on, even for a Chief that 
 }, 150_000);
 
 it("tells the person of a failure whose report waited and was then refused", async () => {
-  // A stand-in enterprise layer grants the monthly spend limit.
-  const layerDir = mkdtempSync(join(tmpdir(), "omb-incidents-layer-"));
-  mkdirSync(join(layerDir, "server"));
-  writeFileSync(join(layerDir, "server", "index.js"), 'export async function register() { return { customer: "Fixture Co", features: ["budgets"], expiresAt: "2099-01-01" }; }\n');
-  const { api, control, file, dump, messages, useCli, incidentsThread, pushes, close } = await launch({ dir: layerDir, licenseKey: "fixture-key" });
+  const { api, control, file, dump, messages, useCli, incidentsThread, pushes, close } = await launch();
   try {
     const chief = (await control(["new-bot", "--name", "Clive"])).bot;
     await api("PATCH", `/api/bots/${chief.id}`, { chiefOfStaff: true });
@@ -413,7 +407,6 @@ it("tells the person of a failure whose report waited and was then refused", asy
     }
   } finally {
     await close();
-    await removeTempDir(layerDir);
   }
 }, 150_000);
 

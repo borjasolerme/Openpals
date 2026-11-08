@@ -3233,8 +3233,6 @@
   "botAccess.recordSteps.off": "Tarayıcı adımları kaydedilmez.",
   "botAccess.recordSteps.needsBrowser": "Önce tarayıcıyı açın.",
   "botAccess.recordSteps.myChrome": "Bu bot kendi Chrome'unuzu kullanıyor, bu nedenle ekran görüntüleri sizin Chrome'unuzu gösterir.",
-  "botSlack.body": "Ekibinizin doğrudan mesaj gönderebilmesi için bu ajana kendi adı ve resmiyle kendi Slack uygulamasını verin.",
-  "botSlack.manage": "Yönetici panelinde yönet",
   "skills.learned.hintOn": "Bir botun doğrulama çalıştırmasını Doğrula kartından beceri olarak kaydedin veya aşağıdan bir tane içe aktarın. Her yeni veya değiştirilmiş beceri, sohbette Geri Al seçeneğiyle birlikte gösterilir.",
   "skills.learned.hintOff": "Beceri yazma kapalıdır, ancak önceden etkinleştirdiğiniz beceriler burada kontrolünüz altında kalır.",
   "skills.write.title": "Komut yaz",

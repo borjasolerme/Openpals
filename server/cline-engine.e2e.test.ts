@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 
 it("offers configured Cline to Chief team setup and runs a Cline specialist in the isolated server", async () => {
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, { scripted: true }, ["cline"]);
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, { scripted: true }, ["cline"]);
   const { url, dataDir } = fixture.info;
   const plan = join(dataDir, "room-plan.json");
   const api = async (method: string, path: string, body?: unknown) => {

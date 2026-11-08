@@ -14,7 +14,7 @@ const PARQUET = Buffer.concat([Buffer.from("PAR1"), randomBytes(2_048), Buffer.f
 
 beforeAll(async () => {
   globalThis.fetch = (input, init = {}) => realFetch(input, { ...init, headers: { ...Object.fromEntries(new Headers(init.headers)), "x-openmausbot-desktop-owner": owner } });
-  fixture = await launchVerificationServer({ ...process.env, OMB_TEST_DESKTOP_OWNER_TOKEN: owner }, undefined, undefined, undefined, undefined, { scripted: true });
+  fixture = await launchVerificationServer({ ...process.env, OMB_TEST_DESKTOP_OWNER_TOKEN: owner }, undefined, undefined, undefined, { scripted: true });
 }, 90_000);
 afterAll(async () => {
   globalThis.fetch = realFetch;

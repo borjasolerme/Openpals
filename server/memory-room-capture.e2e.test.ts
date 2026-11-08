@@ -72,7 +72,7 @@ it("captures a Codex member bot's room turn through Codex's own background call"
     [CAPTURE_MARKER]: JSON.stringify([{ text: "The orchard tour moved to Monday", kind: "decision", confidence: 0.9 }]),
   }));
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CODEX_TEXT_ROUTES: routes, FAKE_CODEX_TEXT_LOG: textLog },
-    undefined, undefined, undefined, undefined, undefined, ["codex"]);
+    undefined, undefined, undefined, undefined, ["codex"]);
   const env = { OPENMAUSBOT_URL: fixture.info.url };
   const api = async <T = any>(path: string, method = "GET", body?: unknown): Promise<T> => {
     const response = await fetch(fixture.info.url + path, {

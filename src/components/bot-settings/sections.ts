@@ -12,7 +12,6 @@ import {
   Mic,
   Network,
   ShieldCheck,
-  Slack,
   Sparkles,
   User,
 } from "lucide-react";
@@ -29,7 +28,6 @@ export const BOT_SECTIONS: Array<{
 }> = [
   { id: "overview", label: "Overview", labelKey: "botSettings.sections.overview", icon: LayoutDashboard, keywords: ["summary", "status", "what it does", "won't", "prompt", "what the model sees"] },
   { id: "identity", label: "Identity", labelKey: "botSettings.sections.identity", icon: User, keywords: ["name", "title", "avatar", "blurb", "instructions"] },
-  { id: "slack", label: "Slack", icon: Slack, keywords: ["slack", "slack app", "admin", "message", "direct messages", "mentions"] },
   { id: "soul", label: "Soul", labelKey: "botSettings.sections.soul", icon: Sparkles, keywords: ["standing instructions", "instructions", "persona", "rules", "soul.md"] },
   { id: "skills", label: "Skills", labelKey: "botSettings.sections.skills", icon: BookOpen, keywords: ["skills", "learned", "procedures", "teach"] },
   { id: "memory", label: "Memory", labelKey: "botSettings.sections.memory", icon: Brain, keywords: ["memory", "notes", "remember", "topics"] },

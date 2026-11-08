@@ -232,14 +232,13 @@ export function caddyImportLine(layout = fleetLayout()): string {
   return `import ${layout.caddyDir}/*.caddy`;
 }
 
-export function instanceEnv(input: { workspace: FleetWorkspace; dataDir: string; licenseKey?: string; portalUrl?: string }): string {
+export function instanceEnv(input: { workspace: FleetWorkspace; dataDir: string; portalUrl?: string }): string {
   const lines = [
     `OMB_DATA_DIR=${input.dataDir}`,
     `OMB_PORT=${input.workspace.port}`,
     `OMB_WEBHOOK_PORT=${input.workspace.webhookPort}`,
     `OMB_PUBLIC_URL=https://${input.workspace.host}`,
   ];
-  if (input.licenseKey) lines.push(`OMB_LICENSE_KEY=${input.licenseKey}`);
   if (input.portalUrl) lines.push(`OMB_ADMIN_URL=${input.portalUrl}`, `OMB_ADMIN_WORKSPACE=${input.workspace.slug}`);
   return lines.join("\n") + "\n";
 }
@@ -325,7 +324,6 @@ export function createPlan(input: {
   registry: FleetRegistry;
   slug: string;
   seed: WorkspaceSeed;
-  licenseKey?: string;
   memoryMax?: string;
   now?: Date;
   layout?: FleetLayout;
@@ -382,7 +380,7 @@ export function createPlan(input: {
       } } }, null, 2)}\n` },
     ] : []),
     ...(input.seed.brandJson ? [{ kind: "write" as const, path: join(dataDir, "brand.json"), content: input.seed.brandJson, mode: 0o600, owner: user }] : []),
-    { kind: "write", path: join(layout.instancesDir, `${workspace.slug}.env`), content: instanceEnv({ workspace, dataDir, licenseKey: input.licenseKey, portalUrl: input.seed.portalUrl }), mode: 0o600 },
+    { kind: "write", path: join(layout.instancesDir, `${workspace.slug}.env`), content: instanceEnv({ workspace, dataDir, portalUrl: input.seed.portalUrl }), mode: 0o600 },
     ...(input.memoryMax
       ? [
           { kind: "mkdir" as const, path: join(layout.unitFile.replace(/openmausbot@\.service$/, ""), `openmausbot@${workspace.slug}.service.d`), mode: 0o755 },

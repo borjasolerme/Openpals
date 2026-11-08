@@ -6,7 +6,6 @@ import { browserEngineStatus, ensureChrome, installAgentBrowserBinary, resolveAg
 import { DATA_DIR, EVENTS_DIR, NATIVE_DIR, instanceConfigs, type AppConfig } from "../config.ts";
 import { boundRetentionDays, decisionsCsv, readDecisionRange, readDecisions, type DecisionRow } from "../decision-log.ts";
 import { flushNativeLog } from "../drivers/native.ts";
-import { editionForMembers, editionStatus, entitled } from "../enterprise.ts";
 import { fleetAvailable, fleetRequest, fleetSocketPath } from "../fleet-client.ts";
 import { noteKeyAccepted, noteKeyRejected } from "../key-rejections.ts";
 import type { OutboundCounts } from "../outbound-counts.ts";
@@ -26,7 +25,6 @@ export interface StatusRouteDeps {
   cfg: AppConfig;
   outboundCounts: Pick<OutboundCounts, "today">;
   staticDir: string | null;
-  sharedWorkspaceFullAccessEnabled(): boolean;
   adminActivityRecording(): boolean;
   configStatus(): ConfigStatus;
   broadcast(payload: Record<string, unknown>): void;
@@ -44,7 +42,7 @@ function readable(rows: DecisionRow[], shown: (threadId: string) => boolean): De
 
 export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
   const {
-    store, cfg, outboundCounts, staticDir: STATIC_DIR, sharedWorkspaceFullAccessEnabled, adminActivityRecording,
+    store, cfg, outboundCounts, staticDir: STATIC_DIR, adminActivityRecording,
     configStatus, broadcast, browserEngineInstall, browserEngineInstallError,
   } = deps;
   return async ({ req, res, url, path, method, auth, json, readBody }) => {
@@ -54,7 +52,6 @@ export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
     if (method === "GET" && path === "/api/health") {
       return json(res, 200, { app: "openmausbot", pid: process.pid, static: Boolean(STATIC_DIR), capabilities: {
         guardedMessages: 1, guardedRequests: 1, guardedFullAccess: 1, guardedOnBehalfOf: 1,
-        ...(sharedWorkspaceFullAccessEnabled() ? { sharedWorkspaceFullAccess: 1 } : {}),
       } });
     }
     // JSON-only, so a form posted from another local page cannot start the install. One install at a time.
@@ -81,10 +78,9 @@ export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
       }
       return json(res, 202, { installing: true });
     }
-    // Admin scope plus the `admin` entitlement; the socket's own permissions decide whether this workspace may drive the agent.
+    // Admin scope; the socket's own permissions decide whether this workspace may drive the agent.
     const fleetRoute = /^\/api\/fleet(?:\/(workspaces(?:\/([a-z0-9-]+)(?:\/(users|suspend|resume))?)?|upgrade))?$/.exec(path);
     if (fleetRoute) {
-      if (!entitled("admin")) return json(res, 403, { error: "Workspaces need an enterprise licence with the admin feature." });
       const socket = fleetSocketPath();
       if (!fleetAvailable(socket)) return json(res, 404, { error: "No fleet agent on this server. Run `openmausbot fleet init --domain … --operator <this user>` as root." });
       const [, resource, slug, sub] = fleetRoute;
@@ -104,11 +100,6 @@ export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
       }
     }
 
-    if (method === "GET" && path === "/api/edition") {
-      // A member learns what is entitled; when the key lapses is for admins.
-      const status = editionStatus();
-      return json(res, 200, auth.scopes.includes("admin") ? status : editionForMembers(status));
-    }
     if (method === "GET" && path === "/api/brand") {
       return json(res, 200, loadBrand());
     }

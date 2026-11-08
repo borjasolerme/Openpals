@@ -3233,8 +3233,6 @@
   "botAccess.recordSteps.off": "Các bước trình duyệt không được lưu.",
   "botAccess.recordSteps.needsBrowser": "Hãy bật trình duyệt trước.",
   "botAccess.recordSteps.myChrome": "Bot này sử dụng chính Chrome của bạn, vì vậy ảnh chụp màn hình sẽ hiển thị Chrome của bạn.",
-  "botSlack.body": "Tạo ứng dụng Slack riêng cho bot này, với tên và ảnh đại diện riêng, để team của bạn có thể nhắn tin trực tiếp.",
-  "botSlack.manage": "Quản lý trong Admin",
   "skills.learned.hintOn": "Lưu lượt chạy xác minh của bot dưới dạng kỹ năng từ thẻ Xác minh, hoặc nhập kỹ năng bên dưới. Mỗi kỹ năng mới hoặc thay đổi sẽ hiển thị trong cuộc trò chuyện kèm nút Hoàn tác.",
   "skills.learned.hintOff": "Tính năng tạo kỹ năng đang tắt, nhưng các kỹ năng bạn đã bật vẫn thuộc quyền kiểm soát của bạn tại đây.",
   "skills.write.title": "Viết lệnh",

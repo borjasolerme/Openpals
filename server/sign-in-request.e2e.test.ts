@@ -17,7 +17,7 @@ async function signInFixture() {
   const binaryPath = join(tools, "agent-browser");
   // Answers the saved-login check the mount makes; every other command succeeds silently.
   writeFileSync(binaryPath, `#!/bin/sh\nif [ "$1" = session ] && [ "$2" = list ]; then printf '{"success":true,"data":{"sessions":[]}}'; fi\nexit 0\n`, { mode: 0o755 });
-  const fixture = await launchVerificationServer({}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, undefined, { scripted: true });
+  const fixture = await launchVerificationServer({}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, { scripted: true });
   const url = fixture.info.url;
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)

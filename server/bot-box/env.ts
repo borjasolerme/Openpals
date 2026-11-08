@@ -23,7 +23,7 @@ export const BOX_ENV_PREFIXES: readonly string[] = [
 
 /** Never, whatever the allow-list says: the control plane's settings and secrets, and the server's own placement. */
 export const BOX_ENV_NEVER: ReadonlySet<string> = new Set([
-  "OMB_LICENSE_KEY", "OMB_INSTALLATION_CREDENTIAL", "OMB_LOOPBACK_TRUST", "OMB_CLOUD_SECRETS_FD",
+  "OMB_INSTALLATION_CREDENTIAL", "OMB_LOOPBACK_TRUST", "OMB_CLOUD_SECRETS_FD",
   "OMB_DATA_DIR", "OMB_STATIC_DIR", "OMB_DUCKDB_DIR", "OMB_PORT", "OMB_WEBHOOK_PORT",
 ]);
 export const BOX_ENV_NEVER_PREFIXES: readonly string[] = ["OMB_CLOUD_"];

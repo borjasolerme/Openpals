@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { launchVerificationServer, runControlOmb } from "./control-omb.ts";
 import { fixtureApi, mountPreview, parkUntilSignal, type MountedPreview } from "./testing/preview-fixture.ts";
 
-const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
 let ui: MountedPreview | undefined;
 const api = fixtureApi(fixture.info.url, { headers: { origin: fixture.info.url } });
 const control = (args: string[]) => runControlOmb([...args, "--url", fixture.info.url]) as Promise<any>;

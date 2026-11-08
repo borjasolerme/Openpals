@@ -8,8 +8,6 @@ import { BOT_SECTIONS } from "./bot-settings/sections";
 import { useBotSettingsDerived } from "./bot-settings/useBotSettingsDerived";
 import { OverviewSection } from "./bot-settings/OverviewSection";
 import { IdentitySection } from "./bot-settings/IdentitySection";
-import { SlackSection } from "./bot-settings/SlackSection";
-import { useSlackManagementUrl } from "./bot-settings/useSlackManagement";
 import { SoulSection } from "./bot-settings/SoulSection";
 import { SkillsSection } from "./bot-settings/SkillsSection";
 import { MemorySection } from "./bot-settings/MemorySection";
@@ -55,10 +53,8 @@ export function BotSettingsDialog({ bot, overlay = false }: {
   const advanced = useAdvancedMode();
   const simpleView = !advanced;
   const linkedSection = !collapsed && !state.botSettingsExpandRemembered ? section : null;
-  const slackUrl = useSlackManagementUrl(bot.id);
   const ownerOrAdmin = useOwnerOrAdmin();
   const sections = BOT_SECTIONS
-    .filter((entry) => entry.id !== "slack" || slackUrl !== null)
     .filter((entry) => entry.id !== "visibility" || (!window.ogb && ownerOrAdmin === true));
   const visibleSections = sections.filter((entry) => sectionMatches(entry, q));
 
@@ -128,8 +124,6 @@ export function BotSettingsDialog({ bot, overlay = false }: {
         );
       case "soul":
         return <SoulSection bot={bot} patch={derived.patch} />;
-      case "slack":
-        return slackUrl ? <SlackSection managementUrl={slackUrl} /> : null;
       case "skills":
         return <SkillsSection bot={bot} />;
       case "memory":

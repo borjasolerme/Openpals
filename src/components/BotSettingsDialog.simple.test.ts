@@ -70,7 +70,6 @@ vi.mock("@/lib/memory", async (importOriginal) => ({
 }));
 // The server renderer cannot portal; the dialog's props are what these tests read.
 vi.mock("./ConfirmDialog", () => ({ ConfirmDialog: () => null }));
-vi.mock("./bot-settings/useSlackManagement", () => ({ useSlackManagementUrl: () => null }));
 vi.mock("./bot-settings/useBotSettingsDerived", () => ({ useBotSettingsDerived: () => fixture.derived }));
 vi.mock("./DesktopCapabilities", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./DesktopCapabilities")>()),
@@ -365,7 +364,7 @@ describe("the bot panel in Simple mode", () => {
   });
 
   it.each([
-    ["overview", "details", undefined], ["identity", "details", undefined], ["slack", "details", undefined],
+    ["overview", "details", undefined], ["identity", "details", undefined],
     ["soul", "details", "settings"], ["skills", "library", "skills"], ["memory", "library", "memory"],
     ["routines", "details", "routines"], ["access", "computer", undefined], ["model", "details", undefined],
     ["permissions", "details", "settings"], ["voice", "details", undefined], ["visibility", "details", undefined],

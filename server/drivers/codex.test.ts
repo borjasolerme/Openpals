@@ -45,7 +45,7 @@ function processIsAlive(pid: number): boolean {
 
 const CONTROL_PLANE_FIXTURE = {
   OMB_CLOUD_READY_TOKEN: "ready-should-not-leak", OMB_CLOUD_BOOTSTRAP: "bootstrap-should-not-leak",
-  OMB_LICENSE_KEY: "license-should-not-leak", OMB_INSTALLATION_CREDENTIAL: "fleet-should-not-leak",
+  OMB_INSTALLATION_CREDENTIAL: "fleet-should-not-leak",
 };
 
 describe("CodexDriver.decodeConfig", () => {

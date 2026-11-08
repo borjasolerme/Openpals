@@ -5,7 +5,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 
 async function launch() {
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = fixture.info;
   const api = async (method: string, path: string, body?: unknown, status = 200) => {
     const response = await fetch(`${url}${path}`, {

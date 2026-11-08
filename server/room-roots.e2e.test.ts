@@ -54,7 +54,7 @@ type Responder = { kind: "member"; botId: string } | { kind: "mentions" } | { ki
 
 async function scenario(test: (f: any) => Promise<void>, options: { fake?: Record<string, string>; scripted?: boolean } = {}) {
   const parentEnv: NodeJS.ProcessEnv = { ...process.env, ...options.fake };
-  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, undefined, { scripted: options.scripted !== false });
+  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, { scripted: options.scripted !== false });
   const url = session.info.url;
   const dataDir = session.info.dataDir;
   let server: ChildProcess = session.child;

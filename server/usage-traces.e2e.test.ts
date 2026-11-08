@@ -10,7 +10,7 @@ const toolsOf = (turn: TraceTurn): TraceTool[] => turn.children.flatMap((child) 
   child.kind === "tool" ? [child] : child.kind === "group" ? child.children.filter((inner): inner is TraceTool => inner.kind === "tool") : []);
 
 it("traces a person's message to the Chief through the teammate it delegated to and the tools that teammate used", async () => {
-  const session = await launchVerificationServer({ ...process.env }, undefined, undefined, undefined, undefined, { scripted: true });
+  const session = await launchVerificationServer({ ...process.env }, undefined, undefined, undefined, { scripted: true });
   const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as Promise<any>;
   const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   try {

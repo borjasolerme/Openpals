@@ -77,7 +77,7 @@ else if (args[0] === "mcp") {
 else bridge("/engine", { args, proxy: process.env.AGENT_BROWSER_PROXY }).then((text) => { process.stdout.write(text); process.exit(0); }, () => process.exit(1));
 `, { mode: 0o755 });
 
-  const fixture = await launchVerificationServer(cuaRecord ? { OMB_TEST_DESKTOP_CUA_CONNECTION: cuaRecord } : {}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(cuaRecord ? { OMB_TEST_DESKTOP_CUA_CONNECTION: cuaRecord } : {}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, { scripted: true });
   const base = fixture.info.url;
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)

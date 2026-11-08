@@ -35,7 +35,7 @@ function assignments(dataDir: string): Row[] {
 }
 
 async function scenario(test: (f: any) => Promise<void>) {
-  const session = await launchVerificationServer({ ...process.env }, undefined, undefined, undefined, undefined, { scripted: true });
+  const session = await launchVerificationServer({ ...process.env }, undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = session.info;
   try {
     const api = async (method: string, path: string, body?: unknown) => {

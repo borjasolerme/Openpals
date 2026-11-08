@@ -24,7 +24,7 @@ const jsonl = (path: string): any[] => existsSync(path)
 
 async function scenario(test: (f: any) => Promise<void>) {
   const parentEnv: NodeJS.ProcessEnv = { ...process.env };
-  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, undefined, { scripted: true });
+  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, { scripted: true });
   const url = session.info.url;
   const dataDir = session.info.dataDir;
   let server: ChildProcess = session.child;

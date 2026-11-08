@@ -25,7 +25,7 @@ describe("the bot panel's page registry", () => {
     ["soul", { tab: "details", page: "settings", anchor: "instructions", editInstructions: true }],
     ["skills", { tab: "library", page: "skills" }], ["memory", { tab: "library", page: "memory" }], ["routines", { tab: "details", page: "routines" }],
     ["access", { tab: "computer" }], ["model", { tab: "details", anchor: "model" }], ["permissions", { tab: "details", page: "settings", anchor: "approval" }],
-    ["voice", { tab: "details" }], ["visibility", { tab: "details" }], ["history", { tab: "details" }], ["usage", { tab: "details" }], ["slack", { tab: "details" }],
+    ["voice", { tab: "details" }], ["visibility", { tab: "details" }], ["history", { tab: "details" }], ["usage", { tab: "details" }],
   ] as const)("sends a %s link to %o", (section, target) => {
     expect(sectionTarget(section)).toEqual(target);
   });

@@ -9,7 +9,7 @@ describe("the box's environment allow-list", () => {
       ANTHROPIC_API_KEY: "sk-ant-1", ANTHROPIC_BASE_URL: "http://127.0.0.1:18080/b/t/anthropic", CLAUDE_CONFIG_DIR: "/data/.claude",
       OPENAI_API_KEY: "sk-1", CODEX_HOME: "/data/.codex", OMB_HOOK_URL: "http://127.0.0.1:8799/api/internal/hook", OMB_COMMS_TOKEN: "cap",
       HTTPS_PROXY: "http://127.0.0.1:3128", NO_PROXY: "127.0.0.1", NPM_CONFIG_LOGLEVEL: "error", ELECTRON_RUN_AS_NODE: "1",
-      OMB_CLOUD_BOOTSTRAP_SECRET: "s", OMB_CLOUD_MACHINE_ID: "m", OMB_CLOUD_ADMIN_URL: "https://a", OMB_LICENSE_KEY: "k",
+      OMB_CLOUD_BOOTSTRAP_SECRET: "s", OMB_CLOUD_MACHINE_ID: "m", OMB_CLOUD_ADMIN_URL: "https://a",
       OMB_DATA_DIR: "/data/.openmausbot", OMB_PORT: "8799", OMB_LOOPBACK_TRUST: "owner", AWS_SECRET_ACCESS_KEY: "aws", SSH_AUTH_SOCK: "/x",
       SOME_RANDOM_NAME: "x", EMPTY: undefined,
     });
@@ -34,8 +34,8 @@ describe("the box's environment allow-list", () => {
 
   it("keeps the keys one spawn vouches for, under any name, past the allow-list and the deny, never past the never-list or OMB_", () => {
     const deny = new Set(["OPENCODE_API_KEY", "OMB_EXAMPLE_TOKEN"]);
-    const allow = new Set(["NANO_GPT_API_KEY", "OPENCODE_API_KEY", "OMB_LICENSE_KEY", "OMB_CLOUD_AI_TOKEN", "OMB_EXAMPLE_TOKEN"]);
-    const env = { NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o", OMB_LICENSE_KEY: "l", OMB_CLOUD_AI_TOKEN: "c", OMB_EXAMPLE_TOKEN: "b", DEEPSEEK_API_KEY: "d" };
+    const allow = new Set(["NANO_GPT_API_KEY", "OPENCODE_API_KEY", "OMB_CLOUD_AI_TOKEN", "OMB_EXAMPLE_TOKEN"]);
+    const env = { NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o", OMB_CLOUD_AI_TOKEN: "c", OMB_EXAMPLE_TOKEN: "b", DEEPSEEK_API_KEY: "d" };
     expect(boxEnvironment(env, deny, allow)).toEqual({ NANO_GPT_API_KEY: "n", OPENCODE_API_KEY: "o" });
     expect(boxEnvironment(env, deny)).toEqual({});
   });

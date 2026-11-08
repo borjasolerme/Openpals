@@ -6,7 +6,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 
 it("starts a teammate's thread in the delegating bot's project folder by default, and refuses an explicit in_my_folder when there is none", async () => {
-  const session = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+  const session = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = session.info;
   const cli = (...args: string[]) => runControlOmb([...args, "--url", url]) as Promise<any>;
   const api = async (method: string, path: string, body?: unknown) => {

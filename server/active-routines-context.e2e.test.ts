@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 
 it("shows a work conversation's interval monitor and stop rule in main chat, then reads back its pause", async () => {
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)
     ? readFileSync(`${planPath}.evidence.jsonl`, "utf8").trim().split("\n").filter(Boolean).map(line => JSON.parse(line)) : [];

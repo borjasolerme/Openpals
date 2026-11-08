@@ -9,7 +9,7 @@ const CONTEXT_TOKENS = 990_000;
 
 it("shows a bot's room context, compacts on request, and compacts before a turn above the threshold", async () => {
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_CONTEXT_TOKENS: String(CONTEXT_TOKENS) },
-    undefined, undefined, undefined, undefined, { scripted: true });
+    undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = fixture.info;
   const control = (...args: string[]) => runControlOmb([...args, "--url", url]);
   const post = (path: string, body: unknown = {}) =>
@@ -62,7 +62,7 @@ it("shows a bot's room context, compacts on request, and compacts before a turn 
 
 it("drops a member's reading once another member's turn replaces its warm process", async () => {
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_CONTEXT_TOKENS: String(CONTEXT_TOKENS) },
-    undefined, undefined, undefined, undefined, { scripted: true });
+    undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = fixture.info;
   const control = (...args: string[]) => runControlOmb([...args, "--url", url]);
   try {

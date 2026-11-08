@@ -18,11 +18,10 @@
   do not spend tokens and still run at the cap.
 - Price turns from the operator's list (`driver/model`, then model, then
   `default`) into a billable column in `/api/usage` and its CSV.
-- Do nothing at all without the `budgets` / `billing` entitlements.
 
 ## User path
 
-Settings → Usage → **Monthly spend limit** and **Sell prices** (enterprise).
+Settings → Usage → **Monthly spend limit** and **Sell prices**.
 The History card shows a billable column once prices exist; the composer's
 send is refused with the limit message once the cap is reached.
 
@@ -32,9 +31,8 @@ send is refused with the limit message once the cap is reached.
 pnpm exec vitest run --no-file-parallelism server/spend-cap-api.test.ts
 ```
 
-The test writes a stand-in enterprise layer (the folder shape core loads,
-granting `budgets` and `billing`) and launches the `control-omb` fixture with
-it through `launchVerificationServer(..., { dir, licenseKey })`. It sets a
+The test launches the `control-omb` fixture through
+`launchVerificationServer`. It sets a
 $0.015 cap and a default price list, sends two turns that the fake engine
 books at $0.01 each, and checks the third is refused with 409 `spend_cap`,
 that `/api/usage` reports the cap exceeded, warned, and priced, that the CSV
@@ -46,9 +44,8 @@ It prints the fixture's server log path and removes its temporary homes.
 The memory regression also proves that one helper reaching the cap blocks
 the next step in that same upkeep pass, and that raising the cap resumes it.
 
-For the same by hand, launch a fixture with `OMB_ENTERPRISE_DIR` pointing at a
-folder whose `server/index.js` exports such a `register()`, and
-`OMB_LICENSE_KEY` set to any value, then use the normal chat-turn commands.
+For the same by hand, launch a fixture and set a cap under Settings → Usage,
+then use the normal chat-turn commands.
 
 ## Unit regressions
 

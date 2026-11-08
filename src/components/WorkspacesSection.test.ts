@@ -11,11 +11,11 @@ vi.mock("@/state/store", async (importOriginal) => ({
 }));
 afterEach(() => vi.unstubAllGlobals());
 
-function config(features: string[], fleet: boolean): ConfigStatus {
+function config(fleet: boolean): ConfigStatus {
   return {
     composio: { configured: false }, box: { configured: false }, vps: { configured: false, sshAlias: "" },
     rooms: { turnTimeoutMinutes: 30 }, localVm: { mode: "shared", maxInstances: 1 },
-    edition: { edition: features.length ? "enterprise" : "oss", features }, fleet: { available: fleet },
+    fleet: { available: fleet },
   } as ConfigStatus;
 }
 
@@ -37,11 +37,10 @@ describe("workspaces section", () => {
     expect(html).not.toContain("<button");
     expect(html).not.toContain(">Running<");
   });
-  it("appears only with the admin entitlement and a fleet agent on this server", () => {
-    expect(workspacesAvailable(config([], true))).toBe(false);
-    expect(workspacesAvailable(config(["admin"], false))).toBe(false);
-    expect(workspacesAvailable(config(["admin"], true))).toBe(true);
-    fixture.config = config(["admin"], false);
+  it("appears only with a fleet agent on this server", () => {
+    expect(workspacesAvailable(config(false))).toBe(false);
+    expect(workspacesAvailable(config(true))).toBe(true);
+    fixture.config = config(false);
     expect(renderToStaticMarkup(createElement(WorkspacesSection, { load: async () => fleet }))).toBe("");
   });
 

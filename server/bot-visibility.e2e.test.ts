@@ -242,8 +242,6 @@ posixOnly("per-bot visibility on a shared workspace", () => {
       ["POST", `/api/bots/${ids.hr}/interrupt`, { threadId: ids.hrThread }],
       ["POST", `/api/bots/${ids.hr}/respond`, { requestId: "x", behavior: "deny", threadId: ids.hrThread }],
       ["PATCH", `/api/bots/${ids.hr}`, { pinned: true }],
-      ["GET", `/api/bots/${ids.hr}/slack-management`],
-      ["GET", `/api/bots/${ids.board}/slack-management`],
       ["POST", `/api/groups/${ids.roomMixed}/read`],
       ["POST", `/api/groups/${ids.roomMixed}/messages`, { text: "hi" }],
       ["PATCH", `/api/groups/${ids.roomMixed}`, { name: "mine now" }],

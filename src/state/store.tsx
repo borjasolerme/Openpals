@@ -401,7 +401,7 @@ export type { BrowserEngineSummary, BrowserProfile, ConfigStatus };
 // A section left out here is wiped from state.config whenever a config frame lands.
 export type ConfigStatusFrame = Pick<
   ConfigStatus,
-  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "edition" | "budgets" | "billing"
+  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "budgets" | "billing"
 >;
 
 export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
@@ -436,7 +436,6 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
     onboarding: frame.onboarding,
     browserEngine: frame.browserEngine,
     browserProfiles: frame.browserProfiles,
-    edition: frame.edition,
     budgets: frame.budgets,
     billing: frame.billing,
   };
@@ -515,7 +514,6 @@ export type AppSettingsSection =
 export type BotSettingsSection =
   | "overview"
   | "identity"
-  | "slack"
   | "soul"
   | "skills"
   | "memory"

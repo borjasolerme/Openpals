@@ -82,7 +82,7 @@ const AREAS = [
   [/^scripts\/.+\.test\.[cm]?[jt]sx?$/, "script-tests"],
   [/^src\/locales\/(?:(?!en\.json$)[^/]+\.json|[^/]+\.test\.ts)$/, "locales"],
   [/^(?:src|public)\/|^[^/]+-preview\.html$/, "web"],
-  [/^(?:server|shared|enterprise|companion|evals|skills|deploy)\/|^(?:Dockerfile|\.dockerignore|compose\.yaml)$/, "server"],
+  [/^(?:server|shared|companion|evals|skills|deploy)\/|^(?:Dockerfile|\.dockerignore|compose\.yaml)$/, "server"],
   [/^electron\/(?:cua|cua-failure|cua-connection|capabilities|paced-typing)\.[cm]js$/, "windows-computer-control"],
   [/^(?:electron|build)\/|^(?:electron-builder\.yml|index\.html)$/, "desktop"],
 ];

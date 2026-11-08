@@ -34,7 +34,7 @@ const botsNow = async () => json(await cli(["bots", "--json"])).bots as any[];
 
 beforeAll(async () => {
   // A port range of its own (19975-19999), and a scripted fake engine.
-  session = await launchVerificationServer({ ...process.env, OMB_TEST_PORTS: "19975-19999" }, undefined, undefined, undefined, undefined, { scripted: true });
+  session = await launchVerificationServer({ ...process.env, OMB_TEST_PORTS: "19975-19999" }, undefined, undefined, undefined, { scripted: true });
   dir = mkdtempSync(join(tmpdir(), "omb-headless-cli-"));
 }, 60_000);
 

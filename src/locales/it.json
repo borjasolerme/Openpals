@@ -3711,8 +3711,6 @@
   "botAccess.recordSteps.off": "I passi nel browser non vengono salvati.",
   "botAccess.recordSteps.needsBrowser": "Prima attiva il browser.",
   "botAccess.recordSteps.myChrome": "Questo bot usa il tuo Chrome, quindi le catture mostrano il tuo Chrome.",
-  "botSlack.body": "Dai a questo agente una sua app Slack, con nome e immagine propri, così il tuo team può scrivergli direttamente.",
-  "botSlack.manage": "Gestisci in Admin",
   "skills.learned.hintOn": "Salva l'esecuzione di verifica di un bot come abilità dalla scheda Verifica, oppure importane una qui sotto. Ogni abilità nuova o modificata compare in chat con Annulla.",
   "skills.learned.hintOff": "La creazione di abilità è disattivata, ma le abilità che hai già attivato restano sotto il tuo controllo qui.",
   "skills.origin.imported": "Questo computer",

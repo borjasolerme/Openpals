@@ -12,7 +12,6 @@ export interface FleetAgentOptions {
   group?: string;
   node: string;
   script: string;
-  licenseKey?: string;
   root?: string;
   deps?: FleetDeps;
   auditFile?: string;
@@ -80,7 +79,7 @@ export function createFleetAgent(options: FleetAgentOptions): Server {
   const auditFile = options.auditFile ?? layout.auditFile;
   const base = (): FleetInput => ({
     action: "list", admins: [], members: [], dryRun: false, yes: false, keepData: false,
-    node: options.node, script: options.script, root: options.root, ...(options.licenseKey ? { licenseKey: options.licenseKey } : {}),
+    node: options.node, script: options.script, root: options.root,
   });
 
   const audit = (entry: Record<string, unknown>) => {

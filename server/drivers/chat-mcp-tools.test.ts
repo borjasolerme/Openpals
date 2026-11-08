@@ -234,7 +234,7 @@ describe("Chat MCP session", () => {
   });
 
   it("keeps the operator's control-plane secrets from a chat bot's tool servers, but not what the descriptor grants", async () => {
-    const secrets = ["OMB_CLOUD_READY_TOKEN", "OMB_CLOUD_BOOTSTRAP", "OMB_LICENSE_KEY", "OMB_INSTALLATION_CREDENTIAL"];
+    const secrets = ["OMB_CLOUD_READY_TOKEN", "OMB_CLOUD_BOOTSTRAP", "OMB_INSTALLATION_CREDENTIAL"];
     for (const name of secrets) vi.stubEnv(name, "should-not-leak");
     vi.stubEnv("OMB_CLOUDFLARED_PATH", "/usr/local/bin/cloudflared");
     const f = fixture();

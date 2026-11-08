@@ -27,7 +27,7 @@ const PRICING_V2 = PRICING.replace("rounded-2xl border p-5", "rounded-2xl border
 
 beforeAll(async () => {
   globalThis.fetch = (input, init = {}) => realFetch(input, { ...init, headers: { ...Object.fromEntries(new Headers(init.headers)), "x-openmausbot-desktop-owner": owner } });
-  fixture = await launchVerificationServer({ ...process.env, OMB_TEST_DESKTOP_OWNER_TOKEN: owner }, undefined, undefined, undefined, undefined, { scripted: true });
+  fixture = await launchVerificationServer({ ...process.env, OMB_TEST_DESKTOP_OWNER_TOKEN: owner }, undefined, undefined, undefined, { scripted: true });
 }, 90_000);
 afterAll(async () => {
   globalThis.fetch = realFetch;

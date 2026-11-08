@@ -48,7 +48,6 @@ export interface FleetInput {
   openrouterDefault?: boolean;
   portalUrl?: string;
   cap?: number;
-  licenseKey?: string;
   memory?: string;
   dryRun: boolean;
   yes: boolean;
@@ -333,7 +332,6 @@ export function planFleetAction(input: FleetInput, deps: FleetDeps): FleetStep[]
         registry,
         slug: input.slug,
         seed: { admins: input.admins, members: input.members, ...(anthropicKey ? { anthropicKey } : {}), ...(input.anthropicUrl ? { anthropicUrl: input.anthropicUrl } : {}), ...(input.portalUrl ? { portalUrl: input.portalUrl } : {}), ...(input.cap !== undefined ? { monthlyCapUsd: input.cap } : {}), ...(brandJson ? { brandJson } : {}), openrouterKey: input.openrouterKey, openrouterUrl: input.openrouterUrl, openrouterModels: input.openrouterModels, openrouterDefault: input.openrouterDefault },
-        ...(input.licenseKey ? { licenseKey: input.licenseKey } : {}),
         ...(input.memory ? { memoryMax: input.memory } : {}),
         layout,
       }).steps;

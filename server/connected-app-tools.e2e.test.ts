@@ -43,7 +43,7 @@ it("a bot given Gmail by its app switch reaches gmail.search_emails by name on C
   const fixture = await launchVerificationServer({
     ...process.env, ...apps.env,
     FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_SLOW_FINISH_GATE: gate, FAKE_ACP_HANG_ON: "Find Ada's mail again",
-  }, undefined, undefined, undefined, undefined, undefined, ["cline"]);
+  }, undefined, undefined, undefined, undefined, ["cline"]);
   const api = async (method: string, path: string, body?: unknown, expected = 200) => {
     const response = await fetch(fixture.info.url + path, {
       method, headers: { "content-type": "application/json", origin: fixture.info.url },

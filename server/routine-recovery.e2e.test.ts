@@ -158,7 +158,7 @@ it("picks a run that a restart cut off up again once on the next start, and neve
 }, hostTimeout(120_000));
 
 it("keeps an ACP engine's run that a graceful shutdown cut off, and starts it once more on the next start", async () => {
-  fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["cline"]);
+  fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, ["cline"]);
   const { url, dataDir, logPath } = fixture.info;
   const configPath = join(dataDir, "config.json");
   const acpMode = (mode: string) => {

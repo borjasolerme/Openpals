@@ -12,7 +12,7 @@ const MP3 = Buffer.from("ID3 fake mp3 for the webhook room fixture");
 const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
 it("posts text, a voice note and an image into a room as one bot message, with no run, and refuses once the bot leaves", async () => {
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, { scripted: true });
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, { scripted: true });
   const spoken: Array<{ input: string; voice: string }> = [];
   const tts: Server = createServer((req, res) => {
     let raw = "";

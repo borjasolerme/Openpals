@@ -75,7 +75,7 @@ it("reviews a Codex bot's conversation through Codex's own background call", asy
     [SKILL_REVIEW_MARKER]: JSON.stringify({ changes: [{ action: "create", skill_md: SKILL_MD, gist: "Five-bullet weekly report." }], note: "one lesson" }),
   }));
   const fixture = await launchVerificationServer({ ...process.env, FAKE_CODEX_TEXT_ROUTES: routes, FAKE_CODEX_TEXT_LOG: textLog },
-    undefined, undefined, undefined, undefined, undefined, ["codex"]);
+    undefined, undefined, undefined, undefined, ["codex"]);
   const { url } = fixture.info;
   const api = async <T = any>(path: string, method = "GET", body?: unknown, status = 200): Promise<T> => {
     const response = await fetch(url + path, {

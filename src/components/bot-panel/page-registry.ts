@@ -15,7 +15,7 @@ export type PageId =
   | "setup" | "model" | "instructions" | "approvals" | "always" | "routines" | "apps"
   | "memory" | "skills"
   | "browser" | "folder" | "android"
-  | "voice" | "blurb" | "mcp" | "tools" | "webhooks" | "visibility" | "slack"
+  | "voice" | "blurb" | "mcp" | "tools" | "webhooks" | "visibility"
   | "overview" | "prompt" | "history";
 
 /** The pages Simple mode draws; a link to any other page lands where its section does. */
@@ -53,7 +53,6 @@ export const PAGES: Record<PageId, PageMeta> = {
   webhooks: { title: "botPanel.page.webhooks", home: "details" },
   always: { title: "botPanel.page.always", home: "details" },
   visibility: { title: "botSettings.visibility.title", home: "details" },
-  slack: { title: "botPanel.page.slack", home: "details" },
   overview: { title: "botPanel.page.overview", home: "details" },
   prompt: { title: "botPanel.page.prompt", home: "details" },
   history: { title: "botPanel.page.history", home: "details" },
@@ -72,7 +71,6 @@ export interface PanelTarget {
 const SECTION_TARGET: Record<BotSettingsSection, PanelTarget> = {
   overview: { tab: "details" },
   identity: { tab: "details" },
-  slack: { tab: "details" },
   soul: { tab: "details", page: "settings", anchor: "instructions", editInstructions: true },
   skills: { tab: "library", page: "skills" },
   memory: { tab: "library", page: "memory" },

@@ -149,7 +149,7 @@ it("reports every run into the bot's main thread while fresh executions, approva
 }, 90_000);
 
 it("reports a routine made in a chat into that chat once the person writes there, not the bot's first thread or a new results thread", async () => {
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
   const evidence: unknown[] = [{ fixture: fixture.info }];
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const api = async (method: string, path: string, body?: unknown, status = 200) => {

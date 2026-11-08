@@ -1,5 +1,5 @@
-// The isolated fake-engine fixture with a stand-in enterprise layer granting `budgets` and `billing`, and a scripted coordinator reply.
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+// The isolated fake-engine fixture with a scripted coordinator reply.
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -12,16 +12,14 @@ describe("spend cap inside a team goal run", () => {
   let layerDir: string;
 
   beforeEach(async () => {
-    layerDir = mkdtempSync(join(tmpdir(), "omb-fake-layer-goal-"));
-    mkdirSync(join(layerDir, "server"));
-    writeFileSync(join(layerDir, "server", "index.js"), 'export async function register() { return { customer: "Fixture Co", features: ["budgets", "billing"], expiresAt: "2099-01-01" }; }\n');
+    layerDir = mkdtempSync(join(tmpdir(), "omb-spend-cap-goal-"));
     session = await launchVerificationServer({
       ...process.env,
       // FAKE_CLAUDE_REPLY_STATE unset: every invocation replays index 0, so an accidental retry would price another turn.
       FAKE_CLAUDE_REPLIES: JSON.stringify([
         'The plan is ready.\n<openmaus-goal>{"status":"continue","next":"Worker","instruction":"Do the thing","detail":"Plan ready"}</openmaus-goal>',
       ]),
-    }, undefined, undefined, undefined, { dir: layerDir, licenseKey: "fixture-key" });
+    });
   }, 60_000);
 
   afterEach(async () => {
@@ -35,8 +33,6 @@ describe("spend cap inside a team goal run", () => {
   const put = (body: unknown) => api("/api/config", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
   it("ends a capped goal as a blocked run with the cap detail, without retrying the refusal", async () => {
-    expect((await (await api("/api/edition")).json())).toMatchObject({ edition: "enterprise", features: ["billing", "budgets"] });
-
     // The fake engine reports $0.01 per turn: a $0.01 cap lets the coordinator's goal turn finish, then blocks the next at execution.
     expect((await put({
       budgets: { monthlyUsd: 0.01, warnAtPercent: 50 },
@@ -92,16 +88,14 @@ describe("spend cap inside a one-on-one goal", () => {
   let layerDir: string;
 
   beforeEach(async () => {
-    layerDir = mkdtempSync(join(tmpdir(), "omb-fake-layer-solo-goal-"));
-    mkdirSync(join(layerDir, "server"));
-    writeFileSync(join(layerDir, "server", "index.js"), 'export async function register() { return { customer: "Fixture Co", features: ["budgets", "billing"], expiresAt: "2099-01-01" }; }\n');
+    layerDir = mkdtempSync(join(tmpdir(), "omb-spend-cap-solo-goal-"));
     session = await launchVerificationServer({
       ...process.env,
       // Every invocation replays index 0, so an accidental retry would price another turn.
       FAKE_CLAUDE_REPLIES: JSON.stringify([
         'Half done.\n<openmaus-goal>{"status":"continue","next":"Solo","instruction":"Finish the thing","detail":"Half done"}</openmaus-goal>',
       ]),
-    }, undefined, undefined, undefined, { dir: layerDir, licenseKey: "fixture-key" });
+    });
   }, 60_000);
 
   afterEach(async () => {

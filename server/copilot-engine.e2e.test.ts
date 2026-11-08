@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.ts";
 
 it("moves one bot and one conversation between Claude, GitHub Copilot and a custom ACP agent through the picker's routes", async () => {
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["copilot", "customAcp"]);
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, ["copilot", "customAcp"]);
   const { url, dataDir } = fixture.info;
   const api = async (method: string, path: string, body?: unknown, status = 200) => {
     const response = await fetch(url + path, { method, headers: { "content-type": "application/json", origin: url },

@@ -55,7 +55,7 @@ async function chiefJob(test: (f: any) => Promise<void>) {
     await reply(res, answer(request)).catch(() => {});
   });
   await new Promise<void>((resolve) => model.listen(0, "127.0.0.1", resolve));
-  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, undefined, { scripted: true });
+  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, { scripted: true });
   const url = session.info.url;
   const dataDir = session.info.dataDir;
   let server: ChildProcess = session.child;

@@ -22,7 +22,7 @@ import { phonePairingLink } from "../shared/pairing-link.ts";
 import { parseAllowList } from "./sign-in-allow-list.ts";
 import { appendAdminAction, flushAdminActivity, sharedSignIn } from "./admin-activity.ts";
 import { bindDecisionRetention, decisionRetentionDays } from "./decision-log.ts";
-import { hostedWorkspaceConfigured } from "./enterprise.ts";
+import { hostedWorkspaceConfigured } from "./hosted-workspace.ts";
 import { resolveLoopbackTrust } from "./request-auth.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import { ensureCaddy, normalizeDomainOption, startCaddy, type RunningCaddy } from "./caddy.ts";
@@ -71,7 +71,6 @@ export interface CliOptions {
   brandFile?: string;
   anthropicKeyFile?: string;
   cap?: number;
-  licenseKey?: string;
   memory?: string;
   dryRun?: boolean;
   yes?: boolean;
@@ -156,7 +155,6 @@ export function parseArgs(argv: string[], env: NodeJS.ProcessEnv = process.env):
       else if (options.command === "fleet" && arg === "--brand") options.brandFile = resolve(value());
       else if (options.command === "fleet" && arg === "--anthropic-key-file") options.anthropicKeyFile = resolve(value());
       else if (options.command === "fleet" && arg === "--cap") options.cap = Number(value());
-      else if (options.command === "fleet" && arg === "--license-key") options.licenseKey = value();
       else if (options.command === "fleet" && arg === "--memory") options.memory = value();
       else if (options.command === "fleet" && arg === "--dry-run") options.dryRun = true;
       else if (options.command === "fleet" && arg === "--yes") options.yes = true;
@@ -829,7 +827,6 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
           group: options.group,
           node: process.execPath,
           script: process.argv[1] ?? "",
-          licenseKey: options.licenseKey ?? process.env.OMB_LICENSE_KEY,
         }, { log: (line) => console.log(line) });
         await new Promise<void>((resolveStop) => {
           for (const signal of ["SIGTERM", "SIGINT"] as const) process.once(signal, () => resolveStop());
@@ -846,7 +843,6 @@ export async function main(argv = process.argv.slice(2)): Promise<number> {
         brandFile: options.brandFile,
         anthropicKeyFile: options.anthropicKeyFile,
         cap: options.cap,
-        licenseKey: options.licenseKey ?? process.env.OMB_LICENSE_KEY,
         memory: options.memory,
         dryRun: options.dryRun ?? false,
         yes: options.yes ?? false,

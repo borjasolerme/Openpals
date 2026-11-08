@@ -6,8 +6,6 @@ import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_BRAND, describeBrand, loadBrand } from "./brand.ts";
 
 const dirs: string[] = [];
-const licensed = (feature: string) => feature === "whitelabel";
-const unlicensed = () => false;
 
 function brandFile(content: string): string {
   const dir = mkdtempSync(join(tmpdir(), "omb-brand-"));
@@ -24,11 +22,11 @@ afterEach(() => {
 describe("brand.json", () => {
   it("is the default brand when no file exists, pointing at where one would go", () => {
     const file = join(tmpdir(), "omb-brand-missing", "brand.json");
-    expect(loadBrand({ file, isEntitled: licensed })).toEqual({ brand: DEFAULT_BRAND, source: "default", file });
-    expect(describeBrand(loadBrand({ file, isEntitled: licensed }))).toBe("brand: default");
+    expect(loadBrand({ file })).toEqual({ brand: DEFAULT_BRAND, source: "default", file });
+    expect(describeBrand(loadBrand({ file }))).toBe("brand: default");
   });
 
-  it("applies a valid file on a licensed server", () => {
+  it("applies a valid file", () => {
     const file = brandFile(JSON.stringify({
       name: "Reliable Platform",
       tagline: "Back office, on autopilot",
@@ -36,20 +34,12 @@ describe("brand.json", () => {
       logo: "data:image/svg+xml;base64,PHN2Zy8+",
       supportUrl: "https://help.reliable.example",
     }));
-    const status = loadBrand({ file, isEntitled: licensed });
+    const status = loadBrand({ file });
     expect(status.source).toBe("file");
     expect(status.brand.name).toBe("Reliable Platform");
     expect(status.brand.accent).toBe("#1D4ED8");
     expect(status.notice).toBeUndefined();
     expect(describeBrand(status)).toBe(`brand: Reliable Platform (from ${file})`);
-  });
-
-  it("keeps the default brand on an unlicensed server and says so", () => {
-    const file = brandFile(JSON.stringify({ name: "Acme" }));
-    const status = loadBrand({ file, isEntitled: unlicensed });
-    expect(status.brand).toEqual(DEFAULT_BRAND);
-    expect(status.source).toBe("default");
-    expect(status.notice).toContain("not licensed for whitelabel");
   });
 
   it("explains a broken file in terms of what to change, and never applies it", () => {
@@ -63,16 +53,11 @@ describe("brand.json", () => {
       [JSON.stringify({ name: "Acme", colour: "#000000" }), /colour/],
     ];
     for (const [content, expected] of cases) {
-      const status = loadBrand({ file: brandFile(content), isEntitled: licensed });
+      const status = loadBrand({ file: brandFile(content) });
       expect(status.brand, content).toEqual(DEFAULT_BRAND);
       expect(status.notice, content).toMatch(expected);
       expect(status.notice, content).toMatch(/using the default brand$/);
     }
-  });
-
-  it("validates before gating, so an unlicensed operator still learns about a broken file", () => {
-    const status = loadBrand({ file: brandFile(JSON.stringify({ name: "Acme", accent: "nope" })), isEntitled: unlicensed });
-    expect(status.notice).toMatch(/accent/);
   });
 });
 

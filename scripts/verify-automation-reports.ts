@@ -11,7 +11,7 @@ const NAME = "Inbox watch";
 const header = `Scheduled routine ${JSON.stringify(NAME)} — do this now:`;
 const QUESTION = "Which Acme account should I check?";
 
-const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
 let ui: MountedPreview | undefined;
 let broker: Socket | undefined;
 const evidence: unknown[] = [];

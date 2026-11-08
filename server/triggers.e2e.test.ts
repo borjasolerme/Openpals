@@ -8,7 +8,7 @@ import { launchVerificationServer, runControlOmb } from "../scripts/control-omb.
 // Copy address is the same link and works through the real receiver; runs show on the one live card; Undo removes what
 // the bot made.
 it("sets up schedule and webhook triggers from chat at Ask, with no confirmation, no leaked secret, and a working link", async () => {
-  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
+  const fixture = await launchVerificationServer(process.env, undefined, undefined, undefined, { scripted: true });
   const evidence: unknown[] = [{ fixture: fixture.info }];
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const turns = () => existsSync(`${planPath}.evidence.jsonl`)

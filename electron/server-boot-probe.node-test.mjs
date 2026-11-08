@@ -287,7 +287,7 @@ test("a child that says it is listening gets the grace before it times out", asy
 
 test("the listening line is heard when stdout splits it across chunks", () => {
   const listening = listeningSignal();
-  listening.hear("boot… openmausbot ser");
+  listening.hear("boot… Openpals ser");
   assert.equal(listening.heard(), false);
   listening.hear("ver on http://127.0.0.1:8799\n");
   assert.equal(listening.heard(), true);

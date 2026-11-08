@@ -118,7 +118,7 @@ async function composioStub() {
 
 async function scenario(test: (f: any) => Promise<void>, options: { env?: Record<string, string>; fake?: Record<string, string>; scripted?: boolean } = {}) {
   const parentEnv: NodeJS.ProcessEnv = { ...process.env, ...options.fake };
-  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, undefined, { scripted: options.scripted !== false });
+  const session = await launchVerificationServer(parentEnv, undefined, undefined, undefined, { scripted: options.scripted !== false });
   const url = session.info.url;
   const dataDir = session.info.dataDir;
   let server: ChildProcess = session.child;

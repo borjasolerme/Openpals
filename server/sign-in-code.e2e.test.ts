@@ -93,7 +93,7 @@ else bridge("/engine", { args }).then((text) => { process.stdout.write(text); pr
   const mailboxTools = join(tools, "mailbox-tools.json");
   writeFileSync(mailboxTools, JSON.stringify([{ name: "read_inbox", description: "Read the newest emails in the person's inbox", inputSchema: { type: "object", properties: {} } }]));
 
-  const fixture = await launchVerificationServer({}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, undefined, { scripted: true });
+  const fixture = await launchVerificationServer({}, undefined, undefined, { binaryPath, executablePath: join(tools, "chrome") }, { scripted: true });
   const base = fixture.info.url;
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)

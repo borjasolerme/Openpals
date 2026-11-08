@@ -1260,7 +1260,7 @@ describe("saving OpenCode provider keys", () => {
       expect(refused(name)).toContain("such as VENICE_API_KEY");
     }
     expect(refused("OPENCODE_API_KEY")).toContain("OpenCode API key box");
-    for (const name of ["OPENCODE_SERVER_KEY", "OMB_LICENSE_KEY", "BOX_TOKEN", "COMPOSIO_API_KEY",
+    for (const name of ["OPENCODE_SERVER_KEY", "BOX_TOKEN", "COMPOSIO_API_KEY",
       "OPENAI_COMPAT_API_KEY", "XAI_API_KEY", "MISTRAL_API_KEY", "CURSOR_API_KEY", "FACTORY_API_KEY"]) {
       expect(refused(name)).toBe(`OpenMaus keeps ${name} for itself, so OpenCode can't be given it here. Put this key in opencode.json instead.`);
     }
@@ -1850,7 +1850,7 @@ describe("workspace credential env strip", () => {
     const operator = {
       OMB_CLOUD_READY_TOKEN: "ready", OMB_CLOUD_BOOTSTRAP: "bootstrap", OMB_CLOUD_GATEWAY_TOKEN: "gateway",
       OMB_CLOUD_MODELS: "models", OMB_CLOUD_REVISION: "revision", OMB_CLOUD_FUTURE_SECRET: "later",
-      OMB_LICENSE_KEY: "license", OMB_INSTALLATION_CREDENTIAL: "fleet", omb_cloud_ready_token: "windows-spelling",
+      OMB_INSTALLATION_CREDENTIAL: "fleet", omb_cloud_ready_token: "windows-spelling",
     };
     // What an engine deliberately receives (the hosted model token as its provider key), plus look-alike names.
     const engine = {

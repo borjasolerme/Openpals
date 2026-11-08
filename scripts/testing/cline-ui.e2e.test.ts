@@ -9,7 +9,7 @@ const enabled = process.env.OMB_UI_E2E === "1";
 
 (enabled ? it : it.skip)("selects the configured Cline model in both picker modes and sends a specialist turn", async () => {
   const tools = await ensureUiBrowser();
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["cline"]);
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, ["cline"]);
   let preview: Awaited<ReturnType<typeof mountPreview>> | undefined;
   const env = sessionEnv({ home: fixture.info.dataDir, session: `omb-cline-ui-${new URL(fixture.info.url).port}`, chrome: tools.chrome });
   const browser = (...args: string[]) => agentBrowser(tools.binary, env, args);

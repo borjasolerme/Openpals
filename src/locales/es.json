@@ -3528,8 +3528,6 @@
   "botAccess.recordSteps.off": "Los pasos del navegador no se guardan.",
   "botAccess.recordSteps.needsBrowser": "Primero activa el navegador.",
   "botAccess.recordSteps.myChrome": "Este bot usa tu propio Chrome, así que las capturas muestran tu Chrome.",
-  "botSlack.body": "Dale a este agente su propia app de Slack, con su propio nombre y foto, para que tu equipo pueda escribirle directamente.",
-  "botSlack.manage": "Gestionar en Admin",
   "skills.learned.hintOn": "Guarda la ejecución de verificación de un bot como habilidad desde la tarjeta de verificación, o importa una abajo. Cada habilidad nueva o modificada aparece en el chat con «Deshacer».",
   "skills.learned.hintOff": "La creación de habilidades está desactivada, pero las habilidades que ya activaste siguen bajo tu control aquí.",
   "skills.origin.imported": "este equipo",

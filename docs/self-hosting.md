@@ -354,7 +354,7 @@ openmausbot fleet delete acme --yes # add --keep-data to keep the home folder
 Give `init` `--operator USER` (the Unix user your own workspace runs as; the
 user behind `sudo` by default) and it also installs the **fleet agent**: a
 root service on a Unix socket only that user may open. Your workspace then
-shows **Settings → Installations** (with the enterprise `admin` feature): create
+shows **Settings → Installations**: create
 an installation, add or remove who may sign in, suspend, resume, delete, upgrade
 all, and see each one's spend this month. Every action goes through the
 agent's audit log at `/var/log/openmausbot/fleet.jsonl`.
@@ -997,9 +997,9 @@ curl -H "Authorization: Bearer $TOKEN" -o activity.csv \
 starts 30 days ago. Nothing here is sent to your organization's cloud Admin,
 which keeps its own activity log.
 
-## Spend limits and sell prices (enterprise)
+## Spend limits and sell prices
 
-With the `budgets` entitlement, **Settings → Usage → Monthly spend limit**
+**Settings → Usage → Monthly spend limit**
 caps the workspace: once the month's cost reaches it, no bot starts a turn,
 whether a person wrote, a routine fired, a peer asked or a webhook arrived,
 until an admin raises it. A warning shows at a configurable percentage, and

@@ -29,7 +29,7 @@ type ScriptEntry = {
 };
 
 async function server(env: NodeJS.ProcessEnv = {}) {
-  fixture = await launchVerificationServer({ ...process.env, ...env }, undefined, undefined, undefined, undefined, { scripted: true });
+  fixture = await launchVerificationServer({ ...process.env, ...env }, undefined, undefined, undefined, { scripted: true });
   const { url, dataDir } = fixture.info;
   const api = async (method: string, path: string, body?: unknown, status?: number) => {
     const response = await fetch(`${url}${path}`, {

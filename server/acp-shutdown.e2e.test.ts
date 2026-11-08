@@ -9,7 +9,7 @@ import { launchVerificationServer, runControlOmb, verificationServerArgs, verifi
 import { waitForExit } from "./testing/cleanup.ts";
 
 it("keeps an ACP partial reply in the transcript across graceful shutdown and restart", async () => {
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["cline"]);
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, ["cline"]);
   const { dataDir, url, logPath } = fixture.info;
   const port = Number(new URL(url).port);
   let server = fixture.child;

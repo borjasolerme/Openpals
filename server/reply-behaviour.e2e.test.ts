@@ -27,7 +27,7 @@ it("remembers at once, learns only what the person said, forgets everywhere, and
     [TIDY_MARKER]: '{"pairs": []}',
   }));
   const fixture = await launchVerificationServer({ ...process.env, TZ: "Asia/Kolkata", FAKE_CLAUDE_TEXT_ROUTES: routes, FAKE_CLAUDE_TEXT_LOG: learnerLog },
-    undefined, undefined, undefined, undefined, { scripted: true });
+    undefined, undefined, undefined, { scripted: true });
   const planPath = join(fixture.info.dataDir, "room-plan.json");
   const evidence = () => existsSync(`${planPath}.evidence.jsonl`)
     ? readFileSync(`${planPath}.evidence.jsonl`, "utf8").trim().split("\n").filter(Boolean).map((line) => JSON.parse(line))

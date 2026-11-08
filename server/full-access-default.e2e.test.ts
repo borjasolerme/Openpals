@@ -8,7 +8,7 @@ import { launchVerificationServer, runControlOmb, verificationServerEnvironment 
 import { waitForExit } from "./testing/cleanup.ts";
 
 it("starts new bots and threads at Full access on each engine family, and keeps a person's Ask", async () => {
-  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, undefined, ["codex"]);
+  const fixture = await launchVerificationServer({}, undefined, undefined, undefined, undefined, ["codex"]);
   const { dataDir, url, logPath } = fixture.info;
   const codexDump = join(dataDir, "codex-dump.json");
   const droidDump = join(dataDir, "droid-dump.json");

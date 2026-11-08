@@ -24,7 +24,7 @@ export interface FleetView {
 }
 
 export function workspacesAvailable(config: ConfigStatus | null | undefined): boolean {
-  return config?.edition?.features?.includes("admin") === true && config?.fleet?.available === true;
+  return config?.fleet?.available === true;
 }
 
 const fetchFleet = (): Promise<FleetView> => api("/api/fleet");

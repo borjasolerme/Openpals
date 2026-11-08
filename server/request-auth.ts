@@ -39,7 +39,6 @@ const SERVICE_SCOPES: readonly Scope[] = ["client"];
 export const SERVICE_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: RegExp }> = [
   { methods: ["GET"], path: /^\/api\/health$/ },
   { methods: ["GET"], path: /^\/api\/auth\/session$/ },
-  { methods: ["GET"], path: /^\/api\/edition$/ },
   { methods: ["GET"], path: /^\/api\/brand$/ },
   { methods: ["GET"], path: /^\/api\/bots$/ },
   { methods: ["GET"], path: /^\/api\/threads\/[\w-]+\/messages$/ },
@@ -283,13 +282,11 @@ export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: Reg
   { methods: ["GET"], path: /^\/api\/phones\/self\/jobs$/ },
   { methods: ["POST"], path: /^\/api\/phones\/self\/jobs\/[\w-]+\/(?:lease|result)$/ },
   { methods: ["GET"], path: /^\/api\/health$/ },
-  { methods: ["GET"], path: /^\/api\/edition$/ },
   { methods: ["GET"], path: /^\/api\/brand$/ },
   { methods: ["GET"], path: /^\/api\/events$/ },
   // reads that carry no secrets
   { methods: ["GET"], path: /^\/api\/bots$/ },
   // a link into the organisation's Admin: identifiers only, and Admin authorizes its own visitor
-  { methods: ["GET"], path: /^\/api\/bots\/[\w-]+\/slack-management$/ },
   { methods: ["GET"], path: /^\/api\/search$/ },
   { methods: ["GET"], path: /^\/api\/threads\/[\w-]+\/messages$/ },
   { methods: ["GET"], path: /^\/api\/threads\/[\w-]+\/messages\/[\w-]+\/image$/ },

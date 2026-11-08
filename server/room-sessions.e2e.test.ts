@@ -33,7 +33,7 @@ async function fixture(test: (f: Awaited<ReturnType<typeof build>>) => Promise<v
   // a reading, and nothing compacts by itself. `scripted: false` runs the
   // fake without the room plan, for the modes only its own turn loop plays.
   const session = await launchVerificationServer({ ...process.env, FAKE_CLAUDE_VERSION: "2.1.270", FAKE_CLAUDE_CONTEXT_TOKENS: "20000", ...env },
-    undefined, undefined, undefined, undefined, { scripted });
+    undefined, undefined, undefined, { scripted });
   try {
     await test(await build(session));
   } finally {
