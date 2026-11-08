@@ -3622,6 +3622,8 @@
   "backup.confirmReplace": "Escribe REPLACE para confirmar",
   "backup.replace": "Reemplazar la instalación",
   "backup.restoring": "Preparando el reemplazo…",
+  "backup.serverRestarting": "La copia de seguridad está lista para restaurarse. {app} se está reiniciando para terminar. Esta página continuará sola en un par de minutos.",
+  "backup.serverRestartSlow": "Está tardando más de lo habitual. Si esta página no continúa en unos minutos más, vuelve a cargarla.",
   "backup.restart": "La copia de seguridad está lista para restaurarse. Cierra {app} por completo y vuelve a abrirlo para terminar. Para un servidor autoalojado, reinicia el proceso del servidor y luego recarga este navegador. No te limites a cerrar esta ventana.",
   "backup.restartDesktop": "Tu copia de seguridad está lista. Reinicia {app} para terminar de restaurarla. Cerrar esta ventana no reinicia el servidor.",
   "backup.restartAction": "Reiniciar y restaurar",

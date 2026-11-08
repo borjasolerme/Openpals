@@ -4343,6 +4343,8 @@
   "backup.confirmReplace": "输入 REPLACE 以确认",
   "backup.replace": "取代安装",
   "backup.restoring": "正在准备取代…",
+  "backup.serverRestarting": "备份已可恢复。{app} 正在重新启动以完成恢复。此页面会在一两分钟内自动继续。",
+  "backup.serverRestartSlow": "这比平时花的时间更长。如果几分钟后此页面仍未继续，请重新加载。",
   "backup.restart": "备份已可还原。请完全结束 {app} 后重新打开以完成。若使用自托管服务器，请重新启动服务器进程，再重新加载此浏览器。请勿只是关闭这个窗口。",
   "backup.restartDesktop": "备份已就绪。请重新启动 {app} 以完成还原。关闭此窗口不会重启服务器。",
   "backup.restartAction": "重启并还原",

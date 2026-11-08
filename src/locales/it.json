@@ -3809,6 +3809,8 @@
   "backup.confirmReplace": "Digita REPLACE per confermare",
   "backup.replace": "Sostituisci l'installazione",
   "backup.restoring": "Preparazione della sostituzione…",
+  "backup.serverRestarting": "Il backup è pronto per il ripristino. {app} si sta riavviando per completarlo. Questa pagina proseguirà da sola tra un paio di minuti.",
+  "backup.serverRestartSlow": "Ci sta mettendo più del solito. Se questa pagina non prosegue entro qualche minuto, ricaricala.",
   "backup.restart": "Il backup è pronto per il ripristino. Chiudi del tutto {app} e riaprilo per finire. Per un server auto-ospitato, riavvia il processo del server e poi ricarica questo browser. Non basta chiudere questa finestra.",
   "backup.restartDesktop": "Il backup è pronto. Riavvia {app} per completare il ripristino. Chiudere questa finestra non riavvia il server.",
   "backup.restartAction": "Riavvia e ripristina",

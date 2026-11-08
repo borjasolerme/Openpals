@@ -3325,6 +3325,8 @@
   "backup.confirmReplace": "Onaylamak için REPLACE yazın",
   "backup.replace": "Kurulumu değiştir",
   "backup.restoring": "Değiştirme hazırlanıyor…",
+  "backup.serverRestarting": "Yedek geri yüklenmeye hazır. Tamamlamak için {app} yeniden başlıyor. Bu sayfa bir iki dakika içinde kendiliğinden devam eder.",
+  "backup.serverRestartSlow": "Bu normalden uzun sürüyor. Bu sayfa birkaç dakika içinde devam etmezse yeniden yükle.",
   "backup.restart": "Yedek geri yüklenmeye hazır. Tamamlamak için {app}'tan tamamen çıkın ve yeniden açın. Kendi kendine barındırılan bir sunucu için sunucu sürecini yeniden başlatın, ardından bu tarayıcıyı yeniden yükleyin. Yalnızca bu pencereyi kapatmayın.",
   "backup.restartDesktop": "Yedeğiniz hazır. Geri yüklemeyi tamamlamak için {app}'u yeniden başlatın. Bu pencereyi kapatmak sunucuyu yeniden başlatmaz.",
   "backup.restartAction": "Yeniden başlat ve geri yükle",

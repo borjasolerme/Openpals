@@ -3325,6 +3325,8 @@
   "backup.confirmReplace": "Nhập REPLACE để xác nhận",
   "backup.replace": "Thay thế bản cài đặt",
   "backup.restoring": "Đang chuẩn bị thay thế…",
+  "backup.serverRestarting": "Bản sao lưu đã sẵn sàng để khôi phục. {app} đang khởi động lại để hoàn tất. Trang này sẽ tự tiếp tục sau một hai phút.",
+  "backup.serverRestartSlow": "Việc này lâu hơn bình thường. Nếu trang này chưa tiếp tục sau vài phút nữa, hãy tải lại trang.",
   "backup.restart": "Bản sao lưu đã sẵn sàng để khôi phục. Hãy thoát hoàn toàn {app} và mở lại để hoàn tất. Đối với máy chủ tự lưu trữ, hãy khởi động lại tiến trình máy chủ, sau đó tải lại trình duyệt này. Đừng chỉ đóng cửa sổ này.",
   "backup.restartDesktop": "Bản sao lưu của bạn đã sẵn sàng. Hãy khởi động lại {app} để hoàn tất khôi phục. Đóng cửa sổ này sẽ không khởi động lại máy chủ.",
   "backup.restartAction": "Khởi động lại và khôi phục",

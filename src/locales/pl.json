@@ -3923,6 +3923,8 @@
   "backup.confirmReplace": "Wpisz REPLACE, aby potwierdzić",
   "backup.replace": "Zastąp instalację",
   "backup.restoring": "Przygotowywanie zamiany…",
+  "backup.serverRestarting": "Kopia zapasowa jest gotowa do przywrócenia. {app} uruchamia się ponownie, aby to dokończyć. Ta strona sama przejdzie dalej za minutę lub dwie.",
+  "backup.serverRestartSlow": "Trwa to dłużej niż zwykle. Jeśli ta strona nie przejdzie dalej w ciągu kilku minut, odśwież ją.",
   "backup.restart": "Kopia zapasowa jest gotowa do przywrócenia. Całkowicie zamknij {app} i otwórz go ponownie, aby zakończyć. W przypadku serwera hostowanego samodzielnie uruchom ponownie proces serwera, a następnie odśwież tę przeglądarkę. Nie wystarczy zamknąć tego okna.",
   "backup.restartDesktop": "Kopia zapasowa jest gotowa. Uruchom ponownie {app}, aby zakończyć przywracanie. Zamknięcie tego okna nie uruchomi ponownie serwera.",
   "backup.restartAction": "Uruchom ponownie i przywróć",

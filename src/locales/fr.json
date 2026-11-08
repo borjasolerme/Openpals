@@ -1622,6 +1622,8 @@
   "botAccess.mcpDisabled": "Désactivé dans Apps → MCP servers — testez-le et activez-le d’abord là-bas.",
   "skills.library.everyBot": "Tous les bots",
   "skills.library.everyBotHint": "Rendre cette compétence disponible pour tous les bots, actuels et futurs.",
+  "backup.serverRestarting": "La sauvegarde est prête à être restaurée. {app} redémarre pour terminer. Cette page reprendra d'elle-même d'ici une ou deux minutes.",
+  "backup.serverRestartSlow": "Cela prend plus de temps que d'habitude. Si cette page n'a pas repris d'ici quelques minutes, recharge-la.",
   "place.cloud": "Bureau cloud",
   "place.vm": "Bureau privé",
   "place.offHint": "« Travaille sur » est désactivé pour ce bot. Modifiez-le dans le panneau Écran.",

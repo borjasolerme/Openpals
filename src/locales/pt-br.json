@@ -3823,6 +3823,8 @@
   "backup.confirmReplace": "Digite REPLACE para confirmar",
   "backup.replace": "Substituir instalação",
   "backup.restoring": "Preparando a substituição…",
+  "backup.serverRestarting": "O backup está pronto para ser restaurado. O {app} está reiniciando para concluir. Esta página continua sozinha em um ou dois minutos.",
+  "backup.serverRestartSlow": "Isso está demorando mais do que o normal. Se esta página não continuar em mais alguns minutos, recarregue-a.",
   "backup.restart": "O backup está pronto para ser restaurado. Feche o {app} por completo e abra de novo para concluir. Em um servidor próprio, reinicie o processo do servidor e depois recarregue este navegador. Não basta fechar esta janela.",
   "backup.restartDesktop": "Seu backup está pronto. Reinicie o {app} para concluir a restauração. Fechar esta janela não reinicia o servidor.",
   "backup.restartAction": "Reiniciar e restaurar",

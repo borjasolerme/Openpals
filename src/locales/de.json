@@ -1635,6 +1635,8 @@
   "botAccess.mcpDisabled": "Unter Apps → MCP servers ausgeschaltet – teste es zuerst dort und schalte es ein.",
   "skills.library.everyBot": "Jeder Bot",
   "skills.library.everyBotHint": "Diesen Skill jedem jetzigen und künftigen Bot geben.",
+  "backup.serverRestarting": "Die Sicherung ist bereit zur Wiederherstellung. {app} startet neu, um sie abzuschließen. Diese Seite macht in ein bis zwei Minuten von selbst weiter.",
+  "backup.serverRestartSlow": "Das dauert länger als üblich. Wenn diese Seite in ein paar Minuten nicht weitermacht, lade sie neu.",
   "place.cloud": "Cloud-Desktop",
   "place.vm": "Privater Desktop",
   "place.offHint": "„Arbeitet auf“ ist für diesen Bot aus. Ändere es im Bildschirm-Panel.",
