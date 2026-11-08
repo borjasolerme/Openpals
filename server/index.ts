@@ -472,6 +472,7 @@ import {
   serializeSessionCookie,
   sessionCookieName, ownerOrAdmin,
 } from "./request-auth.ts";
+import { RESTART_EXIT_CODE } from "./restart.ts";
 import { cookieMaxAgeSeconds, formatPairingCode, pairingRequest, SessionRegistry, type SessionRecord } from "./sessions.ts";
 import { ThreadStarters } from "./thread-starters.ts";
 import {
@@ -11298,7 +11299,10 @@ const workspaceBackupAccess = {
   }, keepLocked),
   status: () => ({ busy: workspaceMaintenance.active, pendingRestore: workspaceMaintenance.pendingRestore }),
 };
-const workspaceCopyAccess = { dataDir: DATA_DIR, appVersion: serverVersion(), readBody, restored: workspaceRestore, ...workspaceBackupAccess };
+// A server whose launcher starts it again (the container launcher, or the systemd unit install-server.sh writes) finishes
+// a committed restore by restarting itself: a browser on a paired server has no app to quit.
+let restartRequested = false;
+const workspaceCopyAccess = { dataDir: DATA_DIR, appVersion: serverVersion(), readBody, restored: workspaceRestore, ...workspaceBackupAccess, ...(process.env.OMB_SUPERVISED === "1" ? { restart: () => { restartRequested = true; gracefulShutdown(); } } : {}) };
 const workspaceBackupRoutes = createWorkspaceBackupRoutes(workspaceCopyAccess);
 
 ROUTES.push(createBotPresetRoutes({ presets: presetStore }));
@@ -14524,7 +14528,7 @@ const gracefulShutdown = createGracefulShutdown({
       closeMessageDb();
       mcpOAuth.dispose();
       releaseDataDirLeaseAtExit();
-      process.exit(exitCode);
+      process.exit(restartRequested && exitCode === 0 ? RESTART_EXIT_CODE : exitCode);
     };
     // Streamed text and lines queued after the cleanup flush reach disk before exit; the deadline already elapsed, so the wait is short.
     void bus.flushWithin(1_000).then((done) => {

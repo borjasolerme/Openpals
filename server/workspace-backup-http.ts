@@ -38,6 +38,9 @@ export function createWorkspaceBackupRoutes(options: {
   authorized: (req: IncomingMessage, auth: RequestAuth) => boolean;
   status: () => { busy: boolean; pendingRestore: boolean };
   restored: RestoreResult;
+  /** Starts this server again so startup installs a committed restore. Given only where a launcher always starts it
+   * again (My Cloud), since the person there has no app to quit or process to restart. */
+  restart?: () => void;
 }) {
   const artifacts = new Map<string, Artifact>();
   let operating = false;
@@ -104,6 +107,7 @@ export function createWorkspaceBackupRoutes(options: {
       if (method === "GET" && path === `${PREFIX}/status`) {
         json(res, 200, {
           ...options.status(),
+          ...(options.restart ? { restarts: true } : {}),
           lastRestoreId: options.restored.restored ? options.restored.id : null,
           safetyCopyPath: options.restored.safetyCopyPath ?? null,
         });
@@ -192,7 +196,10 @@ export function createWorkspaceBackupRoutes(options: {
           return commitPendingWorkspaceRestore(options.dataDir, body.id);
         }, true));
         artifacts.delete(body.id);
-        json(res, 200, { ...result, restoreId: body.id });
+        const restart = options.restart;
+        json(res, 200, { ...result, restoreId: body.id, ...(restart ? { restarting: true } : {}) });
+        // Answer first, so the browser knows to wait for the server to come back; restart even if it hung up.
+        if (restart) { if (res.closed) restart(); else res.once("close", restart); }
         return true;
       }
       json(res, 404, { error: "Unknown backup operation." });

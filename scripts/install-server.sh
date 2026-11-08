@@ -198,6 +198,8 @@ Type=simple
 User=$(id -un)
 WorkingDirectory=${INSTALL_DIR}
 Environment=OMB_STATIC_DIR=${INSTALL_DIR}/dist
+# Exit 75 after a restore commits asks for a fresh start; Restart=on-failure gives it one.
+Environment=OMB_SUPERVISED=1
 Environment=PATH=$(dirname "$node_bin"):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=${node_bin} --experimental-strip-types server/openmausbot.ts serve --port ${PORT} --public-url ${public_url} --label "${label}" --no-pair
 Restart=on-failure
