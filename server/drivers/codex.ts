@@ -5,7 +5,6 @@ import { boxProxyEnvNames, type McpApprovalMode, mountMcpServer } from "./codex-
 import { reportUnsupportedCalls, rolloutMark, type RolloutMark } from "./codex-unsupported-calls.ts";
 // The `codex` CLI headless over its app-server JSON-RPC (NDJSON on stdio): completion is
 // `turn/completed`, approvals arrive as server→client requests, resumeCursor is the codex thread id.
-import { mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { homedir } from "node:os";
@@ -51,6 +50,7 @@ import { volatileContextNote, withContextNote } from "./prompt-split.ts";
 import type { ApprovalMode } from "../../shared/approval-mode.ts";
 import { CodexDeviceAuthController } from "./codex-device-auth.ts";
 import { codexAccountEmail, codexHome } from "./codex-identity.ts";
+import { linkSharedCodexHome } from "./codex-shared-home.ts";
 import { boundedLabel, containsControlCharacter, mcpAppApprovalForm, plainRecord } from "./codex-app-approval.ts";
 import { archivedNativeCodexThread, CODEX_MISSING_CREDENTIALS, CODEX_SIGN_IN_EXPIRED, codexLimitFacts, codexNotSignedIn, CodexRpcError, codexSignInExpired, codexPlanModelRefused, codexSignInRefused, codexUserError, missingNativeCodexThread, type CodexRoute } from "./codex-errors.ts";
 import { codexLoginCheck, codexLoginStatus, storedCodexLogin } from "./codex-login.ts";
@@ -467,7 +467,7 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
           assertPlanCurrent();
           if (!turn.model || !models.options.some(model => model.id === turn.model)) throw new Error("This model is not available to the selected ChatGPT plan. Refresh models and choose a listed model; API billing will not be used.");
         }
-        mkdirSync(join(planDirectory, "codex"), { recursive: true, mode: 0o700 });
+        linkSharedCodexHome(codexHome({ ...process.env, ...input.environment }), join(planDirectory, "codex"));
       }
       if (config.managed) {
         if (!turn.model) {
@@ -1568,7 +1568,7 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
       if (!models.options.length) await refreshModels();
       const token = await planAuth.accessToken();
       if (planSigningOut || disposed || generation !== planGeneration) throw new Error("This ChatGPT account changed.");
-      mkdirSync(join(planDirectory, "codex"), { recursive: true, mode: 0o700 });
+      linkSharedCodexHome(codexHome({ ...process.env, ...input.environment }), join(planDirectory, "codex"));
       const dynamic = await dynamicPlanSupport();
       if (planSigningOut || disposed || generation !== planGeneration) throw new Error("This ChatGPT account changed.");
       if (dynamic) {
