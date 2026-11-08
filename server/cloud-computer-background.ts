@@ -173,7 +173,7 @@ export async function backgroundStatus(
     signal.throwIfAborted();
     assertBoatNotDeleting(boxId);
     if (last && clock.now() >= until) return describeStatus(args.process_id, last.body, last.observedAt);
-    const deadline = waitMs ? clock.timeout(Math.max(1, until - clock.now())) : null;
+    const deadline = waitMs && last ? clock.timeout(Math.max(1, until - clock.now())) : null;
     const readSignal = deadline ? AbortSignal.any([signal, deadline]) : signal;
     let response: Response, body: any;
     try {
