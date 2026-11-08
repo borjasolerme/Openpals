@@ -190,8 +190,9 @@ export type RuntimeEvent = RuntimeEventBase &
     // `limitResetsAt`: epoch ms when the usage limit refusing this account resets, when the engine says.
     // `limit`: a usage limit refused this turn: the account's on this engine ("engine"), one model's own window
     // ("model"), or that model's extra usage credits ("credits"); the engine's other models still work for the last two.
+    // `limitModels`: the models a "model" limit holds, when one allowance is shared (OpenCode's free models).
     | { type: "runtime.error"; message: string; partial?: boolean; setup?: boolean; terminal?: boolean; claudeUpdate?: boolean;
-        stalled?: boolean; limitResetsAt?: number; limit?: "engine" | "model" | "credits" }
+        stalled?: boolean; limitResetsAt?: number; limit?: "engine" | "model" | "credits"; limitModels?: string[] }
     /** Something the person should know that did not fail the turn — for
      * example, a saved model the engine no longer offers was replaced. */
     | { type: "runtime.notice"; message: string }
