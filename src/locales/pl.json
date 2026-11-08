@@ -4964,5 +4964,7 @@
   "server.mcp.problem.notFound": "Nie znaleziono {name} pod jego adresem. Sprawdź adres w Aplikacje → Serwery MCP.",
   "server.mcp.problem.timeout": "{name} nie odpowiedział na czas. Spróbuj za chwilę, a jeśli to się powtarza, przetestuj go w Aplikacje → Serwery MCP.",
   "server.mcp.problem.cantConnect": "Nie udało się połączyć z {name}. Przetestuj go w Aplikacje → Serwery MCP, aby zobaczyć dlaczego.",
-  "server.mcp.alsoOn": "Włączone też dla {names}: wyłącz dla jednego w jego ustawieniach, w sekcji Aplikacje, których może używać"
+  "server.mcp.alsoOn": "Włączone też dla {names}: wyłącz dla jednego w jego ustawieniach, w sekcji Aplikacje, których może używać",
+  "chat.engineCompactionTitle": "Czat skrócony do podsumowania",
+  "chat.engineCompactionHint": "AI podsumowało wcześniejsze wiadomości, żeby zrobić miejsce. Cała rozmowa nadal tu jest, ale agent może nie pamiętać dokładnie starszych szczegółów."
 }

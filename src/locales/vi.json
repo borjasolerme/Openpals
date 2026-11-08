@@ -4044,5 +4044,7 @@
   "server.mcp.problem.notFound": "Không tìm thấy {name} tại địa chỉ của nó. Kiểm tra địa chỉ trong Ứng dụng → Máy chủ MCP.",
   "server.mcp.problem.timeout": "{name} không trả lời kịp. Hãy thử lại sau ít phút, và nếu vẫn xảy ra, hãy kiểm tra nó trong Ứng dụng → Máy chủ MCP.",
   "server.mcp.problem.cantConnect": "Không thể kết nối với {name}. Kiểm tra nó trong Ứng dụng → Máy chủ MCP để xem lý do.",
-  "server.mcp.alsoOn": "Cũng bật cho {names}: tắt cho một bot trong cài đặt của nó, mục Ứng dụng có thể dùng"
+  "server.mcp.alsoOn": "Cũng bật cho {names}: tắt cho một bot trong cài đặt của nó, mục Ứng dụng có thể dùng",
+  "chat.engineCompactionTitle": "Đã tóm gọn cuộc trò chuyện",
+  "chat.engineCompactionHint": "AI đã tóm tắt các tin nhắn trước để có thêm chỗ. Toàn bộ cuộc trò chuyện vẫn ở đây, nhưng tác tử có thể không nhớ chính xác các chi tiết cũ."
 }

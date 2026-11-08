@@ -5460,5 +5460,7 @@
   "server.mcp.problem.notFound": "{name}을(를) 주소에서 찾을 수 없어요. 앱 → MCP 서버에서 주소를 확인하세요.",
   "server.mcp.problem.timeout": "{name}이(가) 제때 응답하지 않았어요. 잠시 후 다시 시도하고, 계속되면 앱 → MCP 서버에서 테스트하세요.",
   "server.mcp.problem.cantConnect": "{name}에 연결할 수 없어요. 이유를 보려면 앱 → MCP 서버에서 테스트하세요.",
-  "server.mcp.alsoOn": "{names}에도 켜져 있어요: 하나만 끄려면 그 봇의 설정에서 '사용할 수 있는 앱'으로 가세요"
+  "server.mcp.alsoOn": "{names}에도 켜져 있어요: 하나만 끄려면 그 봇의 설정에서 '사용할 수 있는 앱'으로 가세요",
+  "chat.engineCompactionTitle": "채팅을 요약으로 압축했어요",
+  "chat.engineCompactionHint": "AI가 공간을 만들려고 이전 메시지를 요약했어요. 대화 전체는 그대로 있지만, 에이전트가 오래된 세부 내용을 정확히 기억하지 못할 수 있어요."
 }

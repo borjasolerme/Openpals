@@ -4901,5 +4901,7 @@
   "server.mcp.problem.notFound": "{name} não foi encontrado no endereço. Confira o endereço em Apps → Servidores MCP.",
   "server.mcp.problem.timeout": "{name} não respondeu a tempo. Tente de novo daqui a pouco e, se continuar, teste em Apps → Servidores MCP.",
   "server.mcp.problem.cantConnect": "Não foi possível conectar a {name}. Teste em Apps → Servidores MCP para ver o motivo.",
-  "server.mcp.alsoOn": "Também ligado para {names}: desligue para um nas configurações dele, em Apps que pode usar"
+  "server.mcp.alsoOn": "Também ligado para {names}: desligue para um nas configurações dele, em Apps que pode usar",
+  "chat.engineCompactionTitle": "Conversa condensada em um resumo",
+  "chat.engineCompactionHint": "A IA resumiu as mensagens anteriores para abrir espaço. Sua conversa inteira continua aqui, mas o agente pode não lembrar exatamente dos detalhes mais antigos."
 }

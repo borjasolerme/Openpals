@@ -6031,6 +6031,7 @@ bus.subscribe((event: RuntimeEvent) => {
         tool: { name: `retrying — attempt ${event.attempt + 1}/${RETRY_MAX_ATTEMPTS} in ${Math.round(event.delayMs / 1000)}s — ${event.reason}`, ok: true },
       });
       break;
+    case "context.compacted": pushMessage({ role: "bot", kind: "compaction", engineCompaction: true }); break;
     case "runtime.notice":
       pushMessage({ role: "bot", kind: "activity", tool: { name: `notice: ${event.message.slice(0, 240)}`, ok: true } });
       break;

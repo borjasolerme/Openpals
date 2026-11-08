@@ -2114,5 +2114,7 @@
   "server.mcp.problem.notFound": "{name} est introuvable à son adresse. Vérifiez l'adresse dans Apps → Serveurs MCP.",
   "server.mcp.problem.timeout": "{name} n'a pas répondu à temps. Réessayez dans un instant et, si cela continue, testez-le dans Apps → Serveurs MCP.",
   "server.mcp.problem.cantConnect": "Impossible de se connecter à {name}. Testez-le dans Apps → Serveurs MCP pour voir pourquoi.",
-  "server.mcp.alsoOn": "Aussi activé pour {names} : désactivez-le pour l'un d'eux dans ses réglages, sous Apps qu'il peut utiliser"
+  "server.mcp.alsoOn": "Aussi activé pour {names} : désactivez-le pour l'un d'eux dans ses réglages, sous Apps qu'il peut utiliser",
+  "chat.engineCompactionTitle": "Discussion condensée en un résumé",
+  "chat.engineCompactionHint": "L'IA a résumé les messages précédents pour faire de la place. Toute votre conversation est toujours là, mais l'agent risque de ne plus se souvenir exactement des détails anciens."
 }

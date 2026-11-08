@@ -4044,5 +4044,7 @@
   "server.mcp.problem.notFound": "{name} adresinde bulunamadı. Adresi Uygulamalar → MCP sunucuları'nda kontrol et.",
   "server.mcp.problem.timeout": "{name} zamanında yanıt vermedi. Biraz sonra tekrar dene; böyle devam ederse Uygulamalar → MCP sunucuları'nda test et.",
   "server.mcp.problem.cantConnect": "{name} sunucusuna bağlanılamadı. Nedenini görmek için Uygulamalar → MCP sunucuları'nda test et.",
-  "server.mcp.alsoOn": "{names} için de açık: biri için kapatmak üzere onun ayarlarında, Kullanabileceği uygulamalar altında kapat"
+  "server.mcp.alsoOn": "{names} için de açık: biri için kapatmak üzere onun ayarlarında, Kullanabileceği uygulamalar altında kapat",
+  "chat.engineCompactionTitle": "Sohbet bir özete sıkıştırıldı",
+  "chat.engineCompactionHint": "Yapay zekâ yer açmak için önceki mesajları özetledi. Sohbetin tamamı hâlâ burada, ancak ajan eski ayrıntıları tam olarak hatırlamayabilir."
 }

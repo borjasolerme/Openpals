@@ -114,7 +114,7 @@ export type SecretRequestCardData = Omit<import("../../shared/wire").SecretReque
 
 export type ComputerControlState = { held: boolean; helpReason: string | null; help?: import("../../shared/wire").ComputerHelpRef | null };
 
-export interface Message extends Pick<import("../../shared/wire").WireMessage, "widget" | "app" | "fromApp" | "pointed" | "routedBy" | "quickModel" | "automation" | "sender" | "setupSuggestion" | "helperIntro" | "helperFollowup" | "setupOffer" | "savedSteps" | "setupChoices" | "setupChoicesPending" | "setupChoicesUpdating" | "setupRequest" | "sentDirectly" | "doneWhen"> {
+export interface Message extends Pick<import("../../shared/wire").WireMessage, "widget" | "app" | "fromApp" | "pointed" | "routedBy" | "quickModel" | "automation" | "sender" | "setupSuggestion" | "helperIntro" | "helperFollowup" | "setupOffer" | "savedSteps" | "setupChoices" | "setupChoicesPending" | "setupChoicesUpdating" | "setupRequest" | "sentDirectly" | "doneWhen" | "engineCompaction"> {
   id: string;
   role: "bot" | "user";
   kind: "text" | "options" | "activity" | "screen" | "connector" | "secret" | "signin" | "routine.run" | "goal.run" | "digest" | "compaction" | "call" | "widget" | "app";
