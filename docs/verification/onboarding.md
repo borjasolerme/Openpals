@@ -2,8 +2,10 @@
 
 The first run goes one screen at a time, then to the chat: Welcome (one line
 and Get started); Where should your bots live? (only in the desktop app while
-it shows this computer: This computer, or An always-on server with a Boat or
-own-Linux-server guide, `scripts/install-server.sh`, and the pairing link);
+it shows this computer: This computer, or An always-on server, which the
+desktop app sets up from a Boat API key (`electron/boat-setup.mjs`) or an
+own server's `user@address` over SSH (`electron/ssh-setup.mjs`), both running
+`scripts/install-server.sh`, then switches to; a pasted pairing link still works);
 Sign in to your AI (the sign-in pill, Other ways to connect, Set up later);
 Bring your bots (Move from Grok Bot, Start with Pal; skippable); Connect your
 apps (a personal Composio key saved as the `composio-personal` MCP server, or a

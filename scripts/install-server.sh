@@ -2,9 +2,10 @@
 # Installs or updates Openpals on a fresh Ubuntu or Debian server and runs it as the openpals systemd service.
 #
 #   curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh \
-#     | bash -s -- --public-url https://bots.example.com [--label "My server"]
+#     | bash -s -- [--public-url https://bots.example.com] [--label "My server"]
 #
-# Safe to run again: it updates the code, rebuilds, restarts the service and prints a new pairing link.
+# Without --public-url it serves https://<public-ip>.sslip.io through Caddy. Safe to run again: it updates the code,
+# rebuilds, restarts the service and prints a new pairing link. The Openpals app reads the OPENPALS_PAIRING_LINK= line.
 set -euo pipefail
 
 REPO_URL="https://github.com/borjasolerme/Openpals.git"
@@ -16,8 +17,11 @@ SERVICE_NAME="openpals"
 SWAP_FILE="/swapfile"
 SWAP_SIZE="4G"
 MIN_MEMORY_KB=$((6 * 1024 * 1024))
+CADDYFILE="/etc/caddy/Caddyfile"
+CADDY_MARKER="# Managed by the Openpals installer"
 
 public_url=""
+self_served=0
 label="$(hostname 2>/dev/null || echo "Openpals server")"
 
 say() { printf '\n==> %s\n' "$*"; }
@@ -27,9 +31,10 @@ usage() {
   cat <<'EOF'
 Install Openpals on this server and keep it running.
 
-  install-server.sh --public-url https://bots.example.com [--label "My server"]
+  install-server.sh [--public-url https://bots.example.com] [--label "My server"]
 
---public-url  the HTTPS address that reaches port 8799 on this server (required)
+--public-url  the HTTPS address that reaches port 8799 on this server. Without it, the installer
+              sets up Caddy with a free https://<public-ip>.sslip.io address (ports 80 and 443 must be open)
 --label       the name the Openpals app shows for this server (default: the hostname)
 EOF
 }
@@ -43,9 +48,10 @@ parse_args() {
       *) usage >&2; fail "unknown option: $1" ;;
     esac
   done
-  [ -n "$public_url" ] || { usage >&2; fail "--public-url is required"; }
-  [[ "$public_url" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] \
-    || fail "--public-url must be an HTTPS address with no path, like https://bots.example.com"
+  if [ -n "$public_url" ]; then
+    [[ "$public_url" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] \
+      || fail "--public-url must be an HTTPS address with no path, like https://bots.example.com"
+  fi
   [[ "$label" =~ ^[A-Za-z0-9][A-Za-z0-9\ ._-]{0,59}$ ]] \
     || fail "--label may use letters, numbers, spaces, dots, dashes and underscores (up to 60)"
 }
@@ -60,6 +66,8 @@ check_system() {
   command -v systemctl >/dev/null 2>&1 || fail "this installer needs systemd"
   if [ "$(id -u)" -ne 0 ]; then
     command -v sudo >/dev/null 2>&1 || fail "run this as root, or as a user who can use sudo"
+    sudo -n true 2>/dev/null || { : </dev/tty; } 2>/dev/null \
+      || fail "run this as root, or as a user who can use sudo without a password"
   fi
 }
 
@@ -125,6 +133,55 @@ build() {
   corepack "pnpm@${PNPM_VERSION}" exec vite build
 }
 
+public_ipv4() {
+  local ip
+  ip="$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)"
+  [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || ip="$(ip -4 route get 1 2>/dev/null | awk '{ for (i = 1; i < NF; i++) if ($i == "src") print $(i + 1) }')"
+  [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "could not find this server's public IPv4 address; pass --public-url instead"
+  printf '%s' "$ip"
+}
+
+install_caddy() {
+  if command -v caddy >/dev/null 2>&1; then return 0; fi
+  say "Installing Caddy for HTTPS"
+  as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y gnupg
+  curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/gpg.key \
+    | as_root gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  as_root chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+  curl -fsSL https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt \
+    | as_root tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+  as_root chmod o+r /etc/apt/sources.list.d/caddy-stable.list
+  as_root apt-get update -y
+  as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y caddy
+}
+
+serve_https() {
+  local host="$1" config
+  if [ -f "$CADDYFILE" ] && ! grep -qF "$CADDY_MARKER" "$CADDYFILE" && ! grep -q '/usr/share/caddy' "$CADDYFILE"; then
+    fail "${CADDYFILE} already holds your own settings; add ${host} there yourself and pass --public-url https://${host}"
+  fi
+  say "Serving https://${host}"
+  config="$(mktemp)"
+  printf '%s\n%s {\n\treverse_proxy 127.0.0.1:%s\n}\n' "$CADDY_MARKER" "$host" "$PORT" >"$config"
+  as_root install -m 644 "$config" "$CADDYFILE"
+  rm -f "$config"
+  if command -v ufw >/dev/null 2>&1 && as_root ufw status 2>/dev/null | grep -q "Status: active"; then
+    as_root ufw allow 80,443/tcp >/dev/null
+  fi
+  as_root systemctl enable caddy >/dev/null 2>&1 || true
+  as_root systemctl restart caddy
+}
+
+choose_public_url() {
+  [ -z "$public_url" ] || return 0
+  local ip
+  ip="$(public_ipv4)"
+  install_caddy
+  serve_https "${ip//./-}.sslip.io"
+  public_url="https://${ip//./-}.sslip.io"
+  self_served=1
+}
+
 install_service() {
   say "Starting the ${SERVICE_NAME} service"
   local node_bin unit
@@ -165,10 +222,26 @@ wait_until_running() {
   done
 }
 
+wait_for_certificate() {
+  [ "$self_served" -eq 1 ] || return 0
+  say "Waiting for the HTTPS certificate"
+  local tries=0
+  until curl -fsS --max-time 10 "${public_url}/api/health" >/dev/null 2>&1; do
+    tries=$((tries + 1))
+    [ "$tries" -lt 60 ] || fail "${public_url} did not get an HTTPS certificate. Ports 80 and 443 must be open to the internet (check your provider's firewall), then run this again. Caddy's log: sudo journalctl -u caddy -n 50"
+    sleep 3
+  done
+}
+
 print_pairing_link() {
+  local pairing link
   say "Openpals is running at ${public_url}"
   cd "$INSTALL_DIR"
-  node --experimental-strip-types server/openmausbot.ts pair --public-url "$public_url" --label "Openpals app"
+  pairing="$(node --experimental-strip-types server/openmausbot.ts pair --public-url "$public_url" --label "Openpals app")"
+  printf '%s\n' "$pairing"
+  link="$(grep -oE "https://[^[:space:]]+/pair#code=[^[:space:]]+" <<<"$pairing" | head -n 1 || true)"
+  [ -n "$link" ] || fail "Openpals did not print a pairing link"
+  printf 'OPENPALS_PAIRING_LINK=%s\n' "$link"
   cat <<EOF
 
 Next: copy the pairing link above (it starts with ${public_url}/pair#code=)
@@ -186,8 +259,10 @@ main() {
   get_code
   ensure_swap
   build
+  choose_public_url
   install_service
   wait_until_running
+  wait_for_certificate
   print_pairing_link
 }
 

@@ -13,21 +13,23 @@ Whichever you pick, the login is the same: you **pair** each device once with a 
 
 ## The quick way: one command
 
-On a fresh Ubuntu or Debian server that already has an HTTPS address reaching
-port 8799 (from Boat's `boat host`, Caddy, Tailscale or your own proxy), one
-command installs Node 24, builds Openpals from this repository, runs it as the
-`openpals` systemd service and prints a one-time pairing link:
+The desktop app does this for you: in the welcome's "An always-on server" (or Settings → Where your bots live), paste
+a Boat API key or your server's `user@address` and press Set up my server. To run it yourself on a fresh Ubuntu or
+Debian server:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh \
-  | bash -s -- --public-url https://bots.example.com --label "My server"
+  | bash -s -- [--public-url https://bots.example.com] [--label "My server"]
 ```
 
-Paste that link in the Openpals app (the welcome's "An always-on server", or
-Settings → Where your bots live). Run the command again to update and get a new
-link. On a server with less than 6 GB of memory it adds a 4 GB swap file first,
-so the build fits. The rest of this guide is the manual way, with the HTTPS
-options explained.
+It installs Node 24, builds Openpals from this repository, runs it as the `openpals` systemd service and prints a
+one-time pairing link (also on a line of its own, `OPENPALS_PAIRING_LINK=…`). Without `--public-url` it installs
+Caddy and serves `https://<public-ip>.sslip.io` with a free certificate; ports 80 and 443 must be open. Pass
+`--public-url` when an HTTPS address already reaches port 8799 (Boat's `boat host`, Tailscale, your own proxy).
+
+Paste the link in the Openpals app under "Already have a pairing link?". Run the command again to update and get a
+new link. On a server with less than 6 GB of memory it adds a 4 GB swap file first, so the build fits.
+The rest of this guide is the manual way, with the HTTPS options explained.
 
 ## What runs on a server, and what does not
 

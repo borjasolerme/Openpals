@@ -48,8 +48,9 @@ const EN_ALLOWED: Record<string, string> = {
   "boatOffer.body": "Boat's credit offer names Boat, whose credit and plan it is",
   "boatOffer.get": "Boat's credit offer names Boat, whose credit and plan it is",
   "homeLine.clean": "MausBot Cloud copy, left as it is until the Cloud is removed from Openpals",
-  "serverGuide.boat.tab": "the always-on server guide names Boat, the service the person signs up with",
-  "serverGuide.boat.docs": "the always-on server guide names Boat, the service the person signs up with",
+  "serverSetup.boat.title": "the always-on server setup names Boat, where the person signs up for the server",
+  "serverSetup.error.boatRefused": "the always-on server setup names Boat, where the person signs up for the server",
+  "serverSetup.error.network": "the always-on server setup names Boat, where the person signs up for the server",
 };
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
@@ -62,6 +63,7 @@ const isSource = (name: string) => /\.(?:ts|tsx|mjs|cjs|js)$/.test(name) && !/\.
 const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = [
   { file: "shared/credential-request.ts", snippet: "when Boat is selected", why: "the card that asks for a person's own Boat key" },
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
+  { file: "electron/boat-setup.mjs", why: "setting up a server on the person's own Boat account, with their Boat API key" },
   { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
   { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },
   { file: "server/phone-secret.ts", snippet: "OpenMausBot phone credential v1", why: "the HPKE info string paired phones encrypt with" },

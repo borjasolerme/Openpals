@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Laptop, Loader2, Server, Unplug } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { disconnectServer, placeAvailable, useBotsPlace } from "@/lib/place";
-import { ServerGuide } from "./ServerGuide";
+import { ServerSetup } from "./ServerSetup";
 import { Card } from "./SettingsPrimitives";
 
 /** Settings → Where your bots live, in the desktop app: this computer, or the server it is paired with. */
 export function BotsPlaceSection() {
   const place = useBotsPlace();
-  const [guide, setGuide] = useState(false);
+  const [setup, setSetup] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!placeAvailable()) return null;
@@ -41,12 +41,12 @@ export function BotsPlaceSection() {
                 {busy ? <Loader2 size={14} aria-hidden="true" className="animate-spin" /> : <Unplug size={14} aria-hidden="true" />}
                 {t("botsHome.disconnect")}
               </button>
-            ) : !guide && (
-              <button type="button" onClick={() => setGuide(true)} className="ui-button shrink-0">{t("botsHome.connect")}</button>
+            ) : !setup && (
+              <button type="button" onClick={() => setSetup(true)} className="ui-button shrink-0">{t("botsHome.connect")}</button>
             )}
           </div>
           {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
-          {!server && guide && <ServerGuide onBack={() => setGuide(false)} backLabel={t("common.cancel")} />}
+          {!server && setup && <ServerSetup onBack={() => setSetup(false)} backLabel={t("common.cancel")} />}
         </div>
       </Card>
     </div>

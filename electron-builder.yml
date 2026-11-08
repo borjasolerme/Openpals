@@ -70,6 +70,9 @@ extraResources:
     to: companion
   - from: skills
     to: skills
+  # Run over SSH on the person's own server when they set one up from the app.
+  - from: scripts/install-server.sh
+    to: install-server.sh
   - from: dist-native/android-platform-tools
     to: android-platform-tools
 

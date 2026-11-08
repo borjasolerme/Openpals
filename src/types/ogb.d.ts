@@ -102,6 +102,8 @@ const __APP_VERSION__: string;
         disconnect(): Promise<void>;
         onChanged(callback: (place: { kind: "local" } | { kind: "server"; url: string; label: string }) => void): () => void;
       };
+      /** This computer's page only: sets up an always-on server and switches this app to it. */
+      serverSetup?: import("../../electron/server-setup.mjs").ServerSetupBridge;
       desktopNotices?: import("../../electron/desktop-prefs.mjs").DesktopNoticesBridge;
       /** This computer's own page only: the account's full name, for a first run's profile (system-name.mjs). */
       desktopProfile?: { systemName(): Promise<string | null> };

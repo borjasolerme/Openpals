@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -23,8 +24,13 @@ describe("the server installer", () => {
     expect(result.stdout).toContain("--public-url");
   });
 
+  it("prints the pairing link on its own line for the app, and sets up HTTPS itself without --public-url", () => {
+    const source = readFileSync(script, "utf8");
+    expect(source).toContain("printf 'OPENPALS_PAIRING_LINK=%s\\n' \"$link\"");
+    expect(run("--help").stdout).toContain("https://<public-ip>.sslip.io");
+  });
+
   it.each([
-    [[], "--public-url is required"],
     [["--public-url", "http://bots.example.com"], "must be an HTTPS address"],
     [["--public-url", "https://bots.example.com/pair"], "must be an HTTPS address"],
     [["--public-url", "https://bots.example.com", "--label", "a;rm -rf /"], "--label may use"],

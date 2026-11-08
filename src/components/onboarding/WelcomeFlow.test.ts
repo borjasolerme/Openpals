@@ -176,35 +176,62 @@ describe("where the bots live", () => {
     expect(title()).toBe("Sign in to your AI");
   });
 
-  it("guides the setup of a server and pairs with the link the installer printed", async () => {
-    const place = desktop({ kind: "local" });
+  it("sets up a server from a Boat key with one button, showing where it is", async () => {
+    const bridge = desktop({ kind: "local" });
+    let report: (progress: { step: string; detail?: string }) => void = () => {};
+    let finish: (result: unknown) => void = () => {};
+    const setup = { start: vi.fn(() => new Promise((resolve) => { finish = resolve; })), onProgress: vi.fn((cb: typeof report) => { report = cb; return () => {}; }) };
+    Object.assign(window.ogb!, { serverSetup: setup });
     await show({ initialBeat: "place" });
     await pick('[data-place-choice="server"]');
     expect(title()).toBe("Set up an always-on server");
-    expect(host.querySelector('[data-server-guide="boat"]')?.textContent).toContain("boat host <id> 8799 --public --localhost");
-    await type('input[placeholder="<id>"]', "m-42");
-    expect(text()).toContain("boat extend m-42 --no-auto-stop");
-    await press("Your own Linux server");
-    await type('input[placeholder="https://…"]', "https://bots.example.com/");
-    expect(text()).toContain("install-server.sh | bash -s -- --public-url https://bots.example.com");
+    expect(host.querySelector('[data-server-setup="boat"]')?.textContent).toContain("Recommended");
+    await type('[data-server-setup="boat"] input', " boat-key ");
+    await submit('[data-server-setup="boat"]');
+    expect(setup.start).toHaveBeenCalledWith({ kind: "boat", key: "boat-key" });
+    expect(host.querySelector("[data-server-setup-progress]")?.textContent).toContain("Creating your server…");
+    await act(async () => report({ step: "installing", detail: "Installing Node 24" }));
+    expect(host.querySelector("[data-server-setup-progress]")?.textContent).toContain("Installing Openpals");
+    expect(text()).toContain("Installing Node 24");
+    await act(async () => finish({ ok: false, error: { code: "boat-key" } }));
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("That key didn't work");
+    expect(bridge.connect).not.toHaveBeenCalled();
+  });
 
+  it("sets up the person's own server over SSH and shows the installer's last lines when it fails", async () => {
+    desktop({ kind: "local" });
+    const setup = { start: vi.fn(async () => ({ ok: false, error: { code: "install-failed", output: "Error: Openpals did not start." } })), onProgress: vi.fn(() => () => {}) };
+    Object.assign(window.ogb!, { serverSetup: setup });
+    await show({ initialBeat: "place" });
+    await pick('[data-place-choice="server"]');
+    await type('[data-server-setup="ssh"] input', "root@203.0.113.7");
+    await submit('[data-server-setup="ssh"]');
+    expect(setup.start).toHaveBeenCalledWith({ kind: "ssh", address: "root@203.0.113.7" });
+    expect(host.querySelector("[role=alert]")?.textContent).toContain("The setup stopped with an error");
+    expect(host.querySelector("[role=alert] pre")?.textContent).toBe("Error: Openpals did not start.");
+  });
+
+  it("still pairs with a link pasted by hand", async () => {
+    const place = desktop({ kind: "local" });
+    await show({ initialBeat: "place" });
+    await pick('[data-place-choice="server"]');
     await type("[data-pairing-link]", "https://bots.example.com/pair");
-    await submit("[data-server-guide] form");
+    await submit("[data-pairing-form]");
     expect(place.connect).not.toHaveBeenCalled();
     expect(host.querySelector("[role=alert]")?.textContent).toContain("That isn't a pairing link");
 
     place.connect.mockResolvedValueOnce({ ok: false, error: "unreachable" });
     await type("[data-pairing-link]", "https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
-    await submit("[data-server-guide] form");
+    await submit("[data-pairing-form]");
     expect(place.connect).toHaveBeenCalledWith("https://bots.example.com/pair#code=ABCD-EFGH-JKLM");
     expect(host.querySelector("[role=alert]")?.textContent).toContain("Couldn't reach that server");
 
     place.connect.mockResolvedValueOnce({ ok: false, error: "cancelled" });
-    await submit("[data-server-guide] form");
+    await submit("[data-pairing-form]");
     expect(host.querySelector("[role=alert]"), "declining the app's own question is no error").toBeNull();
   });
 
-  it("can still choose this computer from the guide", async () => {
+  it("can still choose this computer instead", async () => {
     desktop({ kind: "local" });
     await show({ initialBeat: "place" });
     await pick('[data-place-choice="server"]');

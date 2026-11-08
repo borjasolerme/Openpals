@@ -69,6 +69,16 @@ const bridge = {
       return () => ipcRenderer.removeListener("place:changed", handler);
     },
   },
+  /** This computer's page only: sets up an always-on server and switches to it (electron/server-setup.d.mts). */
+  serverSetup: {
+    start: (request) => ipcRenderer.invoke("server-setup:start", request?.kind === "ssh"
+      ? { kind: "ssh", address: String(request.address ?? "") } : { kind: "boat", key: String(request?.key ?? "") }),
+    onProgress: (cb) => {
+      const handler = (_event, progress) => cb(progress);
+      ipcRenderer.on("server-setup:progress", handler);
+      return () => ipcRenderer.removeListener("server-setup:progress", handler);
+    },
+  },
   // The window's own frame, this desktop's choice for every page of its window; a server's page changes it only from the
   // person's click.
   windowFrame: {

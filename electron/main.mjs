@@ -62,6 +62,8 @@ import { askForMicrophone, openPrivacySettings } from "./privacy-settings.mjs";
 import { createWindowStateFile } from "./window-state-file.mjs";
 import { createPlaceFile } from "./environments-file.mjs";
 import { installServerSessions, reportOwnListeners } from "./server-session.mjs";
+import { setupOnBoat } from "./boat-setup.mjs";
+import { setupOverSsh } from "./ssh-setup.mjs";
 
 const { desktopCapabilities, nativeDesktopActions } = capabilitiesModule;
 const nativeActions = nativeDesktopActions(process.platform);
@@ -916,6 +918,11 @@ async function connectServer(input) {
       : "The link has no pairing code; the server will ask for one.",
   });
   if (response !== 0) return { ok: false, error: "cancelled" };
+  return openServer(link);
+}
+
+/** Security: `link` is one the person confirmed, or one this app got from a server it set up for them. */
+async function openServer(link) {
   if (!(await serverAnswers(link.origin))) return { ok: false, error: "unreachable" };
   const previous = activeServer(placeState);
   try {
@@ -1544,6 +1551,41 @@ ipcMain.handle("dialog:confirm", localWorkspaceOnly("dialog:confirm", async (_ev
 ipcMain.handle("place:current", workspaceOnly(() => placeView(placeState)));
 ipcMain.handle("place:connect", workspaceOnly((_event, link) => connectServer(link)));
 ipcMain.handle("place:disconnect", workspaceOnly(() => disconnectServer()));
+
+const INSTALLER_FILE = app.isPackaged ? path.join(process.resourcesPath, "install-server.sh") : path.join(__dirname, "..", "scripts", "install-server.sh");
+let serverSetupRun = null;
+let serverSetupProgress = null;
+
+function reportServerSetup(progress) {
+  serverSetupProgress = progress;
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("server-setup:progress", progress);
+}
+
+/** Sets up an always-on server (on Boat, or the person's own over SSH) and switches this app to it. */
+async function setUpServer(request) {
+  const setup = request?.kind === "ssh"
+    ? await setupOverSsh({ address: request.address, script: await fs.promises.readFile(INSTALLER_FILE, "utf8"), onProgress: reportServerSetup })
+    : await setupOnBoat({ key: request?.key, onProgress: reportServerSetup });
+  if (!setup.ok) {
+    slog(`server setup: ${request?.kind} stopped (${setup.error.code})`);
+    return setup;
+  }
+  reportServerSetup({ step: "connecting" });
+  const link = parseHostedWorkspaceLink(setup.link);
+  const opened = link ? await openServer(link) : { ok: false, error: "unreachable" };
+  if (opened.ok) return opened;
+  return { ok: false, error: opened.error === "unreachable" ? { code: "unreachable" } : { code: "install-failed", output: opened.error } };
+}
+
+// One setup at a time: a page that asks again (a reopened window) follows the one already running.
+ipcMain.handle("server-setup:start", localWorkspaceOnly("server-setup:start", (_event, request) => {
+  if (serverSetupRun) {
+    if (serverSetupProgress) reportServerSetup(serverSetupProgress);
+    return serverSetupRun;
+  }
+  serverSetupRun = setUpServer(request).finally(() => { serverSetupRun = null; serverSetupProgress = null; });
+  return serverSetupRun;
+}));
 
 ipcMain.handle("desktop:capabilities", async (event) =>
   desktopCapabilities({

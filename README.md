@@ -39,14 +39,17 @@ pnpm dev:server    # server → 127.0.0.1:8799
 pnpm dev           # app → http://127.0.0.1:5199
 ```
 
-On an always-on server (a [Boat](https://boat.dev) machine or any Ubuntu/Debian VPS) with an HTTPS address that
-reaches port 8799, one command installs Openpals as a service and prints a pairing link to paste into the app:
+For bots that keep working while your laptop is closed, the desktop app sets up an always-on server for you: paste
+a [Boat](https://boat.dev) API key, or the `user@address` of your own Ubuntu/Debian server (it logs in with your SSH
+key), and press one button. Underneath it runs one command, which you can also run yourself on a server:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh | bash -s -- --public-url https://your-address
+curl -fsSL https://raw.githubusercontent.com/borjasolerme/Openpals/main/scripts/install-server.sh | bash -s --
 ```
 
-The app's first run walks you through this step by step. For HTTPS options (Caddy, Tailscale) see
+Without `--public-url` it serves `https://<public-ip>.sslip.io` through Caddy (ports 80 and 443 open); with
+`--public-url https://your-address` it uses an HTTPS address you already have. It installs Openpals as a service and
+prints a pairing link to paste into the app. For other HTTPS options (Tailscale) see
 [docs/deploy-vps.md](docs/deploy-vps.md). Package the desktop app with `pnpm package:mac` or `pnpm package:linux`.
 
 ## Credits

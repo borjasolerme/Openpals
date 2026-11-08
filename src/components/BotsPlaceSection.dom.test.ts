@@ -41,14 +41,14 @@ describe("Settings → Where your bots live", () => {
     expect(host.innerHTML).toBe("");
   });
 
-  it("names this computer and opens the server guide to connect", async () => {
+  it("names this computer and opens the server setup to connect", async () => {
     await mount();
     expect(host.textContent).toContain("Where your bots live");
     expect(host.textContent).toContain("This computer");
     await act(async () => button("Connect to a server")!.click());
-    expect(host.querySelector("[data-server-guide]")).not.toBeNull();
+    expect(host.querySelector("[data-server-setup-flow]")).not.toBeNull();
     await act(async () => button("Cancel")!.click());
-    expect(host.querySelector("[data-server-guide]")).toBeNull();
+    expect(host.querySelector("[data-server-setup-flow]")).toBeNull();
   });
 
   it("names the server the bots live on and goes back to this computer", async () => {

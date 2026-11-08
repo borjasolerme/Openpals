@@ -120,14 +120,28 @@ class Crash extends Component<{ children: ReactNode }, { error: Error | null }> 
   }
 }
 
-/** The desktop app's bridge as this computer's page sees it: the bots live here, and pairing only says it was declined. */
+/** The desktop app's bridge as this computer's page sees it: the bots live here, pairing only says it was declined, and
+ * a server setup walks through its steps, then says the key didn't work. */
 function pretendDesktop() {
-  Object.assign(window, { ogb: { place: {
-    current: async () => ({ kind: "local" }),
-    connect: async () => ({ ok: false, error: "unreachable" }),
-    disconnect: async () => {},
-    onChanged: () => () => {},
-  } } });
+  let report: (progress: { step: "creating" | "installing" | "connecting"; detail?: string }) => void = () => {};
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 1500));
+  Object.assign(window, { ogb: {
+    place: {
+      current: async () => ({ kind: "local" }),
+      connect: async () => ({ ok: false, error: "unreachable" }),
+      disconnect: async () => {},
+      onChanged: () => () => {},
+    },
+    serverSetup: {
+      start: async () => {
+        await pause();
+        report({ step: "installing", detail: "Installing dependencies (a few minutes)" });
+        await pause();
+        return { ok: false, error: { code: "boat-key" } };
+      },
+      onProgress: (callback: typeof report) => { report = callback; return () => {}; },
+    },
+  } });
 }
 
 const { ai, bots, desktop } = fromUrl();
