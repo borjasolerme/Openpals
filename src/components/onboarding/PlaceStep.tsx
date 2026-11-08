@@ -16,7 +16,7 @@ export function PlaceStep({ progress, onBack, onNext }: { progress: StepProgress
     );
   }
   return (
-    <StepFrame progress={progress} title={t("onboarding.place.title")} onBack={onBack} actions={null}>
+    <StepFrame progress={progress} title={t("onboarding.place.title")} line={t("onboarding.place.intro")} onBack={onBack} actions={null}>
       <div className="flex flex-col gap-2">
         <ChoiceButton data-place-choice="local" icon={<Laptop size={18} />} title={t("botsHome.local")} hint={t("onboarding.place.localHint")} onClick={onNext} />
         <ChoiceButton data-place-choice="server" icon={<Server size={18} />} title={t("botsHome.server")} hint={t("onboarding.place.alwaysOnHint")} onClick={() => setSetup(true)} />

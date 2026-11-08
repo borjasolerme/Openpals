@@ -86,22 +86,22 @@ export function hintSeenPatch(
 }
 
 
-export type BeatId = "welcome" | "place" | "ai" | "bots" | "apps" | "done";
+export type BeatId = "welcome" | "place" | "ai" | "bring";
 
 /** Every screen the first run can show, in the order it shows them. */
-export const BEAT_ORDER: readonly BeatId[] = ["welcome", "place", "ai", "bots", "apps", "done"];
+export const BEAT_ORDER: readonly BeatId[] = ["welcome", "place", "ai", "bring"];
 
-/** The first run's screens. `place`: the desktop app shows this computer's bots, so it may choose a server instead.
- * `welcomed`: the person met the app already, before pairing the server this page comes from. A hosted place's admin
- * only meets the app: their team's AI, bots and apps are already set up. */
-export function beatsFor(options: { hosted?: boolean; place?: boolean; welcomed?: boolean }): BeatId[] {
+/** The first run's screens: where the bots live (`place`: the desktop app shows this computer's bots, so it may choose a
+ * server instead), the AI, then bots and apps to bring, and on into the chat. A hosted place's admin only meets the
+ * app (`welcome`): their team's AI, bots and apps are already set up. */
+export function beatsFor(options: { hosted?: boolean; place?: boolean }): BeatId[] {
   if (options.hosted) return ["welcome"];
-  return BEAT_ORDER.filter((beat) => (beat !== "place" || options.place) && (beat !== "welcome" || !options.welcomed));
+  return options.place ? ["place", "ai", "bring"] : ["ai", "bring"];
 }
 
 /** Where a reloaded first run opens: the saved screen while it is offered, else the first. */
 export function resumeBeat(beats: readonly BeatId[], saved: BeatId | undefined): BeatId {
-  return saved && beats.includes(saved) ? saved : beats[0] ?? "welcome";
+  return saved && beats.includes(saved) ? saved : beats[0]!;
 }
 
 const WELCOME_FINISHED_KEY = "omb.onboarding.welcomeFinished";

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-// The first run, one screen at a time: welcome, where the bots live (desktop app only), the AI, the bots, the apps, then
-// done; what it saves, where it lands, and what a reload or a replay does.
+// The first run, one screen at a time: where the bots live (desktop app only), the AI, then bots and apps to bring; what
+// it saves, where it lands, and what a reload or a replay does.
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -111,31 +111,23 @@ afterEach(async () => {
 });
 
 describe("a new install's first run", () => {
-  it("meets the app, signs in, starts with Pal, skips the apps and lands in Pal's chat", async () => {
+  it("signs in, starts with Pal, skips the apps and lands in Pal's chat", async () => {
     await show();
-    expect(title()).toBe("Welcome to Openpals");
-    expect(button("Back"), "nothing before the first screen").toBeUndefined();
-    await press("Get started");
-
     expect(title(), "a browser has no question of where the bots live").toBe("Sign in to your AI");
-    expect(text()).toContain("Step 1 of 3");
+    expect(button("Back"), "nothing before the first screen").toBeUndefined();
+    expect(text()).toContain("Step 1 of 2");
     expect(f.checks, "the AI answered one tiny test message").toEqual(["/api/instances/claude/check"]);
     expect(host.querySelector("[data-ai-connected]")?.textContent).toBe("Connected to Claude");
     await press("Continue");
 
-    expect(title()).toBe("Bring your bots");
-    expect(button("Skip"), "nothing brought yet").toBeDefined();
+    expect(title()).toBe("Bring your bots and apps");
+    expect(text()).toContain("Step 2 of 2");
+    expect(button("Open Openpals"), "nothing brought yet").toBeDefined();
+    expect(host.querySelector('[data-key-row="composio"]'), "a Composio project's key").not.toBeNull();
+    expect(host.querySelector("[data-composio-personal]"), "or a personal one").not.toBeNull();
     await pick('[data-bots-choice="pal"]');
     expect(f.dispatch).toHaveBeenCalledWith({ type: "updateBot", botId: "maus", patch: { welcomed: true } });
     expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Pal");
-    await press("Continue");
-
-    expect(title()).toBe("Connect your apps");
-    expect(host.querySelector('[data-key-row="composio"]'), "a Composio project's key").not.toBeNull();
-    expect(host.querySelector("[data-composio-personal]"), "or a personal one").not.toBeNull();
-    await press("Skip");
-
-    expect(title()).toBe("You're all set");
     await press("Chat with Pal");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith("maus");
     expect(introStaged("maus"), "its first messages arrive one at a time").toBe(true);
@@ -144,34 +136,33 @@ describe("a new install's first run", () => {
   });
 
   it("goes back a step with Back", async () => {
-    await show({ initialBeat: "bots" });
+    await show({ initialBeat: "bring" });
     await press("Back");
     expect(title()).toBe("Sign in to your AI");
   });
 
   it("ends in the app with nothing brought, for the chat the app chooses", async () => {
-    await show({ initialBeat: "bots" });
-    await press("Skip");
-    await press("Skip");
-    expect(text()).toContain("You can add bots and connect apps any time");
+    await show({ initialBeat: "bring" });
     await press("Open Openpals");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith(null);
     expect(introStaged("maus")).toBe(false);
   });
 
   it("comes back to the screen it was on after a reload", async () => {
-    saveWelcomeDraft({ beat: "apps" });
+    saveWelcomeDraft({ beat: "bring" });
     await show();
-    expect(title()).toBe("Connect your apps");
+    expect(title()).toBe("Bring your bots and apps");
   });
 });
 
 describe("where the bots live", () => {
-  it("is asked in the desktop app on this computer, and This computer goes on to the AI", async () => {
+  it("is asked first in the desktop app on this computer, and This computer goes on to the AI", async () => {
     desktop({ kind: "local" });
-    await show({ initialBeat: "place" });
+    await show();
     expect(title()).toBe("Where should your bots live?");
-    expect(text()).toContain("Step 1 of 4");
+    expect(text()).toContain("Welcome to Openpals, your own team of AI bots.");
+    expect(text()).toContain("Step 1 of 3");
+    expect(button("Back")).toBeUndefined();
     await pick('[data-place-choice="local"]');
     expect(title()).toBe("Sign in to your AI");
   });
@@ -254,7 +245,7 @@ describe("with no AI working yet", () => {
     expect(button("Continue")).toBeUndefined();
     expect(button("Sign in with Claude")).toBeDefined();
     await press("Set up later");
-    expect(title()).toBe("Bring your bots");
+    expect(title()).toBe("Bring your bots and apps");
   });
 
   it("opens every other way in the Connect an AI dialog, where OpenCode's free model is only a backup", async () => {
@@ -290,20 +281,18 @@ describe("with no AI working yet", () => {
 
 describe("bringing bots and apps", () => {
   it("opens the chat with the first bot moved from Grok Bot", async () => {
-    await show({ initialBeat: "bots" });
+    await show({ initialBeat: "bring" });
     await pick('[data-bots-choice="grok"]');
     f.state = { ...f.state, bots: [maus, research] };
-    await show({ initialBeat: "bots" });
+    await show({ initialBeat: "bring" });
     await press("Close Grok");
     expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Research");
-    await press("Continue");
-    await press("Skip");
     await press("Chat with Research");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith("research");
   });
 
   it("saves a personal Composio key as an MCP server, switched on once Composio accepts it", async () => {
-    await show({ initialBeat: "apps" });
+    await show({ initialBeat: "bring" });
     await type("[data-composio-personal] input", "ak_project");
     await submit("[data-composio-personal]");
     expect(host.querySelector("[data-composio-personal] [role=alert]")?.textContent).toBe("A personal Composio key starts with ck_.");
@@ -312,7 +301,6 @@ describe("bringing bots and apps", () => {
     const calls = f.api.mock.calls.map(([path, init]) => `${init?.method ?? "GET"} ${path}`);
     expect(calls).toEqual(expect.arrayContaining(["POST /api/mcp/servers", "POST /api/mcp/servers/composio-personal/test", "PATCH /api/mcp/servers/composio-personal"]));
     expect(text()).toContain("Connected. Every bot can use your apps.");
-    expect(button("Continue")).toBeDefined();
   });
 });
 
@@ -327,10 +315,8 @@ describe("other first runs", () => {
 
   it("a replay from Settings records nothing about a first chat", async () => {
     f.state = { ...f.state, config: { onboarding: { ...EMPTY_ONBOARDING, completedAt: "2026-09-01T00:00:00.000Z", version: WELCOME_VERSION } } };
-    await show({ replay: true, initialBeat: "bots" });
+    await show({ replay: true, initialBeat: "bring" });
     await pick('[data-bots-choice="pal"]');
-    await press("Continue");
-    await press("Skip");
     await press("Chat with Pal");
     await act(async () => {});
     expect(saved()[0].onboarding).not.toHaveProperty("hintsSeen");

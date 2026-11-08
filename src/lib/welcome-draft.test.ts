@@ -21,8 +21,8 @@ afterEach(() => vi.unstubAllGlobals());
 describe("the welcome draft", () => {
   it("keeps the screen across a reload, and nothing else, until it is cleared", () => {
     expect(readWelcomeDraft()).toBeNull();
-    saveWelcomeDraft({ beat: "bots" });
-    expect(readWelcomeDraft()).toEqual({ beat: "bots" });
+    saveWelcomeDraft({ beat: "bring" });
+    expect(readWelcomeDraft()).toEqual({ beat: "bring" });
     expect(Object.keys(JSON.parse(local.values.get(WELCOME_DRAFT_KEY)!)).sort()).toEqual(["beat", "version"]);
     clearWelcomeDraft();
     expect(readWelcomeDraft()).toBeNull();
@@ -30,16 +30,16 @@ describe("the welcome draft", () => {
   });
 
   it("forgets a draft written by another version of the welcome", () => {
-    saveWelcomeDraft({ beat: "bots" });
+    saveWelcomeDraft({ beat: "bring" });
     expect(JSON.parse(local.values.get(WELCOME_DRAFT_KEY)!).version).toBe(WELCOME_VERSION);
     for (const version of [undefined, WELCOME_VERSION - 1, WELCOME_VERSION + 1]) {
-      local.values.set(WELCOME_DRAFT_KEY, JSON.stringify({ version, beat: "bots" }));
+      local.values.set(WELCOME_DRAFT_KEY, JSON.stringify({ version, beat: "bring" }));
       expect(readWelcomeDraft(), String(version)).toBeNull();
     }
   });
 
   it("ignores anything it did not write, such as a step from an earlier welcome", () => {
-    for (const junk of ["{", "null", "[]", JSON.stringify({ version: WELCOME_VERSION, beat: "reel" }), JSON.stringify({ version: WELCOME_VERSION, beat: "chief" }),
+    for (const junk of ["{", "null", "[]", JSON.stringify({ version: WELCOME_VERSION, beat: "reel" }), JSON.stringify({ version: WELCOME_VERSION, beat: "chief" }), JSON.stringify({ version: WELCOME_VERSION, beat: "done" }),
       JSON.stringify({ version: WELCOME_VERSION, beat: "engines", name: "Ada" }), JSON.stringify({ version: WELCOME_VERSION, beat: "hello", name: "Ada" })]) {
       local.values.set(WELCOME_DRAFT_KEY, junk);
       expect(readWelcomeDraft(), junk.slice(0, 40)).toBeNull();

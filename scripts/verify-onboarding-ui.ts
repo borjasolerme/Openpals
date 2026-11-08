@@ -34,11 +34,8 @@ const poll = async (read: () => Promise<unknown>, expected: unknown, label: stri
 const textVisible = (text: string) => poll(async () => (await snapshot()).includes(text), true, text);
 /** Through every screen of the welcome, bringing and connecting nothing. */
 const finishWelcome = async () => {
-  await click("Get started");
   await click("Continue");
-  await click("Skip");
-  await click("Skip");
-  await textVisible("You're all set");
+  await textVisible("Bring your bots and apps");
   await evaluate("document.querySelector('[data-welcome] [data-primary]').click(); true");
 };
 const evidence = resolve(".omb-scratch/verify-evidence/onboarding");
@@ -74,20 +71,17 @@ await evaluate("fetch('/api/config', {method:'PUT', headers:{'Content-Type':'app
 await evaluate("fetch('/api/bots').then(r => r.json()).then(data => Promise.all(data.bots.filter(bot => bot.defaultBot).map(bot => fetch('/api/bots/' + bot.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({welcomed:false})}).then(r => r.ok)))).then(oks => oks.length > 0 && oks.every(Boolean))");
 // A new install opens in Simple mode; this page's own writes after the clear would otherwise read as an earlier run.
 await evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('omb-advanced-mode', '0'); setTimeout(() => { location.search = '?onboarding=1'; }, 0); true");
-await textVisible("Welcome to Openpals");
-await evaluate("document.documentElement.dataset.reducedMotion = 'true'; true");
-await screenshot("welcome");
-// The first screen asks nothing and shows no steps, Back or Skip. A browser is never asked where the bots live.
-assert.equal(await evaluate("document.querySelectorAll('[data-welcome] input').length"), 0, "no field on the first screen");
-for (const gone of ["Step 1", "Back", "Skip", "Your name"]) assert.equal((await snapshot()).includes(gone), false, gone);
-await click("Get started");
 await textVisible("Sign in to your AI");
+await evaluate("document.documentElement.dataset.reducedMotion = 'true'; true");
+await screenshot("ai");
+// A browser is never asked where the bots live: the AI comes first, with nothing before it.
+for (const gone of ["Back", "Your name", "Where should your bots live?"]) assert.equal((await snapshot()).includes(gone), false, gone);
 await click("Continue");
-await textVisible("Bring your bots");
+await textVisible("Bring your bots and apps");
 // A reload comes back to the screen it was on.
 await evaluate("setTimeout(() => location.reload(), 0); true");
-await textVisible("Bring your bots");
-await screenshot("bots");
+await textVisible("Bring your bots and apps");
+await screenshot("bring");
 console.log("PASS the first run goes screen by screen, and a reload keeps the screen");
 
 // The completion write failing never keeps the person out of the chat.
@@ -103,10 +97,6 @@ await evaluate(`(() => {
   return true;
 })()`);
 await evaluate("document.querySelector('[data-bots-choice=pal]').click(); true");
-await click("Continue");
-await textVisible("Connect your apps");
-await click("Skip");
-await textVisible("You're all set");
 await evaluate("document.querySelector('[data-welcome] [data-primary]').click(); true");
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");
 // The welcome lands in the chat with the Chief (the server's first bot): its first messages, no AI asked.
@@ -133,7 +123,7 @@ assert.equal(starter.modelSelection.model, selected.models.default);
 // and this time it is saved.
 // Skipping every step this time lands in the Chief's chat.
 await evaluate("localStorage.removeItem('omb-email-gate'); localStorage.removeItem('omb.onboarding.welcomeDraft'); setTimeout(() => location.reload(), 0); true");
-await textVisible("Welcome to Openpals");
+await textVisible("Sign in to your AI");
 await finishWelcome();
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");
 await textVisible(composer);
@@ -185,7 +175,7 @@ console.log("PASS Settings replay and Skip queued behind slow Next");
 
 await openSettings();
 await click("Replay welcome tour");
-await textVisible("Welcome to Openpals");
+await textVisible("Sign in to your AI");
 await holdConfigWrite();
 await finishWelcome();
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "slow completion cannot trap welcome");

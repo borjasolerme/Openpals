@@ -7,7 +7,7 @@ import { productName } from "@/lib/brand";
 import { chiefFor, createChiefPatch, defaultBotIn } from "@/lib/default-bot";
 import { t } from "@/lib/i18n";
 import { useStore, type Bot } from "@/state/store";
-import { ChoiceButton, PRIMARY, StepFrame, type StepProgress } from "./StepFrame";
+import { BringSection, ChoiceButton } from "./StepFrame";
 
 /** What the person brought: Pal started, and the bots that came over from Grok Bot. */
 export interface BroughtBots {
@@ -23,13 +23,7 @@ export function firstBot(brought: BroughtBots): string | null {
 }
 
 /** Bringing bots in, both optional: moving them from Grok Bot, or starting with Pal, the helper bot. */
-export function BotsStep({ progress, brought, onBrought, onBack, onNext }: {
-  progress: StepProgress | null;
-  brought: BroughtBots;
-  onBrought: (brought: BroughtBots) => void;
-  onBack?: () => void;
-  onNext: () => void;
-}) {
+export function BringBots({ brought, onBrought }: { brought: BroughtBots; onBrought: (brought: BroughtBots) => void }) {
   const { state, dispatch } = useStore();
   const maus = defaultBotIn(state.bots);
   const [moving, setMoving] = useState(false);
@@ -52,8 +46,7 @@ export function BotsStep({ progress, brought, onBrought, onBack, onNext }: {
 
   const done = Boolean(brought.pal || brought.moved.length);
   return (
-    <StepFrame progress={progress} title={t("onboarding.bots.title")} line={t("onboarding.bots.line")} onBack={onBack}
-      actions={<button type="button" data-primary="" onClick={onNext} className={PRIMARY}>{t(done ? "onboarding.continue" : "onboarding.skip")}</button>}>
+    <BringSection title={t("onboarding.bring.bots")} line={t("onboarding.bots.line")}>
       <div className="flex flex-col gap-2">
         <ChoiceButton data-bots-choice="grok" icon={<GrokBotMark size={20} />} title={t("onboarding.bots.grok")} hint={t("onboarding.bots.grokHint")}
           done={brought.moved.length > 0} onClick={startMove} />
@@ -63,12 +56,12 @@ export function BotsStep({ progress, brought, onBrought, onBack, onNext }: {
         )}
       </div>
       {done && (
-        <p role="status" data-bots-brought="" className="mt-3 flex items-center gap-1.5 text-[13px] leading-[18px] text-success">
+        <p role="status" data-bots-brought="" className="flex items-center gap-1.5 text-[13px] leading-[18px] text-success">
           <Check size={14} strokeWidth={2.5} aria-hidden="true" />
           {t("onboarding.bots.ready", { names: [...(brought.pal && maus ? [maus.name] : []), ...brought.moved.map((bot) => bot.name)].join(", ") })}
         </p>
       )}
       {moving && <GrokMoveDialog onClose={endMove} />}
-    </StepFrame>
+    </BringSection>
   );
 }

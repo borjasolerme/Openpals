@@ -8,8 +8,8 @@ import { PRIMARY, StepFrame } from "./StepFrame";
 
 const MASCOT_SIZE = 72;
 
-/** The first screen: the app's name, its mascot and one line on what it is. */
-export function WelcomeStep({ hosted, onNext }: { hosted: boolean; onNext: () => void }) {
+/** A hosted place's welcome for its admin: the app's name, its mascot and one line on the team's shared place. */
+export function WelcomeStep({ onNext }: { onNext: () => void }) {
   const { state } = useStore();
   const reduced = usePrefersReducedMotion();
   const maus = defaultBotIn(state.bots);
@@ -19,7 +19,7 @@ export function WelcomeStep({ hosted, onNext }: { hosted: boolean; onNext: () =>
     : <MausAvatar color="chrome" size={MASCOT_SIZE} state="idle" animated={!reduced} label={DEFAULT_BOT_NAME} />;
   return (
     <StepFrame centered art={art} title={t("onboarding.welcome.title", { app: productName() })}
-      line={hosted ? t("onboarding.hosted.intro") : t("onboarding.welcome.line")}
+      line={t("onboarding.hosted.intro")}
       actions={<button type="button" data-primary="" onClick={onNext} className={PRIMARY}>{t("onboarding.welcome.start")}</button>} />
   );
 }

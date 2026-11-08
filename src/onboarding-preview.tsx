@@ -17,7 +17,7 @@ function fromUrl() {
   const skin = params.get("skin") as SkinId | null;
   const screen = params.get("screen") as BeatId | null;
   return {
-    screen: screen && BEAT_ORDER.includes(screen) ? screen : "welcome",
+    screen: screen && BEAT_ORDER.includes(screen) ? screen : "place",
     desktop: params.get("desktop") === "1",
     skin: skin && SKINS.some((s) => s.id === skin) ? skin : ("midnight" as SkinId),
     ai: params.get("ai") !== "0",

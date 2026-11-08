@@ -1,17 +1,18 @@
 # Welcome flow and guided tour
 
-The first run goes one screen at a time, then to the chat: Welcome (one line
-and Get started); Where should your bots live? (only in the desktop app while
-it shows this computer: This computer, or An always-on server, which the
-desktop app sets up from a Boat API key (`electron/boat-setup.mjs`) or an
-own server's `user@address` over SSH (`electron/ssh-setup.mjs`), both running
-`scripts/install-server.sh`, then switches to; a pasted pairing link still works);
-Sign in to your AI (the sign-in pill, Other ways to connect, Set up later);
-Bring your bots (Move from Grok Bot, Start with Pal; skippable); Connect your
-apps (a personal Composio key saved as the `composio-personal` MCP server, or a
-Composio project key; skippable); and You're all set, which opens the chat with
-the bot brought in (Pal first, else the first bot moved from Grok Bot), or the
-Chief's chat. A server's page reached by pairing starts at the AI. Pal started
+The first run is three screens, then the chat: Where should your bots live?
+(only in the desktop app while it shows this computer, with the one-line
+welcome: This computer, or An always-on server, which the desktop app sets up
+from a Boat API key (`electron/boat-setup.mjs`) or an own server's
+`user@address` over SSH (`electron/ssh-setup.mjs`), both running
+`scripts/install-server.sh`, then switches to; a pasted pairing link still
+works); Sign in to your AI (the sign-in pill, Other ways to connect, Set up
+later); and Bring your bots and apps (Move from Grok Bot, Start with Pal, a
+personal Composio key saved as the `composio-personal` MCP server, or a
+Composio project key; all optional), whose button opens the chat with the bot
+brought in (Pal first, else the first bot moved from Grok Bot), or the
+Chief's chat. A browser, and a server's page reached by pairing, start at the
+AI. A hosted place's admin sees only its welcome. Pal started
 here lands in a chat where MausBot's three lines, its follow-up (written once
 by the server, `POST /api/bots/:id/helper-followup`) and chips offer only what
 is still missing. The app tour starts only from Settings → Replay app tour.
@@ -84,7 +85,7 @@ What each first-run surface depends on, and how it was checked:
 
 | Who opens the app | What they get | Checked by |
 |---|---|---|
-| Desktop app, own server (full bridge, `remoteClient` present) | The two-screen first run, decided without a new request | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/WelcomeFlow.test.ts` |
+| Desktop app, own server (full bridge, `remoteClient` present) | The three-screen first run, decided without a new request | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/WelcomeFlow.test.ts` |
 | Hosted workspace opened inside the desktop app (reduced bridge, no `remoteClient`) | Treated like a browser: the server is asked | `src/components/onboarding/WelcomeGate.test.ts` |
 | Browser, admin of a hosted workspace | The first screen only, with the shared-workspace line, then the chat | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/WelcomeFlow.test.ts`, `src/lib/onboarding.test.ts` |
 | Browser, hosted member (no admin scope) | No welcome flow; one dismissible note kept in browser storage; no first-conversation spotlights | `src/components/onboarding/WelcomeGate.test.ts`, `src/components/onboarding/FirstConversationTour.test.ts` |

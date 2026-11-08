@@ -167,28 +167,24 @@ describe("persistence patches", () => {
 });
 
 describe("the first run's screens", () => {
-  it("meets the app, then the AI, the bots and the apps, then ends", () => {
-    expect(beatsFor({})).toEqual(["welcome", "ai", "bots", "apps", "done"]);
+  it("signs in to the AI, then brings bots and apps", () => {
+    expect(beatsFor({})).toEqual(["ai", "bring"]);
   });
 
-  it("asks where the bots live only in the desktop app on this computer", () => {
-    expect(beatsFor({ place: true })).toEqual(["welcome", "place", "ai", "bots", "apps", "done"]);
+  it("asks first where the bots live only in the desktop app on this computer", () => {
+    expect(beatsFor({ place: true })).toEqual(["place", "ai", "bring"]);
   });
 
-  it("goes straight on to the AI on a server's page after pairing it", () => {
-    expect(beatsFor({ welcomed: true })).toEqual(["ai", "bots", "apps", "done"]);
-  });
-
-  it("gives a hosted place's admin only the first: their team's AI, bots and apps are set up already", () => {
+  it("gives a hosted place's admin only the welcome: their team's AI, bots and apps are set up already", () => {
     expect(beatsFor({ hosted: true, place: true })).toEqual(["welcome"]);
   });
 
   it("resumes the saved screen while it is offered, else starts at the first", () => {
-    expect(resumeBeat(beatsFor({}), "bots")).toBe("bots");
-    expect(resumeBeat(beatsFor({}), undefined)).toBe("welcome");
-    expect(resumeBeat(beatsFor({}), "place")).toBe("welcome");
-    expect(resumeBeat(beatsFor({ hosted: true }), "bots")).toBe("welcome");
-    expect(resumeBeat(beatsFor({}), "chief" as never), "a step from the earlier welcome").toBe("welcome");
+    expect(resumeBeat(beatsFor({}), "bring")).toBe("bring");
+    expect(resumeBeat(beatsFor({}), undefined)).toBe("ai");
+    expect(resumeBeat(beatsFor({}), "place")).toBe("ai");
+    expect(resumeBeat(beatsFor({ hosted: true }), "bring")).toBe("welcome");
+    expect(resumeBeat(beatsFor({ place: true }), "bots" as never), "a step from the earlier welcome").toBe("place");
   });
 });
 

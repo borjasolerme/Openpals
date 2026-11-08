@@ -1,18 +1,16 @@
 import { useId, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { KEY_FIELD, KeyRow } from "@/components/keys/KeyRow";
-import { keyEntry, savedState } from "@/components/keys/key-catalog";
 import { cn } from "@/lib/cn";
 import { looksLikeComposioPersonalKey, saveComposioPersonalKey } from "@/lib/composio-personal";
 import { t } from "@/lib/i18n";
-import { useStore } from "@/state/store";
-import { PRIMARY, StepFrame, type StepProgress } from "./StepFrame";
+import { BringSection } from "./StepFrame";
 
 const CARD = "rounded-2xl border border-hairline/40 bg-card";
 
 type Saving = { kind: "idle" } | { kind: "saving" } | { kind: "saved" } | { kind: "failed"; message: string };
 
-function PersonalKey({ onSaved }: { onSaved: () => void }) {
+function PersonalKey() {
   const [key, setKey] = useState("");
   const [saving, setSaving] = useState<Saving>({ kind: "idle" });
   const id = useId();
@@ -24,7 +22,6 @@ function PersonalKey({ onSaved }: { onSaved: () => void }) {
       if (!result.ok) return setSaving({ kind: "failed", message: t("onboarding.apps.personalRefused", { reason: result.error || "?" }) });
       setKey("");
       setSaving({ kind: "saved" });
-      onSaved();
     } catch (cause) {
       setSaving({ kind: "failed", message: cause instanceof Error ? cause.message : String(cause) });
     }
@@ -50,17 +47,11 @@ function PersonalKey({ onSaved }: { onSaved: () => void }) {
 }
 
 /** Connecting apps through Composio, optional: a Composio project's key, or a person's own key. */
-export function AppsStep({ progress, onBack, onNext }: { progress: StepProgress | null; onBack?: () => void; onNext: () => void }) {
-  const { state } = useStore();
-  const [personal, setPersonal] = useState(false);
-  const done = personal || savedState(keyEntry("composio"), state.config).configured;
+export function ConnectApps() {
   return (
-    <StepFrame progress={progress} title={t("onboarding.apps.title")} line={t("onboarding.apps.line")} onBack={onBack}
-      actions={<button type="button" data-primary="" onClick={onNext} className={PRIMARY}>{t(done ? "onboarding.continue" : "onboarding.skip")}</button>}>
-      <div className="flex flex-col gap-3">
-        <PersonalKey onSaved={() => setPersonal(true)} />
-        <div className={CARD}><KeyRow id="composio" /></div>
-      </div>
-    </StepFrame>
+    <BringSection title={t("onboarding.bring.apps")} line={t("onboarding.apps.line")}>
+      <PersonalKey />
+      <div className={CARD}><KeyRow id="composio" /></div>
+    </BringSection>
   );
 }

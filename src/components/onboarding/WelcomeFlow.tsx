@@ -3,13 +3,11 @@ import { cn } from "@/lib/cn";
 import { stageIntro } from "@/lib/default-bot";
 import { GROK_MOVE_NOTICE } from "@/lib/notices";
 import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, type BeatId } from "@/lib/onboarding";
-import { desktopShowsOtherServer } from "@/lib/other-server";
 import { placeAvailable, useBotsPlace } from "@/lib/place";
 import { clearWelcomeDraft, readWelcomeDraft, saveWelcomeDraft } from "@/lib/welcome-draft";
 import { api, useStore } from "@/state/store";
-import { AppsStep } from "./AppsStep";
-import { BotsStep, firstBot, NOTHING_BROUGHT, type BroughtBots } from "./BotsStep";
-import { DoneStep } from "./DoneStep";
+import { firstBot, NOTHING_BROUGHT, type BroughtBots } from "./BringBots";
+import { BringStep } from "./BringStep";
 import { PlaceStep } from "./PlaceStep";
 import { SignInStep } from "./SignInStep";
 import type { StepProgress } from "./StepFrame";
@@ -50,15 +48,15 @@ function trapTab(event: ReactKeyboardEvent<HTMLElement>, root: HTMLElement | nul
   }
 }
 
-/** The steps between the welcome and the end are counted. */
+/** The steps after a hosted place's welcome are counted. */
 function progressOf(beats: readonly BeatId[], beat: BeatId): StepProgress | null {
-  const counted: readonly BeatId[] = beats.filter((id) => id !== "welcome" && id !== "done");
+  const counted: readonly BeatId[] = beats.filter((id) => id !== "welcome");
   const at = counted.indexOf(beat);
   return at < 0 ? null : { current: at + 1, total: counted.length };
 }
 
-/** The first run, one screen at a time: welcome, where the bots live (desktop app only), the AI, the bots, the apps, then
- * done. Its end is the chat with the bot brought here (`onDone`). */
+/** The first run, one screen at a time: where the bots live (desktop app only), the AI, then bots and apps to bring. Its
+ * end is the chat with the bot brought here (`onDone`). A hosted place's admin gets its welcome only. */
 export function WelcomeFlow(props: {
   onDone: (botId: string | null) => void;
   replay?: boolean;
@@ -77,7 +75,7 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
   // A first run keeps its screen in this browser, so a reload resumes it; a replay starts over. A hosted place's
   // browser may hold another person's draft.
   const keepsDraft = !replay && !embedded && !hosted;
-  const [beats] = useState(() => beatsFor({ hosted, place, welcomed: desktopShowsOtherServer() }));
+  const [beats] = useState(() => beatsFor({ hosted, place }));
   const [beat, setBeat] = useState<BeatId>(() => resumeBeat(beats, initialBeat ?? (keepsDraft ? readWelcomeDraft()?.beat : undefined)));
   const [brought, setBrought] = useState<BroughtBots>(NOTHING_BROUGHT);
   const root = useRef<HTMLDivElement>(null);
@@ -109,8 +107,8 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
       if (!replay && botId && botId === brought.pal) stageIntro(botId);
       onDone(botId);
       try {
-        // The bots step offered the move from Grok Bot, so its popup has nothing left to offer.
-        const patch = replay ? completionPatch() : firstRunPatch(record.current, new Date(), beats.includes("bots") ? [GROK_MOVE_NOTICE] : []);
+        // The bring step offered the move from Grok Bot, so its popup has nothing left to offer.
+        const patch = replay ? completionPatch() : firstRunPatch(record.current, new Date(), beats.includes("bring") ? [GROK_MOVE_NOTICE] : []);
         const config = await api("/api/config", { method: "PUT", body: JSON.stringify(patch), signal: AbortSignal.timeout(10_000) });
         dispatch({ type: "configStatus", config });
       } catch {
@@ -151,12 +149,11 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
       className={cn("welcome-screen flex flex-col overflow-y-auto bg-app outline-none", embedded ? "relative h-full w-full" : "fixed inset-0 z-50")}
     >
       <div key={beat} className="flex w-full flex-1 shrink-0 flex-col">
-        {beat === "welcome" ? <WelcomeStep hosted={hosted} onNext={next} />
+        {beat === "welcome" ? <WelcomeStep onNext={next} />
           : beat === "place" ? <PlaceStep progress={progress} onBack={back} onNext={next} />
           : beat === "ai" ? <SignInStep progress={progress} onBack={back} onNext={next} />
-          : beat === "bots" ? <BotsStep progress={progress} brought={brought} onBrought={setBrought} onBack={back} onNext={next} />
-          : beat === "apps" ? <AppsStep progress={progress} onBack={back} onNext={next} />
-          : <DoneStep bot={state.bots.find((bot) => bot.id === target)} onBack={back} onDone={() => void finish(target)} />}
+          : <BringStep progress={progress} brought={brought} onBrought={setBrought} bot={state.bots.find((bot) => bot.id === target)}
+              onBack={back} onDone={() => void finish(target)} />}
       </div>
     </div>
   );

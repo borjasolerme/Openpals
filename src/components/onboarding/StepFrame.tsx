@@ -63,3 +63,16 @@ export function ChoiceButton({ icon, title, hint, done = false, onClick, ...rest
     </button>
   );
 }
+
+/** One part of a step that offers several things: a small heading, one line, then its choices. */
+export function BringSection({ title, line, children }: { title: string; line: string; children: ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-[14px] font-medium leading-5 text-ink">{title}</h2>
+        <p className="text-[13px] leading-[18px] text-ink-secondary [text-wrap:pretty]">{line}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
