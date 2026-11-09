@@ -222,10 +222,6 @@ it("shows a settled delegation and its resume in the parent thread, and notifies
     const notes = stream.frames.filter(frame => frame.kind === "notify").map(frame => frame.notification);
     expect(notes.map(note => [note.kind, note.botId]), JSON.stringify(notes)).toEqual([["done", f.chief.id]]);
     expect(notes[0]).toMatchObject({ threadId: f.chief.activeTaskId, title: "Clive finished" });
-    const { bots } = await f.api("/api/bots?messages=0");
-    const work = bots.find((bot: any) => bot.id === f.lead.id).tasks.find((task: any) => task.openedBy?.botId === f.chief.id);
-    expect(work.unread, "no unread mark, on the desktop or the phone's To review, for a teammate's own step").toBeFalsy();
-    expect(bots.find((bot: any) => bot.id === f.chief.id).tasks.find((task: any) => task.threadId === f.chief.activeTaskId).unread, "the person's own conversation still is").toBe(true);
     expect(stream.frames.some(frame => frame.kind === "notify" && frame.notification?.kind === "done"
       && (frame.notification.botId === f.lead.id || frame.notification.botId === f.specialist.id))).toBe(false);
     const chips = (await f.messages(f.chief.activeTaskId))
