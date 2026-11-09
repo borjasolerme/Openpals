@@ -7244,9 +7244,9 @@ async function beginTurn(
         createHash("sha256").update(JSON.stringify([...persistentConfig, soul])).digest("hex").slice(0, 16);
       const plannedConfig = sessionConfig(bot.soul);
       const skillAuthoring = skillAuthoringEnabled(cfg) && agentsMounted;
-      const skillCommandText = supportsWorkspaceFiles(instance.driverKind)
-        ? skillsHost.expandSkillCommand(bot, threadId, providerText, instance)
-        : providerText;
+      // A skill runs by name only from a person's own line: never from outside words, a bot's message or a relayed line.
+      const namesSkills = !commsDepth && !opts?.coordination && !opts?.peerAsk && !userMessage.peerAsk && !outsideLineage.handsNoLevel(threadId);
+      const skillCommandText = namesSkills && supportsWorkspaceFiles(instance.driverKind) ? skillsHost.expandSkillCommand(bot, threadId, providerText, instance) : providerText;
       const setupText = agentsMounted ? expandSetupTurnText(skillCommandText) : skillCommandText;
       const userTurnText = (opts?.app?.context ?? "") + (opts?.cardContinuation ? "" : routineRunNote(threadId, opts?.automationSource)) + labelledLine(personLine && !opts?.excludeMessageIds ? userMessage : {}, withReactionNotes(promptWithReply(
         skillAuthoring ? expandLearnTurnText(setupText) : setupText,
