@@ -30,7 +30,7 @@ ipcRenderer.on("app:open-settings", () => {
 const localOrigin = process.argv.find((arg) => arg.startsWith("--omb-local-origin="))?.slice("--omb-local-origin=".length) ?? null;
 const isLocalPage = !localOrigin || location.origin === localOrigin;
 
-const REMOTE_SAFE = new Set(["platform", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "place", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
+const REMOTE_SAFE = new Set(["platform", "softwareRendering", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "place", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
 function savedLanguageChoice() {
   try { const saved = ipcRenderer.sendSync("desktop-language:read"); return typeof saved === "string" ? saved : null; } catch { return null; }
 }
@@ -54,6 +54,8 @@ function invokeWithPlainError(channel, ...args) {
 
 const bridge = {
   platform: process.platform,
+  /** Linux without a GPU (electron/linux-gpu.mjs): the page drops its backdrop blurs. */
+  softwareRendering: process.argv.includes("--omb-software-rendering=1"),
   /** This app's version, and whether this page is this app's own (served by this computer, not the server it is connected to). */
   app: { version: appVersion, ownPage: isLocalPage },
   /**

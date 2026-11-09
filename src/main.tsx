@@ -6,6 +6,7 @@ import { loadPageLanguage } from "./lib/language-preference";
 import { applySkinChoice, readSkinChoice } from "./lib/skins";
 import { applyChatWidth, readChatWidth } from "./lib/chat-width";
 import { applyFont, readFont } from "./lib/fonts";
+import { applySoftwareRendering } from "./lib/software-rendering";
 import { settleAdvancedModeDefault } from "./lib/interface-mode";
 import { PairPage } from "./pair/PairPage";
 import { PageBoundary } from "./components/PageBoundary";
@@ -16,6 +17,7 @@ import "./styles.css";
 settleAdvancedModeDefault();
 applySkinChoice(readSkinChoice());
 applyFont(readFont());
+applySoftwareRendering();
 applyChatWidth(readChatWidth());
 
 // The app is its own chunk, so these pages don't parse it. Everywhere else its fetch starts now, alongside the session

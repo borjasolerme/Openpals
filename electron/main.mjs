@@ -11,7 +11,7 @@ import { createAndroidDeviceController } from "./android-device.mjs";
 import { finishSpeech, speechBusy, startSpeech, stopSpeech } from "./speech.mjs";
 import { installTalk, isTalkPanel } from "./talk-main.mjs";
 import { openBlankTerminal } from "./terminal-launch.mjs";
-import { linuxDisablesGpu } from "./linux-gpu.mjs";
+import { linuxDisablesGpu, SOFTWARE_RENDERING_ARG } from "./linux-gpu.mjs";
 import { pasteMenuItem } from "./paste-menu-item.mjs";
 import {
   appendDesktopCrashRecord,
@@ -115,10 +115,9 @@ function applyUnreadBadge(win = mainWindow) {
 }
 
 // GNOME groups the window with its desktop entry only when both identities match; set before ready.
-if (process.platform === "linux") {
-  if (linuxDisablesGpu()) app.disableHardwareAcceleration();
-  app.setDesktopName("com.openpals.app.desktop");
-}
+const linuxSoftwareRendering = process.platform === "linux" && linuxDisablesGpu();
+if (linuxSoftwareRendering) app.disableHardwareAcceleration();
+if (process.platform === "linux") app.setDesktopName("com.openpals.app.desktop");
 
 if (!app.requestSingleInstanceLock()) {
   console.log("[desktop] Openpals is already running — focusing that window");
@@ -1080,7 +1079,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, "preload.cjs"),
-      additionalArguments: [`--omb-local-origin=${rendererOrigin()}`, `--omb-app-version=${app.getVersion()}`],
+      additionalArguments: [`--omb-local-origin=${rendererOrigin()}`, `--omb-app-version=${app.getVersion()}`, ...(linuxSoftwareRendering ? [SOFTWARE_RENDERING_ARG] : [])],
     },
   });
   mainWindow = win;

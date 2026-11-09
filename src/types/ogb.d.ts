@@ -89,6 +89,8 @@ const __APP_VERSION__: string;
   interface Window {
     ogb?: {
       platform: NodeJS.Platform;
+      /** Linux without a GPU (electron/linux-gpu.mjs): the page drops its backdrop blurs. */
+      softwareRendering?: boolean;
       /** This app's own version, and whether this page is this app's own: false on the paired server's page, which
        * carries that server's version. Absent in desktop builds before it. */
       app?: { version: string; ownPage: boolean };
