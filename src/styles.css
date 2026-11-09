@@ -107,26 +107,114 @@
 /* a table card's hover plate fits the card's 24px top band; touch keeps 40px targets in a taller band */
 @media (pointer: fine) { .table-plate .table-action { width: 24px; height: 24px; min-width: 24px; min-height: 24px; } }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS
+
+   Components use these scales, never a one-off value; the ratchet in
+   src/design-tokens.test.ts fails on new arbitrary sizes, radii, shadows
+   and raw colours.
+
+   Type      text-xs 11/14 · sm 12/16 · base 13/18 (UI default) · lg 14/22
+             display: xl 16/22 · 2xl 20/26 · 3xl 26/32. Each step carries
+             its line height and letter-spacing; add `leading-*` only to
+             change the rhythm on purpose.
+   Spacing   Tailwind's 4px scale (`p-2`, `gap-1.5`); quarter steps
+             (`0.25`–`0.75`) only to align by a pixel.
+   Controls  h-control-xs 20 · control-sm 24 · control 28 (rows, buttons)
+             · control-lg 32 · touch 44 (the minimum target on a phone).
+   Radius    xs 2 · sm 4 · md 6 (base) · lg 8 · xl 12 · 2xl 14 · 3xl 16
+             · 4xl 18 · full. A skin may re-tune lg and xl, its controls.
+   Colour    a skin's primitives (`--color-ink`, `--color-app`, …) feed
+             the semantic tokens below: text ink → ink-secondary →
+             ink-tertiary → ink-quaternary; fills fill-subtle 4% · fill 8%
+             · fill-strong 12% · fill-bold 16% of ink; lines line-subtle
+             6% · line 10% · line-strong 16%.
+   Shadow    sm · base · popup · lg.
+   Motion    duration-fast 120ms · base 200ms · slow 240ms · slower
+             320ms; ease-standard for anything that arrives.
+   ───────────────────────────────────────────────────────────────────────── */
 @theme {
-  --animate-panel-in: panel-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-sheet-in: sheet-in 0.26s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-workspace-in: workspace-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-pop-in: pop-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  --animate-pop-out: pop-out 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  --text-*: initial;
+  --text-xs: 11px;
+  --text-xs--line-height: 14px;
+  --text-xs--letter-spacing: 0px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-sm--letter-spacing: 0px;
+  --text-base: 13px;
+  --text-base--line-height: 18px;
+  --text-base--letter-spacing: -0.08px;
+  --text-lg: 14px;
+  --text-lg--line-height: 22px;
+  --text-lg--letter-spacing: -0.15px;
+  --text-xl: 16px;
+  --text-xl--line-height: 22px;
+  --text-xl--letter-spacing: -0.2px;
+  --text-2xl: 20px;
+  --text-2xl--line-height: 26px;
+  --text-2xl--letter-spacing: -0.3px;
+  --text-3xl: 26px;
+  --text-3xl--line-height: 32px;
+  --text-3xl--letter-spacing: -0.45px;
+
+  --tracking-*: initial;
+  --tracking-tighter: -0.02em;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  /* small uppercase labels */
+  --tracking-caps: 0.08em;
+  --tracking-widest: 0.12em;
+  /* a one-time code, read digit by digit */
+  --tracking-code: 0.25em;
+
+  --spacing-control-xs: 20px;
+  --spacing-control-sm: 24px;
+  --spacing-control: 28px;
+  --spacing-control-lg: 32px;
+  --spacing-touch: 44px;
+
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+  --radius-3xl: 16px;
+  --radius-4xl: 18px;
+
+  --shadow-*: initial;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.08);
+  --shadow-base: 0 6px 16px -8px rgb(0 0 0 / 0.18), 0 1px 3px rgb(0 0 0 / 0.06);
+  --shadow-popup: 0 10px 28px -12px rgb(0 0 0 / 0.24), 0 2px 6px -2px rgb(0 0 0 / 0.08);
+  --shadow-lg: 0 16px 40px -16px rgb(0 0 0 / 0.3), 0 4px 10px -4px rgb(0 0 0 / 0.1);
+
+  --transition-duration-fast: 120ms;
+  --transition-duration-base: 200ms;
+  --transition-duration-slow: 240ms;
+  --transition-duration-slower: 320ms;
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --animate-panel-in: panel-in var(--transition-duration-slow) var(--ease-standard);
+  --animate-sheet-in: sheet-in var(--transition-duration-slow) var(--ease-standard);
+  --animate-workspace-in: workspace-in var(--transition-duration-base) var(--ease-standard);
+  --animate-pop-in: pop-in var(--transition-duration-base) var(--ease-standard);
+  --animate-pop-out: pop-out var(--transition-duration-base) var(--ease-standard) forwards;
   --animate-caret: caret-blink 1s step-end infinite;
-  --animate-msg-in: msg-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-msg-in: msg-in var(--transition-duration-base) var(--ease-standard);
   --animate-status-pulse: status-pulse 1.6s steps(2, jump-none) infinite;
   /* onboarding: a block of copy or a row arriving in a beat; `.stagger`
      spaces siblings out. Rare, first-time motion, so it may run past the
      300ms UI ceiling. */
-  --animate-rise: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
-  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-rise: rise var(--transition-duration-slower) var(--ease-standard) both;
+  --animate-fade-in: fade-in var(--transition-duration-base) ease-out both;
   --animate-meet-caret: meet-caret 1s linear infinite;
   /* onboarding: a spotlight card or a first-sight hint scaling in from its
      anchor. Never from zero; nothing appears from nothing. */
-  --animate-spot-in: spot-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-spot-in: spot-in var(--transition-duration-slow) var(--ease-standard) both;
   /* onboarding: a surface reacting once to an event (a routine firing) */
-  --animate-ripple: ripple 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-ripple: ripple 0.9s var(--ease-standard) both;
   /* onboarding: a bolt travelling from a webhook address to the bot */
   --animate-bolt: bolt 0.9s cubic-bezier(0.77, 0, 0.175, 1) infinite;
 
@@ -185,14 +273,25 @@
   --font-mono: "Geist Mono Variable", "SF Mono", SFMono-Regular, ui-monospace, Menlo,
     Consolas, "Liberation Mono", monospace;
 
-  --shadow-lg: 0 6px 16px -8px rgb(0 0 0 / 0.18), 0 1px 3px rgb(0 0 0 / 0.06);
-  --shadow-xl: 0 10px 28px -12px rgb(0 0 0 / 0.24), 0 2px 6px -2px rgb(0 0 0 / 0.08);
-  --shadow-2xl: 0 16px 40px -16px rgb(0 0 0 / 0.3), 0 4px 10px -4px rgb(0 0 0 / 0.1);
-
   /* Add a rounded transition class.
      For situations where multiple transition-properties need to be set simultaneously,
      please use transition-[...], for example, transition-[color,background,border-radius] */
   --transition-property-rounded: border-radius;
+}
+
+/* Tiers of the one ink, inlined into each utility so a `[data-skin]` subtree
+   (the skin picker's miniatures) mixes its own ink, not the page's. */
+@theme inline {
+  /* Quaternary ink is for disabled labels and decorative glyphs only: it
+     does not meet 4.5:1 and never carries text a person must read. */
+  --color-ink-quaternary: color-mix(in srgb, var(--color-ink) 36%, transparent);
+  --color-fill-subtle: color-mix(in srgb, var(--color-ink) 4%, transparent);
+  --color-fill: color-mix(in srgb, var(--color-ink) 8%, transparent);
+  --color-fill-strong: color-mix(in srgb, var(--color-ink) 12%, transparent);
+  --color-fill-bold: color-mix(in srgb, var(--color-ink) 16%, transparent);
+  --color-line-subtle: color-mix(in srgb, var(--color-ink) 6%, transparent);
+  --color-line: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  --color-line-strong: color-mix(in srgb, var(--color-ink) 16%, transparent);
 }
 
 /* Tokens that no utility generates — declared outside `@theme` so Tailwind
@@ -288,18 +387,12 @@
 
   --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, sans-serif;
-  /* One radius scale, shared with Daylight. What takes which step: buttons
-     and pills full; menu rows 6; fields 8; sidebar rows 10; menus 12;
-     dialogs 14; a card inside a bubble 16; bubbles 18; the composer 22
-     (18 once it wraps); a card in the transcript 24; the window's panes 0. */
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  /* The control radii (see DESIGN TOKENS). What takes which step: buttons
+     and pills full; menu rows md; fields and sidebar rows lg; menus xl;
+     dialogs 2xl; a card inside a bubble 3xl; bubbles, the composer and
+     cards in the transcript 4xl; the window's panes 0. */
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-2xl: 14px;
-  --radius-3xl: 16px;
-  --radius-4xl: 18px;
   --identity-green: #009957;
   --identity-blue: #377FE6;
   --identity-red: #D94B52;
@@ -368,8 +461,6 @@
     Roboto, sans-serif;
   --radius-lg: 6px;
   --radius-xl: 10px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #007f48;
   --identity-blue: #1b6adc;
@@ -443,8 +534,6 @@
     "Segoe UI", system-ui, sans-serif;
   --radius-lg: 4px;
   --radius-xl: 8px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #009957;
   --identity-blue: #377FE6;
@@ -526,8 +615,6 @@
     Roboto, sans-serif;
   --radius-lg: 8px;
   --radius-xl: 14px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #007945;
   --identity-blue: #1a65d1;
@@ -588,8 +675,6 @@
     "Segoe UI", system-ui, sans-serif;
   --radius-lg: 6px;
   --radius-xl: 10px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #009957;
   --identity-blue: #377FE6;
@@ -651,8 +736,6 @@
     Roboto, sans-serif;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #007d47;
   --identity-blue: #1b68d7;
@@ -712,8 +795,6 @@
     "Segoe UI", system-ui, sans-serif;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #009957;
   --identity-blue: #377FE6;
@@ -788,14 +869,8 @@
 
   --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, sans-serif;
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-2xl: 14px;
-  --radius-3xl: 16px;
-  --radius-4xl: 18px;
   --identity-green: #00864c;
   --identity-blue: #2271e3;
   --identity-red: #d63a42;
@@ -858,8 +933,6 @@
     "Segoe UI", system-ui, sans-serif;
   --radius-lg: 10px;
   --radius-xl: 16px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #00884e;
   --identity-blue: #2573e4;
@@ -923,8 +996,6 @@
     -apple-system, system-ui, "Segoe UI", sans-serif;
   --radius-lg: 12px;
   --radius-xl: 18px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #00824a;
   --identity-blue: #1c6de0;
@@ -980,8 +1051,6 @@
     "Segoe UI", system-ui, sans-serif;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px;
-  --radius-2xl: 16px; --radius-3xl: 24px; --radius-4xl: 32px;
   --color-edge: color-mix(in srgb, var(--color-ink) 8%, transparent);
   --identity-green: #009957;
   --identity-blue: #377FE6;
@@ -2574,10 +2643,9 @@ body {
     box-shadow: 3px 3px 0 var(--color-ink);
   }
   .shadow-sm { --tw-shadow: 2px 2px 0 var(--color-ink); }
-  .shadow-md { --tw-shadow: 3px 3px 0 var(--color-ink); }
-  .shadow-lg { --tw-shadow: 4px 4px 0 var(--color-ink); }
-  .shadow-xl { --tw-shadow: 6px 6px 0 var(--color-ink); }
-  .shadow-2xl { --tw-shadow: 8px 8px 0 var(--color-ink); }
+  .shadow-base { --tw-shadow: 4px 4px 0 var(--color-ink); }
+  .shadow-popup { --tw-shadow: 6px 6px 0 var(--color-ink); }
+  .shadow-lg { --tw-shadow: 8px 8px 0 var(--color-ink); }
   .bg-menu,
   [role="menu"],
   [role="dialog"] {
