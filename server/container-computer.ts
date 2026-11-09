@@ -12,6 +12,7 @@ import { workspacePreparationDockerfile } from "./container-workspace.ts";
 import { DATA_DIR } from "./config.ts";
 import { PIDS_LIMIT, raisePidsLimit } from "./container-limits.ts";
 import { SPAWNED_PROXIES } from "./proxy-paths.ts";
+import { imageBuildArgs, imagePullArgs } from "./container-build-args.ts"; export { imageBuildArgs };
 
 const run = promisify(execFile);
 const SCREENSHOT_STATUS_TTL_MS = 10_000;
@@ -914,22 +915,8 @@ async function ensureVmWorkspace(platform: NodeJS.Platform, target: LocalVmTarge
   if (platform !== "win32") await chmod(target.workspaceDir, 0o700);
 }
 
-function baseImagePullArgs(runtime: Runtime): string[] {
-  return runtime === "container" ? ["image", "pull", BASE_IMAGE] : ["pull", BASE_IMAGE];
-}
-
-/**
- * Docker 29's legacy builder, which it still uses when it can't find the buildx plugin or `DOCKER_BUILDKIT=0` is set,
- * keeps a step's stopped container when the build fails or the client goes away during the commit. Only `--force-rm`
- * removes it. BuildKit accepts the flag and leaves no containers. Apple's `container build` has no such flag and
- * builds with BuildKit.
- */
-export function imageBuildArgs(runtime: Runtime, tag: string, context: string): string[] {
-  return runtime === "container" ? ["build", "-t", tag, context] : ["build", "--force-rm", "-t", tag, context];
-}
-
 async function prepareManagedImage(runtime: Runtime, runner: CommandRunner): Promise<void> {
-  await runner(runtime, baseImagePullArgs(runtime), 10 * 60_000);
+  await runner(runtime, imagePullArgs(runtime, BASE_IMAGE), 10 * 60_000);
   const context = await mkdtemp(join(tmpdir(), "openmausbot-cua-image-"));
   try {
     await writeFile(join(context, "Dockerfile"), managedImageDockerfile(), { mode: 0o600 });
@@ -1222,7 +1209,7 @@ export function setupCommands(
   return {
     install,
     runtimeStart,
-    pull: command(baseImagePullArgs(runtime)),
+    pull: command(imagePullArgs(runtime, BASE_IMAGE)),
     run:
       runtime === "container" && target.key !== SHARED_LOCAL_VM_TARGET.key
         ? null
