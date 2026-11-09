@@ -4,8 +4,8 @@ import type { HandoffView } from "../coordinator.ts";
 import type { BotRecord, TaskRecord } from "../store.ts";
 import { createInternalThreadRoutes } from "./internal-threads.ts";
 
-const lead = { id: "bot-lead", name: "Lead", section: "Work" } as BotRecord;
-const ops = { id: "bot-ops", name: "Ops", section: "Work" } as BotRecord;
+const lead = { id: "bot-lead", name: "Lead" } as BotRecord;
+const ops = { id: "bot-ops", name: "Ops" } as BotRecord;
 const task = (threadId: string, title: string, openedBy?: unknown) => ({ threadId, title, createdAt: 1, openedBy }) as TaskRecord;
 const handoff = { id: "h-42", rootId: "h-1", parentId: "h-1", threadId: "t-ops-new", botId: "bot-ops", status: "queued" } as HandoffView;
 const tasks: Record<string, TaskRecord[]> = {
