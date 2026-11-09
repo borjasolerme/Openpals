@@ -40,18 +40,6 @@ describe("trust controls in the real renderer", () => {
     const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const click = (name: string) => ui("click", "--name", name);
-    const type = async (name: string, text: string) => {
-      // The mapped browser "type" appends and refocuses the field. Clear
-      // through the native input setter first, including React's input event.
-      await evaluate(`(() => {
-        const input = [...document.querySelectorAll('input')].find(el => el.getAttribute('aria-label') === ${JSON.stringify(name)});
-        if (!input) throw new Error('No input to clear');
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '');
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        return true;
-      })()`);
-      await ui("type", "--name", name, "--text", text);
-    };
     const snapshot = async () => (await ui("snapshot")).snapshot as string;
     const bots = async (): Promise<SavedBot[]> => (await fetch(`${info.url}/api/bots`).then(response => response.json())).bots;
     const bot = (await bots()).find(candidate => candidate.name === "Pepper")!;
