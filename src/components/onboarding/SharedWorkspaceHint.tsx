@@ -37,20 +37,20 @@ export function SharedWorkspaceHint({
   return (
     <aside
       aria-labelledby={titleId}
-      className="fixed left-3 right-3 top-14 z-40 flex items-start gap-3 rounded-2xl border border-hairline/50 bg-panel p-3.5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] sm:inset-x-auto sm:right-5 sm:top-16 sm:w-[360px]"
+      className="fixed left-3 right-3 top-14 z-40 flex items-start gap-3 rounded-2xl border border-hairline/50 bg-panel p-3.5 shadow-lg sm:inset-x-auto sm:right-5 sm:top-16 sm:w-90"
     >
       <div className="shrink-0">
         <MausAvatar color="green" state="happy" size={36} trackPointer={false} />
       </div>
       <div className="min-w-0 flex-1">
-        <h2 id={titleId} className="text-[14px] font-semibold text-ink">
+        <h2 id={titleId} className="text-lg font-semibold text-ink">
           {t("onboarding.shared.title")}
         </h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("onboarding.shared.body")}</p>
+        <p className="mt-1 text-base leading-relaxed text-ink-secondary">{t("onboarding.shared.body")}</p>
         <button
           type="button"
           onClick={close}
-          className="mt-2.5 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-medium text-white transition-transform duration-150 active:scale-[0.98]"
+          className="mt-2.5 rounded-lg bg-accent px-3 py-1.5 text-base font-medium text-white transition-transform duration-150 active:scale-[0.98]"
         >
           {t("onboarding.spot.gotIt")}
         </button>

@@ -108,14 +108,14 @@ export function ComposerAttachments({
     <>
       {dragging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-10">
-          <div className="rounded-2xl border-2 border-dashed border-accent/70 bg-panel/90 px-8 py-6 text-[14px] font-medium text-ink shadow-2xl">
+          <div className="rounded-2xl border-2 border-dashed border-accent/70 bg-panel/90 px-8 py-6 text-lg font-medium text-ink shadow-lg">
             Drop to attach
           </div>
         </div>
       )}
 
       {notice && (
-        <div className="mb-2 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-[12px] text-warning">
+        <div className="mb-2 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
           <span className="min-w-0 flex-1">{notice}</span>
           <button
             onClick={() => onNotice(null)}
@@ -144,17 +144,17 @@ export function ComposerAttachments({
                 title={a.text.slice(0, 4000)}
                 onRemove={() => onRemove(a.id)}
               >
-                <div className="relative h-[76px] overflow-hidden">
-                  <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-[1.45] text-ink-secondary">
+                <div className="relative h-19 overflow-hidden">
+                  <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-normal text-ink-secondary">
                     {a.text.slice(0, 400)}
                   </pre>
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-b from-transparent to-raised" />
                 </div>
-                <div className="mt-1 text-[11px] text-ink-tertiary">{pasteSummary(a)}</div>
+                <div className="mt-1 text-xs text-ink-tertiary">{pasteSummary(a)}</div>
                 <button
                   type="button"
                   onClick={() => onDisplayInChatBox(a)}
-                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/25 bg-accent/5 px-2 py-1.5 text-[11px] font-medium text-accent-text transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/60"
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-accent/25 bg-accent/5 px-2 py-1.5 text-xs font-medium text-accent-text transition-colors hover:border-accent/50 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/60"
                   aria-label="Display pasted text in chat box"
                   title="Display in chat box"
                 >
@@ -173,7 +173,7 @@ export function ComposerAttachments({
                   }}
                   disabled={!attachmentImageUrl(a.path) && !a.previewUrl}
                   aria-busy={a.uploading || undefined}
-                  className="relative flex h-[76px] w-full items-center justify-center overflow-hidden rounded-lg bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-default"
+                  className="relative flex h-19 w-full items-center justify-center overflow-hidden rounded-lg bg-inset focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 disabled:cursor-default"
                   aria-label={`Preview ${a.name}`}
                 >
                   <img
@@ -181,7 +181,7 @@ export function ComposerAttachments({
                     alt={a.name}
                     loading="eager"
                     fetchPriority="high"
-                    className="max-h-[76px] max-w-full object-contain"
+                    className="max-h-19 max-w-full object-contain"
                   />
                   {a.uploading && (
                     <span className="absolute bottom-1.5 right-1.5 flex size-6 items-center justify-center rounded-full bg-black/65 text-white shadow-sm">
@@ -189,17 +189,17 @@ export function ComposerAttachments({
                     </span>
                   )}
                 </button>
-                <div className="mt-1 truncate text-[11px] text-ink-tertiary">
+                <div className="mt-1 truncate text-xs text-ink-tertiary">
                   {a.uploading ? "Uploading…" : formatSize(a.size)}
                 </div>
               </Chip>
             ) : (
               <Chip key={a.id} label="FILE" title={a.path} onRemove={() => onRemove(a.id)}>
-                <div className="flex h-[76px] items-center gap-2">
+                <div className="flex h-19 items-center gap-2">
                   <FileIcon size={16} className="shrink-0 text-ink-secondary" />
                   <div className="min-w-0">
-                    <div className="truncate text-[12px] text-ink">{a.name}</div>
-                    <div className="text-[11px] text-ink-tertiary">{formatSize(a.size)}</div>
+                    <div className="truncate text-sm text-ink">{a.name}</div>
+                    <div className="text-xs text-ink-tertiary">{formatSize(a.size)}</div>
                   </div>
                 </div>
               </Chip>
@@ -228,14 +228,14 @@ function Chip({
     <div
       title={title}
       className={cn(
-        "group relative w-[172px] rounded-xl border border-hairline/40 bg-raised px-2.5 py-2",
+        "group relative w-43 rounded-xl border border-hairline/40 bg-raised px-2.5 py-2",
         "transition-colors hover:border-hairline",
       )}
     >
       {children}
       <div className="mt-1 flex items-center gap-1">
         <Icon size={11} className="text-ink-tertiary" />
-        <span className="rounded border border-hairline/60 px-1 py-px text-[10px] font-medium tracking-wide text-ink-secondary">
+        <span className="rounded border border-hairline/60 px-1 py-px text-xs font-medium tracking-wide text-ink-secondary">
           {label}
         </span>
       </div>

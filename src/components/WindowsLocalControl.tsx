@@ -28,19 +28,19 @@ export function WindowsLocalControl() {
       <div className="flex items-start gap-3">
         <MonitorX size={16} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
         <div className="min-w-0 flex-1">
-          <div className="text-[14px] font-medium text-ink">{t("computer.windows.title")}</div>
-          <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">
+          <div className="text-lg font-medium text-ink">{t("computer.windows.title")}</div>
+          <p className="mt-1 text-base leading-relaxed text-ink-secondary">
             {t("computer.windows.body")}
             {local.reasonCode === "cua-driver-blocked" && <> {t("computer.windows.blocked")}</>}
           </p>
           {local.message && (
-            <details className="mt-2 text-[12px] text-ink-secondary">
+            <details className="mt-2 text-sm text-ink-secondary">
               <summary className="cursor-pointer">{t("computer.windows.detail")}</summary>
               <p className="mt-1 break-words">{local.message}</p>
             </details>
           )}
           {error && (
-            <div role="alert" className="mt-2 flex gap-1.5 text-[12px] text-danger">
+            <div role="alert" className="mt-2 flex gap-1.5 text-sm text-danger">
               <AlertTriangle size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
               <span>{error}</span>
             </div>
@@ -50,7 +50,7 @@ export function WindowsLocalControl() {
               type="button"
               onClick={() => void start()}
               disabled={pending}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-base font-medium text-white hover:brightness-110 disabled:opacity-50"
             >
               {pending && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
               {t(pending ? "computer.windows.starting" : "computer.windows.start")}

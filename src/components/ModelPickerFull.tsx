@@ -43,10 +43,10 @@ export function ModelRow({ option, current, defaultId, botModel = false, onPick 
       className={MENU_ROW}
     >
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
-      {botModel && <span data-bot-model className="shrink-0 text-[12px] leading-4 text-ink-tertiary">{t("model.botModelTag")}</span>}
+      {botModel && <span data-bot-model className="shrink-0 text-sm text-ink-tertiary">{t("model.botModelTag")}</span>}
       {meta && <span className={MENU_META}>{meta}</span>}
       {option.loaded && (
-        <span className="flex shrink-0 items-center gap-1 text-[12px] leading-4 text-ink-tertiary">
+        <span className="flex shrink-0 items-center gap-1 text-sm text-ink-tertiary">
           <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
           {t("model.loadedNow")}
         </span>
@@ -64,11 +64,11 @@ export function FollowBotModelRow({ name, model, follows, onPick }: { name: stri
       data-menu-row
       aria-pressed={follows}
       onClick={onPick}
-      className="flex h-9 w-full shrink-0 items-center justify-between gap-2 border-b-[0.5px] border-ink/10 px-3.5 text-left text-[13px] leading-[18px] text-ink hover:bg-ink/[0.06] focus:bg-ink/[0.06]"
+      className="flex h-9 w-full shrink-0 items-center justify-between gap-2 border-b-[0.5px] border-line px-3.5 text-left text-base text-ink hover:bg-fill focus:bg-fill"
     >
       <span className="flex min-w-0 items-baseline gap-2">
         <span className="shrink-0 font-medium">{t("model.useBotModel", { name })}</span>
-        <span className="truncate text-[12px] leading-4 text-ink-tertiary">{model}</span>
+        <span className="truncate text-sm text-ink-tertiary">{model}</span>
       </span>
       {follows && <Check size={14} className="shrink-0 text-accent" aria-hidden="true" />}
     </button>
@@ -77,7 +77,7 @@ export function FollowBotModelRow({ name, model, follows, onPick }: { name: stri
 
 export function ModelSearch({ value, onChange, local }: { value: string; onChange: (value: string) => void; local: boolean }) {
   return (
-    <div className="group/search flex h-9 shrink-0 items-center gap-2 border-b-[0.5px] border-ink/10 px-3.5">
+    <div className="group/search flex h-9 shrink-0 items-center gap-2 border-b-[0.5px] border-line px-3.5">
       <Search size={16} strokeWidth={MENU_STROKE} className="shrink-0 text-ink-tertiary group-focus-within/search:text-ink-secondary" aria-hidden="true" />
       <input
         data-menu-search
@@ -85,7 +85,7 @@ export function ModelSearch({ value, onChange, local }: { value: string; onChang
         onChange={(event) => onChange(event.target.value)}
         placeholder={t("model.search")}
         aria-label={local ? t("model.searchLocal") : t("model.search")}
-        className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] text-ink outline-none placeholder:text-ink-tertiary"
+        className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-tertiary"
       />
     </div>
   );
@@ -123,7 +123,7 @@ export function railProviders(instances: InstanceInfo[], selectedInstance: Insta
   return { subscription: subscription.map(entry), api: api.map(entry), custom: custom.map(entry) };
 }
 
-const RAIL_LABEL = "pb-0.5 text-center text-[11px] leading-[14px] text-ink-tertiary";
+const RAIL_LABEL = "pb-0.5 text-center text-xs text-ink-tertiary";
 
 export function ModelEngineRail({ instances, selectedInstance, claudeInstance, openaiInstance, onSelect, onAddApiKeys }: {
   instances: InstanceInfo[];
@@ -145,8 +145,8 @@ export function ModelEngineRail({ instances, selectedInstance, claudeInstance, o
         aria-pressed={selected}
         title={`${label} · ${engineStatus(target)}`}
         className={cn(
-          "group relative flex size-9 shrink-0 items-center justify-center rounded-[8px]",
-          selected ? "bg-ink/[0.08]" : "hover:bg-ink/[0.06]",
+          "group relative flex size-9 shrink-0 items-center justify-center rounded-lg",
+          selected ? "bg-fill" : "hover:bg-fill",
         )}
       >
         <InstanceProviderMark instance={target} size={18} subtle={!selected} />
@@ -160,7 +160,7 @@ export function ModelEngineRail({ instances, selectedInstance, claudeInstance, o
     );
   };
   return (
-    <div className="flex w-14 shrink-0 flex-col gap-1 overflow-y-auto border-r-[0.5px] border-ink/10 p-2">
+    <div className="flex w-14 shrink-0 flex-col gap-1 overflow-y-auto border-r-[0.5px] border-line p-2">
       {subscription.length > 0 && <div className={cn(RAIL_LABEL, "pt-0.5")}>{t("model.rail.cloud")}</div>}
       {subscription.map(railButton)}
       {(api.length > 0 || onAddApiKeys) && <div className={cn(RAIL_LABEL, subscription.length > 0 ? "pt-2" : "pt-0.5")}>{t("model.rail.apiKeys")}</div>}
@@ -172,7 +172,7 @@ export function ModelEngineRail({ instances, selectedInstance, claudeInstance, o
           onClick={onAddApiKeys}
           aria-label={apiKeysLabel(instances)}
           title={apiKeysLabel(instances)}
-          className="flex size-9 shrink-0 items-center justify-center rounded-[8px] border border-dashed border-ink/20 text-ink-tertiary hover:bg-ink/[0.06] hover:text-ink"
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-ink/20 text-ink-tertiary hover:bg-fill hover:text-ink"
         >
           <Plus size={16} strokeWidth={MENU_STROKE} aria-hidden="true" />
         </button>
@@ -189,7 +189,7 @@ export function ClaudeAccountSelect({ accounts, selectedId, onSelect }: {
   onSelect: (instance: InstanceInfo) => void;
 }) {
   return (
-    <label className="mt-2 flex min-w-0 items-center gap-2 text-[12px] leading-4 text-ink-secondary">
+    <label className="mt-2 flex min-w-0 items-center gap-2 text-sm text-ink-secondary">
       <span>{t("model.account")}:</span>
       <Select size="sm" variant="quiet" className="flex-1"
         aria-label={t("model.account")}

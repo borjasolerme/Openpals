@@ -16,7 +16,7 @@ export const SIMPLE_TOP_BUTTON = `${SIMPLE_TOP} ${ELEVATED_CONTROL} ${ELEVATED_H
 export const SIMPLE_TOP_TOGGLE = `${SIMPLE_TOP} ${ELEVATED_CONTROL} ${ELEVATED_TINT} ${SIMPLE_TOP_FOCUS}`;
 
 /** Search and New in the top corner of Simple's sidebar in a framed window: plain icons, each its own button. */
-export const SIMPLE_CORNER_BUTTON = `flex size-[26px] shrink-0 items-center justify-center rounded-lg text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink aria-expanded:bg-ink/[0.06] aria-expanded:text-ink ${SIMPLE_TOP_FOCUS}`;
+export const SIMPLE_CORNER_BUTTON = `flex size-6.5 shrink-0 items-center justify-center rounded-lg text-ink-secondary transition-colors hover:bg-fill hover:text-ink aria-expanded:bg-fill aria-expanded:text-ink ${SIMPLE_TOP_FOCUS}`;
 
 /** The round control at either end of the phone bot list's top row. */
 export const PHONE_TOP_BUTTON = "flex size-10 shrink-0 items-center justify-center rounded-full border border-hairline bg-card text-ink hover:bg-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
@@ -43,7 +43,7 @@ export function SidebarSearchToggle({ open, onToggle, corner = false, ref }: { o
 export function SidebarSearchPill({ query, onQuery, onClose }: { query: string; onQuery: (query: string) => void; onClose: () => void }) {
   return (
     <div data-sidebar-search-pill className="px-3 pb-2 pt-0.5">
-      <div className={cn("flex h-[34px] items-center gap-2 rounded-full pl-3 pr-1.5 text-ink-secondary focus-within:ring-focus", ELEVATED_CONTROL)}>
+      <div className={cn("flex h-8.5 items-center gap-2 rounded-full pl-3 pr-1.5 text-ink-secondary focus-within:ring-focus", ELEVATED_CONTROL)}>
         <Search size={15} aria-hidden="true" className="shrink-0" />
         <input
           autoFocus
@@ -56,7 +56,7 @@ export function SidebarSearchPill({ query, onQuery, onClose }: { query: string; 
           }}
           placeholder={t("sidebar.searchAria")}
           aria-label={t("sidebar.searchAria")}
-          className="min-w-0 flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-ink-tertiary focus:outline-none"
         />
         <button
           type="button"

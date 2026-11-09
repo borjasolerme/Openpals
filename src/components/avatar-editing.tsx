@@ -79,8 +79,8 @@ export function AvatarFraming({
         <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={`${bot.name} avatar preview`} />
       </div>
       <div className="mb-1.5 mt-4 flex items-baseline justify-between">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">Zoom</span>
-        <span className="tabular-nums text-[12px] text-ink-secondary">{Math.round(zoom * 100)}%</span>
+        <span className="text-sm font-medium uppercase tracking-caps text-ink-secondary">Zoom</span>
+        <span className="tabular-nums text-sm text-ink-secondary">{Math.round(zoom * 100)}%</span>
       </div>
       <input
         type="range"
@@ -97,7 +97,7 @@ export function AvatarFraming({
         onChange={(event) => onPatch({ avatarZoom: clampAvatarZoom(Number(event.target.value)) })}
         className="w-full accent-accent"
       />
-      <div className="mt-1.5 flex items-center justify-between gap-3 text-[12px] text-ink-secondary">
+      <div className="mt-1.5 flex items-center justify-between gap-3 text-sm text-ink-secondary">
         <span>Drag the picture to reposition it. Scroll to zoom.</span>
         {framed && (
           <button

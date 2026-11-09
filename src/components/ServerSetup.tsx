@@ -8,9 +8,9 @@ import { connectServer, isServerPairingLink } from "@/lib/place";
 import { INSTALL_COMMAND, serverSetupAvailable, useServerSetup, type ServerSetupProgress, type ServerSetupRequest } from "@/lib/server-setup";
 
 const BOAT_SIGN_UP = "https://boat.dev";
-const FIELD = "h-9 w-full min-w-0 rounded-lg border border-hairline/60 bg-inset px-3 text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus/60 disabled:opacity-60";
+const FIELD = "h-9 w-full min-w-0 rounded-lg border border-hairline/60 bg-inset px-3 text-base text-ink placeholder:text-ink-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus/60 disabled:opacity-60";
 const TEXT_INPUT = { autoCapitalize: "none", autoCorrect: "off", autoComplete: "off", spellCheck: false } as const;
-const OPTION = "flex flex-col gap-2.5 rounded-lg bg-ink/[0.03] p-3";
+const OPTION = "flex flex-col gap-2.5 rounded-lg bg-fill-subtle p-3";
 
 /** What a refused pairing link tells the person; nothing when they declined the app's own confirmation. */
 function connectErrorText(error: string): string | null {
@@ -22,7 +22,7 @@ function connectErrorText(error: string): string | null {
 function ExternalButton({ href, children }: { href: string; children: ReactNode }) {
   return (
     <button type="button" onClick={() => void openExternalLink(href).catch(() => {})}
-      className="inline-flex w-fit items-center gap-1 text-[12px] text-accent hover:underline">
+      className="inline-flex w-fit items-center gap-1 text-sm text-accent hover:underline">
       {children}<ExternalLink size={11} aria-hidden="true" />
     </button>
   );
@@ -49,11 +49,11 @@ function SetupOption({ kind, title, badge, hint, label, placeholder, secret = fa
   return (
     <form data-server-setup={kind} onSubmit={submit} className={OPTION}>
       <div className="flex flex-col gap-0.5">
-        <span className="flex flex-wrap items-center gap-2 text-[13px] font-medium leading-5 text-ink">
+        <span className="flex flex-wrap items-center gap-2 text-base font-medium leading-5 text-ink">
           {title}
-          {badge && <span className="rounded-full bg-accent/12 px-2 py-px text-[11px] font-medium leading-4 text-accent">{badge}</span>}
+          {badge && <span className="rounded-full bg-accent/12 px-2 py-px text-xs font-medium leading-4 text-accent">{badge}</span>}
         </span>
-        <span className="text-[12px] leading-4 text-ink-secondary [text-wrap:pretty]">{hint}</span>
+        <span className="text-sm text-ink-secondary [text-wrap:pretty]">{hint}</span>
       </div>
       <label htmlFor={id} className="sr-only">{label}</label>
       <div className="flex gap-2 max-sm:flex-col">
@@ -77,9 +77,9 @@ function SetupProgress({ progress }: { progress: ServerSetupProgress }) {
     <div data-server-setup-progress={progress.step} role="status" className={cn(OPTION, "flex-row items-start gap-3")}>
       <Loader2 size={16} aria-hidden="true" className="mt-0.5 shrink-0 animate-spin text-ink-secondary" />
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-[13px] font-medium leading-5 text-ink">{t(STEP_TEXT[progress.step])}</span>
-        {progress.detail && <span className="truncate font-mono text-[12px] leading-4 text-ink-secondary">{progress.detail}</span>}
-        <span className="text-[12px] leading-4 text-ink-secondary [text-wrap:pretty]">{t("serverSetup.keepOpen")}</span>
+        <span className="text-base font-medium leading-5 text-ink">{t(STEP_TEXT[progress.step])}</span>
+        {progress.detail && <span className="truncate font-mono text-sm text-ink-secondary">{progress.detail}</span>}
+        <span className="text-sm text-ink-secondary [text-wrap:pretty]">{t("serverSetup.keepOpen")}</span>
       </div>
     </div>
   );
@@ -110,7 +110,7 @@ function PairingLinkForm() {
 
   return (
     <form data-pairing-form="" className="flex flex-col gap-1.5" onSubmit={(event) => void connect(event)}>
-      <label htmlFor={id} className="text-[12px] text-ink-secondary">{t("serverSetup.paste")}</label>
+      <label htmlFor={id} className="text-sm text-ink-secondary">{t("serverSetup.paste")}</label>
       <div className="flex gap-2 max-sm:flex-col">
         <input id={id} data-pairing-link="" value={link} onChange={(event) => { setLink(event.target.value); setError(null); }}
           placeholder="https://…/pair#code=…" disabled={busy} {...TEXT_INPUT} className={FIELD} />
@@ -119,7 +119,7 @@ function PairingLinkForm() {
           {t("serverSetup.connect")}
         </button>
       </div>
-      {error && <p role="alert" className="text-[12px] leading-4 text-danger">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     </form>
   );
 }
@@ -129,11 +129,11 @@ function InstallCommand() {
   const { state, copy } = useCopyFeedback(INSTALL_COMMAND);
   return (
     <div data-install-command="" className="flex flex-col gap-1.5">
-      <p className="text-[12px] leading-4 text-ink-secondary">{t("serverSetup.runCommand")}</p>
+      <p className="text-sm text-ink-secondary">{t("serverSetup.runCommand")}</p>
       <div className="flex h-9 items-center gap-1 rounded-lg border border-hairline/60 bg-inset pl-3 pr-1">
-        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[12px] leading-9 text-ink [scrollbar-width:none]">{INSTALL_COMMAND}</code>
+        <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm leading-9 text-ink [scrollbar-width:none]">{INSTALL_COMMAND}</code>
         <button type="button" onClick={copy} aria-label={t("engineSetup.copy")} title={t("engineSetup.copy")}
-          className="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink">
+          className="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors hover:bg-fill hover:text-ink">
           {state === "copied" ? <Check size={14} aria-hidden="true" className="text-success" /> : <Copy size={14} aria-hidden="true" />}
         </button>
       </div>
@@ -155,7 +155,7 @@ export function AddServerPanel() {
     <div data-server-setup-flow="" className="flex flex-col gap-3 text-left">
       <PairingLinkForm />
       <button type="button" data-pairing-help="" aria-expanded={open} aria-controls={helpId} onClick={() => setHelp(!open)}
-        className="flex w-fit items-center gap-1 rounded text-[13px] text-ink-secondary transition-colors hover:text-ink">
+        className="flex w-fit items-center gap-1 rounded text-base text-ink-secondary transition-colors hover:text-ink">
         {t("serverSetup.needLink")}
         <ChevronDown size={14} aria-hidden="true" className={cn("transition-transform duration-200", open && "rotate-180")} />
       </button>
@@ -163,7 +163,7 @@ export function AddServerPanel() {
         <div id={helpId} className="flex flex-col gap-2.5">
           {canSetUp && (
             <>
-              <p className="text-[12px] leading-4 text-ink-secondary">{t("serverSetup.intro")}</p>
+              <p className="text-sm text-ink-secondary">{t("serverSetup.intro")}</p>
               <SetupOption kind="boat" title={t("serverSetup.boat.title")} badge={t("serverSetup.recommended")}
                 hint={t("serverSetup.boat.hint")} label={t("serverSetup.boat.key")} secret
                 footer={<ExternalButton href={BOAT_SIGN_UP}>{t("serverSetup.boat.getKey")}</ExternalButton>}
@@ -174,9 +174,9 @@ export function AddServerPanel() {
             </>
           )}
           {failure && (
-            <div role="alert" className="flex flex-col gap-2 text-[12px] leading-4 text-danger">
+            <div role="alert" className="flex flex-col gap-2 text-sm text-danger">
               <p>{failure.text}</p>
-              {failure.output && <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-inset p-3 font-mono text-[12px] leading-4 text-ink-secondary">{failure.output}</pre>}
+              {failure.output && <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-inset p-3 font-mono text-sm text-ink-secondary">{failure.output}</pre>}
             </div>
           )}
           <InstallCommand />

@@ -202,7 +202,7 @@ function ConversationTaskPicker({
         title={switchTitle}
         aria-label={t("task.switch")}
         className={cn(
-          "flex max-w-[220px] items-center gap-1.5 rounded-full border border-hairline/40 px-2.5 py-1 text-[13px] text-ink-secondary hover:bg-raised hover:text-ink",
+          "flex max-w-55 items-center gap-1.5 rounded-full border border-hairline/40 px-2.5 py-1 text-base text-ink-secondary hover:bg-raised hover:text-ink",
           COMPACT_BUBBLE,
         )}
       >
@@ -221,9 +221,9 @@ function ConversationTaskPicker({
       </button>
 
       {motion.shown && (
-        <div className={cn("absolute right-0 top-full z-40 mt-1 w-[300px] overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}>
+        <div className={cn("absolute right-0 top-full z-40 mt-1 w-75 overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}>
           <div>
-            <div className="flex items-center gap-2 rounded-md bg-ink/[0.05] px-2 py-1.5 focus-within:ring-2 focus-within:ring-focus/60">
+            <div className="flex items-center gap-2 rounded-md bg-fill-subtle px-2 py-1.5 focus-within:ring-2 focus-within:ring-focus/60">
               <Search size={14} className="shrink-0 text-ink-secondary" />
               <input
                 autoFocus
@@ -249,13 +249,13 @@ function ConversationTaskPicker({
                 }}
                 placeholder={t("task.search")}
                 aria-label={t("task.search")}
-                className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none"
+                className="w-full bg-transparent text-base text-ink placeholder:text-ink-tertiary focus:outline-none"
               />
             </div>
           </div>
-          <div className="max-h-[320px] overflow-y-auto" role="group" aria-label={looking ? t("task.matching", { count: visible.length }) : t("task.list")}>
+          <div className="max-h-80 overflow-y-auto" role="group" aria-label={looking ? t("task.matching", { count: visible.length }) : t("task.list")}>
             {visible.length === 0 ? (
-              <div className="px-2 py-6 text-center text-[13px] text-ink-secondary">
+              <div className="px-2 py-6 text-center text-base text-ink-secondary">
                 {t("task.noMatch", { query: looking })}
               </div>
             ) : visible.map((task) => {
@@ -290,7 +290,7 @@ function ConversationTaskPicker({
                           commitRename(task.threadId, false);
                         }
                       }}
-                      className="min-w-0 flex-1 rounded bg-inset px-1.5 py-0.5 text-[13px] text-ink focus:outline-none"
+                      className="min-w-0 flex-1 rounded bg-inset px-1.5 py-0.5 text-base text-ink focus:outline-none"
                     />
                   ) : (
                     <button
@@ -313,8 +313,8 @@ function ConversationTaskPicker({
                       className="min-w-0 flex-1 text-left"
                       title={t("task.renameHint")}
                     >
-                      <div dir="auto" className="truncate text-[14px] leading-[18px] text-ink">{localizedTaskTitle(task.title)}</div>
-                      <div className="text-[11px] text-ink-secondary">
+                      <div dir="auto" className="truncate text-lg leading-4.5 text-ink">{localizedTaskTitle(task.title)}</div>
+                      <div className="text-xs text-ink-secondary">
                         {task.activity === "waiting-on-you" ? `${t("task.waiting")} · ` : task.waitingForTeammates ? `${t("task.waitingOnTeammate")} · ` : task.busy ? `${t("chat.activity.working")} · ` : task.unread ? `${t("task.unread")} · ` : ""}
                         <TaskUpdatedTime task={task} now={now} />
                         <TaskUsage usage={task.usage} />
@@ -366,7 +366,7 @@ function ConversationTaskPicker({
               closeMenu();
             }}
             disabled={busy}
-            className="flex min-h-[30px] w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[14px] text-ink hover:bg-menu-hover disabled:opacity-40"
+            className="flex min-h-7.5 w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-lg text-ink hover:bg-menu-hover disabled:opacity-40"
           >
             <SquarePen size={16} className="text-ink-secondary" /> {t("task.newShort")}
           </button>

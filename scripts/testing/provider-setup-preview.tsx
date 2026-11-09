@@ -9,7 +9,7 @@ function Preview() {
   const { state } = useStore();
   const kimi = state.instances.find((instance) => instance.instanceId === "kimi");
   return <main className="mx-auto max-w-lg p-4">
-    <p className="mb-3 text-sm text-ink-secondary">Isolated provider setup · no real account</p>
+    <p className="mb-3 text-lg text-ink-secondary">Isolated provider setup · no real account</p>
     {kimi && <EngineCard instance={kimi}>
       {engineReady(kimi) ? <p role="status">Ready to use</p> : <EngineSetup instance={kimi} />}
     </EngineCard>}

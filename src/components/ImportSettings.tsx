@@ -49,18 +49,18 @@ export function ImportRow({ icon, label, summary, hint, sources, checked, disabl
       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center text-ink-secondary">{icon}</span>
       <span className="flex min-w-0 flex-1 flex-col">
         {/* One run of text, so a narrow card wraps the summary under the label, marks included. */}
-        <span className="text-[13px] leading-5 text-ink-secondary">
-          <span className="mr-2 text-[14px] font-medium text-ink">{label}</span>
+        <span className="text-base leading-5 text-ink-secondary">
+          <span className="mr-2 text-lg font-medium text-ink">{label}</span>
           <SourceMarks sources={sources} />
           {summary}
         </span>
-        <span className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{hint}</span>
+        <span className="mt-0.5 text-sm leading-relaxed text-ink-secondary">{hint}</span>
       </span>
     </label>
   );
 }
 
-const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink disabled:opacity-40";
+const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-base font-medium text-accent-ink disabled:opacity-40";
 
 export interface AiAppsImportViewProps {
   local: boolean;
@@ -76,9 +76,9 @@ export interface AiAppsImportViewProps {
 export function AiAppsImportView({ local, detection, chosen, status, result, onChoose, onBring }: AiAppsImportViewProps) {
   const working = status === "working";
   let body;
-  if (!local) body = <p className="text-[13px] text-ink-secondary">{t("settings.import.appsLocalOnly")}</p>;
+  if (!local) body = <p className="text-base text-ink-secondary">{t("settings.import.appsLocalOnly")}</p>;
   else if (detection === undefined) {
-    body = <p className="flex items-center gap-2 text-[13px] text-ink-secondary"><Loader2 size={14} className="animate-spin" />{t("settings.import.appsLooking")}</p>;
+    body = <p className="flex items-center gap-2 text-base text-ink-secondary"><Loader2 size={14} className="animate-spin" />{t("settings.import.appsLooking")}</p>;
   } else if (result) {
     const { line, notes, done } = importOutcome(result);
     body = (
@@ -87,13 +87,13 @@ export function AiAppsImportView({ local, detection, chosen, status, result, onC
           {done ? <Check size={12} strokeWidth={3} /> : <Info size={12} strokeWidth={2.5} />}
         </span>
         <div className="min-w-0">
-          <p className="text-[14px] font-medium text-ink">{line}</p>
-          {notes.map((note) => <p key={note} className="mt-1 text-[12px] leading-relaxed text-ink-secondary">{note}</p>)}
+          <p className="text-lg font-medium text-ink">{line}</p>
+          {notes.map((note) => <p key={note} className="mt-1 text-sm leading-relaxed text-ink-secondary">{note}</p>)}
         </div>
       </div>
     );
   } else if (!detection || detectionCount(detection) === 0) {
-    body = <p className="text-[13px] text-ink-secondary">{detection === null ? t("onboarding.import.error") : t("settings.import.appsNothing")}</p>;
+    body = <p className="text-base text-ink-secondary">{detection === null ? t("onboarding.import.error") : t("settings.import.appsNothing")}</p>;
   } else {
     body = (
       <>
@@ -109,7 +109,7 @@ export function AiAppsImportView({ local, detection, chosen, status, result, onC
               disabled={working} onChange={(tools) => onChoose({ ...chosen, tools })} />
           )}
         </div>
-        {status === "failed" && <p role="alert" className="mt-3 text-[13px] text-danger">{t("onboarding.import.error")}</p>}
+        {status === "failed" && <p role="alert" className="mt-3 text-base text-danger">{t("onboarding.import.error")}</p>}
         <button onClick={onBring} disabled={working || !(chosen.skills || chosen.tools)} className={cn(buttonClass, "mt-3")}>
           {working && <Loader2 size={14} className="animate-spin" />}
           {working ? t("onboarding.import.bringing") : t("onboarding.import.bring")}
@@ -119,8 +119,8 @@ export function AiAppsImportView({ local, detection, chosen, status, result, onC
   }
   return (
     <section data-import-section="apps" className="rounded-xl bg-card p-4">
-      <div className="text-[15px] font-medium text-ink">{t("settings.import.appsTitle")}</div>
-      <div className="mt-0.5 text-[13px] leading-relaxed text-ink-secondary">{t("settings.import.appsSubtitle")}</div>
+      <div className="text-lg font-medium text-ink">{t("settings.import.appsTitle")}</div>
+      <div className="mt-0.5 text-base leading-relaxed text-ink-secondary">{t("settings.import.appsSubtitle")}</div>
       <div className="mt-4">{body}</div>
     </section>
   );
@@ -161,8 +161,8 @@ export function GrokImportSection() {
   const [open, setOpen] = useState(false);
   return (
     <section data-import-section="grok" className="rounded-xl bg-card p-4">
-      <div className="flex items-center gap-2 text-[15px] font-medium text-ink"><GrokBotMark size={16} />{t("settings.import.grokTitle")}</div>
-      <div className="mt-0.5 text-[13px] leading-relaxed text-ink-secondary">{t("settings.import.grokSubtitle")}</div>
+      <div className="flex items-center gap-2 text-lg font-medium text-ink"><GrokBotMark size={16} />{t("settings.import.grokTitle")}</div>
+      <div className="mt-0.5 text-base leading-relaxed text-ink-secondary">{t("settings.import.grokSubtitle")}</div>
       <button type="button" data-grok-move-open onClick={() => setOpen(true)} className={cn(buttonClass, "mt-3")}>{t("settings.import.grokTitle")}</button>
       {open && <GrokMoveDialog onClose={() => setOpen(false)} />}
     </section>

@@ -38,8 +38,8 @@ export function BotsPlaceSection() {
           <div className="flex items-center gap-3">
             {server ? <Server size={18} aria-hidden="true" className="shrink-0 text-ink-secondary" /> : <Laptop size={18} aria-hidden="true" className="shrink-0 text-ink-secondary" />}
             <div className="min-w-0 flex-1">
-              <div className="truncate text-[14px] text-ink">{server ? server.label : t("botsHome.local")}</div>
-              <div className="break-all text-[12px] text-ink-secondary">{server ? server.url : t("botsHome.localHint")}</div>
+              <div className="truncate text-lg text-ink">{server ? server.label : t("botsHome.local")}</div>
+              <div className="break-all text-sm text-ink-secondary">{server ? server.url : t("botsHome.localHint")}</div>
             </div>
             {server ? (
               <button type="button" disabled={busy} onClick={() => void disconnect()} className="ui-button shrink-0">
@@ -50,12 +50,12 @@ export function BotsPlaceSection() {
               <button type="button" onClick={() => setOpened(true)} className="ui-button shrink-0">{t("botsHome.connect")}</button>
             )}
           </div>
-          {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
+          {error && <p role="alert" className="text-base text-danger">{error}</p>}
           {!server && setup && (
             <>
               <AddServerPanel />
               {!progress && (
-                <button type="button" onClick={() => setOpened(false)} className="w-fit text-[13px] text-ink-secondary transition-colors hover:text-ink">
+                <button type="button" onClick={() => setOpened(false)} className="w-fit text-base text-ink-secondary transition-colors hover:text-ink">
                   {t("common.cancel")}
                 </button>
               )}

@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 const src = join(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(join(src, "styles.css"), "utf8");
 
-const theme = css.match(/@theme\s*\{([^}]*)\}/)?.[1] ?? "";
+const theme = [...css.matchAll(/@theme(?:\s+inline)?\s*\{([^}]*)\}/g)].map(([, body]) => body).join("\n");
 const defined = new Set([...theme.matchAll(/--color-([\w-]+)\s*:/g)].map(([, name]) => name));
 
 // Only names that read like the app's own tokens, so Tailwind's built-in palette never trips it.

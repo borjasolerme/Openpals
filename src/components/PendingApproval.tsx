@@ -175,13 +175,13 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
       <div className="flex min-w-0 items-center gap-2" aria-live="polite">
         <div className="min-w-0 flex-1">
           {asker ? <AskHeader asker={asker} line={line} /> : (
-            <div className="flex items-center gap-1.5 text-[13px] leading-[18px] text-ink-secondary">
+            <div className="flex items-center gap-1.5 text-base text-ink-secondary">
               <ShieldCheck size={15} className="shrink-0" aria-hidden="true" /><span className="min-w-0 truncate">{line}</span>
             </div>
           )}
         </div>
         {count > 1 && (
-          <span className="shrink-0 rounded-full bg-ink/[0.06] px-2 text-[12px] leading-5 tabular-nums text-ink-secondary">
+          <span className="shrink-0 rounded-full bg-fill px-2 text-sm leading-5 tabular-nums text-ink-secondary">
             {t("approval.position", { index: index + 1, count })}
           </span>
         )}
@@ -199,15 +199,15 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
           </button>
         )}
       </div>
-      {summary && <p dir="auto" className="mt-1.5 break-words text-[15px] font-medium leading-[22px] text-ink">{summary}</p>}
+      {summary && <p dir="auto" className="mt-1.5 break-words text-lg font-medium text-ink">{summary}</p>}
       {inline && <AskDetail text={inline} mono label={t("approval.aria.reviewDetails")} />}
       {heldNote && (outbound ? (
-        <p className="mt-2 flex items-center gap-1.5 text-[13px] leading-[18px] text-warning">
+        <p className="mt-2 flex items-center gap-1.5 text-base text-warning">
           <Send size={13} aria-hidden="true" className="shrink-0" />
           <span title={heldNote}>{t("approval.compact.maySend")}</span>
         </p>
       ) : (
-        <p className="mt-2 flex items-start gap-1.5 text-[13px] leading-[18px] text-warning">
+        <p className="mt-2 flex items-start gap-1.5 text-base text-warning">
           <TriangleAlert size={13} aria-hidden="true" className="mt-0.5 shrink-0" />
           <span>{heldNote}</span>
         </p>
@@ -216,7 +216,7 @@ export const PendingApprovalPanel = memo(function PendingApprovalPanel({
       <div id={detailsId} hidden={!open} className="mt-3 space-y-2">
         {hidden && (
           <pre tabIndex={0} aria-label={t("approval.aria.reviewDetails")}
-            className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-ink/[0.045] px-3 py-2 font-mono text-[12px] leading-[18px] text-ink-secondary">
+            className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-fill-subtle px-3 py-2 font-mono text-sm leading-4.5 text-ink-secondary">
             {hidden}
           </pre>
         )}

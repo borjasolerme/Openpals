@@ -23,7 +23,7 @@ describe("ConnectorCard ask card", () => {
     const html = view({});
     expect(html).toContain('data-ask-card="pending"');
     expect(html).toContain('data-tour="connector"');
-    expect(html).toMatch(/font-medium leading-\[22px\] text-ink"><bdi dir="auto">/);
+    expect(html).toMatch(/font-medium text-ink"><bdi dir="auto">/);
     expect(html).not.toContain("text-accent-text\"><bdi");
     expect(html).toContain(t("connectors.card.connectSecurely"));
     expect(html).toContain(`aria-label="${t("connectors.card.notNow")}"`);

@@ -11,7 +11,7 @@ import { AppHeader, AppInfo, AppOpenButton, AppPlaceholder, AppStrip, APP_SURFAC
 import { AppFrame, type AppFrameHandle, type AppFrameProblem } from "./AppFrame";
 import { PAGE_HEIGHT, PageFullScreen, PageNotes, PageToolbar, usePagePoint, usePageVersion } from "./PageTools";
 
-const WIDTH = "max-w-[760px]";
+const WIDTH = "max-w-190";
 const DOC_REUSE_MS = 60_000;
 
 const heights = new Map<string, number>();
@@ -56,7 +56,7 @@ export function AppMessage({ botId, botName, threadId, message, pool }: {
   const payload = message.app;
   if (!isAppPayload(payload) || !threadId) {
     return message.text
-      ? <div className="chat-text w-fit max-w-[min(42rem,78%)] rounded-2xl bg-card px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap text-ink">{message.text}</div>
+      ? <div className="chat-text w-fit max-w-[min(42rem,78%)] rounded-2xl bg-card px-4 py-2.5 text-lg leading-relaxed whitespace-pre-wrap text-ink">{message.text}</div>
       : null;
   }
   return <AppRow botId={botId} botName={botName} threadId={threadId} message={message} payload={payload} pool={pool} />;
@@ -194,13 +194,13 @@ function AppRow({ botId, botName, threadId, message, payload, pool }: {
   const infoId = `${uid}-info`;
 
   const body = collapsed ? null : fullScreen && current ? (
-    <div data-app-box className={cn("relative w-full", bordered && "border-t border-ink/[0.08]")} style={{ height }}>
+    <div data-app-box className={cn("relative w-full", bordered && "border-t border-line")} style={{ height }}>
       <AppPlaceholder height={height} open={() => setFullScreen(false)} label={t("chat.preview.exitFullScreen")} />
     </div>
   ) : noPage ? (
-    message.text ? <div dir="auto" className={cn("line-clamp-6 whitespace-pre-wrap text-[13px] leading-[18px] text-ink-secondary", bordered ? "px-4 pb-3" : "pb-2")}>{message.text}</div> : null
+    message.text ? <div dir="auto" className={cn("line-clamp-6 whitespace-pre-wrap text-base text-ink-secondary", bordered ? "px-4 pb-3" : "pb-2")}>{message.text}</div> : null
   ) : (
-    <div data-app-box className={cn("relative w-full", bordered && "border-t border-ink/[0.08]", point.pointing && "ring-2 ring-inset ring-accent/60")} style={{ height }}>
+    <div data-app-box className={cn("relative w-full", bordered && "border-t border-line", point.pointing && "ring-2 ring-inset ring-accent/60")} style={{ height }}>
       {current ? (
         <AppFrame
           key={loaded!.key}

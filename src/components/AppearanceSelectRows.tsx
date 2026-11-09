@@ -10,7 +10,7 @@ export function FontRow() {
   const [current, setCurrent] = useState<FontId>(readFont);
   return (
     <SettingRow title={t("settings.font.title")} subtitle={t("settings.font.subtitle")}>
-      <Select size="sm" className="w-full max-w-[240px]"
+      <Select size="sm" className="w-full max-w-60"
         value={current}
         aria-label={t("settings.font.aria")}
         onChange={(event) => {
@@ -32,7 +32,7 @@ export function ChatWidthRow() {
   const [current, setCurrent] = useState<ChatWidthId>(readChatWidth);
   return (
     <SettingRow title={t("settings.chatWidth.title")} subtitle={t("settings.chatWidth.subtitle")}>
-      <Select size="sm" className="w-full max-w-[240px]"
+      <Select size="sm" className="w-full max-w-60"
         value={current}
         aria-label={t("settings.chatWidth.aria")}
         onChange={(event) => {
@@ -54,7 +54,7 @@ export function SidebarToolsLayoutRow() {
   const layout = useSidebarToolsLayout();
   return (
     <SettingRow title={t("sidebar.toolsLayout.title")} subtitle={t("sidebar.toolsLayout.subtitle")}>
-      <Select size="sm" className="w-full max-w-[240px]"
+      <Select size="sm" className="w-full max-w-60"
         value={layout}
         aria-label={t("sidebar.toolsLayout.chooseAria")}
         onChange={(event) => setSidebarToolsLayout(parseSidebarToolsLayout(event.target.value))}

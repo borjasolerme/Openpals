@@ -463,7 +463,7 @@ describe("the hero", () => {
   });
 
   it("sets the name at 17px, and shows the title line only once one is set", () => {
-    expect(find(hero(makeBot()), "data-panel-rename").props.className).toContain("text-[17px]");
+    expect(find(hero(makeBot()), "data-panel-rename").props.className).toContain("text-xl");
     const untitled = hero(makeBot({ title: "" }));
     expect(has(untitled, "data-panel-label")).toBe(false);
     expect(untitled.html).not.toContain("Add a label");
@@ -648,7 +648,7 @@ describe("the Bot settings page", () => {
     expect(order.every((index) => index > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(switches(rendered.html)).toBe(0);
-    expect(rendered.html.match(/pl-\[38px\]/g)).toHaveLength(4);
+    expect(rendered.html.match(/pl-9.5/g)).toHaveLength(4);
   });
 
   it("shows the first line of the instructions, or how to start, and edits them in place with Done", () => {

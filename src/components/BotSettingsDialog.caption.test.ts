@@ -31,7 +31,7 @@ describe("bot settings caption inset", () => {
     vi.stubGlobal("window", { ogb: { platform } });
     const classes = header();
     expect(classes).toContain("py-3");
-    expect(classes).not.toContain("pt-[28px]");
+    expect(classes).not.toContain("pt-7");
   });
 
   it.each([["darwin", true], ["win32", true], ["linux", false]] as const)(

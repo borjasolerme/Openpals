@@ -24,14 +24,14 @@ describe("the Connect apps faces", () => {
 
   it("draws a 36px pill with a 14px medium label and three overlapping 16px logos whose outer two fan out on hover", () => {
     const html = renderToStaticMarkup(createElement(SidebarConnectApps));
-    expect(html).toMatch(/class="group\/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1\.5 rounded-full pl-4 pr-3 text-\[14px\] font-medium leading-5 text-ink /);
+    expect(html).toMatch(/class="group\/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1\.5 rounded-full pl-4 pr-3 text-lg font-medium leading-5 text-ink /);
     const faces = [...html.matchAll(/data-app-face="[^"]+" class="([^"]*)"/g)].map(([, classes]) => classes!);
     expect(faces).toHaveLength(3);
-    for (const face of faces) expect(face).toContain("size-[18px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-px");
+    for (const face of faces) expect(face).toContain("size-4.5 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-px");
     expect(faces[0]).toContain("motion-safe:group-hover/apps:-rotate-[8deg]");
     expect(faces[1]).toContain("-ms-1.5");
     expect(faces[1]).not.toContain("rotate");
-    expect(faces[2]).toContain("motion-safe:group-hover/apps:translate-x-[3px] motion-safe:group-hover/apps:rotate-[8deg]");
+    expect(faces[2]).toContain("motion-safe:group-hover/apps:translate-x-0.75 motion-safe:group-hover/apps:rotate-[8deg]");
   });
 
   it("is a round 36px puzzle button on the collapsed rail, named for screen readers", () => {

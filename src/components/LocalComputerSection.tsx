@@ -375,7 +375,7 @@ export function CloudComputersCard({
       subtitle={t("vm.cloud.subtitle")}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[12px] text-ink-secondary">
+        <div className="text-sm text-ink-secondary">
           {configured === true
             ? t("vm.cloud.includesOrphans")
             : configured === false
@@ -387,13 +387,13 @@ export function CloudComputersCard({
           onClick={onRefresh}
           disabled={loading || pending !== null}
           aria-label={t("vm.cloud.refreshAria")}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-sm text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
         >
           <RefreshCw size={12} className={cn(loading && "animate-spin")} /> {t("vm.refresh")}
         </button>
       </div>
 
-      {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>}
 
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {loading
@@ -412,19 +412,19 @@ export function CloudComputersCard({
         className="mt-3 overflow-hidden rounded-xl border border-hairline/40"
       >
         {loading && instances.length === 0 ? (
-          <div className="flex items-center gap-2 px-3 py-4 text-[13px] text-ink-secondary">
+          <div className="flex items-center gap-2 px-3 py-4 text-base text-ink-secondary">
             <Loader2 size={13} className="animate-spin" /> {t("vm.cloud.checkingList")}
           </div>
         ) : unavailableReason ? (
-          <div className="flex items-center gap-2 px-3 py-4 text-[13px] text-ink-secondary">
+          <div className="flex items-center gap-2 px-3 py-4 text-base text-ink-secondary">
             <AlertTriangle size={14} className="shrink-0 text-warning" /> {unavailableReason}
           </div>
         ) : configured === false ? (
-          <div className="flex items-center gap-2 px-3 py-4 text-[13px] text-ink-secondary">
+          <div className="flex items-center gap-2 px-3 py-4 text-base text-ink-secondary">
             <Cloud size={14} className="shrink-0" /> {t("vm.cloud.notConnected")}
           </div>
         ) : instances.length === 0 ? (
-          <div className="px-3 py-4 text-[13px] text-ink-secondary">{t("vm.cloud.noneFound")}</div>
+          <div className="px-3 py-4 text-base text-ink-secondary">{t("vm.cloud.noneFound")}</div>
         ) : instances.map((instance, index) => {
           const kind = cloudComputerInventoryStateKind(instance);
           const state = computerStateLabel(kind);
@@ -441,12 +441,12 @@ export function CloudComputersCard({
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-[14px] font-medium text-ink">
+                  <span className="truncate text-lg font-medium text-ink">
                     {instance.orphaned ? t("vm.cloud.orphan") : instance.ownerName}
                   </span>
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-[11px]",
+                      "rounded-full px-2 py-0.5 text-xs",
                       instance.inUse || kind === "running"
                         ? "bg-success/15 text-success"
                         : kind === "sleeping" || kind === "going-to-sleep"
@@ -457,11 +457,11 @@ export function CloudComputersCard({
                     {state}
                   </span>
                 </div>
-                <div className="mt-1 break-all text-[12px] text-ink-secondary">
+                <div className="mt-1 break-all text-sm text-ink-secondary">
                   {instance.orphaned ? t("vm.owner.gone") : t("vm.owner.owned")} · {instance.name}
                 </div>
                 {instance.inUse && (
-                  <div className="mt-1 text-[12px] text-ink-secondary">{t("vm.cloud.stopFirst")}</div>
+                  <div className="mt-1 text-sm text-ink-secondary">{t("vm.cloud.stopFirst")}</div>
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -471,7 +471,7 @@ export function CloudComputersCard({
                   disabled={loading || instance.inUse || pending !== null || !canSleep}
                   aria-busy={isPending && pending?.action === "sleep" ? true : undefined}
                   title={canSleep ? t("vm.cloud.sleepTitle") : t("vm.cloud.sleepBlocked", { state: state.toLowerCase() })}
-                  className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-control hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-sm text-ink-secondary hover:bg-control hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isPending && pending?.action === "sleep" ? <Loader2 size={12} className="animate-spin" /> : <Moon size={12} />}
                   {t("vm.cloud.sleep")}
@@ -482,7 +482,7 @@ export function CloudComputersCard({
                   disabled={loading || instance.inUse || pending !== null || isRemoving}
                   aria-busy={isPending && pending?.action === "delete" ? true : undefined}
                   title={t("vm.cloud.deleteTitle")}
-                  className="flex items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-[12px] font-medium text-danger hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-sm font-medium text-danger hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isPending && pending?.action === "delete" ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                   {t("common.delete")}
@@ -525,7 +525,7 @@ export function LocalVmInventoryCard({
       })}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[12px] text-ink-secondary">
+        <div className="text-sm text-ink-secondary">
           {t("vm.perBot.deleteHint")}
         </div>
         <button
@@ -533,13 +533,13 @@ export function LocalVmInventoryCard({
           onClick={onRefresh}
           disabled={loading || deletingBotId !== null}
           aria-label={t("vm.perBot.refreshAria")}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-[12px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1.5 text-sm text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
         >
           <RefreshCw size={12} className={cn(loading && "animate-spin")} /> {t("vm.refresh")}
         </button>
       </div>
 
-      {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+      {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>}
 
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {loading
@@ -556,15 +556,15 @@ export function LocalVmInventoryCard({
         className="mt-3 overflow-hidden rounded-xl border border-hairline/40"
       >
         {loading && instances.length === 0 ? (
-          <div className="flex items-center gap-2 px-3 py-4 text-[13px] text-ink-secondary">
+          <div className="flex items-center gap-2 px-3 py-4 text-base text-ink-secondary">
             <Loader2 size={13} className="animate-spin" /> {t("vm.perBot.checkingList")}
           </div>
         ) : unavailableReason ? (
-          <div className="flex items-center gap-2 px-3 py-4 text-[13px] text-ink-secondary">
+          <div className="flex items-center gap-2 px-3 py-4 text-base text-ink-secondary">
             <AlertTriangle size={14} className="shrink-0 text-warning" /> {unavailableReason}
           </div>
         ) : instances.length === 0 ? (
-          <div className="px-3 py-4 text-[13px] text-ink-secondary">{t("vm.perBot.none")}</div>
+          <div className="px-3 py-4 text-base text-ink-secondary">{t("vm.perBot.none")}</div>
         ) : instances.map((instance, index) => {
           const state = localVmInventoryState(instance);
           const deleting = deletingBotId === instance.botId;
@@ -579,10 +579,10 @@ export function LocalVmInventoryCard({
             >
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="truncate text-[14px] font-medium text-ink">{instance.name}</span>
+                  <span className="truncate text-lg font-medium text-ink">{instance.name}</span>
                   <span
                     className={cn(
-                      "rounded-full px-2 py-0.5 text-[11px]",
+                      "rounded-full px-2 py-0.5 text-xs",
                       !managed
                         ? "bg-warning/15 text-warning"
                         : instance.inUse || instance.ready
@@ -595,19 +595,19 @@ export function LocalVmInventoryCard({
                     {state}
                   </span>
                 </div>
-                <div className="mt-1 text-[12px] text-ink-secondary">
+                <div className="mt-1 text-sm text-ink-secondary">
                   {t("vm.perBot.destination", { destination: t(destinationLabelKeys[instance.destination]) })}
                 </div>
                 {!managed && (
-                  <div className="mt-1 text-[12px] text-warning">
+                  <div className="mt-1 text-sm text-warning">
                     {t("vm.perBot.unmanaged")}
                   </div>
                 )}
                 {managed && instance.problem && !instance.inUse && (
-                  <div className="mt-1 text-[12px] text-warning">{instance.problem}</div>
+                  <div className="mt-1 text-sm text-warning">{instance.problem}</div>
                 )}
                 {managed && instance.inUse && (
-                  <div className="mt-1 text-[12px] text-ink-secondary">{t("vm.perBot.stopFirst")}</div>
+                  <div className="mt-1 text-sm text-ink-secondary">{t("vm.perBot.stopFirst")}</div>
                 )}
               </div>
               {managed && <button
@@ -620,7 +620,7 @@ export function LocalVmInventoryCard({
                     ? t("vm.perBot.deleteBlocked")
                     : t("vm.perBot.deleteTitle", { name: instance.name })
                 }
-                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-[12px] font-medium text-danger hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-danger/10 px-2.5 py-1.5 text-sm font-medium text-danger hover:bg-danger/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                 {t("common.delete")}
@@ -638,14 +638,14 @@ function Step({ n, title, done, children }: { n: number; title: string; done: bo
     <div className="flex gap-3">
       <div
         className={cn(
-          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px]",
+          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-xs",
           done ? "bg-success/20 text-success" : "border border-hairline/50 text-ink-secondary",
         )}
       >
         {done ? <Check size={12} /> : n}
       </div>
       <div className="min-w-0 flex-1">
-        <div className={cn("text-[14px]", done ? "text-ink-secondary line-through" : "text-ink")}>{title}</div>
+        <div className={cn("text-lg", done ? "text-ink-secondary line-through" : "text-ink")}>{title}</div>
         {!done && children && <div className="mt-2 flex flex-col items-start gap-2 [&>*]:max-w-full">{children}</div>}
       </div>
     </div>
@@ -671,7 +671,7 @@ function ActionButton({
       aria-busy={pending === action}
       disabled={pending !== null}
       className={cn(
-        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium disabled:opacity-50",
+        "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-base font-medium disabled:opacity-50",
         danger ? "bg-danger/15 text-danger hover:bg-danger/20" : "bg-accent text-white hover:brightness-110",
       )}
     >
@@ -735,12 +735,12 @@ export function LocalVmIdleTimeoutSetting({
     <div className="mt-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <label htmlFor="local-vm-idle-timeout" className="text-[13px] text-ink">{t("vm.idle.label")}</label>
-          <div id="local-vm-idle-timeout-help" className="text-[12px] text-ink-secondary">{t("vm.idle.detail")}</div>
+          <label htmlFor="local-vm-idle-timeout" className="text-base text-ink">{t("vm.idle.label")}</label>
+          <div id="local-vm-idle-timeout-help" className="text-sm text-ink-secondary">{t("vm.idle.detail")}</div>
         </div>
         <div
           className={cn(
-            "flex w-[150px] shrink-0 items-center rounded-lg border bg-control",
+            "flex w-37.5 shrink-0 items-center rounded-lg border bg-control",
             error ? "border-danger/60" : "border-hairline/40 focus-within:border-focus",
           )}
         >
@@ -764,13 +764,13 @@ export function LocalVmIdleTimeoutSetting({
             onKeyDown={(event) => {
               if (event.key === "Enter") event.currentTarget.blur();
             }}
-            className="min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-[13px] tabular-nums text-ink focus:outline-none disabled:opacity-50"
+            className="min-w-0 flex-1 bg-transparent px-2.5 py-1.5 text-base tabular-nums text-ink focus:outline-none disabled:opacity-50"
           />
-          <span className="pr-2.5 text-[13px] text-ink-secondary">{t("vm.idle.minutes")}</span>
+          <span className="pr-2.5 text-base text-ink-secondary">{t("vm.idle.minutes")}</span>
         </div>
       </div>
       {error ? (
-        <p id="local-vm-idle-timeout-error" role="alert" className="mt-1.5 text-[12px] text-danger">
+        <p id="local-vm-idle-timeout-error" role="alert" className="mt-1.5 text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -1240,7 +1240,7 @@ export function LocalComputerSection() {
           <span
             aria-live="polite"
             className={cn(
-              "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px]",
+              "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-base",
               headerReady ? "bg-success/15 text-success" : "bg-control text-ink-secondary",
             )}
           >
@@ -1264,7 +1264,7 @@ export function LocalComputerSection() {
               setInventoryRefreshKey((key) => key + 1);
             }}
             disabled={loading || pending !== null}
-            className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1 text-base text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"
           >
             <RefreshCw size={12} /> {t("vm.main.recheck")}
           </button>
@@ -1273,13 +1273,13 @@ export function LocalComputerSection() {
               href={status?.viewer_url ?? c?.view}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1 text-[13px] text-ink hover:bg-control"
+              className="flex items-center gap-1.5 rounded-lg border border-hairline/40 px-2.5 py-1 text-base text-ink hover:bg-control"
             >
               <ExternalLink size={12} /> {t("vm.main.watch")}
             </a>
           )}
         </div>
-        {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>}
       </Card>
 
       <Card
@@ -1294,7 +1294,7 @@ export function LocalComputerSection() {
               disabled={!status || policyPending}
               onClick={() => void savePolicy(mode, status?.max_instances ?? 2)}
               className={cn(
-                "flex-1 px-3 py-2 text-[13px] disabled:opacity-50",
+                "flex-1 px-3 py-2 text-base disabled:opacity-50",
                 index > 0 && "border-l border-hairline/40",
                 status?.mode === mode ? "bg-control text-ink" : "text-ink-secondary hover:text-ink",
               )}
@@ -1306,8 +1306,8 @@ export function LocalComputerSection() {
         {perBot && (
           <div className="mt-3 flex items-center justify-between gap-3">
             <div>
-              <div className="text-[13px] text-ink">{t("vm.isolation.max")}</div>
-              <div className="text-[12px] text-ink-secondary">{t("vm.isolation.maxDetail")}</div>
+              <div className="text-base text-ink">{t("vm.isolation.max")}</div>
+              <div className="text-sm text-ink-secondary">{t("vm.isolation.maxDetail")}</div>
             </div>
             <Select size="sm"
               aria-label={t("vm.isolation.maxAria")}
@@ -1324,19 +1324,19 @@ export function LocalComputerSection() {
           disabled={!status || policyPending}
           onSave={saveIdleTimeout}
         />
-        {policyPending && <div className="mt-2 flex items-center gap-1.5 text-[12px] text-ink-secondary"><Loader2 size={12} className="animate-spin" /> {t("vm.saving")}</div>}
+        {policyPending && <div className="mt-2 flex items-center gap-1.5 text-sm text-ink-secondary"><Loader2 size={12} className="animate-spin" /> {t("vm.saving")}</div>}
       </Card>
 
       <Card title={t("vm.setup.title")} subtitle={t("vm.setup.subtitle")}>
         <div className="flex flex-col gap-4">
           <Step n={1} title={t("vm.setup.step1")} done={Boolean(status?.runtime)}>
-            <div className="text-[13px] leading-relaxed text-ink-secondary">
+            <div className="text-base leading-relaxed text-ink-secondary">
               {t("vm.setup.step1Detail")}
             </div>
             {c?.install ? (
               <CommandLine command={c.install} />
             ) : (
-              <a href="https://podman.io/docs/installation" target="_blank" rel="noreferrer" className="text-[13px] text-accent hover:underline">
+              <a href="https://podman.io/docs/installation" target="_blank" rel="noreferrer" className="text-base text-accent hover:underline">
                 {t("vm.setup.podmanGuide")}
               </a>
             )}
@@ -1354,7 +1354,7 @@ export function LocalComputerSection() {
             {!status?.runtime ? null : c?.runtimeStart ? (
               <CommandLine command={c.runtimeStart} />
             ) : (
-              <div className="text-[13px] text-ink-secondary">{t("vm.setup.step2Detail")}</div>
+              <div className="text-base text-ink-secondary">{t("vm.setup.step2Detail")}</div>
             )}
           </Step>
 
@@ -1362,7 +1362,7 @@ export function LocalComputerSection() {
             {status?.daemonUp && (
               <ActionButton action="pull" pending={pending} onClick={() => void act("pull")}>{t("vm.setup.prepare")}</ActionButton>
             )}
-            {c?.pull && <details className="text-[12px] text-ink-secondary"><summary className="cursor-pointer">{t("vm.setup.showPull")}</summary><div className="mt-2"><CommandLine command={c.pull} /></div></details>}
+            {c?.pull && <details className="text-sm text-ink-secondary"><summary className="cursor-pointer">{t("vm.setup.showPull")}</summary><div className="mt-2"><CommandLine command={c.pull} /></div></details>}
           </Step>
 
           <Step
@@ -1377,14 +1377,14 @@ export function LocalComputerSection() {
             done={!perBot && ready}
           >
             {perBot ? (
-              <div className="text-[13px] leading-relaxed text-ink-secondary">
+              <div className="text-base leading-relaxed text-ink-secondary">
                 {perBotRuntimeUnsupported
                   ? t("vm.setup.applePort")
                   : t("vm.setup.perBotHint")}
               </div>
             ) : needsRecreate ? (
               <>
-                <div className="flex gap-2 text-[13px] text-warning">
+                <div className="flex gap-2 text-base text-warning">
                   <AlertTriangle size={15} className="mt-0.5 shrink-0" />
                   <span>{status?.problem}</span>
                 </div>
@@ -1393,23 +1393,23 @@ export function LocalComputerSection() {
                     <RotateCcw size={13} /> {t("vm.setup.recreate")}
                   </ActionButton>
                 ) : (
-                  <div className="text-[13px] text-ink-secondary">{t("vm.setup.prepareFirst")}</div>
+                  <div className="text-base text-ink-secondary">{t("vm.setup.prepareFirst")}</div>
                 )}
               </>
             ) : status?.container === "stopped" ? (
               <>
-                <p className="text-[13px] text-ink-secondary">{t(status.stop_reason === "idle" ? "vm.stopped.idle" : "vm.stopped.detail")}</p>
+                <p className="text-base text-ink-secondary">{t(status.stop_reason === "idle" ? "vm.stopped.idle" : "vm.stopped.detail")}</p>
                 <ActionButton action="start" pending={pending} onClick={() => void act("start")}>{t("vm.setup.start")}</ActionButton>
               </>
             ) : status?.container === "running" ? (
-              <div className="flex items-center gap-2 text-[13px] text-ink-secondary"><Loader2 size={13} className="animate-spin" /> {t("vm.setup.waiting")}</div>
+              <div className="flex items-center gap-2 text-base text-ink-secondary"><Loader2 size={13} className="animate-spin" /> {t("vm.setup.waiting")}</div>
             ) : status?.image ? (
               <>
                 <ActionButton action="run" pending={pending} onClick={() => void act("run")}>{t("vm.setup.start")}</ActionButton>
-                <p className="text-[13px] leading-relaxed text-ink-secondary">{t("vm.setup.idleHint")}</p>
+                <p className="text-base leading-relaxed text-ink-secondary">{t("vm.setup.idleHint")}</p>
               </>
             ) : null}
-            {c?.run && <details className="text-[12px] text-ink-secondary"><summary className="cursor-pointer">{t("vm.setup.showCommand")}</summary><div className="mt-2"><CommandLine command={c.run} /></div></details>}
+            {c?.run && <details className="text-sm text-ink-secondary"><summary className="cursor-pointer">{t("vm.setup.showCommand")}</summary><div className="mt-2"><CommandLine command={c.run} /></div></details>}
           </Step>
         </div>
       </Card>
@@ -1429,7 +1429,7 @@ export function LocalComputerSection() {
 
       {unavailable && (
         <Card>
-          <div className="flex gap-2 text-[13px] text-ink-secondary">
+          <div className="flex gap-2 text-base text-ink-secondary">
             <AlertTriangle size={15} className="mt-0.5 shrink-0 text-warning" />
             <span>{t("vm.inspectFailed")}</span>
           </div>
@@ -1456,7 +1456,7 @@ export function LocalComputerSection() {
             </ActionButton>
           </div>
         )}
-        <div className="mt-3 break-all text-[11px] text-ink-secondary">
+        <div className="mt-3 break-all text-xs text-ink-secondary">
           {t("vm.safety.workspace", {
             path: status?.workspace_path ?? t("vm.safety.notCreated"),
             driver: status?.driver_version ?? "0.37.0",

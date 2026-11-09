@@ -6,17 +6,17 @@ import { cn } from "@/lib/cn";
 export const ROW_LIST = "flex flex-col divide-y divide-hairline/40 overflow-hidden rounded-xl border border-hairline/50";
 export const ROW = "flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left";
 /** A small text button under a list, for a way that is not the main one. */
-export const QUIET = "w-fit rounded text-[13px] text-ink-secondary transition-colors hover:text-ink";
+export const QUIET = "w-fit rounded text-base text-ink-secondary transition-colors hover:text-ink";
 
 export function RowIcon({ children }: { children: ReactNode }) {
-  return <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-ink/[0.05] text-ink-secondary">{children}</span>;
+  return <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-fill-subtle text-ink-secondary">{children}</span>;
 }
 
 export function RowText({ title, hint }: { title: ReactNode; hint?: ReactNode }) {
   return (
     <span className="flex min-w-0 flex-1 flex-col">
-      <span className="truncate text-[14px] font-medium leading-5 text-ink">{title}</span>
-      {hint && <span className="truncate text-[12px] leading-4 text-ink-secondary">{hint}</span>}
+      <span className="truncate text-lg font-medium leading-5 text-ink">{title}</span>
+      {hint && <span className="truncate text-sm text-ink-secondary">{hint}</span>}
     </span>
   );
 }
@@ -46,7 +46,7 @@ export type StatusTone = "ok" | "busy" | "bad";
 /** Where a row stands, on its right: Connected, Checking…, No answer. */
 export function RowStatus({ tone, children }: { tone: StatusTone; children: ReactNode }) {
   return (
-    <span role="status" data-row-status={tone} className={cn("flex shrink-0 items-center gap-1.5 text-[13px] leading-5",
+    <span role="status" data-row-status={tone} className={cn("flex shrink-0 items-center gap-1.5 text-base leading-5",
       tone === "bad" ? "text-danger" : "text-ink-secondary")}>
       {tone === "ok" && <Check size={14} strokeWidth={2.5} aria-hidden="true" className="text-success" />}
       {tone === "busy" && <LoaderCircle size={14} aria-hidden="true" className="animate-spin" />}
@@ -75,8 +75,8 @@ export function Section({ title, line, children }: { title: string; line?: strin
   return (
     <section className="flex flex-col gap-2.5">
       <div className="flex flex-col gap-0.5">
-        <h2 className="text-[13px] font-medium leading-5 text-ink">{title}</h2>
-        {line && <p className="text-[12px] leading-4 text-ink-secondary [text-wrap:pretty]">{line}</p>}
+        <h2 className="text-base font-medium leading-5 text-ink">{title}</h2>
+        {line && <p className="text-sm text-ink-secondary [text-wrap:pretty]">{line}</p>}
       </div>
       {children}
     </section>

@@ -107,18 +107,18 @@ export function SetupOffer({ botId, threadId, message, transcript }: { botId: st
 
   return (
     <section data-setup-card={message.id} aria-label={title} aria-busy={busy || pending || updating || undefined} onKeyDown={quiet || pending ? undefined : byLetter}
-      className="w-full max-w-[min(var(--chat-bubble-max),var(--chat-bubble-pct))] rounded-[24px] bg-composer px-2 pb-2 pt-3 ring-[0.5px] ring-ink/10">
+      className="w-full max-w-[min(var(--chat-bubble-max),var(--chat-bubble-pct))] rounded-4xl bg-composer px-2 pb-2 pt-3 ring-[0.5px] ring-line">
       <div className="flex items-start justify-between gap-2 ps-3 pe-1">
-        <h3 dir="auto" className="py-px text-[16px] font-semibold leading-[22px] text-ink-secondary">{title}</h3>
+        <h3 dir="auto" className="py-px text-xl font-semibold text-ink-secondary">{title}</h3>
         {!settled && <button type="button" onClick={close} aria-label={t("common.close")} title={t("common.close")}
-          className="-mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-ink/[0.07] hover:text-ink-secondary">
+          className="-mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-fill hover:text-ink-secondary">
           <X size={15} aria-hidden="true" />
         </button>}
       </div>
       {pending ? <div data-setup-waiting="" className="mt-1.5 flex flex-col">
         {PLACEHOLDER_WIDTHS.map((width) => (
           <div key={width} className="flex min-h-10 items-center px-3 py-2">
-            <span className="h-4 rounded-md bg-ink/[0.06] motion-safe:animate-pulse" style={{ width }} />
+            <span className="h-4 rounded-md bg-fill motion-safe:animate-pulse" style={{ width }} />
           </div>
         ))}
       </div> : <div key={choices.join("\n")} data-setup-updating={updating ? "" : undefined}
@@ -126,22 +126,22 @@ export function SetupOffer({ botId, threadId, message, transcript }: { botId: st
         {options.map((option, index) => (
           <button key={option.label} type="button" data-ask-choice="" disabled={quiet || busy} onClick={option.pick}
             className={cn("group flex min-h-10 items-center gap-3 rounded-xl px-3 py-2 text-start",
-              quiet ? "cursor-default" : "hover:bg-ink/[0.05] disabled:cursor-default")}>
-            <kbd className={cn("flex size-6 shrink-0 items-center justify-center rounded-md font-sans text-[12px] font-medium",
-              quiet ? "bg-ink/[0.04] text-ink-tertiary" : "bg-ink/[0.07] text-ink-secondary group-hover:bg-ink/[0.1]")}>
+              quiet ? "cursor-default" : "hover:bg-fill-subtle disabled:cursor-default")}>
+            <kbd className={cn("flex size-6 shrink-0 items-center justify-center rounded-md font-sans text-sm font-medium",
+              quiet ? "bg-fill-subtle text-ink-tertiary" : "bg-fill text-ink-secondary group-hover:bg-fill")}>
               {LETTERS[index]}
             </kbd>
-            <span dir="auto" className={cn("min-w-0 break-words text-[14px] leading-5", quiet ? "text-ink-tertiary" : "text-ink")}>{option.label}</span>
+            <span dir="auto" className={cn("min-w-0 break-words text-lg leading-5", quiet ? "text-ink-tertiary" : "text-ink")}>{option.label}</span>
           </button>
         ))}
       </div>}
       {settled && answer && (
         <div data-setup-answer="" className="mx-3 mb-1 mt-1.5 border-t border-hairline/40 pt-2.5">
-          <div className="text-[12px] leading-4 text-ink-tertiary">{t("chat.setupCard.answer")}</div>
-          <div dir="auto" className="mt-0.5 break-words text-[14px] leading-5 text-ink">{answer.text}</div>
+          <div className="text-sm text-ink-tertiary">{t("chat.setupCard.answer")}</div>
+          <div dir="auto" className="mt-0.5 break-words text-lg leading-5 text-ink">{answer.text}</div>
         </div>
       )}
-      {error && <p role="alert" dir="auto" className="mx-3 mb-1 mt-1 text-[12px] text-danger">{error}</p>}
+      {error && <p role="alert" dir="auto" className="mx-3 mb-1 mt-1 text-sm text-danger">{error}</p>}
     </section>
   );
 }
@@ -177,12 +177,12 @@ function WaitingChip({ bot, threadId }: { bot: Bot; threadId: string }) {
   };
   return (
     <div data-setup-request className="mb-2 flex">
-      <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 ps-2.5 pe-1 text-[13px] text-ink">
+      <span className="inline-flex h-7 max-w-full items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 ps-2.5 pe-1 text-base text-ink">
         <Sparkles size={13} aria-hidden="true" className="shrink-0 text-accent-text" />
         <bdi dir="auto" className="min-w-0 truncate">{t("composer.setupRequest.waiting", { name: bot.name })}</bdi>
         <button type="button" data-setup-request-cancel="" onClick={stop} disabled={stopping}
           aria-label={t("composer.setupRequest.cancel", { name: bot.name })} title={t("composer.setupRequest.cancel", { name: bot.name })}
-          className="flex size-5 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-ink/[0.08] hover:text-ink">
+          className="flex size-5 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-fill hover:text-ink">
           <X size={12} />
         </button>
       </span>

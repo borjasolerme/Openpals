@@ -166,7 +166,7 @@ export function SidebarPhoneStatusButton({
       data-phone-status={status.kind}
       data-sidebar-density={density}
       className={cn(
-        "relative flex size-[46px] shrink-0 items-center justify-center rounded-xl hover:bg-raised",
+        "relative flex size-11.5 shrink-0 items-center justify-center rounded-xl hover:bg-raised",
         density === "icons" && "mx-auto",
         connected ? "text-success" : "text-ink-secondary hover:text-ink",
       )}

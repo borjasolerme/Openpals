@@ -73,7 +73,7 @@ describe("Simple mode's table card", () => {
   it("draws a short table as a card with a hover plate, header names that sort, and no footer", () => {
     const html = card(3);
     const surface = html.match(/<div data-table-card="[^"]*" class="([^"]*)"/)?.[1] ?? "";
-    expect(surface.split(" ")).toEqual(expect.arrayContaining(["rounded-[24px]", "bg-composer", "touch:pt-11"]));
+    expect(surface.split(" ")).toEqual(expect.arrayContaining(["rounded-4xl", "bg-composer", "touch:pt-11"]));
     // The header row starts at the card's top: the plate floats over it instead of keeping a band at rest.
     expect(surface.split(" ").some((name) => /^(pt|py|p)-/.test(name))).toBe(false);
     const plate = html.match(/<div class="(table-plate [^"]*)"/)?.[1] ?? "";
@@ -82,7 +82,7 @@ describe("Simple mode's table card", () => {
     expect(html).toContain('aria-label="Download results as CSV"');
     expect(html).toContain('aria-label="Expand table"');
     expect(html).toMatch(/<button type="button" class="group\/th [^"]*" aria-label="Sort by Sender"[^>]*><span dir="auto">Sender<\/span>/);
-    expect(html).toContain("border-t-[0.5px] border-ink/[0.07]");
+    expect(html).toContain("border-t-[0.5px] border-line");
     expect(html).not.toContain("<footer");
     expect(html).not.toContain(`aria-label="${"Search all rows…"}"`);
     expect(html).toContain('data-fit="true"');

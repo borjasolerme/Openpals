@@ -117,7 +117,7 @@ describe("bot actions menu viewport placement", () => {
     expect(html).not.toContain(t("sidebar.bot.more"));
     for (const gone of ["New thread", "New folder", "Delete all threads"]) expect(html, gone).not.toContain(gone);
     expect(html).toContain("rounded-[var(--radius-menu)]");
-    expect(html).not.toContain("shadow-2xl");
+    expect(html).not.toContain("shadow-lg");
   });
 
 });

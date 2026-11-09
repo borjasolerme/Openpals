@@ -37,7 +37,7 @@ export function DefaultResponderSelect({ group, members }: { group: Group; membe
     <Select
       variant="pill"
       size="sm"
-      className="shrink-0 max-w-[190px]"
+      className="shrink-0 max-w-47.5"
       title={responderTitle(group, members, jevOn)}
       aria-label={t("room.responder.aria")}
       value={responderChoice(responder)}
@@ -164,10 +164,10 @@ export function RoomHeader({
               style={headerNoDragStyle}
               className="group -mx-2 flex min-w-0 max-w-[calc(100%+1rem)] items-center gap-1 rounded-lg px-2 py-0.5 hover:bg-raised/60 focus-visible:bg-raised/60"
             >
-              <span className="truncate text-[15px] font-semibold text-ink">{group.name}</span>
+              <span className="truncate text-lg font-semibold text-ink">{group.name}</span>
               <ChevronRight size={14} aria-hidden="true" className="-ml-1 w-0 shrink-0 text-ink-secondary opacity-0 transition-[width,margin,opacity] duration-150 group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100 group-focus-visible:ml-0 group-focus-visible:w-3.5 group-focus-visible:opacity-100" />
             </button>
-            {group.description && <p className="max-w-full truncate text-[12px] leading-4 text-ink-secondary">{group.description}</p>}
+            {group.description && <p className="max-w-full truncate text-sm text-ink-secondary">{group.description}</p>}
           </div>
           <div data-roomhead-controls className="flex shrink-0 items-center">
             <button
@@ -183,7 +183,7 @@ export function RoomHeader({
               <span className="flex items-center -space-x-1.5">
                 {faces.slice(0, SIMPLE_FACES)}
                 {more > 0 && (
-                  <span className="relative flex h-6 min-w-6 items-center justify-center rounded-full border border-app bg-raised px-1 text-[11px] font-medium tabular-nums text-ink-secondary">
+                  <span className="relative flex h-6 min-w-6 items-center justify-center rounded-full border border-app bg-raised px-1 text-xs font-medium tabular-nums text-ink-secondary">
                     +{more}
                   </span>
                 )}
@@ -207,10 +207,10 @@ export function RoomHeader({
         <div data-roomhead-identity className="flex min-w-0 items-center gap-2 @max-3xl/roomhead:basis-full" style={headerNoDragStyle}>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-[15px] font-semibold text-ink">{group.name}</span>
+              <span className="truncate text-lg font-semibold text-ink">{group.name}</span>
               {!setupPending && !group.dm && <GroupTaskPicker group={group} />}
             </div>
-            {group.description && <p className="truncate text-[12px] leading-4 text-ink-secondary">{group.description}</p>}
+            {group.description && <p className="truncate text-sm text-ink-secondary">{group.description}</p>}
           </div>
         </div>
         <div
@@ -223,7 +223,7 @@ export function RoomHeader({
             aria-label={t("chat.find")}
             aria-pressed={findOpen}
             className={cn(
-              "flex size-8 items-center justify-center rounded-full transition-colors hover:bg-ink/[0.06]",
+              "flex size-8 items-center justify-center rounded-full transition-colors hover:bg-fill",
               findOpen ? "text-accent" : "text-ink-secondary hover:text-ink",
             )}
             title={t("chat.findShortcut")}
@@ -252,7 +252,7 @@ export function RoomHeader({
               className="flex items-center gap-1.5 rounded-full py-0.5 pl-1 pr-1.5 hover:bg-raised/60"
             >
               {faces}
-              <span className="flex size-[18px] items-center justify-center rounded-full border border-dashed border-hairline/70 text-ink-secondary">
+              <span className="flex size-4.5 items-center justify-center rounded-full border border-dashed border-hairline/70 text-ink-secondary">
                 <Plus size={11} />
               </span>
             </button>

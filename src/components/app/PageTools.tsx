@@ -14,7 +14,7 @@ import { ASK_CHIP, ASK_CHIP_IDLE, ASK_CHIP_PICKED } from "../AskCard";
 export const PAGE_HEIGHT = { start: 520, cap: 560 } as const;
 const FLASH_MS = 2_500;
 const TOOL =
-  "flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-ink/[0.07] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40";
+  "flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-40";
 
 /** The oldest version a row's page still keeps, and its current one. */
 export function pageVersions(app: AppPayload): { first: number; last: number } {
@@ -95,7 +95,7 @@ export function PageToolbar({ version, point, ready, fullScreen, className }: Pa
   const label = version.latest ? t("chat.preview.version", { n: version.rev + 1 }) : t("chat.preview.versionOf", { n: version.rev + 1, count: version.last + 1 });
   return (
     <div data-page-tools className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-2", className)}>
-      <div className="flex items-center gap-0.5 text-[13px] text-ink-secondary">
+      <div className="flex items-center gap-0.5 text-base text-ink-secondary">
         <button type="button" className={TOOL} aria-label={t("chat.preview.older")} title={t("chat.preview.older")} disabled={version.rev <= version.first}
           onClick={() => version.show(version.rev - 1)}><ChevronLeft size={15} /></button>
         <span data-page-version className="min-w-6 text-center tabular-nums">{label}</span>
@@ -122,7 +122,7 @@ export function PageToolbar({ version, point, ready, fullScreen, className }: Pa
 /** Under the toolbar while Point is on: what to do. */
 export function PageNotes({ point, className }: Pick<PageToolsProps, "point"> & { className?: string }) {
   if (!point.pointing) return null;
-  return <div className={cn("flex flex-col gap-2", className)}><div role="status" className="rounded-2xl bg-accent/10 px-3 py-2 text-[13px] text-ink">{t("chat.preview.pointHint")}</div></div>;
+  return <div className={cn("flex flex-col gap-2", className)}><div role="status" className="rounded-2xl bg-accent/10 px-3 py-2 text-base text-ink">{t("chat.preview.pointHint")}</div></div>;
 }
 
 /** The page over the whole chat. Esc stops Point first, then closes. */
@@ -151,7 +151,7 @@ export function PageFullScreen(props: PageToolsProps & {
     <div role="dialog" aria-modal="true" aria-label={props.title} data-page-fullscreen={props.doc.messageId}
       className="fixed inset-0 z-50 flex flex-col bg-panel">
       <div ref={closer} className="flex flex-col gap-2 border-b border-hairline/40 px-4 pb-3 pt-3">
-        <div className="truncate text-[15px] font-semibold text-ink" title={props.title}><bdi dir="auto">{props.title}</bdi></div>
+        <div className="truncate text-lg font-semibold text-ink" title={props.title}><bdi dir="auto">{props.title}</bdi></div>
         <PageToolbar {...props} />
         <PageNotes point={point} />
       </div>

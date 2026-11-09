@@ -51,7 +51,7 @@ export function SidebarPhoneBar({ query, onQuery }: { query: string; onQuery: (q
             placeholder={t("sidebar.search")}
             aria-label={t("sidebar.searchAria")}
             enterKeyHint="search"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-ink placeholder:text-ink-secondary focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent text-lg text-ink placeholder:text-ink-secondary focus:outline-none"
           />
           {query !== "" && (
             <button

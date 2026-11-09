@@ -13,7 +13,7 @@ import { AvatarImageGenerator } from "./AvatarImageGenerator";
 import type { AvatarPatch, useAvatarImage } from "./avatar-editing";
 
 export const AVATAR_FILE_TYPES = "image/png,image/jpeg,image/gif,image/webp";
-const LABEL = "text-[12px] font-medium uppercase tracking-wide text-ink-secondary";
+const LABEL = "text-sm font-medium uppercase tracking-wide text-ink-secondary";
 
 /** The welcome's own profile edit: name, colour, look, then a picture of the person's own or one made with AI. */
 export function MausBotCustomize({ preview, name, nameRef, image, onName, onPatch }: {
@@ -28,7 +28,7 @@ export function MausBotCustomize({ preview, name, nameRef, image, onName, onPatc
   const picture = Boolean(preview.avatarUrl) && preview.avatarCrop !== "mascot";
   const shape = (patch: AvatarPatch) => onPatch({ ...patch, avatarCrop: "mascot" });
   return (
-    <div className="space-y-3 rounded-2xl bg-ink/[0.03] p-3.5 text-left">
+    <div className="space-y-3 rounded-2xl bg-fill-subtle p-3.5 text-left">
       <label className="block">
         <span className={LABEL}>{t("onboarding.bot.name")}</span>
         <input
@@ -38,7 +38,7 @@ export function MausBotCustomize({ preview, name, nameRef, image, onName, onPatc
           placeholder={DEFAULT_BOT_NAME}
           data-mausbot-welcome-name=""
           onChange={(event) => onName(event.target.value)}
-          className="mt-1 w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink focus:outline-none"
+          className="mt-1 w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-lg text-ink focus:outline-none"
         />
       </label>
       <div>
@@ -72,7 +72,7 @@ export function MausBotCustomize({ preview, name, nameRef, image, onName, onPatc
               title={MASCOT_BODIES[id].name}
               data-mausbot-welcome-body={id}
               onClick={() => shape({ mascotBody: id })}
-              className={cn("flex h-11 items-center justify-center rounded-xl", !picture && (preview.mascotBody ?? "cursor") === id ? "bg-ink/[0.08] ring-[1.5px] ring-inset ring-ink/25" : "hover:bg-ink/[0.05]")}
+              className={cn("flex h-11 items-center justify-center rounded-xl", !picture && (preview.mascotBody ?? "cursor") === id ? "bg-fill ring-[1.5px] ring-inset ring-ink/25" : "hover:bg-fill-subtle")}
             >
               <MausAvatar color={preview.color} bodyId={id} size={30} animated={false} trackPointer={false} />
             </button>
@@ -80,27 +80,27 @@ export function MausBotCustomize({ preview, name, nameRef, image, onName, onPatc
         </div>
       </div>
       <div>
-        <div className="flex flex-wrap items-center gap-1.5 text-[13px]">
+        <div className="flex flex-wrap items-center gap-1.5 text-base">
           <input ref={image.fileRef} type="file" accept={AVATAR_FILE_TYPES} className="sr-only" tabIndex={-1} aria-hidden="true"
             onChange={(event) => void image.upload(event.target.files?.[0])} />
           <button type="button" data-mausbot-welcome-upload="" disabled={image.busy} onClick={() => image.fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-ink-secondary hover:bg-ink/[0.05] hover:text-ink disabled:opacity-50">
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-ink-secondary hover:bg-fill-subtle hover:text-ink disabled:opacity-50">
             {image.uploading ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <ImagePlus size={14} aria-hidden="true" />}
             {t("mausbotWelcome.upload")}
           </button>
           <span aria-hidden="true" className="text-ink-tertiary">·</span>
           <button type="button" data-mausbot-welcome-generate="" aria-expanded={generating} onClick={() => setGenerating(!generating)}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-ink-secondary hover:bg-ink/[0.05] hover:text-ink">
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-ink-secondary hover:bg-fill-subtle hover:text-ink">
             <Sparkles size={14} aria-hidden="true" />{t("mausbotWelcome.generate")}
           </button>
           {picture && (
             <div className="basis-full"><button type="button" data-mausbot-welcome-remove="" disabled={image.busy} onClick={image.removeImage}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-ink/[0.05] hover:text-ink disabled:opacity-50">
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-base text-ink-secondary hover:bg-fill-subtle hover:text-ink disabled:opacity-50">
               <Trash2 size={13} aria-hidden="true" />{t("mausbotWelcome.removePicture")}
             </button></div>
           )}
         </div>
-        {image.error && <p role="alert" data-mausbot-welcome-error="" className="mt-1 px-2 text-[13px] text-danger">{image.error}</p>}
+        {image.error && <p role="alert" data-mausbot-welcome-error="" className="mt-1 px-2 text-base text-danger">{image.error}</p>}
         {generating && (
           <div className="mt-2">
             <AvatarImageGenerator botLabel={name || DEFAULT_BOT_NAME} disabled={image.uploading} generating={image.generating} onGenerate={image.generate} onSavingChange={image.setSavingConnection} />

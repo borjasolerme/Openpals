@@ -49,7 +49,7 @@ export function NewBotEffortRow() {
       subtitle={t("settings.newBotEffort.subtitle")}
       message={error ? <p role="alert" className="text-danger">{error}</p> : null}
     >
-      <Select size="sm" className="w-full max-w-[240px]"
+      <Select size="sm" className="w-full max-w-60"
         value={current}
         disabled={saving}
         aria-label={t("settings.newBotEffort.aria")}
@@ -96,7 +96,7 @@ function ReplayAppTourButton() {
       >
         {t("settings.welcome.appTour")}
       </button>
-      {failed && <p role="alert" className="mt-2 text-[13px] text-danger">{t("onboarding.tour.error")}</p>}
+      {failed && <p role="alert" className="mt-2 text-base text-danger">{t("onboarding.tour.error")}</p>}
     </div>
   );
 }
@@ -127,7 +127,7 @@ export function LanguageRow({ simple = false }: { simple?: boolean }) {
       title={t("settings.language.title")}
       subtitle={simple ? activeLocale() === "en" ? undefined : t("settings.simple.language.partial") : t("settings.language.subtitle")}
     >
-      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-[240px]"}
+      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-60"}
         value={current}
         aria-label={t("settings.language.aria")}
         onChange={(event) => setLanguageChoice(event.target.value)}
@@ -147,7 +147,7 @@ export function SendKeyRow({ simple = false }: { simple?: boolean }) {
   const sendKey = useSendKey();
   return (
     <SettingRow title={t("settings.sendKey.title")} subtitle={t(simple ? "settings.simple.sendKey" : "settings.sendKey.subtitle", { key: sendKeyLabel("mod-enter") })}>
-      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-[240px]"}
+      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-60"}
         value={sendKey}
         aria-label={t("settings.sendKey.title")}
         onChange={(event) => setSendKey(parseSendKey(event.target.value))}
@@ -166,7 +166,7 @@ export function FollowUpRow({ simple = false }: { simple?: boolean }) {
   const key = alternateSendLabel(useSendKey());
   return (
     <SettingRow title={t("settings.followUp.title")} subtitle={t(simple ? "settings.simple.followUp" : "settings.followUp.subtitle", { key })}>
-      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-[240px]"}
+      <Select size="sm" variant={simple ? "ghost" : "field"} className={simple ? undefined : "w-full max-w-60"}
         value={followUp}
         aria-label={t("settings.followUp.title")}
         onChange={(event) => setFollowUpDefault(parseFollowUpDefault(event.target.value))}
@@ -311,8 +311,8 @@ export function ExperimentalFeaturesRow() {
     <Card title={t("settings.experimental.title")} subtitle={t("settings.experimental.subtitle")}>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-[14px] font-medium text-ink">{t("settings.experimental.skillAuthoring")}</div>
-          <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+          <div className="text-lg font-medium text-ink">{t("settings.experimental.skillAuthoring")}</div>
+          <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
             {t("settings.experimental.skillAuthoringDetail")}
           </div>
         </div>
@@ -324,7 +324,7 @@ export function ExperimentalFeaturesRow() {
           className="disabled:cursor-wait disabled:opacity-50"
         />
       </div>
-      {error ? <p role="alert" className="mt-2 text-[12px] text-danger">{error}</p> : null}
+      {error ? <p role="alert" className="mt-2 text-sm text-danger">{error}</p> : null}
       <LearnedSkillsSettings />
       <NewBrowserSettings />
     </Card>

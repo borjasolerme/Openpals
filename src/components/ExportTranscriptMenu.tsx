@@ -102,7 +102,7 @@ export function ExportTranscriptMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
-          "flex size-8 items-center justify-center rounded-full transition-colors hover:bg-ink/[0.06]",
+          "flex size-8 items-center justify-center rounded-full transition-colors hover:bg-fill",
           open ? "text-accent" : "text-ink-secondary hover:text-ink",
           className,
         )}
@@ -115,14 +115,14 @@ export function ExportTranscriptMenu({
         <div
           role="menu"
           aria-label="Export options"
-          className={cn("absolute right-0 top-full z-40 mt-1 w-[220px] overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}
+          className={cn("absolute right-0 top-full z-40 mt-1 w-55 overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}
         >
           <div className={MENU_HEADING}>
             Export Conversation
           </div>
 
           {!hasMessages ? (
-            <div className="px-2 py-1.5 text-[12px] text-ink-secondary">
+            <div className="px-2 py-1.5 text-sm text-ink-secondary">
               No messages to export yet.
             </div>
           ) : (
@@ -144,7 +144,7 @@ export function ExportTranscriptMenu({
               </button>
 
               {copyFailed && (
-                <div role="status" className="px-2 py-1.5 text-[12px] text-ink-secondary">
+                <div role="status" className="px-2 py-1.5 text-sm text-ink-secondary">
                   Clipboard unavailable. Download the Markdown file instead.
                 </div>
               )}

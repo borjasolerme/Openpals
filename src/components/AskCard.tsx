@@ -13,7 +13,7 @@ export type Asker = Pick<Bot, "name" | "color"> & Partial<Pick<Bot, "avatarUrl" 
 
 export function AskHeader({ asker, line }: { asker: Asker; line: string }) {
   return (
-    <div data-ask-header="" className="flex min-w-0 items-center gap-1.5 text-[13px] leading-[18px] text-ink-secondary">
+    <div data-ask-header="" className="flex min-w-0 items-center gap-1.5 text-base text-ink-secondary">
       <span aria-hidden="true" className="flex shrink-0"><BotAvatar bot={asker} state="happy" size={16} animated={false} motion="none" motionKey={0} label="" /></span>
       <span dir="auto" className="min-w-0 truncate">{line}</span>
     </div>
@@ -55,15 +55,15 @@ export function AskCard({
       data-tour={tour}
       data-ask-card="pending"
       onKeyDown={onKeyDown}
-      className={cn("w-full max-w-[560px] rounded-[24px] px-4 pb-3.5 pt-3 text-start", ELEVATED_CARD)}
+      className={cn("w-full max-w-140 rounded-4xl px-4 pb-3.5 pt-3 text-start", ELEVATED_CARD)}
     >
       {header && <div className="mb-1.5 pe-6">{header}</div>}
       <div className="flex min-w-0 items-start gap-2">
-        {icon && <span aria-hidden="true" className="mt-[3px] flex shrink-0 text-ink-secondary">{icon}</span>}
-        <div className="min-w-0 flex-1 break-words text-[15px] font-medium leading-[22px] text-ink">
+        {icon && <span aria-hidden="true" className="mt-0.75 flex shrink-0 text-ink-secondary">{icon}</span>}
+        <div className="min-w-0 flex-1 break-words text-lg font-medium text-ink">
           <bdi dir="auto">{title}</bdi>
         </div>
-        {meta && <span className="mt-0.5 shrink-0 text-[12px] tabular-nums text-ink-tertiary">{meta}</span>}
+        {meta && <span className="mt-0.5 shrink-0 text-sm tabular-nums text-ink-tertiary">{meta}</span>}
         {onDismiss && dismissLabel && (
           <button
             type="button"
@@ -71,7 +71,7 @@ export function AskCard({
             aria-label={dismissLabel}
             title={dismissLabel}
             className={cn(
-              "-me-1.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-ink/[0.07] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus pointer-coarse:size-9",
+              "-me-1.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus pointer-coarse:size-9",
               header ? "-mt-7" : "-mt-0.5",
             )}
           >
@@ -79,7 +79,7 @@ export function AskCard({
           </button>
         )}
       </div>
-      {explanation && <div className="mt-1 text-[14px] leading-5 text-ink-secondary">{explanation}</div>}
+      {explanation && <div className="mt-1 text-lg leading-5 text-ink-secondary">{explanation}</div>}
       {children && <div className="mt-3">{children}</div>}
       {footer && <div className="mt-3 flex flex-wrap items-center justify-end gap-2">{footer}</div>}
     </div>
@@ -95,8 +95,8 @@ export function AskDetail({ text, mono = false, label }: { text: string; mono?: 
       <div
         dir="auto"
         aria-label={label}
-        className={cn("rounded-xl bg-ink/[0.045] px-3 py-2 text-ink-secondary [overflow-wrap:anywhere]",
-          mono ? "font-mono text-[12px] leading-[18px] whitespace-pre-wrap" : "whitespace-pre-wrap text-[13px] leading-5",
+        className={cn("rounded-xl bg-fill-subtle px-3 py-2 text-ink-secondary [overflow-wrap:anywhere]",
+          mono ? "font-mono text-sm leading-4.5 whitespace-pre-wrap" : "whitespace-pre-wrap text-base leading-5",
           long && !open && "line-clamp-3")}
       >
         {text}
@@ -143,11 +143,11 @@ export function AskChoices({ choices, label, onPick, sending = null, picked = []
             aria-busy={sending === choice.label || undefined}
             disabled={disabled || (sending !== null && sending !== choice.label)}
             onClick={() => onPick(choice.label)}
-            className={cn(ASK_CHOICE, on ? "bg-ink/[0.08] ring-ink/25" : "enabled:hover:bg-ink/[0.045]", quiet && !on && "text-ink-secondary")}
+            className={cn(ASK_CHOICE, on ? "bg-fill ring-ink/25" : "enabled:hover:bg-fill-subtle", quiet && !on && "text-ink-secondary")}
           >
             <span className="min-w-0 flex-1">
               <span dir="auto" className="block break-words [unicode-bidi:plaintext]">{choice.label}</span>
-              {choice.description && <span dir="auto" className="mt-0.5 block break-words text-[13px] leading-[18px] text-ink-secondary [unicode-bidi:plaintext]">{choice.description}</span>}
+              {choice.description && <span dir="auto" className="mt-0.5 block break-words text-base text-ink-secondary [unicode-bidi:plaintext]">{choice.description}</span>}
             </span>
             {sending === choice.label
               ? <LoaderCircle size={16} aria-hidden="true" className="shrink-0 text-ink-secondary motion-safe:animate-spin" />
@@ -178,7 +178,7 @@ export function AskReply({ label, placeholder, color, onSend, sending = false, v
   };
   const button = askPrimary(color, ASK_ICON_SHAPE);
   return (
-    <form onSubmit={send} className="flex items-end gap-2 rounded-[16px] bg-ink/[0.045] py-1 pe-1 ps-3 ring-[0.5px] ring-ink/[0.14] focus-within:ring-ink/30">
+    <form onSubmit={send} className="flex items-end gap-2 rounded-3xl bg-fill-subtle py-1 pe-1 ps-3 ring-[0.5px] ring-line-strong focus-within:ring-ink/30">
       <textarea
         dir="auto"
         rows={1}
@@ -193,7 +193,7 @@ export function AskReply({ label, placeholder, color, onSend, sending = false, v
           event.preventDefault();
           send();
         }}
-        className={cn("block min-h-8 flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 text-ink outline-none placeholder:text-ink-tertiary [field-sizing:content] pointer-coarse:min-h-9",
+        className={cn("block min-h-8 flex-1 resize-none bg-transparent py-1.5 text-lg leading-5 text-ink outline-none placeholder:text-ink-tertiary [field-sizing:content] pointer-coarse:min-h-9",
           multiline ? "max-h-40" : "max-h-28")}
       />
       <button type="submit" disabled={!ready} aria-label={t("chat.send")} title={t("chat.send")} aria-busy={sending || undefined} {...button}>
@@ -205,7 +205,7 @@ export function AskReply({ label, placeholder, color, onSend, sending = false, v
 
 /** Why an answer did not go, under the card, until the next try. */
 export function AskError({ children }: { children: ReactNode }) {
-  return <p role="alert" className="mt-2 text-[13px] leading-[18px] text-danger">{children}</p>;
+  return <p role="alert" className="mt-2 text-base text-danger">{children}</p>;
 }
 
 export type AskSettledTone = "done" | "closed" | "stopped" | "expired";
@@ -238,7 +238,7 @@ export function AskSettledLine({
       aria-label={ariaLabel}
       data-ask-card="settled"
       data-tone={tone}
-      className="w-full max-w-[560px] text-start text-[13px] leading-[18px] text-ink-tertiary"
+      className="w-full max-w-140 text-start text-base text-ink-tertiary"
     >
       <div className="flex min-w-0 items-center gap-1.5">
         <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center">
@@ -263,10 +263,10 @@ export function settledAnswer(answer: string, choices: readonly string[]): React
  * each script's font metrics push text off center.
  */
 const ASK_SHAPE =
-  "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[13px] font-medium leading-5 transition-colors [&>svg]:shrink-0 disabled:cursor-not-allowed pointer-coarse:h-9";
+  "inline-flex h-7 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-3 text-base font-medium leading-5 transition-colors [&>svg]:shrink-0 disabled:cursor-not-allowed pointer-coarse:h-9";
 /** A card's answers: at least 36px tall, 44 on a touch screen, and a label that wraps rather than being cut. */
 export const ASK_BUTTON_SHAPE =
-  "inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-center text-[14px] font-medium leading-5 transition-colors [&>svg]:shrink-0 disabled:cursor-not-allowed pointer-coarse:min-h-11";
+  "inline-flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-center text-lg font-medium leading-5 transition-colors [&>svg]:shrink-0 disabled:cursor-not-allowed pointer-coarse:min-h-11";
 const ASK_ICON_SHAPE = "inline-flex size-8 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed pointer-coarse:size-9";
 const ASK_LOOK = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-40";
 const ASK_CONTROL = `${ASK_SHAPE} ${ASK_LOOK}`;
@@ -280,21 +280,21 @@ export function askPrimary(color: MausColor | undefined, shape = ASK_BUTTON_SHAP
 }
 
 /** A card's other answers: Deny, Cancel, Not now. */
-export const ASK_SECONDARY_BUTTON = `${ASK_BUTTON_SHAPE} ${ASK_LOOK} bg-ink/[0.07] text-ink enabled:hover:bg-ink/[0.11] enabled:active:bg-ink/[0.15]`;
+export const ASK_SECONDARY_BUTTON = `${ASK_BUTTON_SHAPE} ${ASK_LOOK} bg-fill text-ink enabled:hover:bg-fill-strong enabled:active:bg-fill-bold`;
 /** An extra option that should not compete with the answer: Always allow, Details. */
-export const ASK_QUIET_ANSWER = `${ASK_BUTTON_SHAPE} ${ASK_LOOK} text-ink-secondary enabled:hover:bg-ink/[0.06] enabled:hover:text-ink enabled:active:bg-ink/[0.1]`;
+export const ASK_QUIET_ANSWER = `${ASK_BUTTON_SHAPE} ${ASK_LOOK} text-ink-secondary enabled:hover:bg-fill enabled:hover:text-ink enabled:active:bg-fill`;
 
-const ASK_CHOICE = `flex min-h-10 w-full items-center gap-2.5 rounded-[14px] px-3.5 py-2 text-start text-[14px] leading-5 text-ink ring-[0.5px] ring-ink/[0.14] transition-colors ${ASK_LOOK} disabled:cursor-default pointer-coarse:min-h-11`;
+const ASK_CHOICE = `flex min-h-10 w-full items-center gap-2.5 rounded-2xl px-3.5 py-2 text-start text-lg leading-5 text-ink ring-[0.5px] ring-line-strong transition-colors ${ASK_LOOK} disabled:cursor-default pointer-coarse:min-h-11`;
 
 export const ASK_CHIP = `${ASK_CONTROL} max-w-full border`;
-export const ASK_CHIP_IDLE = "border-transparent bg-ink/[0.07] text-ink hover:bg-ink/[0.12]";
+export const ASK_CHIP_IDLE = "border-transparent bg-fill text-ink hover:bg-fill-strong";
 export const ASK_CHIP_PICKED = "border-accent bg-accent/15 text-ink";
 
 export const ASK_SMALL_PILL = ASK_CONTROL;
-export const ASK_QUIET_BUTTON = `${ASK_SMALL_PILL} -my-1 text-ink-tertiary hover:bg-ink/[0.07] hover:text-ink-secondary`;
+export const ASK_QUIET_BUTTON = `${ASK_SMALL_PILL} -my-1 text-ink-tertiary hover:bg-fill hover:text-ink-secondary`;
 
 export const ASK_FIELD =
-  "h-7 rounded-full border border-hairline/60 bg-inset px-3 text-[13px] leading-5 text-ink outline-none placeholder:text-ink-tertiary focus:border-accent disabled:opacity-60 pointer-coarse:h-9";
+  "h-7 rounded-full border border-hairline/60 bg-inset px-3 text-base leading-5 text-ink outline-none placeholder:text-ink-tertiary focus:border-accent disabled:opacity-60 pointer-coarse:h-9";
 
 export function returnFocusToComposer(): void {
   if (typeof requestAnimationFrame !== "function") return;

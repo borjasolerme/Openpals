@@ -36,11 +36,11 @@ export function BotProfileAvatarCard({
   return (
     <div className="overflow-hidden rounded-xl border border-hairline/40 bg-card">
       <div className="flex items-center justify-between border-b border-hairline/40 px-3 py-2.5">
-        <span className="rounded-lg bg-control px-3 py-1.5 text-[14px] font-medium text-ink">{t("botIdentity.avatar")}</span>
+        <span className="rounded-lg bg-control px-3 py-1.5 text-lg font-medium text-ink">{t("botIdentity.avatar")}</span>
         <button
           disabled={busy}
           onClick={() => onPatch(RESET_MASCOT_PATCH)}
-          className="rounded-md px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"
+          className="rounded-md px-2 py-1.5 text-base text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"
         >
           {t("botIdentity.resetMascot")}
         </button>
@@ -73,7 +73,7 @@ export function BotProfileAvatarCard({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-control px-3 py-2 text-base text-ink hover:bg-raised-hover disabled:opacity-50"
           >
             {uploading ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />}
             {t("botIdentity.uploadImage")}
@@ -91,9 +91,9 @@ export function BotProfileAvatarCard({
             </button>
           )}
         </div>
-        <div className="mt-1.5 text-[12px] text-ink-secondary">{t("botIdentity.imageTypes")}</div>
+        <div className="mt-1.5 text-sm text-ink-secondary">{t("botIdentity.imageTypes")}</div>
 
-        <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+        <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
           {t("botIdentity.shape")}
         </div>
         <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-hairline/40">
@@ -105,7 +105,7 @@ export function BotProfileAvatarCard({
               aria-pressed={crop === candidate}
               onClick={() => onPatch({ avatarCrop: candidate })}
               className={cn(
-                "py-1.5 text-[13px] disabled:opacity-50",
+                "py-1.5 text-base disabled:opacity-50",
                 index > 0 && "border-l border-hairline/40",
                 crop === candidate ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/60 hover:text-ink",
               )}
@@ -118,7 +118,7 @@ export function BotProfileAvatarCard({
         {crop === "mascot" && (
           <>
             <MascotFaceColorPicker bot={bot} disabled={busy} onPatch={onPatch} />
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
               {t("botIdentity.expression")}
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -130,7 +130,7 @@ export function BotProfileAvatarCard({
                   aria-pressed={activeState === expression}
                   onClick={() => onPatch({ mascotExpression: expression })}
                   className={cn(
-                    "flex h-[58px] items-center justify-center rounded-xl bg-inset transition-colors hover:bg-control disabled:opacity-50",
+                    "flex h-14.5 items-center justify-center rounded-xl bg-inset transition-colors hover:bg-control disabled:opacity-50",
                     activeState === expression && "ring-2 ring-accent-border",
                   )}
                   title={expression}
@@ -141,7 +141,7 @@ export function BotProfileAvatarCard({
               ))}
             </div>
 
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
               {t("botIdentity.color")}
             </div>
             <div className="flex flex-wrap gap-2.5">
@@ -163,7 +163,7 @@ export function BotProfileAvatarCard({
               ))}
             </div>
 
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
               {t("botIdentity.body")}
             </div>
             <div className="grid grid-cols-5 gap-1.5">
@@ -171,7 +171,7 @@ export function BotProfileAvatarCard({
                 <BodyButton key={id} id={id} name={MASCOT_BODIES[id].name} bot={bot} busy={busy} onPatch={onPatch} />
               ))}
             </div>
-            <div className="mb-2 mt-4 text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
               {t("botPanel.avatar.halloween")}
             </div>
             <div className="grid grid-cols-5 gap-1.5" data-halloween-bodies>
@@ -190,7 +190,7 @@ export function BotProfileAvatarCard({
           onSavingChange={setSavingConnection}
         />
 
-        {error && <div role="alert" className="mt-3 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-3 text-sm text-danger">{error}</div>}
       </div>
     </div>
   );

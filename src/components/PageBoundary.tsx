@@ -16,10 +16,10 @@ export class PageBoundary extends Component<{ children: ReactNode }, { error: Er
     return (
       <div role="alert" className="flex min-h-screen items-center justify-center p-6 text-center">
         <div className="max-w-md space-y-3">
-          <h1 className="text-lg font-semibold">{t("page.broken.title")}</h1>
-          <p className="text-sm opacity-75">{t("page.broken.body")}</p>
-          <p className="break-words text-xs opacity-60">{this.state.error.message}</p>
-          <button type="button" className="rounded-md border px-3 py-1.5 text-sm" onClick={() => location.reload()}>
+          <h1 className="text-2xl font-semibold">{t("page.broken.title")}</h1>
+          <p className="text-lg opacity-75">{t("page.broken.body")}</p>
+          <p className="break-words text-sm opacity-60">{this.state.error.message}</p>
+          <button type="button" className="rounded-md border px-3 py-1.5 text-lg" onClick={() => location.reload()}>
             {t("page.broken.reload")}
           </button>
         </div>

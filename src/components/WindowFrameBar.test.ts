@@ -48,7 +48,7 @@ describe("the window frame's top bar", () => {
   it("leaves the caption buttons the right end on Windows, and draws nothing where the window has its own title bar", async () => {
     fixture.windowChrome = "win-caption";
     await mount(createElement(WindowFrameBar));
-    expect(host.querySelector("[data-frame-bar-end]")!.className).toContain("pr-[140px]");
+    expect(host.querySelector("[data-frame-bar-end]")!.className).toContain("pr-35");
     await act(async () => root!.unmount());
     fixture.windowChrome = "native";
     await mount(createElement(WindowFrameBar));

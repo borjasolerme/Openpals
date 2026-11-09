@@ -19,7 +19,7 @@ import { WIDGET_COMPACT_BELOW, widgetActionUrl, widgetThreadTarget, WidgetButton
 import { kids } from "./widget-style";
 import { newWidgetSendId, sendWidgetAction, type WidgetSendResult } from "./widget-send";
 
-const WIDTH: Record<string, string> = { sm: "max-w-[360px]", md: "max-w-[440px]", lg: "max-w-[600px]", full: "max-w-[600px]" };
+const WIDTH: Record<string, string> = { sm: "max-w-90", md: "max-w-110", lg: "max-w-150", full: "max-w-150" };
 const SURFACE = "w-full overflow-hidden rounded-2xl bg-composer ring-1 ring-composer-ring transition-opacity";
 const SENT_MS = 1600;
 
@@ -232,20 +232,20 @@ function WidgetCard({ botId, threadId, messageId, payload }: { botId: string; th
             <div className={cn("flex items-start gap-3 px-4 pt-3.5", kids(root).length ? "pb-3" : "pb-3.5")}>
               <div className="min-w-0 flex-1">
                 {statusText && (
-                  <p className={cn("flex items-center gap-1.5 text-[13px] font-semibold leading-[18px] text-accent-text", (title || caption) && "mb-1")}>
+                  <p className={cn("flex items-center gap-1.5 text-base font-semibold text-accent-text", (title || caption) && "mb-1")}>
                     {typeof status.icon === "string" && <WidgetGlyph name={status.icon} size={14} />}
                     <bdi dir="auto" className="min-w-0 truncate">{statusText}</bdi>
                   </p>
                 )}
-                {title && <div title={title} className="truncate text-[15px] font-semibold leading-6 text-ink"><bdi dir="auto">{title}</bdi></div>}
-                {caption && <div dir="auto" className="mt-0.5 text-[13px] leading-snug text-ink-secondary">{caption}</div>}
+                {title && <div title={title} className="truncate text-lg font-semibold leading-6 text-ink"><bdi dir="auto">{title}</bdi></div>}
+                {caption && <div dir="auto" className="mt-0.5 text-base leading-snug text-ink-secondary">{caption}</div>}
               </div>
-              {meta && <span dir="auto" className="mt-1 shrink-0 whitespace-nowrap text-[12px] leading-4 tabular-nums text-ink-tertiary">{meta}</span>}
+              {meta && <span dir="auto" className="mt-1 shrink-0 whitespace-nowrap text-sm tabular-nums text-ink-tertiary">{meta}</span>}
             </div>
           )}
           <WidgetBody root={root} headed={headed} />
           {problem && (
-            <div id={errorId} role="alert" className="mx-4 flex items-start gap-2 border-t border-ink/[0.12] pb-3.5 pt-3 text-[13px] leading-[18px] text-danger">
+            <div id={errorId} role="alert" className="mx-4 flex items-start gap-2 border-t border-line pb-3.5 pt-3 text-base text-danger">
               <CircleAlert aria-hidden="true" size={14} className="mt-0.5 shrink-0" />
               <span dir="auto" className="min-w-0 break-words">{problem.text}</span>
             </div>

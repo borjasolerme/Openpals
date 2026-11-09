@@ -9,7 +9,7 @@ import { MENU_ITEM, MENU_SHEET } from "./menu-recipe";
 export const ACTION_ICON = { size: 17, strokeWidth: 1.5 } as const;
 
 export const messageActionClass =
-  "inline-flex size-7 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-ink/10 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent";
+  "inline-flex size-7 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent";
 
 export type MessageMenuItem = {
   key: string;
@@ -191,7 +191,7 @@ export function MessageActions({
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           aria-controls={menuOpen ? menuId : undefined}
-          className={cn(messageActionClass, menuOpen && "bg-ink/10 text-ink")}
+          className={cn(messageActionClass, menuOpen && "bg-fill text-ink")}
         >
           <Ellipsis {...ACTION_ICON} aria-hidden="true" />
         </button>

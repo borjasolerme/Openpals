@@ -10,7 +10,7 @@ import { BotAvatar } from "../Avatar";
 import type { BotPatch } from "../bot-settings/useBotSettingsDerived";
 
 const inlineInputCls =
-  "rounded-lg border border-accent-border bg-inset px-2 py-[3px] text-center text-ink outline-none placeholder:text-ink-tertiary";
+  "rounded-lg border border-accent-border bg-inset px-2 py-0.75 text-center text-ink outline-none placeholder:text-ink-tertiary";
 
 function useInlineEdit(save: (value: string) => void) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -78,24 +78,24 @@ export function PanelHero({ bot, activeState, patch, editorOpen, onToggleEditor 
         aria-label={t("botPanel.avatar.edit")}
         aria-expanded={editorOpen}
         onClick={onToggleEditor}
-        className="group relative rounded-[24px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+        className="group relative rounded-4xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
       >
         <BotAvatar bot={bot} size={80} state={activeState} />
         <span
           aria-hidden="true"
-          className="absolute inset-0 flex items-center justify-center rounded-[24px] bg-black/0 text-white opacity-0 transition-[opacity,background-color] group-hover:bg-black/40 group-hover:opacity-100 group-focus-visible:bg-black/40 group-focus-visible:opacity-100 group-focus-within:opacity-100 touch:opacity-100 motion-reduce:transition-none"
+          className="absolute inset-0 flex items-center justify-center rounded-4xl bg-black/0 text-white opacity-0 transition-[opacity,background-color] group-hover:bg-black/40 group-hover:opacity-100 group-focus-visible:bg-black/40 group-focus-visible:opacity-100 group-focus-within:opacity-100 touch:opacity-100 motion-reduce:transition-none"
         >
           <Pencil size={20} />
         </span>
         {bot.chiefOfStaff && (
-          <span data-panel-chief title={t("chat.chiefOfStaff")} className="absolute -bottom-0.5 -right-0.5 flex size-[22px] items-center justify-center rounded-full bg-accent text-accent-ink ring-[3px] ring-app">
+          <span data-panel-chief title={t("chat.chiefOfStaff")} className="absolute -bottom-0.5 -right-0.5 flex size-5.5 items-center justify-center rounded-full bg-accent text-accent-ink ring-[3px] ring-app">
             <Crown size={12} aria-hidden="true" />
             <span className="sr-only">{t("chat.chiefOfStaff")}</span>
           </span>
         )}
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-[calc(100%+4px)] z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-hairline bg-menu px-[7px] py-0.5 text-[12px] text-ink opacity-0 transition-opacity group-hover:opacity-100"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+4px)] z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-hairline bg-menu px-[7px] py-0.5 text-sm text-ink opacity-0 transition-opacity group-hover:opacity-100"
         >
           {t("botPanel.avatar.edit")}
         </span>
@@ -113,7 +113,7 @@ export function PanelHero({ bot, activeState, patch, editorOpen, onToggleEditor 
               onChange={(event) => name.setDraft(event.target.value)}
               onKeyDown={name.onKeyDown}
               onBlur={name.onBlur}
-              className={cn(inlineInputCls, "w-[220px] max-w-full text-[17px] font-medium leading-6")}
+              className={cn(inlineInputCls, "w-55 max-w-full text-xl font-medium leading-6")}
             />
           ) : (
             <button
@@ -122,7 +122,7 @@ export function PanelHero({ bot, activeState, patch, editorOpen, onToggleEditor 
               data-panel-rename
               title={t("botPanel.rename")}
               onClick={() => name.start(bot.name)}
-              className="group/name relative inline-flex max-w-full items-center rounded-[7px] px-1.5 text-[17px] font-medium leading-6 text-ink hover:bg-ink/[0.04]"
+              className="group/name relative inline-flex max-w-full items-center rounded-md px-1.5 text-xl font-medium leading-6 text-ink hover:bg-fill-subtle"
             >
               <span className="min-w-0 truncate">{bot.name}</span>
               <Pencil size={13} aria-hidden="true" className="absolute -right-4 shrink-0 text-ink-tertiary opacity-0 transition-opacity group-hover/name:opacity-100 group-focus-visible/name:opacity-100 group-focus-within/name:opacity-100 touch:opacity-100" />
@@ -142,7 +142,7 @@ export function PanelHero({ bot, activeState, patch, editorOpen, onToggleEditor 
           onChange={(event) => label.setDraft(event.target.value)}
           onKeyDown={label.onKeyDown}
           onBlur={label.onBlur}
-          className={cn(inlineInputCls, "mt-[3px] w-[200px] max-w-full text-[13px]")}
+          className={cn(inlineInputCls, "mt-0.75 w-50 max-w-full text-base")}
         />
       ) : title && (
         <button
@@ -150,7 +150,7 @@ export function PanelHero({ bot, activeState, patch, editorOpen, onToggleEditor 
           type="button"
           data-panel-label
           onClick={() => label.start(bot.title)}
-          className="mt-px max-w-full truncate rounded-md px-1.5 py-px text-[13px] text-ink-secondary hover:bg-ink/[0.04]"
+          className="mt-px max-w-full truncate rounded-md px-1.5 py-px text-base text-ink-secondary hover:bg-fill-subtle"
         >
           {title}
         </button>

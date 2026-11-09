@@ -14,7 +14,7 @@ export function AppCopyNotice({ instance, className }: { instance: InstanceInfo;
   if (!useAppCopySwitch(instance.instanceId)) return null;
   return (
     <div data-app-copy-notice className={cn("flex items-start gap-2", className)}>
-      <p role="status" className="min-w-0 flex-1 text-[12px] leading-relaxed text-ink-secondary">
+      <p role="status" className="min-w-0 flex-1 text-sm leading-relaxed text-ink-secondary">
         {t("engineSetup.usingAppCopy", { name: instance.displayName })}
       </p>
       <button
@@ -39,8 +39,8 @@ export function AppCopySetup({ instance, className, unframed }: { instance: Inst
           <Check size={14} />
         </span>
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-ink">{t("engineSetup.appCopy.title", { name: instance.displayName })}</div>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+          <div className="text-base font-semibold text-ink">{t("engineSetup.appCopy.title", { name: instance.displayName })}</div>
+          <p className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
             {t("engineSetup.appCopy.description", { name: instance.displayName })}
           </p>
         </div>
@@ -50,7 +50,7 @@ export function AppCopySetup({ instance, className, unframed }: { instance: Inst
         <button
           type="button"
           onClick={() => dispatch(openKeySettings(keyForInstance(instance.instanceId)))}
-          className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-raised-hover"
+          className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-base font-medium text-ink hover:bg-raised-hover"
         >
           <KeyRound size={13} aria-hidden="true" />
           {t("engineSetup.apiKey.open")}

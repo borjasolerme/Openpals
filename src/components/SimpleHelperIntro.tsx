@@ -172,7 +172,7 @@ export function SimpleHelperIntro({ botId, threadId, message, answered, followup
       {typing && bot && (
         <div role="status" data-helper-typing="" className="mt-1.5 flex items-center gap-2">
           <BotAvatar bot={bot} size={32} state="thinking" />
-          <span className="text-[14px] leading-5 text-ink-tertiary">{t("helperIntro.typing")}</span>
+          <span className="text-lg leading-5 text-ink-tertiary">{t("helperIntro.typing")}</span>
         </div>
       )}
       <IntroChips chips={chips} />

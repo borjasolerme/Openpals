@@ -23,7 +23,7 @@ export interface WidgetWhere {
   cell?: boolean;
 }
 
-const RULE = "bg-ink/[0.12]";
+const RULE = "bg-fill-strong";
 
 export function WidgetChildren({ nodes, where }: { nodes: WidgetNode[]; where: WidgetWhere }) {
   return <>{nodes.map((child, index) => <WidgetNodeView key={child.id ?? index} node={child} where={where} />)}</>;
@@ -49,7 +49,7 @@ export function WidgetNodeView({ node, where }: { node: WidgetNode; where: Widge
     case "Label":
       return <LabelNode node={node} where={where} />;
     case "Markdown":
-      return <div className="min-w-0 text-[14px] text-ink [&_.chat-md]:leading-[21px]!"><ChatMarkdown text={widgetString(node, "value") ?? ""} /></div>;
+      return <div className="min-w-0 text-lg text-ink [&_.chat-md]:leading-5.5!"><ChatMarkdown text={widgetString(node, "value") ?? ""} /></div>;
     case "Image":
       return <WidgetImage node={node} where={where} />;
     case "Icon": {
@@ -57,7 +57,7 @@ export function WidgetNodeView({ node, where }: { node: WidgetNode; where: Widge
       const ink = INK[widgetString(node, "color") ?? ""];
       if (!(where.item && where.lead)) return <WidgetGlyph name={node.name} size={size} className={ink} />;
       return (
-        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-inset group-hover/row:bg-composer group-aria-checked/row:bg-composer", ink ?? "text-ink-secondary")}>
+        <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-lg bg-inset group-hover/row:bg-composer group-aria-checked/row:bg-composer", ink ?? "text-ink-secondary")}>
           <WidgetGlyph name={node.name} size={size} />
         </span>
       );
@@ -122,8 +122,8 @@ function Layout({ node, where }: { node: WidgetNode; where: WidgetWhere }) {
     JUSTIFY[widgetString(node, "justify") ?? ""],
     axis === "row" && (node.wrap === true || flows(shown)) && "flex-wrap",
     BACKGROUND[widgetString(node, "background") ?? ""],
-    widgetNumber(node, "border") ? "border-solid border-ink/[0.12]" : null,
-    where.card && node.type === "Row" && (stacked ? "py-2.5" : "min-h-[44px]"),
+    widgetNumber(node, "border") ? "border-solid border-line" : null,
+    where.card && node.type === "Row" && (stacked ? "py-2.5" : "min-h-11"),
   );
   const style: CSSProperties = { gap, ...boxStyle(node) };
   const children = <WidgetChildren nodes={shown} where={{ axis, gap, item: where.item, form: where.form || isForm, room: gap > 0 ? [0, 0] : [8, 8] }} />;
@@ -138,7 +138,7 @@ function Layout({ node, where }: { node: WidgetNode; where: WidgetWhere }) {
   return <form noValidate onSubmit={(event) => event.preventDefault()} onKeyDown={onKeyDown} className={className} style={style}>{children}</form>;
 }
 
-export const WIDGET_ROW = "flex min-h-[60px] w-full min-w-0 rounded-2xl px-2 py-2.5 text-start";
+export const WIDGET_ROW = "flex min-h-15 w-full min-w-0 rounded-2xl px-2 py-2.5 text-start";
 export const WIDGET_ROW_CONTROLS = "button, a, input, select, textarea, label, [role='button']";
 
 /**
@@ -247,7 +247,7 @@ function LabelNode({ node, where }: { node: WidgetNode; where: WidgetWhere }) {
       htmlFor={field && field.type !== "RadioGroup" && field.type !== "DayPicker" ? widgetFieldId(form, field.name) : undefined}
       dir="auto"
       className={cn(
-        "min-w-0", above ? WIDGET_CAPTION : "shrink-0 text-[14px] leading-5 text-ink-secondary",
+        "min-w-0", above ? WIDGET_CAPTION : "shrink-0 text-lg leading-5 text-ink-secondary",
         TEXT_SIZE[widgetString(node, "size") ?? ""]?.[0], WEIGHT[widgetString(node, "weight") ?? ""], INK[widgetString(node, "color") ?? ""],
         TEXT_ALIGN[widgetString(node, "textAlign") ?? ""],
       )}

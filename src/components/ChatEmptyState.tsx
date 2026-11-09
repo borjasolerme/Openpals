@@ -11,13 +11,13 @@ export function EmptyChat({ bot }: { bot: Bot }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-center">
       <BotAvatar bot={bot} state="idle" size={64} motion="none" motionKey={0} />
-      {!advanced ? <div className="text-[17px] font-semibold text-ink">{bot.name}</div> : <RenameTitle
+      {!advanced ? <div className="text-xl font-semibold text-ink">{bot.name}</div> : <RenameTitle
         value={bot.name}
         onCommit={(name) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } })}
-        className="text-[17px] font-semibold text-ink"
-        inputClassName="rounded bg-inset px-1.5 py-0.5 text-center text-[17px] font-semibold"
+        className="text-xl font-semibold text-ink"
+        inputClassName="rounded bg-inset px-1.5 py-0.5 text-center text-xl font-semibold"
       />}
-      <div className="max-w-[360px] text-[14px] text-ink-secondary">
+      <div className="max-w-90 text-lg text-ink-secondary">
         {bot.description || t("chat.emptyPrompt")}
       </div>
     </div>

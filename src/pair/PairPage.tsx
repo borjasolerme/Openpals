@@ -14,9 +14,9 @@ import {
 } from "../lib/session";
 import { pairedDestination } from "../lib/phone-pairing";
 
-const input = "mt-1 w-full rounded-md border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink outline-none focus:border-accent-border";
-const button = "mt-5 w-full rounded-md bg-accent px-4 py-2 text-[14px] font-medium text-accent-ink disabled:opacity-50";
-const fieldLabel = "mt-4 block text-[12px] font-medium text-ink-secondary";
+const input = "mt-1 w-full rounded-md border border-hairline/40 bg-inset px-3 py-2 text-lg text-ink outline-none focus:border-accent-border";
+const button = "mt-5 w-full rounded-md bg-accent px-4 py-2 text-lg font-medium text-accent-ink disabled:opacity-50";
+const fieldLabel = "mt-4 block text-sm font-medium text-ink-secondary";
 
 /** Only the desktop app pairs from a link at once; a browser asks, so a sent link cannot sign it in unseen. */
 export function pairsAutomatically(initialCode: string | null, desktop = placeAvailable()): boolean {
@@ -78,20 +78,20 @@ export function PairPage({ initialCode, reason }: { initialCode: string | null; 
   return (
     <main className="flex min-h-screen items-center justify-center bg-app px-6 text-ink">
       {placeAvailable() && <button type="button" onClick={() => void disconnectServer()}
-        className="absolute left-3 top-12 rounded-md px-2 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink">Back to this computer</button>}
-      <div className="w-full max-w-[420px]">
+        className="absolute left-3 top-12 rounded-md px-2 py-1.5 text-base text-ink-secondary hover:bg-control hover:text-ink">Back to this computer</button>}
+      <div className="w-full max-w-105">
         {opening ? (
-          <p role="status" className="text-[20px] font-semibold">{`Connecting to ${environment?.label ?? `this ${productName()}`}…`}</p>
+          <p role="status" className="text-2xl font-semibold">{`Connecting to ${environment?.label ?? `this ${productName()}`}…`}</p>
         ) : <>
-        <h1 className="text-[20px] font-semibold">{pairTitle(environment)}</h1>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-ink-secondary">
+        <h1 className="text-2xl font-semibold">{pairTitle(environment)}</h1>
+        <p className="mt-1.5 text-lg leading-relaxed text-ink-secondary">
           {environment ? `Version ${environment.version} on ${environment.platform}. ` : ""}
           {PAIR_INTRO}
         </p>
-        {reasonWorthShowing(reason) && !connected ? <p className="mt-3 text-[13px] text-ink-secondary">{reasonWorthShowing(reason)}</p> : null}
+        {reasonWorthShowing(reason) && !connected ? <p className="mt-3 text-base text-ink-secondary">{reasonWorthShowing(reason)}</p> : null}
         </>}
         {opening ? null : connected ? (
-          <p className="mt-4 text-[14px]">
+          <p className="mt-4 text-lg">
             This browser is already connected.{" "}
             <a href="/" className="text-accent underline">
               Open the app
@@ -113,13 +113,13 @@ export function PairPage({ initialCode, reason }: { initialCode: string | null; 
               autoComplete="one-time-code"
               autoCapitalize="characters"
               spellCheck={false}
-              className={`${input} font-mono text-[15px] tracking-[0.12em]`}
+              className={`${input} font-mono text-lg tracking-widest`}
             />
             <label className={fieldLabel} htmlFor="pair-label">
               This device
             </label>
             <input id="pair-label" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={80} className={input} />
-            {error ? <p className="mt-3 text-[13px] text-danger">{error}</p> : null}
+            {error ? <p className="mt-3 text-base text-danger">{error}</p> : null}
             <button type="submit" disabled={busy || code.replace(/[^a-z0-9]/gi, "").length < 12} className={button}>
               {busy ? "Connecting…" : "Connect"}
             </button>

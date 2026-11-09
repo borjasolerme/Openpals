@@ -251,7 +251,7 @@ export function BotContextMenu({
           more.leaveMenu();
         }}
         style={{ top: shown.y, left: shown.x }}
-        className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[198px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
+        className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-49.5 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
       >
         {[
           item(
@@ -266,7 +266,7 @@ export function BotContextMenu({
           moreRow,
           ...(leave.length ? [divider("leave"), ...leave] : []),
         ]}
-        {readError?.botId === bot.id && <p role="alert" className="px-2 py-1.5 text-[12px] text-danger">{readError.message}</p>}
+        {readError?.botId === bot.id && <p role="alert" className="px-2 py-1.5 text-sm text-danger">{readError.message}</p>}
       </div>,
       document.body,
     )}{flyout && createPortal(
@@ -293,7 +293,7 @@ export function BotContextMenu({
           navigateMenu(event);
         }}
         style={{ top: shown.y, left: shown.x }}
-        className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[180px] max-w-[calc(100vw-16px)] animate-pop-in overflow-y-auto overscroll-contain", MENU_SHEET)}
+        className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-45 max-w-[calc(100vw-16px)] animate-pop-in overflow-y-auto overscroll-contain", MENU_SHEET)}
       >
         {moreItems}
       </div>,
@@ -310,7 +310,7 @@ export function BotContextMenu({
       aria-label={t("sidebar.bot.actions", { name: bot.name })}
       onKeyDown={navigateMenu}
       style={{ top: shown.y, left: shown.x }}
-      className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-[198px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
+      className={cn("fixed z-40 max-h-[calc(100dvh-16px)] w-max min-w-49.5 max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain", MENU_SHEET, motion.className)} {...motion.exitProps}
     >
       {[
         item(
@@ -346,7 +346,7 @@ export function BotContextMenu({
           <BotDeleteMenuItem key="delete" deleting={deleting} className={MENU_ITEM} onClick={() => { onClose(); onDelete(bot); }} />,
         ]),
       ]}
-      {readError?.botId === bot.id && <p role="alert" className="px-2 py-1.5 text-[12px] text-danger">{readError.message}</p>}
+      {readError?.botId === bot.id && <p role="alert" className="px-2 py-1.5 text-sm text-danger">{readError.message}</p>}
     </div>,
     document.body,
   )}</>;

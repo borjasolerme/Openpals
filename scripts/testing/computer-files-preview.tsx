@@ -18,7 +18,7 @@ const value = {
 createRoot(document.getElementById("root")!).render(
   <BotEditorStore value={value}>
     <main className="mx-auto flex min-h-screen max-w-md flex-col bg-app pt-6 text-ink">
-      <h1 className="mb-4 px-5 text-lg font-medium">File reviewer · Files</h1>
+      <h1 className="mb-4 px-5 text-2xl font-medium">File reviewer · Files</h1>
       <ComputerFilesPane bot={bot} />
     </main>
   </BotEditorStore>,

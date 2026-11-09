@@ -105,7 +105,7 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
             data-panel-edit="soul"
             aria-label={`${t("botSettings.simple.edit")}: ${t("botSettings.simple.instructions")}`}
             onClick={() => onEditInstructions?.(true)}
-            className={cn(rowCls, "w-full text-left hover:bg-ink/[0.03]")}
+            className={cn(rowCls, "w-full text-left hover:bg-fill-subtle")}
           >
             <RowIcon icon={FileText} />
             <RowText
@@ -123,7 +123,7 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
             <RowIcon icon={ShieldCheck} />
             <RowText title={t("botSettings.simple.beforeActs", { name })} hint={bot.busy ? t("approvalMode.whileWorking") : undefined} />
           </div>
-          <div className="pl-[38px]">
+          <div className="pl-9.5">
             <Segmented
               attr="data-approval-choice"
               label={t("botSettings.simple.beforeActs", { name })}
@@ -133,8 +133,8 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
             />
           </div>
           {approval.choice && (
-            <div data-panel-row="thread-approval" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pl-[38px]">
-              <span className="text-[13px] text-ink-secondary">{t("botPanel.thisConversation")}</span>
+            <div data-panel-row="thread-approval" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pl-9.5">
+              <span className="text-base text-ink-secondary">{t("botPanel.thisConversation")}</span>
               <span className="ms-auto flex">
                 <ApprovalChip choice={approval.choice} />
               </span>
@@ -151,7 +151,7 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
             <RowIcon icon={AudioLines} />
             <RowText title={t("call.mode.menu")} />
           </div>
-          <div className="pl-[38px]">
+          <div className="pl-9.5">
             <Segmented attr="data-call-mode" label={t("call.mode.menu")} value={callMode} onChange={setCallMode} options={callOptions} />
           </div>
         </ColRow>
@@ -167,7 +167,7 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
         />
         <label data-panel-row="job" className={cn(rowCls, "cursor-text")}>
           <RowIcon icon={Tag} />
-          <span className="shrink-0 text-[14px] font-medium text-ink">{t("botSettings.simple.job")}</span>
+          <span className="shrink-0 text-lg font-medium text-ink">{t("botSettings.simple.job")}</span>
           <input
             data-panel-job
             value={jobDraft ?? bot.title}
@@ -186,7 +186,7 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
                 setJobDraft(null);
               }
             }}
-            className="min-w-0 flex-1 bg-transparent text-right text-[13px] text-ink-secondary outline-none placeholder:text-ink-tertiary focus:text-ink"
+            className="min-w-0 flex-1 bg-transparent text-right text-base text-ink-secondary outline-none placeholder:text-ink-tertiary focus:text-ink"
           />
         </label>
       </Card>

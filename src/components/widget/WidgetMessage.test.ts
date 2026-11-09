@@ -121,8 +121,8 @@ describe("drawing a widget", () => {
       "Android: thread pin parity#739 · 2 files · passed 5h agoReady",
       "iOS: file links, send, attach#719 · 9 files · 1 test failingFailing",
     ]);
-    expect(rows[0]!.querySelector(".size-\\[7px\\].bg-success")).not.toBeNull();
-    expect(rows[2]!.querySelector(".size-\\[7px\\].bg-danger")).not.toBeNull();
+    expect(rows[0]!.querySelector(".size-2.bg-success")).not.toBeNull();
+    expect(rows[2]!.querySelector(".size-2.bg-danger")).not.toBeNull();
     expect(rows[0]!.firstElementChild!.className).toContain("size-10");
     expect(button("Merge the two ready")!.className).toContain("bg-accent");
     expect(button("Fix #719 first")!.className).toContain("ring-composer-ring");
@@ -133,11 +133,11 @@ describe("drawing a widget", () => {
       mount(row({ type: "Card", id: "n1", ...(size ? { size } : {}), children: [] }));
       return find('[data-widget="w1"]')!.className;
     };
-    expect(sized("sm")).toContain("max-w-[360px]");
-    expect(sized("md")).toContain("max-w-[440px]");
-    expect(sized("lg")).toContain("max-w-[600px]");
-    expect(sized("full")).toContain("max-w-[600px]");
-    expect(sized()).toContain("max-w-[600px]");
+    expect(sized("sm")).toContain("max-w-90");
+    expect(sized("md")).toContain("max-w-110");
+    expect(sized("lg")).toContain("max-w-150");
+    expect(sized("full")).toContain("max-w-150");
+    expect(sized()).toContain("max-w-150");
   });
 
   it("draws the children of a type it does not know, and nothing for one with none, and never throws", () => {

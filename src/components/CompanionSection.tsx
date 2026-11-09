@@ -161,7 +161,7 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
           {panelStatus && (
             <div className="mb-4 flex items-center justify-between gap-3">
               <div
-                className={`flex items-center gap-2 rounded-full px-2.5 py-1 text-[12px] ${
+                className={`flex items-center gap-2 rounded-full px-2.5 py-1 text-sm ${
                   panelStatus.good ? "bg-success/10 text-success" : "bg-control text-ink-secondary"
                 }`}
               >
@@ -175,14 +175,14 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
       </div>
 
       <details className="rounded-xl border border-hairline/40 bg-card">
-        <summary className="cursor-pointer px-4 py-3.5 text-[13px] font-medium text-ink">
+        <summary className="cursor-pointer px-4 py-3.5 text-base font-medium text-ink">
           {t("remote.advanced")}
         </summary>
         <div className="flex flex-col gap-4 border-t border-hairline/30 px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <div className="text-[13px] text-ink">{t("remote.title")}</div>
-              <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+              <div className="text-base text-ink">{t("remote.title")}</div>
+              <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
                 {t("remote.toggleDetail")}
               </div>
             </div>
@@ -195,8 +195,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
           </div>
 
           <div className="border-t border-hairline/30 pt-4">
-            <div className="text-[13px] text-ink">{t("remote.devices.title")}</div>
-            <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{pairedCount ? t("remote.devices.subtitle", { app: productName() }) : t("remote.devices.empty")}</div>
+            <div className="text-base text-ink">{t("remote.devices.title")}</div>
+            <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">{pairedCount ? t("remote.devices.subtitle", { app: productName() }) : t("remote.devices.empty")}</div>
             <div className="mt-3">
               {pairedCount > 0 && (
                 <ul className="flex flex-col gap-2">
@@ -207,8 +207,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
                           <Smartphone size={15} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="truncate text-[14px] font-medium text-ink">{device.name}</div>
-                          <div className="text-[12px] text-ink-secondary">{t("remote.devices.lastSeen", { when: relative(device.lastSeenAt) })}</div>
+                          <div className="truncate text-lg font-medium text-ink">{device.name}</div>
+                          <div className="text-sm text-ink-secondary">{t("remote.devices.lastSeen", { when: relative(device.lastSeenAt) })}</div>
                         </div>
                         <button
                           disabled={c.busy}
@@ -221,8 +221,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3 border-t border-hairline/30 pt-3">
                         <div>
-                          <div className="text-[12px] text-ink">{t("remote.devices.allowView")}</div>
-                          <div className="mt-0.5 text-[11px] text-ink-secondary">{t("remote.devices.allowViewDetail")}</div>
+                          <div className="text-sm text-ink">{t("remote.devices.allowView")}</div>
+                          <div className="mt-0.5 text-xs text-ink-secondary">{t("remote.devices.allowViewDetail")}</div>
                         </div>
                         <Switch
                           checked={device.cloudDesktopAccess}
@@ -237,8 +237,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3 border-t border-hairline/30 pt-3">
                         <div>
-                          <div className="text-[12px] text-ink">{t("remote.devices.allowBrowser")}</div>
-                          <div className="mt-0.5 text-[11px] text-ink-secondary">{t("remote.devices.allowBrowserDetail")}</div>
+                          <div className="text-sm text-ink">{t("remote.devices.allowBrowser")}</div>
+                          <div className="mt-0.5 text-xs text-ink-secondary">{t("remote.devices.allowBrowserDetail")}</div>
                         </div>
                         <Switch
                           checked={device.browserControlAccess === true}
@@ -257,8 +257,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
           <PhonesList />
 
           <div className="border-t border-hairline/30 pt-4">
-            <div className="text-[13px] text-ink">{t("remote.pairing.tailscale.title")}</div>
-            <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{t("remote.tailscaleCard.subtitle")}</div>
+            <div className="text-base text-ink">{t("remote.pairing.tailscale.title")}</div>
+            <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">{t("remote.tailscaleCard.subtitle")}</div>
             <div className="mt-3">
               <div className="rounded-xl bg-inset px-3 py-3" aria-live="polite">
                 <div className="flex items-start gap-2.5">
@@ -267,8 +267,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
                     className={`mt-0.5 shrink-0 ${tailscaleStatus.kind === "ready" ? "text-success" : "text-ink-secondary"}`}
                   />
                   <div className="min-w-0">
-                    <div className="text-[13px] font-medium text-ink">{tailscaleStatus.title}</div>
-                    <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+                    <div className="text-base font-medium text-ink">{tailscaleStatus.title}</div>
+                    <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
                       {tailscaleStatus.detail}
                     </div>
                   </div>
@@ -284,7 +284,7 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
                   pairingFlow.current?.focus({ preventScroll: true });
                 });
               }}
-              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-40"
+              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-sm text-ink hover:bg-control disabled:opacity-40"
             >
               {t("remote.pairOverTailscale")}
             </button>
@@ -292,7 +292,7 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
             <button
               disabled={c.busy}
               onClick={c.refreshTailscale}
-              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-40"
+              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-sm text-ink hover:bg-control disabled:opacity-40"
             >
               {c.busy ? t("common.checking") : state.enabled ? t("remote.checkAgain") : t("remote.turnOnAndCheck")}
             </button>
@@ -302,8 +302,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
 
           <div className="flex items-center justify-between gap-4 border-t border-hairline/30 pt-4">
             <div className="min-w-0">
-              <div className="text-[13px] text-ink">{t("remote.keepAwake")}</div>
-              <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+              <div className="text-base text-ink">{t("remote.keepAwake")}</div>
+              <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
                 {t("remote.keepAwakeDetail")}
               </div>
             </div>
@@ -316,14 +316,14 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
           </div>
 
           <div className="border-t border-hairline/30 pt-4">
-            <div className="text-[13px] text-ink">{t("remote.connection.title")}</div>
-            <div className="mt-0.5 text-[12px] text-ink-secondary">
+            <div className="text-base text-ink">{t("remote.connection.title")}</div>
+            <div className="mt-0.5 text-sm text-ink-secondary">
               {t("remote.connection.detail")}
             </div>
             <div className="mt-3 flex flex-col gap-2">
               {localRoutes.map((route) => <ConnectionDetail key={`${route.label}:${route.value}`} {...route} />)}
               {localRoutes.length === 0 && (
-                <div className="text-[12px] text-ink-secondary">{t("remote.connection.none")}</div>
+                <div className="text-sm text-ink-secondary">{t("remote.connection.none")}</div>
               )}
             </div>
           </div>
@@ -332,8 +332,8 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
             <div className="flex items-start gap-2.5">
               <Wifi size={15} className="mt-0.5 shrink-0 text-ink-secondary" />
               <div>
-                <div className="text-[13px] text-ink">{t("remote.pairing.wifi.title")}</div>
-                <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">
+                <div className="text-base text-ink">{t("remote.pairing.wifi.title")}</div>
+                <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">
                   {t("remote.wifi.detail")}
                 </div>
               </div>
@@ -341,18 +341,18 @@ export function CompanionSection({ focusRequest = 0 }: { focusRequest?: number }
             <button
               disabled={c.busy}
               onClick={c.useLocal}
-              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-40"
+              className="mt-3 rounded-lg border border-hairline/40 px-3 py-1.5 text-sm text-ink hover:bg-control disabled:opacity-40"
             >
               {t("remote.wifi.pair")}
             </button>
           </div>
 
           {state.enabled && !state.tailscale && (
-            <div className="rounded-lg bg-inset px-3 py-2 text-[12px] leading-relaxed text-ink-secondary">
+            <div className="rounded-lg bg-inset px-3 py-2 text-sm leading-relaxed text-ink-secondary">
               {t("remote.localOnly")}
             </div>
           )}
-          {(c.error || state.error) && <div className="text-[12px] text-danger">{c.error ?? state.error}</div>}
+          {(c.error || state.error) && <div className="text-sm text-danger">{c.error ?? state.error}</div>}
         </div>
       </details>
     </div>

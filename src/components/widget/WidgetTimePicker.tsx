@@ -227,7 +227,7 @@ export function WidgetTimePicker({ node, bare }: { node: WidgetNode; bare: boole
           // preventDefault on mousedown keeps the focus on the trigger.
           onMouseDown={(event) => event.preventDefault()}
           style={{ position: "fixed", ...place, visibility: place ? undefined : "hidden" }}
-          className="popover-surface z-[70] animate-pop-in overflow-y-auto overscroll-contain rounded-xl border border-hairline/50 bg-menu py-1 shadow-2xl shadow-black/50"
+          className="popover-surface z-[70] animate-pop-in overflow-y-auto overscroll-contain rounded-xl border border-hairline/50 bg-menu py-1 shadow-lg shadow-black/50"
         >
           {slots.map((slot, index) => (
             <div
@@ -240,7 +240,7 @@ export function WidgetTimePicker({ node, bare }: { node: WidgetNode; bare: boole
               onMouseMove={() => index !== active && setActive(index)}
               onClick={() => take(index)}
               className={cn(
-                "flex h-8 cursor-pointer items-center gap-2 px-3 text-[14px] leading-5 tabular-nums text-ink",
+                "flex h-8 cursor-pointer items-center gap-2 px-3 text-lg leading-5 tabular-nums text-ink",
                 index === active && "bg-raised", index === chosen && "font-medium",
               )}
             >

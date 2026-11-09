@@ -116,7 +116,7 @@ export function SidebarNewChatPanel({
   };
 
   const rowClass = (index: number) => cn(
-    "flex h-12 w-full items-center gap-3 rounded-2xl px-3 text-start text-[14px] text-ink outline-none focus-visible:bg-raised-hover",
+    "flex h-12 w-full items-center gap-3 rounded-2xl px-3 text-start text-lg text-ink outline-none focus-visible:bg-raised-hover",
     index === selected && "bg-raised-hover",
   );
 
@@ -133,14 +133,14 @@ export function SidebarNewChatPanel({
       style={{ ...style, left: place.left, width: place.width }}
       className={cn(
         "fixed top-0 z-40 flex animate-panel-in flex-col",
-        !place.floating && "bottom-0 border-e border-hairline/40 bg-app shadow-2xl shadow-black/40",
+        !place.floating && "bottom-0 border-e border-hairline/40 bg-app shadow-lg shadow-black/40",
       )}
     >
       <div className={cn(
         "flex h-12 shrink-0 items-center gap-2 px-4",
         place.floating && "rounded-b-2xl bg-app",
       )}>
-        <label htmlFor="new-chat-to" className="shrink-0 text-[14px] text-ink-secondary">{t("sidebar.newChat.to")}</label>
+        <label htmlFor="new-chat-to" className="shrink-0 text-lg text-ink-secondary">{t("sidebar.newChat.to")}</label>
         <input
           id="new-chat-to"
           autoFocus
@@ -152,7 +152,7 @@ export function SidebarNewChatPanel({
           aria-controls="new-chat-bots"
           autoComplete="off"
           spellCheck={false}
-          className="h-7 min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-secondary focus:outline-none"
+          className="h-7 min-w-0 flex-1 bg-transparent text-lg text-ink placeholder:text-ink-secondary focus:outline-none"
         />
         <button
           type="button"
@@ -168,7 +168,7 @@ export function SidebarNewChatPanel({
         id="new-chat-bots"
         role="list"
         style={{ maxHeight }}
-        className="mx-3 mt-2 min-h-0 overflow-y-auto rounded-2xl border border-hairline/60 bg-composer p-1.5 shadow-xl shadow-black/25 [scrollbar-width:thin]"
+        className="mx-3 mt-2 min-h-0 overflow-y-auto rounded-2xl border border-hairline/60 bg-composer p-1.5 shadow-popup shadow-black/25 [scrollbar-width:thin]"
       >
         {actions.map((action, index) => (
           <div role="listitem" key={action.key}>
@@ -185,9 +185,9 @@ export function SidebarNewChatPanel({
           </div>
         ))}
         {state.bots.every((bot) => bot.hidden) ? (
-          <div className="px-3 py-4 text-center text-[13px] text-ink-secondary">{t("sidebar.newChannel.emptyHint")}</div>
+          <div className="px-3 py-4 text-center text-base text-ink-secondary">{t("sidebar.newChannel.emptyHint")}</div>
         ) : bots.length === 0 ? (
-          <div className="px-3 py-4 text-center text-[13px] text-ink-secondary">{t("sidebar.newChat.noMatch", { query: query.trim() })}</div>
+          <div className="px-3 py-4 text-center text-base text-ink-secondary">{t("sidebar.newChat.noMatch", { query: query.trim() })}</div>
         ) : bots.map((bot, i) => {
           const index = actions.length + i;
           const subtext = newChatSubtext(bot);

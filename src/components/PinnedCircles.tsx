@@ -192,7 +192,7 @@ export const PinnedBotCircle = memo(function PinnedBotCircle({
             />
           )}
         </span>
-        <span className="w-full truncate text-center text-[11px] leading-4 text-ink">{bot.name}</span>
+        <span className="w-full truncate text-center text-xs leading-4 text-ink">{bot.name}</span>
       </button>
     </div>
   );

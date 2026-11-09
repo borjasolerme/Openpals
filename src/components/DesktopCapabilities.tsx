@@ -87,5 +87,5 @@ export function captionChrome(windowChrome: DesktopCapabilities["windowChrome"] 
 export function WindowDragStrip() {
   const { dragProps } = useCaptionChrome();
   if (!dragProps.style) return null;
-  return <div aria-hidden data-window-drag-strip {...dragProps} className="pointer-events-none absolute inset-x-0 top-0 h-[52px]" />;
+  return <div aria-hidden data-window-drag-strip {...dragProps} className="pointer-events-none absolute inset-x-0 top-0 h-13" />;
 }

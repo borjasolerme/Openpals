@@ -49,18 +49,18 @@ export function ShareTeamContents({ preview, includeMemory, localSkips }: {
   const skipped = [...localSkips, ...preview.skipped.map((skip) => describeSkip(skip, preview.document))];
   return (
     <div>
-      <div className="text-[12px] font-medium text-ink-secondary">{t("teamShare.included")}</div>
-      <dl className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-xl bg-raised/45 px-4 py-3 text-[13px]">
+      <div className="text-sm font-medium text-ink-secondary">{t("teamShare.included")}</div>
+      <dl className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 rounded-xl bg-raised/45 px-4 py-3 text-base">
         {rows.map(([label, value]) => (
           <div key={label} className="contents">
             <dt className="text-ink-secondary">{label}</dt>
-            <dd className="max-w-[260px] truncate text-right text-ink" title={value}>{value}</dd>
+            <dd className="max-w-65 truncate text-right text-ink" title={value}>{value}</dd>
           </div>
         ))}
       </dl>
       {pkg.connections?.length ? (
         // Security: the whole address shows before Save, since hosted server URLs often carry a key.
-        <div className="mt-3 text-[13px] text-ink-secondary">
+        <div className="mt-3 text-base text-ink-secondary">
           <div className="font-medium text-ink">{t("teamShare.addresses")}</div>
           <ul className="mt-1 space-y-0.5">
             {pkg.connections.map((connection) => (
@@ -69,12 +69,12 @@ export function ShareTeamContents({ preview, includeMemory, localSkips }: {
           </ul>
         </div>
       ) : null}
-      <p className="mt-3 flex items-start gap-2 text-[13px] leading-relaxed text-ink-secondary">
+      <p className="mt-3 flex items-start gap-2 text-base leading-relaxed text-ink-secondary">
         <ShieldCheck size={15} className="mt-0.5 shrink-0 text-success" />
         <span>{t("teamShare.never")}</span>
       </p>
       {preview.redacted.length > 0 && (
-        <div className="mt-3 rounded-xl border border-hairline px-4 py-3 text-[13px] text-ink-secondary">
+        <div className="mt-3 rounded-xl border border-hairline px-4 py-3 text-base text-ink-secondary">
           <div className="font-medium text-ink">{t("teamShare.redacted")}</div>
           <ul className="mt-1 list-disc pl-5">
             {preview.redacted.map((part) => <li key={part}>{describePart(part, preview.document)}</li>)}
@@ -82,7 +82,7 @@ export function ShareTeamContents({ preview, includeMemory, localSkips }: {
         </div>
       )}
       {skipped.length > 0 && (
-        <div className="mt-3 rounded-xl border border-hairline px-4 py-3 text-[13px] text-ink-secondary">
+        <div className="mt-3 rounded-xl border border-hairline px-4 py-3 text-base text-ink-secondary">
           <div className="font-medium text-ink">{t("teamShare.skipped")}</div>
           <ul className="mt-1 list-disc pl-5">
             {skipped.map((line, index) => <li key={`${line}-${index}`}>{line}</li>)}
@@ -102,10 +102,10 @@ export function ShareSkillChoices({ available, ticked, counted, onToggle }: {
   return (
     <div>
       <div className="font-medium">{t("teamShare.includeSkills")}</div>
-      {counted && available.length === 0 && <p className="mt-1 text-[12px] text-ink-secondary">{t("teamShare.noSkills")}</p>}
+      {counted && available.length === 0 && <p className="mt-1 text-sm text-ink-secondary">{t("teamShare.noSkills")}</p>}
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
         {available.map((skill) => (
-          <label key={skill} className="flex items-center gap-1.5 text-[13px]">
+          <label key={skill} className="flex items-center gap-1.5 text-base">
             <input type="checkbox" className="size-3.5 accent-accent" checked={ticked.has(skill)} onChange={() => onToggle(skill)} />
             {skill}
           </label>
@@ -230,14 +230,14 @@ export function ShareTeamDialog({ onClose }: { onClose: () => void }) {
     else next.add(skill);
     setSkillChoice(next);
   };
-  const field = "mt-1 w-full rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-[14px] text-ink disabled:opacity-60";
+  const field = "mt-1 w-full rounded-lg border border-hairline/50 bg-inset px-3 py-2 text-lg text-ink disabled:opacity-60";
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4" onMouseDown={(event) => {
       if (event.target === event.currentTarget && !saving) onClose();
     }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="share-team-title" tabIndex={-1}
-        className="flex max-h-[90vh] w-full max-w-[620px] flex-col overflow-hidden rounded-2xl border border-hairline/50 bg-panel text-ink shadow-2xl outline-none"
+        className="flex max-h-[90vh] w-full max-w-155 flex-col overflow-hidden rounded-2xl border border-hairline/50 bg-panel text-ink shadow-lg outline-none"
         onKeyDown={(event) => {
           if (event.key === "Escape" && !saving) { event.stopPropagation(); onClose(); }
           if (event.key === "Tab") {
@@ -250,16 +250,16 @@ export function ShareTeamDialog({ onClose }: { onClose: () => void }) {
         }}>
         <header className="flex items-start justify-between gap-3 px-6 pb-2 pt-5">
           <div>
-            <h2 id="share-team-title" className="text-[17px] font-semibold">{t("teamShare.title", { name: t("teamLibrary.yourBots") })}</h2>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("teamShare.intro")}</p>
+            <h2 id="share-team-title" className="text-xl font-semibold">{t("teamShare.title", { name: t("teamLibrary.yourBots") })}</h2>
+            <p className="mt-1 text-base leading-relaxed text-ink-secondary">{t("teamShare.intro")}</p>
           </div>
           <button aria-label={t("teamShare.close")} disabled={saving} onClick={onClose} className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised"><X size={18} /></button>
         </header>
 
         {saved ? (
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 pt-2">
-            <p className="flex items-center gap-2 text-[14px] font-medium text-ink"><Check size={16} className="text-success" />{t("teamShare.saved", { filename: saved.filename })}</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("teamShare.savedHint")}</p>
+            <p className="flex items-center gap-2 text-lg font-medium text-ink"><Check size={16} className="text-success" />{t("teamShare.saved", { filename: saved.filename })}</p>
+            <p className="mt-1 text-base leading-relaxed text-ink-secondary">{t("teamShare.savedHint")}</p>
             <div className="mt-4">
               <ShareTeamContents preview={saved} includeMemory={includeMemory} localSkips={includePictures ? pictures?.skipped ?? [] : []} />
             </div>
@@ -268,9 +268,9 @@ export function ShareTeamDialog({ onClose }: { onClose: () => void }) {
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4 pt-2">
             {preview
               ? <ShareTeamContents preview={preview} includeMemory={includeMemory} localSkips={includePictures ? pictures?.skipped ?? [] : []} />
-              : !error && <div className="flex items-center gap-2 py-6 text-[13px] text-ink-secondary"><Loader2 size={15} className="animate-spin" />{t("teamShare.preparing")}</div>}
+              : !error && <div className="flex items-center gap-2 py-6 text-base text-ink-secondary"><Loader2 size={15} className="animate-spin" />{t("teamShare.preparing")}</div>}
 
-            <fieldset className="mt-4 space-y-2 text-[13px]" disabled={saving}>
+            <fieldset className="mt-4 space-y-2 text-base" disabled={saving}>
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="size-4 accent-accent" checked={includePictures} onChange={(event) => setIncludePictures(event.target.checked)} />
                 {t("teamShare.includePictures")}
@@ -279,45 +279,45 @@ export function ShareTeamDialog({ onClose }: { onClose: () => void }) {
                 <input type="checkbox" className="size-4 accent-accent" checked={includeMemory} onChange={(event) => setIncludeMemory(event.target.checked)} />
                 {t("teamShare.includeNotes")}
               </label>
-              <p className="pl-6 text-[12px] leading-relaxed text-ink-secondary">{notesLine(includeMemory)}</p>
+              <p className="pl-6 text-sm leading-relaxed text-ink-secondary">{notesLine(includeMemory)}</p>
               <ShareSkillChoices available={available ?? []} ticked={ticked} counted={available !== null} onToggle={toggleSkill} />
               <label className="flex items-center gap-2 pt-1">
                 <input type="checkbox" className="size-4 accent-accent" checked={includePreset} onChange={(event) => setIncludePreset(event.target.checked)} />
                 {t("teamShare.includePreset")}
               </label>
-              {includePreset && <p className="pl-6 text-[12px] leading-relaxed text-ink-secondary">{t("teamShare.presetHint")}</p>}
+              {includePreset && <p className="pl-6 text-sm leading-relaxed text-ink-secondary">{t("teamShare.presetHint")}</p>}
             </fieldset>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <label className="block text-[13px] text-ink-secondary">{t("teamShare.name")}
+              <label className="block text-base text-ink-secondary">{t("teamShare.name")}
                 <input value={name} maxLength={100} disabled={saving} onChange={(event) => setName(event.target.value)} className={field} />
               </label>
-              <label className="block text-[13px] text-ink-secondary">{t("teamShare.release")}
+              <label className="block text-base text-ink-secondary">{t("teamShare.release")}
                 <input value={release} maxLength={20} disabled={saving} placeholder="1.0.0" onChange={(event) => setRelease(event.target.value)} className={field} />
               </label>
             </div>
-            <p className="mt-1 text-[12px] text-ink-secondary">{t("teamShare.releaseHint")}</p>
-            <label className="mt-3 block text-[13px] text-ink-secondary">{t("teamShare.notes")}
+            <p className="mt-1 text-sm text-ink-secondary">{t("teamShare.releaseHint")}</p>
+            <label className="mt-3 block text-base text-ink-secondary">{t("teamShare.notes")}
               <textarea value={notes} maxLength={4000} rows={2} disabled={saving} onChange={(event) => setNotes(event.target.value)} className={field} />
             </label>
-            <label className="mt-3 block text-[13px] text-ink-secondary">{t("teamShare.tagline")}
+            <label className="mt-3 block text-base text-ink-secondary">{t("teamShare.tagline")}
               <input value={tagline} maxLength={160} disabled={saving} onChange={(event) => setTagline(event.target.value)} className={field} />
             </label>
-            <label className="mt-3 block text-[13px] text-ink-secondary">{t("teamShare.summary")}
+            <label className="mt-3 block text-base text-ink-secondary">{t("teamShare.summary")}
               <textarea value={summary} maxLength={2000} rows={2} disabled={saving} onChange={(event) => setSummary(event.target.value)} className={field} />
             </label>
           </div>
         )}
 
-        {error && <p role="alert" className="mx-6 mb-2 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{error}</p>}
+        {error && <p role="alert" className="mx-6 mb-2 rounded-lg bg-danger/10 px-3 py-2 text-base text-danger">{error}</p>}
         <footer className="flex justify-end gap-2 border-t border-hairline/35 px-6 py-3">
           {saved ? (
-            <button onClick={onClose} className="rounded-lg bg-accent px-4 py-2 text-[13px] font-medium text-white">{t("teamShare.done")}</button>
+            <button onClick={onClose} className="rounded-lg bg-accent px-4 py-2 text-base font-medium text-white">{t("teamShare.done")}</button>
           ) : (
             <>
-              <button disabled={saving} onClick={onClose} className="rounded-lg px-3 py-2 text-[13px] text-ink-secondary hover:bg-raised">{t("common.cancel")}</button>
+              <button disabled={saving} onClick={onClose} className="rounded-lg px-3 py-2 text-base text-ink-secondary hover:bg-raised">{t("common.cancel")}</button>
               <button disabled={saving || !preview || !name.trim()} onClick={() => void save()}
-                className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-[13px] font-medium text-white disabled:opacity-40">
+                className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-base font-medium text-white disabled:opacity-40">
                 {saving && <Loader2 size={14} className="animate-spin" />}
                 {saving ? t("teamShare.saving") : t("teamShare.save")}
               </button>

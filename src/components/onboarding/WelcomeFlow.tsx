@@ -83,17 +83,17 @@ const STEP_LABEL: Readonly<Record<BeatId, LocaleKey>> = {
 function Stepper({ beats, beat, reached, onGo }: { beats: readonly BeatId[]; beat: BeatId; reached: number; onGo: (beat: BeatId) => void }) {
   return (
     <nav aria-label={t("onboarding.steps.label")} className="shrink-0 px-4 pt-2 sm:px-6">
-      <ol className="flex gap-0.5 rounded-xl bg-ink/[0.05] p-1 sm:gap-1">
+      <ol className="flex gap-0.5 rounded-xl bg-fill-subtle p-1 sm:gap-1">
         {beats.map((id, at) => {
           const current = id === beat;
           return (
             <li key={id} className="min-w-0 flex-1">
               <button type="button" data-welcome-step={id} aria-current={current ? "step" : undefined} disabled={at > reached}
                 onClick={() => onGo(id)}
-                className={cn("flex h-8 w-full min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[12px] leading-5 transition-colors disabled:cursor-default sm:gap-1.5 sm:px-1.5 sm:text-[13px]",
-                  current ? "bg-menu font-medium text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08)]" : "text-ink-secondary enabled:hover:text-ink disabled:opacity-50")}>
-                <span aria-hidden="true" className={cn("flex size-[18px] shrink-0 items-center justify-center rounded-full text-[11px] font-medium leading-none",
-                  current ? "bg-ink text-app" : "bg-ink/[0.08]")}>{at + 1}</span>
+                className={cn("flex h-8 w-full min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-sm leading-5 transition-colors disabled:cursor-default sm:gap-1.5 sm:px-1.5 sm:text-base",
+                  current ? "bg-menu font-medium text-ink shadow-sm" : "text-ink-secondary enabled:hover:text-ink disabled:opacity-50")}>
+                <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full text-xs font-medium leading-none",
+                  current ? "bg-ink text-app" : "bg-fill")}>{at + 1}</span>
                 <span className="truncate">{t(STEP_LABEL[id])}</span>
               </button>
             </li>
@@ -238,13 +238,13 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
         tabIndex={-1}
         onKeyDown={onKeyDown}
         data-welcome={beat}
-        className={cn("welcome-screen ui-modal animate-pop-in relative flex max-h-full w-full max-w-[600px] flex-col overflow-hidden rounded-[18px] outline-none",
+        className={cn("welcome-screen ui-modal animate-pop-in relative flex max-h-full w-full max-w-150 flex-col overflow-hidden rounded-4xl outline-none",
           beats.length > 1 && "min-h-[min(560px,100%)]")}
       >
         <div className="flex shrink-0 items-center justify-between gap-3 pl-4 pr-3 pt-3 sm:pl-6">
-          <span className="text-[13px] font-semibold leading-5 text-ink">{productName()}</span>
+          <span className="text-base font-semibold leading-5 text-ink">{productName()}</span>
           <button type="button" data-welcome-close="" onClick={onClose} aria-label={t("onboarding.later")} title={t("onboarding.later")}
-            className="flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink">
+            className="flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-fill hover:text-ink">
             <X size={16} aria-hidden="true" />
           </button>
         </div>
@@ -253,8 +253,8 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
           <div key={beat} className={cn("animate-fade-in flex flex-col gap-5", beat === "welcome" && "items-center pt-6 text-center")}>
             {beat === "welcome" && <HostedWelcomeArt />}
             <div className="flex flex-col gap-1.5">
-              <h1 id="welcome-title" className="text-[20px] font-semibold leading-7 tracking-[-0.01em] text-ink [text-wrap:balance]">{t(heading.title)}</h1>
-              <p className="text-[13px] leading-5 text-ink-secondary [text-wrap:pretty]">{t(heading.line)}</p>
+              <h1 id="welcome-title" className="text-2xl font-semibold leading-7 tracking-tight text-ink [text-wrap:balance]">{t(heading.title)}</h1>
+              <p className="text-base leading-5 text-ink-secondary [text-wrap:pretty]">{t(heading.line)}</p>
             </div>
             {beat === "place" && place && <ConnectStep place={place} choice={choice} onChoose={setChoice} error={placeError} />}
             {beat === "ai" && <AiStep />}

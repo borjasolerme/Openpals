@@ -82,6 +82,6 @@ describe("ActivityRun at narrow widths", () => {
     ];
     const html = renderToStaticMarkup(createElement(ActivityRun, { messages: steps, children: null }));
     expect(html).toMatch(/<button[^>]*class="flex min-w-0 max-w-full /);
-    expect(html).toContain('class="min-w-0 max-w-[480px] truncate font-medium leading-5"');
+    expect(html).toContain('class="min-w-0 max-w-120 truncate font-medium leading-5"');
   });
 });

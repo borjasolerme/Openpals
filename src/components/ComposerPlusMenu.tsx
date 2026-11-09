@@ -36,7 +36,7 @@ export function GoalToggle({ on, onToggle, solo = false, compact = false }: { on
         aria-label={off}
         title={off}
         onClick={onToggle}
-        className="flex h-7 items-center gap-1 whitespace-nowrap rounded-full border border-accent/35 bg-accent/10 px-2.5 text-[13px] text-accent transition-colors hover:bg-accent/15"
+        className="flex h-7 items-center gap-1 whitespace-nowrap rounded-full border border-accent/35 bg-accent/10 px-2.5 text-base text-accent transition-colors hover:bg-accent/15"
       >
         {t(solo ? "composer.goal.soloAria" : "composer.goal.aria")}
         <X size={12} aria-hidden="true" />
@@ -51,7 +51,7 @@ export function GoalToggle({ on, onToggle, solo = false, compact = false }: { on
       title={t(solo ? "composer.goal.soloTitle" : "composer.goal.title")}
       onClick={onToggle}
       className={cn(
-        "flex items-center gap-1.5 whitespace-nowrap rounded-full border text-[13px] transition-colors",
+        "flex items-center gap-1.5 whitespace-nowrap rounded-full border text-base transition-colors",
         compact ? "h-7 px-2.5" : "h-8 px-3",
         on
           ? "border-accent/35 bg-accent/10 text-accent"
@@ -150,8 +150,8 @@ export function ApprovalChip({ choice, quiet = false }: { choice: ApprovalChoice
         <span
           data-approval-chip={current.mode}
           className={cn(
-            "flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-[13px] transition-colors",
-            open ? "bg-ink/[0.11] text-ink" : quiet ? "text-ink-secondary hover:bg-ink/[0.06] hover:text-ink" : "bg-ink/[0.06] text-ink-secondary hover:bg-ink/[0.11] hover:text-ink",
+            "flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-base transition-colors",
+            open ? "bg-fill-strong text-ink" : quiet ? "text-ink-secondary hover:bg-fill hover:text-ink" : "bg-fill text-ink-secondary hover:bg-fill-strong hover:text-ink",
           )}
         >
           <CurrentIcon size={14} aria-hidden="true" />
@@ -227,13 +227,13 @@ export function ComposerPlusMenu({ onAttach, goal, teach, approval, callBotId, e
       className={cn(
         "flex size-11 items-center justify-center rounded-full bg-composer text-ink ring-1 ring-composer-ring transition-colors",
         // An ink tint, not a fill token: in some skins the control fill is the composer's own colour.
-        open ? "bg-ink/[0.12]" : "bg-ink/[0.05] hover:bg-ink/[0.1]",
+        open ? "bg-fill-strong" : "bg-fill-subtle hover:bg-fill",
       )}
     >
       <Plus size={22} aria-hidden="true" />
     </span>
   ) : (
-    <span data-composer-plus className={cn("flex items-center justify-center transition-colors", SIMPLE_CONTROL, open && "bg-ink/[0.09] text-ink")}>
+    <span data-composer-plus className={cn("flex items-center justify-center transition-colors", SIMPLE_CONTROL, open && "bg-fill text-ink")}>
       <Plus size={20} strokeWidth={1.75} absoluteStrokeWidth aria-hidden="true" />
     </span>
   );
@@ -320,7 +320,7 @@ function ComposerMenu({ items, renderTrigger }: { items: SidebarMenuItem[]; rend
           data-composer-menu
           {...motion.exitProps}
           className={cn(
-            "popover-surface absolute bottom-full start-0 z-40 mb-2 w-max min-w-[200px] max-w-[280px] origin-bottom-left rounded-[14px] border-[0.5px] border-ink/10 bg-menu p-1",
+            "popover-surface absolute bottom-full start-0 z-40 mb-2 w-max min-w-50 max-w-70 origin-bottom-left rounded-2xl border-[0.5px] border-line bg-menu p-1",
             motion.className,
           )}
         >
@@ -335,7 +335,7 @@ function ComposerMenu({ items, renderTrigger }: { items: SidebarMenuItem[]; rend
                 close(false);
                 item.onSelect();
               }}
-              className="flex h-[34px] w-full items-center gap-2 rounded-[9px] px-3 text-start text-[15px] text-ink transition-colors hover:bg-menu-hover focus-visible:bg-menu-hover focus-visible:outline-none disabled:opacity-50"
+              className="flex h-8.5 w-full items-center gap-2 rounded-lg px-3 text-start text-lg text-ink transition-colors hover:bg-menu-hover focus-visible:bg-menu-hover focus-visible:outline-none disabled:opacity-50"
             >
               <span className={cn("flex size-3.5 shrink-0 items-center justify-center [&_svg]:size-3.5 [&_svg]:stroke-[1.5]", item.active ? "text-accent" : "text-ink-secondary")} aria-hidden="true">{item.icon}</span>
               <span className="min-w-0 flex-1 truncate">{item.label}</span>

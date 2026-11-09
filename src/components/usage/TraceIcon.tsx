@@ -45,7 +45,7 @@ export function ToolIcon({ icon, app, catalog, error = false }: { icon: TraceToo
     const card = catalog.get(app);
     return (
       <span className={BOX}>
-        <ServiceIcon key={`${card?.logo}:${card?.domain}`} card={{ logo: card?.logo ?? null, domain: card?.domain ?? null, label: card?.label ?? app }} className="size-4 rounded-[4px]" />
+        <ServiceIcon key={`${card?.logo}:${card?.domain}`} card={{ logo: card?.logo ?? null, domain: card?.domain ?? null, label: card?.label ?? app }} className="size-4 rounded-sm" />
       </span>
     );
   }
@@ -74,7 +74,7 @@ export function TurnAvatar({ bot, name }: { bot: Bot | undefined; name: string }
     );
   }
   return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-raised text-[11px] font-semibold text-ink-secondary" aria-hidden>
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-raised text-xs font-semibold text-ink-secondary" aria-hidden>
       {(name || "?").slice(0, 1).toUpperCase()}
     </span>
   );

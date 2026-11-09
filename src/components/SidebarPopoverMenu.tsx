@@ -122,13 +122,13 @@ function MenuRows({
             onPointerEnter={(event) => onRowEnter?.(item, event.currentTarget, { x: event.clientX, y: event.clientY })}
             onPointerLeave={() => onRowLeave?.(item)}
             className={cn(
-              "flex min-h-[30px] w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-[14px] leading-[18px] disabled:opacity-60 focus-visible:bg-menu-hover focus-visible:outline-none",
+              "flex min-h-7.5 w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-lg leading-4.5 disabled:opacity-60 focus-visible:bg-menu-hover focus-visible:outline-none",
               item.active || (item.submenu && openSubmenu === item.key && engaged) ? "bg-menu-active text-ink" : "text-ink hover:bg-menu-hover",
             )}
           >
             {item.icon && (
               <span
-                className={cn("flex size-4 shrink-0 items-center justify-center [&>svg]:size-4", item.wrap && "h-[18px] self-start", item.active ? "text-accent" : "text-ink-secondary")}
+                className={cn("flex size-4 shrink-0 items-center justify-center [&>svg]:size-4", item.wrap && "h-4.5 self-start", item.active ? "text-accent" : "text-ink-secondary")}
               >
                 {item.icon}
               </span>
@@ -136,13 +136,13 @@ function MenuRows({
             {item.subtitle || item.note ? (
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className={item.wrap ? "break-words" : "truncate"}>{item.label}</span>
-                {item.subtitle && <span className="truncate text-[12px] font-normal leading-4 text-ink-secondary">{item.subtitle}</span>}
-                {item.note && <span className="text-[12px] font-normal leading-snug text-ink-tertiary">{item.note}</span>}
+                {item.subtitle && <span className="truncate text-sm font-normal text-ink-secondary">{item.subtitle}</span>}
+                {item.note && <span className="text-sm font-normal leading-snug text-ink-tertiary">{item.note}</span>}
               </span>
             ) : (
               <span className={cn("flex-1", item.wrap ? "min-w-0 break-words" : "truncate")}>{item.label}</span>
             )}
-            {item.value && <span className="shrink-0 text-[13px] font-normal leading-[18px] tabular-nums text-ink-secondary">{item.value}</span>}
+            {item.value && <span className="shrink-0 text-base font-normal tabular-nums text-ink-secondary">{item.value}</span>}
             {item.trailing}
             {item.attention && <span className="size-2 shrink-0 rounded-full bg-danger" />}
             {(item.submenu || item.chevron) && <ChevronRight size={14} aria-hidden className="-me-0.5 shrink-0 text-ink-secondary rtl:-scale-x-100" />}

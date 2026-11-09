@@ -59,7 +59,7 @@ export function BringBots({ brought, onBrought }: { brought: BroughtBots; onBrou
         )}
       </div>
       {done && (
-        <p role="status" data-bots-brought="" className="flex items-center gap-1.5 text-[12px] leading-4 text-success">
+        <p role="status" data-bots-brought="" className="flex items-center gap-1.5 text-sm text-success">
           <Check size={13} strokeWidth={2.5} aria-hidden="true" />
           {t("onboarding.bots.ready", { names: [...(brought.pal && maus ? [maus.name] : []), ...brought.moved.map((bot) => bot.name)].join(", ") })}
         </p>

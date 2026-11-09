@@ -282,9 +282,9 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           <WindowDragStrip />
           <div className="w-full max-w-md"><ChatNotice notice={state.notice} /></div>
           {loading.busy && <Loader2 size={20} className="animate-spin" />}
-          <div className="text-[14px]">{t(loading.text)}</div>
+          <div className="text-lg">{t(loading.text)}</div>
           {loading.command && (
-            <div className="text-[12px]">
+            <div className="text-sm">
             {t("app.loading.startServer")} <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
             </div>
           )}
@@ -325,7 +325,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         aria-hidden
         data-drawer-button-no-drag
         style={captionChrome.noDragStyle}
-        className="pointer-events-none absolute left-3 top-3 size-[30px] md:hidden"
+        className="pointer-events-none absolute left-3 top-3 size-7.5 md:hidden"
       />}
       </div>
       {/* Last child on purpose: Blink resolves -webkit-app-region in DOM order, so no-drag buttons must follow every drag region. */}

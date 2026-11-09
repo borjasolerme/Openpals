@@ -436,7 +436,7 @@ export function PluginsPanel() {
     : search
       ? t("connectors.section.results")
       : category ? appCategoryLabel(category) : (sections.length > 1 ? t("apps.section.all") : t("connectors.section.available"));
-  const pill = "inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-full px-3 text-[13px] font-medium leading-5 transition-colors";
+  const pill = "inline-flex h-7 shrink-0 items-center justify-center gap-2 rounded-full px-3 text-base font-medium leading-5 transition-colors";
   const pillTone = (selected: boolean) => selected
     ? "bg-ink text-app"
     : "bg-control/70 text-ink-secondary hover:bg-raised-hover hover:text-ink";
@@ -456,12 +456,12 @@ export function PluginsPanel() {
         aria-modal="true"
         aria-labelledby="plugins-title"
         tabIndex={-1}
-        className="glass-surface glass-popup animate-pop-in relative flex max-w-[780px] flex-col overflow-hidden rounded-2xl"
+        className="glass-surface glass-popup animate-pop-in relative flex max-w-195 flex-col overflow-hidden rounded-2xl"
       >
         <header className="flex flex-col gap-4 px-5 pb-4 pt-5 sm:px-7 sm:pt-6">
           <div>
           <div className="flex items-center justify-between gap-3">
-            <h2 id="plugins-title" className="min-w-0 truncate text-[20px] font-semibold leading-7 tracking-[-0.01em] text-ink">{t("apps.title")}</h2>
+            <h2 id="plugins-title" className="min-w-0 truncate text-2xl font-semibold leading-7 tracking-tight text-ink">{t("apps.title")}</h2>
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
@@ -469,7 +469,7 @@ export function PluginsPanel() {
                 aria-pressed={filter === "connected"}
                 onClick={() => chooseFilter(filter === "connected" ? "all" : "connected")}
                 className={cn(
-                  "inline-flex h-8 items-center gap-2 rounded-full ps-1.5 pe-2 text-[13px] font-medium leading-5 transition-colors",
+                  "inline-flex h-8 items-center gap-2 rounded-full ps-1.5 pe-2 text-base font-medium leading-5 transition-colors",
                   filter === "connected" ? "bg-raised text-ink" : "text-ink-secondary hover:bg-raised/60 hover:text-ink",
                 )}
               >
@@ -505,7 +505,7 @@ export function PluginsPanel() {
               </button>
             </div>
           </div>
-          <p className="mt-0.5 text-[13px] leading-5 text-ink-secondary">{t("apps.subtitle")}</p>
+          <p className="mt-0.5 text-base leading-5 text-ink-secondary">{t("apps.subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <label className="flex h-9 min-w-0 flex-1 items-center gap-2.5 rounded-full bg-control/70 px-3.5 focus-within:ring-1 focus-within:ring-accent">
@@ -515,7 +515,7 @@ export function PluginsPanel() {
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder={t("connectors.searchPlaceholder")}
                 aria-label={t("connectors.searchPlaceholder")}
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                className="min-w-0 flex-1 bg-transparent text-lg text-ink placeholder:text-ink-secondary focus:outline-none"
               />
             </label>
             <button
@@ -569,7 +569,7 @@ export function PluginsPanel() {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-7 sm:px-7">
           {stale && (
-            <div className="mb-3 flex items-start gap-2 rounded-xl bg-warning/10 px-3 py-2 text-[13px] text-warning">
+            <div className="mb-3 flex items-start gap-2 rounded-xl bg-warning/10 px-3 py-2 text-base text-warning">
               <TriangleAlert size={14} className="mt-px shrink-0" />
               <span>
                 {t("connectors.stale")}
@@ -577,7 +577,7 @@ export function PluginsPanel() {
             </div>
           )}
           {setupNotice && filter !== "mcp" && (
-            <div className="mb-3 rounded-xl bg-control/50 px-4 py-3 text-[13px] text-ink-secondary">
+            <div className="mb-3 rounded-xl bg-control/50 px-4 py-3 text-base text-ink-secondary">
               {connectedHosted.length > 0
                 ? t("hostedMcp.otherAppsSetup", { services: new Intl.ListFormat(activeLocale(), { style: "long", type: "conjunction" }).format(connectedHosted.map((app) => app.label)) })
                 : t(setupNotice)}{" "}
@@ -590,7 +590,7 @@ export function PluginsPanel() {
             </div>
           )}
           {botsWithoutApps.length > 0 && (
-            <div className="mb-3 rounded-xl bg-control/50 px-4 py-3 text-[13px] leading-relaxed text-ink-secondary">
+            <div className="mb-3 rounded-xl bg-control/50 px-4 py-3 text-base leading-relaxed text-ink-secondary">
               <span className="font-medium text-ink">{t("connectors.perBot.title")}</span>{" "}
               {t("connectors.perBot.body")}
               <div className="mt-2 flex flex-wrap gap-2">
@@ -608,7 +608,7 @@ export function PluginsPanel() {
             </div>
           )}
           {configured && source === "curated" && filter !== "mcp" && (
-            <div className="mb-3 text-[12px] text-ink-secondary">
+            <div className="mb-3 text-sm text-ink-secondary">
               {t("connectors.featuredBefore")}{" "}
               <button
                 className="underline underline-offset-2 hover:text-ink"
@@ -622,7 +622,7 @@ export function PluginsPanel() {
               {t("connectors.featuredAfter")}
             </div>
           )}
-          {error && <div role="alert" className="mb-3 rounded-xl bg-danger/10 px-3 py-2 text-[12px] text-danger">{typeof error === "string" ? error : t(error.key)}</div>}
+          {error && <div role="alert" className="mb-3 rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">{typeof error === "string" ? error : t(error.key)}</div>}
 
           {filter !== "mcp" && (
             <div data-apps-grid className="@container flex flex-col gap-7 pt-1">
@@ -663,7 +663,7 @@ export function PluginsPanel() {
                 after={(
                   <>
                     {cards === null && (
-                      <div className="flex items-center justify-center gap-2 py-24 text-[13px] text-ink-secondary">
+                      <div className="flex items-center justify-center gap-2 py-24 text-base text-ink-secondary">
                         <Loader2 size={14} className="animate-spin" /> {t("connectors.loadingCatalog")}
                       </div>
                     )}
@@ -680,10 +680,10 @@ export function PluginsPanel() {
                     )}
                     {cards !== null && allShown.length === 0 && !nativeCardsShown && sections.length <= 1 && (
                       <div className="flex min-h-40 flex-col items-center justify-center text-center">
-                        <div className="text-[14px] font-medium text-ink">
+                        <div className="text-lg font-medium text-ink">
                           {filter === "connected" ? connectedEmptyCopy.title : t("connectors.noAppsFound")}
                         </div>
-                        <div className="mt-1 text-[13px] text-ink-secondary">
+                        <div className="mt-1 text-base text-ink-secondary">
                           {filter === "connected" ? connectedEmptyCopy.description : t("connectors.tryDifferentSearch")}
                         </div>
                         {filter === "connected" && inventoryPhase === "error" && (
@@ -753,10 +753,10 @@ export function PluginsPanel() {
         className="flex min-w-0 flex-col rounded-xl px-2 py-2 transition-colors hover:bg-raised/40"
       >
         <div className="flex items-center gap-3">
-          <ServiceIcon card={card} className="size-10 shrink-0 rounded-[10px]" />
+          <ServiceIcon card={card} className="size-10 shrink-0 rounded-lg" />
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-[14px] font-semibold leading-5 text-ink">{card.label}</span>
+              <span className="truncate text-lg font-semibold leading-5 text-ink">{card.label}</span>
               {connected && !pending && (
                 <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-label={t("apps.connected")} />
               )}
@@ -779,7 +779,7 @@ export function PluginsPanel() {
                 </span>
               )}
             </div>
-            <div className="truncate text-[13px] leading-[18px] text-ink-secondary" title={description}>
+            <div className="truncate text-base text-ink-secondary" title={description}>
               {description}
             </div>
           </div>
@@ -802,7 +802,7 @@ export function PluginsPanel() {
                 setAliasDraft("");
               }
             }}
-            className="inline-flex h-7 min-w-[64px] shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-[13px] font-medium leading-5 text-ink transition-colors hover:bg-raised-hover disabled:opacity-40"
+            className="inline-flex h-7 min-w-16 shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-base font-medium leading-5 text-ink transition-colors hover:bg-raised-hover disabled:opacity-40"
           >
             {busy ? (
               <Loader2 size={14} className="animate-spin" />
@@ -819,14 +819,14 @@ export function PluginsPanel() {
             )}
           </button>
         </div>
-        <div className="ps-[52px]">
+        <div className="ps-13">
           {authorizationUrl && (
             <a href={authorizationUrl} target="_blank" rel="noopener noreferrer" onClick={(event) => {
               if (!reusableConnectionUrl(pendingAuthorization)) {
                 event.preventDefault();
                 void connect(card.slug);
               }
-            }} className="mt-1.5 inline-block text-[12px] text-accent-text underline underline-offset-2">
+            }} className="mt-1.5 inline-block text-sm text-accent-text underline underline-offset-2">
               {t("connectors.openAuthorizationPage")}
             </a>
           )}
@@ -836,7 +836,7 @@ export function PluginsPanel() {
                 const active = /^active$/i.test(account.status);
                 const reconnectable = needsReconnect(account) && account.id !== reconnect?.id;
                 return (
-                  <div key={account.id} className="flex min-w-0 items-center gap-2 text-[12px] leading-5">
+                  <div key={account.id} className="flex min-w-0 items-center gap-2 text-sm leading-5">
                     {active ? <Check size={12} className="shrink-0 text-success" /> : <span className="size-3 shrink-0" />}
                     <span className="min-w-0 truncate text-ink" title={`${account.alias ? `${account.id} · ` : ""}${account.status.toLowerCase()}`}>
                       {account.alias || account.id}
@@ -847,7 +847,7 @@ export function PluginsPanel() {
                         type="button"
                         disabled={busy}
                         onClick={() => void connect(card.slug, account.alias, account)}
-                        className="ms-auto shrink-0 rounded-full px-2 text-[12px] font-medium leading-5 text-accent-text transition-colors hover:bg-raised-hover disabled:opacity-40"
+                        className="ms-auto shrink-0 rounded-full px-2 text-sm font-medium leading-5 text-accent-text transition-colors hover:bg-raised-hover disabled:opacity-40"
                         aria-label={t("connectors.reconnectAria", { account: account.alias || account.id, service: card.label })}
                       >
                         {t("connectors.action.reconnect")}
@@ -860,7 +860,7 @@ export function PluginsPanel() {
                         if (!window.confirm(disconnectAccountConfirmation(card.label, account))) return;
                         disconnectAccount(card.slug, account.id);
                       }}
-                      className={cn("shrink-0 rounded-full px-2 text-[12px] font-medium leading-5 text-ink-secondary transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-40", !reconnectable && "ms-auto")}
+                      className={cn("shrink-0 rounded-full px-2 text-sm font-medium leading-5 text-ink-secondary transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-40", !reconnectable && "ms-auto")}
                       aria-label={t("connectors.disconnectAria", {
                         account: account.alias || account.id,
                         service: card.label,
@@ -889,7 +889,7 @@ export function PluginsPanel() {
               </span>
             ));
             return (
-              <div className="mt-1.5 text-[12px] leading-relaxed text-ink-secondary">
+              <div className="mt-1.5 text-sm leading-relaxed text-ink-secondary">
                 <span>{t("connectors.grants.limited", { count: limited.length })}</span>{" "}
                 {names}
                 {limited.length > 4 && <span>{t("connectors.grants.more", { count: limited.length - 4 })}</span>}
@@ -918,12 +918,12 @@ export function PluginsPanel() {
                 aria-label={accounts.length > 0
                   ? t("connectors.aliasAriaAnother", { service: card.label })
                   : t("connectors.aliasAriaNew", { service: card.label })}
-                className="h-8 min-w-0 flex-1 rounded-full bg-inset px-3 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent"
+                className="h-8 min-w-0 flex-1 rounded-full bg-inset px-3 text-base text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent"
               />
               <button
                 type="submit"
                 disabled={busy || !aliasDraft.trim()}
-                className="inline-flex h-7 shrink-0 items-center rounded-full bg-accent px-3 text-[13px] font-medium leading-5 text-accent-ink disabled:opacity-40"
+                className="inline-flex h-7 shrink-0 items-center rounded-full bg-accent px-3 text-base font-medium leading-5 text-accent-ink disabled:opacity-40"
               >
                 {t("connectors.action.continue")}
               </button>

@@ -13,7 +13,7 @@ describe("composer reply strip", () => {
 
   it("is one soft strip: arrow, one-line excerpt, x", () => {
     expect(html).toContain("rounded-2xl");
-    expect(html).toContain("bg-ink/[0.06]");
+    expect(html).toContain("bg-fill");
     expect(html).not.toMatch(/border-s|border-accent/);
     expect(html).toContain("truncate");
     expect(html).toContain("The user answered your questions.");
@@ -35,7 +35,7 @@ describe("reply quote in a sent message", () => {
   it("uses the same strip family, without the accent border", () => {
     const html = renderToStaticMarkup(createElement(ReplyQuote, { message: target, compact: true, onJump: () => {} }));
     expect(html).toContain("rounded-2xl");
-    expect(html).toContain("bg-ink/[0.06]");
+    expect(html).toContain("bg-fill");
     expect(html).not.toMatch(/border-s|border-accent/);
     expect(html).toContain(">Willow<");
   });

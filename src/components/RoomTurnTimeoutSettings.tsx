@@ -49,11 +49,11 @@ export function RoomTurnTimeoutSettings() {
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="room-turn-timeout" className="text-[13px] font-medium text-ink">
+      <label htmlFor="room-turn-timeout" className="text-base font-medium text-ink">
         {t("settings.roomTurns.label")}
       </label>
       <div
-        className={`flex max-w-[220px] items-center rounded-lg border bg-inset ${
+        className={`flex max-w-55 items-center rounded-lg border bg-inset ${
           error ? "border-danger/60" : "border-hairline/40 focus-within:border-focus"
         }`}
       >
@@ -77,15 +77,15 @@ export function RoomTurnTimeoutSettings() {
           onKeyDown={(event) => {
             if (event.key === "Enter") event.currentTarget.blur();
           }}
-          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-[14px] tabular-nums text-ink focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent px-3 py-2 text-lg tabular-nums text-ink focus:outline-none"
         />
-        <span className="pr-3 text-[13px] text-ink-secondary">{t("settings.roomTurns.minutes")}</span>
+        <span className="pr-3 text-base text-ink-secondary">{t("settings.roomTurns.minutes")}</span>
       </div>
-      <p id="room-turn-timeout-help" className="text-[12px] leading-relaxed text-ink-secondary">
+      <p id="room-turn-timeout-help" className="text-sm leading-relaxed text-ink-secondary">
         {t("settings.roomTurns.help")}
       </p>
       {error ? (
-        <p id="room-turn-timeout-error" role="alert" className="text-[12px] text-danger">
+        <p id="room-turn-timeout-error" role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}

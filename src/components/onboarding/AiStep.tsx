@@ -37,7 +37,7 @@ function AiRow({ instance, tested, onDialog }: { instance: InstanceInfo; tested:
       const link = slot.link;
       return (
         <button type="button" data-sign-in="waiting" onClick={() => void openExternalLink(link).catch(() => {})}
-          className="flex shrink-0 items-center gap-1.5 text-[13px] text-ink-secondary transition-colors hover:text-ink">
+          className="flex shrink-0 items-center gap-1.5 text-base text-ink-secondary transition-colors hover:text-ink">
           <LoaderCircle size={14} aria-hidden="true" className="animate-spin" />{t("onboarding.ai.waiting", { name })}
         </button>
       );
@@ -57,7 +57,7 @@ function AiRow({ instance, tested, onDialog }: { instance: InstanceInfo; tested:
   return (
     <Row data-ai-row={instance.instanceId} icon={<InstanceProviderMark instance={instance} size={16} />} title={name} hint={hint} trailing={end()}>
       {below && <SignInSlot pill={pill} name={name} />}
-      {pill.error && <p role="alert" className="text-[12px] leading-4 text-danger">{pill.error}</p>}
+      {pill.error && <p role="alert" className="text-sm text-danger">{pill.error}</p>}
     </Row>
   );
 }
@@ -81,7 +81,7 @@ export function AiStep() {
               tested={tested?.instance.instanceId === instance.instanceId ? tested : null} />
           ))}
         </div>
-      ) : state.instances.length === 0 && <p aria-live="polite" className="text-[13px] text-ink-secondary">{t("common.checking")}</p>}
+      ) : state.instances.length === 0 && <p aria-live="polite" className="text-base text-ink-secondary">{t("common.checking")}</p>}
       {tested?.state === "failed" && <SilentAi tested={tested} />}
       <button type="button" onClick={() => setDialog(true)} className={QUIET}>{t("onboarding.ai.otherWays")}</button>
       {dialog && <ConnectAiDialog tested={tested} onClose={() => setDialog(false)} />}

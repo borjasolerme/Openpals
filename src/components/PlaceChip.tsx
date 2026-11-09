@@ -141,7 +141,7 @@ export function PlaceChip({ bot, task, live, disabled = false, onPin }: {
         {showLive && <span className="absolute right-1.5 top-1.5 size-1.5 animate-pulse rounded-full bg-success" aria-label={t("place.live")} />}
       </button>
       {motion.shown && (
-        <div role="menu" aria-label={t("place.chipTitle")} className={cn("absolute bottom-full left-0 z-40 mb-2 w-[300px] overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}>
+        <div role="menu" aria-label={t("place.chipTitle")} className={cn("absolute bottom-full left-0 z-40 mb-2 w-75 overflow-hidden", MENU_SHEET, motion.className)} {...motion.exitProps}>
           <div className={MENU_HEADING}>{t("place.chipTitle")}</div>
           <div className="flex flex-col gap-1">
             <button
@@ -153,8 +153,8 @@ export function PlaceChip({ bot, task, live, disabled = false, onPin }: {
             >
               <PlaceIcon place={botDefault} size={16} className="mt-px shrink-0 text-ink-secondary" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] leading-[18px] text-ink">{followsAuto ? t("place.auto") : t("place.followBot")}</span>
-                <span className="block text-[12px] leading-4 text-ink-secondary">
+                <span className="block text-lg leading-4.5 text-ink">{followsAuto ? t("place.auto") : t("place.followBot")}</span>
+                <span className="block text-sm text-ink-secondary">
                   {followsAuto ? t("place.autoDetail") : t("place.followBotDetail", { place: t(placeLabelKey(botDefault)) })}
                 </span>
               </span>
@@ -177,8 +177,8 @@ export function PlaceChip({ bot, task, live, disabled = false, onPin }: {
                 >
                   <PlaceIcon place={place} size={16} className="mt-px shrink-0 text-ink-secondary" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] leading-[18px] text-ink">{t(placeLabelKey(place))}</span>
-                    <span className="block text-[12px] leading-4 text-ink-secondary">{detail}</span>
+                    <span className="block text-lg leading-4.5 text-ink">{t(placeLabelKey(place))}</span>
+                    <span className="block text-sm text-ink-secondary">{detail}</span>
                   </span>
                   {selected && <Check size={14} className="mt-0.5 shrink-0 text-accent" aria-hidden="true" />}
                 </button>

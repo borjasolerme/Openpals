@@ -121,20 +121,20 @@ export function AutomationsCalendar({ botFilter, selectedAutomationId, onOpenAut
     setEditor({ kind: "call", at: liveSelected.at, durationMinutes: liveSelected.call.durationMinutes, botIds: liveSelected.call.botIds, call: liveSelected.call });
     setSelected(null);
   };
-  const segment = (active: boolean) => cn("rounded-md px-3 py-1 text-[12px] font-medium", active ? "bg-raised text-ink shadow-sm" : "text-ink-secondary hover:text-ink");
+  const segment = (active: boolean) => cn("rounded-md px-3 py-1 text-sm font-medium", active ? "bg-raised text-ink shadow-sm" : "text-ink-secondary hover:text-ink");
 
   return (
     <div className="@container/routines relative flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-hairline/30 px-4 py-2">
         <button type="button" onClick={() => setAnchor((current) => addDays(current, -days))} className="rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={t("routines.previous")}><ChevronLeft size={16} /></button>
         <button type="button" onClick={() => setAnchor((current) => addDays(current, days))} className="rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink" aria-label={t("routines.next")}><ChevronRight size={16} /></button>
-        <div className="min-w-0 truncate px-1 text-[14px] font-medium text-ink" aria-live="polite">{calendarRangeLabel(rangeStart, days)}</div>
-        <button type="button" onClick={() => setAnchor(startOfDay(Date.now()))} className="rounded-lg border border-hairline/50 px-2.5 py-1 text-[12px] font-medium text-ink hover:bg-raised">{t("routines.today")}</button>
+        <div className="min-w-0 truncate px-1 text-lg font-medium text-ink" aria-live="polite">{calendarRangeLabel(rangeStart, days)}</div>
+        <button type="button" onClick={() => setAnchor(startOfDay(Date.now()))} className="rounded-lg border border-hairline/50 px-2.5 py-1 text-sm font-medium text-ink hover:bg-raised">{t("routines.today")}</button>
         <div role="group" className="ml-auto flex items-center rounded-lg border border-hairline/50 bg-panel p-0.5" aria-label={t("routines.view.label")}>
           <button type="button" aria-pressed={days === 1} onClick={() => setDays(1)} className={segment(days === 1)}>{t("routines.view.day")}</button>
           <button type="button" aria-pressed={days === 7} onClick={() => setDays(7)} className={segment(days === 7)}>{t("routines.view.week")}</button>
         </div>
-        {error && <button type="button" onClick={() => setError("")} className="w-full text-left text-[12px] text-danger">{error}</button>}
+        {error && <button type="button" onClick={() => setError("")} className="w-full text-left text-sm text-danger">{error}</button>}
       </div>
       <div className="relative flex min-h-0 flex-1">
         {!liveSelected && <div className="hidden shrink-0 @min-[1040px]/routines:block"><CalendarSidebar bots={visibleBots} anchor={anchor} onSelectDate={(at) => setAnchor(startOfDay(at))} /></div>}
@@ -144,7 +144,7 @@ export function AutomationsCalendar({ botFilter, selectedAutomationId, onOpenAut
           onMove={(item, at) => void moveEvent(item, at)} onResize={(item, duration) => void resizeEvent(item, duration)}
           markers={markers} onDropOnReset={(drop, marker) => void dropOnReset(drop, marker)} />
         {liveSelected && (
-          <div className="absolute inset-y-0 right-0 z-30 flex shadow-2xl @min-[760px]/routines:static @min-[760px]/routines:shadow-none">
+          <div className="absolute inset-y-0 right-0 z-30 flex shadow-lg @min-[760px]/routines:static @min-[760px]/routines:shadow-none">
             <EventDetails key={`${liveSelected.kind}:${liveSelected.id}`} item={liveSelected} bots={state.bots} onClose={() => setSelected(null)} onEdit={editSelected} onOpenRun={openRun}
               onCallChanged={(id) => { if (id) setCalls((current) => current.filter((call) => call.id !== id)); else void loadCalls(); }} onOpenRoom={onOpenRoom} />
           </div>

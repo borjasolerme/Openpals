@@ -5,7 +5,7 @@ export const ALIGN: Record<string, string> = { start: "items-start", center: "it
 export const JUSTIFY: Record<string, string> = {
   start: "justify-start", center: "justify-center", end: "justify-end", between: "justify-between", around: "justify-around", evenly: "justify-evenly", stretch: "justify-stretch",
 };
-export const BACKGROUND: Record<string, string> = { surface: "bg-composer", secondary: "bg-inset", tertiary: "bg-ink/[0.07]", elevated: "bg-card" };
+export const BACKGROUND: Record<string, string> = { surface: "bg-composer", secondary: "bg-inset", tertiary: "bg-fill", elevated: "bg-card" };
 export const INK: Record<string, string> = {
   primary: "text-ink", secondary: "text-ink-secondary", tertiary: "text-ink-tertiary", success: "text-success", warning: "text-warning", danger: "text-danger",
 };

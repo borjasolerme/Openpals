@@ -439,13 +439,13 @@ export function SettingsModal() {
           className="glass-surface glass-popup animate-pop-in relative flex overflow-hidden rounded-2xl text-ink"
         >
           <span id="app-settings-title" className="sr-only">{t("settings.title")}</span>
-          <nav aria-label={t("settings.title")} className="glass-rail hidden min-h-0 w-[198px] shrink-0 flex-col gap-0.5 overflow-y-auto px-3 py-4 sm:flex">
+          <nav aria-label={t("settings.title")} className="glass-rail hidden min-h-0 w-49.5 shrink-0 flex-col gap-0.5 overflow-y-auto px-3 py-4 sm:flex">
             {searchField(
-              "mb-2 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] text-[13px] focus-within:ring-2 focus-within:ring-focus/60",
-              "w-full min-w-0 bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none",
+              "mb-2 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
+              "w-full min-w-0 bg-transparent text-base text-ink placeholder:text-ink-secondary focus:outline-none",
             )}
             {visiblePages.length === 0 && advancedMatches.length === 0 && keyResults.length === 0 && (
-              <div className="px-[9px] py-3 text-[13px] leading-[18px] text-ink-secondary">{t("settings.noMatch", { query: query.trim() })}</div>
+              <div className="px-2 py-3 text-base text-ink-secondary">{t("settings.noMatch", { query: query.trim() })}</div>
             )}
             {visiblePages.map((page) => {
               const Icon = page.icon;
@@ -458,8 +458,8 @@ export function SettingsModal() {
                   onClick={() => goTo(page.sections[0]!)}
                   aria-current={current ? "page" : undefined}
                   className={cn(
-                    "flex h-8 shrink-0 cursor-pointer items-center gap-[9px] rounded-lg px-[9px] text-left text-[13px] text-ink transition-colors motion-reduce:transition-none",
-                    current ? "bg-ink/[0.08]" : "hover:bg-ink/[0.06]",
+                    "flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-left text-base text-ink transition-colors motion-reduce:transition-none",
+                    current ? "bg-fill" : "hover:bg-fill",
                   )}
                 >
                   <Icon size={15} aria-hidden="true" className="shrink-0" />
@@ -473,12 +473,12 @@ export function SettingsModal() {
                 type="button"
                 data-settings-advanced-only={key}
                 onClick={() => { setQuery(""); goTo("general"); setReveal("advanced-mode"); }}
-                className="flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-[9px] py-1.5 text-left text-[13px] leading-[18px] text-ink transition-colors hover:bg-ink/[0.06] motion-reduce:transition-none"
+                className="flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-2 py-1.5 text-left text-base text-ink transition-colors hover:bg-fill motion-reduce:transition-none"
               >
                 <span>{t(key)} <span className="text-ink-secondary">· {t("settings.simple.advanced")}</span></span>
               </button>
             ))}
-            {keyResultButtons("flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-[9px] py-1.5 text-left text-[13px] leading-[18px] text-ink transition-colors hover:bg-ink/[0.06] motion-reduce:transition-none")}
+            {keyResultButtons("flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-2 py-1.5 text-left text-base text-ink transition-colors hover:bg-fill motion-reduce:transition-none")}
           </nav>
 
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -496,7 +496,7 @@ export function SettingsModal() {
                   <option key={page.id} value={page.id}>{t(page.labelKey)}</option>
                 ))}
               </Select>
-              <h2 className="hidden truncate text-[17px] font-medium leading-6 tracking-[-0.008em] text-ink sm:block">
+              <h2 className="hidden truncate text-xl font-medium leading-6 tracking-tight text-ink sm:block">
                 {looksOpen ? t("settings.simple.page.looks") : currentPage ? t(currentPage.labelKey) : null}
               </h2>
             </header>
@@ -505,7 +505,7 @@ export function SettingsModal() {
               onClick={close}
               aria-label={t("settings.close")}
               title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
-              className="absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink motion-reduce:transition-none"
+              className="absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-fill hover:text-ink motion-reduce:transition-none"
             >
               <X size={16} aria-hidden="true" />
             </button>
@@ -514,7 +514,7 @@ export function SettingsModal() {
               ref={scrollRef}
               data-settings-scroll
               className={cn(
-                "flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto px-4 pb-8 pt-4 sm:px-8 sm:pb-7 sm:pt-[22px]",
+                "flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto px-4 pb-8 pt-4 sm:px-8 sm:pb-7 sm:pt-5.5",
                 SIMPLE_BUTTONS,
                 "[&_.uppercase]:normal-case [&_.uppercase]:tracking-normal",
               )}
@@ -546,16 +546,16 @@ export function SettingsModal() {
         className="glass-surface glass-popup animate-pop-in relative flex overflow-hidden rounded-2xl outline-none"
       >
         <span id="app-settings-title" className="sr-only">{t("settings.title")}</span>
-        <nav className="glass-rail hidden min-h-0 w-[200px] shrink-0 flex-col gap-1 overflow-y-auto border-r border-hairline/30 p-3 sm:flex">
-          <div className="shrink-0 px-2 py-3 text-[15px] font-semibold text-ink">
+        <nav className="glass-rail hidden min-h-0 w-50 shrink-0 flex-col gap-1 overflow-y-auto border-r border-hairline/30 p-3 sm:flex">
+          <div className="shrink-0 px-2 py-3 text-lg font-semibold text-ink">
             {t("settings.title")}
           </div>
           {searchField(
-            "mb-2 mt-1 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] text-[13px] focus-within:ring-2 focus-within:ring-focus/60",
-            "w-full min-w-0 bg-transparent text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none",
+            "mb-2 mt-1 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
+            "w-full min-w-0 bg-transparent text-base text-ink placeholder:text-ink-tertiary focus:outline-none",
           )}
           {visibleSections.length === 0 && (
-            <div className="px-2.5 py-4 text-[13px] leading-relaxed text-ink-secondary">
+            <div className="px-2.5 py-4 text-base leading-relaxed text-ink-secondary">
               {t("settings.noMatch", { query: query.trim() })}
             </div>
           )}
@@ -564,7 +564,7 @@ export function SettingsModal() {
             if (entries.length === 0) return null;
             return (
               <div key={group.id} role="group" aria-labelledby={`settings-group-${group.id}`} data-settings-group={group.id} className="flex flex-col gap-0.5 pb-2">
-                <div id={`settings-group-${group.id}`} className="px-[9px] pb-1 pt-2 text-[12px] font-medium leading-4 text-ink-tertiary">
+                <div id={`settings-group-${group.id}`} className="px-2 pb-1 pt-2 text-sm font-medium text-ink-tertiary">
                   {t(group.labelKey)}
                 </div>
                 {entries.map(({ id, labelKey, icon: Icon }) => (
@@ -574,8 +574,8 @@ export function SettingsModal() {
                     onClick={() => openSection(id)}
                     aria-current={section === id ? "page" : undefined}
                     className={cn(
-                      "flex h-8 shrink-0 cursor-pointer items-center gap-[9px] rounded-lg px-[9px] text-left text-[13px] text-ink transition-colors motion-reduce:transition-none",
-                      section === id ? "bg-ink/[0.08]" : "hover:bg-ink/[0.06]",
+                      "flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-left text-base text-ink transition-colors motion-reduce:transition-none",
+                      section === id ? "bg-fill" : "hover:bg-fill",
                     )}
                   >
                     <Icon size={15} className="shrink-0" />
@@ -585,7 +585,7 @@ export function SettingsModal() {
               </div>
             );
           })}
-          {keyResultButtons("cursor-pointer flex min-h-9 items-center rounded-lg px-2.5 py-2 text-left text-[13px] text-ink transition-colors hover:bg-control/50 motion-reduce:transition-none")}
+          {keyResultButtons("cursor-pointer flex min-h-9 items-center rounded-lg px-2.5 py-2 text-left text-base text-ink transition-colors hover:bg-control/50 motion-reduce:transition-none")}
         </nav>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -609,7 +609,7 @@ export function SettingsModal() {
                 );
               })}
             </Select>
-            <span className="hidden text-[15px] font-semibold text-ink sm:block">
+            <span className="hidden text-lg font-semibold text-ink sm:block">
               {sectionLabelKey ? t(sectionLabelKey) : null}
             </span>
             <button

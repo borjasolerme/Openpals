@@ -168,7 +168,7 @@ export interface CodeBlockProps {
   initialWrap?: boolean;
 }
 
-const PLATE_BUTTON = "inline-flex size-7 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60";
+const PLATE_BUTTON = "inline-flex size-7 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60";
 
 /** Simple mode's hover plate on a code block or diagram: Copy, and a ⋯ menu for the rest. It shows on hover, on
  * keyboard focus and always on touch screens, and stays while its menu is open. */
@@ -179,7 +179,7 @@ export function CodePlate({ copied, onCopy, copyLabel, items }: {
   items: SidebarMenuItem[];
 }) {
   return (
-    <div data-code-plate className="absolute end-1 top-1 z-[1] flex gap-0.5 rounded-full bg-composer p-0.5 opacity-0 ring-[0.5px] ring-ink/10 transition-opacity focus-within:opacity-100 group-hover/code:opacity-100 touch:opacity-100 has-[[aria-expanded=true]]:opacity-100">
+    <div data-code-plate className="absolute end-1 top-1 z-[1] flex gap-0.5 rounded-full bg-composer p-0.5 opacity-0 ring-[0.5px] ring-line transition-opacity focus-within:opacity-100 group-hover/code:opacity-100 touch:opacity-100 has-[[aria-expanded=true]]:opacity-100">
       <button type="button" onClick={onCopy} className={PLATE_BUTTON}
         title={copied === "copied" ? t("code.copiedTitle") : copied === "failed" ? t("common.copyFailed") : copyLabel}
         aria-label={copied === "copied" ? t("code.copiedTitle") : copied === "failed" ? t("common.copyFailed") : copyLabel}>
@@ -234,20 +234,20 @@ export function CodeBlock({ code, lang, initialWrap = false }: CodeBlockProps) {
   const lineCount = countLines(code);
   const body = (pad: string, plainInk: string) => markup ? (
     <div
-      className={cn(`text-[13px] [&_pre]:!bg-transparent [&_pre]:m-0 ${pad}`, wrapLines
+      className={cn(`text-base [&_pre]:!bg-transparent [&_pre]:m-0 ${pad}`, wrapLines
         ? "whitespace-pre-wrap break-words overflow-x-hidden [&_pre]:!whitespace-pre-wrap [&_pre]:!break-words [&_code]:!whitespace-pre-wrap [&_code]:!break-words"
         : "overflow-x-auto")}
       dangerouslySetInnerHTML={markup}
     />
   ) : (
-    <pre className={cn(`text-[13px] ${pad.replaceAll("[&_pre]:", "")}`, plainInk, wrapLines ? "whitespace-pre-wrap break-words overflow-x-hidden" : "overflow-x-auto")}>
+    <pre className={cn(`text-base ${pad.replaceAll("[&_pre]:", "")}`, plainInk, wrapLines ? "whitespace-pre-wrap break-words overflow-x-hidden" : "overflow-x-auto")}>
       {code}
     </pre>
   );
 
   if (simple) {
     return (
-      <div dir="ltr" className="chat-code-block group/code relative my-2.5 overflow-hidden rounded-lg bg-ink/[0.04]">
+      <div dir="ltr" className="chat-code-block group/code relative my-2.5 overflow-hidden rounded-lg bg-fill-subtle">
         <CodePlate copied={copied} onCopy={copy} copyLabel={t("code.copyTitle")} items={[
           { key: "wrap", label: t("code.wrapLines"), icon: <WrapText size={14} aria-hidden="true" />, active: wrapLines, onSelect: () => setWrapLines((wrap) => !wrap) },
           { key: "save", label: t("code.saveAsFile"), icon: <Download size={14} aria-hidden="true" />, onSelect: download },
@@ -260,13 +260,13 @@ export function CodeBlock({ code, lang, initialWrap = false }: CodeBlockProps) {
 
   return (
     <div dir="ltr" className="chat-code-block my-2 overflow-hidden rounded-lg border border-hairline/40 bg-inset">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/30 bg-raised/30 px-3 py-1.5 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline/30 bg-raised/30 px-3 py-1.5 text-sm">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span title={displayLanguage} className="min-w-0 truncate rounded border border-hairline/40 bg-raised px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-ink select-none">
+          <span title={displayLanguage} className="min-w-0 truncate rounded border border-hairline/40 bg-raised px-1.5 py-0.5 text-xs font-medium tracking-wide text-ink select-none">
             {displayLanguage}
           </span>
           {lineCount > 0 && (
-            <span className="shrink-0 whitespace-nowrap text-[11px] text-ink-secondary select-none">
+            <span className="shrink-0 whitespace-nowrap text-xs text-ink-secondary select-none">
               {formatLineCount(lineCount)}
             </span>
           )}
@@ -275,7 +275,7 @@ export function CodeBlock({ code, lang, initialWrap = false }: CodeBlockProps) {
           <button
             type="button"
             onClick={() => setWrapLines((w) => !w)}
-            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] transition-colors ${
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs transition-colors ${
               wrapLines
                 ? "bg-accent/15 text-accent font-medium"
                 : "text-ink-secondary hover:bg-raised hover:text-ink"
@@ -290,7 +290,7 @@ export function CodeBlock({ code, lang, initialWrap = false }: CodeBlockProps) {
           <button
             type="button"
             onClick={download}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-ink-secondary hover:bg-raised hover:text-ink transition-colors"
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-secondary hover:bg-raised hover:text-ink transition-colors"
             title={t("code.saveTitle")}
             aria-label={t("code.saveTitle")}
           >
@@ -300,7 +300,7 @@ export function CodeBlock({ code, lang, initialWrap = false }: CodeBlockProps) {
           <button
             type="button"
             onClick={copy}
-            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-ink-secondary hover:bg-raised hover:text-ink transition-colors"
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-secondary hover:bg-raised hover:text-ink transition-colors"
             title={copied === "copied" ? t("code.copiedTitle") : copied === "failed" ? t("common.copyFailed") : t("code.copyTitle")}
             aria-label={copied === "copied" ? t("code.copiedAria") : copied === "failed" ? t("common.copyFailed") : t("code.copyAria")}
           >

@@ -154,17 +154,17 @@ function Thinking({ thinking, labelId }: { thinking: SimpleThinking; labelId: st
   return (
     <div data-simple-thinking className="flex flex-col">
       <div className="flex h-6 items-end justify-between gap-2 px-2 pb-0.5">
-        <span id={labelId} className="text-[12px] font-medium leading-4 text-ink-tertiary">{t("botSettings.simple.thinking")}</span>
+        <span id={labelId} className="text-sm font-medium text-ink-tertiary">{t("botSettings.simple.thinking")}</span>
         {(levels.current === undefined
-          ? <span title={t("model.simple.thinkingDefault")} className="text-[12px] leading-4 text-ink-tertiary">{t("model.effort.default")}</span>
+          ? <span title={t("model.simple.thinkingDefault")} className="text-sm text-ink-tertiary">{t("model.effort.default")}</span>
           : (
             <button type="button" data-simple-effort-default onClick={levels.onReset} title={t("model.simple.thinkingDefault")}
-              className="-mr-1 rounded-[5px] px-1 text-[12px] leading-4 text-ink-secondary hover:bg-ink/[0.06] hover:text-ink">
+              className="-mr-1 rounded-sm px-1 text-sm text-ink-secondary hover:bg-fill hover:text-ink">
               {t("model.simple.useDefault")}
             </button>
           ))}
       </div>
-      <div data-simple-effort role="group" aria-labelledby={labelId} className="m-1 grid rounded-full bg-ink/[0.05] p-[3px]"
+      <div data-simple-effort role="group" aria-labelledby={labelId} className="m-1 grid rounded-full bg-fill-subtle p-0.75"
         style={{ gridTemplateColumns: `repeat(${levels.levels.length}, minmax(0, 1fr))` }}>
         {levels.levels.map((level, index) => (
           <button
@@ -176,8 +176,8 @@ function Thinking({ thinking, labelId }: { thinking: SimpleThinking; labelId: st
             title={t("model.simple.thinkingLevel", { level: effortLabel(level) })}
             onClick={() => levels.onPick(level)}
             className={cn(
-              "h-6 min-w-0 truncate rounded-full px-1 text-[12px] leading-4 transition-colors touch:h-8",
-              levels.current === level ? "bg-ink/[0.1] font-medium text-ink" : "text-ink-secondary hover:text-ink",
+              "h-6 min-w-0 truncate rounded-full px-1 text-sm transition-colors touch:h-8",
+              levels.current === level ? "bg-fill font-medium text-ink" : "text-ink-secondary hover:text-ink",
             )}
           >
             {effortLabel(level)}
@@ -195,7 +195,7 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
   return (
     <div data-simple-model-menu className="flex min-h-0 flex-1 flex-col">
       {menu.search && (
-        <div data-simple-model-search className="group/search flex h-9 shrink-0 items-center gap-2 border-b-[0.5px] border-ink/10 pl-3.5 pr-2">
+        <div data-simple-model-search className="group/search flex h-9 shrink-0 items-center gap-2 border-b-[0.5px] border-line pl-3.5 pr-2">
           <Search size={16} strokeWidth={MENU_STROKE} className="shrink-0 text-ink-tertiary group-focus-within/search:text-ink-secondary" aria-hidden="true" />
           <input
             data-menu-search
@@ -203,11 +203,11 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
             onChange={(event) => props.onQuery(event.target.value)}
             placeholder={t("model.search")}
             aria-label={menu.groups.every((group) => group.instance.access === "custom") ? t("model.searchLocal") : t("model.search")}
-            className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] text-ink outline-none placeholder:text-ink-tertiary"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-ink-tertiary"
           />
           {query && (
             <button type="button" aria-label={t("model.simple.clearSearch")} onClick={() => props.onQuery("")}
-              className="flex size-5 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-ink/[0.06] hover:text-ink">
+              className="flex size-5 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-fill hover:text-ink">
               <X size={14} strokeWidth={MENU_STROKE} aria-hidden="true" />
             </button>
           )}
@@ -235,7 +235,7 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
               <Gutter>
                 {current.instance
                   ? <InstanceProviderMark instance={current.instance} size={14} subtle />
-                  : <span className="size-3.5 rounded-full bg-ink/[0.08]" aria-hidden="true" />}
+                  : <span className="size-3.5 rounded-full bg-fill" aria-hidden="true" />}
               </Gutter>
               <RowLines label={current.label}>
                 {current.meta && <span className={cn(SIMPLE_MENU_META, current.warning && "text-warning")}>{current.meta}</span>}
@@ -282,7 +282,7 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
       </div>
 
       {(props.thinking || props.onResetVariant || props.onManage) && (
-        <div data-simple-effort-band className="flex shrink-0 flex-col gap-0.5 border-t-[0.5px] border-ink/10 p-1.5">
+        <div data-simple-effort-band className="flex shrink-0 flex-col gap-0.5 border-t-[0.5px] border-line p-1.5">
           {props.thinking && (
             <>
               <Thinking thinking={props.thinking} labelId={`${idPrefix}-thinking`} />

@@ -66,7 +66,7 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
       onKeyDown={onKeyDown}
       onContextMenu={(event) => openBotContextMenu(onMenu, bot.id, event)}
       className={cn(
-        "flex h-[92px] w-[78px] shrink-0 cursor-default flex-col items-center rounded-[10px] bg-[var(--tile)] px-1 pt-2 transition-colors duration-150", SIMPLE_ROW_FOCUS,
+        "flex h-23 w-19.5 shrink-0 cursor-default flex-col items-center rounded-lg bg-[var(--tile)] px-1 pt-2 transition-colors duration-150", SIMPLE_ROW_FOCUS,
         selected ? "[--tile:var(--color-raised)]" : "[--tile:var(--color-panel)] hover:[--tile:color-mix(in_srgb,var(--color-raised)_50%,var(--color-panel))]",
         pinnedCircleDragClass({ drag, dragging, drop }),
       )}
@@ -81,7 +81,7 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
           animated={working || noticing || (mascotMotion?.kind ?? "none") !== "none"}
         />
         {primary && bot.chiefOfStaff && (
-          <span data-testid="chief-badge" className={cn("absolute -bottom-px -right-px flex size-4 items-center justify-center rounded-full bg-[#E8993A] text-white", RING)}>
+          <span data-testid="chief-badge" className={cn("absolute -bottom-px -right-px flex size-4 items-center justify-center rounded-full bg-accent text-accent-ink", RING)}>
             <Crown size={10} strokeWidth={1.5} fill="currentColor" aria-hidden="true" />
           </span>
         )}
@@ -90,7 +90,7 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
             <Phone size={9} strokeWidth={2.5} aria-hidden="true" />
           </span>
         ) : waiting ? (
-          <span data-testid="waiting-dot" aria-hidden="true" className={cn("absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-warning text-[11px] font-black leading-none text-panel", RING)}>!</span>
+          <span data-testid="waiting-dot" aria-hidden="true" className={cn("absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-warning text-xs font-black leading-none text-panel", RING)}>!</span>
         ) : working ? dot("working-dot", "bg-success")
           : teammateWait ? dot("teammate-wait-dot", "bg-accent")
           : queued ? dot("queued-dot", "bg-ink-tertiary")
@@ -109,8 +109,8 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
           title={tooltip}
           onCommit={rename}
           onEditingChange={setRenaming}
-          className="min-w-0 truncate text-center text-[13px] font-medium leading-4 text-ink"
-          inputClassName="w-full rounded bg-inset px-1 text-center text-[13px] font-medium leading-4"
+          className="min-w-0 truncate text-center text-base font-medium leading-4 text-ink"
+          inputClassName="w-full rounded bg-inset px-1 text-center text-base font-medium leading-4"
         />
       </span>
     </div>

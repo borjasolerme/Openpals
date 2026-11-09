@@ -23,7 +23,7 @@ export function botRowDropClass(dragging: boolean | undefined): string {
 
 export function BotDropLine({ place }: { place: BotDropPlace | null | undefined }) {
   if (!place) return null;
-  return <span aria-hidden="true" className={cn("pointer-events-none absolute inset-x-2 z-10 h-0.5 rounded-full bg-accent", place === "before" ? "-top-[2px]" : "-bottom-[2px]")} />;
+  return <span aria-hidden="true" className={cn("pointer-events-none absolute inset-x-2 z-10 h-0.5 rounded-full bg-accent", place === "before" ? "-top-0.5" : "-bottom-0.5")} />;
 }
 
 /** Dragging the bots' rows into another order, and Alt+Up/Down. */

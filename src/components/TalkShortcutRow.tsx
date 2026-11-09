@@ -29,7 +29,7 @@ export function TalkShortcutRow() {
   const message = (
     <>
       {state.enabled && (
-        <Select size="sm" className="w-full max-w-[240px]"
+        <Select size="sm" className="w-full max-w-60"
           value={state.key}
           disabled={busy}
           aria-label={t("settings.talk.keyAria")}

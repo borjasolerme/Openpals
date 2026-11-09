@@ -43,9 +43,9 @@ export function SidebarBotActivity({ bot, rowThreadId, density, dispatch }: { bo
       const label = `${bot.name}: ${title} · ${t("sidebar.preview.waiting")}`;
       return <button key={task.threadId} type="button" data-sidebar-activity-row={task.threadId} aria-label={label} title={label}
         onClick={() => dispatch({ type: "switchTask", botId: bot.id, threadId: task.threadId })}
-        className={cn("flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] text-warning outline-none hover:bg-raised/50 focus-visible:ring-1 focus-visible:ring-accent/60", iconOnly && "justify-center")}>
+        className={cn("flex min-h-7 w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-left text-xs text-warning outline-none hover:bg-raised/50 focus-visible:ring-1 focus-visible:ring-accent/60", iconOnly && "justify-center")}>
         <CircleAlert size={12} aria-hidden="true" className="shrink-0" />
-        {!iconOnly && <><span className="min-w-0 flex-1 truncate">{title}</span><span className="shrink-0 text-[10px]">{t("task.waiting")}</span></>}
+        {!iconOnly && <><span className="min-w-0 flex-1 truncate">{title}</span><span className="shrink-0 text-xs">{t("task.waiting")}</span></>}
       </button>;
     })}
   </div>;

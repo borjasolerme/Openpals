@@ -143,20 +143,20 @@ export function CalendarEventCard({
         <div className="flex min-w-0 items-start gap-1.5">
           {avatar(compact ? 18 : 22)}
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[11px] font-semibold leading-tight">{name}</div>
-            <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] opacity-80">{dot}<span className="truncate">{niceTime(item.at)} · {intervalCadence && !room && !isCall ? `${who ?? ""} · ${intervalCadence}` : who}</span></div>
+            <div className="truncate text-xs font-semibold leading-tight">{name}</div>
+            <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs opacity-80">{dot}<span className="truncate">{niceTime(item.at)} · {intervalCadence && !room && !isCall ? `${who ?? ""} · ${intervalCadence}` : who}</span></div>
           </div>
-          {ownerBots.length > 1 && <span className="rounded bg-inset/60 px-1 py-0.5 text-[8px]">+{ownerBots.length - 1}</span>}
+          {ownerBots.length > 1 && <span className="rounded bg-inset/60 px-1 py-0.5 text-xs">+{ownerBots.length - 1}</span>}
         </div>
       ) : fit === "compact" ? (
         <div className="flex h-full min-w-0 items-center gap-1">
           {isCall && <Video size={11} className="shrink-0" />}
-          <span className="min-w-0 flex-1 truncate text-[11px] font-semibold leading-none">{name}</span>
+          <span className="min-w-0 flex-1 truncate text-xs font-semibold leading-none">{name}</span>
           {dot}
-          <span className="shrink-0 text-[10px] leading-none tabular-nums opacity-80">{niceTime(item.at)}</span>
+          <span className="shrink-0 text-xs leading-none tabular-nums opacity-80">{niceTime(item.at)}</span>
         </div>
       ) : (
-        <div className="flex h-full min-w-0 items-center truncate text-[10px] font-semibold leading-none">{name}</div>
+        <div className="flex h-full min-w-0 items-center truncate text-xs font-semibold leading-none">{name}</div>
       )}
       {isCall && <div onPointerDown={beginResize} className="absolute inset-x-1 bottom-0 h-1.5 cursor-ns-resize rounded-full opacity-0 transition group-hover:opacity-100" aria-label="Resize event"><div className="mx-auto mt-0.5 h-0.5 w-5 rounded-full bg-current opacity-50" /></div>}
     </button>

@@ -489,8 +489,8 @@ function GroupCall({ group, members }: { group: Group; members: Bot[] }) {
               <div
                 key={member.id}
                 className={cn(
-                  "flex w-[124px] flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-200",
-                  focused ? "scale-105 bg-raised/70 shadow-lg" : "opacity-75",
+                  "flex w-31 flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-200",
+                  focused ? "scale-105 bg-raised/70 shadow-base" : "opacity-75",
                 )}
               >
                 <BotAvatar
@@ -501,7 +501,7 @@ function GroupCall({ group, members }: { group: Group; members: Bot[] }) {
                   motion={workingMember?.id === member.id ? "working" : "none"}
                   motionKey={workingMember?.id === member.id ? 1 : 0}
                 />
-                <span className={cn("text-[13px] font-medium", focused ? "text-ink" : "text-ink-secondary")}>
+                <span className={cn("text-base font-medium", focused ? "text-ink" : "text-ink-secondary")}>
                   {member.name}
                 </span>
               </div>
@@ -511,14 +511,14 @@ function GroupCall({ group, members }: { group: Group; members: Bot[] }) {
       </div>
 
       <div className="flex flex-col items-center gap-1.5 text-center">
-        <div className="text-[20px] font-medium text-ink">{group.name}</div>
-        <div className="flex items-center gap-2 text-[14px] text-ink-secondary">
+        <div className="text-2xl font-medium text-ink">{group.name}</div>
+        <div className="flex items-center gap-2 text-lg text-ink-secondary">
           {(phase === "working" || phase === "sending") && <Loader2 size={13} className="animate-spin" />}
           {status}
         </div>
       </div>
 
-      <div className="min-h-[3.5rem] max-w-[620px] text-center text-[15px] leading-relaxed text-ink">
+      <div className="min-h-[3.5rem] max-w-155 text-center text-lg leading-relaxed text-ink">
         {phase === "listening" ? (
           heard || (
             <span className="text-ink-secondary">
@@ -535,36 +535,36 @@ function GroupCall({ group, members }: { group: Group; members: Bot[] }) {
       </div>
 
       {note && (
-        <div className="flex max-w-[520px] flex-col items-center gap-2 text-center text-[13px] text-warning">
+        <div className="flex max-w-130 flex-col items-center gap-2 text-center text-base text-warning">
           <span>{note}</span>
           <button
             onClick={listen}
-            className="rounded-full border border-warning/40 px-3 py-1.5 text-[12px] hover:bg-warning/10"
+            className="rounded-full border border-warning/40 px-3 py-1.5 text-sm hover:bg-warning/10"
           >
             Try microphone again
           </button>
         </div>
       )}
-      {speech.error && <div className="max-w-[460px] text-center text-[13px] text-danger">{speech.error}</div>}
+      {speech.error && <div className="max-w-115 text-center text-base text-danger">{speech.error}</div>}
 
       <div className="flex items-center gap-3">
         {speaker.isSpeaking() && (
           <button
             onClick={interruptSpeech}
-            className="rounded-full border border-hairline/50 px-4 py-2 text-[14px] text-ink hover:bg-raised"
+            className="rounded-full border border-hairline/50 px-4 py-2 text-lg text-ink hover:bg-raised"
           >
             Interrupt
           </button>
         )}
         <button
           onClick={() => endCall(group.id)}
-          className="flex items-center gap-2 rounded-full bg-danger px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110"
+          className="flex items-center gap-2 rounded-full bg-danger px-5 py-2.5 text-lg font-medium text-white hover:brightness-110"
         >
           <PhoneOff size={16} /> Hang up
         </button>
       </div>
 
-      <div className="text-[12px] text-ink-tertiary">
+      <div className="text-sm text-ink-tertiary">
         Hold Control + Option to talk · Say a member’s name to direct the turn · Space interrupts · Esc hangs up
       </div>
     </div>

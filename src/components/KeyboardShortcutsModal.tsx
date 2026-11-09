@@ -20,12 +20,12 @@ function ShortcutRow({ item, isMac }: { item: ShortcutItem; isMac: boolean }) {
 
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
-      <span className="text-[13px] text-ink">{item.description}</span>
+      <span className="text-base text-ink">{item.description}</span>
       <div className="flex shrink-0 items-center gap-1">
         {keys.map((key, index) => (
           <kbd
             key={index}
-            className="inline-flex min-w-[22px] items-center justify-center rounded-md border border-hairline/60 bg-control px-1.5 py-0.5 font-mono text-[12px] font-semibold text-ink shadow-xs"
+            className="inline-flex min-w-5.5 items-center justify-center rounded-md border border-hairline/60 bg-control px-1.5 py-0.5 font-mono text-sm font-semibold text-ink shadow-sm"
           >
             {key}
           </kbd>
@@ -60,7 +60,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
     <dialog
       ref={dialogRef}
       aria-labelledby="shortcuts-dialog-title"
-      className="m-auto w-[min(500px,calc(100%-32px))] max-h-[85vh] overflow-hidden rounded-2xl border border-hairline/50 bg-panel p-0 text-ink shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+      className="m-auto w-[min(500px,calc(100%-32px))] max-h-[85vh] overflow-hidden rounded-2xl border border-hairline/50 bg-panel p-0 text-ink shadow-lg backdrop:bg-black/60 backdrop:backdrop-blur-xs"
       onCancel={(event) => { event.preventDefault(); onClose(); }}
       onKeyDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
@@ -74,10 +74,10 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               <Keyboard size={18} />
             </span>
             <div>
-              <h2 id="shortcuts-dialog-title" className="text-[16px] font-semibold text-ink">
+              <h2 id="shortcuts-dialog-title" className="text-xl font-semibold text-ink">
                 Keyboard Shortcuts
               </h2>
-              <p className="text-[12px] text-ink-secondary">
+              <p className="text-sm text-ink-secondary">
                 Quick commands and navigation
               </p>
             </div>
@@ -101,20 +101,20 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search shortcuts…"
               aria-label="Search shortcuts"
-              className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+              className="w-full bg-transparent text-base text-ink placeholder:text-ink-secondary focus:outline-none"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
           {groups.length === 0 ? (
-            <div className="py-8 text-center text-[13px] text-ink-secondary">
+            <div className="py-8 text-center text-base text-ink-secondary">
               No shortcuts found for “{query}”
             </div>
           ) : (
             groups.map((group) => (
               <div key={group.category} className="space-y-1">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">
+                <div className="text-xs font-semibold uppercase tracking-wider text-ink-tertiary">
                   {group.category}
                 </div>
                 <div className="divide-y divide-hairline/20 rounded-xl bg-card/40 px-3 py-1 border border-hairline/30">
@@ -127,9 +127,9 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-[12px] text-ink-secondary">
+        <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-sm text-ink-secondary">
           <span>
-            Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> when not typing to open
+            Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-xs">?</kbd> when not typing to open
           </span>
           <button
             type="button"

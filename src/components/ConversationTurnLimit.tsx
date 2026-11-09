@@ -77,7 +77,7 @@ export function ConversationTurnLimit({ group }: { group: Group }) {
             setError("");
           }
         }}
-        className={`h-8 w-[88px] rounded-full border bg-raised/60 px-3 text-[13px] font-medium tabular-nums text-ink outline-none ${
+        className={`h-8 w-22 rounded-full border bg-raised/60 px-3 text-base font-medium tabular-nums text-ink outline-none ${
           error ? "border-danger/60" : "border-hairline/40 focus:border-accent"
         }`}
       />
@@ -89,7 +89,7 @@ export function ConversationTurnLimit({ group }: { group: Group }) {
     <Select
       variant="pill"
       size="sm"
-      className="shrink-0 max-w-[168px]"
+      className="shrink-0 max-w-42"
       title={t("room.turnLimit.help")}
       aria-label={t("room.turnLimit.aria")}
       data-testid="conversation-turn-limit"

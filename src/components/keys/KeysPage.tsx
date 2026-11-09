@@ -10,7 +10,7 @@ import { finishKeyFocus, useKeyFocus, type KeyFocusRequest } from "./key-focus";
 import { AnthropicEveryClaudeBot, OpenAiCompatUrl, OpenCodeProviderKeys, VpsConnection } from "./KeyPanels";
 import { KEY_ROW, KeyRow, MaskedKey, RowHeading, type KeyStatus } from "./KeyRow";
 
-const CARD = "rounded-xl bg-card in-data-[settings-look=simple]:rounded-[12px] in-data-[settings-look=simple]:border-[0.5px] in-data-[settings-look=simple]:border-(--settings-edge) in-data-[settings-look=simple]:bg-menu";
+const CARD = "rounded-xl bg-card in-data-[settings-look=simple]:rounded-xl in-data-[settings-look=simple]:border-[0.5px] in-data-[settings-look=simple]:border-(--settings-edge) in-data-[settings-look=simple]:bg-menu";
 const HIGHLIGHT_MS = 1600;
 
 const PANELS: Partial<Record<KeyId, () => ReactNode>> = {
@@ -55,7 +55,7 @@ function ElsewhereRow({ entry }: { entry: KeyEntry }) {
       <div className="flex flex-col gap-2 pl-8">
         {saved.configured && <div className="flex"><MaskedKey saved={saved} label={t(entry.labelKey)} /></div>}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          {entry.whereKey && <span className="min-w-0 flex-1 text-[12px] leading-4 text-ink-secondary">{t(entry.whereKey)}</span>}
+          {entry.whereKey && <span className="min-w-0 flex-1 text-sm text-ink-secondary">{t(entry.whereKey)}</span>}
           {opens && (
             <button type="button" data-key-open className="ui-button shrink-0" onClick={() => dispatch({ type: "toggleAppSettings", open: true, section: opens })}>
               {t("keys.row.open")}
@@ -90,10 +90,10 @@ function KeySection({ id, rows, open, onToggle }: { id: KeySectionId; rows: KeyE
         className="flex w-full cursor-pointer items-center gap-3 rounded-[inherit] px-4 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/60"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span id={headId} className="text-[14px] font-medium leading-5 text-ink">{t(section.titleKey)}</span>
-          <span className="text-[13px] leading-[18px] text-ink-secondary">{t(section.purposeKey)}</span>
+          <span id={headId} className="text-lg font-medium leading-5 text-ink">{t(section.titleKey)}</span>
+          <span className="text-base text-ink-secondary">{t(section.purposeKey)}</span>
         </span>
-        {count > 0 && <span className="shrink-0 text-[12px] leading-4 text-ink-secondary">{t("keys.section.connected", { count })}</span>}
+        {count > 0 && <span className="shrink-0 text-sm text-ink-secondary">{t("keys.section.connected", { count })}</span>}
         <ChevronRight size={14} aria-hidden="true" className={cn("shrink-0 text-ink-secondary transition-transform motion-reduce:transition-none", open && "rotate-90")} />
       </button>
       <div id={bodyId} hidden={!open} className="flex flex-col gap-0.5 border-t border-hairline/40 px-1 py-1.5 in-data-[settings-look=simple]:border-t-[0.5px] in-data-[settings-look=simple]:border-(--settings-edge)">
@@ -149,8 +149,8 @@ export function KeysPage() {
 
   return (
     <div ref={pageRef} data-keys-page className="flex flex-col gap-4">
-      <p className="text-[13px] leading-[18px] text-ink-secondary">{t("settings.connections.subtitle")}</p>
-      <div className="flex h-8 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] focus-within:ring-2 focus-within:ring-focus/60">
+      <p className="text-base text-ink-secondary">{t("settings.connections.subtitle")}</p>
+      <div className="flex h-8 items-center gap-2 rounded-lg bg-fill-subtle px-2 focus-within:ring-2 focus-within:ring-focus/60">
         <Search size={15} aria-hidden="true" className="shrink-0 text-ink-secondary" />
         <input
           data-keys-search
@@ -167,11 +167,11 @@ export function KeysPage() {
           aria-label={t("keys.search.aria")}
           autoComplete="off"
           spellCheck={false}
-          className="w-full min-w-0 bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+          className="w-full min-w-0 bg-transparent text-base text-ink placeholder:text-ink-secondary focus:outline-none"
         />
       </div>
       {sections.length === 0 ? (
-        <p data-keys-empty className="px-1 text-[13px] leading-[18px] text-ink-secondary">{t("keys.search.none", { query: query.trim() })}</p>
+        <p data-keys-empty className="px-1 text-base text-ink-secondary">{t("keys.search.none", { query: query.trim() })}</p>
       ) : sections.map(({ id, rows: sectionRows }) => (
         <KeySection
           key={id}

@@ -13,7 +13,7 @@ describe("AskCard", () => {
   it("is one raised card in both modes: the composer's surface, a 0.5px hairline, rounded 20, 560 wide", () => {
     const html = renderToStaticMarkup(createElement(AskCard, { ariaLabel: "Plan", title: "Choose a plan", explanation: "Why it asks." }));
     const card = classesOf(html, /^<div[^>]*class="([^"]*)"/);
-    expect(card).toEqual(expect.arrayContaining(["bg-composer", "ring-[0.5px]", "ring-ink/10", "rounded-[24px]", "max-w-[560px]", "w-full", "text-start"]));
+    expect(card).toEqual(expect.arrayContaining(["bg-composer", "ring-[0.5px]", "ring-line", "rounded-4xl", "max-w-140", "w-full", "text-start"]));
     expect(html).toContain('role="group"');
     expect(html).toContain('aria-label="Plan"');
     expect(html).toContain("Why it asks.");
@@ -23,8 +23,8 @@ describe("AskCard", () => {
   it("puts the question in clear ink at reading size, under a header line in secondary ink that names the bot that asks", () => {
     const header = createElement(AskHeader, { asker: { name: "Ledger", color: "teal" }, line: "Ledger asks" });
     const html = renderToStaticMarkup(createElement(AskCard, { ariaLabel: "Q", header, title: "Should I apply the fix?" }));
-    expect(html).toMatch(/text-\[15px\] font-medium leading-\[22px\] text-ink"><bdi dir="auto">Should I apply the fix\?</);
-    expect(html).toMatch(/data-ask-header="" class="[^"]*text-\[13px\][^"]*text-ink-secondary[^"]*"/);
+    expect(html).toMatch(/text-lg font-medium text-ink"><bdi dir="auto">Should I apply the fix\?</);
+    expect(html).toMatch(/data-ask-header="" class="[^"]*text-base[^"]*text-ink-secondary[^"]*"/);
     expect(html.indexOf("Ledger asks")).toBeLessThan(html.indexOf("Should I apply the fix?"));
   });
 
@@ -83,7 +83,7 @@ describe("the card's buttons", () => {
     const primary = askPrimary("teal");
     expect(primary.className.split(" ")).toEqual(expect.arrayContaining(["bot-button", "min-h-9", "pointer-coarse:min-h-11"]));
     expect(askPrimary(undefined).className.split(" ")).toEqual(expect.arrayContaining(["ui-button-primary", "min-h-9"]));
-    expect(ASK_SECONDARY_BUTTON.split(" ")).toEqual(expect.arrayContaining(["min-h-9", "pointer-coarse:min-h-11", "bg-ink/[0.07]", "text-ink"]));
+    expect(ASK_SECONDARY_BUTTON.split(" ")).toEqual(expect.arrayContaining(["min-h-9", "pointer-coarse:min-h-11", "bg-fill", "text-ink"]));
     expect(ASK_SECONDARY_BUTTON).not.toContain("danger");
     expect(ASK_QUIET_ANSWER.split(" ")).toEqual(expect.arrayContaining(["min-h-9", "text-ink-secondary"]));
   });

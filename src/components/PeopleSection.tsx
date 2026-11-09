@@ -103,11 +103,11 @@ export function PeopleTable({ people, busy, onRole, onRemove, readOnly = false }
   onRemove: (person: Person) => void;
   readOnly?: boolean;
 }) {
-  if (people.length === 0) return <p className="text-[13px] text-ink-secondary">{t(readOnly ? "people.portal.empty" : "people.empty")}</p>;
+  if (people.length === 0) return <p className="text-base text-ink-secondary">{t(readOnly ? "people.portal.empty" : "people.empty")}</p>;
   const columns = "grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-4";
   return (
     <div className="flex flex-col">
-      <div className={cn(columns, "border-b border-hairline/40 pb-2 text-[12px] font-medium uppercase tracking-wide text-ink-secondary")}>
+      <div className={cn(columns, "border-b border-hairline/40 pb-2 text-sm font-medium uppercase tracking-wide text-ink-secondary")}>
         <span>{t("people.colPerson")}</span>
         <span>{t("people.colRole")}</span>
         <span className="text-right">{t("people.colLastSeen")}</span>
@@ -115,19 +115,19 @@ export function PeopleTable({ people, busy, onRole, onRemove, readOnly = false }
         <span />
       </div>
       {people.map((person) => (
-        <div key={person.entry} className={cn(columns, "border-b border-hairline/20 py-2 text-[13px]")}>
+        <div key={person.entry} className={cn(columns, "border-b border-hairline/20 py-2 text-base")}>
           <span className="min-w-0">
             <span className="block truncate text-ink">{person.isDomain ? t("people.everyoneAt", { domain: person.entry.slice(1) }) : person.entry}</span>
-            {person.devices > 0 && <span className="block text-[12px] text-ink-secondary">{t("people.devices", { count: String(person.devices) })}</span>}
+            {person.devices > 0 && <span className="block text-sm text-ink-secondary">{t("people.devices", { count: String(person.devices) })}</span>}
           </span>
-          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium", person.role === "admin" ? "bg-accent/15 text-accent" : "bg-control text-ink-secondary")}>
+          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", person.role === "admin" ? "bg-accent/15 text-accent" : "bg-control text-ink-secondary")}>
             {person.role === "admin" ? t("people.roleAdmin") : t("people.roleMember")}
           </span>
           <span className="text-right tabular-nums text-ink-secondary">{person.isDomain ? "—" : lastSeenLabel(person.lastSeenAt)}</span>
           <span className="text-right tabular-nums text-ink" title={t("people.turns", { turns: String(person.turns) })}>
             {hasFiniteCost(person.costUsd) ? `${person.estimated ? "~" : ""}${formatUsd(person.costUsd)}` : "—"}
           </span>
-          {readOnly ? <span /> : <span className="flex items-center justify-end gap-2 text-[12px]">
+          {readOnly ? <span /> : <span className="flex items-center justify-end gap-2 text-sm">
             <button type="button" disabled={busy} onClick={() => onRole(person, person.role === "admin" ? "member" : "admin")} className="text-ink-secondary hover:text-ink disabled:opacity-50">
               {person.role === "admin" ? t("people.makeMember") : t("people.makeAdmin")}
             </button>
@@ -143,7 +143,7 @@ export function PortalPeople({ peopleUrl, people }: { peopleUrl: string | null; 
   const noop = () => {};
   return (
     <Card title={t("people.title")} subtitle={t("people.portal.subtitle")}>
-      <div data-people-portal className="flex flex-col gap-3 text-[13px] leading-relaxed text-ink-secondary">
+      <div data-people-portal className="flex flex-col gap-3 text-base leading-relaxed text-ink-secondary">
         <p>{t("people.portal.managed")}</p>
         {peopleUrl && (
           <a
@@ -159,7 +159,7 @@ export function PortalPeople({ peopleUrl, people }: { peopleUrl: string | null; 
       <div className="mt-4">
         <PeopleTable people={people} busy={false} readOnly onRole={noop} onRemove={noop} />
       </div>
-      <p className="mt-3 text-[12px] leading-relaxed text-ink-secondary">{t("people.portal.note")}</p>
+      <p className="mt-3 text-sm leading-relaxed text-ink-secondary">{t("people.portal.note")}</p>
     </Card>
   );
 }
@@ -227,7 +227,7 @@ export function PeopleSection({ simple = false, startOpen = false }: { simple?: 
       <div className="flex justify-end">
         <button type="button" onClick={() => void load()} disabled={loading || busy} aria-label={t("people.refresh")} title={t("people.refresh")} className="rounded-md p-1.5 text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50"><RefreshCw size={13} className={cn(loading && "animate-spin")} /></button>
       </div>
-      {error && <p role="alert" className="mt-2 text-[12px] text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-sm text-danger">{error}</p>}
       <div className="mt-4">
         <PeopleTable
           people={people}
@@ -236,7 +236,7 @@ export function PeopleSection({ simple = false, startOpen = false }: { simple?: 
           onRemove={(person) => { if (lists) void save(withoutEntry(lists, person.entry)); }}
         />
       </div>
-      {!simple && <p className="mt-3 text-[12px] leading-relaxed text-ink-secondary">{t("people.note")}</p>}
+      {!simple && <p className="mt-3 text-sm leading-relaxed text-ink-secondary">{t("people.note")}</p>}
     </>
   );
   if (simple) {

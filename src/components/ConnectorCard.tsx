@@ -163,7 +163,7 @@ export function ConnectorCard({ botId, color, threadId, message }: { botId: stri
             {t("connectors.card.continueTask")}
           </button>
         )}
-        detail={error && <p role="alert" className="ms-[19px] mt-1 text-[12px] text-danger">{typeof error === "string" ? error : t(error.key)}</p>}
+        detail={error && <p role="alert" className="ms-[19px] mt-1 text-sm text-danger">{typeof error === "string" ? error : t(error.key)}</p>}
       >
         <span className="text-ink-secondary" title={connector.resumed ? t("connectors.card.resumed") : t("connectors.card.paused")}>
           {connector.label}
@@ -184,7 +184,7 @@ export function ConnectorCard({ botId, color, threadId, message }: { botId: stri
       dismissLabel={t("connectors.card.notNow")}
       footer={
         <>
-          <span className="me-auto flex min-w-0 items-center gap-1.5 text-[12px] text-ink-tertiary">
+          <span className="me-auto flex min-w-0 items-center gap-1.5 text-sm text-ink-tertiary">
             {authorizing && <Loader2 size={12} className="shrink-0 animate-spin" />}
             {authorizing ? t("connectors.card.waiting") : t("connectors.card.requested")}
           </span>
@@ -205,8 +205,8 @@ export function ConnectorCard({ botId, color, threadId, message }: { botId: stri
       }
     >
       <CardHint id="spot.connector" />
-      <p className="text-[12px] text-ink-tertiary">{t(isMcp ? "connectors.card.mcpSignInHint" : "connectors.card.signInHint")}</p>
-      {refusal && <p role="status" className="mt-1.5 text-[12px] text-ink-secondary">{refusal}</p>}
+      <p className="text-sm text-ink-tertiary">{t(isMcp ? "connectors.card.mcpSignInHint" : "connectors.card.signInHint")}</p>
+      {refusal && <p role="status" className="mt-1.5 text-sm text-ink-secondary">{refusal}</p>}
       {labelNeeded ? (
         <form
           className="mt-1.5"
@@ -215,7 +215,7 @@ export function ConnectorCard({ botId, color, threadId, message }: { botId: stri
             if (label.trim()) void connect(label.trim());
           }}
         >
-          <p role="alert" className="text-[12px] text-danger">
+          <p role="alert" className="text-sm text-danger">
             {t(requiresAccountAlias(errorText) ? "connectors.aliasNeeded" : "connectors.aliasTaken")}
           </p>
           <input
@@ -224,17 +224,17 @@ export function ConnectorCard({ botId, color, threadId, message }: { botId: stri
             onChange={(event) => setLabel(event.target.value)}
             placeholder={t("connectors.aliasPlaceholder")}
             aria-label={t("connectors.aliasAriaAnother", { service: connector.label })}
-            className="mt-1.5 h-8 w-full rounded-full bg-inset px-3 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent"
+            className="mt-1.5 h-8 w-full rounded-full bg-inset px-3 text-base text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </form>
-      ) : error && <p role="alert" className="mt-1.5 text-[12px] text-danger">{typeof error === "string" ? error : t(error.key)}</p>}
+      ) : error && <p role="alert" className="mt-1.5 text-sm text-danger">{typeof error === "string" ? error : t(error.key)}</p>}
       {authorizationUrl && (
         <a href={authorizationUrl} target="_blank" rel="noopener noreferrer" onClick={(event) => {
           if (!reusableConnectionUrl(pendingAuthorization)) {
             event.preventDefault();
             void connect();
           }
-        }} className="mt-1.5 inline-block text-[12px] text-accent-text underline underline-offset-2">
+        }} className="mt-1.5 inline-block text-sm text-accent-text underline underline-offset-2">
           {t("connectors.openAuthorizationPage")}
         </a>
       )}

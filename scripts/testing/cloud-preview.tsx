@@ -184,7 +184,7 @@ function Fixture() {
         ...(scenario === "auto-vm" ? {} : { surface: scenario === "browser-pin" ? "browser" : scenario === "cloud-pin" ? "cloud" : "vm" }) }],
     });
   return <div className="flex h-screen justify-center">
-    <div className="fixed left-2 top-2 grid max-w-32 gap-3 text-sm">
+    <div className="fixed left-2 top-2 grid max-w-32 gap-3 text-lg">
       <label>Screenshot response<select aria-label="Screenshot response" defaultValue={mode} onChange={(e) => { mode = e.target.value; }}>
         {["connected", "slow", "held", "contended", "failed", "unconfigured", "corrupt", "timeout"].map((value) => <option key={value}>{value}</option>)}
       </select></label>
@@ -219,7 +219,7 @@ function Fixture() {
     {state.settingsOpen && bot && <BotSettingsDialog key={bot.id} bot={bot} />}
     {state.computerOpen && fixtureBot && (panel === "computer"
       ? <ComputerPanel key={generation} bot={fixtureBot} />
-      : <div className="w-[720px] overflow-y-auto"><LocalComputerSection /></div>)}
+      : <div className="w-180 overflow-y-auto"><LocalComputerSection /></div>)}
   </div>;
 }
 applySkin(readSkin());

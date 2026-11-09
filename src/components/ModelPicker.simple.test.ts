@@ -346,7 +346,7 @@ describe("the model picker in Simple mode", () => {
     const bottom = region(menu(opened.html), "data-simple-effort-band");
     expect(bottom).toMatch(/aria-pressed="true"[^>]*>X-High<\/button>/);
     expect(bottom).toContain('role="group" aria-labelledby=');
-    expect(bottom).toMatch(/data-simple-effort="true"[^>]*class="[^"]*rounded-full bg-ink\/\[0.05\] p-\[3px\]/);
+    expect(bottom).toMatch(/data-simple-effort="true"[^>]*class="[^"]*rounded-full bg-fill-subtle p-0.75/);
     expect(bottom).toContain('title="High thinking. Higher is slower but more careful."');
     expect(bottom).toMatch(/title="The model decides how hard to think."[^>]*>Use default<\/button>/);
     thinking(opened).onReset();
@@ -358,7 +358,7 @@ describe("the model picker in Simple mode", () => {
     const atDefault = region(menu(open(bot()).html), "data-simple-effort-band");
     expect(atDefault).not.toContain('aria-pressed="true"');
     expect(atDefault).not.toContain("Use default");
-    expect(atDefault).toContain('title="The model decides how hard to think." class="text-[12px] leading-4 text-ink-tertiary">Default</span>');
+    expect(atDefault).toContain('title="The model decides how hard to think." class="text-sm text-ink-tertiary">Default</span>');
   });
 
   it("names the model on the Simple chip, quiet until hovered; thinking and route stay in its tooltip and the menu", () => {
@@ -372,7 +372,7 @@ describe("the model picker in Simple mode", () => {
     expect(String(chip.props.className)).toContain("rounded-full");
     expect(String(chip.props.className)).not.toMatch(/\bborder\b|bg-control/);
     expect(markup).not.toContain("@max-4xl/chathead");
-    expect(markup).toContain('<span class="min-w-0 max-w-[160px] truncate">Opus 5.5</span>');
+    expect(markup).toContain('<span class="min-w-0 max-w-40 truncate">Opus 5.5</span>');
     expect(markup).toContain("opacity-60");
     fixture.advanced = true;
     const advanced = render(bot("high")).nodes.find((node) => node.props["data-tour"] === "model")!;
@@ -743,8 +743,8 @@ describe("the model picker in Simple mode", () => {
     expect(lines).toMatch(/data-simple-model-text="true" class="[^"]*\bflex-col\b/);
     expect(lines).toMatch(/<span class="truncate">Claude Sonnet 4\.5<\/span>/);
     expect(lines).toMatch(/data-simple-route="true" class="[^"]*\btruncate\b[^"]*">anthropic</);
-    expect(row).toContain("min-h-[30px]");
-    expect(row).not.toMatch(/\sh-\[30px\]/);
+    expect(row).toContain("min-h-7.5");
+    expect(row).not.toMatch(/\sh-7.5/);
     expect(row).not.toContain("max-w-[45%]");
   });
 
@@ -780,7 +780,7 @@ describe("the model picker in Simple mode", () => {
     expect(bottom).toContain('aria-label="Reasoning variant"');
     expect(bottom.indexOf(">Thinking</span>")).toBeGreaterThan(-1);
     expect(bottom.indexOf(">Thinking</span>")).toBeLessThan(bottom.indexOf("<select"));
-    expect(bottom).toContain("bg-ink/[0.05]");
+    expect(bottom).toContain("bg-fill-subtle");
     expect(bottom).not.toContain("data-simple-effort=");
   });
 

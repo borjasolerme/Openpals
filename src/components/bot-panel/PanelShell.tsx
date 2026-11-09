@@ -96,7 +96,7 @@ export function BotPanel({ bot, derived, linkedSection, onClose }: {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" onKeyDown={onKeyDown}>
-      <div {...dragProps} className="flex h-[50px] shrink-0 items-start justify-end gap-2.5 px-[13px] pt-[13px]">
+      <div {...dragProps} className="flex h-12.5 shrink-0 items-start justify-end gap-2.5 px-[13px] pt-[13px]">
         <ChatShareMenu bot={bot} className={roundButtonCls} />
         <button
           type="button"
@@ -146,8 +146,8 @@ export function BotPanel({ bot, derived, linkedSection, onClose }: {
                   data-panel-tab={id}
                   onClick={() => openTab(id)}
                   className={cn(
-                    "h-[26px] min-w-0 shrink truncate rounded-full px-2 text-[13px] leading-[18px] transition-colors",
-                    tab === id ? "bg-ink/[0.07] text-ink" : "text-ink-secondary hover:text-ink",
+                    "h-6.5 min-w-0 shrink truncate rounded-full px-2 text-base transition-colors",
+                    tab === id ? "bg-fill text-ink" : "text-ink-secondary hover:text-ink",
                   )}
                 >
                   {t(TAB_LABEL[id])}

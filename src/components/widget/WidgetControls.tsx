@@ -51,7 +51,7 @@ export function WidgetGlyph({ name, size = 16, className }: { name: unknown; siz
   if (isWidgetDot(name)) {
     return (
       <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center", className)} style={{ width: size, height: size }}>
-        <span className="size-[7px] rounded-full bg-current" />
+        <span className="size-2 rounded-full bg-current" />
       </span>
     );
   }
@@ -61,14 +61,14 @@ export function WidgetGlyph({ name, size = 16, className }: { name: unknown; siz
 
 
 const BUTTON =
-  "inline-flex h-9 max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-[14px] font-medium leading-5 transition-[background-color,color,filter,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-45 aria-busy:opacity-100";
+  "inline-flex h-9 max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full px-4 text-lg font-medium leading-5 transition-[background-color,color,filter,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-45 aria-busy:opacity-100";
 
 /** inset-ring, never ring-inset: this theme has a colour named `inset`, so ring-inset also paints the ring in it. */
 const BUTTON_LOOK: Record<string, string> = {
   primary: "bg-accent text-accent-ink enabled:hover:brightness-110",
-  secondary: "bg-ink/[0.07] text-ink enabled:hover:bg-ink/[0.12]",
+  secondary: "bg-fill text-ink enabled:hover:bg-fill-strong",
   outline: "bg-composer text-ink inset-ring inset-ring-composer-ring enabled:hover:bg-raised-hover",
-  quiet: "px-2.5 text-ink-secondary enabled:hover:bg-ink/[0.07] enabled:hover:text-ink",
+  quiet: "px-2.5 text-ink-secondary enabled:hover:bg-fill enabled:hover:text-ink",
   danger: "bg-danger text-danger-ink enabled:hover:brightness-110",
 };
 
@@ -122,11 +122,11 @@ export function WidgetButton({ actionRef, label, look, iconStart, iconEnd, block
 
 
 export const WIDGET_FIELD =
-  "block h-9 w-full min-w-0 rounded-lg border border-hairline/40 bg-inset px-3 text-[14px] leading-5 text-ink placeholder:text-ink-tertiary disabled:cursor-not-allowed disabled:opacity-60 user-invalid:border-danger aria-[invalid=true]:border-danger";
+  "block h-9 w-full min-w-0 rounded-lg border border-hairline/40 bg-inset px-3 text-lg leading-5 text-ink placeholder:text-ink-tertiary disabled:cursor-not-allowed disabled:opacity-60 user-invalid:border-danger aria-[invalid=true]:border-danger";
 export const WIDGET_BARE =
-  "h-9 min-w-0 max-w-full cursor-pointer rounded-lg border border-transparent bg-transparent text-[14px] font-medium leading-5 text-ink enabled:hover:bg-ink/[0.07] disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger";
+  "h-9 min-w-0 max-w-full cursor-pointer rounded-lg border border-transparent bg-transparent text-lg font-medium leading-5 text-ink enabled:hover:bg-fill disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-danger";
 export const WIDGET_FIELD_ACTION =
-  "flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-ink/[0.07] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
+  "flex size-7 shrink-0 items-center justify-center rounded-full text-ink-tertiary hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
 export type WidgetFieldControl = ReturnType<typeof useWidgetField>;
 
@@ -248,7 +248,7 @@ export function WidgetDatePicker({ node, bare }: { node: WidgetNode; bare: boole
           )}
         />
         {placeholder && (
-          <span aria-hidden="true" className={cn("pointer-events-none absolute truncate text-[14px] leading-5 text-ink-tertiary peer-focus:hidden", bare ? "start-7 end-2" : "start-8 end-3")}>
+          <span aria-hidden="true" className={cn("pointer-events-none absolute truncate text-lg leading-5 text-ink-tertiary peer-focus:hidden", bare ? "start-7 end-2" : "start-8 end-3")}>
             {placeholder}
           </span>
         )}
@@ -263,13 +263,13 @@ export function WidgetDatePicker({ node, bare }: { node: WidgetNode; bare: boole
 }
 
 const MARK = "shrink-0 peer-focus-visible:ring-2 peer-focus-visible:ring-focus";
-const MARK_IDLE = "shadow-[inset_0_0_0_1.5px_var(--color-ink-tertiary)]";
+const MARK_IDLE = "inset-ring-[1.5px] inset-ring-ink-tertiary";
 
 export function WidgetRadioMark({ on, invalid = false }: { on: boolean; invalid?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className={cn("size-[18px] rounded-full", MARK, on ? "shadow-[inset_0_0_0_5.5px_var(--color-accent)]" : invalid ? "shadow-[inset_0_0_0_1.5px_var(--color-danger)]" : MARK_IDLE)}
+      className={cn("size-4.5 rounded-full", MARK, on ? "inset-ring-[5.5px] inset-ring-accent" : invalid ? "inset-ring-[1.5px] inset-ring-danger" : MARK_IDLE)}
     />
   );
 }
@@ -279,11 +279,11 @@ export function WidgetCheckbox({ node }: { node: WidgetNode }) {
   const checked = field.form.values[field.name] === true;
   const label = widgetString(node, "label");
   return (
-    <label className={cn("relative flex min-h-[44px] min-w-0 items-center gap-3 text-[14px] leading-5 text-ink", field.disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
+    <label className={cn("relative flex min-h-11 min-w-0 items-center gap-3 text-lg leading-5 text-ink", field.disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
       <input {...field.control} type="checkbox" checked={checked} onChange={(event) => field.set(event.target.checked)} className="peer sr-only" />
       <span
         aria-hidden="true"
-        className={cn("flex size-[18px] items-center justify-center rounded-[6px]", MARK, checked ? "bg-accent text-accent-ink" : field.invalid ? "shadow-[inset_0_0_0_1.5px_var(--color-danger)]" : MARK_IDLE)}
+        className={cn("flex size-4.5 items-center justify-center rounded-md", MARK, checked ? "bg-accent text-accent-ink" : field.invalid ? "inset-ring-[1.5px] inset-ring-danger" : MARK_IDLE)}
       >
         {checked && <Check size={12} strokeWidth={2.6} />}
       </span>
@@ -297,7 +297,7 @@ export function WidgetRadioGroup({ node, labelledBy }: { node: WidgetNode; label
   const { id, "aria-invalid": invalid, "aria-describedby": describedBy, "aria-label": ariaLabel } = field.control;
   const choosingOther = field.other !== undefined;
   const choice = (key: string, checked: boolean, onChange: () => void, label: string, first: boolean) => (
-    <label key={key} className={cn("relative inline-flex min-w-0 items-center gap-2 text-[14px] leading-5 text-ink", field.disabled ? "cursor-not-allowed" : "cursor-pointer")}>
+    <label key={key} className={cn("relative inline-flex min-w-0 items-center gap-2 text-lg leading-5 text-ink", field.disabled ? "cursor-not-allowed" : "cursor-pointer")}>
       <input
         type="radio"
         name={id}
@@ -321,7 +321,7 @@ export function WidgetRadioGroup({ node, labelledBy }: { node: WidgetNode; label
       aria-required={field.control.required || undefined}
       aria-invalid={invalid}
       aria-describedby={describedBy}
-      className={cn("flex min-w-0", node.direction === "col" ? "flex-col gap-2.5" : "flex-wrap gap-x-[18px] gap-y-2", field.disabled && "opacity-60")}
+      className={cn("flex min-w-0", node.direction === "col" ? "flex-col gap-2.5" : "flex-wrap gap-x-4.5 gap-y-2", field.disabled && "opacity-60")}
     >
       {optionsOf(node).map((option, index) => choice(option.value, field.text === option.value, () => field.set(option.value), option.label, index === 0))}
       {field.takesOther && choice(OTHER_OPTION, choosingOther, field.chooseOther, t("question.other"), false)}

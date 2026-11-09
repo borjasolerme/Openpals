@@ -112,17 +112,17 @@ export function CallSheet({ message, transcript, botName, threadId, busy, partia
         aria-modal="true"
         aria-labelledby="call-sheet-title"
         data-testid="call-sheet"
-        className="animate-pop-in flex max-h-[min(720px,calc(100dvh-2rem))] w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border border-hairline/50 bg-panel text-ink shadow-2xl"
+        className="animate-pop-in flex max-h-[min(720px,calc(100dvh-2rem))] w-full max-w-160 flex-col overflow-hidden rounded-2xl border border-hairline/50 bg-panel text-ink shadow-lg"
         style={{ outline: "none" }}
       >
         <header className="flex items-start justify-between gap-4 border-b border-hairline/40 px-5 pb-3.5 pt-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-accent-text">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-caps text-accent-text">
               <AudioLines size={13} aria-hidden="true" />
               <span>{t("chat.callSheet.kicker")}</span>
             </div>
-            <h2 id="call-sheet-title" className="mt-0.5 truncate text-[16px] font-semibold">{title}</h2>
-            <p className="mt-0.5 text-[13px] tabular-nums text-ink-secondary">{`${formatCallDuration(call.seconds)} · ${when}`}</p>
+            <h2 id="call-sheet-title" className="mt-0.5 truncate text-xl font-semibold">{title}</h2>
+            <p className="mt-0.5 text-base tabular-nums text-ink-secondary">{`${formatCallDuration(call.seconds)} · ${when}`}</p>
           </div>
           <button
             type="button"
@@ -134,16 +134,16 @@ export function CallSheet({ message, transcript, botName, threadId, busy, partia
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {partial && <p className="mb-3 text-center text-[12px] text-ink-tertiary">{t("chat.callRecord.partial")}</p>}
+          {partial && <p className="mb-3 text-center text-sm text-ink-tertiary">{t("chat.callRecord.partial")}</p>}
           {blocks.length === 0 ? (
-            <p className="py-10 text-center text-[13px] text-ink-secondary">{t("chat.callSheet.empty")}</p>
+            <p className="py-10 text-center text-base text-ink-secondary">{t("chat.callSheet.empty")}</p>
           ) : (
             <div className="flex flex-col gap-2.5">
               {blocks.map((block) => <SheetBlock key={block.id} block={block} busy={busy} threadId={threadId} />)}
             </div>
           )}
         </div>
-        <footer className="border-t border-hairline/40 px-5 py-3 text-[12px] text-ink-tertiary">
+        <footer className="border-t border-hairline/40 px-5 py-3 text-sm text-ink-tertiary">
           {t("chat.callSheet.kept", { name: botName })}
         </footer>
       </div>
@@ -155,7 +155,7 @@ export function CallSheet({ message, transcript, botName, threadId, busy, partia
 function SheetBlock({ block, busy, threadId }: { block: Block; busy: boolean; threadId?: string }): ReactNode {
   if (block.kind === "lines") {
     return (
-      <ul className="flex flex-col gap-0.5 pl-1 text-[13px] text-ink-secondary">
+      <ul className="flex flex-col gap-0.5 pl-1 text-base text-ink-secondary">
         {block.lines.map((line) => <CallLineItem key={line.id} line={line} busy={busy} />)}
       </ul>
     );
@@ -163,7 +163,7 @@ function SheetBlock({ block, busy, threadId }: { block: Block; busy: boolean; th
   if (block.kind === "said") {
     return (
       <div className="flex justify-end">
-        <div className="w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl bg-bubble-user px-3.5 py-2 text-[14px] leading-relaxed text-ink">
+        <div className="w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl bg-bubble-user px-3.5 py-2 text-lg leading-relaxed text-ink">
           {block.message.text}
         </div>
       </div>
@@ -173,7 +173,7 @@ function SheetBlock({ block, busy, threadId }: { block: Block; busy: boolean; th
   if (!text.trim()) return null;
   return (
     <div className="flex justify-start">
-      <div className="w-fit min-w-0 max-w-[85%] rounded-2xl bg-card px-3.5 py-2 text-[14px] leading-relaxed text-ink">
+      <div className="w-fit min-w-0 max-w-[85%] rounded-2xl bg-card px-3.5 py-2 text-lg leading-relaxed text-ink">
         <ChatMarkdown text={text} message={threadId ? { threadId, messageId: block.message.id } : undefined} />
       </div>
     </div>

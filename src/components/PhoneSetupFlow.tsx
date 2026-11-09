@@ -519,8 +519,8 @@ function ValuePoints() {
       {points.map(({ Icon, title, detail }) => (
         <div key={title} className="rounded-xl bg-inset px-3 py-3 text-left">
           <Icon size={16} className="text-accent" />
-          <div className="mt-2 text-[13px] font-medium text-ink">{title}</div>
-          <div className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{detail}</div>
+          <div className="mt-2 text-base font-medium text-ink">{title}</div>
+          <div className="mt-0.5 text-sm leading-relaxed text-ink-secondary">{detail}</div>
         </div>
       ))}
     </div>
@@ -537,8 +537,8 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
         <div className="flex size-14 items-center justify-center rounded-2xl bg-accent/12 text-accent">
           <Smartphone size={26} />
         </div>
-        <h2 className="mt-4 text-[19px] font-semibold text-ink">{t("phone.intro.title", { app: productName() })}</h2>
-        <p className="mt-1.5 max-w-[460px] text-[14px] leading-relaxed text-ink-secondary">
+        <h2 className="mt-4 text-2xl font-semibold text-ink">{t("phone.intro.title", { app: productName() })}</h2>
+        <p className="mt-1.5 max-w-115 text-lg leading-relaxed text-ink-secondary">
           {t("phone.intro.detail")}
         </p>
         <ValuePoints />
@@ -546,7 +546,7 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
           data-phone-pairing-action
           onClick={c.start}
           disabled={!c.state || c.busy}
-          className="mt-5 w-full max-w-[320px] rounded-lg bg-accent py-2.5 text-[14px] font-medium text-white hover:opacity-90 disabled:cursor-wait disabled:opacity-40"
+          className="mt-5 w-full max-w-80 rounded-lg bg-accent py-2.5 text-lg font-medium text-white hover:opacity-90 disabled:cursor-wait disabled:opacity-40"
         >
           {c.state?.devices.length ? t("phone.intro.pairAnother") : t("phone.intro.pair")}
         </button>
@@ -555,14 +555,14 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
             <button
               disabled={!c.state || c.busy}
               onClick={c.useLocal}
-              className="mt-3 flex items-center justify-center gap-2 text-[13px] text-ink-secondary hover:text-ink disabled:opacity-40"
+              className="mt-3 flex items-center justify-center gap-2 text-base text-ink-secondary hover:text-ink disabled:opacity-40"
             >
               <Wifi size={15} /> {t("phone.signIn.wifiInstead")}
             </button>
-            <p className="mt-1 text-[11px] leading-relaxed text-ink-secondary">{t("phone.signIn.wifiNote")}</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-secondary">{t("phone.signIn.wifiNote")}</p>
           </>
         )}
-        {c.error && <p role="alert" className="mt-3 max-w-[390px] text-[13px] text-danger">{c.error}</p>}
+        {c.error && <p role="alert" className="mt-3 max-w-97.5 text-base text-danger">{c.error}</p>}
       </div>
     );
   }
@@ -573,14 +573,14 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
         <div className="flex size-14 items-center justify-center rounded-2xl bg-accent/12 text-accent">
           <Loader2 size={25} className="animate-spin" />
         </div>
-        <h2 className="mt-4 text-[18px] font-semibold text-ink">
+        <h2 className="mt-4 text-2xl font-semibold text-ink">
           {c.route === "tailscale" ? t("phone.verifying.tailscale") : t("phone.verifying.local")}
         </h2>
-        <p className="mt-1.5 max-w-[360px] text-[13px] leading-relaxed text-ink-secondary">
+        <p className="mt-1.5 max-w-90 text-base leading-relaxed text-ink-secondary">
           {c.route === "tailscale" ? t("phone.verifying.tailscaleDetail") : t("phone.verifying.localDetail")}
         </p>
-        {c.error && <p role="alert" className="mt-3 max-w-[380px] text-[13px] text-danger">{c.error}</p>}
-        <button onClick={c.cancel} className="mt-5 text-[12px] text-ink-secondary hover:text-ink">{t("common.cancel")}</button>
+        {c.error && <p role="alert" className="mt-3 max-w-95 text-base text-danger">{c.error}</p>}
+        <button onClick={c.cancel} className="mt-5 text-sm text-ink-secondary hover:text-ink">{t("common.cancel")}</button>
       </div>
     );
   }
@@ -591,13 +591,13 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
         <div className="flex size-14 items-center justify-center rounded-full bg-success/15 text-success">
           <Check size={28} />
         </div>
-        <h2 className="mt-4 text-[19px] font-semibold text-ink">{t("phone.success.title")}</h2>
-        <p className="mt-1.5 text-[13px] text-ink-secondary">
+        <h2 className="mt-4 text-2xl font-semibold text-ink">{t("phone.success.title")}</h2>
+        <p className="mt-1.5 text-base text-ink-secondary">
           {t("phone.success.detail")}
         </p>
         <button
           onClick={c.finish}
-          className="mt-5 w-full max-w-[280px] rounded-lg bg-accent py-2.5 text-[14px] font-medium text-white"
+          className="mt-5 w-full max-w-70 rounded-lg bg-accent py-2.5 text-lg font-medium text-white"
         >
           {t("phone.success.done")}
         </button>
@@ -610,10 +610,10 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
       <div className="flex size-12 items-center justify-center rounded-xl bg-white text-black">
         <QrCode size={23} />
       </div>
-      <h2 className="mt-3 text-[18px] font-semibold text-ink">
+      <h2 className="mt-3 text-2xl font-semibold text-ink">
         {c.pairingExpired ? t("phone.code.expired") : t("phone.code.title")}
       </h2>
-      <p className="mt-1 text-[13px] text-ink-secondary">
+      <p className="mt-1 text-base text-ink-secondary">
         {c.pairingExpired ? t("phone.code.expiredDetail") : t("phone.code.detail")}
       </p>
       {!c.pairingExpired && c.pairingLink && (
@@ -622,32 +622,32 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
         </div>
       )}
       {!c.pairingExpired && manualCodeMode === "direct" && c.state?.pairing && (
-        <div className="mt-4 w-full max-w-[320px] rounded-xl bg-inset px-4 py-3 text-[13px] text-ink-secondary">
+        <div className="mt-4 w-full max-w-80 rounded-xl bg-inset px-4 py-3 text-base text-ink-secondary">
           <div>{t("phone.code.manualIntro")}</div>
-          <div className="mt-2 font-mono text-[22px] tracking-[0.25em] text-ink">
+          <div className="mt-2 font-mono text-2xl tracking-code text-ink">
             {c.state.pairing.code}
           </div>
         </div>
       )}
       {!c.pairingExpired && manualCodeMode === "details" && c.state?.pairing && (
-        <p className="mt-3 text-[12px] text-ink-secondary">{t("phone.code.expiresIn", { seconds: c.secondsLeft })}</p>
+        <p className="mt-3 text-sm text-ink-secondary">{t("phone.code.expiresIn", { seconds: c.secondsLeft })}</p>
       )}
       {!c.pairingExpired && c.route === "local" && c.state?.publicNetwork && (
-        <p role="note" className="mt-3 w-full max-w-[390px] rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-left text-[12px] leading-relaxed text-warning">
+        <p role="note" className="mt-3 w-full max-w-97.5 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-left text-sm leading-relaxed text-warning">
           {t("phone.code.publicNetwork", { network: c.state.publicNetwork })}
         </p>
       )}
       {c.pairingExpired && (
-        <button onClick={c.refreshCode} className="mt-5 rounded-lg bg-accent px-5 py-2.5 text-[14px] font-medium text-white">
+        <button onClick={c.refreshCode} className="mt-5 rounded-lg bg-accent px-5 py-2.5 text-lg font-medium text-white">
           {t("phone.code.createNew")}
         </button>
       )}
       {!c.pairingExpired && c.state?.pairing && (
-        <details className="mt-4 w-full max-w-[390px] rounded-lg border border-hairline/40 px-3 py-2 text-left">
-          <summary className="cursor-pointer text-[12px] text-ink-secondary">{t("phone.code.trouble")}</summary>
-          <div className="mt-3 text-[12px] text-ink-secondary">
+        <details className="mt-4 w-full max-w-97.5 rounded-lg border border-hairline/40 px-3 py-2 text-left">
+          <summary className="cursor-pointer text-sm text-ink-secondary">{t("phone.code.trouble")}</summary>
+          <div className="mt-3 text-sm text-ink-secondary">
             {t("phone.code.manual")}
-            <div className="mt-1 font-mono text-[22px] tracking-[0.25em] text-ink">{c.state.pairing.code}</div>
+            <div className="mt-1 font-mono text-2xl tracking-code text-ink">{c.state.pairing.code}</div>
             {c.address && (
               <div className="mt-3">
                 <ConnectionDetail label={t("phone.code.address")} value={`${c.address}:${c.pairingPort}`} />
@@ -656,7 +656,7 @@ export function PhoneSetupFlowView({ controller }: { controller: PhoneSetupContr
           </div>
         </details>
       )}
-      <button onClick={c.cancel} className="mt-4 text-[12px] text-ink-secondary hover:text-ink">{t("common.cancel")}</button>
+      <button onClick={c.cancel} className="mt-4 text-sm text-ink-secondary hover:text-ink">{t("common.cancel")}</button>
     </div>
   );
 }

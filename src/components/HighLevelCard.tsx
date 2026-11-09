@@ -18,12 +18,12 @@ import {
 import { forgetHighLevelStatus, rememberHighLevelStatus } from "@/lib/highlevel-status";
 import { SidebarPopoverMenu } from "./SidebarPopoverMenu";
 
-const pill = "inline-flex h-7 min-w-[64px] shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-[13px] font-medium leading-5 text-ink transition-colors hover:bg-raised-hover disabled:opacity-40";
-const field = "h-8 w-full min-w-0 rounded-lg bg-inset px-2.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent/50";
+const pill = "inline-flex h-7 min-w-16 shrink-0 items-center justify-center gap-2 rounded-full bg-control/80 px-3 text-base font-medium leading-5 text-ink transition-colors hover:bg-raised-hover disabled:opacity-40";
+const field = "h-8 w-full min-w-0 rounded-lg bg-inset px-2.5 text-base text-ink placeholder:text-ink-secondary focus:outline-none focus:ring-1 focus:ring-accent/50";
 
 export function HighLevelIcon() {
   return (
-    <svg viewBox="0 0 40 40" className="size-10 shrink-0 rounded-[10px]" aria-hidden="true">
+    <svg viewBox="0 0 40 40" className="size-10 shrink-0 rounded-lg" aria-hidden="true">
       <rect width="40" height="40" rx="10" fill="#1b5e9b" />
       <path d="M11 11h4.5v7h9v-7H29v18h-4.5v-7h-9v7H11z" fill="#fff" />
     </svg>
@@ -219,10 +219,10 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
         <HighLevelIcon />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[14px] font-semibold leading-5 text-ink">{t("highlevel.title")}</span>
+            <span className="truncate text-lg font-semibold leading-5 text-ink">{t("highlevel.title")}</span>
             {connected && <Check size={13} strokeWidth={2.5} className="shrink-0 text-success" aria-label={t("apps.connected")} />}
           </div>
-          <p className="truncate text-[13px] leading-[18px] text-ink-secondary" title={description}>{description}</p>
+          <p className="truncate text-base text-ink-secondary" title={description}>{description}</p>
         </div>
         {connecting ? (
           <button type="button" onClick={cancel} className={pill}>{t("mcp.auth.cancel")}</button>
@@ -247,9 +247,9 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
           </div>
         )}
       </div>
-      <div className="ps-[52px]">
+      <div className="ps-13">
         {connecting && (
-          <p role="status" className="mt-1.5 flex items-center gap-2 text-[12px] text-ink-secondary">
+          <p role="status" className="mt-1.5 flex items-center gap-2 text-sm text-ink-secondary">
             <Loader2 size={12} className="shrink-0 animate-spin" aria-hidden="true" />
             <span>{t("highlevel.finishInBrowser")}</span>
             {flow && (
@@ -259,7 +259,7 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
             )}
           </p>
         )}
-        {error && <p role="alert" className="mt-1.5 text-[12px] text-danger">{error}</p>}
+        {error && <p role="alert" className="mt-1.5 text-sm text-danger">{error}</p>}
         {!connecting && status !== null && !connected && !needsSignIn && (
           tokenMode || tokenOnly ? (
             <form
@@ -287,20 +287,20 @@ export function HighLevelCard({ refreshKey = 0, onConnection }: {
                 onChange={(event) => setLocationId(event.target.value)}
                 className={field}
               />
-              <p className="text-[12px] leading-relaxed text-ink-secondary">{t("highlevel.tokenHelp")}</p>
+              <p className="text-sm leading-relaxed text-ink-secondary">{t("highlevel.tokenHelp")}</p>
               <div className="flex items-center gap-2">
                 <button type="submit" disabled={busy !== null} className={pill}>
                   {busy === "token" ? <Loader2 size={14} className="animate-spin" /> : t("connectors.action.connect")}
                 </button>
                 {!tokenOnly && (
-                  <button type="button" onClick={() => { setTokenMode(false); setError(null); }} className="text-[12px] text-ink-secondary underline underline-offset-2 hover:text-ink">
+                  <button type="button" onClick={() => { setTokenMode(false); setError(null); }} className="text-sm text-ink-secondary underline underline-offset-2 hover:text-ink">
                     {t("highlevel.useSignIn")}
                   </button>
                 )}
               </div>
             </form>
           ) : (
-            <button type="button" onClick={() => { setTokenMode(true); setError(null); }} className="mt-1.5 inline-block text-[12px] text-accent-text underline underline-offset-2">
+            <button type="button" onClick={() => { setTokenMode(true); setError(null); }} className="mt-1.5 inline-block text-sm text-accent-text underline underline-offset-2">
               {t("highlevel.useToken")}
             </button>
           )

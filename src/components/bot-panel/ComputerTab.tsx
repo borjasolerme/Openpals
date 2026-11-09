@@ -98,7 +98,7 @@ export function WherePage({ bot, derived }: { bot: Bot; derived: Derived }) {
   return (
     <>
       <Card>
-        <div role="radiogroup" aria-label={t("computer.simple.whereWorks", { name: bot.name })} className="flex flex-col divide-y divide-ink/[0.05]">
+        <div role="radiogroup" aria-label={t("computer.simple.whereWorks", { name: bot.name })} className="flex flex-col divide-y divide-line-subtle">
           {options.map((option) => (
             <RadioRow
               key={option.value}
@@ -112,7 +112,7 @@ export function WherePage({ bot, derived }: { bot: Bot; derived: Derived }) {
           ))}
         </div>
       </Card>
-      {usingNow && <p data-panel-using-now className="mx-1 text-[13px] text-ink-secondary">{t("computer.simple.usingNow", { place: usingNow })}</p>}
+      {usingNow && <p data-panel-using-now className="mx-1 text-base text-ink-secondary">{t("computer.simple.usingNow", { place: usingNow })}</p>}
       <LocalComputerAutoWarning
         open={localAutoWarning !== null}
         onCancel={() => setLocalAutoWarning(null)}
@@ -145,30 +145,30 @@ export function ComputerTab({ bot, derived, onOpen }: { bot: Bot; derived: Deriv
         data-panel-action="open-computer"
         aria-label={`${t("place.action.watch")}: ${screenOf}`}
         onClick={() => openComputer()}
-        className="group relative mt-2.5 flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl bg-composer ring-1 ring-inset ring-ink/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+        className="group relative mt-2.5 flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-xl bg-composer ring-1 ring-inset ring-line-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
       >
         {screenSrc ? (
           <img src={screenSrc} alt="" className="absolute inset-0 size-full object-cover" />
         ) : bot.busy ? (
           <>
             <span className="opacity-55"><BotAvatar bot={bot} size={52} animated={false} /></span>
-            <span className="max-w-[80%] text-center text-[13px] text-ink-secondary">{t("botPanel.screen.working")}</span>
+            <span className="max-w-[80%] text-center text-base text-ink-secondary">{t("botPanel.screen.working")}</span>
           </>
         ) : (
           <>
             <span className="opacity-60"><BotAvatar bot={bot} size={44} state="sleeping" animated={false} /></span>
-            <span className="max-w-[80%] text-center text-[13px] font-medium text-ink">{t("botPanel.screen.resting")}</span>
+            <span className="max-w-[80%] text-center text-base font-medium text-ink">{t("botPanel.screen.resting")}</span>
           </>
         )}
         <span
           aria-hidden="true"
-          className="absolute bottom-2.5 right-2.5 flex h-7 items-center gap-1.5 rounded-full border border-ink/10 bg-panel/80 px-2.5 text-[12px] text-ink opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100"
+          className="absolute bottom-2.5 right-2.5 flex h-7 items-center gap-1.5 rounded-full border border-line bg-panel/80 px-2.5 text-sm text-ink opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100"
         >
           <Monitor size={13} aria-hidden="true" />
           {t("place.action.watch")}
         </span>
       </button>
-      <div className="mt-3 text-center text-[13px] text-ink-tertiary">{screenOf}</div>
+      <div className="mt-3 text-center text-base text-ink-tertiary">{screenOf}</div>
 
       <Card anchor="where">
         <NavRow

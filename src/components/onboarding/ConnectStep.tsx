@@ -24,8 +24,8 @@ function PlaceOption({ kind, selected, connected, icon, title, hint, onChoose, o
   return (
     <button type="button" role="radio" aria-checked={selected} tabIndex={selected ? 0 : -1} data-place-choice={kind}
       onClick={onChoose} onKeyDown={onArrow}
-      className={cn(ROW, "transition-colors hover:bg-ink/[0.03] focus-visible:outline-offset-[-2px]")}>
-      <span aria-hidden="true" className={cn("flex size-[18px] shrink-0 items-center justify-center rounded-full border transition-colors",
+      className={cn(ROW, "transition-colors hover:bg-fill-subtle focus-visible:outline-offset-[-2px]")}>
+      <span aria-hidden="true" className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-full border transition-colors",
         selected ? "border-ink bg-ink" : "border-hairline")}>
         {selected && <span className="size-1.5 rounded-full bg-app" />}
       </span>
@@ -79,8 +79,8 @@ export function ConnectStep({ place, choice, onChoose, error }: {
         </div>
         <div data-add-server="">
           <button type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setAdding(!open)}
-            className={cn(ROW, "transition-colors hover:bg-ink/[0.03] focus-visible:outline-offset-[-2px]")}>
-            <span aria-hidden="true" className="size-[18px] shrink-0" />
+            className={cn(ROW, "transition-colors hover:bg-fill-subtle focus-visible:outline-offset-[-2px]")}>
+            <span aria-hidden="true" className="size-4.5 shrink-0" />
             <RowIcon><Plus size={16} /></RowIcon>
             <RowText title={t("botsHome.addServer")} hint={t("botsHome.addServerHint")} />
             <ChevronDown size={16} aria-hidden="true" className={cn("shrink-0 text-ink-secondary transition-transform duration-200", open && "rotate-180")} />
@@ -89,9 +89,9 @@ export function ConnectStep({ place, choice, onChoose, error }: {
         </div>
       </div>
       {server && choice === "local" && (
-        <p data-leave-server="" className="text-[13px] leading-[18px] text-warning">{t("botsHome.leaveServerNote", { server: server.label })}</p>
+        <p data-leave-server="" className="text-base text-warning">{t("botsHome.leaveServerNote", { server: server.label })}</p>
       )}
-      {error && <p role="alert" className="text-[13px] leading-[18px] text-danger">{error}</p>}
+      {error && <p role="alert" className="text-base text-danger">{error}</p>}
     </div>
   );
 }

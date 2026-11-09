@@ -121,16 +121,16 @@ describe("sidebar top row", () => {
     desktop();
     const html = render();
     const row = topRow(html);
-    expect(row, "the bot tiles rise into the rest of the corner: no drag region, no clicks but the buttons'").toMatch(/^data-sidebar-top-row="corner" class="[^"]*\bpointer-events-none\b[^"]*\bh-\[34px\][^"]*\bitems-start\b[^"]*">/);
+    expect(row, "the bot tiles rise into the rest of the corner: no drag region, no clicks but the buttons'").toMatch(/^data-sidebar-top-row="corner" class="[^"]*\bpointer-events-none\b[^"]*\bh-8.5[^"]*\bitems-start\b[^"]*">/);
     expect(classesOf(row, "data-sidebar-top-row")).toEqual(expect.arrayContaining(["justify-end", "px-1.5", "pt-1.5"]));
     const { lights, slot, buttons } = order(row);
     expect(lights).toBe(-1);
     expect(buttons).toBeGreaterThan(slot);
     expect(classesOf(row, "data-sidebar-top-buttons")).toEqual(expect.arrayContaining(["shrink-0", "pointer-events-auto"]));
     expect(row.slice(buttons).match(/<button/g)).toHaveLength(2);
-    expect(row).toMatch(/data-sidebar-search-toggle="true" aria-label="Search bots and messages" aria-expanded="false" title="Search bots and messages" class="[^"]*\bsize-\[26px\][^"]*\brounded-lg\b[^"]*\btext-ink-secondary\b/);
+    expect(row).toMatch(/data-sidebar-search-toggle="true" aria-label="Search bots and messages" aria-expanded="false" title="Search bots and messages" class="[^"]*\bsize-6.5[^"]*\brounded-lg\b[^"]*\btext-ink-secondary\b/);
     expect(row, "no round box round either").not.toContain("bg-composer");
-    expect(html).toMatch(/aria-label="New or share" class="[^"]*\bsize-\[26px\][^"]*\brounded-lg\b/);
+    expect(html).toMatch(/aria-label="New or share" class="[^"]*\bsize-6.5[^"]*\brounded-lg\b/);
     expect(html).not.toContain("data-sidebar-edge-toggle");
     expect(html).not.toContain('title="Active Threads"');
     expect(html).not.toContain("data-sidebar-search-pill");
@@ -159,7 +159,7 @@ describe("sidebar top row", () => {
     desktop();
     const advanced = topRow(render());
     expect(advanced).toMatch(/^data-sidebar-top-row="true" class="[^"]*" style="-webkit-app-region:drag;height:46px"/);
-    expect(classesOf(advanced, "data-traffic-light-space")).toEqual(["w-[72px]", "shrink-0"]);
+    expect(classesOf(advanced, "data-traffic-light-space")).toEqual(["w-18", "shrink-0"]);
     expect(advanced.indexOf("data-traffic-light-space")).toBeLessThan(advanced.indexOf("data-sidebar-top-slot"));
     fixture.advanced = false;
     const simple = topRow(render());

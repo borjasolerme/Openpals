@@ -30,8 +30,8 @@ function PersonalKey() {
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-col">
-          <label htmlFor={id} className="text-[14px] leading-5 text-ink">{t("onboarding.apps.personal")}</label>
-          <p className="text-[13px] leading-[18px] text-ink-secondary">{t("onboarding.apps.personalHint")}</p>
+          <label htmlFor={id} className="text-lg leading-5 text-ink">{t("onboarding.apps.personal")}</label>
+          <p className="text-base text-ink-secondary">{t("onboarding.apps.personalHint")}</p>
         </div>
         <div className="flex gap-2">
           <input id={id} type="password" value={key} onChange={(event) => { setKey(event.target.value); if (saving.kind === "failed") setSaving({ kind: "idle" }); }}
@@ -42,9 +42,9 @@ function PersonalKey() {
           </button>
         </div>
         {saving.kind === "saved" && (
-          <p role="status" className="flex items-center gap-1.5 text-[12px] text-success"><Check size={13} aria-hidden="true" />{t("onboarding.apps.personalSaved")}</p>
+          <p role="status" className="flex items-center gap-1.5 text-sm text-success"><Check size={13} aria-hidden="true" />{t("onboarding.apps.personalSaved")}</p>
         )}
-        {saving.kind === "failed" && <p role="alert" className="text-[12px] leading-4 text-danger">{saving.message}</p>}
+        {saving.kind === "failed" && <p role="alert" className="text-sm text-danger">{saving.message}</p>}
       </div>
     </form>
   );

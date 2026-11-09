@@ -70,7 +70,7 @@ describe("a bot's cards answer in its own colour", () => {
     expectOwn(button(html, t("approval.action.allowOnce")), "pink");
     const deny = button(html, t("approval.action.deny"));
     expectPlain(deny);
-    expect(classes(deny)).toEqual(expect.arrayContaining(["bg-ink/[0.07]", "text-ink"]));
+    expect(classes(deny)).toEqual(expect.arrayContaining(["bg-fill", "text-ink"]));
     expect(classes(deny).some((name) => name.includes("danger"))).toBe(false);
     const always = button(html, t("approval.action.alwaysAllow"));
     expectPlain(always);

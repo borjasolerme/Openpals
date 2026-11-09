@@ -30,8 +30,8 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
       className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-[340px] rounded-2xl border border-hairline/50 bg-card p-4 shadow-2xl">
-        <div className="mb-3 text-[15px] font-semibold text-ink">{t("sidebar.newChannel.title")}</div>
+      <div className="w-85 rounded-2xl border border-hairline/50 bg-card p-4 shadow-lg">
+        <div className="mb-3 text-lg font-semibold text-ink">{t("sidebar.newChannel.title")}</div>
         <input
           autoFocus
           maxLength={100}
@@ -43,7 +43,7 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
           }}
           aria-label={t("sidebar.newChannel.nameLabel")}
           placeholder={t("sidebar.newChannel.name")}
-          className="mb-3 w-full rounded-lg bg-raised/70 px-3 py-2 text-[14px] text-ink placeholder:text-ink-secondary focus:outline-none"
+          className="mb-3 w-full rounded-lg bg-raised/70 px-3 py-2 text-lg text-ink placeholder:text-ink-secondary focus:outline-none"
         />
         <BotPickerList
           bots={bots}
@@ -54,7 +54,7 @@ export function NewRoomPanel({ onClose }: { onClose: () => void }) {
         <button
           onClick={create}
           disabled={!picked.size}
-          className="mt-3 w-full rounded-lg bg-accent py-2 text-[14px] font-medium text-white hover:brightness-110 disabled:opacity-40"
+          className="mt-3 w-full rounded-lg bg-accent py-2 text-lg font-medium text-white hover:brightness-110 disabled:opacity-40"
         >
           {picked.size === 0
             ? t("sidebar.newChannel.create")

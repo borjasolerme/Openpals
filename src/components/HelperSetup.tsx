@@ -37,13 +37,13 @@ export function HelperSetup() {
   if (!steps.length) return null;
   return (
     <div role="group" aria-label={t("helperIntro.setup")} data-helper-setup="" className="flex max-w-full flex-col items-start gap-1.5">
-      <span className="text-[13px] text-ink-secondary">{t("helperIntro.setup")}</span>
+      <span className="text-base text-ink-secondary">{t("helperIntro.setup")}</span>
       <div className="flex flex-wrap gap-1.5">
         {steps.map((step) => {
           const { label, icon: Icon } = STEPS[step];
           return (
             <button key={step} type="button" data-helper-step={step} onClick={() => dispatch(setupAction(step))}
-              className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-accent/20">
+              className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3 py-1.5 text-base font-medium text-ink hover:bg-accent/20">
               <Icon size={14} aria-hidden="true" className="text-accent" />{t(label)}
             </button>
           );
@@ -94,7 +94,7 @@ export function IntroChips({ chips }: { chips: readonly IntroChip[] }) {
             const { label, icon: Icon } = CHIPS[chip];
             return (
               <button key={chip} type="button" data-helper-step={chip} onClick={() => tap(chip)}
-                className="inline-flex h-8 items-center gap-2 rounded-full border-[0.5px] border-ink/[0.08] bg-card px-3 text-[14px] leading-5 text-ink transition-colors hover:bg-raised-hover">
+                className="inline-flex h-8 items-center gap-2 rounded-full border-[0.5px] border-line bg-card px-3 text-lg leading-5 text-ink transition-colors hover:bg-raised-hover">
                 <Icon size={16} aria-hidden="true" className="text-ink-secondary" />{t(label)}
               </button>
             );

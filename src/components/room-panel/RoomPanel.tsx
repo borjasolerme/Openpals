@@ -33,8 +33,8 @@ function RoomHero({ group, members }: { group: Group; members: Bot[] }) {
           <BotAvatar key={member.id} bot={member} state="happy" size={52} animated={false} />
         ))}
       </div>
-      <h2 id="room-panel-title" className="mt-2.5 max-w-full truncate px-1.5 text-[18px] font-semibold text-ink">{group.name}</h2>
-      {group.description && <p className="mt-px line-clamp-2 max-w-full text-[13px] text-ink-secondary">{group.description}</p>}
+      <h2 id="room-panel-title" className="mt-2.5 max-w-full truncate px-1.5 text-2xl font-semibold text-ink">{group.name}</h2>
+      {group.description && <p className="mt-px line-clamp-2 max-w-full text-base text-ink-secondary">{group.description}</p>}
     </div>
   );
 }
@@ -71,7 +71,7 @@ function InstructionsRow({ group }: { group: Group }) {
           onKeyDown={onKeyDown}
           placeholder={t("room.bulletin.placeholder")}
           rows={6}
-          className="w-full resize-y rounded-lg border border-hairline bg-inset px-2.5 py-2 text-[13px] leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent-border"
+          className="w-full resize-y rounded-lg border border-hairline bg-inset px-2.5 py-2 text-base leading-relaxed text-ink outline-none placeholder:text-ink-tertiary focus:border-accent-border"
         />
         <div className="flex justify-end">
           <button
@@ -99,9 +99,9 @@ function InstructionsRow({ group }: { group: Group }) {
       data-panel-edit="instructions"
       aria-label={`${t("botSettings.simple.edit")}: ${t("room.panel.instructions")}`}
       onClick={bulletin.start}
-      className={cn(rowCls, "w-full text-left hover:bg-ink/[0.03]")}
+      className={cn(rowCls, "w-full text-left hover:bg-fill-subtle")}
     >
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-ink/[0.05] text-ink-secondary max-md:size-8 max-md:rounded-full" aria-hidden="true">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-fill-subtle text-ink-secondary max-md:size-8 max-md:rounded-full" aria-hidden="true">
         <FileText size={15} />
       </span>
       <RowText
@@ -180,7 +180,7 @@ export function RoomPanel({ group, overlay = false }: { group: Group; overlay?: 
         onKeyDown={onKeyDown}
         className={sidePanelCls(overlay, true)}
       >
-        <div {...dragProps} className="flex h-[52px] shrink-0 items-center justify-end gap-2 px-3.5">
+        <div {...dragProps} className="flex h-13 shrink-0 items-center justify-end gap-2 px-3.5">
           <RoomMoreMenu group={group} />
           <button type="button" onClick={() => closeRoomPanel({ refocus: true })} aria-label={t("botSettings.simple.close")} className={roundButtonCls}>
             <X size={16} className="pointer-events-none" />

@@ -6,7 +6,7 @@ import { useStore } from "@/state/store";
 import { captionChrome, useDesktopCapabilities, windowFramed } from "./DesktopCapabilities";
 
 /** A button in the frame's top bar: small, quiet, the bar's height and no more. */
-export const FRAME_BAR_BUTTON = "flex size-[22px] shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors hover:bg-ink/[0.07] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus";
+export const FRAME_BAR_BUTTON = "flex size-5.5 shrink-0 items-center justify-center rounded-md text-ink-secondary transition-colors hover:bg-fill hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus";
 
 /** The window frame's top bar (windowFramed), as thin as the traffic lights allow: they sit in it on macOS (main puts
  * them there: electron/window-chrome.mjs), the caption buttons on Windows (WindowCaptionButtons, drawn over its right
@@ -19,7 +19,7 @@ export function WindowFrameBar() {
   const { dragProps } = captionChrome(capabilities.windowChrome);
   return (
     <div data-window-frame-bar {...dragProps} className="flex h-7 shrink-0 items-center justify-end bg-frame">
-      <div data-frame-bar-end className={cn("flex items-center gap-0.5", mac ? "pr-2" : "pr-[140px]")}>
+      <div data-frame-bar-end className={cn("flex items-center gap-0.5", mac ? "pr-2" : "pr-35")}>
         <button
           type="button"
           data-frame-settings
