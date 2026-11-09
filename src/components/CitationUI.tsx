@@ -212,7 +212,7 @@ export function CitationSelectionToolbar({
       style={captured.point}
     >
       <Quote size={13} aria-hidden="true" /> {tooLong ? "Shorten selection" : "Cite"}
-      {!tooLong && <kbd aria-hidden="true" className="font-sans text-[11px] font-normal text-ink-secondary">{shortcut}</kbd>}
+      {!tooLong && <kbd aria-hidden="true" className="font-sans text-xs font-normal text-ink-secondary">{shortcut}</kbd>}
     </button>,
     document.body,
   );
