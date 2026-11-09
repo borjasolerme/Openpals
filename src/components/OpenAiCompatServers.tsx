@@ -62,8 +62,8 @@ export function BuiltInReplyWait() {
   return (
     <div className="flex flex-col gap-1">
       <ReplyWaitSelect server={server} disabled={busy} onPick={pick} />
-      <p className="text-[12px] leading-4 text-ink-secondary">{t("apiInstances.replyWaitHint")}</p>
-      {error && <div role="alert" className="text-[12px] leading-4 text-danger">{error}</div>}
+      <p className="text-sm text-ink-secondary">{t("apiInstances.replyWaitHint")}</p>
+      {error && <div role="alert" className="text-sm text-danger">{error}</div>}
     </div>
   );
 }
