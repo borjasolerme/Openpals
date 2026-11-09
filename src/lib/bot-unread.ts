@@ -1,11 +1,16 @@
 type UnreadBot = {
   unread?: boolean;
-  tasks?: ReadonlyArray<{ unread?: boolean; routineRunId?: string; archivedAt?: number }> | null;
+  threadId?: string;
+  mainThreadId?: string;
+  tasks?: ReadonlyArray<{ threadId?: string; unread?: boolean }> | null;
 };
 
+/** One chat per bot: only its main chat can be read, so only it lights the dot. Work the bot does in a background
+ * conversation (a routine run, a request from another bot) reaches the person through that chat, never on its own. */
 export function botShowsUnread(bot: UnreadBot): boolean {
-  if (!bot.tasks?.length) return Boolean(bot.unread);
-  return bot.tasks.some((task) => Boolean(task.unread) && !task.routineRunId && task.archivedAt === undefined);
+  const main = bot.mainThreadId ?? bot.threadId;
+  const chat = main ? bot.tasks?.find((task) => task.threadId === main) : undefined;
+  return chat ? Boolean(chat.unread) : Boolean(bot.unread);
 }
 
 

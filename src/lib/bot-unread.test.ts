@@ -3,10 +3,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { botShowsUnread, showBrowserUnread, titleWithUnread } from "./bot-unread";
 
 describe("whether a bot shows unread", () => {
-  it("shows unread while a conversation is, and nothing once read", () => {
-    expect(botShowsUnread({ tasks: [{ unread: true }, { unread: true }] })).toBe(true);
+  it("shows unread while the bot's chat is, and nothing once read", () => {
+    expect(botShowsUnread({ threadId: "chat", tasks: [{ threadId: "chat", unread: true }] })).toBe(true);
     expect(botShowsUnread({ unread: true })).toBe(true);
-    expect(botShowsUnread({ tasks: [{ unread: false }] })).toBe(false);
+    expect(botShowsUnread({ threadId: "chat", tasks: [{ threadId: "chat", unread: false }] })).toBe(false);
+  });
+
+  it("ignores background conversations the person cannot open, so a read chat never keeps the dot", () => {
+    expect(botShowsUnread({ threadId: "chat", mainThreadId: "chat", tasks: [{ threadId: "chat", unread: false }, { threadId: "side", unread: true }] })).toBe(false);
   });
 });
 

@@ -408,7 +408,9 @@ describe("bot-first sidebar", () => {
     if (density === "icons") expect(markup).not.toContain("data-sidebar-bot-activity");
     else expect([...markup.matchAll(/data-sidebar-activity-row="([^"]+)"/g)].map((match) => match[1])).toEqual(["approval"]);
     expect(markup).toContain('data-testid="waiting-dot"');
-    const unread = renderToStaticMarkup(createElement(BotListItem, rowProps(density, { ...bot, tasks: [bot.tasks![0]!, bot.tasks![5]!] })));
+    const sideOnly = renderToStaticMarkup(createElement(BotListItem, rowProps(density, { ...bot, tasks: [{ ...bot.tasks![0]!, threadId: bot.threadId, unread: false }, bot.tasks![5]!] })));
+    expect(sideOnly, "a background conversation the person cannot open lights no dot").not.toContain('data-testid="unread-dot"');
+    const unread = renderToStaticMarkup(createElement(BotListItem, rowProps(density, { ...bot, tasks: [{ ...bot.tasks![0]!, threadId: bot.threadId, unread: true }, bot.tasks![5]!] })));
     expect(unread).not.toContain("data-sidebar-activity-row");
     expect(unread).toContain(density === "icons" ? "rounded-full border border-panel bg-accent" : 'data-testid="unread-dot"');
   });
