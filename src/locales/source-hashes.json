@@ -2113,7 +2113,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6374,7 +6375,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8436,7 +8438,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10498,7 +10501,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -11852,7 +11856,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -15478,7 +15481,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -16804,7 +16808,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -20332,7 +20335,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -23599,7 +23603,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -25836,7 +25839,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29343,7 +29347,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -31777,7 +31782,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -35770,7 +35776,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -39763,7 +39770,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -41107,7 +41115,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -44681,7 +44688,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -46031,7 +46039,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -49640,7 +49647,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50960,7 +50968,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -54446,7 +54453,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -55985,7 +55993,6 @@
       "permissions.approval.title": "2365564d9d3d9d87b163a55d9413be43b45cde0846417cd7a2b2667c9928b5b2",
       "permissions.approval.applyFull": "b2db906c8a2176ef34513004fa2d97f8443a148149a488bc8d6a243291aaa646",
       "permissions.outbound.title": "38c45167f70694d06c7e73599fa2a1310a9e5c78786a85028e0571861dce6ae1",
-      "permissions.outbound.help": "2967fc7efec546f1f3846f099d52ab858ea1e37ca720a99168e70a8b15954f72",
       "permissions.outbound.ask": "91da6bc629e0a3283107d5d84072d03044ec6818d41c65cb2726e3a89f67da17",
       "permissions.outbound.askHint": "3d5ff01e5232f977ef1e70162cde31de4235d27229413971b4b277d5a0b7ae93",
       "permissions.outbound.allow": "ab8b05e8b68815e905fc6e049e31409e6e717d71d4129d3e3238d3e651196987",
@@ -59860,7 +59867,8 @@
       "engineSetup.cursor.invalidChallenge": "8ce7be0e07b5ddeaae795c4564f14f3c8c5ad998388399e940b84939d6924930",
       "engines.updatedTo": "da0fcccdc519425a9c333fda0838bbdd50d67fb0266194753bd1044abd0ecbb4",
       "server.runs.handoffApart": "559250758aa3a0348544255885797836815f2677183919db2461cf8d6c901c03",
-      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033"
+      "server.runs.handoffNotListed": "e92fde8ce1aaea2eefca6481e9171265c299c9231bf65fed72bbfbecea635033",
+      "server.stop.nothingRunning": "8cbd379640801817f0cfa32bc247147eaaa69428cb572512971e7091f4ca7d0c"
     }
   }
 }
