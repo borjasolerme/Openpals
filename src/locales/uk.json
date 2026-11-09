@@ -2477,5 +2477,7 @@
   "permissions.chief.make": "Зробити цього бота вашим головним контактом.",
   "connectors.resetSavedKeys": "Скинути збережені ключі",
   "connectors.savedKeysUnreadable": "Не вдалося прочитати ключі, збережені на цьому комп’ютері.",
-  "automations.run.waitingOnTeam": "Чекає, поки передана робота завершиться"
+  "automations.run.waitingOnTeam": "Чекає, поки передана робота завершиться",
+  "server.teammates.stillWaiting": "Досі чекає на вашу відповідь: {question} Ця робота закриється через {days} дн., якщо ніхто не відповість.",
+  "server.teammates.stillWaitingCard": "Ця робота досі чекає на вас. Вона закриється через {days} дн., якщо нічого не зміниться."
 }

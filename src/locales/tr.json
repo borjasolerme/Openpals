@@ -4036,5 +4036,7 @@
   "permissions.chief.make": "Bu botu ana iletişim noktanız yap.",
   "connectors.resetSavedKeys": "Kayıtlı anahtarları sıfırla",
   "connectors.savedKeysUnreadable": "Bu bilgisayarda kayıtlı anahtarlar okunamadı.",
-  "automations.run.waitingOnTeam": "Devrettiği işin bitmesini bekliyor"
+  "automations.run.waitingOnTeam": "Devrettiği işin bitmesini bekliyor",
+  "server.teammates.stillWaiting": "Hâlâ yanıtını bekliyor: {question} Kimse yanıt vermezse bu iş {days} gün içinde kapanacak.",
+  "server.teammates.stillWaitingCard": "Bu iş hâlâ seni bekliyor. Hiçbir şey değişmezse {days} gün içinde kapanacak."
 }

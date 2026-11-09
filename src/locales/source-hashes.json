@@ -2161,7 +2161,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6469,7 +6471,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8579,7 +8583,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10689,7 +10695,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15711,7 +15719,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20608,7 +20618,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -26154,7 +26166,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29708,7 +29722,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -32189,7 +32205,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -36229,7 +36247,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -40269,7 +40289,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -45229,7 +45251,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50230,7 +50254,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -55078,7 +55104,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -60534,7 +60562,9 @@
       "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
       "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
       "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470",
-      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833"
+      "automations.run.waitingOnTeam": "9765029257ea4e83e5f94c3e6d2dd37e11b5aa9459e50eeb878aaba8fbecd833",
+      "server.teammates.stillWaiting": "f5d915f496a35993463feaa0359a3e77ac14e224f3b365646c097ecd3d026d66",
+      "server.teammates.stillWaitingCard": "e47736ead3eacf2f055b30756720eb908b5ef888f688a85d73c08d84b3fcad0e"
     }
   }
 }

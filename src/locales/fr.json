@@ -2106,5 +2106,7 @@
   "permissions.chief.make": "Faire de ce bot votre contact principal.",
   "connectors.resetSavedKeys": "Réinitialiser les clés enregistrées",
   "connectors.savedKeysUnreadable": "Les clés enregistrées sur cet ordinateur n'ont pas pu être lues.",
-  "automations.run.waitingOnTeam": "En attente de la fin du travail qu'il a confié"
+  "automations.run.waitingOnTeam": "En attente de la fin du travail qu'il a confié",
+  "server.teammates.stillWaiting": "Attend toujours votre réponse : {question} Ce travail sera fermé dans {days} jours si personne ne répond.",
+  "server.teammates.stillWaitingCard": "Ce travail vous attend toujours. Il sera fermé dans {days} jours si rien ne change."
 }

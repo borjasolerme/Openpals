@@ -5542,5 +5542,7 @@
   "settings.simple.people.manage": "管理",
   "connectors.resetSavedKeys": "重置已保存的密钥",
   "connectors.savedKeysUnreadable": "无法读取此电脑上保存的密钥。",
-  "automations.run.waitingOnTeam": "正在等待移交出去的工作完成"
+  "automations.run.waitingOnTeam": "正在等待移交出去的工作完成",
+  "server.teammates.stillWaiting": "仍在等待你的回答：{question} 如果没人回答，这项工作将在 {days} 天后关闭。",
+  "server.teammates.stillWaitingCard": "这项工作仍在等你。如果没有变化，它将在 {days} 天后关闭。"
 }

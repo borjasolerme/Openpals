@@ -2106,5 +2106,7 @@
   "permissions.chief.make": "इस बॉट को अपना मुख्य संपर्क बनाएँ।",
   "connectors.resetSavedKeys": "सहेजी गई कुंजियाँ रीसेट करें",
   "connectors.savedKeysUnreadable": "इस कंप्यूटर पर सहेजी गई कुंजियाँ पढ़ी नहीं जा सकीं।",
-  "automations.run.waitingOnTeam": "सौंपे गए काम के पूरा होने का इंतज़ार"
+  "automations.run.waitingOnTeam": "सौंपे गए काम के पूरा होने का इंतज़ार",
+  "server.teammates.stillWaiting": "अब भी आपके जवाब का इंतज़ार है: {question} अगर कोई जवाब नहीं देता, तो यह काम {days} दिनों में बंद हो जाएगा।",
+  "server.teammates.stillWaitingCard": "यह काम अब भी आपका इंतज़ार कर रहा है। अगर कुछ नहीं बदलता, तो यह {days} दिनों में बंद हो जाएगा।"
 }

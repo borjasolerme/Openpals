@@ -2158,5 +2158,7 @@
   "permissions.chief.make": "Diesen Bot zu deinem Hauptansprechpartner machen.",
   "connectors.resetSavedKeys": "Gespeicherte Schlüssel zurücksetzen",
   "connectors.savedKeysUnreadable": "Die auf diesem Computer gespeicherten Schlüssel konnten nicht gelesen werden.",
-  "automations.run.waitingOnTeam": "Wartet darauf, dass weitergegebene Arbeit fertig wird"
+  "automations.run.waitingOnTeam": "Wartet darauf, dass weitergegebene Arbeit fertig wird",
+  "server.teammates.stillWaiting": "Wartet noch auf deine Antwort: {question} Diese Arbeit wird in {days} Tagen geschlossen, wenn niemand antwortet.",
+  "server.teammates.stillWaitingCard": "Diese Arbeit wartet noch auf dich. Sie wird in {days} Tagen geschlossen, wenn sich nichts ändert."
 }

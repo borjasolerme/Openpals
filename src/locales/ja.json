@@ -5018,5 +5018,7 @@
   "onboarding.bring.openApp": "{app} を開く",
   "connectors.resetSavedKeys": "保存したキーをリセット",
   "connectors.savedKeysUnreadable": "このコンピュータに保存されたキーを読み取れませんでした。",
-  "automations.run.waitingOnTeam": "引き継いだ作業の完了を待っています"
+  "automations.run.waitingOnTeam": "引き継いだ作業の完了を待っています",
+  "server.teammates.stillWaiting": "まだ回答を待っています: {question} 誰も回答しない場合、この作業は {days} 日後に終了します。",
+  "server.teammates.stillWaitingCard": "この作業はまだあなたを待っています。何も変わらなければ {days} 日後に終了します。"
 }

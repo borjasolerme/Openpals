@@ -3550,5 +3550,7 @@
   "permissions.chief.make": "將這個機器人設為你的主要聯絡人。",
   "connectors.resetSavedKeys": "重設已儲存的金鑰",
   "connectors.savedKeysUnreadable": "無法讀取這台電腦上儲存的金鑰。",
-  "automations.run.waitingOnTeam": "正在等待交出去的工作完成"
+  "automations.run.waitingOnTeam": "正在等待交出去的工作完成",
+  "server.teammates.stillWaiting": "仍在等待你的回答：{question} 如果沒人回答，這項工作將在 {days} 天後關閉。",
+  "server.teammates.stillWaitingCard": "這項工作仍在等你。如果沒有變化，它將在 {days} 天後關閉。"
 }

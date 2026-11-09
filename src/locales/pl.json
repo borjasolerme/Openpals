@@ -4956,5 +4956,7 @@
   "onboarding.bring.openApp": "Otwórz {app}",
   "connectors.resetSavedKeys": "Zresetuj zapisane klucze",
   "connectors.savedKeysUnreadable": "Nie udało się odczytać kluczy zapisanych na tym komputerze.",
-  "automations.run.waitingOnTeam": "Czeka, aż przekazana praca się skończy"
+  "automations.run.waitingOnTeam": "Czeka, aż przekazana praca się skończy",
+  "server.teammates.stillWaiting": "Wciąż czeka na Twoją odpowiedź: {question} Ta praca zostanie zamknięta za {days} dni, jeśli nikt nie odpowie.",
+  "server.teammates.stillWaitingCard": "Ta praca wciąż na Ciebie czeka. Zostanie zamknięta za {days} dni, jeśli nic się nie zmieni."
 }

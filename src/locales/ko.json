@@ -5452,5 +5452,7 @@
   "settings.simple.people.manage": "관리",
   "connectors.resetSavedKeys": "저장된 키 초기화",
   "connectors.savedKeysUnreadable": "이 컴퓨터에 저장된 키를 읽을 수 없어요.",
-  "automations.run.waitingOnTeam": "넘긴 작업이 끝나기를 기다리는 중"
+  "automations.run.waitingOnTeam": "넘긴 작업이 끝나기를 기다리는 중",
+  "server.teammates.stillWaiting": "아직 답변을 기다리고 있어요: {question} 아무도 답하지 않으면 이 작업은 {days}일 후에 닫혀요.",
+  "server.teammates.stillWaitingCard": "이 작업이 아직 당신을 기다리고 있어요. 아무 변화가 없으면 {days}일 후에 닫혀요."
 }

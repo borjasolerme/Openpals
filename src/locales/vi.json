@@ -4036,5 +4036,7 @@
   "permissions.chief.make": "Đặt bot này làm đầu mối liên hệ chính của bạn.",
   "connectors.resetSavedKeys": "Đặt lại các khóa đã lưu",
   "connectors.savedKeysUnreadable": "Không đọc được các khóa đã lưu trên máy tính này.",
-  "automations.run.waitingOnTeam": "Đang chờ việc đã giao lại hoàn tất"
+  "automations.run.waitingOnTeam": "Đang chờ việc đã giao lại hoàn tất",
+  "server.teammates.stillWaiting": "Vẫn đang chờ câu trả lời của bạn: {question} Việc này sẽ đóng sau {days} ngày nếu không ai trả lời.",
+  "server.teammates.stillWaitingCard": "Việc này vẫn đang chờ bạn. Nó sẽ đóng sau {days} ngày nếu không có gì thay đổi."
 }

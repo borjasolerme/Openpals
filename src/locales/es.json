@@ -4304,5 +4304,7 @@
   "permissions.chief.make": "Hacer de este bot tu contacto principal.",
   "connectors.resetSavedKeys": "Restablecer las claves guardadas",
   "connectors.savedKeysUnreadable": "No se pudieron leer las claves guardadas en este ordenador.",
-  "automations.run.waitingOnTeam": "Esperando a que termine el trabajo que delegó"
+  "automations.run.waitingOnTeam": "Esperando a que termine el trabajo que delegó",
+  "server.teammates.stillWaiting": "Sigue esperando tu respuesta: {question} Este trabajo se cierra en {days} días si nadie responde.",
+  "server.teammates.stillWaitingCard": "Este trabajo sigue esperándote. Se cierra en {days} días si nada cambia."
 }

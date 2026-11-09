@@ -4997,5 +4997,7 @@
   "onboarding.bring.openApp": "Открыть {app}",
   "connectors.resetSavedKeys": "Сбросить сохранённые ключи",
   "connectors.savedKeysUnreadable": "Не удалось прочитать ключи, сохранённые на этом компьютере.",
-  "automations.run.waitingOnTeam": "Ждёт завершения переданной работы"
+  "automations.run.waitingOnTeam": "Ждёт завершения переданной работы",
+  "server.teammates.stillWaiting": "Всё ещё ждёт вашего ответа: {question} Эта работа закроется через {days} дн., если никто не ответит.",
+  "server.teammates.stillWaitingCard": "Эта работа всё ещё ждёт вас. Она закроется через {days} дн., если ничего не изменится."
 }

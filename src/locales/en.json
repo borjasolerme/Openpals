@@ -107,6 +107,8 @@
   "notice.notNow": "Not now",
   "notice.openFailed": "Could not open your browser. Please try again.",
   "server.teammates.sameRequest": "Another teammate asked the same a moment ago, so this gets that answer instead of a second one.",
+  "server.teammates.stillWaiting": "Still waiting on your answer: {question} This work closes in {days} days if nobody answers.",
+  "server.teammates.stillWaitingCard": "This work is still waiting on you. It closes in {days} days if nothing changes.",
   "server.questions.notAsked": "Not asked (Just do it): {question}",
   "server.warmSummary.summarized": "summarized this conversation while it was idle; the latest messages carry on word for word",
   "server.runs.didNotFinish": "This run didn't finish.",

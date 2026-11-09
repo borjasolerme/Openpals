@@ -4893,5 +4893,7 @@
   "onboarding.bring.openApp": "Abrir {app}",
   "connectors.resetSavedKeys": "Redefinir chaves salvas",
   "connectors.savedKeysUnreadable": "Não foi possível ler as chaves salvas neste computador.",
-  "automations.run.waitingOnTeam": "Aguardando o trabalho que repassou terminar"
+  "automations.run.waitingOnTeam": "Aguardando o trabalho que repassou terminar",
+  "server.teammates.stillWaiting": "Ainda aguardando sua resposta: {question} Este trabalho será encerrado em {days} dias se ninguém responder.",
+  "server.teammates.stillWaitingCard": "Este trabalho ainda está esperando por você. Ele será encerrado em {days} dias se nada mudar."
 }
