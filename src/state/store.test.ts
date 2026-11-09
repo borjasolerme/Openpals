@@ -3023,7 +3023,7 @@ describe("notifications feed", () => {
     expect(reducer(open, action).notificationsOpen).toBe(false);
     expect(reducer({ ...open, notificationsPinned: true }, action).notificationsOpen).toBe(true);
     expect(reducer({ ...open, selectedId: "bot-1" }, action).notificationsOpen).toBe(true);
-    expect(reducer({ ...open, activeView: "team-map" as const }, action).notificationsOpen).toBe(true);
+    expect(reducer({ ...open, activeView: "routines" as const }, action).notificationsOpen).toBe(true);
   });
 
   it("a thread switch in a room that is not on screen leaves the tray as it is", () => {
