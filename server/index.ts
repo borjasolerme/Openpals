@@ -12756,7 +12756,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             { approvals: blocked });
           approvalGranted = true;
         }
-        const requestBatchKey = destination ? randomUUID() : undefined;
+        const requestBatchKey = destination ? randomUUID() : undefined, fanOut = targets.length > 1 ? randomUUID() : undefined;
         const generation = EXTERNAL ? randomUUID() : internalCapability.generation;
         if (EXTERNAL) {
           const opener = handoffOpener(internalCapability, address.threadId);
@@ -12804,7 +12804,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             const routed = lane ? { botId: target.botId, threadId: lane.threadId } : target;
             outsideLineage.carry(address.threadId, routed.threadId);
             const { node, duplicate } = coordinator.enqueue(address, generation, internalCapability.roomHandoffId, routed, call.message, {
-              mode, reply, thread: lane || fresh ? "new" : "standing", approvalGranted, rework: call.rework, ...(lane ? {} : { requestBatchKey }),
+              mode, reply, thread: lane || fresh ? "new" : "standing", approvalGranted, rework: call.rework, ...(lane ? {} : { requestBatchKey }), ...(fanOut ? { fanOut } : {}),
               ...(call.doneWhen ? { doneWhen: call.doneWhen } : {}),
             });
             usageTrace.link(node.id, node.parentId, { threadId: internalCapability.threadId, turnId: liveTurnByThread.get(internalCapability.threadId) ?? "" });
