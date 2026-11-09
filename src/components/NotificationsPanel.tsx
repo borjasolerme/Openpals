@@ -7,6 +7,7 @@ import type { LocaleKey } from "@/locales";
 import { BotAvatar, type BotAvatarProps } from "./Avatar";
 import { threadUpdatedLabel } from "./SidebarThreadRow";
 import type { NotificationLogEntry, NotifyKind } from "../../shared/notification";
+import { plainPreviewText } from "../../shared/plain-preview";
 import { Select } from "./Select";
 
 const KIND_LOOK: Record<NotifyKind, { Icon: LucideIcon; className: string; status: LocaleKey }> = {
@@ -223,7 +224,7 @@ function NotificationRow({ entry, now, bot, threadName, onOpen }: { entry: Notif
           )}
           <span className={cn("shrink-0 text-[11px] font-medium", className)}>{t(status)}</span>
         </span>
-        {entry.body && <span className="mt-0.5 block truncate text-[12px] text-ink-secondary">{entry.body}</span>}
+        {entry.body && <span className="mt-0.5 block truncate text-[12px] text-ink-secondary">{plainPreviewText(entry.body)}</span>}
         <span className="mt-0.5 block text-[11px] text-ink-tertiary">{threadUpdatedLabel(entry.at, now)}</span>
       </span>
     </button>

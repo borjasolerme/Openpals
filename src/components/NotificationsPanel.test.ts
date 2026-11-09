@@ -1,10 +1,23 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ALL_BOTS, filterNotifications, notificationBots, notificationBotForAvatar, notificationThreadName, postNotificationRead } from "./NotificationsPanel";
+import { initialState, StoreContext, type Bot } from "@/state/store";
+import { ALL_BOTS, filterNotifications, notificationBots, notificationBotForAvatar, notificationThreadName, NotificationsPanel, postNotificationRead } from "./NotificationsPanel";
 
 const state = {
   bots: [{ id: "b1", threadId: "t-main", tasks: [{ threadId: "t-main", title: "Notification Pane" }, { threadId: "t-2", title: "Hotpatches" }] }],
   groups: [{ threadId: "g-main", name: "Mantis-email & co.", tasks: [{ threadId: "g-task", title: "Skill rollout" }] }],
 };
+
+describe("a row stored before notifications spoke plain text", () => {
+  const scout: Bot = { id: "scout", threadId: "main", name: "Scout", title: "", description: "", notifications: true, color: "green", unread: false, modelSelection: { instanceId: "fake", model: "m" }, messages: [], tasks: [] };
+  it("shows its Markdown as the readable line", () => {
+    const state = { ...initialState, bots: [scout], notifications: [{ id: "n1", at: 1, read: true, kind: "done" as const, botId: "scout", botName: "Scout", threadId: "main", title: "Scout finished", body: "**Facture reçue** — [voir](https://example.com)" }] };
+    const html = renderToStaticMarkup(createElement(StoreContext.Provider, { value: { state, dispatch: vi.fn() } as never }, createElement(NotificationsPanel)));
+    expect(html).toContain("Facture reçue — voir");
+    expect(html).not.toContain("**");
+  });
+});
 
 describe("notificationThreadName", () => {
   it("finds a bot task title", () => {

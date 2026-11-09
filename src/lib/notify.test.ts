@@ -159,6 +159,14 @@ describe("desktop notifications", () => {
   });
 });
 
+describe("an older notification body", () => {
+  it("shows its Markdown as the plain line a banner can show", () => {
+    const { notices } = installNotification("granted");
+    showNotification({ ...frame, body: "**Facture reçue** — [voir](https://example.com)" }, vi.fn());
+    expect(notices[0]!.options?.body).toBe("Facture reçue — voir");
+  });
+});
+
 describe("notification sounds", () => {
   it("lets the platform play its sound by default", () => {
     const { notices } = installNotification("granted");

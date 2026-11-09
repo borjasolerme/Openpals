@@ -1,4 +1,5 @@
 import type { Notification } from "../../shared/notification";
+import { plainPreviewText } from "../../shared/plain-preview";
 import { finishedNotificationsEnabled, notificationSoundsEnabled } from "./notification-preferences";
 
 export type NotifyFrame = Notification;
@@ -42,7 +43,8 @@ export function showNotification(
 
   if (Notification.permission === "granted") {
     const options: NotificationOptions = {
-      body: frame.body,
+      // Entries saved before the harness spoke plain text still carry Markdown.
+      body: plainPreviewText(frame.body),
       ...buildNotificationOptions({ id: frame.botId, avatarUrl }),
       ...(spend ? { tag: "openmausbot:spend", icon: undefined } : {}),
       ...(notificationSoundsEnabled() ? {} : { silent: true }),
