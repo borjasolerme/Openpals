@@ -1,6 +1,7 @@
 import { hostTimeZone } from "../turn-clock.ts";
 import { USAGE_LIMIT } from "./retry.ts";
 import { CODEX_USAGE_LIMIT_REACHED } from "../../shared/codex-usage-limit.ts";
+import { plainRecord } from "./codex-app-approval.ts";
 
 /** How a Codex turn reaches OpenAI: Openpals' ChatGPT plan, Codex's own sign-in, or any other provider. */
 export type CodexRoute = "plan" | "own" | "other";
@@ -107,10 +108,12 @@ export function codexSignInExpired(raw: string): string {
 
 export class CodexRpcError extends Error {
   code: unknown;
+  data: unknown;
 
-  constructor(error: { code?: unknown; message?: string }) {
+  constructor(error: { code?: unknown; message?: string; data?: unknown }) {
     super(error.message ?? JSON.stringify(error));
     this.code = error.code;
+    this.data = error.data;
   }
 }
 
@@ -119,6 +122,12 @@ export function missingNativeCodexThread(error: unknown, cursor: string): boolea
   return error instanceof CodexRpcError && error.code === -32600 &&
     error.message === `no rollout found for thread id ${cursor}`;
 }
+
+/** codex-cli 0.167.0 refuses to resume a session saved under another provider: "This chat uses custom, but your current
+ * provider is magpie. Switch to custom to continue.", with data { type: "modelProviderMismatch" }. */
+export const codexProviderMismatch = (error: unknown): boolean =>
+  error instanceof CodexRpcError && error.code === -32600 &&
+  plainRecord(error.data)?.type === "modelProviderMismatch";
 
 /** Codex refuses to resume an archived session: "session <id> is archived. Run `codex unarchive <id>` to unarchive it first." */
 export const archivedNativeCodexThread = (error: unknown, cursor: string): boolean =>
