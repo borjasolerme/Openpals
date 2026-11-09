@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { TOOL_BRIDGE_ENV } from "./drivers/agents-bridge.ts";
 import { agentsMcp } from "./drivers/agents-mcp.ts";
-import { agentsServerEnv, COMPUTER_OFF_REFUSAL, computerPickRefusal, directTurnKind, roomSkillsRefusal, type AgentsConversation, type AgentsTurn } from "./agents-turn.ts";
+import { agentsServerEnv, botDrivenConversation, COMPUTER_OFF_REFUSAL, computerPickRefusal, directTurnKind, roomSkillsRefusal, type AgentsConversation, type AgentsTurn } from "./agents-turn.ts";
 
 const HOST: AgentsConversation["host"] = { skillAuthoring: true, escalations: true, voiceNotes: true, x: true };
 const CHAT: AgentsConversation = { threadId: "thread-1", bot: { id: "bot-1", chiefOfStaff: true }, room: false, host: HOST };
@@ -53,6 +53,17 @@ describe("one conversation's agents tools", () => {
       });
     }
   }
+
+  it("never lists select_computer in a conversation only bots or automation drive, where every pick would be refused", async () => {
+    const names = async (conversation: AgentsConversation) =>
+      (JSON.parse((await everyTurn(conversation))[0]!.wire) as { tools: Array<{ name: string }> }).tools.map((tool) => tool.name);
+    expect(await names(CHAT)).toContain("select_computer");
+    expect(await names({ ...CHAT, botDriven: true })).not.toContain("select_computer");
+    expect(botDrivenConversation({ openedBy: { botId: "b" } })).toBe(true);
+    expect(botDrivenConversation({ routineRunId: "r1" })).toBe(true);
+    expect(botDrivenConversation({})).toBe(false);
+    expect(botDrivenConversation(undefined)).toBe(false);
+  });
 
   it("lists a direct chat select_computer and the wait tools and a room none, and both the skill tools while authoring is on", async () => {
     const names = async (conversation: AgentsConversation) =>

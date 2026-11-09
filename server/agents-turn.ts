@@ -11,6 +11,8 @@ export interface AgentsConversation {
   bot: NonNullable<Parameters<typeof roleToolEnv>[0]> & { id: string; computer?: string; memoryEnabled?: boolean; xResearch?: boolean };
   /** A room's thread: rooms refuse widgets, pages and a computer pick. */
   room: boolean;
+  /** Only bots or automation drive it (`botDrivenConversation`): no turn in it is a person's own message to pick a computer for. */
+  botDriven?: boolean;
   /** `x`: a treg key is held. */
   host: { skillAuthoring: boolean; escalations: boolean; voiceNotes: boolean; x: boolean };
 }
@@ -44,8 +46,13 @@ export function agentsServerEnv(conversation: AgentsConversation, turn: AgentsTu
     OMB_RESEARCH: flag(host.x && bot.xResearch !== false),
     ...roleToolEnv(bot),
     OMB_ESCALATIONS: flag(host.escalations),
-    OMB_COMPUTER_SELECTION: flag(!conversation.room && bot.computer !== "off"),
+    OMB_COMPUTER_SELECTION: flag(!conversation.room && bot.computer !== "off" && !conversation.botDriven),
   };
+}
+
+/** A conversation a bot opened or a routine's run: a fact of the conversation, so its tool list stays the same turn to turn. */
+export function botDrivenConversation(task: { openedBy?: unknown; routineRunId?: string } | undefined): boolean {
+  return Boolean(task && (task.openedBy || task.routineRunId));
 }
 
 /** What started a direct turn, in the words a refusal uses. */
