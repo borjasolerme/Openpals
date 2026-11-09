@@ -2,8 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
+// The Docker image builds DuckDB per architecture into duckdb/target; the x86_64-only Podman image copies linux-x64.
 const buildCopies = (text) =>
-  [...text.matchAll(/^COPY --from=build (?:--chown=\S+ )?(\S+) (\S+)$/gm)].map(([, from, to]) => `${from} ${to}`);
+  [...text.matchAll(/^COPY --from=build (?:--chown=\S+ )?(\S+) (\S+)$/gm)]
+    .map(([, from, to]) => `${from.replace(/\/duckdb\/(?:target|linux-x64)$/, "/duckdb/<arch>")} ${to}`);
 
 describe("Podman image build", () => {
   it("ships everything the Docker server image ships from the build", () => {
