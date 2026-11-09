@@ -290,9 +290,11 @@ export class RuntimeCoordinator implements Coordinator {
 
   outstandingFor(threadId: string): HandoffView[] {
     this.ready();
-    const live = this.live();
-    const mine = new Set(live.filter(a => a.assignee.destination.threadId === threadId).map(a => a.id));
-    return live.filter(a => a.parentId !== undefined && mine.has(a.parentId) && a.reply !== "none").map(a => this.project(a));
+    // Only this thread's open rows and their children: the plan's cap asks for every running thread, often.
+    return this.store.all({ nonTerminal: true, assigneeThreadId: threadId })
+      .flatMap(parent => this.store.children(parent.id).filter(a => !isTerminal(a) && a.reply !== "none").map(a => ({ a, parent })))
+      .sort((x, y) => x.a.createdAt - y.a.createdAt)
+      .map(({ a, parent }) => view(a, parent));
   }
 
   beginTurn(req: BeginTurnRequest): HandoffView {
