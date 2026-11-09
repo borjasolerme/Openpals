@@ -83,8 +83,8 @@ describe("bot-first sidebar", () => {
   });
 
   it.each([
-    { advanced: true, density: "icons", size: 44, spacing: ["justify-center", "px-1", "py-1.5"] },
-    { advanced: true, density: "comfortable", size: 44, spacing: ["gap-3", "py-2", "pl-2.5", "pr-9"] },
+    { advanced: true, density: "icons", size: 40, spacing: ["justify-center", "px-1", "py-1"] },
+    { advanced: true, density: "comfortable", size: 32, spacing: ["gap-2.5", "py-1.5", "pl-2", "pr-9"] },
     { advanced: false, density: "comfortable", size: 42, spacing: ["gap-2", "rounded-lg", "pl-2", "pr-2", "md:h-13.5"] },
     { advanced: false, density: "icons", size: 36, spacing: ["h-13.5", "justify-center"] },
   ] as const)("sizes bot portraits and row spacing in $density density (advanced $advanced)", ({ advanced, density, size, spacing }) => {
@@ -122,12 +122,12 @@ describe("bot-first sidebar", () => {
     });
   }
 
-  it.each([false, true])("uses 14px medium names in Simple comfortable rows and keeps 15px semibold otherwise (advanced %s)", (advanced) => {
+  it.each([false, true])("uses 14px medium names in Simple comfortable rows and 13px semibold otherwise (advanced %s)", (advanced) => {
     fixture.advanced = advanced;
     const markup = renderToStaticMarkup(createElement(BotListItem, rowProps("comfortable", { ...bot, tasks: [], projects: [] })));
     const name = markup.match(/<span class="flex min-w-0 grow items-center gap-1\.5 truncate text-ink ([^"]*)"/)?.[1];
-    expect(name).toBe(advanced ? "text-lg font-semibold leading-5" : "text-lg font-medium leading-5");
-    expect(markup).toContain("truncate text-base");
+    expect(name).toBe(advanced ? "text-base font-semibold" : "text-lg font-medium leading-5");
+    expect(markup).toContain(advanced ? "truncate text-sm" : "truncate text-base");
   });
 
   it("puts the bot's role in its name line in Advanced mode", () => {

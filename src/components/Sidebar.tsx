@@ -444,18 +444,18 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
   const simpleRow = !advanced && density === "comfortable";
   const simpleList = !advanced && !iconOnly;
   const railTile = iconOnly && !advanced;
-  const avatarSize = iconOnly ? (railTile ? 36 : 44) : simpleRow ? 36 : 44;
+  const avatarSize = iconOnly ? (railTile ? 36 : 40) : simpleRow ? 36 : 32;
   const tooltip = simpleList ? botTooltip(bot, instances) : undefined;
   const visible = useVisibleMessages(bot);
   const last = lastNonReceipt(visible);
   const title = bot.title.trim();
   const details = [title, bot.chiefOfStaff ? t("sidebar.bot.chiefOfStaff") : ""].filter(Boolean);
   const rowClass = cn(
-    "flex w-full items-center rounded-xl text-left transition-colors duration-150", SIMPLE_ROW_FOCUS,
+    "flex w-full items-center rounded-lg text-left transition-colors duration-fast", SIMPLE_ROW_FOCUS,
     iconOnly
-      ? railTile ? "h-13.5 justify-center" : "justify-center px-1 py-1.5"
-      : simpleRow ? "gap-2 rounded-lg py-2 pl-2 pr-2 md:h-13.5 md:py-0"
-        : "gap-3 py-2 pl-2.5 pr-9",
+      ? railTile ? "h-13.5 justify-center" : "justify-center px-1 py-1"
+      : simpleRow ? "gap-2 py-2 pl-2 pr-2 md:h-13.5 md:py-0"
+        : "gap-2.5 py-1.5 pl-2 pr-9",
     !iconOnly && "max-md:rounded-2xl max-md:py-2.5",
     selected ? "bg-raised" : "hover:bg-raised/50",
     simpleRow && rowSurface(selected),
@@ -509,7 +509,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
       </span>
       <div className={cn("min-w-0 flex-1", iconOnly && "hidden")}>
         <div className={cn("flex items-baseline justify-between gap-2", simpleRow && "pr-7")}>
-          <span className={cn("flex min-w-0 grow items-center gap-1.5 truncate text-ink", simpleRow ? "text-lg font-medium leading-5" : "text-lg font-semibold leading-5")}>
+          <span className={cn("flex min-w-0 grow items-center gap-1.5 truncate text-ink", simpleRow ? "text-lg font-medium leading-5" : "text-base font-semibold")}>
             {!simpleList && bot.pinned && <Pin size={12} className="shrink-0 text-ink-secondary" />}
             <RenameTitle
               key={iconOnly ? "icons" : "expanded"}
@@ -519,7 +519,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               onCommit={(name) => dispatch({ type: "updateBot", botId: bot.id, patch: { name } })}
               onEditingChange={setRenaming}
               className="truncate"
-              inputClassName={cn("w-full rounded bg-inset px-1 py-0.5", simpleRow ? "text-lg font-medium" : "text-lg font-semibold")}
+              inputClassName={cn("w-full rounded bg-inset px-1 py-0.5", simpleRow ? "text-lg font-medium" : "text-base font-semibold")}
             />
             {!simpleList && bot.chiefOfStaff && !renaming && (
               <Crown size={13} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={t("sidebar.bot.chiefOfStaff")} data-testid="chief-crown">
@@ -551,7 +551,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               {t("sidebar.bot.deletingRow")}
             </span>
           ) : (
-            <span className={cn("flex min-w-0 items-center gap-1.5 truncate text-base", waiting ? simpleRow ? "text-warning" : "font-semibold text-warning" : "text-ink-secondary")}>
+            <span className={cn("flex min-w-0 items-center gap-1.5 truncate", simpleRow ? "text-base" : "text-sm", waiting ? simpleRow ? "text-warning" : "font-semibold text-warning" : "text-ink-secondary")}>
               {working ? (
                 <SidebarWorkingStep bot={bot} last={last} />
               ) : (
@@ -871,13 +871,13 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
       style={{ "--sidebar-width": `${sizing.width}px` } as CSSProperties}
       className={cn(
         "relative flex h-full shrink-0 flex-col border-r-[0.5px] border-edge bg-panel max-md:[--scroll-fade-surface:var(--color-app)]",
-        sizing.resizing && !sizing.snapping ? "transition-none" : "transition-[width] duration-200 motion-reduce:transition-none",
+        sizing.resizing && !sizing.snapping ? "transition-none" : "transition-[width] duration-base motion-reduce:transition-none",
         density === "icons" ? rail ? "w-23" : "w-20" : advanced ? "w-80 md:w-[var(--sidebar-width)]" : "w-70 md:w-[var(--sidebar-width)]",
         sidePanelOpen ? advanced ? "md:max-w-80" : "md:max-w-70" : "md:max-w-[calc(100vw-320px)]",
         // max-md: rather than an md: cancel: Tailwind v4 emits the native `translate`, and any value but `none` makes
         // this a containing block for its `fixed` descendants.
         "max-md:absolute max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:w-full max-md:bg-app",
-        "max-md:transition-transform max-md:duration-200",
+        "max-md:transition-transform max-md:duration-base",
         open ? "max-md:translate-x-0" : "max-md:-translate-x-full",
       )}
     >

@@ -159,9 +159,9 @@ export function MausBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
             onClick={() => setEditing(!editing)}
             onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
             onDrop={drop}
-            className="group relative rounded-full p-1 transition-transform duration-200 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="group relative rounded-full p-1 transition-transform duration-base ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            <span className="pointer-events-none absolute inset-1 rounded-full ring-0 ring-accent/35 transition-[box-shadow] duration-200 group-hover:ring-2 group-focus-visible:ring-2" aria-hidden="true" />
+            <span className="pointer-events-none absolute inset-1 rounded-full ring-0 ring-accent/35 transition-[box-shadow] duration-base group-hover:ring-2 group-focus-visible:ring-2" aria-hidden="true" />
             <span ref={avatarRef} data-mausbot-welcome-avatar="" className="block drop-shadow-float">
               <BotAvatar bot={preview} size={96} label={name} motion="arrive" />
             </span>
@@ -183,7 +183,7 @@ export function MausBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
           inert={!editing}
           aria-hidden={!editing}
           data-mausbot-welcome-panel={editing ? "open" : "closed"}
-          className={cn("grid transition-[grid-template-rows,opacity] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+          className={cn("grid transition-[grid-template-rows,opacity] duration-slow ease-standard motion-reduce:transition-none",
             editing ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}
         >
           <div className="min-h-0 overflow-hidden">

@@ -85,7 +85,7 @@ export function SidebarConnectApps({ circle = false }: { circle?: boolean }) {
         <span className="min-w-0 truncate">{label}</span>
         <span aria-hidden="true" className="flex shrink-0 items-center">
           {faces.map((face, index) => <AppFaceIcon key={face.slug} face={face}
-            className={cn(index > 0 && "-ms-1.5", faces.length > 1 && FAN[index === 0 ? 0 : index === faces.length - 1 ? 2 : 1], "motion-safe:transition-transform motion-safe:duration-150")} />)}
+            className={cn(index > 0 && "-ms-1.5", faces.length > 1 && FAN[index === 0 ? 0 : index === faces.length - 1 ? 2 : 1], "motion-safe:transition-transform motion-safe:duration-fast")} />)}
         </span>
       </>}
     </button>

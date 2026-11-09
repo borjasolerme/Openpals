@@ -140,7 +140,7 @@ export function VoiceNoteBubble({
             aria-expanded={transcriptOpen}
             className="mt-1 flex items-center gap-0.5 self-start text-sm text-ink-secondary transition-colors hover:text-ink"
           >
-            <ChevronRight size={12} aria-hidden="true" className={cn("transition-transform duration-150", transcriptOpen && "rotate-90")} />
+            <ChevronRight size={12} aria-hidden="true" className={cn("transition-transform duration-fast", transcriptOpen && "rotate-90")} />
             {t("chat.voiceNote.transcript")}
           </button>
           {transcriptOpen && (

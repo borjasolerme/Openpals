@@ -1175,7 +1175,7 @@
 
 .chat-text,
 .chat-md {
-  line-height: 1.75;
+  line-height: 1.6;
   font-family: "omb-chat", var(--font-sans);
 }
 .chat-md :is(strong, b) {
@@ -1213,7 +1213,7 @@
     min-height: 44px;
     max-width: 100%;
     padding: 8px 10px;
-    font-size: 12px;
+    font-size: var(--text-sm);
     white-space: normal;
   }
 
@@ -1841,10 +1841,10 @@ body {
 .reply-bubble {
   width: fit-content;
   max-width: min(100%, 36rem);
-  border-radius: 20px;
+  border-radius: var(--radius-4xl);
   padding: 10px 16px;
   background: color-mix(in srgb, var(--color-ink) 8%, transparent);
-  font-size: 16px;
+  font-size: var(--text-xl);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }

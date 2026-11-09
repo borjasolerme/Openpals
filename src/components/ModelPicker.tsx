@@ -651,7 +651,7 @@ export function ModelPicker({
       className={cn(
         "group flex items-center rounded-full text-base text-ink-secondary disabled:cursor-not-allowed disabled:text-ink-tertiary",
         contained
-          ? "min-w-0 max-w-[58%] transition-colors duration-150 hover:bg-fill hover:text-ink aria-expanded:bg-fill aria-expanded:text-ink disabled:hover:bg-transparent"
+          ? "min-w-0 max-w-[58%] transition-colors duration-fast hover:bg-fill hover:text-ink aria-expanded:bg-fill aria-expanded:text-ink disabled:hover:bg-transparent"
           : cn("shrink-0", ELEVATED_FLOAT, ELEVATED_HOVER, "hover:text-ink aria-expanded:text-ink disabled:hover:bg-composer"),
         size === "sm" ? "h-7 pl-2 pr-1.5" : "h-8 pl-2.5 pr-2",
       )}

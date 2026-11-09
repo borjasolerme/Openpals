@@ -62,7 +62,7 @@ describe("BotListItem", () => {
     expect(badge).not.toContain("size-2.5");
     expect(badge).not.toContain("size-3");
     expect(waiting).toContain('aria-hidden="true">!</span>');
-    expect(waiting).toContain('class="flex min-w-0 items-center gap-1.5 truncate text-base font-semibold text-warning"');
+    expect(waiting).toContain('class="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold text-warning"');
     expect(waiting).toContain('class="truncate">Waiting for you…</span>');
 
     const icons = opening(renderRow(bot({ activity: "waiting-on-you" }), "icons"), "waiting-dot");
@@ -76,7 +76,7 @@ describe("BotListItem", () => {
     expect(teammateDot).toContain("size-2.5");
     expect(teammateDot).not.toContain("size-4");
     expect(teammate).toContain('class="truncate">Waiting on a teammate…</span>');
-    expect(teammate).toContain("truncate text-base text-ink-secondary");
+    expect(teammate).toContain("truncate text-sm text-ink-secondary");
     expect(teammate).not.toContain("font-semibold text-warning");
 
     const working = renderRow(bot({ busy: true }));
@@ -88,7 +88,7 @@ describe("BotListItem", () => {
       messages: [{ id: "b1", role: "bot", kind: "text", text: "Created notes.txt", at: 2 }] as Bot["messages"],
     }));
     expect(preview).toContain('class="truncate">Created notes.txt</span>');
-    expect(preview).toContain("truncate text-base text-ink-secondary");
+    expect(preview).toContain("truncate text-sm text-ink-secondary");
     expect(preview).not.toContain("text-warning");
     expect(preview).not.toContain("waiting-dot");
   });
@@ -278,10 +278,10 @@ describe("BotListItem", () => {
     expect(rowClass(chief)).toBe(rowClass(plain));
   });
 
-  it("reads the name at 15px semibold and the preview at 13px", () => {
+  it("reads the name at 13px semibold and the preview at 12px", () => {
     const markup = renderRow(bot({ messages: [{ id: "b1", role: "bot", kind: "text", text: "All set.", at: 1 }] as Bot["messages"] }));
-    expect(markup).toMatch(/class="[^"]*text-lg font-semibold[^"]*"/);
-    expect(markup).toMatch(/class="[^"]*truncate text-base[^"]*text-ink-secondary[^"]*"/);
+    expect(markup).toMatch(/class="[^"]*text-base font-semibold[^"]*"/);
+    expect(markup).toMatch(/class="[^"]*truncate text-sm[^"]*text-ink-secondary[^"]*"/);
   });
 
   it("previews the last reply as plain text, without its markdown", () => {

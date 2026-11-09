@@ -7,6 +7,8 @@ import { botAvatarUrlFromStoredPath } from "../../shared/bot-avatar";
 import { AboutMeSettings } from "./AboutMeSettings";
 import { profileInitials } from "./SidebarProfileMenu";
 import { User } from "lucide-react";
+import { Button, buttonClass } from "./ui/Button";
+import { Input } from "./ui/Input";
 
 const PHOTO_MIN_SIDE = 64;
 const PHOTO_MAX_SIDE = 8192;
@@ -125,12 +127,12 @@ function ProfilePhoto() {
                   <input aria-label={t("settings.profile.avatar.zoom")} type="range" min="1" max="2.5" step="0.05" value={draft.zoom} onChange={(event) => replaceDraft({ ...draft, zoom: Number(event.target.value) })} className="ml-2 w-28 align-middle accent-accent" />
                 </label>
               </div>
-              <button type="button" className="rounded-md px-2 py-1 text-sm text-ink-secondary hover:bg-control" onClick={() => replaceDraft(null)}>{t("settings.profile.avatar.cancel")}</button>
-              <button type="button" className="rounded-md bg-control px-2 py-1 text-sm text-ink hover:bg-raised-hover" disabled={busy} onClick={() => save(draft)}>{t("settings.profile.avatar.save")}</button>
+              <Button variant="ghost" size="sm" onClick={() => replaceDraft(null)}>{t("settings.profile.avatar.cancel")}</Button>
+              <Button size="sm" disabled={busy} onClick={() => save(draft)}>{t("settings.profile.avatar.save")}</Button>
             </div>
           </div>
         ) : avatarUrl ? <img src={avatarUrl} alt="" className="size-12 rounded-full object-cover" /> : <div className="size-12 rounded-full bg-raised" />}
-        <label className="cursor-pointer rounded-lg bg-control px-3 py-2 text-sm text-ink hover:bg-raised-hover">
+        <label className={buttonClass({ size: "sm" }, "cursor-pointer")}>
           {busy ? t("settings.profile.avatar.uploading") : t("settings.profile.avatar.choose")}
           <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" className="sr-only" disabled={busy} onChange={(event) => {
             const file = event.target.files?.[0];
@@ -167,20 +169,18 @@ export function ProfileFields() {
       .catch(() => {});
   };
 
-  const inputClass =
-    "w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-lg text-ink placeholder:text-ink-secondary focus:outline-none";
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <ProfilePhoto />
-      <input aria-label={t("settings.profile.name")} value={name} onChange={(e) => setName(e.target.value)} onBlur={save} placeholder={t("settings.profile.name")} className={inputClass} />
-      <input
+      <Input size="lg" aria-label={t("settings.profile.name")} value={name} onChange={(e) => setName(e.target.value)} onBlur={save} placeholder={t("settings.profile.name")} />
+      <Input
+        size="lg"
         type="email"
         aria-label={t("phone.signIn.email")}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         onBlur={save}
         placeholder="you@example.com"
-        className={inputClass}
       />
       <AboutMeSettings />
     </div>

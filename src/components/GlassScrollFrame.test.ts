@@ -114,7 +114,7 @@ describe("the scroll fade", () => {
     expect(html).not.toContain("glass-scroller");
     const band = (edge: string) => new RegExp(`data-scroll-fade-edge="${edge}" class="([^"]*)"`).exec(html)![1]!;
     for (const edge of ["top", "bottom"]) {
-      expect(band(edge)).toMatch(/^pointer-events-none absolute inset-x-0 z-10 h-6 bg-\[var\(--scroll-fade-surface,var\(--color-panel\)\)\] opacity-0 transition-opacity duration-150 ease-out /);
+      expect(band(edge)).toMatch(/^pointer-events-none absolute inset-x-0 z-10 h-6 bg-\[var\(--scroll-fade-surface,var\(--color-panel\)\)\] opacity-0 transition-opacity duration-fast ease-out /);
       expect(band(edge)).not.toMatch(/blur|backdrop|shadow/);
     }
     expect(band("top")).toContain("top-0 [mask-image:linear-gradient(to_bottom,black,transparent)]");

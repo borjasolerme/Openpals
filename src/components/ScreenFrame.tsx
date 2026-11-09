@@ -30,7 +30,7 @@ export function ScreenFrame({ threadId, message }: { threadId: string; message: 
         <img
           src={image.src}
           alt={image.name}
-          className="block max-w-full transition duration-200 group-hover/image:scale-[1.015]"
+          className="block max-w-full transition duration-base group-hover/image:scale-[1.015]"
         />
         <span
           aria-hidden

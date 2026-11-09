@@ -156,7 +156,7 @@ export function Spotlight({
       aria-live="polite"
     >
       <div
-        className="absolute inset-0 bg-black/55 transition-[clip-path] duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="absolute inset-0 bg-black/55 transition-[clip-path] duration-slower ease-standard motion-reduce:transition-none"
         style={{ clipPath: cutout(settled ? rect : null) }}
         aria-hidden="true"
       />
@@ -179,7 +179,7 @@ export function Spotlight({
       {/* Outer layer positions (transition), inner layer enters (keyframes): the two never fight over transform. */}
       <div
         data-tour-card
-        className="pointer-events-auto absolute left-0 top-0 w-80 transition-transform duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="pointer-events-auto absolute left-0 top-0 w-80 transition-transform duration-slower ease-standard motion-reduce:transition-none"
         style={{ transform, width: cardWidth }}
       >
         <div
@@ -217,7 +217,7 @@ export function Spotlight({
                   type="button"
                   autoFocus
                   onClick={primary.onClick}
-                  className="rounded-lg bg-accent px-3 py-1.5 text-base font-medium text-white transition-transform duration-150 active:scale-[0.98]"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-base font-medium text-white transition-transform duration-fast active:scale-[0.98]"
                 >
                   {primary.label}
                 </button>

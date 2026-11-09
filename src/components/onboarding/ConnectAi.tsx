@@ -32,7 +32,7 @@ function OtherWay({ instance, open, onToggle }: { instance: InstanceInfo; open: 
           <InstanceProviderMark instance={instance} size={18} />
         </span>
         <span className="min-w-0 flex-1 truncate text-lg text-ink">{instance.displayName}</span>
-        <ChevronDown size={14} className={cn("shrink-0 text-ink-secondary transition-transform duration-200", open && "rotate-180")} />
+        <ChevronDown size={14} className={cn("shrink-0 text-ink-secondary transition-transform duration-base", open && "rotate-180")} />
       </button>
       {open && <EngineSetup instance={instance} {...setupFor(instance)} className="mx-4 mb-3.5 border-0 bg-inset" />}
     </div>

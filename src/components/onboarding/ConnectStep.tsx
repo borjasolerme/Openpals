@@ -83,7 +83,7 @@ export function ConnectStep({ place, choice, onChoose, error }: {
             <span aria-hidden="true" className="size-4.5 shrink-0" />
             <RowIcon><Plus size={16} /></RowIcon>
             <RowText title={t("botsHome.addServer")} hint={t("botsHome.addServerHint")} />
-            <ChevronDown size={16} aria-hidden="true" className={cn("shrink-0 text-ink-secondary transition-transform duration-200", open && "rotate-180")} />
+            <ChevronDown size={16} aria-hidden="true" className={cn("shrink-0 text-ink-secondary transition-transform duration-base", open && "rotate-180")} />
           </button>
           {open && <div id={panelId} className="px-4 pb-4 pt-1"><AddServerPanel /></div>}
         </div>

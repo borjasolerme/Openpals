@@ -3,6 +3,7 @@ import { CircleHelp } from "lucide-react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { createAboutMeDraft } from "./about-me-draft";
+import { TextArea } from "./ui/Input";
 
 const drafts = new WeakMap<object, ReturnType<typeof createAboutMeDraft>>();
 
@@ -36,10 +37,10 @@ export function AboutMeSettings() {
           </p>
         </details>
       </div>
-      <textarea id="profile-about-me" value={value} rows={5} maxLength={24_000}
+      <TextArea id="profile-about-me" value={value} rows={5} maxLength={24_000}
         onChange={(event) => controller.edit(event.target.value)}
         onBlur={() => void flush()}
-        className="min-h-30 w-full resize-y rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-lg text-ink focus:outline-none"
+        className="min-h-30"
       />
       <LearnedFacts onChanged={(aboutMe) => { controller.confirm(aboutMe); dispatch({ type: "profileSaved", profile: { aboutMe } }); }} />
       <div className="min-h-4 text-sm" role="status">

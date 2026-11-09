@@ -29,7 +29,7 @@ export function AgentCursor({ phase, sequence, left, top, controller }: {
   }, [sequence]);
   return (
     <div
-      className="pointer-events-none absolute left-0 top-0 z-30 transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none"
+      className="pointer-events-none absolute left-0 top-0 z-30 transition-[opacity,transform] duration-fast ease-out motion-reduce:transition-none"
       style={{ opacity: agentCursorOpacity(active, controller), transform: `translate3d(${left}px, ${top}px, 0)` }}
       aria-hidden="true"
       data-agent-cursor

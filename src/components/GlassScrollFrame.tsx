@@ -52,7 +52,7 @@ export function watchScrollFade(list: HTMLElement, frame: HTMLElement): () => vo
 
 const FadeFrame = createContext(false);
 
-const FADE_BAND = "pointer-events-none absolute inset-x-0 z-10 h-6 bg-[var(--scroll-fade-surface,var(--color-panel))] opacity-0 transition-opacity duration-150 ease-out";
+const FADE_BAND = "pointer-events-none absolute inset-x-0 z-10 h-6 bg-[var(--scroll-fade-surface,var(--color-panel))] opacity-0 transition-opacity duration-fast ease-out";
 
 /** `fade` stacks the bars above and below the scroller instead of floating them over it as glass, and marks
  * the list's edges with a band of the surface colour that shows only while more of the list lies past that edge. */

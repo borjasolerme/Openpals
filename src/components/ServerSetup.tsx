@@ -157,7 +157,7 @@ export function AddServerPanel() {
       <button type="button" data-pairing-help="" aria-expanded={open} aria-controls={helpId} onClick={() => setHelp(!open)}
         className="flex w-fit items-center gap-1 rounded text-base text-ink-secondary transition-colors hover:text-ink">
         {t("serverSetup.needLink")}
-        <ChevronDown size={14} aria-hidden="true" className={cn("transition-transform duration-200", open && "rotate-180")} />
+        <ChevronDown size={14} aria-hidden="true" className={cn("transition-transform duration-base", open && "rotate-180")} />
       </button>
       {open && (
         <div id={helpId} className="flex flex-col gap-2.5">

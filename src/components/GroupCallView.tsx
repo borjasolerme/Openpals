@@ -489,7 +489,7 @@ function GroupCall({ group, members }: { group: Group; members: Bot[] }) {
               <div
                 key={member.id}
                 className={cn(
-                  "flex w-31 flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-200",
+                  "flex w-31 flex-col items-center gap-2 rounded-2xl px-2 py-3 transition-all duration-base",
                   focused ? "scale-105 bg-raised/70 shadow-base" : "opacity-75",
                 )}
               >

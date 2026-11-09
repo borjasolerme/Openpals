@@ -620,7 +620,7 @@ export function AttachmentPreviewDialog({
               onLoad={() => setLoadedSources((sources) => new Set(sources).add(current.src))}
               onError={() => setFailedSource(current.src)}
               className={cn(
-                "block max-h-full max-w-full rounded-lg object-contain shadow-lg transition-opacity duration-150",
+                "block max-h-full max-w-full rounded-lg object-contain shadow-lg transition-opacity duration-fast",
                 loaded ? "opacity-100" : "opacity-0",
               )}
             />
@@ -744,7 +744,7 @@ export function AttachmentThumbnail({
               if (explainRefusal) void messageImageOutsideWorkspace(image.src).then(setOutsideWorkspace);
             }}
             className={cn(
-              "block size-full object-cover object-top transition duration-200 group-hover/image:scale-[1.015]",
+              "block size-full object-cover object-top transition duration-base group-hover/image:scale-[1.015]",
               state === "ready" ? "opacity-100" : "opacity-0",
             )}
           />

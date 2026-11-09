@@ -131,7 +131,7 @@ describe("the Simple header", () => {
       const pill = identity.match(/<button[^>]*data-chathead-pill="true"[^>]*>([\s\S]*?)<\/button>/)!;
       expect(identity.replace(pill[0], "").replace(/<span role="status"[^>]*>[^<]*<\/span>/, "")).not.toMatch(/<(button|a|span)[\s>]/);
       expect(pill[1]).toContain(">Pepper</span>");
-      expect(pill[0].match(/class="([^"]*)"/)![1]!.split(" ")).toEqual(expect.arrayContaining(["rounded-full", "bg-composer", "ring-[0.5px]", "py-[7.5px]", "pr-[13.5px]"]));
+      expect(pill[0].match(/class="([^"]*)"/)![1]!.split(" ")).toEqual(expect.arrayContaining(["rounded-full", "bg-composer", "ring-[0.5px]", "h-control-lg", "pe-3"]));
       for (const gone of ["data-chathead-elsewhere", "data-chathead-conversation", "data-chathead-role", "data-background-activity", "data-chathead-back", 'data-testid="chat-more"']) {
         expect(simple, gone).not.toContain(gone);
       }
