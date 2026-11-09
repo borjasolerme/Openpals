@@ -132,7 +132,7 @@ import {
   type LocalVmTarget,
   type Runtime,
 } from "./container-computer.ts";
-import { attachForTurn, saveBotAttachment } from "./bot-attachment.ts";
+import { attachedFileLine, attachForTurn, saveBotAttachment } from "./bot-attachment.ts";
 import { cacheUntilConfigChanges, ensureDirs, instanceConfigs, loadConfig, changedInstanceIds, engineLaunches, localVmIdleTimeoutMinutes, localVmMaxInstances, localVmMode, localVmPreservesInstalledApps, roomTurnTimeoutMinutes, mcpCallTimeoutMinutes, cacheKeepWarmSettings, threadEventLogMaxBytes, threadEventLogRetentionDays, saveConfig, showToolCallsEnabled, claudeUserMcpEnabled, skillAuthoringEnabled, skillReviewEnabled, skillReviewSteps, autoRecallEnabled, captureQuietMs, roomMemoryCaptureEnabled, tidyHour, builtInBrowserEnabled, persistableInstanceConfigs, type AppConfig, vpsSshAlias, DATA_DIR, onConfigSaved, CLAUDE_API_INSTANCE, openCodeProviderKeys } from "./config.ts";
 import { serveStatic } from "./static-files.ts";
 import { startUpkeep } from "./host/start-upkeep.ts";
@@ -12342,15 +12342,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             },
             stillLive: () => internalCapabilityIsActive({ ...internalCapability, ...(vm ? { localVmTarget: vm } : {}) }) &&
               connectorThread(from.id, threadId) !== null,
-            publish: (saved) => {
-              store.appendMessage(threadId, {
-                role: "bot",
-                kind: "text",
-                text: "",
-                attachments: [saved.attachment],
-                ...(source.group ? { from: { botId: from.id, name: from.name, color: from.color } } : {}),
-              });
-            },
+            publish: (saved) => store.appendMessage(threadId, attachedFileLine(saved.attachment, liveTurnByThread.get(threadId),
+              source.group ? { botId: from.id, name: from.name, color: from.color } : undefined)),
             discard: (saved) => deleteAttachment(saved.attachment.path),
           });
           if (outcome.status === "limit") {
