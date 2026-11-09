@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { BUILT_IN_BROWSER_SYSTEM_PROMPT, browserEngineStatus, clearBrowserSessionState, closeBrowserSession, runningBrowserSessionNames } from "../browser-engine.ts";
 import { CHROME_BROWSER_SYSTEM_PROMPT } from "../browser/prompt.ts";
 import { TOOL_LIST } from "../browser/tools.ts";
+import { browserEgress } from "../browser/egress/registry.ts";
 import { type AppConfig } from "../config.ts";
 import type { Store } from "../store.ts";
 import { type TurnOwner } from "../turn-resources.ts";
@@ -96,6 +97,14 @@ describe("the bots' browser host with browserEngine.engine set to chrome", () =>
     expect(host.engineSummary({ kind: "unavailable", reason: "agent-browser is not installed", myChrome: true })).toMatchObject({ engine: "chrome", myChrome: true });
     cfg.browserEngine = { engine: "agent-browser" };
     expect(host.engineSummary({ kind: "unavailable", reason: "agent-browser is not installed", myChrome: true })).toEqual({ kind: "unavailable", reason: "agent-browser is not installed", myChrome: true, engine: "agent-browser" });
+  });
+
+  it("keeps the desktop's own egress config: an allow-list never takes away its local network", () => {
+    const desktop = setup("agent-browser");
+    desktop.cfg.browserEngine = { engine: "agent-browser", egress: { allow: ["10.0.0.5"] } };
+    expect(desktop.host.engineSummary({ kind: "unavailable", reason: "agent-browser is not installed", myChrome: false }).serverSites).toBeUndefined();
+    // Its browsers reach the local network unless egress.localNetwork is false.
+    expect(browserEgress.rules().localNetwork).toBe(true);
   });
 
   it("forgets the new engine's sessions when the engine is switched back", async () => {
