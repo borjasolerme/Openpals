@@ -651,6 +651,12 @@ export function AttachmentPreviewDialog({
   );
 }
 
+/** A thumbnail keeps a standard frame: a full-page screenshot or a long scan shows its top in a 3:4 frame at most,
+ * capped by max-h-96, and opens whole in the viewer; wide images stop at 2:1. */
+export function thumbnailRatio(width: number, height: number): number {
+  return Math.min(Math.max(width / height, 3 / 4), 2);
+}
+
 export function AttachmentThumbnail({
   image,
   onPreview,
@@ -674,7 +680,7 @@ export function AttachmentThumbnail({
   return (
     <span
       style={ratio ? { aspectRatio: String(ratio) } : undefined}
-      className={cn("group/image relative block aspect-[4/3] min-w-0 overflow-hidden rounded-xl border border-hairline/40 bg-inset", className)}
+      className={cn("group/image relative block aspect-[4/3] max-h-96 min-w-0 overflow-hidden rounded-xl border border-hairline/40 bg-inset", className)}
     >
       {state === "loading" && <ImageLoading name={image.name} className="absolute inset-0 bg-raised/65" />}
       {state === "failed" ? (
@@ -735,7 +741,7 @@ export function AttachmentThumbnail({
             fetchPriority={eager ? "high" : undefined}
             onLoad={(event) => {
               const { naturalWidth, naturalHeight } = event.currentTarget;
-              if (naturalWidth > 0 && naturalHeight > 0) setRatio(Math.min(Math.max(naturalWidth / naturalHeight, 0.6), 2.4));
+              if (naturalWidth > 0 && naturalHeight > 0) setRatio(thumbnailRatio(naturalWidth, naturalHeight));
               setState("ready");
             }}
             onError={() => {
@@ -743,7 +749,7 @@ export function AttachmentThumbnail({
               if (explainRefusal) void messageImageOutsideWorkspace(image.src).then(setOutsideWorkspace);
             }}
             className={cn(
-              "block size-full object-cover transition duration-200 group-hover/image:scale-[1.015]",
+              "block size-full object-cover object-top transition duration-200 group-hover/image:scale-[1.015]",
               state === "ready" ? "opacity-100" : "opacity-0",
             )}
           />
