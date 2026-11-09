@@ -44,16 +44,16 @@ which answers `--version` with its own banner. Settings' CLI test refuses such a
 the same way. A missing login shows as
 unauthenticated rather than crashing the fleet.
 
-## MausBot Cloud
+## A server without a terminal
 
-A Cloud has no terminal, so on Linux Cursor's card installs Cursor's own build itself
+On a Linux server, Cursor's card installs Cursor's own build itself
 (**Install Cursor here**): the build `https://cursor.com/install` downloads, pinned to the
 version above and checked against its SHA-256 (`server/drivers/acp/cursor-release.ts`). It goes
 into the app's own folder on the data volume (`tools/standalone/cursor-agent/<version>`, about
 560 MB; every bot's box sees it read-only), and `bin/cursor-agent` there is a link to its
 launcher, which runs the node and scripts beside it. That `bin/` goes last on PATH, at start-up
 too, only while the link and the launcher are the pinned ones, so a Cursor the person installs
-themselves comes first. Nothing is added to the Cloud image.
+themselves comes first.
 
 A saved CLI path that answers `--version` as another program gives way by itself to Cursor's own
 CLI once one is installed (the app's copy or one on PATH), as Set CLI would; until then the card
