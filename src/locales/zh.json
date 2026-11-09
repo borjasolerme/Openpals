@@ -2983,6 +2983,8 @@
   "botsHome.welcomeLine": "欢迎使用 {app}。机器人可以就放在这里，或放在一直开着的服务器上。",
   "botsHome.addServer": "添加服务器",
   "botsHome.addServerHint": "即使这台电脑关机，机器人也会继续工作。",
+  "botsHome.leaveServer": "断开连接并继续",
+  "botsHome.leaveServerNote": "继续后，此应用将断开与 {server} 的连接并改用这台电脑。{server} 上的机器人会继续运行。",
   "botsHome.local": "这台电脑",
   "botsHome.localHint": "只要这台电脑开着且没有休眠，机器人就会工作。",
   "botsHome.connect": "连接到服务器…",

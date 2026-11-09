@@ -191,9 +191,11 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
     setBeat(to);
     setReached((furthest) => Math.max(furthest, beats.indexOf(to)));
   };
+  const leavingServer = beat === "place" && place?.kind === "server" && choice === "local";
   const next = async () => {
-    // Choosing this computer on a server's page goes back to it: the app opens this computer's page instead.
-    if (beat === "place" && place?.kind === "server" && choice === "local") {
+    // Choosing this computer on a server's page goes back to it: the app opens this computer's page instead. The
+    // button says so ("Disconnect and continue") and the step explains it, so it never happens unannounced.
+    if (leavingServer) {
       setPlaceError(null);
       try {
         await disconnectServer();
@@ -224,7 +226,8 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
 
   const heading = HEADING[beat];
   const last = at === beats.length - 1;
-  const primary = beat === "welcome" ? t("onboarding.welcome.start") : last ? t("onboarding.bring.openApp") : t("onboarding.continue");
+  const primary = beat === "welcome" ? t("onboarding.welcome.start") : leavingServer ? t("botsHome.leaveServer")
+    : last ? t("onboarding.bring.openApp") : t("onboarding.continue");
   return (
     <Frame embedded={embedded}>
       <div

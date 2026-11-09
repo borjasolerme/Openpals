@@ -2739,6 +2739,8 @@
   "botsHome.welcomeLine": "{app} へようこそ。ボットはこのコンピュータでも、常時稼働のサーバーでも動かせます。",
   "botsHome.addServer": "サーバーを追加",
   "botsHome.addServerHint": "このコンピュータの電源が切れていても、ボットが働き続けます。",
+  "botsHome.leaveServer": "切断して続ける",
+  "botsHome.leaveServerNote": "続けると、このアプリは{server}から切断され、このコンピューターを使います。{server}上のボットは動き続けます。",
   "botsHome.local": "このコンピュータ",
   "botsHome.localHint": "このコンピュータの電源が入っていてスリープしていない間、ボットが働きます。",
   "botsHome.connect": "サーバーに接続…",

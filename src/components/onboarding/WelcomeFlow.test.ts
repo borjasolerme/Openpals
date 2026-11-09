@@ -329,7 +329,10 @@ describe("where the bots live", () => {
     await key(radio("server")!, { key: "ArrowUp" });
     expect(radio("local")?.getAttribute("aria-checked")).toBe("true");
     expect(document.activeElement).toBe(radio("local"));
-    await press("Continue");
+    expect(place.disconnect, "choosing alone never disconnects").not.toHaveBeenCalled();
+    expect(host.querySelector("[data-leave-server]")?.textContent, "the step says what Continue will do")
+      .toContain("disconnects this app from Office box");
+    await press("Disconnect and continue");
     expect(place.disconnect).toHaveBeenCalledOnce();
     expect(title(), "this computer's page takes over").toBe("Where your bots live");
   });

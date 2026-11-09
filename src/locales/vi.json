@@ -2381,6 +2381,8 @@
   "botsHome.welcomeLine": "Chào mừng bạn đến với {app}. Bot có thể sống ngay tại đây, hoặc trên một máy chủ luôn bật.",
   "botsHome.addServer": "Thêm máy chủ",
   "botsHome.addServerHint": "Bot vẫn làm việc khi máy tính này tắt.",
+  "botsHome.leaveServer": "Ngắt kết nối và tiếp tục",
+  "botsHome.leaveServerNote": "Khi tiếp tục, ứng dụng sẽ ngắt kết nối khỏi {server} và dùng máy tính này. Các bot trên {server} vẫn tiếp tục chạy.",
   "botsHome.local": "Máy tính này",
   "botsHome.localHint": "Bot làm việc khi máy tính này đang bật và không ở chế độ ngủ.",
   "botsHome.connect": "Kết nối với máy chủ…",

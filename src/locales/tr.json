@@ -2381,6 +2381,8 @@
   "botsHome.welcomeLine": "{app}'a hoş geldin. Botların burada ya da hep açık kalan bir sunucuda yaşayabilir.",
   "botsHome.addServer": "Sunucu ekle",
   "botsHome.addServerHint": "Bu bilgisayar kapalıyken de botların çalışmaya devam eder.",
+  "botsHome.leaveServer": "Bağlantıyı kes ve devam et",
+  "botsHome.leaveServerNote": "Devam edersen uygulama {server} bağlantısını keser ve bu bilgisayarı kullanır. {server} üzerindeki botların çalışmaya devam eder.",
   "botsHome.local": "Bu bilgisayar",
   "botsHome.localHint": "Botların, bu bilgisayar açık ve uyku modunda değilken çalışır.",
   "botsHome.connect": "Bir sunucuya bağlan…",

@@ -2010,6 +2010,8 @@
   "botsHome.welcomeLine": "歡迎使用 {app}。機器人可以就放在這裡，或放在一直開著的伺服器上。",
   "botsHome.addServer": "新增伺服器",
   "botsHome.addServerHint": "即使這台電腦關機，機器人也會繼續工作。",
+  "botsHome.leaveServer": "中斷連線並繼續",
+  "botsHome.leaveServerNote": "繼續後，此應用程式會中斷與 {server} 的連線並改用這台電腦。{server} 上的機器人會繼續運作。",
   "botsHome.local": "這台電腦",
   "botsHome.localHint": "只要這台電腦開著且沒有進入睡眠，機器人就會工作。",
   "botsHome.connect": "連線到伺服器…",

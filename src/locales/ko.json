@@ -2926,6 +2926,8 @@
   "botsHome.welcomeLine": "{app}에 오신 것을 환영해요. 봇은 바로 여기서 지낼 수도 있고, 늘 켜져 있는 서버에서 지낼 수도 있어요.",
   "botsHome.addServer": "서버 추가",
   "botsHome.addServerHint": "이 컴퓨터가 꺼져 있어도 봇이 계속 일해요.",
+  "botsHome.leaveServer": "연결 해제 후 계속",
+  "botsHome.leaveServerNote": "계속하면 이 앱은 {server}에서 연결이 해제되고 이 컴퓨터를 사용합니다. {server}의 봇은 계속 실행됩니다.",
   "botsHome.local": "이 컴퓨터",
   "botsHome.localHint": "이 컴퓨터가 켜져 있고 잠자기 상태가 아닐 때 봇이 일해요.",
   "botsHome.connect": "서버에 연결…",

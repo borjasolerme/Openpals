@@ -88,6 +88,9 @@ export function ConnectStep({ place, choice, onChoose, error }: {
           {open && <div id={panelId} className="px-4 pb-4 pt-1"><AddServerPanel /></div>}
         </div>
       </div>
+      {server && choice === "local" && (
+        <p data-leave-server="" className="text-[13px] leading-[18px] text-warning">{t("botsHome.leaveServerNote", { server: server.label })}</p>
+      )}
       {error && <p role="alert" className="text-[13px] leading-[18px] text-danger">{error}</p>}
     </div>
   );

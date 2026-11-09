@@ -2657,6 +2657,8 @@
   "botsHome.welcomeLine": "Benvenuto in {app}. I tuoi bot possono vivere qui, oppure su un server sempre acceso.",
   "botsHome.addServer": "Aggiungi un server",
   "botsHome.addServerHint": "I tuoi bot continuano a lavorare anche quando questo computer è spento.",
+  "botsHome.leaveServer": "Disconnetti e continua",
+  "botsHome.leaveServerNote": "Continuando, l'app si disconnette da {server} e usa questo computer. I tuoi bot su {server} continuano a funzionare.",
   "botsHome.local": "Questo computer",
   "botsHome.localHint": "I tuoi bot lavorano finché questo computer è acceso e attivo.",
   "botsHome.connect": "Connetti a un server…",

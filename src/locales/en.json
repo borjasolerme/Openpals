@@ -3020,6 +3020,8 @@
   "botsHome.welcomeLine": "Welcome to {app}. Your bots can live right here, or on a server that stays on.",
   "botsHome.addServer": "Add a server",
   "botsHome.addServerHint": "Keeps your bots working while this computer is off.",
+  "botsHome.leaveServer": "Disconnect and continue",
+  "botsHome.leaveServerNote": "Continuing disconnects this app from {server} and uses this computer instead. Your bots on {server} keep running.",
   "botsHome.local": "This computer",
   "botsHome.localHint": "Your bots work while this computer is on and awake.",
   "botsHome.connect": "Connect to a server…",
