@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const listen = async (server: Server) => {
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
@@ -51,5 +51,21 @@ describe("Fish Audio redirects", () => {
     reached.length = 0;
     await expect((await fish()).synthesize("private words", "v-1", "fish-secret")).rejects.toThrow();
     expect(reached).toEqual([]);
+  });
+});
+
+describe("Fish Audio requests", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("refuse redirects, so the key and the person's text go only to Fish", async () => {
+    const fetchMock = vi.fn(async () => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { listVoices, synthesize, verifyKey } = await import("./fish.ts");
+    await verifyKey("k");
+    await listVoices("k").catch(() => undefined);
+    await synthesize("hello", "voice", "k").catch(() => undefined);
+    const inits = (fetchMock.mock.calls as unknown as Array<[string, RequestInit]>).map(([, init]) => init);
+    expect(inits.length).toBeGreaterThanOrEqual(3);
+    for (const init of inits) expect(init.redirect).toBe("error");
   });
 });
