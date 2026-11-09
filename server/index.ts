@@ -225,7 +225,7 @@ import { mainThread, wasOldestThread } from "./main-thread.ts";
 import { botBox, startBotBoxAtBoot } from "./bot-box/boot.ts"; import { brokerPath } from "./bot-box/broker-probe.ts";
 import { createBotNameClash } from "./host/bot-name-clash.ts"; import { createVisibilityHost } from "./host/visibility-host.ts"; 
 import { mcpReconnectLine, retryBrokeredMcp } from "./bot-box/broker-mcp.ts";
-import { outsideDriven } from "./outside-driven.ts";
+import { createOutsideLineage } from "./host/outside-lineage.ts";
 
 import { researchCredential } from "./service-credentials.ts";
 
@@ -755,18 +755,6 @@ function routineRunIsOwners(run: RoutineRun | null | undefined, botId: string, t
   }) === true;
 }
 
-/** The conversations that handed this work on, however deep. */
-function handedFrom(nodeId: string | undefined): string[] {
-  const sources: string[] = [];
-  let node = nodeId ? coordinator.node(nodeId) : undefined;
-  for (let steps = 0; node && steps < 32; steps++) {
-    if (node.id !== nodeId) sources.push(node.threadId);
-    if (node.id === node.rootId) break;
-    node = coordinator.node(node.parentId ?? node.rootId);
-  }
-  return sources;
-}
-
 function parentThreadModel(botId: string, parentThreadId: string): { modelSelection?: ModelSelection; approvalMode?: "ask" } {
   const bot = store.bot(botId);
   const modelSelection = bot && store.taskByThread(bot.id, parentThreadId)?.modelSelection;
@@ -776,10 +764,6 @@ function parentThreadModel(botId: string, parentThreadId: string): { modelSelect
     registry.cliTarget(modelSelection.instanceId)?.driverKind);
   return { modelSelection, ...(needsAsk ? { approvalMode: "ask" as const } : {}) };
 }
-
-/** A webhook drove this conversation: its run, a payload posted into it, or a conversation that handed it the work. */
-const outsideDrivenThread = (threadId: string) => outsideDriven(threadId, { webhookRun: (id) => activeRoutineRunForThread(id)?.triggerSource === "webhook",
-  webhookPosted: (id) => store.messagesFor(id).some((line) => line.webhookPost), handedFrom: (id) => coordinator.active().filter((node) => node.threadId === id).flatMap((node) => handedFrom(node.id)) });
 
 /** Decides only whose answer to an existing card counts; it adds no card, gate or prompt. */
 function cardAnswerRefusal(auth: RequestAuth, threadId: string, requestId: string, behavior: string): string | null {
@@ -2374,6 +2358,9 @@ const store = new Store(
   () => appLanguage() ?? Intl.DateTimeFormat().resolvedOptions().locale,
   () => sharedMembership() ? undefined : cfg.profile?.name,
 );
+/** Work from outside keeps its record: what it hands on never borrows a level (server/host/outside-lineage.ts). */
+const outsideLineage = createOutsideLineage({ store, activeRun: activeRoutineRunForThread, node: (id) => coordinator.node(id), active: () => coordinator.active() });
+const { outsideDrivenThread } = outsideLineage;
 const { ownerTurn, roomTurnStarted, roomTurnEnded } = createOwnerTurns({
   store, directRequest: (threadId) => directRequestOwners.get(threadId), threadStarter: (threadId) => threadStarters.get(threadId),
   cardAnswerer: inFlightCardAnswerer, activeRoutineRun: activeRoutineRunForThread, ownerStartedRun: (runId) => ownerStartedRoutineRuns.has(runId), routineRunIsOwners });
@@ -2651,7 +2638,7 @@ function peerReviewRequired(bot: BotRecord, threadId: string): boolean {
 }
 
 const delegatedLevel = createDelegatedLevel({ store, node: id => coordinator.node(id), sourceLevel: sourceApprovalMode, turnLevel: approvalModeForTurn,
-  driverKind: bot => registry.cliTarget(bot.modelSelection.instanceId)?.driverKind });
+  driverKind: bot => registry.cliTarget(bot.modelSelection.instanceId)?.driverKind, handsNoLevel: outsideLineage.handsNoLevel });
 const liveApprovalMode = createLiveApprovalMode({ store, turnLevel: approvalModeForTurn });
 
 function roomTurnApprovalMode(bot: BotRecord, threadId: string, orchestration?: GroupTurnOrchestration): ApprovalMode {
@@ -8197,7 +8184,11 @@ routines = new RoutineManager({
     }
     return groupIsWorking(group) || coordinator.busy ? "busy" : "ready";
   },
-  createTask: (botId, title) => store.createTask(botId, title, false),
+  createTask: (botId, title, run) => {
+    const task = store.createTask(botId, title, false);
+    if (task && run?.triggerSource === "webhook") outsideLineage.mark(task.threadId);
+    return task;
+  },
   joinConversation: (run) => {
     if (run.eventSource === "wait") return waitRunChat(run, directChatOf);
     const continues = routines?.listRoutines().some((routine) => routine.id === run.routineId && routine.schedule.type === "limit_reset");
@@ -8268,7 +8259,7 @@ routines = new RoutineManager({
     notify(buildNotification("routine-deferred", routineSourceOwner(run)?.bot ?? bot, routineSourceThread(run) ?? bot.threadId, detail));
   },
 });
-phones.adoptRoutines();
+phones.adoptRoutines(); outsideLineage.settle(routines.listRuns());
 routines.clearFrozenResultsThreads(); proactive.ensureWatch();
 // Separate durable stores: after a crash between the two writes, the correlated RoutineRun's terminal state wins.
 const recoveredRoutineGoalRuns = new Map(
@@ -12858,6 +12849,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
               delegatedLevel.apply(internalSender, internalCapability.threadId, internalCapability.roomHandoffId ?? generation, recipient, target.threadId);
             }
             const routed = lane ? { botId: target.botId, threadId: lane.threadId } : target;
+            outsideLineage.carry(address.threadId, routed.threadId);
             const { node, duplicate } = coordinator.enqueue(address, generation, internalCapability.roomHandoffId, routed, call.message, {
               mode, reply, thread: lane || fresh ? "new" : "standing", approvalGranted, rework: call.rework, ...(lane ? {} : { requestBatchKey }),
               ...(call.doneWhen ? { doneWhen: call.doneWhen } : {}),

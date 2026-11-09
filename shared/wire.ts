@@ -134,6 +134,8 @@ export interface WireTask {
   projectId?: string;
   /** Detached routine execution, reachable through its visible results card. */
   routineRunId?: string;
+  /** Work from outside (a webhook, an app's event) reached this conversation: what it hands on never borrows a level, for good. */
+  outside?: true;
   /** Set when a bot, not a person, opened this thread. */
   openedBy?: TaskOpenedBy;
   /** On a team's server: one person's conversation, seen by them alone (never by another member or an admin). */
