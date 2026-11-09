@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { useModalDialog } from "@/hooks/use-modal-dialog";
 import { useStore } from "@/state/store";
-import { Card, Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import type { SkillsLibrarySkillWire } from "../../shared/wire";
 import { Select } from "./Select";
 

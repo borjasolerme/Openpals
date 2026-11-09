@@ -390,7 +390,7 @@ describe("archive / delete confirmation", () => {
     expect(markup).toContain("Delete Willow?");
     expect(markup).toContain(">Cancel</button>");
     expect(markup).toContain(">Delete</button>");
-    expect(markup).toContain("bg-danger");
+    expect(markup).toContain("ui-button-danger");
   });
 });
 
@@ -413,7 +413,7 @@ describe("bot deletion feedback", () => {
       onClick: vi.fn(),
     }));
 
-    expect(markup).toContain(">Delete</button>");
+    expect(markup).toContain(">Delete</span></button>");
     expect(markup).not.toContain('disabled=""');
   });
 });

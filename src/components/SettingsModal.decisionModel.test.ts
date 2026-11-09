@@ -17,7 +17,7 @@ describe("Settings → Decision and extraction", () => {
     const { SettingsModal } = await import("./SettingsModal");
     const html = renderToStaticMarkup(createElement(StoreProvider, null, createElement(SettingsModal)));
     expect(html).toContain('<option value="decisionModel">Decision and extraction</option>');
-    expect(html).toMatch(/<button[^>]*>(?:<svg[\s\S]*?<\/svg>)?Decision and extraction<\/button>/);
+    expect(html).toMatch(/<button[^>]*>(?:(?!<\/button>)[\s\S])*>Decision and extraction<\/span><\/span><\/button>/);
   });
 
   it("matches searches for decision, extraction, jev, typesafe, cloudflare, routing and auto", async () => {

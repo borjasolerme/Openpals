@@ -1274,65 +1274,55 @@ body {
   overflow: hidden;
 }
 
-/* Shared action rhythm. Existing skin tokens supply the colors and radius;
-   use utilities for placement and the control scale below for size, rather
-   than inventing another button size. */
+/* The controls behind src/components/ui. Each size is a control-height token
+   (sm 24, md 28 = the default, lg 32) and each label a type step, so a call
+   site places a control with utilities and never sizes one itself. */
 @layer components {
   .ui-button,
   .ui-icon-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    min-height: 2rem;
-    border-radius: var(--radius-lg, 0.5rem);
-    font-size: 13px;
+    gap: 0.375rem;
+    min-height: var(--spacing-control);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    font-size: var(--text-base);
     font-weight: 500;
-    line-height: 1.25rem;
-    transition: background-color 120ms ease, color 120ms ease;
+    line-height: var(--text-base--line-height);
+    letter-spacing: var(--text-base--letter-spacing);
+    transition: background-color var(--transition-duration-fast) ease, color var(--transition-duration-fast) ease;
   }
   .ui-button {
-    /* 4px + 20px line + 4px + a 1px border each side = 30px, so the 32px
-       min-height decides the box and the label sits on its center. */
-    padding: 0.25rem 0.75rem;
-    border: 1px solid var(--color-hairline);
+    padding: 0 0.625rem;
+    border-color: var(--color-hairline);
     background: var(--color-control);
     color: var(--color-ink);
   }
   .ui-icon-button {
-    width: 2rem;
-    padding: 0.375rem;
+    width: var(--spacing-control);
+    padding: 0;
     color: var(--color-ink-secondary);
   }
-  /* Control scale. `.ui-button` is the 32px default; the size classes step
-     it down for dense rows and inline actions. Every step keeps weight 500
-     and a line box equal to its text height plus leading, so the label sits
-     on the box center. Radii reuse the skin tokens: rounded-lg for buttons,
-     full for pills and chips. */
-  .ui-button-md {
-    min-height: 1.75rem;
-    gap: 0.375rem;
-    padding: 0.125rem 0.625rem;
-    font-size: 13px;
-    line-height: 1.25rem;
-  }
-  .ui-button-sm {
-    min-height: 1.5rem;
+  .ui-button-sm,
+  .ui-icon-button-sm {
+    min-height: var(--spacing-control-sm);
     gap: 0.25rem;
-    padding: 0.125rem 0.5rem;
-    font-size: 12px;
-    line-height: 1rem;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    letter-spacing: var(--text-sm--letter-spacing);
   }
+  .ui-button-sm { padding-inline: 0.5rem; }
+  .ui-icon-button-sm { width: var(--spacing-control-sm); }
+  .ui-button-lg,
+  .ui-icon-button-lg { min-height: var(--spacing-control-lg); }
+  .ui-button-lg { padding-inline: 0.875rem; }
+  .ui-icon-button-lg { width: var(--spacing-control-lg); }
   /* Longhands only: the `font` shorthand would reset the family. */
   .ui-button-pill {
     border-radius: 9999px;
-    font-size: 14px;
+    font-size: var(--text-lg);
     font-weight: 400;
-    line-height: 1.25rem;
-  }
-  .ui-button-lg {
-    min-height: 2.25rem;
-    padding-inline: 1rem;
   }
   .ui-button-primary {
     border-color: transparent;
@@ -1345,24 +1335,39 @@ body {
     color: var(--color-accent-ink);
     filter: brightness(1.1);
   }
+  .ui-button-danger {
+    border-color: transparent;
+    background: var(--color-danger);
+    color: var(--color-danger-ink);
+  }
+  .ui-button-danger:enabled:hover {
+    background: var(--color-danger);
+    color: var(--color-danger-ink);
+    filter: brightness(1.1);
+  }
+  .ui-button-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--color-ink-secondary);
+  }
   /* A pill-shaped action in the transcript: run and conversation chips,
-     "load earlier", the failed-turn Retry. Same 28px as `.ui-button-md`. */
+     "load earlier", the failed-turn Retry. A md control. */
   .ui-pill {
     display: inline-flex;
     max-width: 100%;
     min-width: 0;
     align-items: center;
-    gap: 0.5rem;
-    min-height: 1.75rem;
-    padding: 0.125rem 0.75rem;
+    gap: 0.375rem;
+    min-height: var(--spacing-control);
+    padding: 0 0.625rem;
     border: 1px solid color-mix(in srgb, var(--color-hairline) 40%, transparent);
     border-radius: 9999px;
     background: var(--color-panel);
     color: var(--color-ink-secondary);
-    font-size: 13px;
+    font-size: var(--text-base);
     font-weight: 500;
-    line-height: 1.25rem;
-    transition: background-color 120ms ease, color 120ms ease;
+    line-height: var(--text-base--line-height);
+    transition: background-color var(--transition-duration-fast) ease, color var(--transition-duration-fast) ease;
   }
   button.ui-pill:enabled:hover,
   a.ui-pill:hover {
@@ -1370,28 +1375,14 @@ body {
     color: var(--color-ink);
   }
   button.ui-pill:disabled { opacity: 0.6; }
-  /* A static label: a digest, a count, a status. */
-  .ui-chip {
-    display: inline-flex;
-    max-width: 100%;
-    min-width: 0;
-    align-items: center;
-    gap: 0.25rem;
-    min-height: 1.375rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1rem;
-  }
   /* Inline code inside prose. Sized off the surrounding text so it reads at
-     the same optical size in a 15px bubble or a 13px note. It stays an
-     inline box, not inline-flex, so a long path can still wrap mid-line;
-     an inline background already centers on the glyphs, and `clone` keeps
-     the padding on every wrapped piece. */
+     the same optical size in a bubble or a note. It stays an inline box, not
+     inline-flex, so a long path can still wrap mid-line; an inline background
+     already centers on the glyphs, and `clone` keeps the padding on every
+     wrapped piece. */
   .ui-code-chip {
     padding: 0.125em 0.35em;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
     background: color-mix(in srgb, var(--color-ink) 8%, transparent);
     font-family: var(--font-mono);
     font-size: 0.86em;
@@ -1399,26 +1390,14 @@ body {
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
-  /* One row of a popover menu: 30px, 14px, icon then label. */
-  .ui-menu-row {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 30px;
-    padding: 0.375rem 0.5rem;
-    border-radius: 0.375rem;
-    text-align: left;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 18px;
-  }
-  .ui-menu-row:enabled:hover { background: var(--color-menu-hover); }
-  .ui-menu-row:disabled { opacity: 0.6; }
   .ui-button:enabled:hover,
   .ui-icon-button:enabled:hover {
     background: var(--color-raised-hover);
     color: var(--color-ink);
+  }
+  .ui-button-ghost:enabled:hover,
+  .ui-icon-button:enabled:hover {
+    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
   }
   .ui-button:enabled:active,
   .ui-icon-button:enabled:active {
@@ -1429,29 +1408,69 @@ body {
     cursor: not-allowed;
     opacity: 0.45;
   }
+  .ui-button:focus-visible,
+  .ui-icon-button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  /* A touch screen gets a 44px target whatever the control draws. */
+  @media (pointer: coarse) {
+    .ui-button,
+    .ui-icon-button { min-height: var(--spacing-touch); }
+    .ui-icon-button { width: var(--spacing-touch); }
+  }
   /* A secondary action in Midnight and Daylight: a faint ink wash with a hairline of ink. Layered, so a
      call site's own fill (an ink pill, a danger outline) still wins. */
-  :root[data-skin="midnight"] .ui-button {
+  :root[data-skin="midnight"] .ui-button:not(.ui-button-ghost, .ui-button-danger) {
     border-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
     background: color-mix(in srgb, var(--color-ink) 4%, transparent);
   }
-  :root[data-skin="midnight"] .ui-button:enabled:is(:hover, :active) {
+  :root[data-skin="midnight"] .ui-button:not(.ui-button-ghost, .ui-button-danger):enabled:is(:hover, :active) {
     background: color-mix(in srgb, var(--color-ink) 8%, transparent);
   }
   :root:is([data-skin="midnight"], [data-skin="daylight"]) :is(.ui-button, .ui-icon-button) {
     border-radius: 9999px;
   }
-  :root[data-skin="daylight"] .ui-button {
+  :root[data-skin="daylight"] .ui-button:not(.ui-button-ghost, .ui-button-danger) {
     border-color: color-mix(in srgb, var(--color-ink) 12%, transparent);
     background: color-mix(in srgb, var(--color-ink) 6%, transparent);
   }
-  :root[data-skin="daylight"] .ui-button:enabled:is(:hover, :active) {
+  :root[data-skin="daylight"] .ui-button:not(.ui-button-ghost, .ui-button-danger):enabled:is(:hover, :active) {
     background: color-mix(in srgb, var(--color-ink) 10%, transparent);
   }
-  /* A dialog for the first-run surfaces: the menu tone on a hairline of ink, lifted only in Daylight. */
+  /* A text field: a md control on a quiet wash, ringed in the focus colour. */
+  .ui-field {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--spacing-control);
+    padding: 0.25rem 0.625rem;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    background: var(--color-inset);
+    color: var(--color-ink);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    letter-spacing: var(--text-base--letter-spacing);
+    transition: border-color var(--transition-duration-fast) ease;
+  }
+  .ui-field::placeholder { color: var(--color-ink-tertiary); }
+  .ui-field:focus-visible {
+    border-color: var(--color-focus);
+    outline: 1px solid var(--color-focus);
+    outline-offset: 0;
+  }
+  .ui-field:disabled { cursor: not-allowed; opacity: 0.6; }
+  .ui-field[aria-invalid="true"] { border-color: var(--color-danger); }
+  .ui-field-sm { min-height: var(--spacing-control-sm); padding-block: 0; font-size: var(--text-sm); line-height: var(--text-sm--line-height); }
+  .ui-field-lg { min-height: var(--spacing-control-lg); }
+  /* A touch keyboard zooms the page into a field under 16px. */
+  @media (pointer: coarse) {
+    .ui-field { min-height: var(--spacing-touch); font-size: var(--text-xl); }
+  }
+  /* A dialog: the menu tone on a hairline of ink, lifted only in Daylight. */
   .ui-modal {
     border: 0.5px solid color-mix(in srgb, var(--color-ink) 10%, transparent);
-    border-radius: 14px;
+    border-radius: var(--radius-2xl);
     background: var(--color-menu);
   }
   .ui-modal-divider {
@@ -1468,7 +1487,7 @@ body {
   /* Dims the app under a first-run dialog as a sheet does: half in a light skin, deeper in a dark one. */
   .ui-scrim {
     background: rgb(0 0 0 / 0.5);
-    animation: fade-in 200ms ease-out both;
+    animation: fade-in var(--transition-duration-base) ease-out both;
   }
   @container style(--code-color-scheme: dark) {
     .ui-scrim { background: rgb(0 0 0 / 0.7); }
@@ -1481,7 +1500,8 @@ body {
   @media (prefers-reduced-motion: reduce) {
     .ui-button,
     .ui-icon-button,
-    .ui-pill { transition: none; }
+    .ui-pill,
+    .ui-field { transition: none; }
   }
 }
 

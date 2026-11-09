@@ -1,6 +1,7 @@
 import { Children, type ReactNode } from "react";
 import { Check, ChevronRight, CircleAlert, LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Button } from "../ui/Button";
 
 /** A list of rows in one card, divided by hairlines. */
 export const ROW_LIST = "flex flex-col divide-y divide-hairline/40 overflow-hidden rounded-xl border border-hairline/50";
@@ -63,10 +64,10 @@ export function RowAction({ onClick, disabled = false, children, ...data }: {
   children: ReactNode;
 } & Record<`data-${string}`, string>) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} {...data} className="ui-button shrink-0 gap-0.5 pr-2">
+    <Button size="sm" pill onClick={onClick} disabled={disabled} {...data} className="shrink-0 gap-0.5 pe-1.5">
       {children}
-      <ChevronRight size={14} aria-hidden="true" className="text-ink-secondary" />
-    </button>
+      <ChevronRight size={12} aria-hidden="true" className="text-ink-secondary rtl:-scale-x-100" />
+    </Button>
   );
 }
 

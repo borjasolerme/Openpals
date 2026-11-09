@@ -3,7 +3,8 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { api } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
-import { Card, SIMPLE_CARD } from "./SettingsPrimitives";
+import { SIMPLE_CARD } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { formatPlanSpend, type PlanSpend } from "@/lib/plan-spend";
 
 interface PlanWindow {

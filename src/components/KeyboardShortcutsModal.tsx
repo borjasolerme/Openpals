@@ -134,7 +134,7 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           <button
             type="button"
             onClick={onClose}
-            className="ui-button ui-button-md"
+            className="ui-button"
           >
             Done
           </button>

@@ -5,6 +5,7 @@ import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
 import type { LocaleKey } from "@/locales";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { MenuItem } from "./ui/MenuItem";
 import { ClaudeSignIn } from "./ClaudeSignIn";
 import { DeviceSignIn, deviceSignInProvider } from "./DeviceSignIn";
 import { ChatGptPlanStatus } from "./ChatGptPlanStatus";
@@ -105,7 +106,6 @@ function AccountMenu({ group, instance, onRename }: { group: AccountGroup; insta
     }
   };
 
-  const item = "ui-menu-row w-full text-left disabled:cursor-not-allowed disabled:opacity-50";
   return (
     <div ref={menuRef} className="relative flex items-center gap-1">
       {canRemove && <button type="button" disabled={busy || usedBy > 0} onClick={() => setConfirm("remove")}
@@ -120,8 +120,8 @@ function AccountMenu({ group, instance, onRename }: { group: AccountGroup; insta
       </button>
       {open && (
         <div role="menu" className={cn("absolute right-0 top-full z-40 mt-1 w-55 overflow-hidden text-base", MENU_SHEET)}>
-          <button type="button" role="menuitem" className={cn(item, "text-ink")} onClick={() => { setOpen(false); onRename(); }}>{t("accounts.rename")}</button>
-          {canSignOut && <button type="button" role="menuitem" className={cn(item, "text-ink")} onClick={() => { setOpen(false); setConfirm("signOut"); }}>{t("accounts.signOut")}</button>}
+          <MenuItem onClick={() => { setOpen(false); onRename(); }} label={t("accounts.rename")} />
+          {canSignOut && <MenuItem onClick={() => { setOpen(false); setConfirm("signOut"); }} label={t("accounts.signOut")} />}
           {canRemove && usedBy > 0 && <p className="px-3 pb-1 pt-0.5 text-xs leading-snug text-ink-secondary">{t("accounts.inUse", { count: String(usedBy) })}</p>}
         </div>
       )}

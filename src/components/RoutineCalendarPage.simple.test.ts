@@ -3,6 +3,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppState, Bot } from "@/state/store";
 import type { Routine, RoutineRun } from "@/lib/routines";
+import { Button } from "./ui/Button";
+import { IconButton } from "./ui/IconButton";
+import { SegmentedControl, type SegmentedControlProps } from "./ui/SegmentedControl";
 
 // Hook-by-call-order harness: the page's own state survives between captures, so a click then a fresh capture shows
 // what renders next. Effects never run.
@@ -90,9 +93,14 @@ const page = () => capture(() => RoutinesPage({ onBack: vi.fn(), onOpenRoom: vi.
 function buttons(tree: Node[]): Map<string, Node["props"]> {
   const map = new Map<string, Node["props"]>();
   for (const node of tree) {
-    if (node.type !== "button") continue;
-    const props = node.props as { "aria-label"?: string; title?: string; children?: ReactNode };
-    map.set(props["aria-label"] ?? props.title ?? textOf(props.children), node.props);
+    if (node.type === SegmentedControl) {
+      const { options, value, onChange } = node.props as unknown as SegmentedControlProps<string>;
+      for (const option of options) map.set(textOf(option.label), { onClick: () => onChange(option.value), "aria-selected": option.value === value });
+      continue;
+    }
+    if (node.type !== "button" && node.type !== Button && node.type !== IconButton) continue;
+    const props = node.props as { "aria-label"?: string; label?: string; title?: string; children?: ReactNode };
+    map.set(props["aria-label"] ?? props.label ?? props.title ?? textOf(props.children), node.props);
   }
   return map;
 }
@@ -129,7 +137,7 @@ describe("Automations page", () => {
     expect(tree.some((node) => node.type === "h1" && textOf(node.props.children) === "Automations")).toBe(true);
     for (const label of ["List", "Calendar", "New"]) expect(header.has(label), label).toBe(true);
     for (const gone of ["Day", "Week", "History", "Run logs", "All", "Schedules", "Webhooks"]) expect(header.has(gone), gone).toBe(false);
-    expect(header.get("List")!["aria-pressed"]).toBe(true);
+    expect(header.get("List")!["aria-selected"]).toBe(true);
   });
 
   it("lists each automation as one sentence with a plain status line and a switch", () => {

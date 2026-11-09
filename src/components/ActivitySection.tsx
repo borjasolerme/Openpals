@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { ACTIVITY_WHATS, activityQuery, describeEntry, formatValue, whoLabel, type ActivityEntry, type ActivityFilters, type ActivityWhat } from "@/lib/activity";
 import type { LocaleKey } from "@/locales";
 import { Select } from "./Select";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 const inputClass = "rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-base text-ink placeholder:text-ink-secondary focus:outline-none [color-scheme:dark]";
 

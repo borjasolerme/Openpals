@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useMenuMotion } from "./MenuMotion";
 import { popoverClosesOnKey, usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { submenuIntent, type Point, type SubmenuIntent } from "@/lib/submenu-intent";
 import { MENU_HEADING, MENU_ITEM_SEPARATOR, MENU_SHEET } from "./menu-recipe";
+import { MenuItem } from "./ui/MenuItem";
 
 export interface SidebarMenuItem {
   key: string;
@@ -108,8 +108,7 @@ function MenuRows({
         <div key={item.key} className="flex flex-col gap-1">
           {item.separatorBefore && <div role="separator" className={MENU_ITEM_SEPARATOR} />}
           {item.heading && <div className={MENU_HEADING}>{item.heading}</div>}
-          <button
-            type="button"
+          <MenuItem
             role={item.checked === undefined ? "menuitem" : "menuitemradio"}
             aria-checked={item.checked}
             data-tour={item.tourId}
@@ -121,32 +120,16 @@ function MenuRows({
             onClick={(event) => onItem(item, event.currentTarget, event.detail === 0)}
             onPointerEnter={(event) => onRowEnter?.(item, event.currentTarget, { x: event.clientX, y: event.clientY })}
             onPointerLeave={() => onRowLeave?.(item)}
-            className={cn(
-              "flex min-h-7.5 w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-lg leading-4.5 disabled:opacity-60 focus-visible:bg-menu-hover focus-visible:outline-none",
-              item.active || (item.submenu && openSubmenu === item.key && engaged) ? "bg-menu-active text-ink" : "text-ink hover:bg-menu-hover",
-            )}
-          >
-            {item.icon && (
-              <span
-                className={cn("flex size-4 shrink-0 items-center justify-center [&>svg]:size-4", item.wrap && "h-4.5 self-start", item.active ? "text-accent" : "text-ink-secondary")}
-              >
-                {item.icon}
-              </span>
-            )}
-            {item.subtitle || item.note ? (
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className={item.wrap ? "break-words" : "truncate"}>{item.label}</span>
-                {item.subtitle && <span className="truncate text-sm font-normal text-ink-secondary">{item.subtitle}</span>}
-                {item.note && <span className="text-sm font-normal leading-snug text-ink-tertiary">{item.note}</span>}
-              </span>
-            ) : (
-              <span className={cn("flex-1", item.wrap ? "min-w-0 break-words" : "truncate")}>{item.label}</span>
-            )}
-            {item.value && <span className="shrink-0 text-base font-normal tabular-nums text-ink-secondary">{item.value}</span>}
-            {item.trailing}
-            {item.attention && <span className="size-2 shrink-0 rounded-full bg-danger" />}
-            {(item.submenu || item.chevron) && <ChevronRight size={14} aria-hidden className="-me-0.5 shrink-0 text-ink-secondary rtl:-scale-x-100" />}
-          </button>
+            label={item.label}
+            icon={item.icon}
+            subtitle={item.subtitle}
+            note={item.note}
+            value={item.value}
+            wrap={item.wrap}
+            active={item.active || (!!item.submenu && openSubmenu === item.key && engaged)}
+            chevron={!!(item.submenu || item.chevron)}
+            trailing={<>{item.trailing}{item.attention && <span className="size-2 shrink-0 rounded-full bg-danger" />}</>}
+          />
         </div>
       ))}
     </>

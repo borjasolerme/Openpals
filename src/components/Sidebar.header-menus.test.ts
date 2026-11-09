@@ -39,6 +39,7 @@ vi.mock("@/state/store", async (importOriginal) => {
 
 import { Sidebar } from "./Sidebar";
 import { SidebarNewChatPanel } from "./SidebarNewChatPanel";
+import { MenuItem } from "./ui/MenuItem";
 
 type Props = { children?: ReactNode; className?: string; onClick?: () => void; [key: string]: unknown };
 function nodes(value: ReactNode): ReactElement<Props>[] {
@@ -78,7 +79,7 @@ function press(target: unknown) {
 const menus = [
   { name: "New or share", label: "New or share", item: "New group chat" },
 ];
-const text = (tree: ReactElement<Props>[]) => tree.map((node) => Children.toArray(node.props.children).filter((child) => typeof child === "string").join(" ")).join(" ");
+const text = (tree: ReactElement<Props>[]) => tree.map((node) => [...Children.toArray(node.props.children), node.props.label].filter((child) => typeof child === "string").join(" ")).join(" ");
 
 beforeEach(() => {
   fixture.values = [];
@@ -137,7 +138,7 @@ describe.each(menus)("sidebar header menu: $name", ({ label, item }) => {
 describe("sidebar header menu: New chat", () => {
   it("leads the + menu and opens the New chat panel in its place", () => {
     trigger("New or share").props.onClick!();
-    const first = render().find((node) => node.type === "button" && text([node]).includes("New chat"));
+    const first = render().find((node) => node.type === MenuItem && text([node]).includes("New chat"));
     expect(first).toBeDefined();
     expect(render().some((node) => node.type === SidebarNewChatPanel)).toBe(false);
     first!.props.onClick!();

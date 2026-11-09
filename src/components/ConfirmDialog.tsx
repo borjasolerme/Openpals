@@ -1,8 +1,9 @@
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
-import { createPortal } from "react-dom";
+import { useRef, type ReactNode, type RefObject } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/cn";
+import { Button } from "./ui/Button";
+import { Dialog, DialogFooter, DialogPanel } from "./ui/Dialog";
 
 export type ConfirmTone = "danger" | "neutral";
 
@@ -23,65 +24,13 @@ export interface ConfirmDialogProps {
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-/**
- * Cancel is focused by default so a stray Enter never confirms. Portalled to <body>: the sidebar's translate below md
- * would become the containing block.
- */
+/** Cancel is focused by default so a stray Enter never confirms. */
 export function ConfirmDialog(props: ConfirmDialogProps) {
-  const { open, onCancel, returnFocusRef } = props;
-  const dialogRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
-  const cancelAction = useRef(onCancel);
-  cancelAction.current = onCancel;
-  useEffect(() => {
-    if (!open) return;
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    cancelRef.current?.focus();
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        cancelAction.current();
-        return;
-      }
-      if (event.key === "Tab") {
-        const controls = dialogRef.current?.querySelectorAll<HTMLElement>("button:not([disabled])");
-        if (!controls?.length) { event.preventDefault(); dialogRef.current?.focus(); return; }
-        const first = controls[0]!;
-        const last = controls[controls.length - 1]!;
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      const target = opener?.isConnected && opener !== document.body ? opener : returnFocusRef?.current;
-      target?.focus();
-    };
-  }, [open, returnFocusRef]);
-
-  // Capture the opener above before moving focus on open or pending changes.
-  useEffect(() => {
-    if (!open) return;
-    if (props.pending) dialogRef.current?.focus();
-    else cancelRef.current?.focus();
-  }, [open, props.pending]);
-
-  if (!open) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-6"
-      onMouseDown={(event) => event.target === event.currentTarget && onCancel()}
-    >
-      <ConfirmDialogCard ref={dialogRef} cancelRef={cancelRef} {...props} />
-    </div>,
-    document.body,
+  return (
+    <Dialog open={props.open} onClose={props.onCancel} initialFocusRef={cancelRef} returnFocusRef={props.returnFocusRef} busy={props.pending}>
+      {(panelRef) => <ConfirmDialogCard ref={panelRef} cancelRef={cancelRef} {...props} />}
+    </Dialog>
   );
 }
 
@@ -104,18 +53,13 @@ export function ConfirmDialogCard({
 }) {
   const danger = tone === "danger";
   return (
-    <div
+    <DialogPanel
       ref={ref}
       role="alertdialog"
-      tabIndex={-1}
-      aria-modal="true"
       aria-busy={pending}
       aria-labelledby="confirm-dialog-title"
       aria-describedby="confirm-dialog-body"
-      className={cn(
-        "w-full max-w-105 rounded-2xl border bg-panel p-5 shadow-lg",
-        danger ? "border-danger/30" : "border-hairline/50",
-      )}
+      className={cn(danger && "border-danger/30")}
     >
       <div className="flex items-start gap-3">
         <span className={cn("mt-0.5 shrink-0", danger ? "text-danger" : "text-warning")}>
@@ -125,35 +69,20 @@ export function ConfirmDialogCard({
           <h2 id="confirm-dialog-title" className="text-lg font-semibold text-ink">
             {title}
           </h2>
-          <p id="confirm-dialog-body" className="mt-1.5 text-base leading-relaxed text-ink-secondary">
+          <p id="confirm-dialog-body" className="mt-1 text-base text-ink-secondary">
             {body}
           </p>
         </div>
       </div>
-      <div className="mt-5 flex justify-end gap-2">
-        <button
-          ref={cancelRef}
-          type="button"
-          onClick={onCancel}
-          disabled={pending}
-          className="rounded-xl px-4 py-2 text-base text-ink-secondary hover:bg-raised hover:text-ink"
-        >
+      <DialogFooter>
+        <Button ref={cancelRef} variant="ghost" onClick={onCancel} disabled={pending}>
           {cancelLabel}
-        </button>
-        {alternative && <button type="button" data-confirm-alternative onClick={alternative.onClick} disabled={pending}
-          className="rounded-xl bg-accent px-4 py-2 text-base font-medium text-white hover:brightness-110">{alternative.label}</button>}
-        <button
-          type="button"
-          onClick={onConfirm}
-          disabled={pending}
-          className={cn(
-            "rounded-xl px-4 py-2 text-base font-medium",
-            danger ? "bg-danger text-white hover:brightness-110" : "bg-accent text-white hover:brightness-110",
-          )}
-        >
+        </Button>
+        {alternative && <Button variant="primary" data-confirm-alternative onClick={alternative.onClick} disabled={pending}>{alternative.label}</Button>}
+        <Button variant={danger ? "danger" : "primary"} onClick={onConfirm} disabled={pending}>
           {confirmLabel}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </DialogFooter>
+    </DialogPanel>
   );
 }

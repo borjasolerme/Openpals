@@ -22,6 +22,7 @@ import { PinnedBotCircle } from "./PinnedCircles";
 import { SidebarBotActivity, sidebarBotActivityTasks } from "./SidebarBotActivity";
 import { noteTurnEvent, resetTurnLive } from "@/state/turn-status";
 import type { RuntimeEvent } from "../../shared/runtime-events";
+import { MenuItem } from "./ui/MenuItem";
 
 const bot: Bot = {
   id: "atlas", threadId: "last-selected", name: "Atlas", title: "", description: "",
@@ -377,12 +378,12 @@ describe("bot-first sidebar", () => {
       const walk = (node: ReactNode) => {
         for (const child of Children.toArray(node)) {
           if (!isValidElement<ElementProps>(child)) continue;
-          if (child.props.role === "menuitem") items.push(child);
+          if (child.type === MenuItem || child.props.role === "menuitem") items.push(child);
           walk(child.props.children);
         }
       };
       walk(tree);
-      return items.find((item) => Children.toArray(item.props.children).includes("Edit Profile"))!;
+      return items.find((item) => item.props.label === "Edit Profile" || Children.toArray(item.props.children).includes("Edit Profile"))!;
     };
     const render = () => renderToStaticMarkup(createElement(Capture));
 

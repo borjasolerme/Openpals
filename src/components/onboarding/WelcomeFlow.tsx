@@ -17,6 +17,8 @@ import { ConnectApps } from "./ConnectApps";
 import { ConnectStep, type PlaceKind } from "./ConnectStep";
 import { HostedWelcomeArt } from "./HostedWelcome";
 import { localDesktopPage } from "./WelcomeGate";
+import { Button } from "../ui/Button";
+import { IconButton } from "../ui/IconButton";
 
 type Config = ReturnType<typeof useStore>["state"]["config"];
 
@@ -242,19 +244,16 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
           beats.length > 1 && "min-h-[min(560px,100%)]")}
       >
         <div className="flex shrink-0 items-center justify-between gap-3 pl-4 pr-3 pt-3 sm:pl-6">
-          <span className="text-base font-semibold leading-5 text-ink">{productName()}</span>
-          <button type="button" data-welcome-close="" onClick={onClose} aria-label={t("onboarding.later")} title={t("onboarding.later")}
-            className="flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-fill hover:text-ink">
-            <X size={16} aria-hidden="true" />
-          </button>
+          <span className="text-base font-semibold text-ink">{productName()}</span>
+          <IconButton data-welcome-close="" onClick={onClose} label={t("onboarding.later")} className="rounded-full" icon={<X size={16} aria-hidden="true" />} />
         </div>
         {beats.length > 1 && <Stepper beats={beats} beat={beat} reached={reached} onGo={go} />}
         <div ref={body} className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-5 [scrollbar-width:thin] sm:px-6">
           <div key={beat} className={cn("animate-fade-in flex flex-col gap-5", beat === "welcome" && "items-center pt-6 text-center")}>
             {beat === "welcome" && <HostedWelcomeArt />}
             <div className="flex flex-col gap-1.5">
-              <h1 id="welcome-title" className="text-2xl font-semibold leading-7 tracking-tight text-ink [text-wrap:balance]">{t(heading.title)}</h1>
-              <p className="text-base leading-5 text-ink-secondary [text-wrap:pretty]">{t(heading.line)}</p>
+              <h1 id="welcome-title" className="text-2xl font-semibold text-ink [text-wrap:balance]">{t(heading.title)}</h1>
+              <p className="text-base text-ink-secondary [text-wrap:pretty]">{t(heading.line)}</p>
             </div>
             {beat === "place" && place && <ConnectStep place={place} choice={choice} onChoose={setChoice} error={placeError} />}
             {beat === "ai" && <AiStep />}
@@ -266,12 +265,12 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-hairline/40 px-4 py-3.5 sm:px-6">
-          {at > 0 ? <button type="button" onClick={() => go(beats[at - 1]!)} className="ui-button min-h-9 px-4">{t("onboarding.back")}</button> : <span />}
-          <button type="button" data-primary="" onClick={() => void next()} className="ui-button ui-button-primary min-h-9 gap-1.5 px-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-hairline/40 px-4 py-3 sm:px-6">
+          {at > 0 ? <Button size="lg" onClick={() => go(beats[at - 1]!)}>{t("onboarding.back")}</Button> : <span />}
+          <Button variant="primary" size="lg" data-primary="" onClick={() => void next()}>
             {primary}
-            {!last && beat !== "welcome" && <ArrowRight size={15} aria-hidden="true" />}
-          </button>
+            {!last && beat !== "welcome" && <ArrowRight size={14} aria-hidden="true" />}
+          </Button>
         </div>
       </div>
     </Frame>

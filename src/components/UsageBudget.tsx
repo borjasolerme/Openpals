@@ -4,7 +4,7 @@ import { api, useStore, type ConfigStatus } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { formatUsd } from "@/lib/usage";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 export interface BudgetState {
   month: string;

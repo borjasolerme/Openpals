@@ -18,6 +18,9 @@ import { RoutineEditor } from "./RoutineCalendarPage";
 import { Select } from "./Select";
 import { Switch } from "./SettingsPrimitives";
 import { WebhookEditor } from "./WebhookTrigger";
+import { Button } from "./ui/Button";
+import { IconButton } from "./ui/IconButton";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 /** The bot filter earns its place only on a long list shared by several bots. */
 const FILTER_FROM = 9;
@@ -66,8 +69,8 @@ export function TriggersPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
     <main className="flex h-full min-w-0 flex-1 flex-col bg-app animate-workspace-in">
       <header className={cn("shrink-0 border-b border-hairline/35 bg-app py-3 pr-4", macInset && !windowFramed(capabilities) && view === "calendar" ? "pl-21.5" : view === "list" ? "pl-12 md:pl-4" : "pl-4")} style={windowDragStyle}>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" ref={backButtonRef} onClick={onBack} aria-label="Back" title="Back" className="flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-secondary hover:bg-raised hover:text-ink" style={windowNoDragStyle}><ArrowLeft size={18} /></button>
-          <h1 data-tour="automations-page" className="mr-1 text-2xl font-semibold tracking-tight text-ink">{t("automations.title")}</h1>
+          <IconButton ref={backButtonRef} onClick={onBack} label="Back" icon={<ArrowLeft size={16} className="rtl:-scale-x-100" />} style={windowNoDragStyle} />
+          <h1 data-tour="automations-page" className="mr-1 text-xl font-semibold text-ink">{t("automations.title")}</h1>
           <div className="ml-auto flex items-center gap-3" style={windowNoDragStyle}>
             {showFilter && view === "list" && (
               <Select size="sm" aria-label={t("automations.allBots")} value={botFilter} onChange={(event) => setBotFilter(event.target.value)} className="max-w-45">
@@ -75,15 +78,14 @@ export function TriggersPage({ onBack, onOpenRoom }: { onBack: () => void; onOpe
                 {visibleBots.map((bot) => <option key={bot.id} value={bot.id}>{bot.name}</option>)}
               </Select>
             )}
-            <div role="group" aria-label={t("automations.view")} className="flex items-center rounded-lg border border-hairline/50 bg-panel p-0.5">
-              {(["list", "calendar"] as const).map((option) => (
-                <button key={option} type="button" aria-pressed={view === option} onClick={() => dispatch({ type: "showRoutines", view: option, botId: botFilter === "all" ? undefined : botFilter })}
-                  className={cn("rounded-md px-3 py-1 text-base font-medium", view === option ? "bg-raised text-ink shadow-sm" : "text-ink-secondary hover:text-ink")}>
-                  {option === "list" ? t("automations.list") : t("automations.calendar")}
-                </button>
-              ))}
-            </div>
-            <button type="button" onClick={() => setNewText("")} className="flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-base font-semibold text-accent-ink hover:brightness-110"><Plus size={15} aria-hidden="true" />{t("automations.new")}</button>
+            <SegmentedControl
+              kind="tabs"
+              label={t("automations.view")}
+              options={[{ value: "list", label: t("automations.list") }, { value: "calendar", label: t("automations.calendar") }]}
+              value={view}
+              onChange={(option) => dispatch({ type: "showRoutines", view: option, botId: botFilter === "all" ? undefined : botFilter })}
+            />
+            <Button variant="primary" onClick={() => setNewText("")}><Plus size={14} aria-hidden="true" />{t("automations.new")}</Button>
           </div>
         </div>
       </header>

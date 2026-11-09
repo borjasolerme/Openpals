@@ -51,7 +51,8 @@ import { PHONE_LAYOUT, useMediaQuery } from "@/lib/use-media-query";
 import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 
-import { MENU_ITEM, MENU_SHEET, navigateMenu } from "./menu-recipe";
+import { MENU_SHEET, navigateMenu } from "./menu-recipe";
+import { MenuItem } from "./ui/MenuItem";
 import { ELEVATED_CONTROL } from "./elevated";
 import { SidebarResizeHandle, useSidebarWidth } from "./SidebarResizeHandle";
 import { PHONE_TOP_BUTTON, SIMPLE_CORNER_BUTTON, SIMPLE_ROW_FOCUS, SIMPLE_TOP_BUTTON, SidebarSearchPill, SidebarSearchToggle } from "./SidebarSimpleTop";
@@ -341,53 +342,42 @@ function RoomContextMenu({
           </button>
         </div>
       ) : (
-        <button
-          role="menuitem"
+        <MenuItem
           onClick={() => {
             setDraft(group.name);
             setRenaming(true);
           }}
-          className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
-        >
-          <Pencil size={16} className="text-ink-secondary" />
-          {isBotChat ? t("sidebar.room.renameChat") : t("sidebar.room.renameChannel")}
-        </button>
+          icon={<Pencil size={16} />}
+          label={isBotChat ? t("sidebar.room.renameChat") : t("sidebar.room.renameChannel")}
+        />
       )}
       {!renaming && !isBotChat && (
-        <button
-          role="menuitem"
+        <MenuItem
           onClick={() => {
             setDescriptionDraft(group.description ?? "");
             setDescribing(true);
           }}
-          className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
-        >
-          <TextQuote size={16} className="text-ink-secondary" />
-          {t("sidebar.room.setDescription")}
-        </button>
+          icon={<TextQuote size={16} />}
+          label={t("sidebar.room.setDescription")}
+        />
       )}
-      <button
-        role="menuitem"
+      <MenuItem
         onClick={() => {
           void copyText(group.threadId);
           onClose();
         }}
-        className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
-      >
-        <ClipboardCopy size={16} className="text-ink-secondary" />
-        {t("sidebar.copyConversationId")}
-      </button>
-      <button
-        role="menuitem"
+        icon={<ClipboardCopy size={16} />}
+        label={t("sidebar.copyConversationId")}
+      />
+      <MenuItem
         onClick={() => {
           onClose();
           onDelete(group.id);
         }}
-        className={cn(MENU_ITEM, "text-danger hover:bg-menu-hover")}
-      >
-        <Trash2 size={16} />
-        {isBotChat ? t("sidebar.room.deleteChat") : t("sidebar.room.deleteChannel")}
-      </button>
+        tone="danger"
+        icon={<Trash2 size={16} />}
+        label={isBotChat ? t("sidebar.room.deleteChat") : t("sidebar.room.deleteChannel")}
+      />
     </div>,
     document.body,
   );
@@ -802,7 +792,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     setSearchOpen(true);
     toggleCollapsed();
   };
-  const plusItem = cn(MENU_ITEM, "text-ink hover:bg-menu-hover");
   const plusControl = (
     <div ref={plusMenuRef} className="contents">
     <button
@@ -824,58 +813,43 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           rail ? "left-full top-0 ml-4" : cn("top-full", advanced ? "mt-1" : "mt-1.5", density === "icons" ? "left-0" : "right-0"),
           plusMotion.className,
         )} {...plusMotion.exitProps}>
-          {advanced && <button
+          {advanced && <MenuItem
             onClick={() => {
               setPlusOpen(false);
               setNewChatOpen(true);
             }}
-            role="menuitem"
-            className={plusItem}
-          >
-            <MessageSquarePlus size={16} className="text-ink-secondary" />
-            {t("sidebar.newChat.title")}
-          </button>}
-          <button
+            icon={<MessageSquarePlus size={16} />}
+            label={t("sidebar.newChat.title")}
+          />}
+          <MenuItem
             onClick={() => { setPlusOpen(false); dispatch({ type: "newBot" }); }}
-            role="menuitem"
-            className={plusItem}
-          >
-            <BotIcon size={16} className="text-ink-secondary" />
-            <span className="flex-1">{advanced ? t("sidebar.newBot") : t("sidebar.newBotSimple")}</span>
-            {advanced && <ShortcutHint id="new-bot" />}
-          </button>
-          <button
+            icon={<BotIcon size={16} />}
+            label={advanced ? t("sidebar.newBot") : t("sidebar.newBotSimple")}
+            trailing={advanced && <ShortcutHint id="new-bot" />}
+          />
+          <MenuItem
             onClick={() => {
               setPlusOpen(false);
               setNewRoom(true);
             }}
-            role="menuitem"
-            className={plusItem}
-          >
-            <Users size={16} className="text-ink-secondary" />
-            {t("sidebar.newChannel.title")}
-          </button>
-          <button
+            icon={<Users size={16} />}
+            label={t("sidebar.newChannel.title")}
+          />
+          <MenuItem
             onClick={() => { setPlusOpen(false); setTeamLibraryOpen(true); }}
-            role="menuitem"
-            className={plusItem}
-          >
-            <Library size={16} className="text-ink-secondary" />
-            {t("sidebar.teamLibrary")}
-          </button>
+            icon={<Library size={16} />}
+            label={t("sidebar.teamLibrary")}
+          />
           {advanced && archivedBots.length > 0 && (
-            <button
+            <MenuItem
               onClick={() => {
                 setPlusOpen(false);
                 setArchivedBotsOpen(true);
               }}
-              role="menuitem"
-              className={plusItem}
-            >
-              <Archive size={16} className="text-ink-secondary" />
-              <span className="flex-1">{t("sidebar.archived.title")}</span>
-              <span className="text-sm text-ink-secondary">{archivedBots.length}</span>
-            </button>
+              icon={<Archive size={16} />}
+              label={t("sidebar.archived.title")}
+              value={archivedBots.length}
+            />
           )}
         </div>
       </>

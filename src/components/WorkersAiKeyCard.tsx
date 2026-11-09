@@ -6,7 +6,7 @@ import { Check, ExternalLink, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { api, useStore, type ConfigStatus } from "@/state/store";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 const TOKEN_URL = "https://dash.cloudflare.com/profile/api-tokens";
 const ACCOUNT_ID = /^[0-9a-f]{32}$/i;

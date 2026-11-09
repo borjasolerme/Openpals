@@ -1,7 +1,7 @@
 import { AlertTriangle, Loader2, RefreshCw, Server, Trash2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/cn";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { KeysLink } from "./keys/KeysLink";
 import {
   computerStateLabel,

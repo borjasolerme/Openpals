@@ -8,7 +8,8 @@ import { isOwnerOrAdmin, readSessionState, type SessionState } from "../lib/sess
 import { readMembership } from "../lib/membership";
 import { lastSeen, minutesLeft } from "../lib/pairing-time";
 import { revealPhonePairing } from "../lib/phone-pairing";
-import { Card, SettingRow, SIMPLE_CARD } from "./SettingsPrimitives";
+import { SettingRow, SIMPLE_CARD } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { Select } from "./Select";
 import { cn } from "@/lib/cn";
 import { ComputerNameRow } from "./ComputerNameRow";

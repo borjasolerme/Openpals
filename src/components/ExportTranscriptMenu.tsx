@@ -11,6 +11,7 @@ import {
 } from "@/lib/export-transcript";
 import type { Message } from "@/state/store";
 import { MENU_HEADING, MENU_SHEET } from "./menu-recipe";
+import { MenuItem } from "./ui/MenuItem";
 
 export interface ExportTranscriptMenuProps {
   title: string;
@@ -127,21 +128,11 @@ export function ExportTranscriptMenu({
             </div>
           ) : (
             <>
-              <button
-                type="button"
-                role="menuitem"
+              <MenuItem
                 onClick={() => void handleCopy()}
-                className="ui-menu-row text-ink"
-              >
-                {copied ? (
-                  <Check size={16} className="shrink-0 text-success" />
-                ) : (
-                  <Copy size={16} className="shrink-0 text-ink-secondary" />
-                )}
-                <span className="flex-1 truncate">
-                  {copied ? "Copied to clipboard!" : "Copy as Markdown"}
-                </span>
-              </button>
+                icon={copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+                label={copied ? "Copied to clipboard!" : "Copy as Markdown"}
+              />
 
               {copyFailed && (
                 <div role="status" className="px-2 py-1.5 text-sm text-ink-secondary">
@@ -149,15 +140,7 @@ export function ExportTranscriptMenu({
                 </div>
               )}
 
-              <button
-                type="button"
-                role="menuitem"
-                onClick={handleDownload}
-                className="ui-menu-row text-ink"
-              >
-                <Download size={16} className="shrink-0 text-ink-secondary" />
-                <span className="flex-1 truncate">Download as .md</span>
-              </button>
+              <MenuItem onClick={handleDownload} icon={<Download size={16} />} label="Download as .md" />
             </>
           )}
         </div>

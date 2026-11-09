@@ -4,12 +4,13 @@ import { popoverClosesOnKey, usePopoverDismiss } from "@/hooks/use-popover-dismi
 import { cn } from "@/lib/cn";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
-import { MENU_ITEM, MENU_SHEET } from "./menu-recipe";
+import { MENU_SHEET } from "./menu-recipe";
+import { IconButton, iconButtonClass } from "./ui/IconButton";
+import { MenuItem } from "./ui/MenuItem";
 
-export const ACTION_ICON = { size: 17, strokeWidth: 1.5 } as const;
+export const ACTION_ICON = { size: 16, strokeWidth: 1.5 } as const;
 
-export const messageActionClass =
-  "inline-flex size-7 items-center justify-center rounded-full text-ink-tertiary transition-colors hover:bg-fill hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent";
+export const messageActionClass = iconButtonClass("md", "rounded-full text-ink-tertiary");
 
 export type MessageMenuItem = {
   key: string;
@@ -182,19 +183,16 @@ export function MessageActions({
     >
       {children}
       {menu.length > 0 && (
-        <button
+        <IconButton
           ref={moreRef}
-          type="button"
           onClick={() => setMenuOpen((value) => !value)}
-          aria-label={t("chat.messageActions")}
-          title={t("chat.messageActions")}
+          label={t("chat.messageActions")}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           aria-controls={menuOpen ? menuId : undefined}
-          className={cn(messageActionClass, menuOpen && "bg-fill text-ink")}
-        >
-          <Ellipsis {...ACTION_ICON} aria-hidden="true" />
-        </button>
+          className={cn("rounded-full text-ink-tertiary", menuOpen && "bg-fill text-ink")}
+          icon={<Ellipsis {...ACTION_ICON} aria-hidden="true" />}
+        />
       )}
       {menuOpen && (
         <div
@@ -210,10 +208,8 @@ export function MessageActions({
           )}
         >
           {menu.map((item) => (
-            <button
+            <MenuItem
               key={item.key}
-              type="button"
-              role="menuitem"
               disabled={item.disabled}
               title={item.title}
               onClick={() => {
@@ -221,11 +217,9 @@ export function MessageActions({
                 setMenuOpen(false);
                 moreRef.current?.focus();
               }}
-              className={cn(MENU_ITEM, "text-start text-ink hover:bg-menu-hover focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60")}
-            >
-              <span className="flex size-4 shrink-0 items-center justify-center text-ink-secondary [&>svg]:size-4" aria-hidden="true">{item.icon}</span>
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-            </button>
+              icon={item.icon}
+              label={item.label}
+            />
           ))}
         </div>
       )}
@@ -235,9 +229,8 @@ export function MessageActions({
 
 export function ReplyAction({ onReply }: { onReply: () => void }) {
   return (
-    <button type="button" onClick={onReply} aria-label={t("chat.replyToMessage")} title={t("chat.reply")} className={messageActionClass}>
-      <Reply {...ACTION_ICON} aria-hidden="true" />
-    </button>
+    <IconButton onClick={onReply} label={t("chat.replyToMessage")} title={t("chat.reply")} className="rounded-full text-ink-tertiary"
+      icon={<Reply {...ACTION_ICON} aria-hidden="true" />} />
   );
 }
 
@@ -249,11 +242,11 @@ export function CopyButton({ text, className }: { text: string; className?: stri
       onClick={copy}
       aria-label={label}
       title={label}
-      className={cn(
-        "rounded-md p-1.5 text-ink-secondary opacity-0 transition-opacity hover:bg-raised hover:text-ink focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100",
+      className={iconButtonClass("md", cn(
+        "opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100",
         state !== "idle" && "opacity-100",
         className,
-      )}
+      ))}
     >
       {state === "copied" ? <Check {...ACTION_ICON} className="text-success" /> : state === "failed" ? <X {...ACTION_ICON} className="text-danger" /> : <Copy {...ACTION_ICON} />}
     </button>

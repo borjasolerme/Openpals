@@ -27,7 +27,8 @@ import { BuiltInBrowserRow, ServerSitesRow } from "./BrowserSettingsRows";
 import { LoginsSettings } from "./LoginsSettings";
 import { BotsPlaceSection } from "./BotsPlaceSection";
 import { WindowFrameRow } from "./WindowFrameRow";
-import { Card, SettingsGroup, SIMPLE_BUTTONS } from "./SettingsPrimitives";
+import { SettingsGroup, SIMPLE_BUTTONS } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { shortcutLabel } from "./ShortcutHint";
 import { UsageSection } from "./UsageSection";
 import { SkillsSection } from "./SkillsSection";
@@ -54,6 +55,8 @@ import { Select } from "./Select";
 import { SavedStepsRow } from "./SavedStepsRow";
 import { BrowserProfilesRow, ColorUserBubblesRow, AdvancedModeRow, ExperimentalFeaturesRow, LanguageRow, NewBotEffortRow, PinnedCirclesRow, ReplayTourRow, RunCardRow, FollowUpRow, SendKeyRow, ToolCallsRow, UniversalPinsRow } from "./AppSettingsRows";
 import { SIMPLE_ADVANCED_ONLY, SimpleAiPage, SimpleBillingPage, SimpleComputerPage, SimpleGeneralPage, SimpleLooksPage, SimpleAboutPage, type Disclose, type SimpleDisclosureId } from "./SettingsSimplePages";
+import { IconButton } from "./ui/IconButton";
+import { Row, rowClass } from "./ui/Row";
 
 // labelKey, not a label: t() reads the active pack when called, so a label resolved at module scope would freeze the
 // boot language.
@@ -441,7 +444,7 @@ export function SettingsModal() {
           <span id="app-settings-title" className="sr-only">{t("settings.title")}</span>
           <nav aria-label={t("settings.title")} className="glass-rail hidden min-h-0 w-49.5 shrink-0 flex-col gap-0.5 overflow-y-auto px-3 py-4 sm:flex">
             {searchField(
-              "mb-2 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
+              "mb-2 flex h-control shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
               "w-full min-w-0 bg-transparent text-base text-ink placeholder:text-ink-secondary focus:outline-none",
             )}
             {visiblePages.length === 0 && advancedMatches.length === 0 && keyResults.length === 0 && (
@@ -451,20 +454,15 @@ export function SettingsModal() {
               const Icon = page.icon;
               const current = page === currentPage;
               return (
-                <button
+                <Row
                   key={page.id}
-                  type="button"
                   data-settings-page={page.id}
                   onClick={() => goTo(page.sections[0]!)}
                   aria-current={current ? "page" : undefined}
-                  className={cn(
-                    "flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-left text-base text-ink transition-colors motion-reduce:transition-none",
-                    current ? "bg-fill" : "hover:bg-fill",
-                  )}
-                >
-                  <Icon size={15} aria-hidden="true" className="shrink-0" />
-                  <span className="truncate">{t(page.labelKey)}</span>
-                </button>
+                  selected={current}
+                  leading={<Icon aria-hidden="true" />}
+                  title={t(page.labelKey)}
+                />
               );
             })}
             {advancedMatches.map((key) => (
@@ -473,12 +471,12 @@ export function SettingsModal() {
                 type="button"
                 data-settings-advanced-only={key}
                 onClick={() => { setQuery(""); goTo("general"); setReveal("advanced-mode"); }}
-                className="flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-2 py-1.5 text-left text-base text-ink transition-colors hover:bg-fill motion-reduce:transition-none"
+                className={rowClass()}
               >
                 <span>{t(key)} <span className="text-ink-secondary">· {t("settings.simple.advanced")}</span></span>
               </button>
             ))}
-            {keyResultButtons("flex min-h-8 shrink-0 cursor-pointer items-center rounded-lg px-2 py-1.5 text-left text-base text-ink transition-colors hover:bg-fill motion-reduce:transition-none")}
+            {keyResultButtons(rowClass())}
           </nav>
 
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -500,15 +498,13 @@ export function SettingsModal() {
                 {looksOpen ? t("settings.simple.page.looks") : currentPage ? t(currentPage.labelKey) : null}
               </h2>
             </header>
-            <button
-              type="button"
+            <IconButton
               onClick={close}
-              aria-label={t("settings.close")}
+              label={t("settings.close")}
               title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
-              className="absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-fill hover:text-ink motion-reduce:transition-none"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
+              className="absolute right-3 top-3 rounded-full"
+              icon={<X size={16} aria-hidden="true" />}
+            />
 
             <div
               ref={scrollRef}
@@ -551,7 +547,7 @@ export function SettingsModal() {
             {t("settings.title")}
           </div>
           {searchField(
-            "mb-2 mt-1 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
+            "mb-2 mt-1 flex h-control shrink-0 items-center gap-2 rounded-lg bg-fill-subtle px-2 text-base focus-within:ring-2 focus-within:ring-focus/60",
             "w-full min-w-0 bg-transparent text-base text-ink placeholder:text-ink-tertiary focus:outline-none",
           )}
           {visibleSections.length === 0 && (
@@ -568,24 +564,20 @@ export function SettingsModal() {
                   {t(group.labelKey)}
                 </div>
                 {entries.map(({ id, labelKey, icon: Icon }) => (
-                  <button
+                  <Row
                     key={id}
                     data-settings-section={id}
                     onClick={() => openSection(id)}
                     aria-current={section === id ? "page" : undefined}
-                    className={cn(
-                      "flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-left text-base text-ink transition-colors motion-reduce:transition-none",
-                      section === id ? "bg-fill" : "hover:bg-fill",
-                    )}
-                  >
-                    <Icon size={15} className="shrink-0" />
-                    {t(labelKey)}
-                  </button>
+                    selected={section === id}
+                    leading={<Icon aria-hidden="true" />}
+                    title={t(labelKey)}
+                  />
                 ))}
               </div>
             );
           })}
-          {keyResultButtons("cursor-pointer flex min-h-9 items-center rounded-lg px-2.5 py-2 text-left text-base text-ink transition-colors hover:bg-control/50 motion-reduce:transition-none")}
+          {keyResultButtons(rowClass())}
         </nav>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -612,14 +604,13 @@ export function SettingsModal() {
             <span className="hidden text-lg font-semibold text-ink sm:block">
               {sectionLabelKey ? t(sectionLabelKey) : null}
             </span>
-            <button
+            <IconButton
               onClick={close}
-              aria-label={t("settings.close")}
+              label={t("settings.close")}
               title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
-              className="ui-icon-button cursor-pointer shrink-0 max-md:size-9 max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card"
-            >
-              <X size={18} />
-            </button>
+              className="max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card"
+              icon={<X size={16} />}
+            />
           </div>
 
           <div ref={scrollRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 sm:px-5 sm:pb-5">

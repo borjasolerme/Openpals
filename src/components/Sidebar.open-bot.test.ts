@@ -43,6 +43,7 @@ vi.mock("@/state/store", async (importOriginal) => {
 import { initialState } from "@/state/store";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ArchivedBotsPanel, BotContextMenu, Sidebar } from "./Sidebar";
+import { MenuItem } from "./ui/MenuItem";
 
 const left = (id: string, extra: Partial<Bot> = {}): Bot => ({
   id, threadId: `${id}-left`, mainThreadId: `${id}-main`, name: id, title: "", description: "", notifications: true,
@@ -63,7 +64,7 @@ function render(component: () => ReactNode) {
   fixture.effects = [];
   return nodes(component());
 }
-const label = (node: ReactElement<Props>) => Children.toArray(node.props.children).filter((child) => typeof child === "string").join("");
+const label = (node: ReactElement<Props>) => typeof node.props.label === "string" ? node.props.label : Children.toArray(node.props.children).filter((child) => typeof child === "string").join("");
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
 const opened = (id: string) => ({ type: "switchTask", botId: id, threadId: `${id}-main` });
 const actions = () => fixture.dispatch.mock.calls.map(([action]) => action).filter((action) => action.type !== "botPatched");
@@ -84,7 +85,7 @@ describe("opening a bot from the sidebar's menus", () => {
     fixture.state = { ...initialState, bots: [left("scout"), left("atlas")], selectedId: "scout", activeView: "chat" };
     const menu = (botId: string) => render(() => BotContextMenu({
       menu: { botId, x: 0, y: 0 }, onClose: vi.fn(), onArchive: vi.fn(), onDelete: vi.fn(),
-    })).find((node) => node.props.role === "menuitem" && label(node) === "Edit Profile")!;
+    })).find((node) => (node.type === MenuItem || node.props.role === "menuitem") && label(node) === "Edit Profile")!;
     menu("atlas").props.onClick!();
     expect(actions()).toEqual([opened("atlas"), { type: "toggleSettings", open: true }]);
     fixture.dispatch.mockReset();

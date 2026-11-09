@@ -72,7 +72,7 @@ describe("bot actions menu viewport placement", () => {
     const element = measuredMenu(228, 468);
     const cleanup = layoutEffects();
     expect(element.style).toEqual({ top: "324px", left: "764px" });
-    expect(html).toContain(">Archive</button>");
+    expect(html).toContain(">Archive</span></button>");
     expect(fixture.portal?.target).toBe(document.body);
     expect(html).toContain("data-sidebar");
     expect(listeners.has("resize")).toBe(true);

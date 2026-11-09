@@ -4,7 +4,7 @@ import { t } from "@/lib/i18n";
 import { disconnectServer, placeAvailable, useBotsPlace } from "@/lib/place";
 import { useServerSetup } from "@/lib/server-setup";
 import { AddServerPanel } from "./ServerSetup";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 /** Settings → Where your bots live, in the desktop app: this computer, or the server it is paired with. Connect to a
  * server opens the first run's own Add a server panel. */

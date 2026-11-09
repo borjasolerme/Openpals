@@ -92,9 +92,9 @@ export function LoginForm({
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <div className="flex flex-wrap justify-end gap-2">
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={pending} className="ui-button ui-button-md">{t("logins.cancel")}</button>
+          <button type="button" onClick={onCancel} disabled={pending} className="ui-button">{t("logins.cancel")}</button>
         )}
-        <button type="submit" disabled={pending} className="ui-button ui-button-md ui-button-primary inline-flex items-center gap-1.5">
+        <button type="submit" disabled={pending} className="ui-button ui-button-primary inline-flex items-center gap-1.5">
           {pending && <Loader2 size={13} className="animate-spin" />}{submitLabel}
         </button>
       </div>

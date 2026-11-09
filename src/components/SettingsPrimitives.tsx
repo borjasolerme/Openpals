@@ -40,24 +40,6 @@ export function Switch({
   );
 }
 
-export function Card({
-  title,
-  subtitle,
-  children,
-}: {
-  title?: string;
-  subtitle?: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl bg-card p-4 max-md:rounded-2xl in-data-[settings-look=simple]:rounded-xl in-data-[settings-look=simple]:border-[0.5px] in-data-[settings-look=simple]:border-(--settings-edge) in-data-[settings-look=simple]:bg-menu">
-      {title && <div className="text-xl font-semibold text-ink in-data-[settings-look=simple]:text-lg in-data-[settings-look=simple]:leading-5 in-data-[settings-look=simple]:font-medium">{title}</div>}
-      {subtitle && <div className={cn(title && "mt-0.5", "text-base leading-relaxed text-ink-secondary in-data-[settings-look=simple]:leading-4.5")}>{subtitle}</div>}
-      {children && <div className={title || subtitle ? "mt-4" : undefined}>{children}</div>}
-    </div>
-  );
-}
-
 export function SettingRow({
   title,
   subtitle,

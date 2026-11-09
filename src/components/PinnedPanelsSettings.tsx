@@ -4,7 +4,7 @@ import { t } from "@/lib/i18n";
 import { setWebPanels, useWebPanels } from "@/lib/web-panel-preferences";
 import { MAX_WEB_PANELS, MAX_WEB_PANEL_NAME, newWebPanelId, validateWebPanel } from "@/lib/web-panels";
 
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 const field = "min-w-0 rounded-lg border bg-inset px-3 py-2 text-lg text-ink focus:outline-none";
 

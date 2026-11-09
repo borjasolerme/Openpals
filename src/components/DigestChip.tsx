@@ -7,6 +7,7 @@ import type { Message } from "@/state/store";
 import { traceRootId } from "../../shared/usage-trace";
 import { EXCERPT_SUMMARY_HEADER } from "../../shared/wire";
 import { TraceDialog } from "./usage/TraceView";
+import { Badge } from "./ui/Badge";
 
 export function DigestChip({ message }: { message: Message }) {
   const [tracing, setTracing] = useState(false);
@@ -22,16 +23,12 @@ export function DigestChip({ message }: { message: Message }) {
   if (!label) return null;
   return (
     <div className="flex justify-start" data-testid="digest-chip">
-      <span
-        title={message.text ?? t("chat.digestTitle")}
-        className="ui-chip max-w-[min(520px,100%)] border border-hairline/40 bg-panel text-ink-secondary"
-      >
-        <ClipboardList size={12} />
+      <Badge tone="outline" title={message.text ?? t("chat.digestTitle")} className="max-w-[min(520px,100%)] font-normal" icon={<ClipboardList size={12} />}>
         <span className="truncate">{label}</span>
         <button type="button" onClick={() => setTracing(true)} className="shrink-0 text-accent hover:underline" data-testid="view-trace">
           {t("trace.view")}
         </button>
-      </span>
+      </Badge>
       {tracing && <TraceDialog id={traceRootId(digest.threadId, digest.turnId)} at={digest.at} onClose={() => setTracing(false)} />}
     </div>
   );

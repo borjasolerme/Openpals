@@ -1,7 +1,8 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Card, SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 describe("settings primitives", () => {
   it("lays out a labeled setting and keeps its status outside the control column", () => {

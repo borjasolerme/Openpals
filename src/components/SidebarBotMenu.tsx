@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Archive, BellDot, CheckCheck, ChevronRight, ClipboardCopy, Copy, Crown, Loader2, MoreHorizontal, Pencil, Pin, PinOff, SquarePen } from "lucide-react";
+import { Archive, BellDot, CheckCheck, ClipboardCopy, Copy, Crown, Loader2, MoreHorizontal, Pencil, Pin, PinOff, SquarePen } from "lucide-react";
 import { api, useStore, openBot, type Bot } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { useHeldMenuMotion } from "./MenuMotion";
@@ -10,7 +10,8 @@ import { BotDeleteMenuItem } from "./BotMenuDelete";
 import { HideDefaultBotItem } from "./DefaultBotControls";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { botUnreadThreadIds, markBotRead } from "@/lib/mark-read";
-import { MENU_ITEM, MENU_ITEM_SEPARATOR, MENU_SHEET, navigateMenu } from "./menu-recipe";
+import { MENU_ITEM_SEPARATOR, MENU_SHEET, navigateMenu } from "./menu-recipe";
+import { MenuItem } from "./ui/MenuItem";
 import { submenuPosition } from "./SidebarPopoverMenu";
 import { submenuIntent, type SubmenuIntent } from "@/lib/submenu-intent";
 import { useAdvancedMode } from "@/lib/interface-mode";
@@ -153,25 +154,18 @@ export function BotContextMenu({
     onClick?: () => void,
     opts?: { danger?: boolean; disabled?: boolean; hint?: string; keepOpen?: boolean },
   ) => (
-    <button
+    <MenuItem
       key={label}
-      type="button"
-      role="menuitem"
       disabled={opts?.disabled}
       onClick={() => {
         onClick?.();
         if (!opts?.keepOpen) onClose();
       }}
       title={opts?.hint}
-      className={cn(
-        MENU_ITEM,
-        opts?.danger ? "text-danger" : "text-ink",
-        opts?.disabled ? "cursor-default opacity-40" : "hover:bg-menu-hover",
-      )}
-    >
-      {icon}
-      {label}
-    </button>
+      tone={opts?.danger ? "danger" : "default"}
+      icon={icon}
+      label={label}
+    />
   );
   const divider = (key: string) => <div key={key} role="separator" className={MENU_ITEM_SEPARATOR} />;
 
@@ -182,11 +176,9 @@ export function BotContextMenu({
     };
     const copyId = item(<ClipboardCopy size={16} className="text-ink-secondary" />, t("sidebar.copyConversationId"), () => { void copyText(bot.threadId); });
     const flyoutButton = (key: Flyout, ref: React.RefObject<HTMLButtonElement | null>, icon: React.ReactNode, label: string) => (
-      <button
+      <MenuItem
         key={key}
         ref={ref}
-        type="button"
-        role="menuitem"
         data-bot-menu-more=""
         aria-haspopup="menu"
         aria-expanded={flyout === key}
@@ -196,12 +188,11 @@ export function BotContextMenu({
           event.preventDefault();
           showFlyout(key, true);
         }}
-        className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover", flyout === key && moreEngaged && "bg-menu-active")}
-      >
-        {icon}
-        <span className="flex-1">{label}</span>
-        <ChevronRight size={15} aria-hidden="true" className="text-ink-secondary rtl:-scale-x-100" />
-      </button>
+        active={flyout === key && moreEngaged}
+        icon={icon}
+        label={label}
+        chevron
+      />
     );
     const rename = onRename && item(<SquarePen size={16} className="text-ink-secondary" />, t("sidebar.bot.rename"), () => onRename(bot.id));
     const editProfile = item(<Pencil size={16} className="text-ink-secondary" />, t("sidebar.bot.simple.editProfile"), () => {
@@ -222,9 +213,9 @@ export function BotContextMenu({
       member ? null : item(<Copy size={16} className="text-ink-secondary" />, t("sidebar.bot.duplicate"), () => dispatch({ type: "duplicateBot", botId: bot.id })),
     ];
     const moreRow = flyoutButton("more", moreRef, <MoreHorizontal size={16} className="text-ink-secondary" />, t("sidebar.bot.more"));
-    const leave = bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} className={MENU_ITEM} />] : member ? [] : [
+    const leave = bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} />] : member ? [] : [
       item(<Archive size={16} className="text-ink-secondary" />, t("sidebar.bot.archive"), () => onArchive(bot), { disabled: archiveBlocked, hint: archiveHint }),
-      <BotDeleteMenuItem key="delete" deleting={deleting} className={MENU_ITEM} onClick={() => { onClose(); onDelete(bot); }} />,
+      <BotDeleteMenuItem key="delete" deleting={deleting} onClick={() => { onClose(); onDelete(bot); }} />,
     ];
     return <>{createPortal(
       <div
@@ -341,9 +332,9 @@ export function BotContextMenu({
           void copyText(bot.threadId);
         }),
         divider("d3"),
-        ...(bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} className={MENU_ITEM} />] : member ? [] : [
+        ...(bot.defaultBot ? [<HideDefaultBotItem key="hide" bot={bot} onDone={onClose} />] : member ? [] : [
           item(<Archive size={16} className="text-ink-secondary" />, t("sidebar.bot.archive"), () => onArchive(bot), { disabled: archiveBlocked, hint: archiveHint }),
-          <BotDeleteMenuItem key="delete" deleting={deleting} className={MENU_ITEM} onClick={() => { onClose(); onDelete(bot); }} />,
+          <BotDeleteMenuItem key="delete" deleting={deleting} onClick={() => { onClose(); onDelete(bot); }} />,
         ]),
       ]}
       {readError?.botId === bot.id && <p role="alert" className="px-2 py-1.5 text-sm text-danger">{readError.message}</p>}

@@ -17,7 +17,8 @@ import {
 import { revealPhonePairing } from "../lib/phone-pairing";
 import { PhonesList } from "./PhonesList";
 import { ConnectionDetail } from "./ConnectionDetail";
-import { Card, Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { productName } from "../lib/brand";
 
 export interface CompanionPanelStatus {

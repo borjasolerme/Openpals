@@ -23,6 +23,8 @@ import { useMenuMotion } from "./MenuMotion";
 import { nextMenuIndex, SidebarPopoverMenu, type SidebarMenuItem } from "./SidebarPopoverMenu";
 import type { ApprovalChoice } from "./thread-approval";
 import { SIMPLE_CONTROL } from "./composer-simple";
+import { IconButton } from "./ui/IconButton";
+import { MenuItem } from "./ui/MenuItem";
 
 /** Finish together: the room (or, `solo`, the one bot) keeps working until the goal is done. The chip turns accent while it is on.
  * `compact` is Simple mode's chip, shown only while the mode is on: its name and a × that turns it off. */
@@ -125,15 +127,7 @@ function approvalItem(name: string, choice: ApprovalChoice, simple: boolean): Si
  * default, and on the bot panel's Details. */
 export function TeachTaskButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={t("composer.teachTask")}
-      title={t("composer.teachTask")}
-      className="flex size-8 shrink-0 items-center justify-center rounded-full text-ink-secondary hover:bg-control hover:text-ink"
-    >
-      <GraduationCap size={16} strokeWidth={1.75} absoluteStrokeWidth />
-    </button>
+    <IconButton onClick={onClick} label={t("composer.teachTask")} className="rounded-full" icon={<GraduationCap size={16} strokeWidth={1.75} absoluteStrokeWidth />} />
   );
 }
 
@@ -325,22 +319,19 @@ function ComposerMenu({ items, renderTrigger }: { items: SidebarMenuItem[]; rend
           )}
         >
           {items.map((item) => (
-            <button
+            <MenuItem
               key={item.key}
-              type="button"
-              role="menuitem"
               data-menu-key={item.key}
               disabled={item.disabled}
               onClick={() => {
                 close(false);
                 item.onSelect();
               }}
-              className="flex h-8.5 w-full items-center gap-2 rounded-lg px-3 text-start text-lg text-ink transition-colors hover:bg-menu-hover focus-visible:bg-menu-hover focus-visible:outline-none disabled:opacity-50"
-            >
-              <span className={cn("flex size-3.5 shrink-0 items-center justify-center [&_svg]:size-3.5 [&_svg]:stroke-[1.5]", item.active ? "text-accent" : "text-ink-secondary")} aria-hidden="true">{item.icon}</span>
-              <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              {item.trailing}
-            </button>
+              active={item.active}
+              icon={item.icon}
+              label={item.label}
+              trailing={item.trailing}
+            />
           ))}
         </div>
       )}

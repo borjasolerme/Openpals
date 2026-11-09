@@ -1,11 +1,11 @@
 import { EyeOff } from "lucide-react";
 
-import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { DEFAULT_BOT_NAME, defaultBotIn } from "@/lib/default-bot";
 import { useStore, type Action, type Bot } from "@/state/store";
 import { Card, NavRow } from "./bot-panel/rows";
 import { SettingRow, Switch } from "./SettingsPrimitives";
+import { MenuItem } from "./ui/MenuItem";
 
 /** Hiding MausBot is the Settings switch turned off: one place says whether it is in the sidebar. */
 export function showDefaultBot(dispatch: (action: Action) => void, bot: Pick<Bot, "id" | "name">, shown: boolean): void {
@@ -13,20 +13,16 @@ export function showDefaultBot(dispatch: (action: Action) => void, bot: Pick<Bot
   if (!shown) dispatch({ type: "notice", notice: { kind: "note", botName: null, text: t("defaultBot.hidden", { name: bot.name }) } });
 }
 
-export function HideDefaultBotItem({ bot, onDone, className = "flex w-full items-center gap-3 px-3.5 py-2 text-left text-lg" }: { bot: Bot; onDone: () => void; className?: string }) {
+export function HideDefaultBotItem({ bot, onDone }: { bot: Bot; onDone: () => void }) {
   const { dispatch } = useStore();
   return (
-    <button
-      type="button"
-      role="menuitem"
+    <MenuItem
       data-default-bot-hide=""
       onClick={() => { showDefaultBot(dispatch, bot, false); onDone(); }}
       title={t("defaultBot.hideHint")}
-      className={cn(className, "text-ink hover:bg-menu-hover")}
-    >
-      <EyeOff size={16} className="text-ink-secondary" />
-      {t("defaultBot.hide")}
-    </button>
+      icon={<EyeOff size={16} />}
+      label={t("defaultBot.hide")}
+    />
   );
 }
 

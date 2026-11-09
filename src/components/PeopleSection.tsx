@@ -7,7 +7,8 @@ import { formatUsd, hasFiniteCost } from "@/lib/usage";
 import { readMembership, type Membership } from "../lib/membership";
 import { readSessionState, type SessionState } from "../lib/session";
 import { canPairDevices } from "./ServerPairingCard";
-import { Card, SettingRow } from "./SettingsPrimitives";
+import { SettingRow } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 export type Role = "admin" | "member";
 

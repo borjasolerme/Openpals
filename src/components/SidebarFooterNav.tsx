@@ -10,6 +10,8 @@ import { useSidebarToolsLayout, type SidebarDensity } from "@/lib/sidebar-prefer
 import { useStore } from "@/state/store";
 
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
+import { IconButton } from "./ui/IconButton";
+import { rowClass } from "./ui/Row";
 
 
 function NavRow({
@@ -42,14 +44,13 @@ function NavRow({
       aria-label={iconsOnly ? label : undefined}
       title={iconsOnly ? label : undefined}
       aria-current={active ? "page" : undefined}
-      className={cn(
-        "relative flex items-center rounded-xl transition-colors",
-        rail ? "size-9 shrink-0 justify-center" : iconsOnly ? "mx-auto size-11.5 shrink-0 justify-center" : "w-full min-h-9 gap-3 px-3 py-1.5 text-left",
-        active ? "bg-raised text-ink" : "text-ink hover:bg-raised/50",
-      )}
+      className={iconsOnly
+        ? cn("relative flex items-center justify-center rounded-xl transition-colors", rail ? "size-9 shrink-0" : "mx-auto size-11.5 shrink-0",
+          active ? "bg-raised text-ink" : "text-ink hover:bg-raised/50")
+        : rowClass(active, "relative")}
     >
       {icon(active)}
-      {!iconsOnly && <span className="flex-1 truncate text-lg font-medium leading-5">{label}</span>}
+      {!iconsOnly && <span className="flex-1 truncate">{label}</span>}
       {attention && (
         <span
           data-testid="routines-attention"
@@ -64,21 +65,16 @@ export function SidebarAppsButton() {
   const { state, dispatch } = useStore();
   const label = t("sidebar.nav.apps");
   return (
-    <button
-      type="button"
+    <IconButton
+      size="lg"
       data-tour="nav-apps"
       data-sidebar-nav="apps"
       onClick={() => dispatch({ type: "togglePlugins", open: true })}
-      aria-label={label}
-      title={label}
+      label={label}
       aria-pressed={state.pluginsOpen}
-      className={cn(
-        "flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors",
-        state.pluginsOpen ? "bg-raised text-accent" : "text-ink-secondary hover:bg-raised/50 hover:text-ink",
-      )}
-    >
-      <Puzzle size={18} />
-    </button>
+      active={state.pluginsOpen}
+      icon={<Puzzle size={16} />}
+    />
   );
 }
 
@@ -113,7 +109,7 @@ export function SidebarFooterNav({
   const iconsOnly = density === "icons";
   const toolsLayout = useSidebarToolsLayout();
   const toolbar = advanced && !iconsOnly && toolsLayout === "toolbar";
-  const iconSize = iconsOnly && !rail ? 20 : 18;
+  const iconSize = iconsOnly && !rail ? 20 : iconsOnly ? 18 : 16;
   const tone = (active: boolean) => (active ? "text-accent" : "text-ink-secondary");
   const automationsNeedYou = useAutomationsNeedYou();
   const automationsRow = <NavRow

@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-import { cn } from "@/lib/cn";
 import { shareLearnedSkillsMode, skillAuthoringEnabled, skillsLibraryEnabled } from "@/lib/feature-flags";
 import { t } from "@/lib/i18n";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { SkillReviewSettings } from "./SkillReviewSettings";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 const MODES = [
   { value: "off", label: "settings.experimental.shareSkillsOff" },
@@ -46,24 +46,12 @@ export function ShareLearnedSkillsSettings() {
             {t(authoring ? "settings.experimental.shareSkillsDetail" : "settings.experimental.shareSkillsNeedsAuthoring")}
           </div>
         </div>
-        <div className="inline-flex shrink-0 rounded-xl bg-inset p-1" role="radiogroup" aria-label={t("settings.experimental.shareSkillsAria")}>
-          {MODES.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={mode === option.value}
-              disabled={saving || !authoring}
-              onClick={() => void choose(option.value)}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-base transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                mode === option.value ? "bg-raised text-ink shadow" : "text-ink-secondary hover:text-ink",
-              )}
-            >
-              {t(option.label)}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          label={t("settings.experimental.shareSkillsAria")}
+          options={MODES.map((option) => ({ value: option.value, label: t(option.label), disabled: saving || !authoring }))}
+          value={mode}
+          onChange={(next) => void choose(next)}
+        />
       </div>
       {error ? <p role="alert" className="mt-2 text-sm text-danger">{error}</p> : null}
     </div>

@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { formatUsd, hasFiniteCost } from "@/lib/usage";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 export interface FleetWorkspaceView {
   slug: string;

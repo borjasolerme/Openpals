@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 import { Select } from "./Select";
 
 export function ThreadConcurrencySettings() {

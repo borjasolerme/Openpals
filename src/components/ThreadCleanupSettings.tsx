@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./ui/Card";
 
 /** Server bounds from server/config.ts, mirrored to reject out-of-range input before the round trip. */
 const MIN_RETENTION_DAYS = 1;

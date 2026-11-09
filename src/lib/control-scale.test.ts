@@ -6,6 +6,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ChatMarkdown } from "@/components/ChatMarkdown";
 import { DigestChip } from "@/components/DigestChip";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Input } from "@/components/ui/Input";
 import type { Message } from "@/state/store";
 
 const src = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -21,26 +24,40 @@ function rule(selector: string): Record<string, string> {
 }
 
 describe("control scale", () => {
-  it("steps buttons 32, 28 and 24px with a centered medium label", () => {
+  it("steps buttons 24, 28 and 32px on the control tokens with a centered medium label", () => {
     const base = rule(".ui-button,\n  .ui-icon-button");
-    expect(base).toMatchObject({ "min-height": "2rem", "font-size": "13px", "font-weight": "500", "line-height": "1.25rem", "align-items": "center" });
-    expect(rule(".ui-button")).toMatchObject({ padding: "0.25rem 0.75rem" });
-    expect(rule(".ui-button-md")).toMatchObject({ "min-height": "1.75rem", "font-size": "13px", "line-height": "1.25rem" });
-    expect(rule(".ui-button-sm")).toMatchObject({ "min-height": "1.5rem", "font-size": "12px", "line-height": "1rem" });
+    expect(base).toMatchObject({ "min-height": "var(--spacing-control)", "font-size": "var(--text-base)", "font-weight": "500", "line-height": "var(--text-base--line-height)", "align-items": "center" });
+    expect(rule(".ui-button-sm,\n  .ui-icon-button-sm")).toMatchObject({ "min-height": "var(--spacing-control-sm)", "font-size": "var(--text-sm)" });
+    expect(rule(".ui-button-lg,\n  .ui-icon-button-lg")).toMatchObject({ "min-height": "var(--spacing-control-lg)" });
     expect(rule(".ui-button-primary")).toMatchObject({ background: "var(--color-accent)", color: "var(--color-accent-ink)" });
+    expect(rule(".ui-button-danger")).toMatchObject({ background: "var(--color-danger)", color: "var(--color-danger-ink)" });
+    expect(css).toMatch(/--spacing-control-sm: 24px;\s+--spacing-control: 28px;\s+--spacing-control-lg: 32px;/);
   });
 
-  it("gives pills, chips, code and menu rows one size each", () => {
-    expect(rule(".ui-pill")).toMatchObject({ "min-height": "1.75rem", "border-radius": "9999px", "font-size": "13px", "font-weight": "500", "line-height": "1.25rem", "align-items": "center" });
-    expect(rule(".ui-chip")).toMatchObject({ "min-height": "1.375rem", "border-radius": "9999px", "font-size": "12px", "font-weight": "500", "line-height": "1rem" });
+  it("grows every control to a 44px target on a touch screen", () => {
+    const touch = css.slice(css.indexOf("A touch screen gets a 44px target"));
+    expect(touch).toMatch(/\.ui-icon-button \{ min-height: var\(--spacing-touch\); \}/);
+    expect(css).toContain("--spacing-touch: 44px;");
+  });
+
+  it("gives pills, fields and code one size each", () => {
+    expect(rule(".ui-pill")).toMatchObject({ "min-height": "var(--spacing-control)", "border-radius": "9999px", "font-size": "var(--text-base)", "font-weight": "500", "align-items": "center" });
+    expect(rule(".ui-field")).toMatchObject({ "min-height": "var(--spacing-control)", "border-radius": "var(--radius-lg)", "font-size": "var(--text-base)" });
     expect(rule(".ui-code-chip")).toMatchObject({ "box-decoration-break": "clone", "font-family": "var(--font-mono)", "font-size": "0.86em", "line-height": "1" });
-    expect(rule(".ui-menu-row")).toMatchObject({ "min-height": "30px", "border-radius": "0.375rem", "font-size": "14px", "line-height": "18px", gap: "0.5rem" });
   });
 
-  it("keeps every step on skin tokens", () => {
-    for (const selector of [".ui-button-md", ".ui-button-sm", ".ui-button-primary", ".ui-pill", ".ui-chip", ".ui-code-chip", ".ui-menu-row"]) {
-      expect(Object.values(rule(selector)).join(" "), selector).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+  it("keeps every step on tokens", () => {
+    for (const selector of [".ui-button", ".ui-button-primary", ".ui-button-danger", ".ui-button-ghost", ".ui-pill", ".ui-field", ".ui-code-chip"]) {
+      expect(Object.values(rule(selector)).join(" "), selector).not.toMatch(/#[0-9a-f]{3,8}\b|\b(?!9999px)(?:[2-9]|\d{2,})px\b/i);
     }
+  });
+
+  it("is what the shared components render with", () => {
+    expect(renderToStaticMarkup(createElement(Button, { variant: "primary", size: "sm" }, "Save"))).toBe('<button type="button" class="ui-button ui-button-primary ui-button-sm">Save</button>');
+    expect(renderToStaticMarkup(createElement(Button, null, "Cancel"))).toBe('<button type="button" class="ui-button">Cancel</button>');
+    expect(renderToStaticMarkup(createElement(IconButton, { label: "Close", icon: "×", size: "lg" })))
+      .toBe('<button type="button" aria-label="Close" title="Close" class="ui-icon-button ui-icon-button-lg">×</button>');
+    expect(renderToStaticMarkup(createElement(Input, { size: "sm" }))).toBe('<input class="ui-field ui-field-sm"/>');
   });
 
   it("is what the digest chip and inline code render with", () => {
@@ -49,7 +66,7 @@ describe("control scale", () => {
       digest: { turnId: "t", botId: "b", threadId: "th", at: 1, durationMs: 1, tools: [{ name: "Read", count: 2, failed: 0 }],
         files: { changed: [], added: [], deleted: [] }, memory: [], reply: "", hookCoverage: "preview" },
     };
-    expect(renderToStaticMarkup(createElement(DigestChip, { message }))).toMatch(/class="ui-chip /);
+    expect(renderToStaticMarkup(createElement(DigestChip, { message }))).toMatch(/class="inline-flex h-control-xs /);
     const html = renderToStaticMarkup(createElement(ChatMarkdown, { text: "run `pnpm test` now" }));
     expect(html).toContain('class="ui-code-chip break-words [unicode-bidi:isolate]"');
     expect(html).not.toContain("text-base");
