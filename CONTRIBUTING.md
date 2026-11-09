@@ -33,6 +33,8 @@ pnpm dev:desktop   # Electron shell (macOS/Ubuntu; keep server + Vite running)
 pnpm typecheck     # app + server
 pnpm test          # vitest suite (server unit + driver contract + API smoke)
 pnpm test:watch    # same, in watch mode
+pnpm test:unit     # the unit project only: every test file not named *.e2e.test.ts, on half the cores
+pnpm test:e2e      # the e2e project only: every *.e2e.test.ts file, one at a time (OMB_E2E_WORKERS=n for more)
 pnpm check:electron # syntax-check the plain JS Electron entrypoints
 
 pnpm package:mac   # DMG + ZIP; requires Swift/Xcode tools
