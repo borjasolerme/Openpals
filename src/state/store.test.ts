@@ -3023,7 +3023,7 @@ describe("notifications feed", () => {
   });
 
   it("unpinned, re-selecting the open chat from another view closes it", () => {
-    const open = { ...reducer(initialState, { type: "toggleNotifications", open: true }), selectedId: "bot-1", activeView: "team-map" as const,
+    const open = { ...reducer(initialState, { type: "toggleNotifications", open: true }), selectedId: "bot-1", activeView: "routines" as const,
       bots: [{ id: "bot-1", threadId: "t-1" }] as AppState["bots"], groups: [{ id: "room-1", threadId: "room-t" }] as AppState["groups"] };
     expect(reducer(open, { type: "select", id: "bot-1" }).notificationsOpen).toBe(false);
     expect(reducer({ ...open, selectedId: "room-1" }, { type: "select", id: "room-1" }).notificationsOpen).toBe(false);
