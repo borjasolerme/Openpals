@@ -6,6 +6,8 @@ export const RESERVED_MCP_NAMES: ReadonlySet<string> = new Set([
   "composio",
   "data",
   "browser",
+  "highlevel",
+  "device",
   "phone",
   "dweb",
   "openmausbot_connectors",
