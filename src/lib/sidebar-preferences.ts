@@ -8,6 +8,7 @@ export type SidebarToolsLayout = "rows" | "toolbar";
 export const SIDEBAR_TOOLS_LAYOUTS: readonly SidebarToolsLayout[] = ["rows", "toolbar"];
 
 export const SIDEBAR_DENSITY_KEY = "openmausbot.sidebarDensity";
+export const SIDEBAR_HIDDEN_KEY = "openpals.sidebarHidden";
 export const SIDEBAR_TOOLS_LAYOUT_KEY = "openmausbot.sidebarToolsLayout";
 export const SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth";
 export const SIMPLE_SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth.simple";
@@ -431,4 +432,35 @@ export function saveSimpleSectionOrder(
   storage?: Pick<Storage, "setItem"> | null,
 ): void {
   saveStringList(SIMPLE_SIDEBAR_SECTION_ORDER_KEY, ids, storage);
+}
+
+const hiddenListeners = new Set<() => void>();
+
+function loadSidebarHidden(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(SIDEBAR_HIDDEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+let hiddenChoice: boolean | undefined;
+
+function subscribeHidden(listener: () => void): () => void {
+  hiddenListeners.add(listener);
+  return () => hiddenListeners.delete(listener);
+}
+
+/** ⌘B hides the whole sidebar on a wide window and brings it back; a phone keeps its drawer either way. */
+export function toggleSidebarHidden(): void {
+  hiddenChoice = !(hiddenChoice ?? loadSidebarHidden());
+  try {
+    globalThis.localStorage?.setItem(SIDEBAR_HIDDEN_KEY, hiddenChoice ? "1" : "0");
+  } catch {
+  }
+  for (const listener of hiddenListeners) listener();
+}
+
+export function useSidebarHidden(): boolean {
+  return useSyncExternalStore(subscribeHidden, () => hiddenChoice ?? loadSidebarHidden(), () => false);
 }

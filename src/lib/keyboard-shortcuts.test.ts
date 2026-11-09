@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   filterShortcutGroups,
+  isSidebarHideToggle,
   isSidebarToggle,
   SHORTCUT_GROUPS,
   shortcutGroupsFor,
@@ -19,6 +20,18 @@ describe("keyboard-shortcuts", () => {
     expect(isSidebarToggle({ ...chord, metaKey: false })).toBe(false);
     expect(isSidebarToggle({ ...chord, shiftKey: true })).toBe(false);
     expect(isSidebarToggle({ ...chord, defaultPrevented: true })).toBe(false);
+  });
+
+  it("lists ⌘B or Ctrl+B for hiding the sidebar, and matches only that chord", () => {
+    const item = SHORTCUT_GROUPS.flatMap((group) => group.items).find((entry) => entry.id === "hide-sidebar")!;
+    expect(item).toMatchObject({ macKeys: ["⌘", "B"], winKeys: ["Ctrl", "B"] });
+    const chord = { key: "b", metaKey: true, ctrlKey: false, shiftKey: false, altKey: false, defaultPrevented: false };
+    expect(isSidebarHideToggle(chord)).toBe(true);
+    expect(isSidebarHideToggle({ ...chord, key: "B" })).toBe(true);
+    expect(isSidebarHideToggle({ ...chord, metaKey: false, ctrlKey: true })).toBe(true);
+    expect(isSidebarHideToggle({ ...chord, metaKey: false })).toBe(false);
+    expect(isSidebarHideToggle({ ...chord, shiftKey: true })).toBe(false);
+    expect(isSidebarHideToggle({ ...chord, key: "n" })).toBe(false);
   });
 
   it("defines unique IDs and non-empty key lists for all shortcuts", () => {

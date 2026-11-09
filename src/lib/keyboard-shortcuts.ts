@@ -41,6 +41,12 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
         winKeys: ["Ctrl", "\\"],
       },
       {
+        id: "hide-sidebar",
+        description: "Hide or show the sidebar",
+        macKeys: ["⌘", "B"],
+        winKeys: ["Ctrl", "B"],
+      },
+      {
         id: "switch-bot",
         description: "Switch to previous / next bot",
         macKeys: ["⌘", "⇧", "[ / ]"],
@@ -155,6 +161,10 @@ export function shortcutGroupsFor(sendKey: SendKey): readonly ShortcutGroup[] {
 
 export function isSidebarToggle(event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey" | "defaultPrevented">): boolean {
   return !event.defaultPrevented && event.key === "\\" && (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey;
+}
+
+export function isSidebarHideToggle(event: Pick<KeyboardEvent, "key" | "metaKey" | "ctrlKey" | "shiftKey" | "altKey" | "defaultPrevented">): boolean {
+  return !event.defaultPrevented && event.key.toLowerCase() === "b" && (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey;
 }
 
 export function shouldOpenKeyboardShortcuts(event: KeyboardEvent): boolean {
