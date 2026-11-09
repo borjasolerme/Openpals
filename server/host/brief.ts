@@ -251,7 +251,9 @@ export function createBrief(deps: BriefDeps) {
     }));
     const troubleRows: NeedRow[] = (trouble ?? []).map((one) => {
       const app = one.app === "gmail" ? "Gmail" : "Google Calendar";
-      return { key: `trouble:${one.app}`, text: w.couldNotRead(app), note: one.signedOut ? w.reconnect(app) : w.tryAgainSoon };
+      // Several accounts connected: the newest was read and refused, so Connected apps is where to look, not a later try.
+      const connectedApps = one.signedOut || one.severalAccounts === true;
+      return { key: `trouble:${one.app}`, text: w.couldNotRead(app), note: connectedApps ? w.reconnect(app) : w.tryAgainSoon };
     });
     const unfencedRows: NeedRow[] = !unfenced ? []
       : helpersSort
