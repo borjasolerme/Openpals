@@ -32,6 +32,13 @@ export function serverTerminal(): boolean {
   return Boolean(window.ogb?.openInstallTerminal);
 }
 
+/** Google's redirect goes to 127.0.0.1 on the server, which the person's browser can't reach when the server is another
+ * computer (a browser on the server's address, or this app showing a paired server's page): there the
+ * paste-the-redirect step is the only way to finish, so it starts open. */
+export function redirectPasteOpen(): boolean {
+  return !window.ogb || window.ogb.app?.ownPage === false;
+}
+
 export function grokKeyInstead(instance: InstanceInfo): boolean {
   return instance.driverKind === "grokAgent" && needsCli(instance) && !serverTerminal();
 }
@@ -366,7 +373,7 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
           <button type="button" onClick={() => void check()} className="w-full rounded-lg bg-control px-3 py-2 text-sm font-semibold text-ink hover:bg-raised-hover">
             {busy === "check" ? t("common.checking") : t("engineSetup.finishedSignIn")}
           </button>
-          <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-sm text-ink-secondary">
+          <details open={redirectPasteOpen()} className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-sm text-ink-secondary">
             <summary className="cursor-pointer select-none">{t("engineSetup.otherComputer")}</summary>
             <p className="mt-2 leading-relaxed">{t("engineSetup.otherComputerHint")}</p>
             <input
