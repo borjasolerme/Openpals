@@ -5,9 +5,11 @@ import { existsSync, readdirSync, readFileSync, statfsSync } from "node:fs";
 import { arch, cpus, homedir, release, totalmem } from "node:os";
 import { dirname, join, posix, resolve } from "node:path";
 
-import { PRODUCTION_CLOUD_ORIGIN } from "../devs-report-send.ts";
 import { EXIT, flag, usageError } from "./args.ts";
 import type { VerbContext, VerbOutcome } from "./context.ts";
+
+/** Any large HTTPS site answers with a Date header; this one is only asked for the time. */
+const TIME_REFERENCE_ORIGIN = "https://www.cloudflare.com";
 
 export type HostStatus = "ok" | "warn" | "FAIL";
 
@@ -74,7 +76,7 @@ function systemCheck(probe: HostProbe): HostCheck {
 function archCheck(probe: HostProbe): HostCheck {
   if (probe.arch === "x64") return ok("arch", "x86_64");
   if (probe.arch === "arm64") return warn("arch", "arm64: the server runs here, but a self-hosted Team server is supported on x86_64 only");
-  return fail("arch", `${probe.arch}: OpenMausBot's images are built for x86_64 and arm64 only`, "use an x86_64 server");
+  return fail("arch", `${probe.arch}: Openpals' images are built for x86_64 and arm64 only`, "use an x86_64 server");
 }
 
 async function containerCheck(probe: HostProbe): Promise<HostCheck> {
@@ -176,7 +178,7 @@ async function portChecks(probe: HostProbe, options: HostOptions): Promise<HostC
   const taken = listeningPorts(probe);
   const ours = taken.has(options.port) && await probe.serverAnswers(options.port);
   const server = !taken.has(options.port) ? ok("port", `Port ${options.port} is free for the server`)
-    : ours ? ok("port", `OpenMausBot already answers on port ${options.port}`)
+    : ours ? ok("port", `Openpals already answers on port ${options.port}`)
       : fail("port", `Port ${options.port} is taken by another program`, `stop it (sudo ss -ltnp 'sport = :${options.port}' names it), or run the server with --port N`);
   const web = [80, 443].filter((port) => taken.has(port));
   if (!web.length) return [server, ok("web-ports", "Ports 80 and 443 are free")];
@@ -205,7 +207,7 @@ async function clockCheck(probe: HostProbe): Promise<HostCheck> {
 export async function checkHost(probe: HostProbe, options: HostOptions): Promise<HostCheck[]> {
   if (probe.platform !== "linux") {
     const name = probe.platform === "darwin" ? "macOS" : probe.platform === "win32" ? "Windows" : probe.platform;
-    return [fail("platform", `doctor --host checks a Linux server, and this is ${name}`, "run it on the Linux server that will host OpenMausBot")];
+    return [fail("platform", `doctor --host checks a Linux server, and this is ${name}`, "run it on the Linux server that will host Openpals")];
   }
   const [containers, ports, clock] = await Promise.all([containerCheck(probe), portChecks(probe, options), clockCheck(probe)]);
   return [systemCheck(probe), archCheck(probe), containers, userNamespaceCheck(probe), seccompCheck(probe), cgroupCheck(probe),
@@ -254,7 +256,7 @@ export function systemProbe(): HostProbe {
     async clockOffset() {
       try {
         const before = Date.now();
-        const response = await fetch(PRODUCTION_CLOUD_ORIGIN, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(5_000) });
+        const response = await fetch(TIME_REFERENCE_ORIGIN, { method: "HEAD", redirect: "manual", signal: AbortSignal.timeout(5_000) });
         const after = Date.now();
         const date = Date.parse(response.headers.get("date") ?? "");
         // An HTTP date is whole seconds: the server's clock was somewhere in the second after it.
