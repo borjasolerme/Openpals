@@ -399,6 +399,7 @@
   "attach.previewAudio": "{name} 재생",
   "attach.audioUnavailable": "이 오디오는 여기서 재생할 수 없어요. 사본은 저장할 수 있어요.",
   "attach.fileTooLarge": "미리보기는 25MB까지만 돼요.",
+  "attach.previewTooLarge": "이 파일은 {size}로 미리보기 한도 {limit}를 넘습니다. 아래에서 다운로드는 할 수 있습니다.",
   "teamImport.backupCopies": "가져온 봇은 새 사본으로 추가되고, 이름이 겹치면 번호가 붙어요.",
   "teamImport.newSection": "{name}의 봇을 새 사본으로 추가해요. 내 봇은 그대로이고, 이름이 겹치면 번호가 붙어요.",
   "teamImport.sharedTeam": "봇 {count}개 · 공유 팀",

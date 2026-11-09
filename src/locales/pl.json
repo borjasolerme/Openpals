@@ -374,6 +374,7 @@
   "attach.previewAudio": "Odtwórz: {name}",
   "attach.audioUnavailable": "Tego dźwięku nie można odtworzyć w tym miejscu. Nadal możesz zapisać kopię.",
   "attach.fileTooLarge": "Podgląd jest ograniczony do 25 MB.",
+  "attach.previewTooLarge": "Ten plik ma {size}, więcej niż limit podglądu {limit}. Nadal możesz go pobrać poniżej.",
   "teamImport.backupCopies": "Zaimportowane boty są dodawane jako nowe kopie; zduplikowane nazwy otrzymują numery.",
   "teamImport.newSection": "Dodaje boty z: {name} jako nowe kopie. Twoje boty pozostają bez zmian; zduplikowane nazwy otrzymują numery.",
   "teamImport.sharedTeam": "Boty: {count} · współdzielony zespół",

@@ -778,6 +778,7 @@ describe("ChatMarkdown attachments", () => {
       reason: "",
       savedTo: "",
       outsideWorkspace: false,
+      retryable: false,
       folder: {
         name: "04_post",
         entries: [{ name: "cover.png", bytes: 2048, mime: "image/png" }],
@@ -805,6 +806,7 @@ describe("ChatMarkdown attachments", () => {
         reason: "the linked file is outside this conversation's workspace",
         savedTo: "",
         outsideWorkspace,
+        retryable: !outsideWorkspace,
         folder: null,
         save: vi.fn(async () => undefined),
       });

@@ -290,6 +290,7 @@
   "attach.previewAudio": "播放 {name}",
   "attach.audioUnavailable": "無法在此播放這段音訊，但你仍可儲存副本。",
   "attach.fileTooLarge": "預覽僅支援 25 MB 以下的檔案。",
+  "attach.previewTooLarge": "此檔案為 {size}，超過 {limit} 的預覽上限。你仍可在下方下載。",
   "teamImport.backupCopies": "匯入的機器人會新增為副本；重複的名稱會加上編號。",
   "teamImport.newSection": "將 {name} 中的機器人新增為副本。你現有的機器人維持不變；重複的名稱會加上編號。",
   "teamImport.sharedTeam": "{count} 個機器人 · 共用團隊",

@@ -12,6 +12,8 @@ import { linkPlainPaths } from "../shared/markdown-plain-paths.ts";
 import { inSecretFolder, SECRET_FILE_REFUSAL } from "./secret-folder.ts";
 
 export const MESSAGE_FILE_MAX_BYTES = 25 * 1024 * 1024;
+/** Saving a linked file streams it to the person, so it may be larger than anything read into memory or previewed. */
+export const MESSAGE_FILE_DOWNLOAD_MAX_BYTES = 500 * 1024 * 1024;
 
 export interface OpenedMessageFile {
   handle: FileHandle;
@@ -38,6 +40,16 @@ export function messageFileRoots(options: {
 
 function statusError(status: number, message: string, code?: string): Error & { status: number; code?: string } {
   return Object.assign(new Error(message), { status, ...(code ? { code } : {}) });
+}
+
+/** Rounded up so a file just over the limit never reads as the limit itself. */
+function megabytes(bytes: number, round: (value: number) => number = Math.round): string {
+  return `${round(bytes / (1024 * 102.4)) / 10} MB`;
+}
+
+function fileTooLarge(bytes: number, limit: number, path: string): Error {
+  const message = `This file is ${megabytes(bytes, Math.ceil)}, over the ${megabytes(limit)} limit for opening files from chat. The file itself is still saved as ${basename(path)}.`;
+  return statusError(413, message, "file_too_large");
 }
 
 const outsideWorkspace = () =>
@@ -354,7 +366,11 @@ export function mimeFor(path: string): string {
 }
 
 /** Canonicalised before and after opening, and the handle compared with the post-open path, to reject symlink escapes and directory swaps. */
-export async function openMessageFile(href: string, roots: readonly string[]): Promise<OpenedMessageFile> {
+export async function openMessageFile(
+  href: string,
+  roots: readonly string[],
+  maxBytes = MESSAGE_FILE_MAX_BYTES,
+): Promise<OpenedMessageFile> {
   const requested = referencedPath(href);
   const canonicalRoots = (await Promise.all(roots.map(async (root) => {
     try {
@@ -392,9 +408,7 @@ export async function openMessageFile(href: string, roots: readonly string[]): P
       const opened = await handle.stat();
       if (opened.isDirectory()) throw statusError(400, "the link points to a folder, not a file", "directory");
       if (!opened.isFile()) throw statusError(400, "the link does not point to a regular file");
-      if (opened.size > MESSAGE_FILE_MAX_BYTES) {
-        throw statusError(413, `file exceeds ${MESSAGE_FILE_MAX_BYTES} bytes`);
-      }
+      if (opened.size > maxBytes) throw fileTooLarge(opened.size, maxBytes, canonicalBefore);
 
       const canonicalAfter = await realpath(candidate);
       if (!containedBy(root, canonicalAfter)) throw outsideWorkspace();
@@ -479,12 +493,13 @@ export async function openMessageFolderEntry(
   href: string,
   entry: string,
   roots: readonly string[],
+  maxBytes = MESSAGE_FILE_MAX_BYTES,
 ): Promise<OpenedMessageFile> {
   const folder = await readMessageFolder(href, roots);
   if (!folder.entries.some((listed) => listed.name === entry)) {
     throw statusError(404, "the linked file is unavailable");
   }
-  return openMessageFile(pathToFileURL(join(folder.path, entry)).href, roots);
+  return openMessageFile(pathToFileURL(join(folder.path, entry)).href, roots, maxBytes);
 }
 
 async function readMessageFolder(

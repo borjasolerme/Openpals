@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
 import {
+  MESSAGE_FILE_DOWNLOAD_MAX_BYTES,
   MESSAGE_FILE_MAX_BYTES,
   messageFileDisposition,
   messageFileDownloadName,
@@ -338,6 +339,32 @@ describe("message-linked files", () => {
     truncateSync(large, MESSAGE_FILE_MAX_BYTES + 1);
     await expect(openMessageFile("large.pdf", [workspace]))
       .rejects.toMatchObject({ status: 413 });
+  });
+
+  it("lets a saved download pass the preview ceiling and explains a file over the limit", async () => {
+    const large = join(workspace, "reel.mp4");
+    writeFileSync(large, "x");
+    truncateSync(large, 26 * 1024 * 1024);
+
+    await expect(openMessageFile("reel.mp4", [workspace])).rejects.toMatchObject({
+      status: 413,
+      code: "file_too_large",
+      message: "This file is 26 MB, over the 25 MB limit for opening files from chat. The file itself is still saved as reel.mp4.",
+    });
+    const file = await openMessageFile("reel.mp4", [workspace], MESSAGE_FILE_DOWNLOAD_MAX_BYTES);
+    expect(file.bytes).toBe(26 * 1024 * 1024);
+    await file.handle.close();
+
+    mkdirSync(join(workspace, "Reels"));
+    writeFileSync(join(workspace, "Reels", "big.mp4"), "x");
+    truncateSync(join(workspace, "Reels", "big.mp4"), 26 * 1024 * 1024);
+    await expect(openMessageFolderEntry("Reels/", "big.mp4", [workspace])).rejects.toMatchObject({ status: 413 });
+    const entry = await openMessageFolderEntry("Reels/", "big.mp4", [workspace], MESSAGE_FILE_DOWNLOAD_MAX_BYTES);
+    await entry.handle.close();
+
+    truncateSync(large, MESSAGE_FILE_DOWNLOAD_MAX_BYTES + 1);
+    await expect(openMessageFile("reel.mp4", [workspace], MESSAGE_FILE_DOWNLOAD_MAX_BYTES))
+      .rejects.toMatchObject({ status: 413, message: expect.stringMatching(/^This file is 500\.1 MB, over the 500 MB limit/) });
   });
 
   it("lists the regular files directly inside a linked folder", async () => {

@@ -374,6 +374,7 @@
   "attach.previewAudio": "Riproduci {name}",
   "attach.audioUnavailable": "Questo audio non si riproduce qui. Puoi comunque salvarne una copia.",
   "attach.fileTooLarge": "L’anteprima arriva fino a 25 MB.",
+  "attach.previewTooLarge": "Questo file è di {size}, oltre il limite di anteprima di {limit}. Puoi comunque scaricarlo qui sotto.",
   "teamImport.backupCopies": "I bot importati si aggiungono come copie nuove; ai nomi duplicati viene messo un numero.",
   "teamImport.newSection": "Aggiunge i bot di {name} come copie nuove. I tuoi bot restano come sono; ai nomi duplicati viene messo un numero.",
   "teamImport.sharedTeam": "{count} bot · team condiviso",

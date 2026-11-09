@@ -415,6 +415,7 @@
   "attach.previewAudio": "Play {name}",
   "attach.audioUnavailable": "This audio cannot be played here. You can still save a copy.",
   "attach.fileTooLarge": "Preview is limited to 25 MB.",
+  "attach.previewTooLarge": "This file is {size}, over the {limit} preview limit. You can still download it below.",
   "teamImport.backupCopies": "Imported bots are added as new copies; duplicate names get numbered.",
   "teamImport.newSection": "Adds the bots of {name} as new copies. Your bots stay as they are; duplicate names get numbered.",
   "teamImport.sharedTeam": "{count} bots · shared team",

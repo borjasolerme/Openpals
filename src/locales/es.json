@@ -328,6 +328,7 @@
   "attach.previewAudio": "Reproducir {name}",
   "attach.audioUnavailable": "Este audio no se puede reproducir aquí. Aun así, puedes guardar una copia.",
   "attach.fileTooLarge": "La vista previa está limitada a 25 MB.",
+  "attach.previewTooLarge": "Este archivo ocupa {size}, más que el límite de vista previa de {limit}. Aun así puedes descargarlo abajo.",
   "teamImport.backupCopies": "Los bots importados se añaden como copias nuevas; los nombres duplicados se numeran.",
   "teamImport.newSection": "Añade los bots de {name} como copias nuevas. Tus bots no cambian; los nombres duplicados se numeran.",
   "teamImport.sharedTeam": "{count} bots · equipo compartido",

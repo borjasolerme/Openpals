@@ -381,6 +381,7 @@
   "attach.previewAudio": "{name} を再生",
   "attach.audioUnavailable": "ここでは再生できない音声です。コピーを保存できます。",
   "attach.fileTooLarge": "プレビューは 25 MB までです。",
+  "attach.previewTooLarge": "このファイルは {size} で、プレビューの上限 {limit} を超えています。下からダウンロードはできます。",
   "teamImport.backupCopies": "読み込んだボットは新しいコピーとして追加されます。同名の場合は番号が付きます。",
   "teamImport.newSection": "{name} のボットを新しいコピーとして追加します。今あるボットはそのままで、同名の場合は番号が付きます。",
   "teamImport.sharedTeam": "ボット {count} 体 · 共有チーム",

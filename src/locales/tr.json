@@ -308,6 +308,7 @@
   "attach.previewAudio": "{name} çal",
   "attach.audioUnavailable": "Bu ses burada oynatılamıyor. Yine de bir kopyasını kaydedebilirsiniz.",
   "attach.fileTooLarge": "Önizleme 25 MB ile sınırlıdır.",
+  "attach.previewTooLarge": "Bu dosya {size}, {limit} önizleme sınırının üzerinde. Yine de aşağıdan indirebilirsiniz.",
   "teamImport.backupCopies": "İçe aktarılan botlar yeni kopyalar olarak eklenir; yinelenen adlar numaralandırılır.",
   "teamImport.newSection": "{name} içindeki botları yeni kopyalar olarak ekler. Botlarınız olduğu gibi kalır; yinelenen adlar numaralandırılır.",
   "teamImport.sharedTeam": "{count} bot · paylaşılan ekip",

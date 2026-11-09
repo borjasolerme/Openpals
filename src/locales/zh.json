@@ -409,6 +409,7 @@
   "attach.previewAudio": "播放 {name}",
   "attach.audioUnavailable": "这段音频无法在此播放，但你仍可保存一份副本。",
   "attach.fileTooLarge": "预览仅支持 25 MB 以下的文件。",
+  "attach.previewTooLarge": "此文件为 {size}，超过了 {limit} 的预览上限。你仍可以在下方下载。",
   "teamImport.backupCopies": "导入的机器人会添加为副本；重复的名称会加上编号。",
   "teamImport.newSection": "将 {name} 中的机器人添加为副本。你现有的机器人保持不变；重复的名称会加上编号。",
   "teamImport.sharedTeam": "{count} 个机器人 · 共享团队",

@@ -308,6 +308,7 @@
   "attach.previewAudio": "Phát {name}",
   "attach.audioUnavailable": "Không thể phát âm thanh này ở đây. Bạn vẫn có thể lưu một bản sao.",
   "attach.fileTooLarge": "Giới hạn xem trước tối đa 25 MB.",
+  "attach.previewTooLarge": "Tệp này có dung lượng {size}, vượt giới hạn xem trước {limit}. Bạn vẫn có thể tải xuống bên dưới.",
   "teamImport.backupCopies": "Các bot được nhập sẽ được thêm dưới dạng bản sao mới; các tên trùng lặp sẽ được đánh số.",
   "teamImport.newSection": "Thêm các bot của {name} dưới dạng bản sao mới. Các bot của bạn vẫn giữ nguyên; các tên trùng lặp sẽ được đánh số.",
   "teamImport.sharedTeam": "{count} bot · team dùng chung",
