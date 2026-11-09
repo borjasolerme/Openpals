@@ -1754,6 +1754,7 @@
   "signIn.settled.failed": "No se pudo reanudar",
   "signIn.saveLogin": "Guardar un inicio de sesión",
   "signIn.save.note": "Guarda el usuario y la contraseña de {site}. A partir de ahora, {name} iniciará sesión con ellos sin ti y nunca verá la contraseña. Cámbialo o elimínalo en Ajustes → Inicios de sesión.",
+  "signIn.save.noteShared": "Guarda el usuario y la contraseña de {site}. {name} y los bots que comparten su navegador ({bots}) inician sesión con ellos a partir de ahora, sin ti, y nunca ven la contraseña. Cámbialos o bórralos en Ajustes → Inicios de sesión.",
   "signIn.save.submit": "Guardar y continuar",
   "signIn.save.elsewhere": "Rellenarlo también en {host}, la página de inicio de sesión abierta ahora en el navegador",
   "signIn.settled.saved": "Inicio de sesión guardado para {site}",

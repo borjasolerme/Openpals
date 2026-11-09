@@ -2137,6 +2137,7 @@
   "signIn.settled.failed": "继续失败",
   "signIn.saveLogin": "保存登录信息",
   "signIn.save.note": "保存 {site} 的用户名和密码。此后 {name} 会自动用它们登录，无需你介入，并且始终看不到密码。你可以在设置 → 登录信息中修改或删除。",
+  "signIn.save.noteShared": "保存 {site} 的用户名和密码。从现在起，{name} 以及共用其浏览器的机器人（{bots}）会在你不在时用它们登录，而且永远看不到密码。可在 设置 → 登录信息 中更改或删除。",
   "signIn.save.submit": "保存并继续",
   "signIn.save.elsewhere": "同时在 {host} 上填写，即当前浏览器中打开的登录页面",
   "signIn.settled.saved": "已保存 {site} 的登录信息",

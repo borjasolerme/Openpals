@@ -1939,6 +1939,7 @@
   "signIn.settled.failed": "再開に失敗しました",
   "signIn.saveLogin": "ログイン情報を保存",
   "signIn.save.note": "{site}のユーザー名とパスワードを保存します。以後は{name}があなたに代わってサインインし、パスワードを目にすることはありません。変更や削除は「設定 → ログイン情報」で行えます。",
+  "signIn.save.noteShared": "{site} のユーザー名とパスワードを保存します。今後は {name} とそのブラウザを共有するボット（{bots}）が、あなたなしでこれを使ってサインインし、パスワードを見ることはありません。変更や削除は「設定 → ログイン情報」で行えます。",
   "signIn.save.submit": "保存して続ける",
   "signIn.save.elsewhere": "現在ブラウザで開いているサインインページ（{host}）にも入力する",
   "signIn.settled.saved": "{site}のログイン情報を保存しました",

@@ -1879,6 +1879,7 @@
   "signIn.settled.failed": "Ripresa non riuscita",
   "signIn.saveLogin": "Salva un accesso",
   "signIn.save.note": "Salva nome utente e password per {site}. Da ora {name} accede con quelli senza di te e non vede mai la password. Cambialo o eliminalo in Impostazioni → Accessi.",
+  "signIn.save.noteShared": "Salva nome utente e password per {site}. Da ora {name} e i bot che condividono il suo browser ({bots}) accedono con questi dati senza di te, e non vedono mai la password. Modificali o eliminali in Impostazioni → Accessi.",
   "signIn.save.submit": "Salva e continua",
   "signIn.save.elsewhere": "Compilalo anche su {host}, la pagina di accesso ora aperta nel browser",
   "signIn.settled.saved": "Accesso salvato per {site}",

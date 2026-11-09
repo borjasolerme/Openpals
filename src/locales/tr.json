@@ -1693,6 +1693,7 @@
   "signIn.settled.failed": "Devam ettirilemedi",
   "signIn.saveLogin": "Giriş bilgilerini kaydet",
   "signIn.save.note": "{site} için kullanıcı adını ve parolayı kaydedin. Bundan sonra {name} sizin yardımınız olmadan bunlarla oturum açar ve parolayı asla görmez. Ayarlar → Giriş bilgileri bölümünden değiştirebilir veya silebilirsiniz.",
+  "signIn.save.noteShared": "{site} için kullanıcı adını ve parolayı kaydet. Bundan sonra {name} ve tarayıcısını paylaşan botlar ({bots}) sensiz bunlarla oturum açar ve parolayı hiç görmez. Ayarlar → Oturum açma bilgileri bölümünden değiştir veya sil.",
   "signIn.save.submit": "Kaydet ve devam et",
   "signIn.save.elsewhere": "Tarayıcıda şu anda açık olan oturum açma sayfası {host} üzerinde de doldur",
   "signIn.settled.saved": "{site} için giriş bilgileri kaydedildi",

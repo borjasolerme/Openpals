@@ -1902,6 +1902,7 @@
   "signIn.settled.failed": "Falha ao retomar",
   "signIn.saveLogin": "Salvar um login",
   "signIn.save.note": "Salve o usuário e a senha de {site}. A partir de agora, {name} faz login com eles sem você e nunca vê a senha. Altere ou exclua em Configurações → Logins.",
+  "signIn.save.noteShared": "Salve o usuário e a senha de {site}. A partir de agora, {name} e os bots que compartilham o navegador dele ({bots}) entram com eles sem você e nunca veem a senha. Altere ou exclua em Configurações → Logins.",
   "signIn.save.submit": "Salvar e continuar",
   "signIn.save.elsewhere": "Preencher também em {host}, a página de login aberta no navegador agora",
   "signIn.settled.saved": "Login salvo para {site}",

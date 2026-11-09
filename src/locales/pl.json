@@ -1930,6 +1930,7 @@
   "signIn.settled.failed": "Nie udało się wznowić",
   "signIn.saveLogin": "Zapisz dane logowania",
   "signIn.save.note": "Zapisz nazwę użytkownika i hasło do {site}. Od teraz {name} będzie się nimi logować bez ciebie i nigdy nie zobaczy hasła. Zmień je lub usuń w Ustawienia → Logowania.",
+  "signIn.save.noteShared": "Zapisz nazwę użytkownika i hasło do {site}. Od teraz {name} i boty, które dzielą jego przeglądarkę ({bots}), logują się nimi bez ciebie i nigdy nie widzą hasła. Zmień je lub usuń w Ustawienia → Loginy.",
   "signIn.save.submit": "Zapisz i kontynuuj",
   "signIn.save.elsewhere": "Uzupełnij je też na {host}, stronie logowania otwartej teraz w przeglądarce",
   "signIn.settled.saved": "Zapisano dane logowania do {site}",

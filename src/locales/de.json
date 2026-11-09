@@ -890,6 +890,7 @@
   "signIn.where.vm": "Melde dich auf dem privaten Desktop an, auf dem {name} arbeitet. „Öffnen“ zeigt ihn mit „Steuerung übernehmen“.",
   "signIn.where.cloud": "Melde dich auf dem Cloud-Desktop an, auf dem {name} arbeitet. „Öffnen“ zeigt ihn mit „Steuerung übernehmen“.",
   "signIn.answeredInChat": "Du hast im Chat geantwortet",
+  "signIn.save.noteShared": "Speichere Benutzername und Passwort für {site}. {name} und die Bots, die seinen Browser teilen ({bots}), melden sich ab jetzt ohne dich damit an und sehen das Passwort nie. Ändern oder löschen kannst du es unter Einstellungen → Logins.",
   "settings.profiles.title": "Browser-Profile",
   "settings.profiles.subtitle": "Benannte Anmelde-Sitzungen, die jeder Bot nutzen kann. Leg eine im Browser-Tab eines Bots an; einmal anmelden, und sie bleibt.",
   "settings.profiles.empty": "Noch keine Profile — wähl „+ Profil hinzufügen…“ im Browser eines Bots.",

@@ -2123,7 +2123,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -3606,7 +3607,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -6394,7 +6394,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8466,7 +8467,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10538,7 +10540,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -12195,7 +12198,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -15523,7 +15525,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -17150,7 +17153,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -20383,7 +20385,8 @@
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
       "permissions.outbound.help": "f50c72c7db31cb4c0b7f71e2b5d96fc570aaa96c5fc3d26330ec94db681d21b3",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -21240,7 +21243,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -25892,7 +25894,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -27065,7 +27068,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -29409,7 +29411,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -30164,7 +30167,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -31853,7 +31855,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -33272,7 +33275,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -35856,7 +35858,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -37275,7 +37278,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -39859,7 +39861,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -41507,7 +41510,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -44782,7 +44784,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -46436,7 +46439,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -49746,7 +49748,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -51364,7 +51367,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -54557,7 +54559,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -56422,7 +56425,6 @@
       "settings.profiles.own": "013c07b7a23bf918aa0cfd3d4055230e66fa88fb2aa1f61cadecb8e6385189c5",
       "settings.profiles.temporary": "35192a17ce645ae38a82a6479f96208d0c8664c445a50ffb5a3dcec72bc3e0ba",
       "settings.profiles.temporaryHint": "12d44d4fe3fd707b658190c09e1bf5102974436daa9264023b796d897ac33395",
-      "settings.profiles.sharedHint": "097003a1b1fd599fda05c002bfded2ebcbd00ddcd3c87ab319d54c4a333a5c8f",
       "settings.profiles.stopToSwitch": "b147a399bf9e25286aa075e8d5d63b226ea3039e0970c1ca870da9a20ffbf655",
       "settings.profiles.manage": "4be8b4595698be3dd13a1c8c3fa484e3771472711823d0fe95ed806723c2aef3",
       "settings.profiles.newName": "dba20004289e0b261e4e39df96016ed85a4ca0029715be1ecf93903c509a19aa",
@@ -59976,7 +59978,8 @@
       "server.rooms.sameName.choice": "7c5927164452e96b5a3b6e92c457ecadcf887ba6cdcd4b6ed6559ae16c6984b7",
       "server.rooms.sameName.chief": "245b630a86a9f2753c86a86f1a9cdeaed80b74704dfa2fc3193d6e312c294a38",
       "server.rooms.sameNameMissed": "185226df6aff5977316a271e9bc721de4af20875c8ac317282e9bcf8698bd64c",
-      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc"
+      "routines.drawer.cancelRun": "56bccd9d49b0317a1cae086940cdf68aa26a521fc4b1b640b17b1751840aa3cc",
+      "signIn.save.noteShared": "89b8315fa467805a4db83d45861e37d1ca744f92ae74631e97b00250046eb998"
     }
   }
 }

@@ -1693,6 +1693,7 @@
   "signIn.settled.failed": "Không thể tiếp tục",
   "signIn.saveLogin": "Lưu thông tin đăng nhập",
   "signIn.save.note": "Lưu tên người dùng và mật khẩu cho {site}. Từ bây giờ, {name} có thể tự động đăng nhập mà bạn không cần can thiệp, đồng thời không bao giờ nhìn thấy mật khẩu. Thay đổi hoặc xóa trong Cài đặt → Thông tin đăng nhập.",
+  "signIn.save.noteShared": "Lưu tên người dùng và mật khẩu cho {site}. Từ giờ {name} và các bot dùng chung trình duyệt của nó ({bots}) sẽ đăng nhập bằng chúng mà không cần bạn, và không bao giờ thấy mật khẩu. Đổi hoặc xóa trong Cài đặt → Đăng nhập.",
   "signIn.save.submit": "Lưu và tiếp tục",
   "signIn.save.elsewhere": "Cũng điền trên {host}, trang đăng nhập đang mở trong trình duyệt",
   "signIn.settled.saved": "Đã lưu thông tin đăng nhập cho {site}",
