@@ -105,8 +105,9 @@ describe("charts end to end on DuckDB", () => {
     const { compiled, reduced } = await chart({ type: "bar", x: "week", y: "revenue", color: "plan", stack: true }, "weekly");
     expect(reduced.rows).toHaveLength(24);
     const day = 86_400_000;
-    // A DATE comes back as "2026-08-31" and the bucket end as a TIMESTAMP: read both as local wall-clock time.
-    const at = (cell: Cell) => Date.parse(String(cell).length === 10 ? `${String(cell)}T00:00:00` : String(cell).replace(" ", "T"));
+    // A DATE comes back as "2026-08-31" and the bucket end as a TIMESTAMP, both naive wall-clock time. Read them on one
+    // fixed clock (UTC), so a week that crosses a daylight-saving change in the host's zone still spans seven days.
+    const at = (cell: Cell) => Date.parse(`${String(cell).length === 10 ? `${String(cell)}T00:00:00` : String(cell).replace(" ", "T")}Z`);
     for (const [x, x2] of reduced.rows) expect(at(x2!) - at(x!)).toBe(7 * day);
     const svg = await chartRenderer.svg(compiled.vegaLite, reduced.rows, reduced.columns, { theme: "light", width: 640 });
     const bars = [...svg.matchAll(/aria-roledescription="bar" d="M([\d.]+),([\d.]+)h([\d.]+)v([\d.]+)/g)]
