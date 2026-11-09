@@ -1,21 +1,26 @@
 # Welcome flow and guided tour
 
-The first run is three screens, then the chat: Where should your bots live?
-(only in the desktop app while it shows this computer, with the one-line
-welcome: This computer, or An always-on server, which the desktop app sets up
-from a Boat API key (`electron/boat-setup.mjs`) or an own server's
-`user@address` over SSH (`electron/ssh-setup.mjs`), both running
-`scripts/install-server.sh`, then switches to; a pasted pairing link still
-works); Sign in to your AI (the sign-in pill, Other ways to connect, Set up
-later); and Bring your bots and apps (Move from Grok Bot, Start with Pal, a
-personal Composio key saved as the `composio-personal` MCP server, or a
-Composio project key; all optional), whose button opens the chat with the bot
-brought in (Pal first, else the first bot moved from Grok Bot), or the
-Chief's chat. A browser, and a server's page reached by pairing, start at the
-AI. A hosted place's admin sees only its welcome. Pal started
-here lands in a chat where MausBot's three lines, its follow-up (written once
-by the server, `POST /api/bots/:id/helper-followup`) and chips offer only what
-is still missing. The app tour starts only from Settings → Replay app tour.
+The first run is one window over the app (`WelcomeFlow`): the app's name and a
+close button (X or Escape: finish later, back on the same step next launch or
+from Settings), the steps across the top (`Connect`, `AI`, `Bots & apps`; one
+already reached opens again), and Continue at the bottom (Enter), with Back.
+Connect is shown only in the desktop app: This computer, chosen and Connected,
+or the paired server's row on that server's page (choosing This computer there
+goes back to it on Continue); Add a server opens the pairing link and, under
+Need a pairing link?, the setup the desktop app does from a Boat API key
+(`electron/boat-setup.mjs`) or an own server's `user@address` over SSH
+(`electron/ssh-setup.mjs`), both running `scripts/install-server.sh`, and the
+installer as one line to copy. Settings → Where your bots live → Connect to a
+server… opens the same panel (`AddServerPanel`). The AI step lists Claude and
+ChatGPT as rows (Signed in, or Sign in ›) with Other ways to connect; Bots &
+apps offers Move from Grok Bot, Start with Pal, a personal Composio key saved
+as the `composio-personal` MCP server, or a Composio project key, all
+optional. Open Openpals opens the chat with the bot brought in (Pal first,
+else the first bot moved from Grok Bot), or the Chief's chat. A hosted place's
+admin sees only its welcome. Pal started here lands in a chat where MausBot's
+three lines, its follow-up (written once by the server,
+`POST /api/bots/:id/helper-followup`) and chips offer only what is still
+missing. The app tour starts only from Settings → Replay app tour.
 
 Launch the isolated full-app fixture following [Chat UI](chat-ui.md):
 
@@ -56,8 +61,8 @@ The rules behind it run offline:
 pnpm exec vitest run src/components/onboarding/WelcomeFlow.test.ts src/components/onboarding/ConnectAi.test.ts src/lib/composio-personal.test.ts src/lib/place.test.ts src/components/BotsPlaceSection.dom.test.ts scripts/install-server.test.mjs src/components/HelperIntro.test.ts src/lib/default-bot.test.ts server/routes/helper-followup.test.ts electron/system-name.test.mjs src/components/CardHint.test.ts
 ```
 
-They cover the screens and their order (where the bots live only in the
-desktop app on this computer), the server guide and pairing errors, the
+They cover the window and its steps (where the bots live only in the desktop
+app), Escape and the close button, the Add a server panel and pairing errors, the
 personal Composio key, the installer's argument checks, the chips' order and
 cap, the follow-up written once and only by MausBot's own person, the default
 profile name's guards, and the Advanced intro and spotlights kept as they were.

@@ -1955,6 +1955,31 @@ body {
   /* The drawer still moves, it just arrives instantly. */
   aside { transition: none; }
 }
+/* The first run's window: a card over the dimmed app, clear of the window's
+   edges and of the macOS traffic lights and Windows caption buttons
+   (--welcome-top, set from WelcomeFlow). On a phone it is nearly the full
+   width, still clear of the edges. */
+.welcome-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--welcome-top, 24px) 24px 24px;
+}
+.welcome-frame.welcome-frame-embedded {
+  position: absolute;
+}
+/* The window itself takes focus only to hold it inside; its controls show the ring. */
+.welcome-frame [role="dialog"][data-welcome]:focus-visible {
+  outline: none;
+}
+@media (max-width: 639.98px) {
+  .welcome-frame {
+    padding: var(--welcome-top, 12px) 12px 12px;
+  }
+}
 /* The onboarding preview page flips this to show the reduced variant
    without touching system settings; the welcome flow also reads it to skip
    its view transitions. Mirrors the media block above for its own classes. */

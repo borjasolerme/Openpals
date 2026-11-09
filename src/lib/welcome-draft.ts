@@ -1,6 +1,6 @@
 import { BEAT_ORDER, WELCOME_VERSION, type BeatId } from "./onboarding";
 
-/** The first run in progress: the screen it is on, so a reload resumes there. */
+/** The first run in progress: the step it is on, so a reload, or opening it again after a close, resumes there. */
 export interface WelcomeDraft {
   beat: BeatId;
 }

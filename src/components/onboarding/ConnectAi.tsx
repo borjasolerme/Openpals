@@ -39,6 +39,25 @@ function OtherWay({ instance, open, onToggle }: { instance: InstanceInfo; open: 
   );
 }
 
+/** An AI that is signed in but didn't answer its test message: why, when the check said, and Check again. */
+export function SilentAi({ tested, className }: { tested: WelcomeAiNow; className?: string }) {
+  return (
+    <div role="alert" data-ai-silent className={cn("animate-rise w-full rounded-2xl bg-warning/10 px-4 py-3 text-left text-[13px] leading-relaxed text-ink", className)}>
+      {/* The check's own plain reason (signed out, a used-up limit…) when it gave one. */}
+      <p data-ai-reason>{tested.error ?? t("onboarding.engines.noAnswer", { name: tested.instance.displayName })}</p>
+      {tested.error && <p className="mt-1 text-ink-secondary">{t("onboarding.engines.orAnother")}</p>}
+      <button
+        type="button"
+        onClick={tested.retry}
+        className="-mx-2 mt-1.5 flex items-center gap-1.5 rounded-full px-2 py-1 text-[13px] font-medium text-ink transition-colors hover:bg-ink/[0.06]"
+      >
+        <RefreshCw size={12} aria-hidden="true" />
+        {t("common.checkAgain")}
+      </button>
+    </div>
+  );
+}
+
 /** Every way to connect an AI, until one has answered a test message (`tested`, from useWelcomeAi): the recommended
  * one's own setup first, then every other AI. One that didn't answer says why, with Check again;
  * OpenCode's free model is only ever a backup. */
@@ -90,21 +109,7 @@ export function ConnectAi({ tested }: { tested: WelcomeAiNow | null }) {
         </p>
       ) : (
         <>
-          {tested?.state === "failed" && (
-            <div role="alert" data-ai-silent className="animate-rise mb-3 w-full rounded-2xl bg-warning/10 px-4 py-3 text-left text-[13px] leading-relaxed text-ink">
-              {/* The check's own plain reason (signed out, a used-up limit…) when it gave one. */}
-              <p data-ai-reason>{tested.error ?? t("onboarding.engines.noAnswer", { name: tested.instance.displayName })}</p>
-              {tested.error && <p className="mt-1 text-ink-secondary">{t("onboarding.engines.orAnother")}</p>}
-              <button
-                type="button"
-                onClick={tested.retry}
-                className="-mx-2 mt-1.5 flex items-center gap-1.5 rounded-full px-2 py-1 text-[13px] font-medium text-ink transition-colors hover:bg-ink/[0.06]"
-              >
-                <RefreshCw size={12} aria-hidden="true" />
-                {t("common.checkAgain")}
-              </button>
-            </div>
-          )}
+          {tested?.state === "failed" && <SilentAi tested={tested} className="mb-3" />}
           {!tested && backup && (
             <p data-ai-backup className="animate-rise mb-3 text-[13px] text-ink-secondary">
               {t("onboarding.engines.freeBackup", { name: backup.displayName })}

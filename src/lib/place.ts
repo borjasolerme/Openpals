@@ -39,6 +39,25 @@ export function useBotsPlace(): BotsPlace | null {
   return place;
 }
 
+/** The name this computer goes by, as its own server reports it ("Borja's MacBook Pro"), without the ".local" macOS adds;
+ * null until it answers, and on another page (`enabled` false), whose server is not this computer. */
+export function useThisComputerName(enabled: boolean): string | null {
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    void fetch("/.well-known/openmausbot/environment", { signal: AbortSignal.timeout(5_000) })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((environment: { label?: unknown } | null) => {
+        const label = typeof environment?.label === "string" ? environment.label.trim().replace(/\.local$/i, "") : "";
+        if (alive && label) setName(label);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [enabled]);
+  return name;
+}
+
 /** A one-time pairing link as the installer prints it: https://host/pair#code=…, the code in the hash only. */
 export function isServerPairingLink(input: string): boolean {
   const link = input.trim();

@@ -27,8 +27,8 @@ one-time pairing link (also on a line of its own, `OPENPALS_PAIRING_LINK=…`). 
 Caddy and serves `https://<public-ip>.sslip.io` with a free certificate; ports 80 and 443 must be open. Pass
 `--public-url` when an HTTPS address already reaches port 8799 (Boat's `boat host`, Tailscale, your own proxy).
 
-Paste the link in the Openpals app under "Already have a pairing link?". Run the command again to update and get a
-new link. On a server with less than 6 GB of memory it adds a 4 GB swap file first, so the build fits.
+Paste the link in the Openpals app under Where your bots live → Add a server → Pairing link. Run the command again to
+update and get a new link. On a server with less than 6 GB of memory it adds a 4 GB swap file first, so the build fits.
 The rest of this guide is the manual way, with the HTTPS options explained.
 
 ## What runs on a server, and what does not

@@ -10,8 +10,9 @@ import { SKINS, type SkinId } from "@/lib/skins";
 import { StoreProvider } from "@/state/store";
 import "./styles.css";
 
-/** ?screen=bots&ai=0&bots=3&desktop=1&skin=daylight&reduced=1 opens any state directly (desktop=1: the desktop app on this
- * computer, which asks where the bots live); ?w=1338&h=870 sizes the stage. */
+/** ?screen=bring&ai=0&bots=3&desktop=1&skin=daylight&reduced=1 opens any state directly (desktop=1: the desktop app on
+ * this computer, which asks where the bots live; place=server: its paired server's page; screen=welcome: a hosted
+ * place's admin); ?w=1338&h=870 sizes the stage. */
 function fromUrl() {
   const params = new URLSearchParams(location.search);
   const skin = params.get("skin") as SkinId | null;
@@ -19,6 +20,7 @@ function fromUrl() {
   return {
     screen: screen && BEAT_ORDER.includes(screen) ? screen : "place",
     desktop: params.get("desktop") === "1",
+    server: params.get("place") === "server",
     skin: skin && SKINS.some((s) => s.id === skin) ? skin : ("midnight" as SkinId),
     ai: params.get("ai") !== "0",
     bots: Math.max(0, Math.min(20, Number(params.get("bots")) || 0)),
@@ -55,7 +57,8 @@ function fixture(url: string, ai: boolean, bots: number): unknown {
       snapshot: { state: "unavailable", authenticated: false }, models: { default: "m", options: [] },
     }] };
   }
-  if (path === "/api/config") return { onboarding: EMPTY_ONBOARDING, profile: { name: "", email: "", aboutMe: "" } };
+  if (path === "/api/config") return { onboarding: EMPTY_ONBOARDING, profile: { name: "", email: "", aboutMe: "" }, computerName: "" };
+  if (path === "/.well-known/openmausbot/environment") return { label: "Studio MacBook Pro.local" };
   if (path === "/api/mcp/servers") return { servers: [] };
   if (path === "/api/auth/session") return { kind: "local" };
   if (path === "/api/routines") return { routines: [], runs: [] };
@@ -71,7 +74,7 @@ function answerFromFixture(ai: boolean, bots: number) {
   const real = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
-    if (!new URL(url, location.href).pathname.startsWith("/api/")) return real(input, init);
+    if (!/^\/(?:api|\.well-known)\//.test(new URL(url, location.href).pathname)) return real(input, init);
     return new Response(JSON.stringify(fixture(url, ai, bots)), { status: 200, headers: { "content-type": "application/json" } });
   };
 }
@@ -104,7 +107,8 @@ function Preview() {
         <span className="ml-auto">?ai=0 for no AI, ?bots=3 for bots to choose from</span>
       </header>
       <div className="relative overflow-hidden rounded-xl border border-hairline/40 bg-app" style={{ width, height }}>
-        <WelcomeFlow key={`${screen}-${run}`} embedded initialBeat={screen} onDone={() => setRun((r) => r + 1)} />
+        <WelcomeFlow key={`${screen}-${run}`} embedded hosted={screen === "welcome"} initialBeat={screen}
+          onDone={() => setRun((r) => r + 1)} onClose={() => setRun((r) => r + 1)} />
       </div>
     </div>
   );
@@ -120,33 +124,40 @@ class Crash extends Component<{ children: ReactNode }, { error: Error | null }> 
   }
 }
 
-/** The desktop app's bridge as this computer's page sees it: the bots live here, pairing only says it was declined, and
- * a server setup walks through its steps, then says the key didn't work. */
-function pretendDesktop() {
+const SERVER = { kind: "server" as const, url: "https://bots.example.com", label: "bots.example.com" };
+
+/** The desktop app's bridge as this computer's page sees it (or, with `server`, the paired server's page): a pairing link
+ * connects and the server's row says Connected; a server setup walks through its steps, waits a while installing, then
+ * says the key didn't work. */
+function pretendDesktop(server: boolean) {
   let report: (progress: { step: "creating" | "installing" | "connecting"; detail?: string }) => void = () => {};
-  const pause = () => new Promise((resolve) => setTimeout(resolve, 1500));
+  let changed: (place: { kind: "local" } | typeof SERVER) => void = () => {};
+  let place: { kind: "local" } | typeof SERVER = server ? SERVER : { kind: "local" };
+  const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const move = (next: typeof place) => { place = next; changed(next); };
   Object.assign(window, { ogb: {
+    app: { version: "preview", ownPage: !server },
     place: {
-      current: async () => ({ kind: "local" }),
-      connect: async () => ({ ok: false, error: "unreachable" }),
-      disconnect: async () => {},
-      onChanged: () => () => {},
+      current: async () => place,
+      connect: async () => { await pause(600); move(SERVER); return { ok: true }; },
+      disconnect: async () => { await pause(300); move({ kind: "local" }); },
+      onChanged: (callback: typeof changed) => { changed = callback; return () => {}; },
     },
-    serverSetup: {
+    ...(server ? {} : { serverSetup: {
       start: async () => {
-        await pause();
+        await pause(1500);
         report({ step: "installing", detail: "Installing dependencies (a few minutes)" });
-        await pause();
+        await pause(20_000);
         return { ok: false, error: { code: "boat-key" } };
       },
       onProgress: (callback: typeof report) => { report = callback; return () => {}; },
-    },
+    } }),
   } });
 }
 
-const { ai, bots, desktop } = fromUrl();
+const { ai, bots, desktop, server } = fromUrl();
 answerFromFixture(ai, bots);
-if (desktop) pretendDesktop();
+if (desktop || server) pretendDesktop(server);
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Crash>

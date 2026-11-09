@@ -171,7 +171,7 @@ describe("the first run's screens", () => {
     expect(beatsFor({})).toEqual(["ai", "bring"]);
   });
 
-  it("asks first where the bots live only in the desktop app on this computer", () => {
+  it("asks first where the bots live only in the desktop app", () => {
     expect(beatsFor({ place: true })).toEqual(["place", "ai", "bring"]);
   });
 

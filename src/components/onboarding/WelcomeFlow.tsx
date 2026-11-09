@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { ArrowRight, X } from "lucide-react";
+import { productName } from "@/lib/brand";
 import { cn } from "@/lib/cn";
 import { stageIntro } from "@/lib/default-bot";
+import { GLASS_POPUP_GUTTER, glassPopupTopInset } from "@/lib/glass-popup";
+import { t } from "@/lib/i18n";
 import { GROK_MOVE_NOTICE } from "@/lib/notices";
 import { beatsFor, completionPatch, firstRunPatch, markWelcomeFinished, resumeBeat, type BeatId } from "@/lib/onboarding";
-import { placeAvailable, useBotsPlace } from "@/lib/place";
+import { disconnectServer, placeAvailable, useBotsPlace, type BotsPlace } from "@/lib/place";
 import { clearWelcomeDraft, readWelcomeDraft, saveWelcomeDraft } from "@/lib/welcome-draft";
+import type { LocaleKey } from "@/locales";
 import { api, useStore } from "@/state/store";
-import { firstBot, NOTHING_BROUGHT, type BroughtBots } from "./BringBots";
-import { BringStep } from "./BringStep";
-import { PlaceStep } from "./PlaceStep";
-import { SignInStep } from "./SignInStep";
-import type { StepProgress } from "./StepFrame";
+import { AiStep } from "./AiStep";
+import { BringBots, firstBot, NOTHING_BROUGHT, type BroughtBots } from "./BringBots";
+import { ConnectApps } from "./ConnectApps";
+import { ConnectStep, type PlaceKind } from "./ConnectStep";
+import { HostedWelcomeArt } from "./HostedWelcome";
 import { localDesktopPage } from "./WelcomeGate";
-import { WelcomeStep } from "./WelcomeStep";
 
 type Config = ReturnType<typeof useStore>["state"]["config"];
 
@@ -31,6 +35,8 @@ async function nameFromComputer(config: Config, done: (config: NonNullable<Confi
 }
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+/** Where Enter belongs to the control itself, not to the window's Continue. */
+const OWNS_ENTER = "input, textarea, select, button, a[href], summary, [contenteditable='true']";
 
 /** Tab and Shift+Tab stay inside `root`, the way a modal dialog keeps them. */
 function trapTab(event: ReactKeyboardEvent<HTMLElement>, root: HTMLElement | null): void {
@@ -39,46 +45,103 @@ function trapTab(event: ReactKeyboardEvent<HTMLElement>, root: HTMLElement | nul
   if (!focusable.length) return;
   const first = focusable[0]!;
   const last = focusable[focusable.length - 1]!;
-  if (event.shiftKey && document.activeElement === first) {
+  const active = document.activeElement;
+  if (event.shiftKey && (active === first || active === root)) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
+  } else if (!event.shiftKey && active === last) {
     event.preventDefault();
     first.focus();
   }
 }
 
-/** The steps after a hosted place's welcome are counted. */
-function progressOf(beats: readonly BeatId[], beat: BeatId): StepProgress | null {
-  const counted: readonly BeatId[] = beats.filter((id) => id !== "welcome");
-  const at = counted.indexOf(beat);
-  return at < 0 ? null : { current: at + 1, total: counted.length };
+/** Clears the macOS traffic lights and the Windows caption buttons where the window has them. */
+function frameStyle(): CSSProperties | undefined {
+  const top = glassPopupTopInset();
+  // SAFETY: React passes custom properties through; CSSProperties just does not list them.
+  return top > GLASS_POPUP_GUTTER ? ({ "--welcome-top": `${top}px` } as CSSProperties) : undefined;
 }
 
-/** The first run, one screen at a time: where the bots live (desktop app only), the AI, then bots and apps to bring. Its
- * end is the chat with the bot brought here (`onDone`). A hosted place's admin gets its welcome only. */
+/** The app dimmed behind the first run's window. */
+function Frame({ embedded, children }: { embedded: boolean; children?: ReactNode }) {
+  return (
+    <div className={cn("welcome-frame", embedded && "welcome-frame-embedded")} style={frameStyle()}>
+      <div aria-hidden="true" className="ui-scrim absolute inset-0" />
+      {children}
+    </div>
+  );
+}
+
+const STEP_LABEL: Readonly<Record<BeatId, LocaleKey>> = {
+  welcome: "onboarding.welcome.start",
+  place: "onboarding.steps.connect",
+  ai: "onboarding.steps.ai",
+  bring: "onboarding.steps.bring",
+};
+
+/** The steps across the top: the one shown is current; one already reached opens again. */
+function Stepper({ beats, beat, reached, onGo }: { beats: readonly BeatId[]; beat: BeatId; reached: number; onGo: (beat: BeatId) => void }) {
+  return (
+    <nav aria-label={t("onboarding.steps.label")} className="shrink-0 px-4 pt-2 sm:px-6">
+      <ol className="flex gap-0.5 rounded-xl bg-ink/[0.05] p-1 sm:gap-1">
+        {beats.map((id, at) => {
+          const current = id === beat;
+          return (
+            <li key={id} className="min-w-0 flex-1">
+              <button type="button" data-welcome-step={id} aria-current={current ? "step" : undefined} disabled={at > reached}
+                onClick={() => onGo(id)}
+                className={cn("flex h-8 w-full min-w-0 items-center justify-center gap-1 rounded-lg px-1 text-[12px] leading-5 transition-colors disabled:cursor-default sm:gap-1.5 sm:px-1.5 sm:text-[13px]",
+                  current ? "bg-menu font-medium text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08)]" : "text-ink-secondary enabled:hover:text-ink disabled:opacity-50")}>
+                <span aria-hidden="true" className={cn("flex size-[18px] shrink-0 items-center justify-center rounded-full text-[11px] font-medium leading-none",
+                  current ? "bg-ink text-app" : "bg-ink/[0.08]")}>{at + 1}</span>
+                <span className="truncate">{t(STEP_LABEL[id])}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+const HEADING: Readonly<Record<BeatId, { title: LocaleKey; line: LocaleKey }>> = {
+  welcome: { title: "onboarding.welcome.title", line: "onboarding.hosted.intro" },
+  place: { title: "botsHome.title", line: "botsHome.welcomeLine" },
+  ai: { title: "onboarding.ai.title", line: "onboarding.ai.line" },
+  bring: { title: "onboarding.bring.title", line: "onboarding.bring.line" },
+};
+
+/** The first run as one window over the app: where the bots live (desktop app only), the AI, then bots and apps to
+ * bring, each a step of the stepper, with Continue at the bottom. Its end is the chat with the bot brought here
+ * (`onDone`); its X and Escape close it to finish later (`onClose`), keeping the step it was on. A hosted place's admin
+ * gets its welcome only. */
 export function WelcomeFlow(props: {
   onDone: (botId: string | null) => void;
+  onClose: () => void;
   replay?: boolean;
   initialBeat?: BeatId;
   embedded?: boolean;
   hosted?: boolean;
 }) {
   const place = useBotsPlace();
-  // The desktop app answers where the bots live before the first screen shows; a browser has no question to ask.
-  if (placeAvailable() && !place) return <div className={cn("bg-app", props.embedded ? "h-full w-full" : "fixed inset-0 z-50")} />;
-  return <Steps {...props} place={place?.kind === "local"} />;
+  // The desktop app answers where the bots live before the window shows; a browser has no question to ask.
+  if (placeAvailable() && !place) return <Frame embedded={props.embedded ?? false} />;
+  return <Steps {...props} place={place} />;
 }
 
-function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted = false, place }: Parameters<typeof WelcomeFlow>[0] & { place: boolean }) {
+function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false, hosted = false, place }: Parameters<typeof WelcomeFlow>[0] & { place: BotsPlace | null }) {
   const { state, dispatch } = useStore();
-  // A first run keeps its screen in this browser, so a reload resumes it; a replay starts over. A hosted place's
-  // browser may hold another person's draft.
+  // A first run keeps its step in this browser, so a reload or a close resumes it; a replay starts over. A hosted
+  // place's browser may hold another person's draft.
   const keepsDraft = !replay && !embedded && !hosted;
-  const [beats] = useState(() => beatsFor({ hosted, place }));
+  const [beats] = useState(() => beatsFor({ hosted, place: Boolean(place) }));
   const [beat, setBeat] = useState<BeatId>(() => resumeBeat(beats, initialBeat ?? (keepsDraft ? readWelcomeDraft()?.beat : undefined)));
+  const [reached, setReached] = useState(() => beats.indexOf(beat));
   const [brought, setBrought] = useState<BroughtBots>(NOTHING_BROUGHT);
+  const [choice, setChoice] = useState<PlaceKind>(place?.kind ?? "local");
+  const [placeError, setPlaceError] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const body = useRef<HTMLDivElement>(null);
   const finishing = useRef(false);
   const record = useRef(state.config?.onboarding);
   record.current = state.config?.onboarding;
@@ -94,8 +157,14 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
 
   useEffect(() => {
     root.current?.focus({ preventScroll: true });
-    root.current?.scrollTo?.({ top: 0 });
+    body.current?.scrollTo?.({ top: 0 });
   }, [beat]);
+
+  // A server this app just paired with is where the bots live now.
+  const placeKind = place?.kind;
+  useEffect(() => {
+    if (placeKind) setChoice(placeKind);
+  }, [placeKind]);
 
   const finish = useCallback(
     async (botId: string | null) => {
@@ -118,43 +187,90 @@ function Steps({ onDone, replay = false, initialBeat, embedded = false, hosted =
   );
 
   const at = beats.indexOf(beat);
-  const next = () => {
-    const following = beats[at + 1];
-    if (following) setBeat(following);
-    else void finish(firstBot(brought));
+  const go = (to: BeatId) => {
+    setBeat(to);
+    setReached((furthest) => Math.max(furthest, beats.indexOf(to)));
   };
-  const back = at > 0 ? () => setBeat(beats[at - 1]!) : undefined;
-  const progress = progressOf(beats, beat);
-
-  // Enter on the screen itself presses its main button while it can be pressed.
-  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Enter" && event.target === root.current) {
-      event.preventDefault();
-      root.current.querySelector<HTMLButtonElement>("[data-primary]:not([disabled])")?.click();
+  const next = async () => {
+    // Choosing this computer on a server's page goes back to it: the app opens this computer's page instead.
+    if (beat === "place" && place?.kind === "server" && choice === "local") {
+      setPlaceError(null);
+      try {
+        await disconnectServer();
+      } catch (cause) {
+        setPlaceError(cause instanceof Error ? cause.message : String(cause));
+      }
       return;
     }
-    trapTab(event, root.current);
+    const following = beats[at + 1];
+    if (following) go(following);
+    else void finish(firstBot(brought));
   };
 
-  const target = firstBot(brought);
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    // A dialog opened from a step (Connect an AI, Move from Grok Bot) owns its own keys.
+    const target = event.target instanceof HTMLElement ? event.target : null;
+    if (event.defaultPrevented || target?.closest('[role="dialog"]') !== root.current) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+    } else if (event.key === "Enter" && !event.nativeEvent.isComposing && !target?.closest(OWNS_ENTER)) {
+      event.preventDefault();
+      root.current?.querySelector<HTMLButtonElement>("[data-primary]:not([disabled])")?.click();
+    } else {
+      trapTab(event, root.current);
+    }
+  };
+
+  const heading = HEADING[beat];
+  const last = at === beats.length - 1;
+  const primary = beat === "welcome" ? t("onboarding.welcome.start") : last ? t("onboarding.bring.openApp") : t("onboarding.continue");
   return (
-    <div
-      ref={root}
-      role="dialog"
-      aria-modal
-      aria-labelledby="welcome-title"
-      tabIndex={-1}
-      onKeyDown={onKeyDown}
-      data-welcome={beat}
-      className={cn("welcome-screen flex flex-col overflow-y-auto bg-app outline-none", embedded ? "relative h-full w-full" : "fixed inset-0 z-50")}
-    >
-      <div key={beat} className="flex w-full flex-1 shrink-0 flex-col">
-        {beat === "welcome" ? <WelcomeStep onNext={next} />
-          : beat === "place" ? <PlaceStep progress={progress} onBack={back} onNext={next} />
-          : beat === "ai" ? <SignInStep progress={progress} onBack={back} onNext={next} />
-          : <BringStep progress={progress} brought={brought} onBrought={setBrought} bot={state.bots.find((bot) => bot.id === target)}
-              onBack={back} onDone={() => void finish(target)} />}
+    <Frame embedded={embedded}>
+      <div
+        ref={root}
+        role="dialog"
+        aria-modal
+        aria-labelledby="welcome-title"
+        tabIndex={-1}
+        onKeyDown={onKeyDown}
+        data-welcome={beat}
+        className={cn("welcome-screen ui-modal animate-pop-in relative flex max-h-full w-full max-w-[600px] flex-col overflow-hidden rounded-[18px] outline-none",
+          beats.length > 1 && "min-h-[min(560px,100%)]")}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-3 pl-4 pr-3 pt-3 sm:pl-6">
+          <span className="text-[13px] font-semibold leading-5 text-ink">{productName()}</span>
+          <button type="button" data-welcome-close="" onClick={onClose} aria-label={t("onboarding.later")} title={t("onboarding.later")}
+            className="flex size-8 items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink">
+            <X size={16} aria-hidden="true" />
+          </button>
+        </div>
+        {beats.length > 1 && <Stepper beats={beats} beat={beat} reached={reached} onGo={go} />}
+        <div ref={body} className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-5 [scrollbar-width:thin] sm:px-6">
+          <div key={beat} className={cn("animate-fade-in flex flex-col gap-5", beat === "welcome" && "items-center pt-6 text-center")}>
+            {beat === "welcome" && <HostedWelcomeArt />}
+            <div className="flex flex-col gap-1.5">
+              <h1 id="welcome-title" className="text-[20px] font-semibold leading-7 tracking-[-0.01em] text-ink [text-wrap:balance]">{t(heading.title)}</h1>
+              <p className="text-[13px] leading-5 text-ink-secondary [text-wrap:pretty]">{t(heading.line)}</p>
+            </div>
+            {beat === "place" && place && <ConnectStep place={place} choice={choice} onChoose={setChoice} error={placeError} />}
+            {beat === "ai" && <AiStep />}
+            {beat === "bring" && (
+              <div className="flex flex-col gap-6">
+                <BringBots brought={brought} onBrought={setBrought} />
+                <ConnectApps />
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t border-hairline/40 px-4 py-3.5 sm:px-6">
+          {at > 0 ? <button type="button" onClick={() => go(beats[at - 1]!)} className="ui-button min-h-9 px-4">{t("onboarding.back")}</button> : <span />}
+          <button type="button" data-primary="" onClick={() => void next()} className="ui-button ui-button-primary min-h-9 gap-1.5 px-4">
+            {primary}
+            {!last && beat !== "welcome" && <ArrowRight size={15} aria-hidden="true" />}
+          </button>
+        </div>
       </div>
-    </div>
+    </Frame>
   );
 }

@@ -7,7 +7,7 @@ import { productName } from "@/lib/brand";
 import { chiefFor, createChiefPatch, defaultBotIn } from "@/lib/default-bot";
 import { t } from "@/lib/i18n";
 import { useStore, type Bot } from "@/state/store";
-import { BringSection, ChoiceButton } from "./StepFrame";
+import { ROW_LIST, Row, RowAction, RowStatus, Section } from "./rows";
 
 /** What the person brought: Pal started, and the bots that came over from Grok Bot. */
 export interface BroughtBots {
@@ -46,22 +46,25 @@ export function BringBots({ brought, onBrought }: { brought: BroughtBots; onBrou
 
   const done = Boolean(brought.pal || brought.moved.length);
   return (
-    <BringSection title={t("onboarding.bring.bots")} line={t("onboarding.bots.line")}>
-      <div className="flex flex-col gap-2">
-        <ChoiceButton data-bots-choice="grok" icon={<GrokBotMark size={20} />} title={t("onboarding.bots.grok")} hint={t("onboarding.bots.grokHint")}
-          done={brought.moved.length > 0} onClick={startMove} />
+    <Section title={t("onboarding.bring.bots")} line={t("onboarding.bots.line")}>
+      <div className={ROW_LIST}>
+        <Row icon={<GrokBotMark size={18} />} title={t("onboarding.bots.grok")} hint={t("onboarding.bots.grokHint")}
+          trailing={brought.moved.length > 0 ? <RowStatus tone="ok">{t("onboarding.bots.added")}</RowStatus>
+            : <RowAction data-bots-choice="grok" onClick={startMove}>{t("onboarding.bots.move")}</RowAction>} />
         {maus && !maus.hidden && (
-          <ChoiceButton data-bots-choice="pal" icon={<BotAvatar bot={maus} size={28} />} title={t("onboarding.bots.pal", { name: maus.name })}
-            hint={t("onboarding.bots.palHint", { app: productName() })} done={Boolean(brought.pal)} onClick={startPal} />
+          <Row icon={<BotAvatar bot={maus} size={24} />} title={t("onboarding.bots.pal", { name: maus.name })}
+            hint={t("onboarding.bots.palHint", { app: productName() })}
+            trailing={brought.pal ? <RowStatus tone="ok">{t("onboarding.bots.added")}</RowStatus>
+              : <RowAction data-bots-choice="pal" onClick={startPal}>{t("onboarding.bots.start")}</RowAction>} />
         )}
       </div>
       {done && (
-        <p role="status" data-bots-brought="" className="flex items-center gap-1.5 text-[13px] leading-[18px] text-success">
-          <Check size={14} strokeWidth={2.5} aria-hidden="true" />
+        <p role="status" data-bots-brought="" className="flex items-center gap-1.5 text-[12px] leading-4 text-success">
+          <Check size={13} strokeWidth={2.5} aria-hidden="true" />
           {t("onboarding.bots.ready", { names: [...(brought.pal && maus ? [maus.name] : []), ...brought.moved.map((bot) => bot.name)].join(", ") })}
         </p>
       )}
       {moving && <GrokMoveDialog onClose={endMove} />}
-    </BringSection>
+    </Section>
   );
 }

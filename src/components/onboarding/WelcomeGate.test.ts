@@ -125,6 +125,20 @@ describe("who gets the welcome flow", () => {
     expect(store.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "select" }));
   });
 
+  it("closes to finish later: nothing saved, gone until Settings opens it, which resumes it rather than replaying", () => {
+    vi.stubGlobal("window", LOCAL_PAGE);
+    store.state = { ...store.state, bots: [{ id: "first" }] };
+    gate(LOCAL_VIEWER).tree!.props.onClose!();
+    expect(store.dispatch).toHaveBeenCalledWith({ type: "toggleWelcome", open: false });
+    expect(store.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "select" }));
+    expect(store.api).not.toHaveBeenCalled();
+    expect(gate(LOCAL_VIEWER).tree, "closed for this session").toBeNull();
+    store.state = { ...store.state, welcomeOpen: true };
+    const { tree } = gate(LOCAL_VIEWER);
+    expect(tree?.type).toBe(WelcomeFlow);
+    expect(tree?.props, "still a first run, back on its saved step").toMatchObject({ replay: false });
+  });
+
   it("opens the hosted beat set for a hosted workspace's admin", () => {
     const { tree } = gate({ hosted: true, canSave: true });
     expect(tree?.type).toBe(WelcomeFlow);

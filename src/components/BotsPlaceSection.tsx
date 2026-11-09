@@ -2,17 +2,22 @@ import { useState } from "react";
 import { Laptop, Loader2, Server, Unplug } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { disconnectServer, placeAvailable, useBotsPlace } from "@/lib/place";
-import { ServerSetup } from "./ServerSetup";
+import { useServerSetup } from "@/lib/server-setup";
+import { AddServerPanel } from "./ServerSetup";
 import { Card } from "./SettingsPrimitives";
 
-/** Settings → Where your bots live, in the desktop app: this computer, or the server it is paired with. */
+/** Settings → Where your bots live, in the desktop app: this computer, or the server it is paired with. Connect to a
+ * server opens the first run's own Add a server panel. */
 export function BotsPlaceSection() {
   const place = useBotsPlace();
-  const [setup, setSetup] = useState(false);
+  const [opened, setOpened] = useState(false);
+  const { progress } = useServerSetup();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!placeAvailable()) return null;
   const server = place?.kind === "server" ? place : null;
+  // A setup under way stays in view, wherever it was started.
+  const setup = opened || Boolean(progress);
 
   const disconnect = async () => {
     setBusy(true);
@@ -42,11 +47,20 @@ export function BotsPlaceSection() {
                 {t("botsHome.disconnect")}
               </button>
             ) : !setup && (
-              <button type="button" onClick={() => setSetup(true)} className="ui-button shrink-0">{t("botsHome.connect")}</button>
+              <button type="button" onClick={() => setOpened(true)} className="ui-button shrink-0">{t("botsHome.connect")}</button>
             )}
           </div>
           {error && <p role="alert" className="text-[13px] text-danger">{error}</p>}
-          {!server && setup && <ServerSetup onBack={() => setSetup(false)} backLabel={t("common.cancel")} />}
+          {!server && setup && (
+            <>
+              <AddServerPanel />
+              {!progress && (
+                <button type="button" onClick={() => setOpened(false)} className="w-fit text-[13px] text-ink-secondary transition-colors hover:text-ink">
+                  {t("common.cancel")}
+                </button>
+              )}
+            </>
+          )}
         </div>
       </Card>
     </div>

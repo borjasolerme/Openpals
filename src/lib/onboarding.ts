@@ -88,18 +88,18 @@ export function hintSeenPatch(
 
 export type BeatId = "welcome" | "place" | "ai" | "bring";
 
-/** Every screen the first run can show, in the order it shows them. */
+/** Every step the first run can show, in the order it shows them. */
 export const BEAT_ORDER: readonly BeatId[] = ["welcome", "place", "ai", "bring"];
 
-/** The first run's screens: where the bots live (`place`: the desktop app shows this computer's bots, so it may choose a
- * server instead), the AI, then bots and apps to bring, and on into the chat. A hosted place's admin only meets the
- * app (`welcome`): their team's AI, bots and apps are already set up. */
+/** The first run's steps: where the bots live (`place`: the desktop app, on this computer's page or its server's, so it
+ * may choose or add a server), the AI, then bots and apps to bring, and on into the chat. A hosted place's admin only
+ * meets the app (`welcome`): their team's AI, bots and apps are already set up. */
 export function beatsFor(options: { hosted?: boolean; place?: boolean }): BeatId[] {
   if (options.hosted) return ["welcome"];
   return options.place ? ["place", "ai", "bring"] : ["ai", "bring"];
 }
 
-/** Where a reloaded first run opens: the saved screen while it is offered, else the first. */
+/** Where a reloaded or reopened first run opens: the saved step while it is offered, else the first. */
 export function resumeBeat(beats: readonly BeatId[], saved: BeatId | undefined): BeatId {
   return saved && beats.includes(saved) ? saved : beats[0]!;
 }

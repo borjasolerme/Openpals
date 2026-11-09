@@ -54,22 +54,25 @@ export function WelcomeGate({ viewer }: { viewer: WelcomeViewer | null }) {
       />
     );
   }
-  const due =
-    !dismissed &&
-    welcomeDue(state.config, {
-      hosted: viewer.hosted,
-      canSave: viewer.canSave,
-    });
-  if (!state.welcomeOpen && !due) return null;
+  const due = welcomeDue(state.config, {
+    hosted: viewer.hosted,
+    canSave: viewer.canSave,
+  });
+  // Closed or finished in this session, it waits for the next launch, or for Settings to open it again.
+  if (!state.welcomeOpen && (dismissed || !due)) return null;
   const fallback = state.bots.find((b) => !b.hidden && b.chiefOfStaff) ?? state.bots.find((b) => !b.hidden) ?? null;
   const replay = state.welcomeOpen && !due;
+  const close = () => {
+    setDismissed(true);
+    dispatch({ type: "toggleWelcome", open: false });
+  };
   return (
     <WelcomeFlow
       replay={replay}
       hosted={viewer.hosted}
+      onClose={close}
       onDone={(botId) => {
-        setDismissed(true);
-        dispatch({ type: "toggleWelcome", open: false });
+        close();
         // A first run ends in the chat with the bot it chose, else its Chief; the app tour starts only from Settings.
         const target = botId ?? (replay ? null : fallback?.id);
         if (target) dispatch({ type: "select", id: target });

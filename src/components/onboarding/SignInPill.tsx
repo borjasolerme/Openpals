@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowUp, Check, Copy, LoaderCircle } from "lucide-react";
+import { ArrowUp, Check, Copy } from "lucide-react";
 import { claudeSignInLink } from "@/components/ClaudeSignIn";
 import { chatgptPlanLink, deviceSignInProvider, type DeviceSignInStatus } from "@/components/DeviceSignIn";
 import { needsSignIn } from "@/components/EngineSetup";
@@ -11,7 +11,6 @@ import { api, useStore, type InstanceInfo } from "@/state/store";
 import { deviceSignInLink, isDeviceSignInCode } from "../../../shared/device-sign-in";
 
 const POLL_MS = 2_000;
-export const PILL = "ui-button ui-button-pill ui-button-lg ui-button-primary w-[288px] max-w-full";
 
 type Slot =
   | { kind: "start" }
@@ -20,15 +19,15 @@ type Slot =
   | { kind: "paste"; flowId: string }
   | { kind: "code"; flowId: string; code: string; link: string | null };
 
-/** How the first screen's pill connects `instance`: in place for a website sign-in or an install the app does itself,
+/** How an AI's row connects `instance`: in place for a website sign-in or an install the app does itself,
  * else through the Connect an AI dialog. */
 export function pillWay(instance: InstanceInfo | undefined): "install" | "sign-in" | "dialog" {
   if (!instance || !plainSignIn(instance)) return "dialog";
   return needsSignIn(instance) ? "sign-in" : "install";
 }
 
-/** One AI connected from the first screen's pill: installed (when the app installs it), signed in on the provider's
- * page, and the code pasted or shown in the same place. A finished sign-in refreshes the AIs, where the welcome's test
+/** One AI connected from its row: installed (when the app installs it), signed in on the provider's page, and the code
+ * pasted or shown under the row. A finished sign-in refreshes the AIs, where the welcome's test
  * message takes over. */
 export function useSignInPill(instance: InstanceInfo | undefined) {
   const { refreshInstances, refreshModels } = useStore();
@@ -156,36 +155,11 @@ function PasteSlot({ name, onSubmit }: { name: string; onSubmit: (code: string) 
   );
 }
 
-/** The first screen's 288×36 slot while an AI is still to connect: its one button, the field for the code a provider
- * shows, or the code to enter on the provider's page. */
-export function SignInPill({ pill, instance, waiting, onDialog }: {
-  pill: PillState;
-  instance: InstanceInfo | undefined;
-  /** The test message after a sign-in is under way: the pill waits with it. */
-  waiting: boolean;
-  onDialog: () => void;
-}) {
-  const { slot, install, start, submit } = pill;
-  const name = instance?.displayName ?? "";
-  if (waiting || slot.kind === "busy" || slot.kind === "waiting") {
-    const link = slot.kind === "waiting" ? slot.link : null;
-    return (
-      <button type="button" data-sign-in="waiting" className={PILL} aria-disabled={!link}
-        onClick={() => link && void openExternalLink(link).catch(() => {})}>
-        <LoaderCircle size={14} aria-hidden="true" className="shrink-0 animate-spin" />{t("onboarding.ai.waiting", { name })}
-      </button>
-    );
-  }
+/** What a row's sign-in shows under it while it waits on the person: the field for the code a provider shows, or the
+ * code to enter on the provider's page. */
+export function SignInSlot({ pill, name }: { pill: PillState; name: string }) {
+  const { slot, submit } = pill;
   if (slot.kind === "paste") return <PasteSlot name={name} onSubmit={(code) => void submit(code)} />;
   if (slot.kind === "code") return <CodeSlot code={slot.code} />;
-  const way = pillWay(instance);
-  const label = way === "install" ? t("onboarding.ai.install", { name })
-    : way === "sign-in" ? t("onboarding.ai.signIn", { name })
-    : instance ? t("onboarding.ai.connectNamed", { name }) : t("onboarding.ai.connectAi");
-  return (
-    <button type="button" data-primary="" data-sign-in={way} className={PILL}
-      onClick={() => (way === "install" ? void install() : way === "sign-in" ? void start() : onDialog())}>
-      {label}
-    </button>
-  );
+  return null;
 }
