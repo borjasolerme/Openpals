@@ -11,7 +11,6 @@ vi.mock("@/state/store", async (importOriginal) => ({
   api: fixture.api,
   useStore: () => ({ state: { config: fixture.config }, dispatch: fixture.dispatch }),
 }));
-vi.mock("@/lib/own-profile", () => ({ saveTeamProfile: (patch: unknown) => fixture.api("/api/me", { method: "PUT", body: JSON.stringify(patch) }) }));
 
 const { AboutMeSettings } = await import("./AboutMeSettings");
 

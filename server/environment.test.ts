@@ -133,7 +133,7 @@ describe("environment identity", () => {
     expect(serverVersion()).toMatch(/^\d+\.\d+\.\d+/);
   });
 
-  it("reads the version the bundle carries when no package.json sits beside it, as in the Cloud home image", () => {
+  it("reads the version the bundle carries when no package.json sits beside it, as in a packaged server image", () => {
     delete process.env.OMB_APP_VERSION;
     const image = mkdtempSync(join(tmpdir(), "omb-image-"));
     dirs.push(image);

@@ -62,7 +62,7 @@ read-only (every verb also takes --url URL):
   events --job THREAD_ID --until-settled
 
 mutating (an explicit --url or OPENMAUSBOT_URL/OMB_PORT is required):
-  new-bot --name NAME [--section TEAM]
+  new-bot --name NAME
   new-channel --name NAME --members ID,ID
   send --bot ID --text TEXT [--task ID] [--dry-run]
   send-channel --channel ID --text TEXT [--task ID] [--dry-run]

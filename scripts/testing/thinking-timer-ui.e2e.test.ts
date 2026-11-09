@@ -96,18 +96,6 @@ function elapsedSeconds(text: string): number {
   return -1;
 }
 
-/** Selection can already expand a thread list. Click only its collapsed DOM
- * chevron, avoiding both accidental collapse and transient duplicate AX names. */
-async function expandThreads(handle: string, name: string): Promise<void> {
-  const collapsed = JSON.stringify(`button[aria-label="Expand ${name} threads"]`);
-  const expanded = JSON.stringify(`button[aria-label="Collapse ${name} threads"]`);
-  await waitUntil(async () => (await ui("eval", handle, "--js", `(() => {
-    if (document.querySelector(${expanded})) return true;
-    document.querySelector(${collapsed})?.click();
-    return false;
-  })()`)).result, 10_000, `${name}'s thread list to expand`);
-}
-
 async function waitUntil<T>(probe: () => Promise<T>, timeoutMs: number, what: string): Promise<T> {
   const deadline = Date.now() + timeoutMs;
   let last: T;
@@ -119,7 +107,7 @@ async function waitUntil<T>(probe: () => Promise<T>, timeoutMs: number, what: st
   }
 }
 
-describe("the thinking timer stays anchored across a thread switch", () => {
+describe("the thinking timer stays anchored across a conversation switch", () => {
   let launched: Launched | undefined;
 
   afterEach(async () => {
@@ -143,69 +131,6 @@ describe("the thinking timer stays anchored across a thread switch", () => {
   afterAll(async () => {
     if (ownsEvidenceDir) await removeTempDir(evidenceDir);
   });
-
-  run("counts from the server's turn-start stamp, not from the re-selection", async () => {
-    launched = await launch(["--mode", "hang"]); // the turn never settles; the bot stays busy
-    const { info } = launched;
-    const api = fixtureApi(info.url);
-    const evaluate = async (js: string) => (await ui("eval", info.ui, "--js", js)).result;
-    const timerText = () => evaluate(`document.querySelector('.turn-presence .tabular-nums')?.textContent ?? null`);
-    const selectThread = (threadId: string) => evaluate(`document.querySelector('[data-sidebar-thread-row="${threadId}"]')?.click(); true`);
-    const isCurrent = (threadId: string) => evaluate(`Boolean(document.querySelector('[data-sidebar-thread-row="${threadId}"][aria-current="page"]'))`);
-    const taskOf = async (threadId: string) =>
-      (await api("GET", "/api/bots")).bots.find((bot: any) => bot.id === info.botId).tasks.find((task: any) => task.threadId === threadId);
-
-    // The second thread comes through the same POST the sidebar's "New thread" uses.
-    const busyThread = (await api("GET", "/api/bots")).bots.find((bot: any) => bot.id === info.botId).threadId;
-    const otherThread = (await api("POST", `/api/bots/${info.botId}/tasks`, {})).task.threadId;
-    await expandThreads(info.ui, "Pepper");
-    await waitUntil(() => evaluate(`Boolean(document.querySelector('[data-sidebar-thread-row="${otherThread}"]'))`), 10_000, "the new thread's sidebar row to appear");
-    // Creating a thread selects it on the server. Pin the original thread in
-    // the renderer before sending the turn whose stamp this case observes.
-    await selectThread(busyThread);
-    await waitUntil(() => isCurrent(busyThread), 10_000, "the original thread to become current");
-
-    await ui("type", info.ui, "--name", "Message Pepper", "--text", "hello");
-    await ui("press", info.ui, "--keys", "Enter");
-    const sentAt = Date.now();
-
-    const busy = await waitUntil(async () => {
-      const task = await taskOf(busyThread);
-      return task && task.busy && typeof task.turnStartedAt === "number" ? task : null;
-    }, 60_000, "the task to go busy with a turnStartedAt stamp");
-    const stamp = busy.turnStartedAt as number;
-    expect(stamp).toBeGreaterThanOrEqual(sentAt - 2_000);
-    expect(stamp).toBeLessThanOrEqual(Date.now() + 2_000);
-
-    const first = await waitUntil(timerText, 15_000, "the thinking readout to appear");
-    expect(elapsedSeconds(first)).toBeGreaterThanOrEqual(0);
-    await new Promise((done) => setTimeout(done, Math.max(0, stamp + 10_000 - Date.now())));
-    const beforeSwitch = await timerText();
-    expect(elapsedSeconds(beforeSwitch)).toBeGreaterThanOrEqual(Math.floor((Date.now() - stamp) / 1000) - 2);
-
-    await selectThread(otherThread);
-    await waitUntil(() => isCurrent(otherThread), 10_000, "the other thread to become current");
-    await new Promise((done) => setTimeout(done, 3_000));
-    await selectThread(busyThread);
-    await waitUntil(() => isCurrent(busyThread), 10_000, "the busy thread to become current again");
-
-    // A restart would show single digits after a 13+ second turn.
-    const resumed = await waitUntil(timerText, 10_000, "the thinking readout to appear again");
-    const away = (Date.now() - stamp) / 1000;
-    expect(elapsedSeconds(resumed)).toBeGreaterThanOrEqual(Math.floor(away) - 3);
-    expect(elapsedSeconds(resumed)).toBeGreaterThanOrEqual(10);
-
-    expect(await taskOf(busyThread)).toMatchObject({ busy: true, turnStartedAt: stamp });
-
-    mkdirSync(evidenceDir, { recursive: true });
-    await ui("screenshot", info.ui, "--out", join(evidenceDir, "thinking-timer-anchored.png"));
-    const logs = await ui("console", info.ui);
-    expect((logs.messages as Array<{ type: string; text: string }>).filter((message) => message.type === "error")).toEqual([]);
-
-    await waitForExit(launched.child, { signal: "SIGINT", graceMs: 30_000 });
-    expect(launched.child.exitCode).toBe(0);
-    expect(existsSync(info.dataDir)).toBe(false);
-  }, LAUNCH_TIMEOUT_MS + 120_000);
 
   run("counts a group's turn from the speaking member's claim, resuming after a switch away", async () => {
     launched = await launch(["--mode", "hang"]); // the group's turn never settles either
@@ -254,7 +179,7 @@ describe("the thinking timer stays anchored across a thread switch", () => {
     expect(elapsedSeconds(beforeSwitch)).toBeGreaterThanOrEqual(Math.floor((Date.now() - stamp) / 1000) - 2);
 
     await selectRow(soloRow);
-    await waitUntil(() => isCurrentRow(soloRow), 10_000, "the 1:1 thread to become current");
+    await waitUntil(() => isCurrentRow(soloRow), 10_000, "the 1:1 chat to become current");
     await new Promise((done) => setTimeout(done, 3_000));
     await selectRow(groupRow);
     await waitUntil(() => isCurrentRow(groupRow), 10_000, "the group to become current again");

@@ -34,7 +34,6 @@ vi.mock("@/components/Avatar", async (importOriginal) => ({
 }));
 // The tour's text, without measuring an anchor on screen.
 vi.mock("./onboarding/Spotlight", () => ({ Spotlight: ({ children }: { children: ReactNode }) => createElement("div", null, children) }));
-vi.mock("@/components/onboarding/view-transition", () => ({ withViewTransition: (update: () => void) => { update(); return null; } }));
 
 const { Composer } = await import("./Composer");
 const { ChatView } = await import("./ChatView");

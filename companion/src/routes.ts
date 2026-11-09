@@ -87,7 +87,6 @@ const ALLOWED: ReadonlyArray<{ method: string; path: RegExp }> = [
   // The harness refuses it while any Claude turn runs. Instance ids may carry
   // dots, so a dots-only segment is refused outright.
   { method: "POST", path: /^\/api\/instances\/(?!\.+\/)[\w.-]+\/claude-update$/ },
-  { method: "GET", path: /^\/api\/team-map$/ },
   // Sidecar-owned: the proxy answers it locally.
   { method: "GET", path: /^\/api\/companion\/endpoints$/ },
 

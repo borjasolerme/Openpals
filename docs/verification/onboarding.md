@@ -151,11 +151,6 @@ pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts sr
   holding Connect an AI, Next held until one connects and Later moving on;
   Escape and Enter; a reload on the second screen; a hosted admin's one screen;
   a replay saving nothing about a first chat.
-- `src/components/onboarding/ChiefIntro.test.ts` covers Create (MausBot made the
-  Chief only where there is none, an existing Chief never replaced), Choose with
-  its radio list and Confirm (a bot whose AI cannot lead held back), Escape
-  leaving only the list, and the choice finishing in a window that runs no
-  animation frames.
 - `src/components/onboarding/ConnectAi.test.ts` covers the recommended sign-in,
   Other ways and the failed check.
 - `src/components/HelperIntro.test.ts` covers MausBot's first messages: the

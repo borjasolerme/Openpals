@@ -36,7 +36,6 @@ describe("what the app may do", () => {
     ["GET", "/api/instances"],
     ["POST", "/api/instances/claude/claude-update"],
     ["POST", "/api/instances/claude.work/claude-update"],
-    ["GET", "/api/team-map"],
     ["GET", "/api/companion/endpoints"],
     ["GET", "/api/bots"],
     ["POST", "/api/bots"],
@@ -294,7 +293,6 @@ describe("what it may not", () => {
     expect(allowed("POST", "/api/bots/bot_123/overview")).toBe(false);
     expect(allowed("GET", "/api/bots/bot_123/overview/extra")).toBe(false);
     expect(allowed("PATCH", "/api/bots/bot_123/profile/execution-policy")).toBe(false);
-    expect(allowed("POST", "/api/sidebar-sections")).toBe(false);
     expect(allowed("PUT", "/api/config")).toBe(false);
     expect(allowed("GET", "/api/attachments/../config.json")).toBe(false);
     expect(allowed("GET", "/api/files")).toBe(false);

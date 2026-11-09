@@ -122,7 +122,7 @@ assert.equal(starter.modelSelection.model, selected.models.default);
 // The failed save left the server's record empty: a browser without this one's local mark shows the welcome again,
 // and this time it is saved.
 // Skipping every step this time lands in the Chief's chat.
-await evaluate("localStorage.removeItem('omb-email-gate'); localStorage.removeItem('omb.onboarding.welcomeDraft'); setTimeout(() => location.reload(), 0); true");
+await evaluate("localStorage.removeItem('omb.onboarding.welcomeDraft'); setTimeout(() => location.reload(), 0); true");
 await textVisible("Sign in to your AI");
 await finishWelcome();
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");

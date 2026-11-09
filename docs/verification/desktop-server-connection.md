@@ -7,8 +7,7 @@ one-time pairing link and disconnecting to go back to this computer.
 
 ```sh
 node --test electron/place-main.node-test.mjs electron/environments.node-test.mjs
-pnpm exec vitest run src/lib/place.test.ts src/components/RemoteComputerSection.dom.test.ts \
-  src/components/RemoteComputerSection.test.ts src/components/SettingsModal.serverPairing.test.ts
+pnpm exec vitest run src/lib/place.test.ts src/components/SettingsModal.serverPairing.test.ts
 ```
 
 `electron/place-main.node-test.mjs` runs main's own connect and disconnect

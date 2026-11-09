@@ -682,7 +682,7 @@ test("a live but unrelated Windows pid reused within the same boot is treated as
   }
 });
 
-// A Cloud home's volume mounts on one machine at a time, and each new home on it has a new hostname and boot.
+// A data folder on a shared or moved volume can carry a record from another machine, with another hostname and boot.
 const otherMachine = (current) => ({ host: renamedHost(current), boot: randomUUID(), uptime: 1 });
 
 test("on request, the lease, delegated child and recovery record another machine left are cleared and their holder named; then the lease is free", async () => {

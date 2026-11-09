@@ -20,7 +20,6 @@ const EVERYDAY_PREFIXES: Record<string, readonly string[]> = {
   ],
   "signing in": ["cloudSignIn."],
   "routines and automations": ["routines.", "automations."],
-  "a computer's steps": ["mapComputer."],
   "Apps": ["apps.", "connectors."],
   "the Settings pages Simple mode shows": ["settings.section.", "settings.group.", "settings.mcpCalls.", "settings.logins."],
   "the Usage page and its traces": ["trace.", "usage.page."],
