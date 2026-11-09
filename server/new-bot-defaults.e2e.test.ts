@@ -68,6 +68,11 @@ it("applies independent creation templates through the real isolated HTTP routes
     await api("PATCH", "/api/config", { browserProfiles: [] });
     expect((await api("GET", "/api/bot-defaults")).defaults.profile.browserProfile).toBeUndefined();
     expect((await api("POST", "/api/bots", { name: "After profile removal" }, 201)).bot.browserProfile).toBeUndefined();
+    await api("PATCH", "/api/config", { newBotDefaults: { profile: { voiceNotes: false } } });
+    expect((await api("POST", "/api/bots", { name: "Quiet" }, 201)).bot).toMatchObject({ voiceNotes: false });
+    await api("PATCH", "/api/config", { newBotDefaults: { profile: { voiceNotes: true } } });
+    expect((await api("POST", "/api/bots", { name: "Voice notes on" }, 201)).bot.voiceNotes).toBe(true);
+    await api("PATCH", "/api/config", { newBotDefaults: { profile: { voiceNotes: "off" } } }, 400);
     await api("PATCH", "/api/config", { newBotDefaults: { profile: { approvalMode: "full" } } });
     expect((await api("POST", "/api/bots", {}, 201)).bot.approvalMode).toBe("full");
     await api("PATCH", "/api/config", { newBotDefaults: { profile: { approvalMode: "custom" } } });
