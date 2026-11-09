@@ -37,6 +37,9 @@ function isRecord(value: unknown): value is Json {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+/** How many times a command server was restarted, in the spec a turn mounts (host/mcp-servers-host.ts). */
+export const MCP_RESTART_ENV = "OMB_MCP_RESTART";
+
 /** Headers are left out, so a refreshed sign-in token is the same server; hashed, so no credential is stored. */
 export function mcpServerConfigHash(server: McpServerSpec | Json): string {
   const record = server as Json;
