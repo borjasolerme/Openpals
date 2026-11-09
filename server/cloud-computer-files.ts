@@ -6,7 +6,7 @@ import { randomBytes } from "node:crypto";
 import { constants, lstatSync, mkdirSync, realpathSync, renameSync, rmSync } from "node:fs";
 import { open } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join, posix, relative, win32 } from "node:path";
-import { assertBoatNotDeleting, boatAccount, boatErrorMessage, boatFetch } from "./boat.ts";
+import { assertBoatNotDeleting, boatErrorMessage, boatFetch } from "./boat.ts";
 import type { AppConfig } from "./config.ts";
 import { inSecretFolder, SECRET_FILE_REFUSAL } from "./secret-folder.ts";
 import { isInside, resolveThroughLinks } from "./sentinel/paths.ts";
@@ -36,9 +36,9 @@ function placeInFolder(folder: string, wanted: string): Placed {
   return { root, file };
 }
 
-async function boatProblem(cfg: AppConfig, response: Response, what: string): Promise<string> {
+async function boatProblem(response: Response, what: string): Promise<string> {
   const body: unknown = await response.json().catch(() => null);
-  return boatErrorMessage(response.status, what, body, boatAccount(cfg)?.included === true);
+  return boatErrorMessage(response.status, what, body);
 }
 
 /** Checked again once the download has begun: a link made in the folder meanwhile would lead the file out. */
@@ -70,7 +70,7 @@ export async function copyFromComputer(
   if ("error" in placed) return placed;
   assertBoatNotDeleting(boxId);
   const response = await boatFetch(cfg, `/sandboxes/${boxId}/artifacts?path=${encodeURIComponent(args.path)}`, { signal, headers: { accept: "*/*" } });
-  if (!response.ok) return { error: await boatProblem(cfg, response, `Copying ${args.path} from the cloud computer`) };
+  if (!response.ok) return { error: await boatProblem(response, `Copying ${args.path} from the cloud computer`) };
   const landed = Number(response.headers.get("content-length")) > COPY_FROM_COMPUTER_MAX_BYTES ? { error: tooBigToBring(args.path) } : land(placed, wanted);
   if ("error" in landed) {
     await response.body?.cancel().catch(() => {});
@@ -139,7 +139,7 @@ export async function copyToComputer(
     body: JSON.stringify({ path: args.path, content: content.toString("base64"), encoding: "base64" }),
     signal,
   });
-  if (!response.ok) return { error: await boatProblem(cfg, response, `Copying ${args.from} to the cloud computer`) };
+  if (!response.ok) return { error: await boatProblem(response, `Copying ${args.from} to the cloud computer`) };
   const body = await response.json().catch(() => null) as { path?: unknown } | null;
   return { path: typeof body?.path === "string" ? body.path : args.path, bytes: content.length };
 }

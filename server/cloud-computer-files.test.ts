@@ -222,19 +222,6 @@ describe("copy_to_computer", () => {
   });
 });
 
-describe("through the Cloud's included Boat", () => {
-  it("copies both ways over the relay's box paths, with only the included token", async () => {
-    disk.set("/home/user/report.csv", { bytes: Buffer.from("a,b\n1,2\n") });
-    writeFileSync(join(folder, "seed.txt"), "seed");
-    await expect(files.copyFromComputer({}, BOX, folder, { path: "/home/user/report.csv" }, signal())).resolves.toEqual({ path: "report.csv", bytes: 8 });
-    await expect(files.copyToComputer({}, BOX, folder, { from: "seed.txt", path: "/tmp/seed.txt" }, signal())).resolves.toEqual({ path: "/tmp/seed.txt", bytes: 4 });
-    expect(calls.map(call => [call.method, call.path, call.authorization])).toEqual([
-      ["GET", `/relay/api/box/v1/boxes/${BOX}/artifacts`, `Bearer ${INCLUDED}`],
-      ["PUT", `/relay/api/box/v1/boxes/${BOX}/files`, `Bearer ${INCLUDED}`],
-    ]);
-  });
-});
-
 describe("as cloud computer tools", () => {
   const rpc = (name: string, args: unknown, folderOf: () => string | null | undefined = () => folder) => {
     let gated = 0;
