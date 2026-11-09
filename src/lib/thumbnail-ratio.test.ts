@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { thumbnailRatio } from "./AttachmentPreview";
+import { thumbnailRatio } from "@/lib/thumbnail-ratio";
 
 describe("chat image thumbnails keep a standard frame", () => {
   it("shows a full-page screenshot as its top, in a 3:4 frame at most", () => {
