@@ -4895,5 +4895,10 @@
   "connectors.savedKeysUnreadable": "Não foi possível ler as chaves salvas neste computador.",
   "automations.run.waitingOnTeam": "Aguardando o trabalho que repassou terminar",
   "server.teammates.stillWaiting": "Ainda aguardando sua resposta: {question} Este trabalho será encerrado em {days} dias se ninguém responder.",
-  "server.teammates.stillWaitingCard": "Este trabalho ainda está esperando por você. Ele será encerrado em {days} dias se nada mudar."
+  "server.teammates.stillWaitingCard": "Este trabalho ainda está esperando por você. Ele será encerrado em {days} dias se nada mudar.",
+  "server.mcp.problem.signIn": "{name} precisa que você entre na conta antes que as ferramentas funcionem. Abra Apps → Servidores MCP e entre.",
+  "server.mcp.problem.refused": "{name} recusou o login ou a chave. Abra Apps → Servidores MCP para entrar de novo ou atualizar a chave.",
+  "server.mcp.problem.notFound": "{name} não foi encontrado no endereço. Confira o endereço em Apps → Servidores MCP.",
+  "server.mcp.problem.timeout": "{name} não respondeu a tempo. Tente de novo daqui a pouco e, se continuar, teste em Apps → Servidores MCP.",
+  "server.mcp.problem.cantConnect": "Não foi possível conectar a {name}. Teste em Apps → Servidores MCP para ver o motivo."
 }

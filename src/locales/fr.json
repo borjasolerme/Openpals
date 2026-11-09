@@ -2108,5 +2108,10 @@
   "connectors.savedKeysUnreadable": "Les clés enregistrées sur cet ordinateur n'ont pas pu être lues.",
   "automations.run.waitingOnTeam": "En attente de la fin du travail qu'il a confié",
   "server.teammates.stillWaiting": "Attend toujours votre réponse : {question} Ce travail sera fermé dans {days} jours si personne ne répond.",
-  "server.teammates.stillWaitingCard": "Ce travail vous attend toujours. Il sera fermé dans {days} jours si rien ne change."
+  "server.teammates.stillWaitingCard": "Ce travail vous attend toujours. Il sera fermé dans {days} jours si rien ne change.",
+  "server.mcp.problem.signIn": "{name} a besoin que vous vous connectiez pour que ses outils fonctionnent. Ouvrez Apps → Serveurs MCP et connectez-vous.",
+  "server.mcp.problem.refused": "{name} a refusé sa connexion ou sa clé. Ouvrez Apps → Serveurs MCP pour vous reconnecter ou mettre à jour sa clé.",
+  "server.mcp.problem.notFound": "{name} est introuvable à son adresse. Vérifiez l'adresse dans Apps → Serveurs MCP.",
+  "server.mcp.problem.timeout": "{name} n'a pas répondu à temps. Réessayez dans un instant et, si cela continue, testez-le dans Apps → Serveurs MCP.",
+  "server.mcp.problem.cantConnect": "Impossible de se connecter à {name}. Testez-le dans Apps → Serveurs MCP pour voir pourquoi."
 }

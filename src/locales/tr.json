@@ -4038,5 +4038,10 @@
   "connectors.savedKeysUnreadable": "Bu bilgisayarda kayıtlı anahtarlar okunamadı.",
   "automations.run.waitingOnTeam": "Devrettiği işin bitmesini bekliyor",
   "server.teammates.stillWaiting": "Hâlâ yanıtını bekliyor: {question} Kimse yanıt vermezse bu iş {days} gün içinde kapanacak.",
-  "server.teammates.stillWaitingCard": "Bu iş hâlâ seni bekliyor. Hiçbir şey değişmezse {days} gün içinde kapanacak."
+  "server.teammates.stillWaitingCard": "Bu iş hâlâ seni bekliyor. Hiçbir şey değişmezse {days} gün içinde kapanacak.",
+  "server.mcp.problem.signIn": "{name} araçlarının çalışması için giriş yapman gerekiyor. Uygulamalar → MCP sunucuları'nı aç ve giriş yap.",
+  "server.mcp.problem.refused": "{name} girişi veya anahtarı reddetti. Yeniden giriş yapmak ya da anahtarı güncellemek için Uygulamalar → MCP sunucuları'nı aç.",
+  "server.mcp.problem.notFound": "{name} adresinde bulunamadı. Adresi Uygulamalar → MCP sunucuları'nda kontrol et.",
+  "server.mcp.problem.timeout": "{name} zamanında yanıt vermedi. Biraz sonra tekrar dene; böyle devam ederse Uygulamalar → MCP sunucuları'nda test et.",
+  "server.mcp.problem.cantConnect": "{name} sunucusuna bağlanılamadı. Nedenini görmek için Uygulamalar → MCP sunucuları'nda test et."
 }

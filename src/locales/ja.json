@@ -5020,5 +5020,10 @@
   "connectors.savedKeysUnreadable": "このコンピュータに保存されたキーを読み取れませんでした。",
   "automations.run.waitingOnTeam": "引き継いだ作業の完了を待っています",
   "server.teammates.stillWaiting": "まだ回答を待っています: {question} 誰も回答しない場合、この作業は {days} 日後に終了します。",
-  "server.teammates.stillWaitingCard": "この作業はまだあなたを待っています。何も変わらなければ {days} 日後に終了します。"
+  "server.teammates.stillWaitingCard": "この作業はまだあなたを待っています。何も変わらなければ {days} 日後に終了します。",
+  "server.mcp.problem.signIn": "{name} のツールを使うにはサインインが必要です。アプリ → MCP サーバーを開いてサインインしてください。",
+  "server.mcp.problem.refused": "{name} がサインインまたはキーを拒否しました。アプリ → MCP サーバーを開いて、もう一度サインインするかキーを更新してください。",
+  "server.mcp.problem.notFound": "{name} がそのアドレスで見つかりませんでした。アプリ → MCP サーバーでアドレスを確認してください。",
+  "server.mcp.problem.timeout": "{name} が時間内に応答しませんでした。少し待ってから再試行し、続くようならアプリ → MCP サーバーでテストしてください。",
+  "server.mcp.problem.cantConnect": "{name} に接続できませんでした。理由を確認するには、アプリ → MCP サーバーでテストしてください。"
 }

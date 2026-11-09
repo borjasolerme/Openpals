@@ -4038,5 +4038,10 @@
   "connectors.savedKeysUnreadable": "Không đọc được các khóa đã lưu trên máy tính này.",
   "automations.run.waitingOnTeam": "Đang chờ việc đã giao lại hoàn tất",
   "server.teammates.stillWaiting": "Vẫn đang chờ câu trả lời của bạn: {question} Việc này sẽ đóng sau {days} ngày nếu không ai trả lời.",
-  "server.teammates.stillWaitingCard": "Việc này vẫn đang chờ bạn. Nó sẽ đóng sau {days} ngày nếu không có gì thay đổi."
+  "server.teammates.stillWaitingCard": "Việc này vẫn đang chờ bạn. Nó sẽ đóng sau {days} ngày nếu không có gì thay đổi.",
+  "server.mcp.problem.signIn": "{name} cần bạn đăng nhập trước khi các công cụ của nó hoạt động. Mở Ứng dụng → Máy chủ MCP và đăng nhập.",
+  "server.mcp.problem.refused": "{name} đã từ chối đăng nhập hoặc khóa. Mở Ứng dụng → Máy chủ MCP để đăng nhập lại hoặc cập nhật khóa.",
+  "server.mcp.problem.notFound": "Không tìm thấy {name} tại địa chỉ của nó. Kiểm tra địa chỉ trong Ứng dụng → Máy chủ MCP.",
+  "server.mcp.problem.timeout": "{name} không trả lời kịp. Hãy thử lại sau ít phút, và nếu vẫn xảy ra, hãy kiểm tra nó trong Ứng dụng → Máy chủ MCP.",
+  "server.mcp.problem.cantConnect": "Không thể kết nối với {name}. Kiểm tra nó trong Ứng dụng → Máy chủ MCP để xem lý do."
 }

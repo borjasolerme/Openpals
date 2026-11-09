@@ -4958,5 +4958,10 @@
   "connectors.savedKeysUnreadable": "Nie udało się odczytać kluczy zapisanych na tym komputerze.",
   "automations.run.waitingOnTeam": "Czeka, aż przekazana praca się skończy",
   "server.teammates.stillWaiting": "Wciąż czeka na Twoją odpowiedź: {question} Ta praca zostanie zamknięta za {days} dni, jeśli nikt nie odpowie.",
-  "server.teammates.stillWaitingCard": "Ta praca wciąż na Ciebie czeka. Zostanie zamknięta za {days} dni, jeśli nic się nie zmieni."
+  "server.teammates.stillWaitingCard": "Ta praca wciąż na Ciebie czeka. Zostanie zamknięta za {days} dni, jeśli nic się nie zmieni.",
+  "server.mcp.problem.signIn": "{name} wymaga zalogowania, zanim jego narzędzia zadziałają. Otwórz Aplikacje → Serwery MCP i zaloguj się.",
+  "server.mcp.problem.refused": "{name} odrzucił logowanie lub klucz. Otwórz Aplikacje → Serwery MCP, aby zalogować się ponownie lub zmienić klucz.",
+  "server.mcp.problem.notFound": "Nie znaleziono {name} pod jego adresem. Sprawdź adres w Aplikacje → Serwery MCP.",
+  "server.mcp.problem.timeout": "{name} nie odpowiedział na czas. Spróbuj za chwilę, a jeśli to się powtarza, przetestuj go w Aplikacje → Serwery MCP.",
+  "server.mcp.problem.cantConnect": "Nie udało się połączyć z {name}. Przetestuj go w Aplikacje → Serwery MCP, aby zobaczyć dlaczego."
 }

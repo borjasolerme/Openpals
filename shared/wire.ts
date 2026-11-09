@@ -484,6 +484,8 @@ export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLine
     place?: PlaceRow;
     /** error rows: epoch ms when the usage limit that stopped the turn resets. */
     limitResetsAt?: number;
+    /** A failed step on an MCP server, in the reader's language: which server, why, and what to do. */
+    problem?: string;
     /** error rows: the reply came back; only a step the turn ran failed or wasn't allowed. */
     partial?: boolean;
     /** Provider item identity, scoped to the owning turn. */

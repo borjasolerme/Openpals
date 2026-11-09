@@ -2160,5 +2160,10 @@
   "connectors.savedKeysUnreadable": "Die auf diesem Computer gespeicherten Schlüssel konnten nicht gelesen werden.",
   "automations.run.waitingOnTeam": "Wartet darauf, dass weitergegebene Arbeit fertig wird",
   "server.teammates.stillWaiting": "Wartet noch auf deine Antwort: {question} Diese Arbeit wird in {days} Tagen geschlossen, wenn niemand antwortet.",
-  "server.teammates.stillWaitingCard": "Diese Arbeit wartet noch auf dich. Sie wird in {days} Tagen geschlossen, wenn sich nichts ändert."
+  "server.teammates.stillWaitingCard": "Diese Arbeit wartet noch auf dich. Sie wird in {days} Tagen geschlossen, wenn sich nichts ändert.",
+  "server.mcp.problem.signIn": "{name} braucht deine Anmeldung, bevor seine Werkzeuge funktionieren. Öffne Apps → MCP-Server und melde dich dort an.",
+  "server.mcp.problem.refused": "{name} hat die Anmeldung oder den Schlüssel abgelehnt. Öffne Apps → MCP-Server, um dich erneut anzumelden oder den Schlüssel zu ändern.",
+  "server.mcp.problem.notFound": "{name} wurde unter seiner Adresse nicht gefunden. Prüfe die Adresse unter Apps → MCP-Server.",
+  "server.mcp.problem.timeout": "{name} hat nicht rechtzeitig geantwortet. Versuche es gleich noch einmal, und wenn es weiter passiert, teste ihn unter Apps → MCP-Server.",
+  "server.mcp.problem.cantConnect": "Keine Verbindung zu {name}. Teste ihn unter Apps → MCP-Server, um den Grund zu sehen."
 }

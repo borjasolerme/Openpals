@@ -19,7 +19,8 @@ export function ToolActivity({ tool, place = null, live = false, source }: { too
   const output = full.output ?? tool.output;
   const failed = tool.ok === false;
   const advanced = useAdvancedMode();
-  const label = advanced ? tool.label ?? tool.name : toolStepLabel(tool);
+  const problem = failed ? tool.problem : undefined;
+  const label = problem ?? (advanced ? tool.label ?? tool.name : toolStepLabel(tool));
   const status = tool.ok === undefined ? (live ? t("toolDetail.running") : t("toolDetail.unverified")) : failed ? t("toolDetail.failed") : t("toolDetail.completed");
   return (
     <details onToggle={(event) => setExpanded(event.currentTarget.open)} className="group/tool w-fit max-w-full rounded-xl border border-hairline/40 bg-panel text-base open:w-[min(38rem,100%)]" data-testid="tool-activity">
@@ -31,7 +32,7 @@ export function ToolActivity({ tool, place = null, live = false, source }: { too
       >
         <span className="shrink-0" aria-hidden="true">{tool.ok === undefined ? (live ? <WorkingDots size={3.5} /> : <Circle size={13} />) : failed ? <X size={13} /> : <Check size={13} className="text-success" />}</span>
         {place && <PlaceIcon place={place} size={13} className="shrink-0 opacity-70" role="img" aria-label={t(placeLabelKey(place))} data-testid="tool-place" />}
-        <span className={cn("min-w-0 max-w-[30rem] truncate leading-5", advanced ? "font-mono" : "font-medium")}>{label}</span>
+        <span className={cn("min-w-0 max-w-[30rem]", !problem && "truncate", "leading-5", advanced && !problem ? "font-mono" : "font-medium")}>{label}</span>
         {advanced && tool.summary && tool.summary !== tool.name && !nameIsCommand(tool.name) && <span className="min-w-0 flex-1 truncate font-mono" title={tool.summary}>{tool.summary}</span>}
         <ChevronRight size={13} className="ml-auto shrink-0 group-open/tool:rotate-90" aria-hidden="true" />
       </summary>

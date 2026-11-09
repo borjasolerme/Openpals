@@ -3552,5 +3552,10 @@
   "connectors.savedKeysUnreadable": "無法讀取這台電腦上儲存的金鑰。",
   "automations.run.waitingOnTeam": "正在等待交出去的工作完成",
   "server.teammates.stillWaiting": "仍在等待你的回答：{question} 如果沒人回答，這項工作將在 {days} 天後關閉。",
-  "server.teammates.stillWaitingCard": "這項工作仍在等你。如果沒有變化，它將在 {days} 天後關閉。"
+  "server.teammates.stillWaitingCard": "這項工作仍在等你。如果沒有變化，它將在 {days} 天後關閉。",
+  "server.mcp.problem.signIn": "{name} 需要你先登入，它的工具才能使用。打開「應用程式 → MCP 伺服器」並登入。",
+  "server.mcp.problem.refused": "{name} 拒絕了登入或金鑰。打開「應用程式 → MCP 伺服器」重新登入或更新金鑰。",
+  "server.mcp.problem.notFound": "在其位址上找不到 {name}。請在「應用程式 → MCP 伺服器」中檢查位址。",
+  "server.mcp.problem.timeout": "{name} 沒有及時回應。請稍後再試；如果一直這樣，請在「應用程式 → MCP 伺服器」中測試它。",
+  "server.mcp.problem.cantConnect": "無法連線到 {name}。請在「應用程式 → MCP 伺服器」中測試它以查看原因。"
 }

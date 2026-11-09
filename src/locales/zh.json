@@ -5544,5 +5544,10 @@
   "connectors.savedKeysUnreadable": "无法读取此电脑上保存的密钥。",
   "automations.run.waitingOnTeam": "正在等待移交出去的工作完成",
   "server.teammates.stillWaiting": "仍在等待你的回答：{question} 如果没人回答，这项工作将在 {days} 天后关闭。",
-  "server.teammates.stillWaitingCard": "这项工作仍在等你。如果没有变化，它将在 {days} 天后关闭。"
+  "server.teammates.stillWaitingCard": "这项工作仍在等你。如果没有变化，它将在 {days} 天后关闭。",
+  "server.mcp.problem.signIn": "{name} 需要你先登录，它的工具才能使用。打开“应用 → MCP 服务器”并登录。",
+  "server.mcp.problem.refused": "{name} 拒绝了登录或密钥。打开“应用 → MCP 服务器”重新登录或更新密钥。",
+  "server.mcp.problem.notFound": "在其地址上找不到 {name}。请在“应用 → MCP 服务器”中检查地址。",
+  "server.mcp.problem.timeout": "{name} 没有及时响应。请稍后重试；如果一直这样，请在“应用 → MCP 服务器”中测试它。",
+  "server.mcp.problem.cantConnect": "无法连接到 {name}。请在“应用 → MCP 服务器”中测试它以查看原因。"
 }
