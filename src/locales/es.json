@@ -4303,5 +4303,6 @@
   "permissions.chief.replace": "Hacer de este bot el jefe de gabinete y traspasarle el rol de {current}.",
   "permissions.chief.make": "Hacer de este bot tu contacto principal.",
   "connectors.resetSavedKeys": "Restablecer las claves guardadas",
-  "connectors.savedKeysUnreadable": "No se pudieron leer las claves guardadas en este ordenador."
+  "connectors.savedKeysUnreadable": "No se pudieron leer las claves guardadas en este ordenador.",
+  "automations.run.waitingOnTeam": "Esperando a que termine el trabajo que delegó"
 }

@@ -2157,5 +2157,6 @@
   "permissions.chief.replace": "Diesen Bot zum Stabschef machen und die Rolle von {current} übernehmen.",
   "permissions.chief.make": "Diesen Bot zu deinem Hauptansprechpartner machen.",
   "connectors.resetSavedKeys": "Gespeicherte Schlüssel zurücksetzen",
-  "connectors.savedKeysUnreadable": "Die auf diesem Computer gespeicherten Schlüssel konnten nicht gelesen werden."
+  "connectors.savedKeysUnreadable": "Die auf diesem Computer gespeicherten Schlüssel konnten nicht gelesen werden.",
+  "automations.run.waitingOnTeam": "Wartet darauf, dass weitergegebene Arbeit fertig wird"
 }

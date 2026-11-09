@@ -4035,5 +4035,6 @@
   "permissions.chief.replace": "Bu botu Kurmay Başkanı yap ve rolü {current} botundan devral.",
   "permissions.chief.make": "Bu botu ana iletişim noktanız yap.",
   "connectors.resetSavedKeys": "Kayıtlı anahtarları sıfırla",
-  "connectors.savedKeysUnreadable": "Bu bilgisayarda kayıtlı anahtarlar okunamadı."
+  "connectors.savedKeysUnreadable": "Bu bilgisayarda kayıtlı anahtarlar okunamadı.",
+  "automations.run.waitingOnTeam": "Devrettiği işin bitmesini bekliyor"
 }

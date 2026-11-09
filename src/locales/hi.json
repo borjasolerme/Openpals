@@ -2105,5 +2105,6 @@
   "permissions.chief.replace": "इस बॉट को चीफ़ ऑफ़ स्टाफ़ बनाएँ और {current} से यह भूमिका इसे सौंपें।",
   "permissions.chief.make": "इस बॉट को अपना मुख्य संपर्क बनाएँ।",
   "connectors.resetSavedKeys": "सहेजी गई कुंजियाँ रीसेट करें",
-  "connectors.savedKeysUnreadable": "इस कंप्यूटर पर सहेजी गई कुंजियाँ पढ़ी नहीं जा सकीं।"
+  "connectors.savedKeysUnreadable": "इस कंप्यूटर पर सहेजी गई कुंजियाँ पढ़ी नहीं जा सकीं।",
+  "automations.run.waitingOnTeam": "सौंपे गए काम के पूरा होने का इंतज़ार"
 }

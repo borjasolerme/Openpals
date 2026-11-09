@@ -4035,5 +4035,6 @@
   "permissions.chief.replace": "Đặt bot này làm Chief of Staff và nhận lại vai trò từ {current}.",
   "permissions.chief.make": "Đặt bot này làm đầu mối liên hệ chính của bạn.",
   "connectors.resetSavedKeys": "Đặt lại các khóa đã lưu",
-  "connectors.savedKeysUnreadable": "Không đọc được các khóa đã lưu trên máy tính này."
+  "connectors.savedKeysUnreadable": "Không đọc được các khóa đã lưu trên máy tính này.",
+  "automations.run.waitingOnTeam": "Đang chờ việc đã giao lại hoàn tất"
 }

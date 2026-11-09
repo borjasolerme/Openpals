@@ -2476,5 +2476,6 @@
   "permissions.chief.replace": "Призначити цього бота керівником штабу й передати йому роль від {current}.",
   "permissions.chief.make": "Зробити цього бота вашим головним контактом.",
   "connectors.resetSavedKeys": "Скинути збережені ключі",
-  "connectors.savedKeysUnreadable": "Не вдалося прочитати ключі, збережені на цьому комп’ютері."
+  "connectors.savedKeysUnreadable": "Не вдалося прочитати ключі, збережені на цьому комп’ютері.",
+  "automations.run.waitingOnTeam": "Чекає, поки передана робота завершиться"
 }

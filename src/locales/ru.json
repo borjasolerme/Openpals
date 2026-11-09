@@ -4996,5 +4996,6 @@
   "onboarding.apps.personalSaved": "Подключено. Все боты могут пользоваться вашими приложениями.",
   "onboarding.bring.openApp": "Открыть {app}",
   "connectors.resetSavedKeys": "Сбросить сохранённые ключи",
-  "connectors.savedKeysUnreadable": "Не удалось прочитать ключи, сохранённые на этом компьютере."
+  "connectors.savedKeysUnreadable": "Не удалось прочитать ключи, сохранённые на этом компьютере.",
+  "automations.run.waitingOnTeam": "Ждёт завершения переданной работы"
 }

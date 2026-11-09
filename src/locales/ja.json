@@ -5017,5 +5017,6 @@
   "onboarding.apps.personalSaved": "接続しました。すべてのボットがあなたのアプリを使えます。",
   "onboarding.bring.openApp": "{app} を開く",
   "connectors.resetSavedKeys": "保存したキーをリセット",
-  "connectors.savedKeysUnreadable": "このコンピュータに保存されたキーを読み取れませんでした。"
+  "connectors.savedKeysUnreadable": "このコンピュータに保存されたキーを読み取れませんでした。",
+  "automations.run.waitingOnTeam": "引き継いだ作業の完了を待っています"
 }

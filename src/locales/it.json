@@ -4843,5 +4843,6 @@
   "onboarding.apps.personalSaved": "Collegato. Tutti i bot possono usare le tue app.",
   "onboarding.bring.openApp": "Apri {app}",
   "connectors.resetSavedKeys": "Reimposta le chiavi salvate",
-  "connectors.savedKeysUnreadable": "Non è stato possibile leggere le chiavi salvate su questo computer."
+  "connectors.savedKeysUnreadable": "Non è stato possibile leggere le chiavi salvate su questo computer.",
+  "automations.run.waitingOnTeam": "In attesa che finisca il lavoro che ha passato"
 }
