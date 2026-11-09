@@ -110,9 +110,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS
 
-   Components use these scales, never a one-off value; the ratchet in
-   src/design-tokens.test.ts fails on new arbitrary sizes, radii, shadows
-   and raw colours.
+   Components use these scales, never a one-off value.
 
    Type      text-xs 11/14 · sm 12/16 · base 13/18 (UI default) · lg 14/22
              display: xl 16/22 · 2xl 20/26 · 3xl 26/32. Each step carries
