@@ -28,18 +28,18 @@ describe("the container's server command", () => {
   const here = join("/app", "dist-server");
   const small = { bytes: GB, cgroupLimit: GB };
 
-  it("runs the server through the compile-cache bootstrap, its cache on the data volume, its heap sized to the limit", () => {
+  it("runs the server through the compile-cache bootstrap, its cache on the data volume, its heap sized to the limit, as a supervised server", () => {
     const command = serverCommand(here, { OMB_DATA_DIR: join("/srv", "omb"), OMB_PORT: "8799" }, { exists: () => true, box: small });
     expect(command).toEqual({
       args: ["--max-old-space-size=614", join(here, "desktop-entry.mjs")],
-      env: { OMB_DATA_DIR: join("/srv", "omb"), OMB_PORT: "8799", OMB_SERVER_COMPILE_CACHE: join("/srv", "omb", "cache", "node-compile") },
+      env: { OMB_DATA_DIR: join("/srv", "omb"), OMB_PORT: "8799", OMB_SUPERVISED: "1", OMB_SERVER_COMPILE_CACHE: join("/srv", "omb", "cache", "node-compile") },
     });
     expect(serverCommand(here, {}, { exists: () => true, box: small }).env.OMB_SERVER_COMPILE_CACHE)
       .toBe(join(homedir(), ".openmausbot", "cache", "node-compile"));
   });
 
   it("runs index.js itself without the bootstrap, and leaves the heap alone without a limit or when NODE_OPTIONS sizes it", () => {
-    expect(serverCommand(here, {}, { exists: () => false, box: { bytes: 16 * GB, cgroupLimit: null } })).toEqual({ args: [join(here, "index.js")], env: {} });
+    expect(serverCommand(here, {}, { exists: () => false, box: { bytes: 16 * GB, cgroupLimit: null } })).toEqual({ args: [join(here, "index.js")], env: { OMB_SUPERVISED: "1" } });
     expect(serverCommand(here, { NODE_OPTIONS: "--max-old-space-size=900" }, { exists: () => true, box: small }).args).toEqual([join(here, "desktop-entry.mjs")]);
   });
 });
