@@ -39,10 +39,6 @@ pnpm package:mac   # DMG + ZIP; requires Swift/Xcode tools
 pnpm package:linux # Ubuntu x64 .deb + AppImage; no Swift required
 ```
 
-To reproduce a failing CI test job, follow [Vitest shards](docs/ci.md#vitest-shards).
-Use the job's checkout revision, OS, file filters, shard fraction, and
-`OMB_VITEST_E2E` value; the same shard number alone does not select the same files.
-
 For Ubuntu installation and real desktop checks, see [`docs/linux-desktop.md`](docs/linux-desktop.md).
 
 ## Repo map
@@ -231,23 +227,7 @@ out of its commits and screenshots.
 - No DCO sign-off or CLA is required. Submit only code you wrote or have the
   right to contribute under the Apache License 2.0 (see [LICENSING.md](LICENSING.md)).
 
-## CI, in one glance
-
-Every PR runs locale validation (`pnpm i18n:check`), lint, CI-selection tests,
-verification-documentation checks, and the required `CI` gate. The changed files
-select the remaining checks; see [CI job selection](docs/ci.md). Documentation-only
-PRs run the docs tests, while translation-only PRs run the locale subset. Runtime
-changes select broader tests and smokes.
-
-- **typecheck + lint** — the static job always runs the checks above, and adds typecheck, Electron syntax checks, and a production UI build when selected. It runs before the dependent jobs.
-- **vitest (os, part)** — full platform suites use eight Linux or Windows shards and four macOS shards; subset jobs have their own file lists and shard counts. Windows jobs run on PRs whose changes can affect Windows or carry the `windows` label. macOS Vitest shards run in the nightly/manual full lane. Files run serially within each shard, balanced by recorded platform time. Use the [reproduction steps](docs/ci.md#vitest-shards) for the failing job.
-- **packaged server smoke (os)** — when selected, the server bundle is copied out of the repo and started with no `node_modules` in reach.
-- **Windows CUA host smoke**, **macOS smokes (packaged server + Electron)** — when selected, real Electron utility processes run against disposable homes; never the live app.
-- **CI** — the required aggregate gate checks that selected jobs passed and unselected jobs were skipped. Its log names any failing dependency.
-
-For eligible owner runs on Boat, the static job also runs the selected Linux
-test lanes; their logs appear in groups named for each lane. Fork PRs use
-GitHub-hosted jobs. See [Linux on Boat](docs/ci.md#linux-on-boat).
+## Checks
 
 A `pre-push` hook installed by `pnpm install` runs lint, typecheck and the locale check before a push (about a minute). `git push --no-verify` skips it once; `OMB_SKIP_HOOKS=1` skips it for a session.
 

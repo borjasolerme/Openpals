@@ -1,6 +1,6 @@
 // Every other language's server lines, from the app's packs (server-lines.ts reads English). The server loads this when
 // it starts (server/index.ts), and so does a test that checks a line in another language; before that, a line reads in
-// English. Only tests that load this read a translation, so only they run with the locale tests (scripts/ci-scope.mjs).
+// English. Only tests that load this read a translation.
 import de from "../src/locales/de.json" with { type: "json" };
 import es from "../src/locales/es.json" with { type: "json" };
 import fr from "../src/locales/fr.json" with { type: "json" };
