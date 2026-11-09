@@ -4025,7 +4025,6 @@
   "place.action.tryAgain": "Повторить попытку",
   "place.action.addBoatKey": "Подключить Boat",
   "place.action.turnOnBrowser": "Включить браузер",
-  "place.action.openTeamMap": "Открыть карту Team",
   "place.action.openVmSettings": "Настройки приватного рабочего стола",
   "place.action.clearPin": "Убрать привязку этого разговора к месту",
   "place.action.usePlace": "Использовать {place}",

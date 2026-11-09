@@ -3719,7 +3719,6 @@
   "place.action.tryAgain": "Inténtalo de nuevo",
   "place.action.addBoatKey": "Conectar Boat",
   "place.action.turnOnBrowser": "Activar el navegador",
-  "place.action.openTeamMap": "Abrir el Mapa del equipo",
   "place.action.openVmSettings": "Ajustes del escritorio privado",
   "place.action.clearPin": "Quitar el lugar fijado de esta conversación",
   "place.action.usePlace": "Usar {place}",

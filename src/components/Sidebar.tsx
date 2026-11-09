@@ -72,7 +72,7 @@ import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { defaultBotIn, useWelcomingBot } from "@/lib/default-bot";
 import { PinnedBotRoster } from "./PinnedCircles";
-import { archiveBotWithNotice, onArchiveNotice } from "./bot-archive";
+import { archiveBotWithNotice } from "./bot-archive";
 import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel";
 import { NewRoomPanel } from "./SidebarNewRoomPanel";
 
@@ -732,7 +732,6 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     if (bot) await archiveBotWithNotice(bot, { bots: state.bots, selectedId: state.selectedId, dispatch, notify: setTeamFeedback });
   };
   // Archives from the bot panel report here too, with the same Undo.
-  useEffect(() => onArchiveNotice(setTeamFeedback), []);
 
   const undoBotArchive = async (bot: { id: string; name: string }) => {
     setTeamFeedback(null);

@@ -3200,7 +3200,6 @@
   "place.action.tryAgain": "再試一次",
   "place.action.addBoatKey": "連接 Boat",
   "place.action.turnOnBrowser": "開啟瀏覽器",
-  "place.action.openTeamMap": "開啟團隊地圖",
   "place.action.openVmSettings": "私人桌面設定",
   "place.action.clearPin": "清除此對話的執行位置",
   "place.action.usePlace": "使用 {place}",

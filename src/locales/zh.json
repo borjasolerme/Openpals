@@ -4440,7 +4440,6 @@
   "place.action.tryAgain": "重试",
   "place.action.addBoatKey": "连接 Boat",
   "place.action.turnOnBrowser": "开启浏览器",
-  "place.action.openTeamMap": "打开团队地图",
   "place.action.openVmSettings": "私有桌面设置",
   "place.action.clearPin": "清除此对话的位置",
   "place.action.usePlace": "使用 {place}",

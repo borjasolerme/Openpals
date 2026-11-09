@@ -10,7 +10,7 @@ vi.mock("@/state/store", async (importOriginal) => ({
 }));
 
 const { initialState } = await import("@/state/store");
-const { announceArchiveNotice, archivableChief, archiveBotWithNotice, onArchiveNotice } = await import("./bot-archive");
+const { archivableChief, archiveBotWithNotice } = await import("./bot-archive");
 const { botConfirmCopy } = await import("./ArchivedBotsPanel");
 
 const make = (id: string, extra: Partial<Bot> = {}): Bot => ({
@@ -65,13 +65,4 @@ describe("archiving a bot", () => {
     expect(fixture.api).toHaveBeenCalledWith("/api/bots/chief", { method: "PATCH", body: JSON.stringify({ hidden: true, chiefOfStaff: false }) });
   });
 
-  it("reaches the sidebar from anywhere, and says when no sidebar is there to hear", () => {
-    const shown = vi.fn();
-    expect(announceArchiveNotice(null)).toBe(false);
-    const stop = onArchiveNotice(shown);
-    expect(announceArchiveNotice({ error: false, text: "Scout archived" })).toBe(true);
-    expect(shown).toHaveBeenCalledWith({ error: false, text: "Scout archived" });
-    stop();
-    expect(announceArchiveNotice(null)).toBe(false);
-  });
 });

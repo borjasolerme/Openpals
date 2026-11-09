@@ -8,22 +8,6 @@ export interface ArchiveNotice {
   restoreBot?: { id: string; name: string };
 }
 
-const listeners = new Set<(notice: ArchiveNotice | null) => void>();
-
-/** The sidebar listens here, so an archive started elsewhere (the Simple bot panel) gets its notice and Undo. */
-export function onArchiveNotice(listener: (notice: ArchiveNotice | null) => void): () => void {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-/** Shows `notice` in the sidebar; false when no sidebar is mounted to show it. */
-export function announceArchiveNotice(notice: ArchiveNotice | null): boolean {
-  for (const listener of Array.from(listeners)) listener(notice);
-  return listeners.size > 0;
-}
-
 /** A Chief of Staff its delete dialog offers to archive instead, keeping its chats: never the place's own MausBot, and
  * never the last active bot. */
 export function archivableChief(bots: readonly Bot[], id: string): Bot | undefined {

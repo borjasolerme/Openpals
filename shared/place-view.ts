@@ -163,7 +163,6 @@ export const PLACE_EN = {
   "place.action.tryAgain": "Try again",
   "place.action.addBoatKey": "Connect Boat",
   "place.action.turnOnBrowser": "Turn on the browser",
-  "place.action.openTeamMap": "Open Team map",
   "place.action.openVmSettings": "Private desktop settings",
   "place.action.clearPin": "Clear this conversation's place",
   "place.action.usePlace": "Use {place}",
