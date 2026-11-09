@@ -11,7 +11,7 @@ import { TOOL_LIST } from "../browser/tools.ts";
 import { browserEgress } from "../browser/egress/registry.ts";
 import { type AppConfig } from "../config.ts";
 import type { Store } from "../store.ts";
-import { type TurnOwner } from "../turn-resources.ts";
+import { TurnResources, type TurnOwner } from "../turn-resources.ts";
 import { createBrowserHost, type BrowserHostDeps } from "./browser.ts";
 
 vi.mock("../browser-engine.ts", async (original) => {
