@@ -8,3 +8,11 @@ export function driverFailure(error) {
     .map(([key, value]) => `${key} ${String(value)}`);
   return said.length ? `${kind}: ${said.join("; ")}` : kind;
 }
+
+const PANES = Object.freeze(["accessibility", "screen"]);
+/** The macOS permissions computer control lacks, in the order macOS asks for them, from its own start-up failure
+ * ("Accessibility and Screen Recording required"): reading it never asks macOS anything. */
+export function missingPermissions(reason) {
+  const list = typeof reason === "string" ? /((?:Accessibility|Screen Recording)(?: and (?:Accessibility|Screen Recording))?) required\b/iu.exec(reason)?.[1] ?? "" : "";
+  return PANES.filter((pane) => (pane === "screen" ? /Screen Recording/iu : /Accessibility/iu).test(list));
+}

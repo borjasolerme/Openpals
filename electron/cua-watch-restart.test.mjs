@@ -5,15 +5,19 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const fixture = vi.hoisted(() => ({ home: "", alive: true, hosts: [], failStarts: 0, granted: true }));
+const fixture = vi.hoisted(() => ({ home: "", alive: true, dead: new Set(), hosts: [], failStarts: 0, granted: true }));
 vi.mock("electron", () => ({ app: { isPackaged: false, getPath: () => fixture.home }, ipcMain: { handle: () => {} } }));
 vi.mock("@trycua/cua-driver/embedded", () => ({
   EmbeddedCuaDriverHost: class {
-    constructor() { fixture.hosts.push(this); }
+    static withOptions() { return new this(); }
+    // Each start answers on its own socket, so one driver can stop answering while the next one works.
+    constructor() { fixture.hosts.push(this); this.socket = `/fixture/driver-${fixture.hosts.length}.sock`; }
     async start() {
       if (fixture.failStarts > 0) { fixture.failStarts -= 1; throw new Error("the driver could not start"); }
-      return { socketPath: "/fixture/driver.sock" };
+      return { socketPath: this.socket };
     }
+    // Main's exit watch (cua.mjs watchEmbeddedHost): this driver never exits, it only stops answering.
+    waitForExit() { return new Promise(() => {}); }
     stop = vi.fn(async () => {});
     uniffiDestroy = vi.fn();
   },
@@ -25,7 +29,7 @@ vi.mock("@trycua/cua-driver/electron", () => ({
 vi.mock("node:fs", async (original) => {
   const fs = await original();
   return { ...fs, default: { ...fs.default, existsSync: (file) => {
-    if (String(file).endsWith(".sock")) return fixture.alive;
+    if (String(file).endsWith(".sock")) return fixture.alive && !fixture.dead.has(String(file));
     if (String(file).includes("CuaDriver.app")) return false;
     return fs.existsSync(file);
   } } };
@@ -41,12 +45,17 @@ vi.mock("node:net", async (original) => {
 });
 vi.mock("./cua-watch.mjs", async (original) => {
   const actual = await original();
-  return { ...actual, DEAD_DRIVER_RETRY_MS: [5, 5], watchDriver: (options) => actual.watchDriver({ ...options, everyMs: 5, log: () => {} }) };
+  return { ...actual, watchDriver: (options) => actual.watchDriver({ ...options, everyMs: 5, log: () => {} }) };
+});
+// The helper's own bounded restarts (three tries), quickly.
+vi.mock("./cua-restart.mjs", async (original) => {
+  const actual = await original();
+  return { ...actual, createHelperRestarts: (options) => actual.createHelperRestarts({ ...options, waitsMs: [5, 5, 5], log: () => {} }) };
 });
 
 let cua;
 beforeEach(async () => {
-  Object.assign(fixture, { home: mkdtempSync(join(tmpdir(), "omb-cua-watch-")), alive: true, hosts: [], failStarts: 0, granted: true });
+  Object.assign(fixture, { home: mkdtempSync(join(tmpdir(), "omb-cua-watch-")), alive: true, dead: new Set(), hosts: [], failStarts: 0, granted: true });
   vi.stubEnv("OPENMAUSBOT_CUA_EMBEDDED", "1");
   vi.stubEnv("CUA_DRIVER_PATH", "/fixture/cua-driver");
   vi.resetModules();
@@ -68,15 +77,15 @@ describe.skipIf(process.platform !== "darwin")("the Mac driver dies after it sta
 
   it("starts it again, and watches the new one", async () => {
     await expect(cua.startCua()).resolves.toMatchObject({ mode: "embedded" });
-    fixture.alive = false;
-    await expect.poll(() => fixture.hosts.length).toBeGreaterThanOrEqual(2);
+    fixture.dead.add(fixture.hosts[0].socket);
+    await expect.poll(() => fixture.hosts.length).toBe(2);
     expect(fixture.hosts[0].stop).toHaveBeenCalledOnce();
-    fixture.alive = true;
-    const settled = fixture.hosts.length;
     await pause();
-    expect(fixture.hosts).toHaveLength(settled);
-    fixture.alive = false;
-    await expect.poll(() => fixture.hosts.length).toBeGreaterThan(settled);
+    expect(fixture.hosts).toHaveLength(2);
+    fixture.dead.add(fixture.hosts[1].socket);
+    await expect.poll(() => fixture.hosts.length).toBe(3);
+    await pause();
+    expect(fixture.hosts).toHaveLength(3);
   });
 
   it("tries again when the restart fails, and stops trying after a few", async () => {
@@ -94,7 +103,8 @@ describe.skipIf(process.platform !== "darwin")("the Mac driver dies after it sta
     fixture.alive = false;
     await expect.poll(() => fixture.hosts.length).toBeGreaterThanOrEqual(3);
     fixture.alive = true;
-    expect(JSON.parse((await import("node:fs")).readFileSync(join(fixture.home, "cua-connection.json"), "utf8")).mode).toBe("embedded");
+    const { readFileSync } = await import("node:fs");
+    await expect.poll(() => JSON.parse(readFileSync(join(fixture.home, "cua-connection.json"), "utf8")).mode).toBe("embedded");
   });
 
   it("doesn't keep asking when macOS permissions are what's missing", async () => {

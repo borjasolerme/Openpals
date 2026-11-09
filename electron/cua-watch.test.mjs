@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { MISSES_BEFORE_RESTART, WATCH_EVERY_MS, restartWorthTrying, watchDriver } from "./cua-watch.mjs";
+import { MISSES_BEFORE_RESTART, WATCH_EVERY_MS, watchDriver } from "./cua-watch.mjs";
 
 const tick = () => vi.advanceTimersByTimeAsync(WATCH_EVERY_MS);
 
@@ -54,14 +54,5 @@ describe("watching the computer-control driver", () => {
     watch.stop();
     for (let i = 0; i < 6; i++) await tick();
     expect(restart).not.toHaveBeenCalled();
-  });
-
-  it.each([
-    ["Accessibility and Screen Recording required; grant access in System Settings and restart OpenMausBot", false],
-    ["Computer use restart cancelled", false],
-    ["embedded host failed: EmbeddedDriverError.Spawn; standalone launch failed: timed out", true],
-    [undefined, true],
-  ])("decides whether another try can help: %s", (message, worth) => {
-    expect(restartWorthTrying(message)).toBe(worth);
   });
 });
