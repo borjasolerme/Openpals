@@ -545,7 +545,6 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
           // Native shell snapshots can restore variables the shell policy removed.
           ...(turn.toolScope === undefined && !authBridge ? [] : ["-c", "features.shell_snapshot=false"])];
         const codexConfig = codexConfigMcp(env), declaredInCodexConfig = codexConfig.names;
-        // A whole-table override preserves literal names and must precede the per-mount CLI overrides.
         if (turn.toolScope !== undefined) appServerArgs.push(...codexMcpDisableArgs(declaredInCodexConfig));
         const baseEnv = new Map(Object.entries(env).filter(([, value]) => value !== undefined));
         const mountedNames = new Set<string>();
