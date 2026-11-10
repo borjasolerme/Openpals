@@ -566,7 +566,7 @@ import { createPersonReplies } from "./person-replies.ts";
 import { personKey, relayedPersonKey } from "./person-key.ts";
 
 import { createShareAnswer } from "./host/share-answer.ts";
-import { selfThreadRefusal } from "./host/self-threads.ts";
+import { selfThreadOpening, selfThreadRefusal } from "./host/self-threads.ts";
 import { createCardRequester, linePersonKey } from "./host/thread-person.ts";
 import { createThreadRoutes } from "./routes/threads.ts";
 import { createWebhookRoutes } from "./routes/webhooks.ts";
@@ -13156,9 +13156,11 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           };
           if (owner.group) chip.from = { botId: from.id, name: from.name, color: from.color };
           store.appendMessage(fromThreadId, chip);
-          // Mark the bot's own words, so a later turn never mistakes the request for the person's.
-          const opening = `[Thread you opened yourself${sourceTitle ? ` from #${sourceTitle}` : ""}. The request below is your own words, not the person's: do the work here and end with a clear result they can read.]\n\n${message}`;
-          const outcome = await startOrQueueOpenedThread(from.id, task.threadId, opening, isUnattended(from.id, fromThreadId), turnOrigin(internalCapability));
+          // Mark the bot's own words, so a later turn never mistakes the request for the person's; a person's own request
+          // travels with it, so the person's words decide the scope.
+          const origin = turnOrigin(internalCapability);
+          const opening = selfThreadOpening({ sourceTitle, origin, message });
+          const outcome = await startOrQueueOpenedThread(from.id, task.threadId, opening, isUnattended(from.id, fromThreadId), origin);
           return json(res, 201, {
             threadId: task.threadId,
             title: task.title,
