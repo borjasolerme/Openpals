@@ -4968,5 +4968,6 @@
   "chat.engineCompactionTitle": "Czat skrócony do podsumowania",
   "chat.engineCompactionHint": "AI podsumowało wcześniejsze wiadomości, żeby zrobić miejsce. Cała rozmowa nadal tu jest, ale agent może nie pamiętać dokładnie starszych szczegółów.",
   "chat.preview.save": "Zapisz na urządzeniu",
-  "chat.preview.saveFailed": "Nie udało się zapisać strony."
+  "chat.preview.saveFailed": "Nie udało się zapisać strony.",
+  "skills.unassignConfirm": "Odpiąć „{name}” od tego bota? Umiejętność zostanie w bibliotece."
 }

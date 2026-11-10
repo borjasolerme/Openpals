@@ -3562,5 +3562,6 @@
   "chat.engineCompactionTitle": "聊天已濃縮為摘要",
   "chat.engineCompactionHint": "AI 已將先前的訊息整理成摘要以騰出空間。完整對話仍在這裡，但代理程式可能記不清較早的細節。",
   "chat.preview.save": "儲存到裝置",
-  "chat.preview.saveFailed": "無法儲存此頁面。"
+  "chat.preview.saveFailed": "無法儲存此頁面。",
+  "skills.unassignConfirm": "要從此機器人取消指派「{name}」嗎？技能仍保留在資料庫中。"
 }

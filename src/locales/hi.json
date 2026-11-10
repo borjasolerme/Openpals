@@ -2118,5 +2118,6 @@
   "chat.engineCompactionTitle": "चैट को सारांश में समेटा गया",
   "chat.engineCompactionHint": "जगह बनाने के लिए AI ने पुराने संदेशों का सारांश बनाया। आपकी पूरी बातचीत अब भी यहीं है, लेकिन हो सकता है एजेंट को पुरानी बातें ठीक-ठीक याद न रहें।",
   "chat.preview.save": "डिवाइस पर सहेजें",
-  "chat.preview.saveFailed": "पेज सहेजा नहीं जा सका।"
+  "chat.preview.saveFailed": "पेज सहेजा नहीं जा सका।",
+  "skills.unassignConfirm": "इस बॉट से “{name}” हटाएँ? स्किल लाइब्रेरी में बनी रहेगी।"
 }

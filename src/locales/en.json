@@ -2834,6 +2834,7 @@
   "botPanel.memory.addPlaceholder": "Tell {name} something to remember",
   "botPanel.skills.remove": "Remove {name}",
   "botPanel.skills.removeConfirm": "Remove the skill “{name}”?",
+  "skills.unassignConfirm": "Unassign “{name}” from this bot? The skill stays in the library.",
   "botPanel.skills.removeFailed": "Could not remove this skill.",
   "botPanel.skills.importFailed": "Could not add that skill.",
   "botPanel.skills.importPlaceholder": "Paste a skill link or owner/repo",

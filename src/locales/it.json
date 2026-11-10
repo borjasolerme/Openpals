@@ -4856,5 +4856,6 @@
   "chat.engineCompactionTitle": "Chat condensata in un riepilogo",
   "chat.engineCompactionHint": "L'IA ha riassunto i messaggi precedenti per fare spazio. Tutta la conversazione è ancora qui, ma l'agente potrebbe non ricordare con precisione i dettagli più vecchi.",
   "chat.preview.save": "Salva sul dispositivo",
-  "chat.preview.saveFailed": "Impossibile salvare la pagina."
+  "chat.preview.saveFailed": "Impossibile salvare la pagina.",
+  "skills.unassignConfirm": "Togliere “{name}” da questo bot? La skill resta nella libreria."
 }

@@ -4048,5 +4048,6 @@
   "chat.engineCompactionTitle": "Đã tóm gọn cuộc trò chuyện",
   "chat.engineCompactionHint": "AI đã tóm tắt các tin nhắn trước để có thêm chỗ. Toàn bộ cuộc trò chuyện vẫn ở đây, nhưng tác tử có thể không nhớ chính xác các chi tiết cũ.",
   "chat.preview.save": "Lưu vào thiết bị",
-  "chat.preview.saveFailed": "Không lưu được trang."
+  "chat.preview.saveFailed": "Không lưu được trang.",
+  "skills.unassignConfirm": "Bỏ gán “{name}” khỏi bot này? Kỹ năng vẫn ở trong thư viện."
 }

@@ -5554,5 +5554,6 @@
   "chat.engineCompactionTitle": "聊天已压缩为摘要",
   "chat.engineCompactionHint": "AI 已总结之前的消息以腾出空间。完整对话仍在这里，但智能体可能记不清较早的细节。",
   "chat.preview.save": "保存到设备",
-  "chat.preview.saveFailed": "无法保存该页面。"
+  "chat.preview.saveFailed": "无法保存该页面。",
+  "skills.unassignConfirm": "要从此机器人取消分配“{name}”吗？技能仍保留在库中。"
 }

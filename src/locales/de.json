@@ -2170,5 +2170,6 @@
   "chat.engineCompactionTitle": "Chat zu einer Zusammenfassung verdichtet",
   "chat.engineCompactionHint": "Die KI hat frühere Nachrichten zusammengefasst, um Platz zu schaffen. Dein ganzer Chat ist noch da, aber der Agent erinnert sich an ältere Details vielleicht nicht genau.",
   "chat.preview.save": "Auf dem Gerät speichern",
-  "chat.preview.saveFailed": "Die Seite konnte nicht gespeichert werden."
+  "chat.preview.saveFailed": "Die Seite konnte nicht gespeichert werden.",
+  "skills.unassignConfirm": "„{name}“ von diesem Bot entfernen? Der Skill bleibt in der Bibliothek."
 }

@@ -5464,5 +5464,6 @@
   "chat.engineCompactionTitle": "채팅을 요약으로 압축했어요",
   "chat.engineCompactionHint": "AI가 공간을 만들려고 이전 메시지를 요약했어요. 대화 전체는 그대로 있지만, 에이전트가 오래된 세부 내용을 정확히 기억하지 못할 수 있어요.",
   "chat.preview.save": "기기에 저장",
-  "chat.preview.saveFailed": "페이지를 저장할 수 없어요."
+  "chat.preview.saveFailed": "페이지를 저장할 수 없어요.",
+  "skills.unassignConfirm": "이 봇에서 “{name}”을(를) 빼시겠어요? 스킬은 라이브러리에 남아요."
 }

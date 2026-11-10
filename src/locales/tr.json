@@ -4048,5 +4048,6 @@
   "chat.engineCompactionTitle": "Sohbet bir özete sıkıştırıldı",
   "chat.engineCompactionHint": "Yapay zekâ yer açmak için önceki mesajları özetledi. Sohbetin tamamı hâlâ burada, ancak ajan eski ayrıntıları tam olarak hatırlamayabilir.",
   "chat.preview.save": "Cihaza kaydet",
-  "chat.preview.saveFailed": "Sayfa kaydedilemedi."
+  "chat.preview.saveFailed": "Sayfa kaydedilemedi.",
+  "skills.unassignConfirm": "“{name}” bu bottan kaldırılsın mı? Beceri kitaplıkta kalır."
 }

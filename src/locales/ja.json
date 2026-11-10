@@ -5030,5 +5030,6 @@
   "chat.engineCompactionTitle": "チャットを要約にまとめました",
   "chat.engineCompactionHint": "AI が空きを作るために以前のメッセージを要約しました。会話はすべて残っていますが、エージェントは古い詳細を正確には覚えていないかもしれません。",
   "chat.preview.save": "デバイスに保存",
-  "chat.preview.saveFailed": "ページを保存できませんでした。"
+  "chat.preview.saveFailed": "ページを保存できませんでした。",
+  "skills.unassignConfirm": "このボットから「{name}」の割り当てを外しますか？スキルはライブラリに残ります。"
 }

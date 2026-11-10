@@ -4316,5 +4316,6 @@
   "chat.engineCompactionTitle": "Chat resumido",
   "chat.engineCompactionHint": "La IA resumió los mensajes anteriores para hacer sitio. Toda tu conversación sigue aquí, pero puede que el agente no recuerde con exactitud los detalles más antiguos.",
   "chat.preview.save": "Guardar en el dispositivo",
-  "chat.preview.saveFailed": "No se pudo guardar la página."
+  "chat.preview.saveFailed": "No se pudo guardar la página.",
+  "skills.unassignConfirm": "¿Quitar «{name}» de este bot? La habilidad sigue en la biblioteca."
 }
