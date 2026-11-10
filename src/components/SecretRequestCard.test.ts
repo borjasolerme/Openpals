@@ -167,13 +167,19 @@ describe("SecretRequestCard key analytics", () => {
     expect(fixture.api.mock.calls[0]).toEqual(["/api/config", { method: "PUT", body: JSON.stringify({ xai: { key: "xai-ZZtestSECRET0123456789" } }) }]);
   });
 
-  // Settings keeps an AI provider key in the server's settings, not the desktop's store: the card does the same.
-  it("saves an Anthropic key where Settings does, never through the desktop store, keeping Claude sign-ins", async () => {
-    const setCredential = vi.fn();
+  it("saves an Anthropic key in the desktop store as Settings does, keeping Claude sign-ins", async () => {
+    const setCredential = vi.fn().mockResolvedValue({ anthropic: { configured: true } });
     vi.stubGlobal("window", { ogb: { setCredential } });
+    fixture.api.mockResolvedValueOnce({ ok: true });
+    await submit("anthropicApiKey", "sk-ant-ZZtestSECRET0123456789");
+    expect(setCredential).toHaveBeenCalledExactlyOnceWith("anthropicApiKey", "sk-ant-ZZtestSECRET0123456789", { everyClaudeBot: false });
+    expect(fixture.api.mock.calls.map(([path]) => path)).toEqual(["/api/bots/bot-1/secret-cards/secret-card/provided"]);
+  });
+
+  it("sends a provider key typed on a page without the desktop store to the server's settings", async () => {
+    vi.stubGlobal("window", { ogb: {} });
     fixture.api.mockResolvedValueOnce({ anthropic: { configured: true } }).mockResolvedValueOnce({ ok: true });
     await submit("anthropicApiKey", "sk-ant-ZZtestSECRET0123456789");
-    expect(setCredential).not.toHaveBeenCalled();
     expect(fixture.api.mock.calls[0]).toEqual(["/api/config", { method: "PUT", body: JSON.stringify({ anthropic: { key: "sk-ant-ZZtestSECRET0123456789", everyClaudeBot: false } }) }]);
   });
 

@@ -74,6 +74,8 @@ Setup needs an interactive terminal. Later starts can run without one once setup
 
 API keys are hidden while typed or pasted. New API connections save their key in the data directory's `config.json` as **plaintext, not encrypted**, with owner-only permissions (`0600`) on Unix. Keep this file and backups private. Native provider sign-in credentials are managed by the provider's own CLI.
 
+The packaged desktop app does not keep your AI provider and service keys there: it encrypts them with the operating system (Keychain on macOS, DPAPI on Windows, the system secret store on Linux, where a desktop without one gets only Electron's fixed-key obfuscation) in `credentials.bin` and moves keys it finds in `config.json` into that store at startup. Keys entered through this CLI setup, OpenCode provider keys, keys given to one engine (`environment` or `key`), and MCP header values stay plaintext in `config.json`, on desktop too. `mcp-oauth.json` is also plaintext.
+
 Ctrl-C during AI setup leaves unsaved OMB changes unapplied. Installations and provider sign-ins already completed remain available. Ctrl-C during the later phone step keeps the AI setup you already saved, and exits without starting a server. Run `openmausbot setup` to continue; no destructive reset is needed.
 
 For remote access and background deployment options, see [self-hosting](self-hosting.md) and [the VPS guide](deploy-vps.md).
