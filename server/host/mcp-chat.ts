@@ -10,7 +10,7 @@ import { json } from "../harness/http.ts";
 import { mcpOAuthRedirectUri, type McpOAuthManager } from "../mcp-oauth.ts";
 import { listMcpServers } from "../mcp-registry.ts";
 import type { RequestAuth } from "../request-auth.ts";
-import { applyMcpChange, showMcpActivity, type InternalMcpDeps } from "../routes/internal-mcp.ts";
+import { applyMcpChange, otherBotsGiven, showMcpActivity, type InternalMcpDeps } from "../routes/internal-mcp.ts";
 import type { BotRecord, Store } from "../store.ts";
 import { workspaceDir } from "../workspace.ts";
 import type { McpConfig } from "./mcp-config.ts";
@@ -85,7 +85,7 @@ export function createMcpChat(deps: McpChatDeps) {
       decide: (summary, applied) => appendDecision(DATA_DIR, { threadId, botId: sender.id, botName: sender.name, tool: "mcp_server", summary, decision: "auto-approved", source: applied }),
       activity: (label, call) => showMcpActivity(store, { threadId, turnId: liveTurnByThread.get(threadId), ...(from ? { from } : {}) }, call, label),
       language: () => threadLanguage(threadId),
-      usedBy: (name) => store.bots.filter((bot) => bot.id !== sender.id && !bot.hidden && mcpServersHost.given(bot).includes(name) && canUseMcpServer(bot.toolScope, name)).map((bot) => bot.name),
+      usedBy: (name) => otherBotsGiven(store.bots, sender, (bot) => mcpServersHost.given(bot).includes(name) && canUseMcpServer(bot.toolScope, name)),
       requestApproval: ({ action, name, subtitle, targetHash, fields }) => mcpRequests.propose({ action, name, botId: sender.id, threadId, targetHash }, subtitle, fields, from),
       requestSignIn: (name, server) => mcpSignInCards.request({ bot: sender, threadId, ...(from ? { from } : {}) }, name, server),
     };
