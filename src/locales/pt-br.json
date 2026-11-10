@@ -4900,5 +4900,6 @@
   "server.mcp.problem.refused": "{name} recusou o login ou a chave. Abra Apps → Servidores MCP para entrar de novo ou atualizar a chave.",
   "server.mcp.problem.notFound": "{name} não foi encontrado no endereço. Confira o endereço em Apps → Servidores MCP.",
   "server.mcp.problem.timeout": "{name} não respondeu a tempo. Tente de novo daqui a pouco e, se continuar, teste em Apps → Servidores MCP.",
-  "server.mcp.problem.cantConnect": "Não foi possível conectar a {name}. Teste em Apps → Servidores MCP para ver o motivo."
+  "server.mcp.problem.cantConnect": "Não foi possível conectar a {name}. Teste em Apps → Servidores MCP para ver o motivo.",
+  "server.mcp.alsoOn": "Também ligado para {names}: desligue para um nas configurações dele, em Apps que pode usar"
 }

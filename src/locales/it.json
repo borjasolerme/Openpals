@@ -4851,5 +4851,6 @@
   "server.mcp.problem.refused": "{name} ha rifiutato l'accesso o la chiave. Apri App → Server MCP per accedere di nuovo o aggiornare la chiave.",
   "server.mcp.problem.notFound": "{name} non è stato trovato al suo indirizzo. Controlla l'indirizzo in App → Server MCP.",
   "server.mcp.problem.timeout": "{name} non ha risposto in tempo. Riprova tra un attimo e, se continua, provalo in App → Server MCP.",
-  "server.mcp.problem.cantConnect": "Impossibile connettersi a {name}. Provalo in App → Server MCP per vedere perché."
+  "server.mcp.problem.cantConnect": "Impossibile connettersi a {name}. Provalo in App → Server MCP per vedere perché.",
+  "server.mcp.alsoOn": "Attivo anche per {names}: disattivalo per uno nelle sue impostazioni, in App che può usare"
 }

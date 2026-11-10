@@ -4963,5 +4963,6 @@
   "server.mcp.problem.refused": "{name} odrzucił logowanie lub klucz. Otwórz Aplikacje → Serwery MCP, aby zalogować się ponownie lub zmienić klucz.",
   "server.mcp.problem.notFound": "Nie znaleziono {name} pod jego adresem. Sprawdź adres w Aplikacje → Serwery MCP.",
   "server.mcp.problem.timeout": "{name} nie odpowiedział na czas. Spróbuj za chwilę, a jeśli to się powtarza, przetestuj go w Aplikacje → Serwery MCP.",
-  "server.mcp.problem.cantConnect": "Nie udało się połączyć z {name}. Przetestuj go w Aplikacje → Serwery MCP, aby zobaczyć dlaczego."
+  "server.mcp.problem.cantConnect": "Nie udało się połączyć z {name}. Przetestuj go w Aplikacje → Serwery MCP, aby zobaczyć dlaczego.",
+  "server.mcp.alsoOn": "Włączone też dla {names}: wyłącz dla jednego w jego ustawieniach, w sekcji Aplikacje, których może używać"
 }

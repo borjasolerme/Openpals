@@ -2168,7 +2168,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6483,7 +6484,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8600,7 +8602,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10717,7 +10720,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15746,7 +15750,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20650,7 +20655,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -26203,7 +26209,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29764,7 +29771,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -32252,7 +32260,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -36299,7 +36308,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -40346,7 +40356,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -45313,7 +45324,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50321,7 +50333,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -55176,7 +55189,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -60639,7 +60653,8 @@
       "server.mcp.problem.refused": "3c308a0a415cf088ed837cea9eb5ca4aa6c9f9f101786687ca42d2d6a2785496",
       "server.mcp.problem.notFound": "c13c9b1627765e908c61becffdecf4dc78277e519d7439722ce0fb6336cd01ca",
       "server.mcp.problem.timeout": "8229ad60ab199a10f9b970656c657c5df4096606b70a1fef3aef09837f832a88",
-      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875"
+      "server.mcp.problem.cantConnect": "def48e41b7746250c2af76b8426c8a40d37a27b06972e6537617df9ee691b875",
+      "server.mcp.alsoOn": "a7717d98c90c14e338a9e5d265c8f4c8f8c3d5ea4eb197a93705b868bc5f0dc7"
     }
   }
 }

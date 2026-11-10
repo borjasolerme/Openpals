@@ -2165,5 +2165,6 @@
   "server.mcp.problem.refused": "{name} hat die Anmeldung oder den Schlüssel abgelehnt. Öffne Apps → MCP-Server, um dich erneut anzumelden oder den Schlüssel zu ändern.",
   "server.mcp.problem.notFound": "{name} wurde unter seiner Adresse nicht gefunden. Prüfe die Adresse unter Apps → MCP-Server.",
   "server.mcp.problem.timeout": "{name} hat nicht rechtzeitig geantwortet. Versuche es gleich noch einmal, und wenn es weiter passiert, teste ihn unter Apps → MCP-Server.",
-  "server.mcp.problem.cantConnect": "Keine Verbindung zu {name}. Teste ihn unter Apps → MCP-Server, um den Grund zu sehen."
+  "server.mcp.problem.cantConnect": "Keine Verbindung zu {name}. Teste ihn unter Apps → MCP-Server, um den Grund zu sehen.",
+  "server.mcp.alsoOn": "Auch an für {names}: Schalte es für einen in dessen Einstellungen unter „Apps, die er nutzen darf“ aus"
 }

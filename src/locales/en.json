@@ -167,6 +167,7 @@
   "server.mcp.removed": "Removed MCP server {name}",
   "server.mcp.listed": "Checked MCP servers",
   "server.mcp.on": "Turned on",
+  "server.mcp.alsoOn": "Also on for {names}: switch it off for one in its settings, under Apps it can use",
   "server.mcp.switchedOff": "Switched off",
   "server.mcp.keysCleared": "Saved keys cleared",
   "server.mcp.testTools.one": "Test: {count} tool",

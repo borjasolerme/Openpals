@@ -2113,5 +2113,6 @@
   "server.mcp.problem.refused": "{name} a refusé sa connexion ou sa clé. Ouvrez Apps → Serveurs MCP pour vous reconnecter ou mettre à jour sa clé.",
   "server.mcp.problem.notFound": "{name} est introuvable à son adresse. Vérifiez l'adresse dans Apps → Serveurs MCP.",
   "server.mcp.problem.timeout": "{name} n'a pas répondu à temps. Réessayez dans un instant et, si cela continue, testez-le dans Apps → Serveurs MCP.",
-  "server.mcp.problem.cantConnect": "Impossible de se connecter à {name}. Testez-le dans Apps → Serveurs MCP pour voir pourquoi."
+  "server.mcp.problem.cantConnect": "Impossible de se connecter à {name}. Testez-le dans Apps → Serveurs MCP pour voir pourquoi.",
+  "server.mcp.alsoOn": "Aussi activé pour {names} : désactivez-le pour l'un d'eux dans ses réglages, sous Apps qu'il peut utiliser"
 }

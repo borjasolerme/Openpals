@@ -3557,5 +3557,6 @@
   "server.mcp.problem.refused": "{name} 拒絕了登入或金鑰。打開「應用程式 → MCP 伺服器」重新登入或更新金鑰。",
   "server.mcp.problem.notFound": "在其位址上找不到 {name}。請在「應用程式 → MCP 伺服器」中檢查位址。",
   "server.mcp.problem.timeout": "{name} 沒有及時回應。請稍後再試；如果一直這樣，請在「應用程式 → MCP 伺服器」中測試它。",
-  "server.mcp.problem.cantConnect": "無法連線到 {name}。請在「應用程式 → MCP 伺服器」中測試它以查看原因。"
+  "server.mcp.problem.cantConnect": "無法連線到 {name}。請在「應用程式 → MCP 伺服器」中測試它以查看原因。",
+  "server.mcp.alsoOn": "{names} 也已開啟：要為某一個關閉，請在其設定的「可使用的應用程式」中關閉"
 }

@@ -4043,5 +4043,6 @@
   "server.mcp.problem.refused": "{name} đã từ chối đăng nhập hoặc khóa. Mở Ứng dụng → Máy chủ MCP để đăng nhập lại hoặc cập nhật khóa.",
   "server.mcp.problem.notFound": "Không tìm thấy {name} tại địa chỉ của nó. Kiểm tra địa chỉ trong Ứng dụng → Máy chủ MCP.",
   "server.mcp.problem.timeout": "{name} không trả lời kịp. Hãy thử lại sau ít phút, và nếu vẫn xảy ra, hãy kiểm tra nó trong Ứng dụng → Máy chủ MCP.",
-  "server.mcp.problem.cantConnect": "Không thể kết nối với {name}. Kiểm tra nó trong Ứng dụng → Máy chủ MCP để xem lý do."
+  "server.mcp.problem.cantConnect": "Không thể kết nối với {name}. Kiểm tra nó trong Ứng dụng → Máy chủ MCP để xem lý do.",
+  "server.mcp.alsoOn": "Cũng bật cho {names}: tắt cho một bot trong cài đặt của nó, mục Ứng dụng có thể dùng"
 }

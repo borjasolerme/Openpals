@@ -4043,5 +4043,6 @@
   "server.mcp.problem.refused": "{name} girişi veya anahtarı reddetti. Yeniden giriş yapmak ya da anahtarı güncellemek için Uygulamalar → MCP sunucuları'nı aç.",
   "server.mcp.problem.notFound": "{name} adresinde bulunamadı. Adresi Uygulamalar → MCP sunucuları'nda kontrol et.",
   "server.mcp.problem.timeout": "{name} zamanında yanıt vermedi. Biraz sonra tekrar dene; böyle devam ederse Uygulamalar → MCP sunucuları'nda test et.",
-  "server.mcp.problem.cantConnect": "{name} sunucusuna bağlanılamadı. Nedenini görmek için Uygulamalar → MCP sunucuları'nda test et."
+  "server.mcp.problem.cantConnect": "{name} sunucusuna bağlanılamadı. Nedenini görmek için Uygulamalar → MCP sunucuları'nda test et.",
+  "server.mcp.alsoOn": "{names} için de açık: biri için kapatmak üzere onun ayarlarında, Kullanabileceği uygulamalar altında kapat"
 }

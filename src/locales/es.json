@@ -4311,5 +4311,6 @@
   "server.mcp.problem.refused": "{name} rechazó el inicio de sesión o la clave. Abre Apps → Servidores MCP para iniciar sesión de nuevo o actualizar la clave.",
   "server.mcp.problem.notFound": "No se encontró {name} en su dirección. Revisa la dirección en Apps → Servidores MCP.",
   "server.mcp.problem.timeout": "{name} no respondió a tiempo. Vuelve a intentarlo en un momento y, si sigue pasando, pruébalo en Apps → Servidores MCP.",
-  "server.mcp.problem.cantConnect": "No se pudo conectar con {name}. Pruébalo en Apps → Servidores MCP para ver por qué."
+  "server.mcp.problem.cantConnect": "No se pudo conectar con {name}. Pruébalo en Apps → Servidores MCP para ver por qué.",
+  "server.mcp.alsoOn": "También activado para {names}: desactívalo para uno en sus ajustes, en Apps que puede usar"
 }
