@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { WATCHER_OPTIONS_CARD_BOT_ID } from "../../shared/options-card.ts";
+import { dropBlankArguments } from "./agents-blank-arguments.ts";
 import { callTool, type ToolCallContext } from "./agents-call.ts";
 import { availableTools, catalogProfileFromEnv, fullInputSchema } from "./agents-catalog.ts";
 import type { Json } from "./agents-client.ts";
@@ -115,7 +116,12 @@ describe("the advertised agents tool schemas", () => {
 });
 
 describe("every agents call is held to its full schema", () => {
-  const cases = LISTED.flatMap((tool) => bounds(fullInputSchema(tool.name)).map((bound) => [`${tool.name} ${bound.path.join(".")} ${bound.keyword}`, tool.name, bound] as const));
+  const all = LISTED.flatMap((tool) => bounds(fullInputSchema(tool.name)).map((bound) => [`${tool.name} ${bound.path.join(".")} ${bound.keyword}`, tool.name, bound] as const));
+  const blankLeftOut = ([, tool, bound]: (typeof all)[number]) => {
+    const args = argumentsBreaking(bound);
+    return JSON.stringify(dropBlankArguments(tool, args)) !== JSON.stringify(args);
+  };
+  const cases = all.filter((one) => !blankLeftOut(one));
 
   it("covers every bound of every listed tool", () => {
     expect(cases.length).toBeGreaterThan(80);
@@ -128,6 +134,14 @@ describe("every agents call is held to its full schema", () => {
     expect(result.text).toContain(`${tool} was not run:`);
     expect(result.text).toContain(bound.path.filter((part) => part !== "[]" && part !== "{}").at(-1) ?? "arguments");
     expect(calls).toEqual([]);
+  });
+
+  it("reads a blank model effort as left out, not as a value out of bounds", () => {
+    // No bound here gives a blank a meaning of its own, so none is skipped above.
+    expect(all.filter(blankLeftOut).map(([label]) => label)).toEqual([]);
+    const args = { title: "t", message: "m", model_selection: { instanceId: "codex", model: "gpt", effort: "" } };
+    expect(dropBlankArguments("start_thread", args)).toEqual({ title: "t", message: "m", model_selection: { instanceId: "codex", model: "gpt" } });
+    expect(outOfBounds("start_thread", fullInputSchema("start_thread"), dropBlankArguments("start_thread", args))).toBeUndefined();
   });
 
   it("reads a null as a field left out, and names every problem up to four", () => {
