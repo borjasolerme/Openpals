@@ -259,7 +259,7 @@ export class LimitResetClock {
   start(): void {
     if (this.timer) return;
     // While an engine is held its usage is read every few minutes too, so a limit that reset early ends the hold.
-    this.timer = setInterval(() => { if (this.refusals.size || this.options.waiting?.()) void this.ensureFresh(LIMIT_POLL_MS - 1_000); }, 60_000);
+    this.timer = setInterval(() => { if (this.holding() || this.options.waiting?.()) void this.ensureFresh(LIMIT_POLL_MS - 1_000); }, 60_000);
     this.timer.unref?.();
   }
 
@@ -274,6 +274,11 @@ export class LimitResetClock {
     const fixture = process.env.OMB_TEST_PLAN_USAGE_FILE;
     if (fixture) return Promise.resolve(fixtureUsage(fixture, this.now()));
     return loadPlanUsage({ accounts, refresh: force });
+  }
+
+  /** Whether any hold is still live; reading each one drops a hold that ran out, so polling stops with the last. */
+  private holding(): boolean {
+    return [...this.refusals.keys()].some((engine) => this.refusal(engine) !== null);
   }
 
   private refusal(engine: string): number | null {
