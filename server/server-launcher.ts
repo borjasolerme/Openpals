@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { boxMemory, heapSizeArgs, type BoxMemory } from "./box-memory.ts";
+import { clearRecordsFromEarlierRunOfThisContainer } from "./data-dir-lease.ts";
 import { restartPolicy } from "./restart.ts";
 
 /** The server's heap sized to the container's memory limit, run through the bootstrap that keeps Node's compile cache on
@@ -52,6 +53,13 @@ function isEntry(): boolean {
 }
 
 if (isEntry()) {
+  const dataDir = process.env.OMB_DATA_DIR || join(homedir(), ".openmausbot");
+  try {
+    // A container starts with nothing of its own running: a lease its earlier run left is a dead server's.
+    for (const { path, pid } of clearRecordsFromEarlierRunOfThisContainer(dataDir)) console.log(`Removed ${path}, left by this container's server (process ${pid}) when it stopped without closing.`);
+  } catch (error) {
+    console.warn(`The data folder's lease could not be checked: ${error instanceof Error ? error.message : String(error)}`);
+  }
   const server = serverCommand(dirname(fileURLToPath(import.meta.url)), process.env);
   void superviseServer(() => spawn(process.execPath, server.args, { stdio: "inherit", env: server.env })).then((code) => { process.exitCode = code; });
 }
