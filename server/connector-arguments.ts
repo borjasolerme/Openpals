@@ -59,7 +59,13 @@ const UNSAFE_JSON_NUMBER = Symbol("unsafe-json-number");
 
 function parsedJson(text: string, expectedShape: "object" | "array"): unknown {
   try {
-    return JSON.parse(text);
+    let unsafe = false;
+    const parsed = JSON.parse(text, (_key: string, value: unknown, context?: { source?: string }) => {
+      if (typeof value === "number" && (context?.source === undefined || !preservesNumericText(context.source, value))) unsafe = true;
+      return value;
+    });
+    if (expectedShape === "array" ? !Array.isArray(parsed) : !isObject(parsed)) return undefined;
+    return unsafe ? UNSAFE_JSON_NUMBER : parsed;
   } catch {
     return undefined;
   }
@@ -72,7 +78,8 @@ function coerce(value: unknown, node: Json | null, root: Json, path: string, cha
     const items = resolved(node!.items, root);
     const field = soleStringField(items, root);
     if (typeof value === "string") {
-      const parsed = parsedJson(value);
+      const parsed = parsedJson(value, "array");
+      if (parsed === UNSAFE_JSON_NUMBER) return value;
       if (Array.isArray(parsed)) {
         changed.push(`${path} from text to a list`);
         return parsed.map((item, index) => coerce(item, items, root, `${path}[${index}]`, []));
@@ -99,7 +106,8 @@ function coerce(value: unknown, node: Json | null, root: Json, path: string, cha
     return value;
   }
   if (type === "object") {
-    const parsed = typeof value === "string" ? parsedJson(value) : undefined;
+    const parsed = typeof value === "string" ? parsedJson(value, "object") : undefined;
+    if (parsed === UNSAFE_JSON_NUMBER) return value;
     if (isObject(parsed)) changed.push(`${path} from text to an object`);
     const object = isObject(parsed) ? parsed : value;
     if (!isObject(object) || !isObject(node!.properties)) return object;
@@ -109,8 +117,7 @@ function coerce(value: unknown, node: Json | null, root: Json, path: string, cha
   }
   if ((type === "number" || type === "integer") && typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value.trim())) {
     const number = Number(value.trim());
-    if (!Number.isFinite(number) || (Number.isInteger(number) && !Number.isSafeInteger(number)) ||
-      (type === "integer" && !Number.isInteger(number))) return value;
+    if (!preservesNumericText(value.trim(), number) || (type === "integer" && !Number.isInteger(number))) return value;
     changed.push(`${path} as a number`);
     return number;
   }
@@ -146,7 +153,8 @@ export function fitArguments(args: unknown, schema: unknown): { args: unknown; c
   const root = resolved(schema, isObject(schema) ? schema : {});
   if (!root || typeOf(root) !== "object" || !isObject(root.properties)) return { args, changed: [] };
   const changed: string[] = [];
-  const parsed = typeof args === "string" ? parsedJson(args) : args;
+  const parsed = typeof args === "string" ? parsedJson(args, "object") : args;
+  if (parsed === UNSAFE_JSON_NUMBER) return { args, changed: [] };
   if (typeof args === "string" && isObject(parsed)) changed.push("the arguments from text to an object");
   if (!isObject(parsed)) return { args, changed: [] };
   const properties = root.properties;
@@ -198,12 +206,12 @@ export function argumentRefusalNote(tool: string, schema: unknown, apps: readonl
   const again = example ? `Call it again with the arguments its schema names, for example ${example} with your own values. `
     : schema === undefined && !tool.startsWith("COMPOSIO_") ? "Read its arguments with COMPOSIO_GET_TOOL_SCHEMAS, then call it again with them. "
       : "Call it again with the arguments its schema names. ";
-  return `Openpals note: ${tool} did not run because its arguments did not fit its schema. ${again}` +
+  return `OpenMausBot note: ${tool} did not run because its arguments did not fit its schema. ${again}` +
     "This was a mistake in the arguments only: it says nothing about which apps or tools exist, so do not tell the person a tool is missing" +
     (apps.length ? `. Connected apps you can use: ${apps.join(", ")}.` : ".");
 }
 
 /** What a bot is told when its arguments were fitted, so its next call uses the shape the tool asks for. */
 export function fittedArgumentsNote(tool: string, changed: readonly string[]): string {
-  return `Openpals note: ${tool}'s arguments were read with ${changed.join(", ")}. Send them in that shape next time.`;
+  return `OpenMausBot note: ${tool}'s arguments were read with ${changed.join(", ")}. Send them in that shape next time.`;
 }
