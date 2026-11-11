@@ -117,8 +117,6 @@ async function readSse(
   signal: AbortSignal,
   onEvent: (event: SseEvent) => "stop" | undefined,
   maxBytes = MAX_REMOTE_MCP_BYTES,
-  /** One POST's reply: a stateless server may hang up right after its last event, leaving off the closing blank line. */
-  lastEventAtEnd = false,
 ): Promise<void> {
   const reader = response.body?.getReader();
   if (!reader) throw new McpHttpError("protocol", "empty event stream");
@@ -131,11 +129,7 @@ async function readSse(
   try {
     for (;;) {
       const { value, done } = await reader.read();
-      if (done) {
-        const last = lastEventAtEnd ? parseSseBlock(buffer + decoder.decode()) : null;
-        if (last) onEvent(last);
-        return;
-      }
+      if (done) return;
       bytes += value.byteLength;
       if (bytes > maxBytes) throw new McpHttpError("protocol", "event stream too large");
       const chunk = decoder.decode(value, { stream: true });
@@ -150,13 +144,14 @@ async function readSse(
         buffer = buffer.slice(separator + 2);
         const event = parseSseBlock(block);
         if (event && onEvent(event) === "stop") {
-          await reader.cancel().catch(() => {});
           return;
         }
       }
     }
   } finally {
     signal.removeEventListener("abort", onAbort);
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }
 
@@ -166,15 +161,17 @@ async function readBounded(response: Response, maxBytes = MAX_REMOTE_MCP_BYTES):
   const decoder = new TextDecoder();
   let text = "";
   let bytes = 0;
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) return text + decoder.decode();
-    bytes += value.byteLength;
-    if (bytes > maxBytes) {
-      await reader.cancel().catch(() => {});
-      throw new McpHttpError("protocol", "response too large");
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) return text + decoder.decode();
+      bytes += value.byteLength;
+      if (bytes > maxBytes) throw new McpHttpError("protocol", "response too large");
+      text += decoder.decode(value, { stream: true });
     }
-    text += decoder.decode(value, { stream: true });
+  } finally {
+    void reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }
 
@@ -317,7 +314,7 @@ export class RemoteMcpClient {
         if (!message) return undefined;
         found = message;
         return "stop";
-      }, this.maxBytes, true);
+      }, this.maxBytes);
       if (signal.aborted) throw new McpHttpError("network", "aborted");
       if (!found) throw new McpHttpError("protocol", "event stream ended without the response");
       return unwrap(found);
