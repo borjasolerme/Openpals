@@ -37,7 +37,27 @@ function soleStringField(node: Json | null, root: Json): string | null {
   return typeOf(resolved(node!.properties[keys[0]!], root)) === "string" ? keys[0]! : null;
 }
 
-function parsedJson(text: string): unknown {
+function decimalValue(text: string): string | null {
+  const match = /^(-?)(\d+)(?:\.(\d+))?(?:[eE]([+-]?\d+))?$/.exec(text);
+  if (!match) return null;
+  const fraction = match[3] ?? "";
+  const coefficient = (match[2] + fraction).replace(/^0+/, "");
+  if (!coefficient) return "0";
+  const digits = coefficient.replace(/0+$/, "");
+  const exponent = Number(match[4] ?? "0") - fraction.length + coefficient.length - digits.length;
+  if (!Number.isSafeInteger(exponent)) return null;
+  return `${match[1]}${digits}e${exponent}`;
+}
+
+export function preservesNumericText(text: string, value: number): boolean {
+  if (!Number.isFinite(value) || (Number.isInteger(value) && !Number.isSafeInteger(value))) return false;
+  const original = decimalValue(text);
+  return original !== null && original === decimalValue(String(value));
+}
+
+const UNSAFE_JSON_NUMBER = Symbol("unsafe-json-number");
+
+function parsedJson(text: string, expectedShape: "object" | "array"): unknown {
   try {
     return JSON.parse(text);
   } catch {
