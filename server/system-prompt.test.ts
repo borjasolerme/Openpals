@@ -38,6 +38,15 @@ describe("the stable half", () => {
   });
 });
 
+describe("sign-ins with a Google or Microsoft account", () => {
+  it("prefers connected apps for Google and Microsoft data without refusing an asked-for Google or Microsoft sign-in", () => {
+    // A company SSO into a work app needs a Microsoft or Google browser sign-in; the bot must not refuse it.
+    expect(SIGN_IN_PROMPT).not.toContain("use connected apps, not a browser sign-in");
+    expect(SIGN_IN_PROMPT).toContain("For Gmail, Calendar, Drive, Outlook or OneDrive data, use connected apps rather than a browser sign-in");
+    expect(SIGN_IN_PROMPT).toContain("when the person asks you to sign in to a site that uses a Google or Microsoft account (such as a company single sign-on), sign in as for any other site, through that provider's own sign-in button and login page rather than a saved login for the site's own form");
+  });
+});
+
 describe("resolveComputerPromptKind", () => {
   // Rows the mounts already refuse are pinned here because no dispatchable engine in the test fleet lacks the capability.
   it.each([
