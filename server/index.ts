@@ -6945,6 +6945,12 @@ async function beginTurn(
     if (!answer.incident) throw Object.assign(new Error(changing), { status: 409, code: "settling" });
     computerSkipped ??= changing;
   }
+  // Sampling an attached video is the one slow step before the turn starts. It runs before the busy and capacity checks:
+  // an await between those checks and the turn taking its slot would let a queue drain start every queued thread at once.
+  const resolvedImages = extractTurnImages(text);
+  const videoFrames = registry.get(bot.modelSelection.instanceId)?.adapter.capabilities.nativeImageInput === true && resolvedImages.videos.length
+    ? await videoFrameImages(resolvedImages.videos)
+    : [];
   if (threadBusy(botId, threadId)) throw Object.assign(new Error("this thread is already working — interrupt it first"), { status: 409, code: "thread_busy" });
   if (roomTurnHolds(activeGroupTurnForBot(botId), threadId, opts?.allowRoomTurnElsewhere === true)) {
     throw Object.assign(new Error("the bot is already working in a channel — wait for it to finish"), { status: 409, code: "thread_busy" });
@@ -6968,12 +6974,9 @@ async function beginTurn(
     );
   }
   const toolScope = toolScopeForTurn(bot.id);
-  const resolvedImages = extractTurnImages(text);
   const usesNativeImageInput = instance.adapter.capabilities.nativeImageInput === true;
   let providerText = promptWithDataContext(usesNativeImageInput ? resolvedImages.text : text, opts?.dataContext);
-  const turnImages = usesNativeImageInput
-    ? [...resolvedImages.images, ...(await videoFrameImages(resolvedImages.videos))]
-    : [];
+  const turnImages = usesNativeImageInput ? [...resolvedImages.images, ...videoFrames] : [];
   const commsDepth = opts?.commsDepth ?? 0;
   if (commsDepth > 0) markInternalTurn(threadId);
   else { clearInternalTurn(threadId); doneNotice.personTurnStarted(threadId); }
