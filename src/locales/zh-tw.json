@@ -3560,5 +3560,7 @@
   "server.mcp.problem.cantConnect": "無法連線到 {name}。請在「應用程式 → MCP 伺服器」中測試它以查看原因。",
   "server.mcp.alsoOn": "{names} 也已開啟：要為某一個關閉，請在其設定的「可使用的應用程式」中關閉",
   "chat.engineCompactionTitle": "聊天已濃縮為摘要",
-  "chat.engineCompactionHint": "AI 已將先前的訊息整理成摘要以騰出空間。完整對話仍在這裡，但代理程式可能記不清較早的細節。"
+  "chat.engineCompactionHint": "AI 已將先前的訊息整理成摘要以騰出空間。完整對話仍在這裡，但代理程式可能記不清較早的細節。",
+  "chat.preview.save": "儲存到裝置",
+  "chat.preview.saveFailed": "無法儲存此頁面。"
 }

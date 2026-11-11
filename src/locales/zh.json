@@ -5552,5 +5552,7 @@
   "server.mcp.problem.cantConnect": "无法连接到 {name}。请在“应用 → MCP 服务器”中测试它以查看原因。",
   "server.mcp.alsoOn": "{names} 也已开启：要为某一个关闭，请在其设置的“可使用的应用”中关闭",
   "chat.engineCompactionTitle": "聊天已压缩为摘要",
-  "chat.engineCompactionHint": "AI 已总结之前的消息以腾出空间。完整对话仍在这里，但智能体可能记不清较早的细节。"
+  "chat.engineCompactionHint": "AI 已总结之前的消息以腾出空间。完整对话仍在这里，但智能体可能记不清较早的细节。",
+  "chat.preview.save": "保存到设备",
+  "chat.preview.saveFailed": "无法保存该页面。"
 }

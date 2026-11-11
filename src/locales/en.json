@@ -5498,6 +5498,8 @@
   "chat.preview.latest": "Back to the latest",
   "chat.preview.updated": "Updated",
   "chat.preview.point": "Point",
+  "chat.preview.save": "Save to device",
+  "chat.preview.saveFailed": "Couldn't save the page.",
   "chat.preview.pointHint": "Click the part of the page you want changed. Press Esc to stop.",
   "chat.preview.publishFailed": "Couldn’t publish this page. Try again in a moment.",
   "chat.preview.fullScreen": "Full screen",

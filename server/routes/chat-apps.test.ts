@@ -63,7 +63,7 @@ async function fixture(extra: Partial<ChatAppRouteDeps> = {}) {
     const app: AppPayload = { v: 1, source: "mcp", title: "Get time", doc: stored.doc, rev: 0, bytes: 11, border: true, network: { connect: [], resources: [] }, mcp: { server: "basic", tool: "get-time", resourceUri: "ui://basic/view" } };
     return store.appendMessage(threadId, { role: "bot", kind: "app", text: "Basic · Get time", app }).id;
   };
-  return { store, bot, other, chatApps, get, post, page, mcpRow };
+  return { store, bot, other, chatApps, base, get, post, page, mcpRow };
 }
 
 describe("GET /api/threads/:threadId/messages/:messageId/app", () => {
@@ -87,6 +87,29 @@ describe("GET /api/threads/:threadId/messages/:messageId/app", () => {
     expect((await get(`/api/threads/${bot.threadId}/messages/${text}/app`)).status).toBe(404);
     const gone = store.appendMessage(bot.threadId, { role: "bot", kind: "app", text: "x", app: { v: 1, source: "html", title: "x", doc: "", rev: 0, bytes: 1, border: true, network: { connect: [], resources: [] }, blocked: "too-large" } }).id;
     expect(await get(`/api/threads/${bot.threadId}/messages/${gone}/app`)).toMatchObject({ status: 404, body: { error: "This app's page is not stored on this computer." } });
+  });
+});
+
+describe("GET /api/threads/:threadId/messages/:messageId/app/download", () => {
+  it("hands a bot's page over as an opaque download, never as a page to render", async () => {
+    const { bot, page, base } = await fixture();
+    const response = await fetch(`${base}/api/threads/${bot.threadId}/messages/${page()}/app/download`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/octet-stream");
+    expect(response.headers.get("content-disposition")).toMatch(/^attachment; filename="Hello\.html"/);
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("content-security-policy")).toBe("sandbox");
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+    expect(await response.text()).toContain("<p>Hello</p>");
+  });
+
+  it("refuses an MCP app, another conversation's row and a bad version", async () => {
+    const { bot, other, get, page, mcpRow } = await fixture();
+    const id = page();
+    const path = (threadId: string, messageId: string) => `/api/threads/${threadId}/messages/${messageId}/app/download`;
+    expect((await get(path(bot.threadId, mcpRow()))).status).toBe(409);
+    expect((await get(path(other.threadId, id))).status).toBe(404);
+    expect((await get(`${path(bot.threadId, id)}?rev=x`)).status).toBe(400);
   });
 });
 

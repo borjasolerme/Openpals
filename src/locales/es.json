@@ -4314,5 +4314,7 @@
   "server.mcp.problem.cantConnect": "No se pudo conectar con {name}. Pruébalo en Apps → Servidores MCP para ver por qué.",
   "server.mcp.alsoOn": "También activado para {names}: desactívalo para uno en sus ajustes, en Apps que puede usar",
   "chat.engineCompactionTitle": "Chat resumido",
-  "chat.engineCompactionHint": "La IA resumió los mensajes anteriores para hacer sitio. Toda tu conversación sigue aquí, pero puede que el agente no recuerde con exactitud los detalles más antiguos."
+  "chat.engineCompactionHint": "La IA resumió los mensajes anteriores para hacer sitio. Toda tu conversación sigue aquí, pero puede que el agente no recuerde con exactitud los detalles más antiguos.",
+  "chat.preview.save": "Guardar en el dispositivo",
+  "chat.preview.saveFailed": "No se pudo guardar la página."
 }

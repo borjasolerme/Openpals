@@ -5028,5 +5028,7 @@
   "server.mcp.problem.cantConnect": "{name} に接続できませんでした。理由を確認するには、アプリ → MCP サーバーでテストしてください。",
   "server.mcp.alsoOn": "{names} にもオンになっています: 個別にオフにするには、そのボットの設定の「使えるアプリ」で切り替えます",
   "chat.engineCompactionTitle": "チャットを要約にまとめました",
-  "chat.engineCompactionHint": "AI が空きを作るために以前のメッセージを要約しました。会話はすべて残っていますが、エージェントは古い詳細を正確には覚えていないかもしれません。"
+  "chat.engineCompactionHint": "AI が空きを作るために以前のメッセージを要約しました。会話はすべて残っていますが、エージェントは古い詳細を正確には覚えていないかもしれません。",
+  "chat.preview.save": "デバイスに保存",
+  "chat.preview.saveFailed": "ページを保存できませんでした。"
 }

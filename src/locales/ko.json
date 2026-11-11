@@ -5462,5 +5462,7 @@
   "server.mcp.problem.cantConnect": "{name}에 연결할 수 없어요. 이유를 보려면 앱 → MCP 서버에서 테스트하세요.",
   "server.mcp.alsoOn": "{names}에도 켜져 있어요: 하나만 끄려면 그 봇의 설정에서 '사용할 수 있는 앱'으로 가세요",
   "chat.engineCompactionTitle": "채팅을 요약으로 압축했어요",
-  "chat.engineCompactionHint": "AI가 공간을 만들려고 이전 메시지를 요약했어요. 대화 전체는 그대로 있지만, 에이전트가 오래된 세부 내용을 정확히 기억하지 못할 수 있어요."
+  "chat.engineCompactionHint": "AI가 공간을 만들려고 이전 메시지를 요약했어요. 대화 전체는 그대로 있지만, 에이전트가 오래된 세부 내용을 정확히 기억하지 못할 수 있어요.",
+  "chat.preview.save": "기기에 저장",
+  "chat.preview.saveFailed": "페이지를 저장할 수 없어요."
 }

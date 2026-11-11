@@ -2168,5 +2168,7 @@
   "server.mcp.problem.cantConnect": "Keine Verbindung zu {name}. Teste ihn unter Apps → MCP-Server, um den Grund zu sehen.",
   "server.mcp.alsoOn": "Auch an für {names}: Schalte es für einen in dessen Einstellungen unter „Apps, die er nutzen darf“ aus",
   "chat.engineCompactionTitle": "Chat zu einer Zusammenfassung verdichtet",
-  "chat.engineCompactionHint": "Die KI hat frühere Nachrichten zusammengefasst, um Platz zu schaffen. Dein ganzer Chat ist noch da, aber der Agent erinnert sich an ältere Details vielleicht nicht genau."
+  "chat.engineCompactionHint": "Die KI hat frühere Nachrichten zusammengefasst, um Platz zu schaffen. Dein ganzer Chat ist noch da, aber der Agent erinnert sich an ältere Details vielleicht nicht genau.",
+  "chat.preview.save": "Auf dem Gerät speichern",
+  "chat.preview.saveFailed": "Die Seite konnte nicht gespeichert werden."
 }

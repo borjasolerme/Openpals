@@ -1,12 +1,14 @@
-// A bot's page in the chat, artifact-style: its version stepper, Point and Full screen.
-import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
+// A bot's page in the chat, artifact-style: its version stepper, Point, Save and Full screen.
+import { useCallback, useEffect, useRef, useState, type MutableRefObject, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, Crosshair, Maximize2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Crosshair, Download, Loader2, Maximize2, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { addPointedChip } from "@/lib/pointed-chips";
 import type { AppDocument, AppPayload } from "../../../shared/app";
 import { pointMessage, readPointEvent } from "../../../shared/app-frame/point";
+import { canonicalDownloadFilename } from "../AttachmentPreview";
+import { appDownloadPath } from "./app-api";
 import { AppFrame, type AppFrameHandle } from "./AppFrame";
 import { ASK_CHIP, ASK_CHIP_IDLE, ASK_CHIP_PICKED } from "../AskCard";
 
@@ -83,15 +85,65 @@ export function usePagePoint(args: { frame(): HTMLIFrameElement | null | undefin
   return { pointing, toggle: () => set(!on.current), stop: () => { if (on.current) set(false); } };
 }
 
+/** On a phone the OS share sheet (Save to Files, Share); elsewhere a download, which Electron turns into its save dialog. */
+async function saveToDevice(file: File): Promise<void> {
+  if (window.matchMedia?.("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+    } catch (error) {
+      if ((error as { name?: unknown } | null)?.name !== "AbortError") throw error;
+    }
+    return;
+  }
+  // Security: octet-stream, so a browser that ignores download never renders the bot's HTML as the app's own page.
+  const url = URL.createObjectURL(new Blob([file], { type: "application/octet-stream" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = file.name;
+  document.body.append(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+    // Chromium may consume the Blob after the click task.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+}
+
+/** The page's version as one .html file on this device. */
+export function usePageSave(threadId: string, messageId: string, title: string) {
+  const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState("");
+  const run = async (rev: number) => {
+    setBusy(true);
+    setReason("");
+    try {
+      const response = await fetch(appDownloadPath(threadId, messageId, rev));
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: unknown } | null;
+        throw new Error(typeof body?.error === "string" && body.error ? body.error : t("chat.preview.saveFailed"));
+      }
+      const name = canonicalDownloadFilename({ contentDisposition: response.headers.get("content-disposition"), fallback: `${title}.html` });
+      await saveToDevice(new File([await response.blob()], name, { type: "text/html" }));
+    } catch (error) {
+      setReason(error instanceof Error && error.message ? error.message : t("chat.preview.saveFailed"));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { busy, reason, run };
+}
+
 export interface PageToolsProps {
   version: ReturnType<typeof usePageVersion>;
   point: ReturnType<typeof usePagePoint>;
+  save: ReturnType<typeof usePageSave>;
   ready: boolean;
   fullScreen: { open: boolean; toggle(): void };
 }
 
-/** The card's toolbar: ‹ v2 › and Updated on the left; Point and Full screen on the right. */
-export function PageToolbar({ version, point, ready, fullScreen, className }: PageToolsProps & { className?: string }) {
+/** The card's toolbar: ‹ v2 › and Updated on the left; Point, Save and Full screen on the right. */
+export function PageToolbar({ version, point, save, ready, fullScreen, className }: PageToolsProps & { className?: string }) {
   const label = version.latest ? t("chat.preview.version", { n: version.rev + 1 }) : t("chat.preview.versionOf", { n: version.rev + 1, count: version.last + 1 });
   return (
     <div data-page-tools className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-2", className)}>
@@ -109,6 +161,10 @@ export function PageToolbar({ version, point, ready, fullScreen, className }: Pa
           className={cn(ASK_CHIP, point.pointing ? ASK_CHIP_PICKED : ASK_CHIP_IDLE)}>
           <Crosshair size={14} />{t("chat.preview.point")}
         </button>
+        <button type="button" className={TOOL} disabled={save.busy} onClick={() => void save.run(version.rev)}
+          aria-label={t("chat.preview.save")} title={t("chat.preview.save")}>
+          {save.busy ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+        </button>
         <button type="button" className={TOOL} onClick={fullScreen.toggle} aria-pressed={fullScreen.open}
           aria-label={fullScreen.open ? t("chat.preview.exitFullScreen") : t("chat.preview.fullScreen")}
           title={fullScreen.open ? t("chat.preview.exitFullScreen") : t("chat.preview.fullScreen")}>
@@ -119,10 +175,12 @@ export function PageToolbar({ version, point, ready, fullScreen, className }: Pa
   );
 }
 
-/** Under the toolbar while Point is on: what to do. */
-export function PageNotes({ point, className }: Pick<PageToolsProps, "point"> & { className?: string }) {
-  if (!point.pointing) return null;
-  return <div className={cn("flex flex-col gap-2", className)}><div role="status" className="rounded-2xl bg-accent/10 px-3 py-2 text-base text-ink">{t("chat.preview.pointHint")}</div></div>;
+/** Under the toolbar: why saving failed, and while Point is on, what to do. */
+export function PageNotes({ point, save, className }: Pick<PageToolsProps, "point" | "save"> & { className?: string }) {
+  const rows: ReactNode[] = [];
+  if (save.reason) rows.push(<p key="save" role="alert" dir="auto" className="px-1 text-base text-danger">{save.reason}</p>);
+  if (point.pointing) rows.push(<div key="hint" role="status" className="rounded-2xl bg-accent/10 px-3 py-2 text-base text-ink">{t("chat.preview.pointHint")}</div>);
+  return rows.length ? <div className={cn("flex flex-col gap-2", className)}>{rows}</div> : null;
 }
 
 /** The page over the whole chat. Esc stops Point first, then closes. */
@@ -153,7 +211,7 @@ export function PageFullScreen(props: PageToolsProps & {
       <div ref={closer} className="flex flex-col gap-2 border-b border-hairline/40 px-4 pb-3 pt-3">
         <div className="truncate text-lg font-semibold text-ink" title={props.title}><bdi dir="auto">{props.title}</bdi></div>
         <PageToolbar {...props} />
-        <PageNotes point={point} />
+        <PageNotes point={point} save={props.save} />
       </div>
       <div className={cn("relative min-h-0 flex-1 bg-app", point.pointing && "ring-2 ring-inset ring-accent/60")}>
         <AppFrame doc={props.doc} botId={props.botId} threadId={props.threadId} title={props.title} height={600} handle={props.handle}

@@ -4903,5 +4903,7 @@
   "server.mcp.problem.cantConnect": "Não foi possível conectar a {name}. Teste em Apps → Servidores MCP para ver o motivo.",
   "server.mcp.alsoOn": "Também ligado para {names}: desligue para um nas configurações dele, em Apps que pode usar",
   "chat.engineCompactionTitle": "Conversa condensada em um resumo",
-  "chat.engineCompactionHint": "A IA resumiu as mensagens anteriores para abrir espaço. Sua conversa inteira continua aqui, mas o agente pode não lembrar exatamente dos detalhes mais antigos."
+  "chat.engineCompactionHint": "A IA resumiu as mensagens anteriores para abrir espaço. Sua conversa inteira continua aqui, mas o agente pode não lembrar exatamente dos detalhes mais antigos.",
+  "chat.preview.save": "Salvar no dispositivo",
+  "chat.preview.saveFailed": "Não foi possível salvar a página."
 }

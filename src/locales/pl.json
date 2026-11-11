@@ -4966,5 +4966,7 @@
   "server.mcp.problem.cantConnect": "Nie udało się połączyć z {name}. Przetestuj go w Aplikacje → Serwery MCP, aby zobaczyć dlaczego.",
   "server.mcp.alsoOn": "Włączone też dla {names}: wyłącz dla jednego w jego ustawieniach, w sekcji Aplikacje, których może używać",
   "chat.engineCompactionTitle": "Czat skrócony do podsumowania",
-  "chat.engineCompactionHint": "AI podsumowało wcześniejsze wiadomości, żeby zrobić miejsce. Cała rozmowa nadal tu jest, ale agent może nie pamiętać dokładnie starszych szczegółów."
+  "chat.engineCompactionHint": "AI podsumowało wcześniejsze wiadomości, żeby zrobić miejsce. Cała rozmowa nadal tu jest, ale agent może nie pamiętać dokładnie starszych szczegółów.",
+  "chat.preview.save": "Zapisz na urządzeniu",
+  "chat.preview.saveFailed": "Nie udało się zapisać strony."
 }

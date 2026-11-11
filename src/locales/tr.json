@@ -4046,5 +4046,7 @@
   "server.mcp.problem.cantConnect": "{name} sunucusuna bağlanılamadı. Nedenini görmek için Uygulamalar → MCP sunucuları'nda test et.",
   "server.mcp.alsoOn": "{names} için de açık: biri için kapatmak üzere onun ayarlarında, Kullanabileceği uygulamalar altında kapat",
   "chat.engineCompactionTitle": "Sohbet bir özete sıkıştırıldı",
-  "chat.engineCompactionHint": "Yapay zekâ yer açmak için önceki mesajları özetledi. Sohbetin tamamı hâlâ burada, ancak ajan eski ayrıntıları tam olarak hatırlamayabilir."
+  "chat.engineCompactionHint": "Yapay zekâ yer açmak için önceki mesajları özetledi. Sohbetin tamamı hâlâ burada, ancak ajan eski ayrıntıları tam olarak hatırlamayabilir.",
+  "chat.preview.save": "Cihaza kaydet",
+  "chat.preview.saveFailed": "Sayfa kaydedilemedi."
 }

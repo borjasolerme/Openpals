@@ -198,6 +198,22 @@ export function pageVersion(app: AppPayload, rev?: number): { doc: string; rev: 
   return Number.isInteger(rev) && rev >= 0 && rev < current && index >= 0 && history[index] ? { doc: history[index]!, rev } : null;
 }
 
+/** A bot's page saved as one file: the HTML of version `rev` (the current one when omitted), as it was written. A page
+ * with files beside it, built as JSX, or from an MCP server can't be one file. */
+export function downloadablePage(args: { store: Pick<AgentCardStore, "messagesFor">; docs: AppDocs; threadId: string; messageId: string; rev?: number }):
+  { ok: true; title: string; html: string } | { ok: false; status: number; error: string } {
+  const row = appRow(args.store, args.threadId, args.messageId);
+  if (!row) return { ok: false, status: 404, error: "That page is not in this conversation." };
+  if (row.app.source !== "html") return { ok: false, status: 409, error: "That app came from an MCP server; only a page a bot made can be saved." };
+  const version = pageVersion(row.app, args.rev);
+  const stored = version ? args.docs.read(version.doc) : null;
+  if (!version || !stored || stored.source !== "html") return { ok: false, status: 404, error: "That version of the page is no longer kept." };
+  if (stored.data?.folder || Object.keys(stored.data?.files ?? {}).length || stored.data?.format === "jsx") {
+    return { ok: false, status: 409, error: "This page has files or code beside it, so it can't be saved as one file." };
+  }
+  return { ok: true, title: row.app.title.replace(/\s+/g, " ").trim(), html: stored.html };
+}
+
 export function appDocument(args: {
   store: Pick<AgentCardStore, "messagesFor">;
   docs: AppDocs;
@@ -389,6 +405,7 @@ export interface ChatApps {
   }): AgentCardResult | Promise<AgentCardResult>;
   /** `origin`: the web origin the client reaches this app at, which a folder page's files load from. */
   appDocument(threadId: string, messageId: string, rev?: number, origin?: string): AppDocument | null;
+  downloadablePage(threadId: string, messageId: string, rev?: number): ReturnType<typeof downloadablePage>;
   /** The folder pages' files route, ahead of the sign-in gate: true when the request was its own. */
   serveFile(req: IncomingMessage, res: ServerResponse, path: string, method: string): boolean;
   setAppContext(args: { threadId: string; messageId: string; content?: unknown; structuredContent?: unknown }): AppRouteResult;
@@ -432,6 +449,7 @@ export function createChatApps(deps: {
   const apps: ChatApps = {
     docs,
     createAppCard: (args) => createAppCard({ ...args, store: deps.store, docs }),
+    downloadablePage: (threadId, messageId, rev) => downloadablePage({ store: deps.store, docs, threadId, messageId, ...(rev !== undefined ? { rev } : {}) }),
     appDocument: (threadId, messageId, rev, origin) => appDocument({ store: deps.store, docs, threadId, messageId, ...(rev !== undefined ? { rev } : {}),
       ...(apps.mcpAccess ? { mcpAccess: apps.mcpAccess } : {}), ...(origin ? { files: { origin, folder: files.folder } } : {}) }),
     serveFile: (req, res, path, method) => files.serve(req, res, path, method),
