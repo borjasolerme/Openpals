@@ -4033,5 +4033,7 @@
   "permissions.chief.oneFor": "Một cho tất cả bot của bạn",
   "permissions.chief.active": "Đây là đầu mối liên hệ chính của bạn. Bot này có thể tạo và điều phối các chuyên gia, rồi gộp kết quả của họ thành một câu trả lời.",
   "permissions.chief.replace": "Đặt bot này làm Chief of Staff và nhận lại vai trò từ {current}.",
-  "permissions.chief.make": "Đặt bot này làm đầu mối liên hệ chính của bạn."
+  "permissions.chief.make": "Đặt bot này làm đầu mối liên hệ chính của bạn.",
+  "connectors.resetSavedKeys": "Đặt lại các khóa đã lưu",
+  "connectors.savedKeysUnreadable": "Không đọc được các khóa đã lưu trên máy tính này."
 }

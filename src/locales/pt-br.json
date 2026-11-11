@@ -4890,5 +4890,7 @@
   "onboarding.apps.personalShape": "Uma chave pessoal do Composio começa com ck_.",
   "onboarding.apps.personalRefused": "O Composio não aceitou esta chave: {reason}",
   "onboarding.apps.personalSaved": "Conectado. Todos os bots podem usar seus apps.",
-  "onboarding.bring.openApp": "Abrir {app}"
+  "onboarding.bring.openApp": "Abrir {app}",
+  "connectors.resetSavedKeys": "Redefinir chaves salvas",
+  "connectors.savedKeysUnreadable": "Não foi possível ler as chaves salvas neste computador."
 }

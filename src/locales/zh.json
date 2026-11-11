@@ -5539,5 +5539,7 @@
   "server.browser.free": "浏览器已空闲，继续进行。",
   "server.browser.stoppedWaiting": "已停止等待浏览器。",
   "settings.simple.page.about": "关于",
-  "settings.simple.people.manage": "管理"
+  "settings.simple.people.manage": "管理",
+  "connectors.resetSavedKeys": "重置已保存的密钥",
+  "connectors.savedKeysUnreadable": "无法读取此电脑上保存的密钥。"
 }

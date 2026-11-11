@@ -4301,5 +4301,7 @@
   "permissions.chief.oneFor": "Uno para todos tus bots",
   "permissions.chief.active": "Es tu contacto principal. Puede crear y coordinar especialistas y luego reunir su trabajo en una sola respuesta.",
   "permissions.chief.replace": "Hacer de este bot el jefe de gabinete y traspasarle el rol de {current}.",
-  "permissions.chief.make": "Hacer de este bot tu contacto principal."
+  "permissions.chief.make": "Hacer de este bot tu contacto principal.",
+  "connectors.resetSavedKeys": "Restablecer las claves guardadas",
+  "connectors.savedKeysUnreadable": "No se pudieron leer las claves guardadas en este ordenador."
 }

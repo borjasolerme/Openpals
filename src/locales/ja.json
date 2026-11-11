@@ -5015,5 +5015,7 @@
   "onboarding.apps.personalShape": "個人用の Composio キーは ck_ で始まります。",
   "onboarding.apps.personalRefused": "Composio がこのキーを受け付けませんでした: {reason}",
   "onboarding.apps.personalSaved": "接続しました。すべてのボットがあなたのアプリを使えます。",
-  "onboarding.bring.openApp": "{app} を開く"
+  "onboarding.bring.openApp": "{app} を開く",
+  "connectors.resetSavedKeys": "保存したキーをリセット",
+  "connectors.savedKeysUnreadable": "このコンピュータに保存されたキーを読み取れませんでした。"
 }

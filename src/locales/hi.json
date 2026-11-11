@@ -2103,5 +2103,7 @@
   "permissions.chief.oneFor": "आपके सभी बॉट्स के लिए एक",
   "permissions.chief.active": "यह आपका मुख्य संपर्क है। यह विशेषज्ञ बना सकता है और उनके बीच तालमेल कर सकता है, फिर उनके काम को एक जवाब में जोड़ देता है।",
   "permissions.chief.replace": "इस बॉट को चीफ़ ऑफ़ स्टाफ़ बनाएँ और {current} से यह भूमिका इसे सौंपें।",
-  "permissions.chief.make": "इस बॉट को अपना मुख्य संपर्क बनाएँ।"
+  "permissions.chief.make": "इस बॉट को अपना मुख्य संपर्क बनाएँ।",
+  "connectors.resetSavedKeys": "सहेजी गई कुंजियाँ रीसेट करें",
+  "connectors.savedKeysUnreadable": "इस कंप्यूटर पर सहेजी गई कुंजियाँ पढ़ी नहीं जा सकीं।"
 }

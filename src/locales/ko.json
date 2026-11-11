@@ -5449,5 +5449,7 @@
   "server.browser.free": "브라우저가 비었습니다. 계속합니다.",
   "server.browser.stoppedWaiting": "브라우저 대기를 멈췄습니다.",
   "settings.simple.page.about": "정보",
-  "settings.simple.people.manage": "관리"
+  "settings.simple.people.manage": "관리",
+  "connectors.resetSavedKeys": "저장된 키 초기화",
+  "connectors.savedKeysUnreadable": "이 컴퓨터에 저장된 키를 읽을 수 없어요."
 }

@@ -50,7 +50,7 @@ import {
   withPhoneSecretIdentity,
 } from "./phone-secret-identity.mjs";
 import { isKnownSkin, skinChrome } from "./skin-overlay.cjs";
-import { readSecureCredentials } from "./secure-credentials.mjs";
+import { installCredentialStoreIpc, readSecureCredentials } from "./secure-credentials.mjs";
 import capabilitiesModule from "./capabilities.cjs";
 import environmentsModule from "./environments.cjs";
 import localOriginModule from "./local-origin.cjs";
@@ -1634,6 +1634,20 @@ async function saveWorkspaceCredential(name, value) {
   );
 }
 
+// The desktop's own dialog words for "Reset saved keys" (main has no catalog; {app} is filled in).
+const RESET_SAVED_KEYS_WORDS = {
+  "native.dialog.resetSavedKeys.title": "Reset saved keys?",
+  "native.dialog.resetSavedKeys.detail": "{app} can't read its saved keys here, so it can't use them or save new ones. Resetting puts the unreadable file aside and restarts {app}. Then enter your keys again and reconnect your apps.",
+  "native.dialog.resetSavedKeys.button": "Reset and restart",
+  "native.dialog.resetSavedKeys.failed": "Couldn't reset saved keys",
+  "native.common.cancel": "Cancel",
+};
+const resetSavedKeysT = (key, values = {}) => (RESET_SAVED_KEYS_WORDS[key] ?? key).replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
+installCredentialStoreIpc({
+  ipcMain, localOnly, dialog, windowFor: (sender) => BrowserWindow.fromWebContents(sender), t: resetSavedKeysT, appName: () => app.name,
+  unreadable: () => credentialStoreUnavailable, quitting: () => desktopShutdownStarted,
+  moveAside: () => fs.renameSync(CREDENTIALS_FILE, `${CREDENTIALS_FILE}.unreadable-${Date.now()}`), log: slog, relaunch: relaunchApp,
+});
 ipcMain.handle("credential:set", localOnly("credential:set", (_event, name, value) =>
   saveWorkspaceCredential(name, value),
 ));

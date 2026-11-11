@@ -4033,5 +4033,7 @@
   "permissions.chief.oneFor": "Tüm botlarınız için bir tane",
   "permissions.chief.active": "Bu, ana iletişim noktanızdır. Uzman botlar oluşturup koordine edebilir, ardından çalışmalarını tek bir yanıtta birleştirir.",
   "permissions.chief.replace": "Bu botu Kurmay Başkanı yap ve rolü {current} botundan devral.",
-  "permissions.chief.make": "Bu botu ana iletişim noktanız yap."
+  "permissions.chief.make": "Bu botu ana iletişim noktanız yap.",
+  "connectors.resetSavedKeys": "Kayıtlı anahtarları sıfırla",
+  "connectors.savedKeysUnreadable": "Bu bilgisayarda kayıtlı anahtarlar okunamadı."
 }

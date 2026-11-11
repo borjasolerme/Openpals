@@ -2158,7 +2158,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6463,7 +6465,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -8570,7 +8574,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -10677,7 +10683,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -15696,7 +15704,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -20590,7 +20600,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -26133,7 +26145,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -29684,7 +29698,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -32162,7 +32178,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -36199,7 +36217,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -40236,7 +40256,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -45193,7 +45215,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -50191,7 +50215,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -55036,7 +55062,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -60489,7 +60517,9 @@
       "chat.watchScreen": "a71e757324467ccfe2ae90f483fd759eff5378e6afcfcce4c620de929b3f2dd8",
       "chat.watchScreenHint": "68f4bf62848c8540e13fc9618af386d2d5b00cd77555ef8c8e39e0babffc3a65",
       "computer.watchFullScreenTitle": "9f3f625c39cd1e74ba76474fda7f8cd15b2fabe6e6ee337201a72551f47986d2",
-      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b"
+      "computer.watchingBotWorks": "b441025e38fe828e8ec4d56a2c9c685f88d9b41d993242c2af8eeaeb8ae3878b",
+      "connectors.resetSavedKeys": "764411710357197d3d55fbf646d0ea6249c4236cbc635e0b4212b8d92cf5dea6",
+      "connectors.savedKeysUnreadable": "6a639d5ea19bf20de5ce7551bea2ccc330cfbd5085d0906a3ec9ece6959c4470"
     }
   }
 }

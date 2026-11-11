@@ -252,6 +252,8 @@ const __APP_VERSION__: string;
       openLogsFolder?(): Promise<{ folder: string; opened: boolean; error?: string }>;
       /** This app's own login item, which opens the window. `available`: false in a build that cannot add one. */
       openAtLogin?: { state(): Promise<{ available: boolean; on: boolean }>; set(on: boolean): Promise<{ available: boolean; on: boolean }> };
+      /** Saved keys this launch could not read, and "Reset saved keys" (the desktop asks the person first, then restarts). */
+      credentialStore?: { unreadable(): Promise<boolean>; reset(): Promise<"reset" | "cancelled" | "quitting" | "failed" | "readable"> };
       /** Save a provider credential through Electron's OS-backed store. */
       setCredential?(
         name: "composioApiKey" | "xaiApiKey" | "boxToken" | "opencodeGoApiKey" | "ttsKey" | "fishAudioKey" | "jevApiKey" | "openrouterDeciderKey" | "workersAiToken" | "openaiImageApiKey" | "customImageApiKey" | "openaiLiveKey" | "tregApiKey" | "postizApiKey",

@@ -2155,5 +2155,7 @@
   "permissions.chief.oneFor": "Einer für alle deine Bots",
   "permissions.chief.active": "Das ist dein Hauptansprechpartner. Er kann Spezialisten erstellen und koordinieren und ihre Arbeit dann zu einer Antwort zusammenführen.",
   "permissions.chief.replace": "Diesen Bot zum Stabschef machen und die Rolle von {current} übernehmen.",
-  "permissions.chief.make": "Diesen Bot zu deinem Hauptansprechpartner machen."
+  "permissions.chief.make": "Diesen Bot zu deinem Hauptansprechpartner machen.",
+  "connectors.resetSavedKeys": "Gespeicherte Schlüssel zurücksetzen",
+  "connectors.savedKeysUnreadable": "Die auf diesem Computer gespeicherten Schlüssel konnten nicht gelesen werden."
 }

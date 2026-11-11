@@ -4841,5 +4841,7 @@
   "onboarding.apps.personalShape": "Una chiave personale Composio inizia con ck_.",
   "onboarding.apps.personalRefused": "Composio non ha accettato questa chiave: {reason}",
   "onboarding.apps.personalSaved": "Collegato. Tutti i bot possono usare le tue app.",
-  "onboarding.bring.openApp": "Apri {app}"
+  "onboarding.bring.openApp": "Apri {app}",
+  "connectors.resetSavedKeys": "Reimposta le chiavi salvate",
+  "connectors.savedKeysUnreadable": "Non è stato possibile leggere le chiavi salvate su questo computer."
 }

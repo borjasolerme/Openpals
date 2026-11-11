@@ -4994,5 +4994,7 @@
   "onboarding.apps.personalShape": "Личный ключ Composio начинается с ck_.",
   "onboarding.apps.personalRefused": "Composio не принял этот ключ: {reason}",
   "onboarding.apps.personalSaved": "Подключено. Все боты могут пользоваться вашими приложениями.",
-  "onboarding.bring.openApp": "Открыть {app}"
+  "onboarding.bring.openApp": "Открыть {app}",
+  "connectors.resetSavedKeys": "Сбросить сохранённые ключи",
+  "connectors.savedKeysUnreadable": "Не удалось прочитать ключи, сохранённые на этом компьютере."
 }

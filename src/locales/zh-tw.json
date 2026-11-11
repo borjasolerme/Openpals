@@ -3547,5 +3547,7 @@
   "permissions.chief.oneFor": "所有機器人共用一個",
   "permissions.chief.active": "這是你的主要聯絡人。它可以建立並協調專業機器人，再將它們的成果彙整成一個答案。",
   "permissions.chief.replace": "將這個機器人設為幕僚長，並從 {current} 手中接任該角色。",
-  "permissions.chief.make": "將這個機器人設為你的主要聯絡人。"
+  "permissions.chief.make": "將這個機器人設為你的主要聯絡人。",
+  "connectors.resetSavedKeys": "重設已儲存的金鑰",
+  "connectors.savedKeysUnreadable": "無法讀取這台電腦上儲存的金鑰。"
 }

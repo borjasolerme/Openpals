@@ -4953,5 +4953,7 @@
   "onboarding.apps.personalShape": "Osobisty klucz Composio zaczyna się od ck_.",
   "onboarding.apps.personalRefused": "Composio nie zaakceptowało tego klucza: {reason}",
   "onboarding.apps.personalSaved": "Połączono. Każdy bot może korzystać z twoich aplikacji.",
-  "onboarding.bring.openApp": "Otwórz {app}"
+  "onboarding.bring.openApp": "Otwórz {app}",
+  "connectors.resetSavedKeys": "Zresetuj zapisane klucze",
+  "connectors.savedKeysUnreadable": "Nie udało się odczytać kluczy zapisanych na tym komputerze."
 }

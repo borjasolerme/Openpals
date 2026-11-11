@@ -239,6 +239,11 @@ const bridge = {
       ? ipcRenderer.invoke("open-at-login:set", on === true) : Promise.reject(new Error("Turn on the switch to open Openpals at login.")),
   },
   setCredential: (name, value) => ipcRenderer.invoke("credential:set", name, value),
+  // Saved keys this launch could not read, and "Reset saved keys" (main asks the person first, then restarts).
+  credentialStore: {
+    unreadable: () => ipcRenderer.invoke("credential-store:unreadable"),
+    reset: () => ipcRenderer.invoke("credential-store:reset"),
+  },
 
   confirm: message => ipcRenderer.invoke("dialog:confirm", message),
   desktopProfile: {
