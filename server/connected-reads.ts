@@ -13,6 +13,8 @@ export interface CalendarEvent {
   start: number;
   end: number;
   allDay: boolean;
+  /** Google Calendar's Show me as Available: this event does not block time. */
+  transparent?: boolean;
   status: "confirmed" | "tentative" | "cancelled";
   selfDeclined: boolean;
   attendees: Array<{ email: string; name?: string; self: boolean; organizer: boolean; response?: string }>;
@@ -205,6 +207,7 @@ function calendarEvent(raw: unknown, calendar: { id: string; owned: boolean }): 
     start: startMs,
     end: Number.isFinite(endMs) ? endMs : startMs,
     allDay,
+    ...(item.transparency === "transparent" ? { transparent: true } : {}),
     status: item.status === "cancelled" || item.status === "tentative" ? item.status : "confirmed",
     selfDeclined: attendees.some((attendee) => attendee.self && attendee.response === "declined"),
     attendees,
