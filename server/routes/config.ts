@@ -63,6 +63,9 @@ export interface ConfigRouteDeps {
   /** After browserEngine.engine changed: closes the viewers and the browsers the other engine ran. */
   browserEngineSwitched(): void;
   decider: Pick<Decider, "testKey">;
+  /** Security: a server several people sign in to never takes over another installation's Composio user, since every
+   * person's bots would then get that person's apps. */
+  sharedMembership: () => boolean;
   providerConfigs(): InstanceConfigMap;
   localVmIdleMs(): number;
   localVmIdles: { values(): Iterable<Pick<ComputerIdleTimer, "setIdleMs">> };
@@ -92,7 +95,7 @@ export interface ConfigRouteDeps {
 export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
   const {
     store, cfg, registry, sessions, browserCleanup, browserLive, browserRuntime, usedBrowserSessions, decider,
-    closeBrowser, browserEngineSwitched, providerConfigs,
+    closeBrowser, browserEngineSwitched, sharedMembership, providerConfigs,
     localVmIdleMs, localVmIdles, localVmActiveThreads, localVmLifecycleBusy, localVmImageBusy, localVmModeChangeBusy,
     providerConfigBusy, computerProviderConfigTransitions, managedBoatOwners, providerOperationConflict,
     perBotLocalVmCountForModeChange, checkedModelSelection, browserSessionSpec, configStatus,
@@ -322,7 +325,7 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
       if (requestedComposioKey !== undefined) {
         if (requestedComposioKey.trim()) {
           try {
-            const prepared = await composio.prepareProjectSession(requestedComposioKey, cfg.composio);
+            const prepared = await composio.prepareProjectSession(requestedComposioKey, cfg.composio, undefined, { reuseEarlierUser: !sharedMembership() });
             patch.composio = { ...patch.composio, ...prepared };
           } catch (error) {
             return json(res, 400, { error: error instanceof Error ? error.message : String(error) });
