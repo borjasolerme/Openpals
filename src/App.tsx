@@ -72,6 +72,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [localVmWorkspaceBotId, setLocalVmWorkspaceBotId] = useState<string | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const closeDrawer = useCallback(() => { setDrawerOpen(false); menuButtonRef.current?.focus(); }, []);
   const previousViewRef = useRef(state.activeView);
   const calendarOriginRef = useRef<"chat" | "web-panel">("chat");
   const loading = loadingLine({ connected: state.connected, hydrated: state.hydrated === true, developer: import.meta.env.DEV });
@@ -257,10 +258,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       {!calendarFocus && <div className={sidebarHidden ? "contents md:hidden" : "contents"}><Sidebar
         collapseToIcons={collapseSidebar}
         open={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          menuButtonRef.current?.focus();
-        }}
+        onClose={closeDrawer}
       /></div>}
       {state.activeView === "web-panel" ? (
         <WebPanelPage />

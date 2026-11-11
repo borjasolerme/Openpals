@@ -291,6 +291,7 @@ export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: Reg
   { methods: ["GET"], path: /^\/api\/events$/ },
   // reads that carry no secrets
   { methods: ["GET"], path: /^\/api\/bots$/ },
+  { methods: ["GET"], path: /^\/api\/bots\/[\w-]+$/ },
   // a link into the organisation's Admin: identifiers only, and Admin authorizes its own visitor
   { methods: ["GET"], path: /^\/api\/search$/ },
   { methods: ["GET"], path: /^\/api\/threads\/[\w-]+\/messages$/ },

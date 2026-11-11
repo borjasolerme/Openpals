@@ -1,4 +1,4 @@
-import { Children, isValidElement, type EffectCallback, type ReactElement, type ReactNode } from "react";
+import { Children, isValidElement, type ComponentProps, type EffectCallback, type ReactElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppState, Bot } from "@/state/store";
 
@@ -35,6 +35,7 @@ vi.mock("./DesktopCapabilities", async () => {
   return { useDesktopCapabilities: () => ({ capabilities: initialDesktopCapabilities() }), windowFramed: () => false };
 });
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => true, setAdvancedMode: () => {} }));
+vi.mock("@/state/store-select", async (importOriginal) => (await import("@/testing/plain-store-select")).plainStoreSelect(await importOriginal()));
 vi.mock("@/state/store", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/state/store")>();
   return { ...original, api: fixture.api, useStore: () => ({ state: fixture.state, dispatch: fixture.dispatch }) };
@@ -44,6 +45,7 @@ import { initialState } from "@/state/store";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ArchivedBotsPanel, BotContextMenu, Sidebar } from "./Sidebar";
 import { MenuItem } from "./ui/MenuItem";
+const drawSidebar = (Sidebar as unknown as { type: (props: ComponentProps<typeof Sidebar>) => ReactNode }).type;
 
 const left = (id: string, extra: Partial<Bot> = {}): Bot => ({
   id, threadId: `${id}-left`, mainThreadId: `${id}-main`, name: id, title: "", description: "", notifications: true,
@@ -100,7 +102,7 @@ describe("opening a bot from the sidebar's menus", () => {
   it("opens the next bot after archiving the one on screen, and the archived one again on Undo", async () => {
     fixture.state = { ...initialState, bots: [left("scout"), left("atlas")], selectedId: "scout", activeView: "chat" };
     fixture.api.mockImplementation(async (_path: string, init: RequestInit) => ({ bot: { ...left("scout"), ...JSON.parse(String(init.body)) } }));
-    const sidebar = () => render(() => Sidebar({ open: false, onClose: () => {} }));
+    const sidebar = () => render(() => drawSidebar({ open: false, onClose: () => {} }));
     sidebar().find((node) => node.type === BotContextMenu)!.props.onArchive!(fixture.state.bots[0]!);
     sidebar().find((node) => node.type === ConfirmDialog && node.props.open)!.props.onConfirm!();
     await flush();

@@ -3,7 +3,7 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { useStore, type Bot } from "@/state/store";
+import type { Bot } from "@/state/store"; import { useStoreSelector } from "@/state/store-select";
 import { BotAvatar } from "./Avatar";
 import { ELEVATED_FLOAT, ELEVATED_HOVER } from "./elevated";
 import { BOT_PANEL_ID } from "./bot-panel/side-panel";
@@ -16,8 +16,7 @@ export function ChatHeadPill({ bot, avatar, onToggle }: {
   avatar: Pick<ComponentProps<typeof BotAvatar>, "state" | "motion" | "motionKey" | "animated">;
   onToggle: () => void;
 }) {
-  const { state } = useStore();
-  const open = state.settingsOpen;
+  const open = useStoreSelector((state) => state.settingsOpen);
   const label = t("chat.openProfileAria", { name: bot.name });
   return (
     <button

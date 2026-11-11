@@ -26,8 +26,8 @@ const IME = [
 function startRenaming() {
   const onRename = vi.fn();
   flushSync(() => root.render(createElement(SidebarThreadRow, {
-    task: { threadId: "t1", title: "Weekly notes" }, ownerId: "scout", current: false,
-    onSelect: vi.fn(), onRename, onDelete: vi.fn(), locale: "en",
+    task: { threadId: "t1", title: "Weekly notes" }, current: false,
+    onSelect: vi.fn(), onRename, onDelete: vi.fn(), onArchive: vi.fn(), onPin: vi.fn(), locale: "en",
   })));
   const row = host.querySelector<HTMLButtonElement>("[data-sidebar-thread-row]")!;
   flushSync(() => row.dispatchEvent(new MouseEvent("dblclick", { bubbles: true })));
