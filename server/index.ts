@@ -280,7 +280,7 @@ import { extractReplayImages, extractTurnImages } from "./turn-images.ts";
 import { videoFrameImages } from "./turn-video.ts";
 import { callTitleExcerpt } from "./thread-title.ts";
 import { generateThreadTitle, llmThreadTitlesEnabled } from "./thread-title-generate.ts";
-import { stallLimitMs, TurnWatchdog } from "./turn-watchdog.ts";
+import { stallLimitMs, stallNotice, TurnWatchdog } from "./turn-watchdog.ts";
 import { TurnResources, type TurnOwner } from "./turn-resources.ts";
 import {
   ensureWorkspace,
@@ -4490,7 +4490,10 @@ const watchdog = new TurnWatchdog({
     const bot = botForThread(turn.botId, turn.threadId);
     const routineRun = activeRoutineRunForThread(turn.threadId);
     void runningTurnInstance(bot, turn.threadId)?.adapter.interruptTurn(turn.threadId).catch(() => {});
-    const minutes = Math.round(silentMs / 60_000), cause = `no activity for ${minutes} minutes — the turn was stopped`;
+    const minutes = Math.round(silentMs / 60_000), notice = stallNotice(turn, silentMs, Date.now());
+    const cause = notice.key === "chat.notice.stalledCommand"
+      ? `the command \`${notice.params.command}\` ran for ${notice.params.minutes} minutes without finishing and looks stuck — the turn was stopped`
+      : `no activity for ${minutes} minutes — the turn was stopped`;
     const stalled = stoppedTurnText(turn.threadId, liveTurnByThread.get(turn.threadId), cause);
     if (routineRun?.target === "bot") {
       routines?.failThread(turn.threadId, `No activity for ${minutes} minutes — the routine was stopped`, { cause: "stalled" });

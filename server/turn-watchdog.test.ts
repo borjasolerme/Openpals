@@ -6,13 +6,14 @@ import { describe, expect, it, vi } from "vitest";
 import type { RuntimeEvent } from "./contracts.ts";
 import type { Message } from "./store.ts";
 import { TurnStops, stoppedTurnOutcome } from "./turn-outcome.ts";
-import { stallLimitMs, TurnWatchdog, type WatchedTurn } from "./turn-watchdog.ts";
+import { stallLimitMs, stallNotice, stuckCommand, TurnWatchdog, type WatchedTurn } from "./turn-watchdog.ts";
 
 const STALL = 10_000;
 const TOOL_STALL = 50_000;
 const base = { eventId: "e1", provider: "claudeAgent", threadId: "t1", createdAt: "2026-01-01T00:00:00.000Z" };
 const text: RuntimeEvent = { ...base, type: "content.delta", streamKind: "assistant_text", delta: "working" };
 const toolStarted = (itemId: string): RuntimeEvent => ({ ...base, type: "item.started", itemType: "tool", itemId });
+const shellStarted = (itemId: string, summary: string): RuntimeEvent => ({ ...base, type: "item.started", itemType: "tool", itemId, title: "Bash", summary });
 const toolEnded = (itemId: string): RuntimeEvent => ({ ...base, type: "item.completed", itemType: "tool", itemId, ok: true });
 
 function rig() {
@@ -243,6 +244,35 @@ describe("TurnWatchdog", () => {
   });
 });
 
+describe("stuckCommand", () => {
+  it("names the longest-running shell command still running when the turn is stopped", () => {
+    const { dog, stalls, tick } = rig();
+    dog.watch("t1", "bot1");
+    dog.observe(toolStarted("read"));
+    tick(1_000);
+    dog.observe(shellStarted("export", "ffmpeg -i talk.mov talk.mp4"));
+    tick(1_000);
+    dog.observe(shellStarted("done", "ls"));
+    dog.observe(toolEnded("done"));
+    tick(TOOL_STALL);
+    dog.sweep();
+    expect(stalls).toHaveLength(1);
+    expect(stuckCommand(stalls[0]!, 1_000 + 120 * 60_000)).toEqual({ command: "ffmpeg -i talk.mov talk.mp4", minutes: 120 });
+  });
+
+  it("names nothing when no running tool runs a shell command", () => {
+    const { dog, stalls, tick } = rig();
+    dog.watch("t1", "bot1");
+    dog.observe(toolStarted("fetch"));
+    dog.observe(shellStarted("ended", "make build"));
+    dog.observe(toolEnded("ended"));
+    tick(TOOL_STALL);
+    dog.sweep();
+    expect(stuckCommand(stalls[0]!, TOOL_STALL)).toBeNull();
+    expect(stuckCommand({}, 0)).toBeNull();
+  });
+});
+
 // The harness's stall handler (index.ts), run without starting a server.
 describe("the stall handler", () => {
   function load(env: Record<string, string> = {}) {
@@ -267,7 +297,7 @@ describe("the stall handler", () => {
       cancelDirectTurnDispatch() {}, revokeInternalCapabilitiesForThread() {}, repeats: { settle() {} },
       botForThread: () => ({ id: "eli" }), activeRoutineRunForThread: () => undefined,
       runningTurnInstance: () => ({ adapter: { interruptTurn: async () => {} } }),
-      failedTurnTool: (name: string) => ({ name, ok: false }), reportIncident() {},
+      failedTurnTool: (name: string) => ({ name, ok: false }), stallNotice, reportIncident() {},
       settleDirectFollowup: (generation: string | undefined, outcome: { text: string }) => settled.push({ generation, text: outcome.text }),
       finalizeDelegationWatch: (_threadId: string, _ok: boolean, _reply: string, why: string) => delegations.push(why),
       setTimeout: () => ({ unref() {} }),
@@ -288,6 +318,14 @@ describe("the stall handler", () => {
     const { context, settled } = load();
     context.watchdog.options.onStall({ threadId: "t1", botId: "eli" }, 120 * 60_000);
     expect(settled[0]!.text).toMatch(/^No activity for 120 minutes — the turn was stopped\. Before it stopped/);
+  });
+
+  it("names the shell command that was still running and how long it ran", () => {
+    const { context, settled } = load();
+    const startedAt = Date.now() - 120 * 60_000;
+    const runningTools = new Map([["i1", { startedAt, command: "ffmpeg -i talk.mov talk.mp4" }]]);
+    context.watchdog.options.onStall({ threadId: "t1", botId: "eli", runningTools }, 120 * 60_000);
+    expect(settled[0]!.text).toMatch(/^The command `ffmpeg -i talk\.mov talk\.mp4` ran for 120 minutes without finishing and looks stuck — the turn was stopped\. Before it stopped/);
   });
 
   it("never lets the environment switch the watchdog off", () => {
