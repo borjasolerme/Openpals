@@ -280,7 +280,7 @@ import { extractReplayImages, extractTurnImages } from "./turn-images.ts";
 import { videoFrameImages } from "./turn-video.ts";
 import { callTitleExcerpt } from "./thread-title.ts";
 import { generateThreadTitle, llmThreadTitlesEnabled } from "./thread-title-generate.ts";
-import { stallLimitMs, stallNotice, TurnWatchdog } from "./turn-watchdog.ts";
+import { engineCommandCpuMs, engineProcessGone, stallLimitMs, stallNotice, TurnWatchdog } from "./turn-watchdog.ts";
 import { TurnResources, type TurnOwner } from "./turn-resources.ts";
 import {
   ensureWorkspace,
@@ -4477,8 +4477,8 @@ function stoppedTurnText(threadId: string, turnId: string | undefined, cause?: s
   });
 }
 const watchdog = new TurnWatchdog({
-  stallMs: TURN_STALL_MS, toolStallMs: TOOL_STALL_MS,
-  checkMs: 60_000,
+  stallMs: TURN_STALL_MS, toolStallMs: TOOL_STALL_MS, parkedStallMs: COMPUTER_WAIT_MAX_MS + TURN_STALL_MS, commandCpuMs: (turn, since) => engineCommandCpuMs(runningTurnInstance(botForThread(turn.botId, turn.threadId), turn.threadId)?.adapter, turn.threadId, since),
+  checkMs: 60_000, engineGone: (turn) => engineProcessGone(runningTurnInstance(botForThread(turn.botId, turn.threadId), turn.threadId)?.adapter, turn.threadId),
   onStall: (turn, silentMs) => {
     const stalledResourceOwner = turnResourceOwners.get(turn.threadId);
     const stalledGeneration = directTurnGenerationByThread.get(turn.threadId);
