@@ -3706,5 +3706,6 @@
   "macHome.move.openRemote": "開啟遠端存取",
   "workComputer.screen.worksOn": "{name} 在你的這台 Mac 上工作。",
   "workComputer.screen.hint": "機器人在背景使用它的螢幕。可在那台 Mac 上的 Openpals 中暫停或停止。",
-  "workComputer.screen.look": "查看螢幕"
+  "workComputer.screen.look": "查看螢幕",
+  "ask.settled.answeredInChat": "已在聊天中回答"
 }
