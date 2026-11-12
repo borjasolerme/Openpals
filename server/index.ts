@@ -8172,7 +8172,7 @@ routines = new RoutineManager({
   launchId: DESKTOP_MANAGED && /^[\w-]{1,100}$/.test(process.env.OMB_DESKTOP_LAUNCH_ID ?? "")
     ? process.env.OMB_DESKTOP_LAUNCH_ID : undefined,
   hasPendingDelegations: runtimeWorkPending, refusedHandoff: refusedHandoffs.take, handedOffWorkLive: (threadId) => coordinator.outstandingFor(threadId).length > 0,
-  routineTurn: (threadId) => directRequestOwners.get(threadId)?.automation !== undefined,
+  routineTurn: (threadId) => directRequestOwners.get(threadId)?.automation !== undefined, personTurn: (threadId) => directRequestOwners.get(threadId)?.origin?.kind === "user",
   botState: unattendedDispatchState,
   goalState: (groupId, coordinatorBotId) => {
     if (!groupId) return unattendedDispatchState(coordinatorBotId);
