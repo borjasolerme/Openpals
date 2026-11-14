@@ -1,7 +1,7 @@
 // Packages are untrusted: import only adds new records, sets every privilege-bearing field itself, and rolls back on any failure.
 import { randomUUID } from "node:crypto";
 
-import { mcpServerNameError, MAX_MCP_SERVERS, parseStoredMcpServer } from "./mcp-registry.ts";
+import { mcpServerNameError, mcpSharedServerRoom, parseStoredMcpServer } from "./mcp-registry.ts";
 import type { PresetRegistry } from "./presets.ts";
 import type { Routine, RoutineInput, RoutineManager } from "./routines.ts";
 import type { SkillListing } from "./skills.ts";
@@ -175,7 +175,7 @@ function runImport(source: ImportSource, options: PackageImportOptions, deps: Pa
       const next: Record<string, unknown> = { ...deps.mcp.servers() };
       for (const connection of pkg.connections) {
         const part = `connections[${connection.key}]`;
-        if (Object.keys(next).length >= MAX_MCP_SERVERS) {
+        if (mcpSharedServerRoom(next) === 0) {
           skipped.push({ part, reason: "too_many_connections" });
           continue;
         }
