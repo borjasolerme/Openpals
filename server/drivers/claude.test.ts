@@ -1656,6 +1656,30 @@ describe("ClaudeDriver turns (fake CLI)", () => {
       expect(seen.settings.claudeMdExcludes).toEqual([join(homedir(), ".claude", "CLAUDE.md")]);
     });
 
+    it("keeps an MCP output limit the bot's settings set instead of the automatic one", async () => {
+      const dump = join(scratch, "bot-settings-mcp-limit.json");
+      process.env.FAKE_CLAUDE_DUMP = dump;
+      await create();
+      const { thread, file } = botFolders("mcp-limit", { env: { MAX_MCP_OUTPUT_TOKENS: "40000" } });
+      await instance.adapter.sendTurn({ threadId: "t-bot-settings-mcp-limit", text: "hi", cwd: thread, botSettingsFile: file,
+        integrations: { custom: { docs: { type: "http", url: "https://docs.example/mcp", headers: {} } } } });
+      await recorder.until((e) => e.type === "turn.completed");
+      const seen = JSON.parse(readFileSync(dump, "utf8"));
+      expect(seen.env.MAX_MCP_OUTPUT_TOKENS).toBeUndefined();
+      expect(seen.settings.env.MAX_MCP_OUTPUT_TOKENS).toBe("40000");
+    });
+
+    it("keeps an MCP output limit set in the turn's own folder, which Claude Code reads itself", async () => {
+      const dump = join(scratch, "bot-settings-own-mcp-limit.json");
+      process.env.FAKE_CLAUDE_DUMP = dump;
+      await create();
+      const { bot, file } = botFolders("own-mcp-limit", { env: { MAX_MCP_OUTPUT_TOKENS: "40000" } });
+      await instance.adapter.sendTurn({ threadId: "t-bot-settings-own-mcp-limit", text: "hi", cwd: bot, botSettingsFile: file,
+        integrations: { custom: { docs: { type: "http", url: "https://docs.example/mcp", headers: {} } } } });
+      await recorder.until((e) => e.type === "turn.completed");
+      expect(JSON.parse(readFileSync(dump, "utf8")).env.MAX_MCP_OUTPUT_TOKENS).toBeUndefined();
+    });
+
     it("is left to Claude Code when the turn runs in the folder that holds it", async () => {
       const dump = join(scratch, "bot-settings-own-folder.json");
       process.env.FAKE_CLAUDE_DUMP = dump;
