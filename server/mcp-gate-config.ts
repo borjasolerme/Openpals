@@ -62,20 +62,30 @@ export function customServerGate(
 export const UNGATED_MCP_OUTPUT_TOKENS = 10_000;
 
 /** A bot server the gate leaves untrimmed (a URL server keeps its native connection) has the CLI save big results to a file
- * instead of filling the thread; a limit of 0 asks for whole payloads, and an explicit MAX_MCP_OUTPUT_TOKENS wins. */
+ * instead of filling the thread. The limit is process-wide, so it stays unset when any untrimmed server asks for whole
+ * payloads (a limit of 0), and an explicit MAX_MCP_OUTPUT_TOKENS (the process's or the bot settings file's) wins. */
 export function limitUngatedOutput(
   env: NodeJS.ProcessEnv,
   mounted: Readonly<Record<string, unknown>>,
   owned: Iterable<string>,
   perServer: Readonly<Record<string, number>> | undefined,
+  configured?: unknown,
 ): void {
-  if (env.MAX_MCP_OUTPUT_TOKENS) return;
+  if (env.MAX_MCP_OUTPUT_TOKENS || configured !== undefined) return;
+  let untrimmed = false;
   for (const name of owned) {
     const server = Object.hasOwn(mounted, name) ? mounted[name] as { env?: Record<string, string> } | undefined : undefined;
-    if (!server || server.env?.OMB_GATE_BUDGET || serverResultBudget(name, perServer, env) <= 0) continue;
-    env.MAX_MCP_OUTPUT_TOKENS = String(UNGATED_MCP_OUTPUT_TOKENS);
-    return;
+    if (!server) continue;
+    // A gate trims on its own budget; one set to 0 passes whole payloads through, so it needs the limit unset too.
+    const gateBudget = server.env?.OMB_GATE_BUDGET;
+    if (gateBudget !== undefined) {
+      if (Number(gateBudget) <= 0) return;
+      continue;
+    }
+    if (serverResultBudget(name, perServer, env) <= 0) return;
+    untrimmed = true;
   }
+  if (untrimmed) env.MAX_MCP_OUTPUT_TOKENS = String(UNGATED_MCP_OUTPUT_TOKENS);
 }
 
 export function spillDir(threadId: string): string {
