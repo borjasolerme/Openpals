@@ -119,6 +119,7 @@ function heldBanner(
   const call = `${QUERY_TOOL_NAME} {"result":"${held.handle}","query":"<JMESPath>"}`;
   if (held.queried) {
     if (input.footer) return `⚠️ TRUNCATED by Openpals: ${kept} of your query on "${held.handle}"; narrow it (see above).`;
+    if (input.short) return `⚠️ TRUNCATED by Openpals: ${kept} of your query on "${held.handle}"; the rest was NOT shown. Narrow the query.`;
     return `⚠️ TRUNCATED by Openpals: your query on "${held.handle}" returned ${fmt(input.originalChars)} chars; ${kept}. The rest was NOT shown. Narrow the query: pick fewer fields with {a: a, b: b}, slice with [0:20], or filter with [?cond]. The result is ${held.shape}.`;
   }
   if (input.footer) return `⚠️ SHAPED by Openpals: ${kept}; the rest is held as "${held.handle}" for ${QUERY_TOOL_NAME} (see the note above).`;
