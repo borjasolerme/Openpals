@@ -2313,7 +2313,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6773,7 +6774,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -9035,7 +9037,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -11297,7 +11300,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -16471,7 +16475,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -21520,7 +21526,13 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "attach.copyImage": "3cb27ae0fbca8ae3efdf8fa92493efc9cae666d90b99ae18d2cadf586f5dad32",
+      "attach.copyImageAria": "29bcb449a544d268db71d0014ec64ea9d2b79195c8e17b4e775ddb483b579f2d",
+      "attach.imageCopied": "d2f93ee383fa87452f9a67e88bcfd22d6b26782d777a4d751c3e16b260fc54d4",
+      "attach.copyImageFailed": "1b711a9276f5accb89acffd2a86b0c86c379e9382cb74f8cddb0da27c7e1494c",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -27218,7 +27230,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -30924,7 +30938,13 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "attach.copyImage": "3cb27ae0fbca8ae3efdf8fa92493efc9cae666d90b99ae18d2cadf586f5dad32",
+      "attach.copyImageAria": "29bcb449a544d268db71d0014ec64ea9d2b79195c8e17b4e775ddb483b579f2d",
+      "attach.imageCopied": "d2f93ee383fa87452f9a67e88bcfd22d6b26782d777a4d751c3e16b260fc54d4",
+      "attach.copyImageFailed": "1b711a9276f5accb89acffd2a86b0c86c379e9382cb74f8cddb0da27c7e1494c",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -33557,7 +33577,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -37749,7 +37770,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -41941,7 +41963,8 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -47053,7 +47076,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -52206,7 +52231,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -57206,7 +57233,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -62814,7 +62843,9 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "ask.settled.answeredInChat": "29568f953b2b0256ed7bd24dcfe2a2eb896d1f21b8bddcce0599b4d6fb9b66b9",
+      "botSettings.searchLoading": "6dc1cfffda0f5e0bc80bbf84611c4842b27da73c8a53c387b943cf885230d684"
     }
   }
 }
