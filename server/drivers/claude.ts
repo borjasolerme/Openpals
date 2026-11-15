@@ -18,7 +18,7 @@ import { botSettingsFor, folderSettingsEnv, withBotSettings } from "./claude-bot
 import { claudeBilling, claudeCallUsage } from "./claude-billing.ts";
 import { claudeAuthFailure, claudeAuthRecovery, claudeOAuthExpired } from "./claude-auth-recovery.ts";
 import { claudeModelExtras } from "./claude-model-extras.ts";
-import { claudeToolSearchSetting } from "./claude-tool-search.ts"; import { unusableBuiltIns } from "./claude-unusable-tools.ts";
+import { claudeAgentsMount, claudeToolSearchSetting } from "./claude-tool-search.ts"; import { unusableBuiltIns } from "./claude-unusable-tools.ts";
 import { claudeElicitations } from "./claude-elicitation.ts";
 import { readCostHistory, recordCostState } from "./claude-cost-history.ts";
 import { classifyResumeFailure, mayReplay, rebuiltSessionNotice, recoveryPromptFor } from "../resume-recovery.ts";
@@ -1102,10 +1102,10 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
         };
         if (!controlsHost) allowed.push("mcp__computer");
       }
+      const cwd = turn.cwd ?? homedir(), toolSearch = claudeToolSearchSetting(cwd, turnEnvironment);
       // Pre-allowed, or the CLI's own ListAgents look-alike shadows it.
       if (turn.integrations?.agents) {
-        // Claude waits for always-loaded tools before building the prompt.
-        mcpServers.agents = { ...turn.integrations.agents, alwaysLoad: true };
+        mcpServers.agents = claudeAgentsMount(turn.integrations.agents, toolSearch);
         allowed.push("mcp__agents");
       }
       if (turn.integrations?.phone) {
@@ -1190,9 +1190,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
         // in the packaged app process.execPath is Electron — run the helper as node
         if (process.versions.electron) env.ELECTRON_RUN_AS_NODE = "1";
       }
-      const cwd = turn.cwd ?? homedir();
       // Every MCP server without alwaysLoad loads on demand behind ToolSearch (claude-tool-search.ts).
-      const toolSearch = claudeToolSearchSetting(cwd, env);
       const own: Record<string, unknown> = { ...authSettings, env: { ...authSettings.env, ENABLE_TOOL_SEARCH: toolSearch, ...(isolated ? CLAUDE_OWN_MEMORY_OFF : {}) } };
       // Project-only settings still find the personal memory via ancestors when the bot lives under HOME.
       if (isolated) own.claudeMdExcludes = [join(homedir(), ".claude", "CLAUDE.md")];
