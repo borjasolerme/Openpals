@@ -3699,5 +3699,8 @@
   "macHome.move.pair.title": "重新配對你的裝置",
   "macHome.move.pair.body": "你的筆記型電腦和手機先前與舊伺服器配對。請把它們與這台 Mac 配對。",
   "macHome.move.openBackups": "開啟備份",
-  "macHome.move.openRemote": "開啟遠端存取"
+  "macHome.move.openRemote": "開啟遠端存取",
+  "workComputer.screen.worksOn": "{name} 在你的這台 Mac 上工作。",
+  "workComputer.screen.hint": "機器人在背景使用它的螢幕。可在那台 Mac 上的 Openpals 中暫停或停止。",
+  "workComputer.screen.look": "查看螢幕"
 }

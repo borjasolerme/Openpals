@@ -4185,5 +4185,8 @@
   "macHome.move.pair.title": "Cihazlarını yeniden eşleştir",
   "macHome.move.pair.body": "Dizüstü bilgisayarın ve telefonun eski sunucuyla eşleştirilmişti. Onları bu Mac'le eşleştir.",
   "macHome.move.openBackups": "Yedekleri aç",
-  "macHome.move.openRemote": "Uzaktan erişimi aç"
+  "macHome.move.openRemote": "Uzaktan erişimi aç",
+  "workComputer.screen.worksOn": "{name} bu Mac'inizde çalışıyor.",
+  "workComputer.screen.hint": "Botlar ekranını arka planda kullanır. O Mac'teki Openpals'tan duraklatın veya durdurun.",
+  "workComputer.screen.look": "Ekranına bak"
 }

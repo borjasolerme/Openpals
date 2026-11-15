@@ -2255,5 +2255,8 @@
   "macHome.move.pair.title": "अपने डिवाइस दोबारा जोड़ें",
   "macHome.move.pair.body": "आपका लैपटॉप और फ़ोन पुराने सर्वर से जुड़े थे। उन्हें इस Mac से जोड़ें।",
   "macHome.move.openBackups": "बैकअप खोलें",
-  "macHome.move.openRemote": "रिमोट एक्सेस खोलें"
+  "macHome.move.openRemote": "रिमोट एक्सेस खोलें",
+  "workComputer.screen.worksOn": "{name} आपके इस Mac पर काम करता है।",
+  "workComputer.screen.hint": "बॉट इसकी स्क्रीन बैकग्राउंड में इस्तेमाल करते हैं। उस Mac पर Openpals से इसे रोकें या बंद करें।",
+  "workComputer.screen.look": "इसकी स्क्रीन देखें"
 }

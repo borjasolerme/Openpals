@@ -2255,5 +2255,8 @@
   "macHome.move.pair.title": "Appairez de nouveau vos appareils",
   "macHome.move.pair.body": "Votre portable et votre téléphone étaient appairés à l'ancien serveur. Appairez-les à ce Mac.",
   "macHome.move.openBackups": "Ouvrir Sauvegardes",
-  "macHome.move.openRemote": "Ouvrir Accès à distance"
+  "macHome.move.openRemote": "Ouvrir Accès à distance",
+  "workComputer.screen.worksOn": "{name} travaille sur ce Mac à vous.",
+  "workComputer.screen.hint": "Les bots utilisent son écran en arrière-plan. Mettez en pause ou arrêtez depuis Openpals sur ce Mac.",
+  "workComputer.screen.look": "Voir son écran"
 }

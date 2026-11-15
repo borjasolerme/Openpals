@@ -2307,5 +2307,8 @@
   "macHome.move.pair.title": "Geräte erneut koppeln",
   "macHome.move.pair.body": "Laptop und Handy waren mit dem alten Server gekoppelt. Koppel sie mit diesem Mac.",
   "macHome.move.openBackups": "Sicherungen öffnen",
-  "macHome.move.openRemote": "Fernzugriff öffnen"
+  "macHome.move.openRemote": "Fernzugriff öffnen",
+  "workComputer.screen.worksOn": "{name} arbeitet auf diesem Mac von dir.",
+  "workComputer.screen.hint": "Bots nutzen seinen Bildschirm im Hintergrund. Pausiere oder stoppe das in Openpals auf diesem Mac.",
+  "workComputer.screen.look": "Bildschirm ansehen"
 }

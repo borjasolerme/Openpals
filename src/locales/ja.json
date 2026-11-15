@@ -5167,5 +5167,8 @@
   "macHome.move.pair.title": "デバイスをもう一度ペアリング",
   "macHome.move.pair.body": "ノートパソコンとスマートフォンは以前のサーバーとペアリングされていました。このMacとペアリングしてください。",
   "macHome.move.openBackups": "バックアップを開く",
-  "macHome.move.openRemote": "リモートアクセスを開く"
+  "macHome.move.openRemote": "リモートアクセスを開く",
+  "workComputer.screen.worksOn": "{name} はあなたのこの Mac で作業します。",
+  "workComputer.screen.hint": "ボットはバックグラウンドで画面を使います。その Mac の Openpals から一時停止または停止できます。",
+  "workComputer.screen.look": "画面を見る"
 }

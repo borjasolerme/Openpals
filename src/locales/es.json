@@ -4453,5 +4453,8 @@
   "macHome.move.pair.title": "Vincula tus dispositivos de nuevo",
   "macHome.move.pair.body": "Tu portátil y tu móvil estaban vinculados al servidor anterior. Vincúlalos a este Mac.",
   "macHome.move.openBackups": "Abrir Copias de seguridad",
-  "macHome.move.openRemote": "Abrir Acceso remoto"
+  "macHome.move.openRemote": "Abrir Acceso remoto",
+  "workComputer.screen.worksOn": "{name} trabaja en este Mac tuyo.",
+  "workComputer.screen.hint": "Los bots usan su pantalla en segundo plano. Pausa o detén esto desde Openpals en ese Mac.",
+  "workComputer.screen.look": "Ver su pantalla"
 }

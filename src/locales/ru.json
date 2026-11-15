@@ -5146,5 +5146,8 @@
   "macHome.move.pair.title": "Снова свяжите устройства",
   "macHome.move.pair.body": "Ваши ноутбук и телефон были связаны со старым сервером. Свяжите их с этим Mac.",
   "macHome.move.openBackups": "Открыть «Резервные копии»",
-  "macHome.move.openRemote": "Открыть «Удалённый доступ»"
+  "macHome.move.openRemote": "Открыть «Удалённый доступ»",
+  "workComputer.screen.worksOn": "{name} работает на этом вашем Mac.",
+  "workComputer.screen.hint": "Боты используют его экран в фоне. Приостановите или остановите это в Openpals на том Mac.",
+  "workComputer.screen.look": "Посмотреть экран"
 }

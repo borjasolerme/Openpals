@@ -2626,5 +2626,8 @@
   "macHome.move.pair.title": "Знову прив'яжіть свої пристрої",
   "macHome.move.pair.body": "Ваш ноутбук і телефон були прив'язані до старого сервера. Прив'яжіть їх до цього Mac.",
   "macHome.move.openBackups": "Відкрити «Резервні копії»",
-  "macHome.move.openRemote": "Відкрити «Віддалений доступ»"
+  "macHome.move.openRemote": "Відкрити «Віддалений доступ»",
+  "workComputer.screen.worksOn": "{name} працює на цьому вашому Mac.",
+  "workComputer.screen.hint": "Боти використовують його екран у фоні. Призупиніть або зупиніть це в Openpals на тому Mac.",
+  "workComputer.screen.look": "Переглянути екран"
 }

@@ -4185,5 +4185,8 @@
   "macHome.move.pair.title": "Ghép nối lại các thiết bị",
   "macHome.move.pair.body": "Laptop và điện thoại của bạn đã được ghép nối với máy chủ cũ. Hãy ghép nối chúng với chiếc Mac này.",
   "macHome.move.openBackups": "Mở Sao lưu",
-  "macHome.move.openRemote": "Mở Truy cập từ xa"
+  "macHome.move.openRemote": "Mở Truy cập từ xa",
+  "workComputer.screen.worksOn": "{name} làm việc trên chiếc Mac này của bạn.",
+  "workComputer.screen.hint": "Bot dùng màn hình của nó ở chế độ nền. Tạm dừng hoặc dừng trong Openpals trên chiếc Mac đó.",
+  "workComputer.screen.look": "Xem màn hình"
 }

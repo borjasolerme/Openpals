@@ -5601,5 +5601,8 @@
   "macHome.move.pair.title": "기기 다시 페어링",
   "macHome.move.pair.body": "노트북과 휴대폰은 이전 서버와 페어링되어 있었어요. 이 Mac과 페어링하세요.",
   "macHome.move.openBackups": "백업 열기",
-  "macHome.move.openRemote": "원격 접근 열기"
+  "macHome.move.openRemote": "원격 접근 열기",
+  "workComputer.screen.worksOn": "{name}은(는) 내 이 Mac에서 작업해요.",
+  "workComputer.screen.hint": "봇은 백그라운드에서 화면을 사용해요. 그 Mac의 Openpals에서 일시 정지하거나 중지하세요.",
+  "workComputer.screen.look": "화면 보기"
 }

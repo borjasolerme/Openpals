@@ -5042,5 +5042,8 @@
   "macHome.move.pair.title": "Pareie seus dispositivos de novo",
   "macHome.move.pair.body": "Seu notebook e seu celular estavam pareados com o servidor antigo. Pareie-os com este Mac.",
   "macHome.move.openBackups": "Abrir Backups",
-  "macHome.move.openRemote": "Abrir Acesso remoto"
+  "macHome.move.openRemote": "Abrir Acesso remoto",
+  "workComputer.screen.worksOn": "{name} trabalha neste seu Mac.",
+  "workComputer.screen.hint": "Os bots usam a tela dele em segundo plano. Pause ou pare pelo Openpals nesse Mac.",
+  "workComputer.screen.look": "Ver a tela dele"
 }

@@ -5105,5 +5105,8 @@
   "macHome.move.pair.title": "Sparuj urządzenia ponownie",
   "macHome.move.pair.body": "Twój laptop i telefon były sparowane ze starym serwerem. Sparuj je z tym Makiem.",
   "macHome.move.openBackups": "Otwórz Kopie zapasowe",
-  "macHome.move.openRemote": "Otwórz Dostęp zdalny"
+  "macHome.move.openRemote": "Otwórz Dostęp zdalny",
+  "workComputer.screen.worksOn": "{name} pracuje na tym Twoim Macu.",
+  "workComputer.screen.hint": "Boty używają jego ekranu w tle. Wstrzymaj lub zatrzymaj to w Openpals na tym Macu.",
+  "workComputer.screen.look": "Zobacz jego ekran"
 }

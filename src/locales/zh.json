@@ -5691,5 +5691,8 @@
   "macHome.move.pair.title": "重新配对你的设备",
   "macHome.move.pair.body": "你的笔记本电脑和手机之前与旧服务器配对。请把它们与这台 Mac 配对。",
   "macHome.move.openBackups": "打开备份",
-  "macHome.move.openRemote": "打开远程访问"
+  "macHome.move.openRemote": "打开远程访问",
+  "workComputer.screen.worksOn": "{name} 在你的这台 Mac 上工作。",
+  "workComputer.screen.hint": "机器人在后台使用它的屏幕。可在那台 Mac 上的 Openpals 中暂停或停止。",
+  "workComputer.screen.look": "查看屏幕"
 }

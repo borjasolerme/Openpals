@@ -5791,5 +5791,8 @@
   "macHome.move.pair.title": "Pair your devices again",
   "macHome.move.pair.body": "Your laptop and phone were paired with the old server. Pair them with this Mac.",
   "macHome.move.openBackups": "Open Backups",
-  "macHome.move.openRemote": "Open Remote access"
+  "macHome.move.openRemote": "Open Remote access",
+  "workComputer.screen.worksOn": "{name} works on this Mac of yours.",
+  "workComputer.screen.hint": "Bots use its screen in the background. Pause or stop it from Openpals on that Mac.",
+  "workComputer.screen.look": "Look at its screen"
 }

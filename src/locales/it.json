@@ -4993,5 +4993,8 @@
   "macHome.move.pair.title": "Associa di nuovo i tuoi dispositivi",
   "macHome.move.pair.body": "Il tuo portatile e il tuo telefono erano associati al vecchio server. Associali a questo Mac.",
   "macHome.move.openBackups": "Apri Backup",
-  "macHome.move.openRemote": "Apri Accesso remoto"
+  "macHome.move.openRemote": "Apri Accesso remoto",
+  "workComputer.screen.worksOn": "{name} lavora su questo tuo Mac.",
+  "workComputer.screen.hint": "I bot usano il suo schermo in background. Metti in pausa o ferma da Openpals su quel Mac.",
+  "workComputer.screen.look": "Guarda il suo schermo"
 }

@@ -2310,7 +2310,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "es": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -6767,7 +6770,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -9026,7 +9032,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "hi": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -11285,7 +11294,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "ja": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -16456,7 +16468,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "pt-br": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -21502,7 +21517,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "zh": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -27197,7 +27215,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "zh-tw": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -30900,7 +30921,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "uk": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",
@@ -33530,7 +33554,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "vi": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -37719,7 +37746,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "tr": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -41908,7 +41938,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "pl": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -47017,7 +47050,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "ru": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -52167,7 +52203,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "it": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -57164,7 +57203,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     },
     "ko": {
       "whop.description": "1a07cf04ef17029448d3781415cbac16d54e66b821907a40d94e0e6349710e70",
@@ -62769,7 +62811,10 @@
       "macHome.move.pair.title": "70206690b28db4f90162a63cf8e2a666d3f9bf5e86c4f6279b14d90e0df508e8",
       "macHome.move.pair.body": "4f6a8807ee9416e7bbd03a0c136c68c42ee06a67208acfc3b5fd33dce8d45fa1",
       "macHome.move.openBackups": "b0444890d35f1a6d856a7bc7a5dc9fed50cc24bd61c93cc7ebbee01254d25d2e",
-      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61"
+      "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
+      "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
+      "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
     }
   }
 }
