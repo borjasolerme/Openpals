@@ -365,7 +365,11 @@ export class Store {
           botsMigrated = true;
         }
       }
-      if (b.cloudBackend !== undefined && b.cloudBackend !== "box" && b.cloudBackend !== "vps") {
+      if (b.cloudBackend !== undefined && b.cloudBackend !== "box" && b.cloudBackend !== "vps" && b.cloudBackend !== "lent") {
+        delete b.cloudBackend;
+        botsMigrated = true;
+      }
+      if (b.cloudBackend === "lent" && typeof b.lentComputerId !== "string") {
         delete b.cloudBackend;
         botsMigrated = true;
       }

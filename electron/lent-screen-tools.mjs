@@ -39,7 +39,7 @@ export const LENT_SCREEN_ARGUMENTS = Object.freeze({
   list_windows: { on_screen_only: BOOLEAN, pid: INTEGER },
   get_window_state: { ...target, capture_mode: oneOf("ax", "vision"), include_screenshot: BOOLEAN, max_depth: INTEGER, max_elements: INTEGER, query: LABEL },
   get_accessibility_tree: {},
-  get_desktop_state: { session: ID },
+  get_desktop_state: { session: ID, max_image_dimension: INTEGER },
   get_screen_size: { session: ID },
   get_cursor_position: { session: ID },
   zoom: { pid: INTEGER, window_id: INTEGER, x1: NUMBER, y1: NUMBER, x2: NUMBER, y2: NUMBER },

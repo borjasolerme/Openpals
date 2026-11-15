@@ -33,6 +33,7 @@ export const sharedComputerOperation = z.object({
 }).strict();
 type Registration = z.infer<typeof sharedComputerRegistration>;
 type Operation = z.infer<typeof sharedComputerOperation>;
+export type SharedComputerOperation = Operation;
 const COMMAND_SECONDS = 120;
 const OLD_MAX_COMMAND_SECONDS = 240;
 /** A command's deadline is its own limit on the desktop plus time for the result to come back. */

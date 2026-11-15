@@ -44,8 +44,8 @@ function stubWorkspace() {
   state.answered = count => new Promise(resolve => { settle = () => { if (state.results.length >= count) resolve(state.results); }; settle(); });
   const fetchImpl = async (url, init) => {
     const route = new URL(url).pathname;
-    if (route === "/api/auth/session") return json({ kind: "session", id: sessionId, scopes: ["admin", "client"] });
-    if (route === "/.well-known/openmausbot/environment") return json({ environmentId, capabilities: { workComputers: true } });
+    if (route === "/api/auth/session") return json({ kind: "session", id: sessionId, scopes: ["admin", "client"], workComputers: true });
+    if (route === "/.well-known/openmausbot/environment") return json({ environmentId, capabilities: {} });
     const body = init?.body ? JSON.parse(init.body) : {};
     if (route === "/api/shared-computers/connect") { state.connected = body; return json({}); }
     if (route.endsWith("/poll")) {

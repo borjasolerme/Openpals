@@ -16,8 +16,8 @@ function fakeServer({ scopes = ["admin", "client"], workComputers = true } = {})
     const route = new URL(url).pathname;
     seen.origin = init?.headers?.origin;
     seen.secret = init?.headers?.["x-omb-computer-secret"] ?? seen.secret;
-    if (route === "/.well-known/openmausbot/environment") return json({ environmentId: "6f1c1f7e-2c55-4a4f-9a51-0c1c7d6f0a11", capabilities: workComputers ? { workComputers: true } : {} });
-    if (route === "/api/auth/session") return json({ kind: "session", id: randomUUID(), scopes });
+    if (route === "/.well-known/openmausbot/environment") return json({ environmentId: "6f1c1f7e-2c55-4a4f-9a51-0c1c7d6f0a11", capabilities: {} });
+    if (route === "/api/auth/session") return json({ kind: "session", id: randomUUID(), scopes, ...(workComputers ? { workComputers: true } : {}) });
     const body = init?.body ? JSON.parse(init.body) : {};
     if (route === "/api/shared-computers/connect") { seen.connects.push(body); return json({ ok: true }); }
     if (route.endsWith("/poll")) { seen.polls++; await delay(20, undefined, { signal: init.signal }).catch(() => {}); return json({ job: null }); }

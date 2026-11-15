@@ -31,7 +31,7 @@ export function mapComputers(input: {
   working(owner: string): boolean;
 }): Omit<MapComputer, "frame">[] {
   return input.bots
-    .filter((bot) => !bot.hidden && bot.cloudBackend !== "vps" && (bot.computer === "cloud" || input.machine(bot.id) !== undefined))
+    .filter((bot) => !bot.hidden && (bot.cloudBackend ?? "box") === "box" && (bot.computer === "cloud" || input.machine(bot.id) !== undefined))
     .map((bot) => ({
       id: bot.id, name: bot.name, botIds: [bot.id],
       state: mapComputerState(input.machine(bot.id), input.working(bot.id)),

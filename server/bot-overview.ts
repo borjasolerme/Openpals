@@ -40,6 +40,7 @@ export interface OverviewFacts {
     | "soul"
     | "computer"
     | "cloudBackend"
+    | "lentComputerId"
     | "cwd"
     | "autoApprove"
     | "approvalMode"

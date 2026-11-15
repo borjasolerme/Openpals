@@ -295,9 +295,9 @@ export function createComputerSharing({
       request(where, "/api/auth/session"),
     ]);
     signal.throwIfAborted();
-    if (descriptor?.capabilities?.workComputers !== true) throw problem("unsupported");
     if (auth?.kind !== "session") throw problem("signed-out");
     if (!Array.isArray(auth.scopes) || !auth.scopes.includes("admin")) throw problem("not-admin");
+    if (auth.workComputers !== true) throw problem("unsupported");
     // A folder moved or deleted since is left out, so the rest keeps working.
     const folders = await existingFolders(record.folders, validateSharedFolders);
     const grant = { enabled: true, folders, terminal: record.terminal, computer: record.screen, protectedPaths: protectedRoots };

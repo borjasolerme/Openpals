@@ -296,6 +296,7 @@ export interface Bot extends DefaultBotFields, Pick<WireBot, "mascotFaceColor"> 
   modelSelection: ModelSelection;
   computer?: "cloud" | "vm" | "local" | "browser" | "off";
   cloudBackend?: CloudBackend;
+  lentComputerId?: string;
   autoStartVps?: boolean;
   vpsAlias?: string;
   cwd?: string;

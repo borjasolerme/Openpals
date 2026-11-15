@@ -31,6 +31,7 @@ export function duplicateBotProfile(source: Bot) {
     modelSelection: source.modelSelection,
     computer: source.computer,
     cloudBackend: source.cloudBackend,
+    lentComputerId: source.lentComputerId,
     autoStartVps: source.autoStartVps,
     vpsAlias: source.vpsAlias,
     avatarUrl: source.avatarUrl,

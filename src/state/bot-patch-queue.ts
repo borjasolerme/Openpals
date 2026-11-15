@@ -9,6 +9,7 @@ export type BotUpdatePatch = Partial<
     | "soul"
     | "notifications"
     | "cloudBackend"
+    | "lentComputerId"
     | "autoStartVps"
     | "color"
     | "mascotExpression"

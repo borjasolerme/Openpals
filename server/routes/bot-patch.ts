@@ -346,8 +346,16 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
           patch.browserProfile = requestedProfile;
         } else return json(res, 400, { error: "browserProfile must name an existing browser profile" });
       }
-      if (body.cloudBackend !== undefined && !["box", "vps"].includes(String(body.cloudBackend))) {
-        return json(res, 400, { error: "cloudBackend must be box or vps" });
+      if (body.cloudBackend !== undefined && !["box", "vps", "lent"].includes(String(body.cloudBackend))) {
+        return json(res, 400, { error: "cloudBackend must be box, vps or lent" });
+      }
+      if (body.lentComputerId !== undefined) {
+        if (body.lentComputerId === null || body.lentComputerId === "") patch.lentComputerId = undefined;
+        else if (typeof body.lentComputerId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.lentComputerId)) patch.lentComputerId = body.lentComputerId;
+        else return json(res, 400, { error: "lentComputerId must name a computer lent to this server, or be null" });
+      }
+      if ((body.cloudBackend ?? existingBot?.cloudBackend) === "lent" && !(patch.lentComputerId ?? (body.lentComputerId === undefined ? existingBot?.lentComputerId : undefined))) {
+        return json(res, 400, { error: "Choose which of your computers this bot works on" });
       }
       if (body.autoStartVps !== undefined) {
         if (typeof body.autoStartVps !== "boolean") return json(res, 400, { error: "autoStartVps must be true or false" });
