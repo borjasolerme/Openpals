@@ -143,7 +143,7 @@ export class LentComputers {
   }
 }
 
-/** What makes a lent computer lend its apps and screen: OpenMausBot on it lends them by itself once computer control works there. */
+/** What makes a lent computer lend its apps and screen: Openpals on it lends them by itself once computer control works there. */
 export const lendScreenSteps = (device: "PC" | "Mac" | "computer") => device === "Mac"
   ? "Openpals on that Mac lends them by itself once macOS allows it Accessibility and Screen Recording: tell the person in one sentence to allow both for Openpals in System Settings → Privacy & Security on that Mac, and to update Openpals there if it is an older version."
   : `Openpals on that ${device} lends them by itself once its computer control works: tell the person in one sentence to check computer control in Openpals on that ${device}, and to update Openpals there if it is an older version.`;
