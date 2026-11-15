@@ -57,7 +57,6 @@ function profiles(): Record<string, Record<string, string>> {
   all["skills+voice+escalations"] = { ...all["skills+voice"]!, OMB_ESCALATIONS: "1" };
   all["skills+voice+escalations+x"] = { ...all["skills+voice+escalations"]!, OMB_X_RESEARCH: "1", OMB_RESEARCH: "1" };
   all["default+legacy-switches"] = { ...all.default!, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1", OMB_ACTIVE_WAITS: "0" };
-  for (const name of ["default", "skills+voice"]) all[`${name}+mausbot`] = { ...all[name]!, OMB_MAUSBOT: "1" };
   all["default+no-computer-pick"] = { ...all.default!, OMB_COMPUTER_SELECTION: "0" };
   for (const name of ["default", "non-chief"]) all[`${name}+room`] = { ...all[name]!, OMB_COMPUTER_SELECTION: "0", OMB_ROOM: "1" };
   return all;
@@ -85,8 +84,6 @@ const BUDGET_BASELINE: Record<string, number> = {
   "skills+voice+escalations": 16596,
   "skills+voice+escalations+x": 16657,
   "default+legacy-switches": 15824,
-  "default+mausbot": 15876,
-  "skills+voice+mausbot": 16630,
   "default+no-computer-pick": 14618,
   "default+room": 14557,
   "non-chief+room": 14440,

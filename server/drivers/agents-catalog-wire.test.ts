@@ -49,8 +49,6 @@ function profiles(): Record<string, Profile> {
   all["default+legacy-switches"] = {
     env: { ...all.default!.env, OMB_ROOM_TURN: "1", OMB_OWN_THREAD_CREATION: "1", OMB_EXTERNAL_RUNTIME: "1", OMB_ACTIVE_WAITS: "0" },
   };
-  // The person's MausBot holds a Chief's powers and adds its notification pair; MAUSBOT_ADDS bounds what that costs.
-  for (const name of ["default", "skills+voice"]) all[`${name}+mausbot`] = { env: { ...all[name]!.env, OMB_MAUSBOT: "1" } };
   // A chat that can never pick its computer: its Works on is Off, or it works on its team's computer. A room is one too.
   all["default+no-computer-pick"] = { env: { ...all.default!.env, OMB_COMPUTER_SELECTION: "0" } };
   for (const name of ["default", "non-chief"]) all[`${name}+room`] = { env: { ...all[name]!.env, OMB_COMPUTER_SELECTION: "0", OMB_ROOM: "1" } };
@@ -62,9 +60,6 @@ const CHIEF_ONLY_TOOLS = ["create_bot", "list_team_setup", "list_team_library", 
 const CHIEF_TARGET_TOOLS = ["propose_profile", "propose_model"];
 const CHIEF_PROFILE_TARGET = " A Chief of Staff may pass for_bot_id (from list_bots) for a requested change to another bot on its team.";
 const TEAMWORK_TOOLS = ["list_room_targets", "coordinate_bots", "assignment_status", "list_bots", "list_rooms", "list_threads", "close_thread", "start_thread", "post_to_room"];
-const MAUSBOT_TOOLS = ["list_unread_notifications", "mark_notifications_read"];
-/** MausBot's tools may make its list at most this much longer than the same Chief's without them. */
-const MAUSBOT_ADDS = 0.02;
 const RESEARCH_TOOLS = ["x_search", "research_search", "research_endpoint", "research_call"];
 /** The fullest profile, checked in whole; every other one is pinned by tool names, bytes and sha256. */
 const FULL = "skills+voice+escalations+x";
@@ -80,8 +75,6 @@ const BUDGET_BASELINE: Record<string, number> = {
   "skills+non-chief": 48900,
   "skills+voice+non-chief": 49681,
   "default+legacy-switches": 55291,
-  "default+mausbot": 55942,
-  "skills+voice+mausbot": 59373,
   "skills+voice+escalations": 59552,
   "skills+voice+escalations+x": 63380,
   "default+no-computer-pick": 54085,
@@ -188,7 +181,6 @@ describe("agents proxy tools/list golden", () => {
     for (const [name, profile] of Object.entries(PROFILES)) {
       for (const tool of toolsOf(wires[name]!)) {
         if (profile.env.OMB_CHIEF_OF_STAFF === "0" && CHIEF_TARGET_TOOLS.includes(tool.name)) continue;
-        if (profile.env.OMB_MAUSBOT === "1" && MAUSBOT_TOOLS.includes(tool.name)) continue;
         expect(JSON.stringify(tool), `${name}: ${tool.name}`).toBe(full.get(tool.name));
       }
     }
@@ -364,14 +356,6 @@ describe("agents proxy tools/list wire size", () => {
     ];
     console.log(lines.join("\n"));
     expect(rows.length).toBeGreaterThan(0);
-  });
-
-  it.each(Object.keys(PROFILES).filter((name) => name.endsWith("+mausbot")))("%s adds at most 2% to the same Chief's list", (name) => {
-    const without = name.slice(0, -"+mausbot".length);
-    const tools = toolsOf(wires[name]!).map((tool) => tool.name);
-    expect(tools.slice(-MAUSBOT_TOOLS.length)).toEqual(MAUSBOT_TOOLS);
-    expect(tools.slice(0, -MAUSBOT_TOOLS.length)).toEqual(toolsOf(wires[without]!).map((tool) => tool.name));
-    expect(bytes(wires[name]!)).toBeLessThanOrEqual(Math.floor(bytes(wires[without]!) * (1 + MAUSBOT_ADDS)));
   });
 
   it.each(Object.keys(PROFILES))("%s stays within 2% of its budget baseline", (name) => {

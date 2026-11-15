@@ -390,7 +390,7 @@ export function requiredScope(method: string, path: string): Scope {
 /** A client may change how a bot looks, never what it may do. */
 const CLIENT_BOT_PATCH_FIELDS = new Set([
   "unread", "pinned", "pinnedMessageId", "color", "mascotExpression", "mascotBody", "mascotFaceColor",
-  "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY", "sidebarHidden", "welcomed",
+  "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY",
 ]);
 export function clientBotPatchViolation(body: unknown): string | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return "body";
@@ -399,8 +399,7 @@ export function clientBotPatchViolation(body: unknown): string | null {
 
 /** All a paired device may give a bot it makes or brings in: who the bot is, how it looks, its
  * own playbooks, projects and library skills, and which of this place's models it runs on. Everything else (what it may
- * do and reach, where it runs, whom it answers to or directs, whether it is the MausBot or a package's
- * bot) only an admin on the host sets. */
+ * do and reach, where it runs, whom it answers to or directs, whether it is a package's bot) only an admin on the host sets. */
 const BOT_PROFILE_SETTINGS: ReadonlySet<string> = new Set([
   ...CLIENT_BOT_PATCH_FIELDS, ...BOT_PROFILE_PATCH_FIELDS, "hidden",
   "modelSelection", "requireAvailableModel", "fallback", "projects", "playbooks", "assignedSkills",

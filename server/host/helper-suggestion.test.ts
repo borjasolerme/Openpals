@@ -9,7 +9,7 @@ import type { RequestAuth } from "../request-auth.ts";
 import { createHelperSuggestionRoutes } from "../routes/helper-suggestion.ts";
 import { Store } from "../store.ts";
 import { createHelperSuggestion, HELPER_KEY_SUGGESTION_TEXT } from "./helper-suggestion.ts";
-import { proactiveOwner } from "./proactive-owner.ts";
+import { mainChief } from "./proactive-owner.ts";
 
 const owner: RequestAuth = { kind: "loopback", scopes: ["admin", "client"] };
 const guest: RequestAuth = { kind: "loopback", scopes: ["client"], trust: "service" };
@@ -25,7 +25,7 @@ function setup(options: { hosted?: boolean } = {}) {
   let settled = false;
   let busy = false;
   const make = () => createHelperSuggestion({
-    store, dataDir: dir, hosted: options.hosted ?? false, settled: () => settled, owner: () => proactiveOwner(store),
+    store, dataDir: dir, hosted: options.hosted ?? false, settled: () => settled, owner: () => mainChief(store),
     mainThread: (botId) => store.bot(botId)!.threadId, threadBusy: () => busy,
   });
   let suggestion = make();

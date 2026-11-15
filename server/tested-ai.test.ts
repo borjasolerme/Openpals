@@ -8,11 +8,6 @@ import { selectDefaultModelSelection, type SelectableInstance } from "./default-
 import type { CheckableEngine } from "./engine-check.ts";
 import { backgroundAiChecks, configIdentity, createTestedAi, type TestedAiDeps } from "./tested-ai.ts";
 
-type Message = { role: string };
-type Task = { threadId: string; modelSelection?: ModelSelection };
-type Bot = { id: string; chiefOfStaff?: boolean; modelSelection: ModelSelection; tasks: Task[] };
-type Change = { type: string; botId?: string; threadId?: string; message?: Message };
-
 const MINUTE = 60_000;
 const ready = (instanceId: string, driverKind: string, snapshot: Partial<ProviderSnapshot> = {}): SelectableInstance => ({
   instanceId, driverKind, snapshot: { state: "available", authenticated: true, ...snapshot },
@@ -21,53 +16,13 @@ const ready = (instanceId: string, driverKind: string, snapshot: Partial<Provide
 const on = (instanceId: string): ModelSelection => ({ instanceId, model: `${instanceId}-model` });
 const silent = async (): Promise<string> => { throw new Error("529 overloaded"); };
 
-/** What the server's store does here: bots and their conversations, the first bot it seeds, and change events. */
-class FakeStore {
-  bots: Bot[] = [];
-  messages = new Map<string, Message[]>();
-  private listeners = new Set<(change: Change) => void>();
-  private seedSelection: () => ModelSelection;
-  constructor(seedSelection: () => ModelSelection) {
-    this.seedSelection = seedSelection;
-  }
-  needsSeed() { return this.bots.length === 0; }
-  seedIfEmpty() {
-    if (this.bots.length) return;
-    this.bots.unshift({ id: "chief", chiefOfStaff: true, modelSelection: structuredClone(this.seedSelection()), tasks: [{ threadId: "chief-main" }] });
-    this.emit({ type: "bot", botId: "chief" });
-  }
-  bot(id: string) { return this.bots.find((bot) => bot.id === id); }
-  tasks(botId: string) { return this.bot(botId)?.tasks ?? []; }
-  messagesFor(threadId: string) { return this.messages.get(threadId) ?? []; }
-  applyModelDefault = vi.fn((botId: string, selection: ModelSelection) => this.choose(botId, selection));
-  /** Anything that sets a bot's model: the person's picker, a team setup, the app's own default. */
-  choose(botId: string, selection: ModelSelection) {
-    const bot = this.bot(botId)!;
-    bot.modelSelection = structuredClone(selection);
-    this.emit({ type: "bot", botId });
-    return bot;
-  }
-  say(threadId: string, role: string) {
-    const message = { role };
-    this.messages.set(threadId, [...this.messagesFor(threadId), message]);
-    this.emit({ type: "message", threadId, message });
-  }
-  onChange(listener: (change: Change) => void) {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-  emit(change: Change) { for (const listener of this.listeners) listener(change); }
-}
-
 describe("testing an AI with one tiny message before a new bot's default trusts it", () => {
   let instances: SelectableInstance[];
   let answers: Record<string, () => Promise<string>>;
   let engines: Map<string, CheckableEngine>;
-  let store: FakeStore;
   let saved: ModelSelection | undefined;
   let profile: ModelSelection | undefined;
   let pick: ModelSelection;
-  let busy: Set<string>;
   let clock: number;
   let timers: Array<{ at: number; run: () => void; cancelled: boolean }>;
   let data: string;
@@ -93,9 +48,6 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     saved: () => [saved, profile],
     hosted: () => false,
     context: { company: (instanceId) => company(instanceId) },
-    store: () => store as unknown as ReturnType<TestedAiDeps["store"]>,
-    threadBusy: (botId, threadId) => busy.has(`${botId}/${threadId}`),
-    forBot: (selection) => ({ ...selection, effort: "high" }),
     changed: async () => refresh(),
     background: true,
     file: join(data, "ai-checks.json"),
@@ -118,13 +70,11 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     }
     await settled();
   };
-  /** First run: read the engines, then make the first bot, as server/index.ts does at start. */
+  /** A start: read the engines, as server/index.ts does. */
   const boot = async () => {
     refresh();
-    tested.seed();
     await settled();
   };
-  const chief = () => store.bot("chief")!;
 
   beforeEach(() => {
     instances = [ready("grok", "grokAgent"), ready("claude", "claudeAgent")];
@@ -132,12 +82,10 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     engines = new Map();
     saved = undefined;
     profile = undefined;
-    busy = new Set();
     clock = 1_000_000;
     timers = [];
     company = () => false;
     data = mkdtempSync(join(tmpdir(), "omb-tested-ai-"));
-    store = new FakeStore(() => pick);
     tested = make();
   });
   afterEach(() => {
@@ -149,13 +97,11 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     refresh();
     expect(pick).toEqual(on("claude"));
     expect(tested.state(instances[1]!)).toBe("testing");
-    tested.seed();
     await settled();
     expect(tested.state(instances[1]!)).toBe("passed");
     expect(sent("claude")).toBe(1);
     expect(sent("grok")).toBe(0);
     expect(pick).toEqual(on("claude"));
-    expect(chief().modelSelection).toEqual(on("claude"));
   });
 
   it("doesn't demote an AI for one missed test: it tries again in two minutes and keeps its place", async () => {
@@ -170,11 +116,9 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     expect(sent("claude")).toBe(2);
     expect(tested.state(instances[1]!)).toBe("passed");
     expect(pick).toEqual(on("claude"));
-    expect(chief().modelSelection).toEqual(on("claude"));
-    expect(store.applyModelDefault).not.toHaveBeenCalled();
   });
 
-  it("after two misses in a row moves the default, and the first bot only once the next AI answered", async () => {
+  it("after two misses in a row moves the default to the next AI", async () => {
     answers.claude = silent;
     let grokAnswers!: (text: string) => void;
     answers.grok = () => new Promise<string>((resolve) => { grokAnswers = resolve; });
@@ -183,13 +127,12 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     for (const timer of timers.splice(0)) timer.run();
     await vi.waitFor(() => expect(tested.answered(instances[1]!)).toBe(false));
     expect(tested.state(instances[1]!)).toBe("failed");
-    // The default goes to the next AI at once, but the first bot waits for that AI's own answer.
+    // The default goes to the next AI at once, and that AI is tested next.
     await vi.waitFor(() => expect(tested.state(instances[0]!)).toBe("testing"));
     expect(pick).toEqual(on("grok"));
-    expect(chief().modelSelection).toEqual(on("claude"));
     grokAnswers("OK");
     await settled();
-    expect(chief().modelSelection).toEqual({ ...on("grok"), effort: "high" });
+    expect(tested.state(instances[0]!)).toBe("passed");
   });
 
   it("keeps the default on the AI that answered while one that didn't is being tried again", async () => {
@@ -207,77 +150,6 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     claudeAnswers("OK");
     await settled();
     expect(pick).toEqual(on("claude"));
-    expect(chief().modelSelection.instanceId).toBe("claude");
-  });
-
-  it("moves the first bot back once the person's own AI answers again, even after a restart", async () => {
-    instances = [ready("claude", "claudeAgent"), ready("opencodeGo", "opencodeGo", { freeFallback: true })];
-    answers.claude = silent;
-    await boot();
-    await wait(2 * MINUTE);
-    expect(chief().modelSelection.instanceId).toBe("opencodeGo");
-    // The app restarts before Claude's next try; Claude answers then.
-    answers.claude = async () => "OK";
-    engines = new Map();
-    timers = [];
-    tested = make();
-    refresh();
-    tested.seed();
-    await settled();
-    expect(sent("claude")).toBe(0);
-    await wait(10 * MINUTE);
-    expect(sent("claude")).toBe(1);
-    expect(pick).toEqual(on("claude"));
-    expect(chief().modelSelection.instanceId).toBe("claude");
-  });
-
-  it("moves the first bot off an AI whose latest test missed, to the default that answered, as the welcome says", async () => {
-    answers.claude = silent;
-    await boot();
-    expect(chief().modelSelection).toEqual(on("claude"));
-    // The welcome checks the next AI while Claude waits for its retry; that AI answers, and new bots get it.
-    await tested.check({ ...engineFor("grok"), snapshot: async () => instances[0]!.snapshot });
-    await settled();
-    expect(pick).toEqual(on("grok"));
-    expect(chief().modelSelection, "the first bot goes where the welcome said").toEqual({ ...on("grok"), effort: "high" });
-    // Claude answers its retry: the first bot, still following, moves back up.
-    answers.claude = async () => "OK";
-    await wait(2 * MINUTE);
-    expect(pick).toEqual(on("claude"));
-    expect(chief().modelSelection.instanceId).toBe("claude");
-  });
-
-  it("moves the first bot on a result that lands while a later start still reads the engines, once that read settles", async () => {
-    answers.claude = silent;
-    await boot();
-    expect(chief().modelSelection).toEqual(on("claude"));
-    // The app restarts mid-welcome; the engines are read one at a time, and nothing settles until that read ends.
-    engines = new Map();
-    timers = [];
-    let reading = true;
-    tested = make({ changed: async () => { if (!reading) refresh(); } });
-    tested.seed();
-    await tested.check({ ...engineFor("grok"), snapshot: async () => instances[0]!.snapshot });
-    await settled();
-    expect(chief().modelSelection, "nothing moves on the last run's status").toEqual(on("claude"));
-    reading = false;
-    refresh();
-    await settled();
-    expect(pick).toEqual(on("grok"));
-    expect(chief().modelSelection).toEqual({ ...on("grok"), effort: "high" });
-    expect(sent("claude"), "Claude's retry is still two minutes off").toBe(0);
-  });
-
-  it("moves the first bot off an AI that can't run once one that can has answered", async () => {
-    instances = [ready("claude", "claudeAgent", { authenticated: false })];
-    await boot();
-    expect(chief().modelSelection.instanceId, "nothing could run: the first bot got what was there").toBe("claude");
-    answers.codex = async () => "OK";
-    instances = [ready("claude", "claudeAgent", { authenticated: false }), ready("codex", "codex")];
-    refresh();
-    await settled();
-    expect(pick).toEqual(on("codex"));
-    expect(chief().modelSelection.instanceId).toBe("codex");
   });
 
   it("keeps trying an AI that missed three times, once an hour", async () => {
@@ -327,53 +199,6 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     expect(configIdentity(named("One"))).toBe(configIdentity(named("Two")));
   });
 
-  it("never moves a first bot the person chose a model for, wrote to, or set a conversation's AI on", async () => {
-    for (const touch of [
-      // The same model at another effort is a choice too (the very same choice again can't be told apart from none).
-      () => store.choose("chief", { ...on("claude"), effort: "low" }),
-      () => store.choose("chief", on("grok")),
-      () => { chief().tasks[0]!.modelSelection = on("claude"); store.emit({ type: "bot", botId: "chief" }); },
-      () => store.say("chief-main", "user"),
-    ]) {
-      rmSync(join(data, "ai-checks.json"), { force: true });
-      store = new FakeStore(() => pick);
-      engines = new Map();
-      timers = [];
-      answers.claude = silent;
-      tested = make();
-      await boot();
-      // The app's own greeting is not the person's.
-      store.say("chief-main", "bot");
-      touch();
-      await wait(2 * MINUTE);
-      expect(pick).toEqual(on("grok"));
-      expect(store.applyModelDefault).not.toHaveBeenCalled();
-    }
-  });
-
-  it("moves only the first bot the app made: never a Chief someone promoted, one a team setup made, or a busy one", async () => {
-    answers.claude = silent;
-    await boot();
-    store.bots.push({ id: "promoted", chiefOfStaff: true, modelSelection: on("claude"), tasks: [{ threadId: "promoted-main" }] });
-    busy.add("chief/chief-main");
-    await wait(2 * MINUTE);
-    expect(pick).toEqual(on("grok"));
-    expect(store.bot("promoted")!.modelSelection).toEqual(on("claude"));
-    expect(chief().modelSelection).toEqual(on("claude"));
-  });
-
-  it("never moves anything on a status read alone, such as one that timed out", async () => {
-    await boot();
-    // Claude's status read fails once: the default for new bots reads Grok for that moment, nothing follows it.
-    instances = [ready("grok", "grokAgent"), { ...ready("claude", "claudeAgent"), snapshot: { state: "unavailable", reason: "timed out" } }];
-    clock += 6 * MINUTE;
-    refresh();
-    await settled();
-    expect(pick).toEqual(on("grok"));
-    expect(chief().modelSelection).toEqual(on("claude"));
-    expect(store.applyModelDefault).not.toHaveBeenCalled();
-  });
-
   it("never tests or moves a default the person saved, in Settings or as the New Bot defaults' model", async () => {
     for (const keep of [() => { saved = on("claude"); }, () => { profile = on("claude"); }]) {
       saved = undefined;
@@ -385,7 +210,6 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
       await boot();
       await wait(10 * MINUTE);
       expect(engines.size).toBe(0);
-      expect(store.applyModelDefault).not.toHaveBeenCalled();
     }
   });
 
@@ -465,23 +289,9 @@ describe("testing an AI with one tiny message before a new bot's default trusts 
     await expect(tested.check({ ...engineFor("grok"), snapshot: async () => instances[0]!.snapshot })).resolves.toEqual({ ok: true });
   });
 
-  it("lets the first bot follow while the app fills in its model, when nothing could run at first", async () => {
-    instances = [];
-    await boot();
-    expect(chief().modelSelection).toEqual({ instanceId: "", model: "" });
-    // The app gives the waiting bot the default once an AI turns up (refreshUnsetModelSelections).
-    instances = [ready("claude", "claudeAgent"), ready("grok", "grokAgent")];
-    answers.claude = silent;
-    refresh();
-    store.choose("chief", pick);
-    await settled();
-    await wait(2 * MINUTE);
-    expect(chief().modelSelection.instanceId).toBe("grok");
-  });
-
   it("writes its record where it was told, and starts clean from a broken one", async () => {
     await boot();
-    expect(JSON.parse(readFileSync(join(data, "ai-checks.json"), "utf8"))).toMatchObject({ follower: { botId: "chief" } });
+    expect(JSON.parse(readFileSync(join(data, "ai-checks.json"), "utf8"))).toMatchObject({ results: { claude: { state: "passed" } } });
     writeFileSync(join(data, "ai-checks.json"), "{not json");
     engines = new Map();
     tested = make();

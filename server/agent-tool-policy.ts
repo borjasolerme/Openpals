@@ -11,7 +11,6 @@ export const READ_ONLY_AGENT_TOOL_NAMES: ReadonlySet<string> = new Set([
   "trigger_info",
   "list_waits",
   "skills_list",
-  "list_unread_notifications",
   "usage_limits",
 ]);
 

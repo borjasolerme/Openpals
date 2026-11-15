@@ -280,12 +280,12 @@ describe("control-omb isolated verification loop", () => {
     expect(existsSync(session.info.logPath)).toBe(true);
   }, 30_000);
 
-  it("allows slow starter reads and renames within the fixture launch deadline", async () => {
+  it("allows a slow starter creation and Chief promotion within the fixture launch deadline", async () => {
     const fetch = globalThis.fetch;
     const delayed: string[] = [];
     const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const path = new URL(String(input)).pathname;
-      if (path === "/api/bots" || path.endsWith("/profile")) {
+      if (path.startsWith("/api/bots") && init?.method && init.method !== "GET") {
         delayed.push(path);
         await new Promise(resolve => setTimeout(resolve, 1_100));
       }
@@ -294,10 +294,10 @@ describe("control-omb isolated verification loop", () => {
     let session: Awaited<ReturnType<typeof launchVerificationServer>> | undefined;
     try {
       session = await launchVerificationServer();
-      expect(delayed).toEqual(["/api/bots", expect.stringMatching(/^\/api\/bots\/[^/]+\/profile$/)]);
+      expect(delayed).toEqual(["/api/bots", expect.stringMatching(/^\/api\/bots\/[^/]+$/)]);
       const response = await fetch(`${session.info.url}/api/bots`);
-      const body = await response.json() as { bots: Array<{ name: string }> };
-      expect(body.bots[0].name).toBe("Fixture Starter");
+      const body = await response.json() as { bots: Array<{ name: string; chiefOfStaff?: boolean }> };
+      expect(body.bots).toMatchObject([{ name: "Fixture Starter", chiefOfStaff: true }]);
     } finally {
       spy.mockRestore();
       await session?.close();

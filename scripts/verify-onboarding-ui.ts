@@ -67,8 +67,6 @@ const holdConfigWrite = () => evaluate(`(() => {
 // suppression; only this fixture browser's localStorage is cleared. The name
 // is the one the person already gave (the welcome no longer asks for it).
 await evaluate("fetch('/api/config', {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({profile:{name:'Onboarding fixture'}})}).then(r => r.ok)");
-// The standard fixture has MausBot met already (no first-launch card); a new install's has met nobody yet.
-await evaluate("fetch('/api/bots').then(r => r.json()).then(data => Promise.all(data.bots.filter(bot => bot.defaultBot).map(bot => fetch('/api/bots/' + bot.id, {method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({welcomed:false})}).then(r => r.ok)))).then(oks => oks.length > 0 && oks.every(Boolean))");
 // A new install opens in Simple mode; this page's own writes after the clear would otherwise read as an earlier run.
 await evaluate("localStorage.clear(); sessionStorage.clear(); localStorage.setItem('omb-advanced-mode', '0'); setTimeout(() => { location.search = '?onboarding=1'; }, 0); true");
 await textVisible("Sign in to your AI");
@@ -96,21 +94,15 @@ await evaluate(`(() => {
   };
   return true;
 })()`);
-await evaluate("document.querySelector('[data-bots-choice=pal]').click(); true");
 await evaluate("document.querySelector('[data-welcome] [data-primary]').click(); true");
 await poll(() => evaluate("document.querySelectorAll('[data-welcome]').length"), 0, "the end lands in the chat");
-// The welcome lands in the chat with the Chief (the server's first bot): its first messages, no AI asked.
-const first = await evaluate("fetch('/api/bots').then(r => r.json()).then(data => data.bots.find(bot => bot.chiefOfStaff && !bot.hidden))");
-assert.ok(first?.name, "the Chief");
-assert.equal(first.welcomed, true, "MausBot is introduced, so its old first-launch card never comes");
+// With nothing brought, the welcome lands in the chat with the first bot there.
+const first = await evaluate("fetch('/api/bots').then(r => r.json()).then(data => data.bots.find(bot => !bot.hidden))");
+assert.ok(first?.name, "a bot");
 const composer = `Message ${first.name}`;
 await textVisible(composer);
-await textVisible(`Hey! I'm ${first.name}. I'm new here.`);
-await textVisible("I looked around");
-const followups = await evaluate(`fetch('/api/threads/${first.threadId}/messages?limit=20').then(r => r.json()).then(data => data.messages.filter(message => message.helperFollowup).length)`);
-assert.equal(followups, 1, "its follow-up is written once, as a message the model reads");
 assert.equal((await config()).profile.email, "", "the welcome saves no email");
-console.log("PASS starting with Pal lands in its chat with its first messages, though the save failed");
+console.log("PASS the welcome lands in a chat, though the save failed");
 
 const starter = await evaluate("fetch('/api/bots').then(r => r.json()).then(data => data.bots.find(bot => bot.name === 'Pepper'))");
 assert.ok(starter?.modelSelection?.instanceId && starter.modelSelection.model, "starter has a model without opening the picker");
@@ -121,7 +113,7 @@ assert.notEqual(selected?.snapshot.authenticated, false, "starter uses a connect
 assert.equal(starter.modelSelection.model, selected.models.default);
 // The failed save left the server's record empty: a browser without this one's local mark shows the welcome again,
 // and this time it is saved.
-// Skipping every step this time lands in the Chief's chat.
+// Skipping every step this time lands in the same chat.
 await evaluate("localStorage.removeItem('omb.onboarding.welcomeDraft'); setTimeout(() => location.reload(), 0); true");
 await textVisible("Sign in to your AI");
 await finishWelcome();
@@ -137,7 +129,7 @@ await delay(1500);
 assert.equal(await evaluate("document.querySelectorAll('[data-welcome], [data-tour-card]').length"), 0, "no app tour after a reload");
 assert.equal((await config()).onboarding.hintsSeen.filter((id: string) => id.startsWith("tour.")).length, 0, "no tour step was shown");
 await screenshot("chat");
-console.log("PASS the first run lands in the chat with the Chief; the app tour never starts by itself, nor after a reload");
+console.log("PASS the first run lands in a chat; the app tour never starts by itself, nor after a reload");
 
 await type(composer, "FIRST_MESSAGE_AFTER_ONBOARDING_7J");
 await ui("press", "--keys", "Enter");

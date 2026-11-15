@@ -138,8 +138,7 @@ describe("team apply", () => {
   it("keeps bots and rooms the file leaves out, and deletes them only with --prune in a file marked prune", async () => {
     const { client, writes, state } = workspace();
     await reconcile(client, file(), options());
-    state.bots.push({ id: "old", name: "Old visitor", busy: false }, { id: "helper", name: "Helper", hidden: true, busy: false },
-      { id: "default", name: "Assistant", defaultBot: true, busy: false });
+    state.bots.push({ id: "old", name: "Old visitor", busy: false }, { id: "helper", name: "Helper", hidden: true, busy: false });
     writes.length = 0;
     const kept = await reconcile(client, file(), options());
     expect(kept.lines).toEqual(['bot "Old visitor": not in file (kept; --prune deletes it)']);

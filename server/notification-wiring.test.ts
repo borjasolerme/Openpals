@@ -102,17 +102,13 @@ posixOnly("routine failure notification wiring", () => {
   it(
     "emits one routine-failed notification linking the chat that says the run failed, and no generic done notification",
     async () => {
-      const listed = await api("GET", "/api/bots");
-      const bot = listed.body.bots[0];
-      expect(
-        (
-          await api("PATCH", `/api/bots/${bot.id}`, {
-            name: "Routine Scout",
-            notifications: true,
-            modelSelection: { instanceId: "grok", model: "fake-model" },
-          })
-        ).status,
-      ).toBe(200);
+      const made = await api("POST", "/api/bots", {
+        name: "Routine Scout",
+        notifications: true,
+        modelSelection: { instanceId: "grok", model: "fake-model" },
+      });
+      expect(made.status).toBe(201);
+      const bot = made.body.bot;
 
       const created = await api("POST", "/api/routines", {
         name: "Broken nightly report",

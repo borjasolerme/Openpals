@@ -26,7 +26,7 @@ import { createBrief, type BriefDeps, type MorningDeps } from "./brief.ts";
 import { WATCH_EVERY_MINUTES, WATCH_INSTRUCTIONS, WATCH_NAME } from "./default-watch.ts";
 import { createHelperSuggestion } from "./helper-suggestion.ts";
 import { createInboxTriage } from "./inbox-triage.ts";
-import { mainChief, proactiveOwner } from "./proactive-owner.ts";
+import { mainChief } from "./proactive-owner.ts";
 import { createRoutineChecks } from "./routine-checks.ts";
 import type { ValueKind } from "./value-ledger.ts";
 
@@ -35,7 +35,6 @@ export const WATCH_FILE = "watch.json";
 /** The engines whose every tool use outside a run's allowlist reaches OpenMausBot's answerer and is refused there. */
 const FENCED_ENGINES = new Set(["claudeAgent"]);
 const READ_SLUG: Record<ReadApp, string> = { gmail: "GMAIL_FETCH_EMAILS", googlecalendar: "GOOGLECALENDAR_EVENTS_LIST" };
-const ACTIVE = new Set(["queued", "running", "waiting"]);
 const MAX_HANDED = 50;
 const watchSchema = z.object({
   version: z.literal(1),
@@ -115,7 +114,7 @@ export function createProactive(deps: ProactiveDeps) {
     return Boolean(bot && FENCED_ENGINES.has(deps.registry.get(bot.modelSelection.instanceId)?.driverKind ?? ""));
   };
   const runs = (): RoutineRun[] => [...(deps.routines()?.listRuns() ?? [])].reverse();
-  const owner = () => proactiveOwner(store);
+  const owner = () => mainChief(store);
   /** The owner's briefing routine is on: pausing or deleting it switches the brief off. */
   const watching = (): boolean => {
     const bot = owner();
@@ -191,23 +190,13 @@ export function createProactive(deps: ProactiveDeps) {
     }
   };
 
-  /** The watch the main Chief holds becomes the proactive bot's, once: the same routine, so its switch, the instructions
-   * the person edited, its checks' cursors and seen ids and its daily cap stay as they are. Never while one of its runs
-   * is queued or working. A briefing routine newly on the bot, handed over or arrived with it, is the one: every other is
-   * paused, never deleted, and the brief moves to the bot's chat. A restart between the steps finishes them. */
-  function handOver(manager: RoutineManager, bot: BotRecord): void {
+  /** A briefing routine newly on the Chief, made by it or arrived with it, is the one: every other is paused, never
+   * deleted, and the brief moves to the Chief's chat. */
+  function settleWatch(manager: RoutineManager, bot: BotRecord): void {
     const kept = watchRecord();
     const handed = { ...kept.handed };
-    const watches = manager.listRoutines().filter(isWatch);
-    const chief = mainChief(store);
-    const before = chief && chief.id !== bot.id ? watches.filter((routine) => routine.botId === chief.id && handed[routine.id] !== bot.id) : [];
-    const runs = before.length ? manager.listRuns() : [];
-    if (before.some((routine) => runs.some((run) => run.routineId === routine.id && ACTIVE.has(run.status)))) return;
-    const placed = watches.filter((routine) => routine.botId === bot.id && handed[routine.id] !== bot.id).sort((a, b) => a.updatedAt - b.updatedAt);
-    for (const routine of before) {
-      const moved = manager.update(routine.id, { botId: bot.id });
-      if (moved) placed.push(moved);
-    }
+    const placed = manager.listRoutines().filter(isWatch).filter((routine) => routine.botId === bot.id && handed[routine.id] !== bot.id)
+      .sort((a, b) => a.updatedAt - b.updatedAt);
     const watch = placed.at(-1);
     if (!watch) return;
     for (const other of manager.listRoutines()) if (isWatch(other) && other.id !== watch.id && other.enabled) manager.update(other.id, { enabled: false });
@@ -218,15 +207,15 @@ export function createProactive(deps: ProactiveDeps) {
 
   /** The proactive bot's default routine, once, when connected apps are there to read: pausing or deleting it is how it
    * is switched off, so it is never made again. Asked at start and every minute, since connected apps can arrive later,
-   * and a MausBot can arrive after the routine was made. */
+   * and a Chief can arrive after the routine was made. */
   function ensureWatch(): Routine | null {
     const manager = deps.routines();
     const bot = owner();
     if (deps.team || !manager || !bot) return null;
     try {
-      handOver(manager, bot);
+      settleWatch(manager, bot);
     } catch (error) {
-      console.warn(`watch: not handed over yet: ${error instanceof Error ? error.message : String(error)}`);
+      console.warn(`watch: not settled yet: ${error instanceof Error ? error.message : String(error)}`);
       return null;
     }
     if (!composio.configured(cfg) || watchRecord().createdAt) return null;

@@ -51,11 +51,11 @@ test("the box's words and timings are fixed", () => {
     busy: "Voice is in use in Openpals",
     serverDown: "Open Openpals to talk",
     starting: "Openpals is still starting. Try again in a moment.",
-    noMausbot: "Set up Pal first, then try again.",
+    noChief: "Choose a Chief of Staff first, then try again.",
     permission: "Talking needs Microphone + Speech Recognition access — System Settings → Privacy & Security.",
     dictationOff: "Turn on Dictation in System Settings → Keyboard, then try again.",
     unavailable: "Talking couldn't start. Try again.",
-    failed: "Pal couldn't take that · Open chat",
+    failed: "Your Chief couldn't take that · Open chat",
   });
   assert.ok(Object.isFrozen(TALK_TIMING));
   assert.ok(Object.isFrozen(TALK_TEXT));
@@ -178,11 +178,11 @@ test("permission and setup problems say what to fix, in the composer's words: on
   }
 });
 
-test("a server that can't take asks says why and stops listening: down, still starting, or no Pal", async () => {
+test("a server that can't take asks says why and stops listening: down, still starting, or no Chief", async () => {
   const notices = [
     ["server-down", "Open Openpals to talk"],
     ["starting", TALK_TEXT.starting],
-    ["no-mausbot", TALK_TEXT.noMausbot],
+    ["no-chief", TALK_TEXT.noChief],
   ];
   for (const [code, text] of notices) {
     const h = harness({ prepare: async () => { throw new TalkServerError(code); } });
@@ -289,7 +289,7 @@ test("replaced while listening closes the box and nothing is sent", async () => 
   assert.equal(h.starts.length, 2);
 });
 
-test("clicking the box opens the chat; before the chat is known it only brings Pal forward", async () => {
+test("clicking the box opens the chat; before the chat is known it only brings the app forward", async () => {
   const idle = harness(); idle.session.open();
   assert.deepEqual(idle.opened, []); assert.equal(idle.closed, 0);
 

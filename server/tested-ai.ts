@@ -5,21 +5,16 @@
 // miss demotes nothing: that AI is tried again in two minutes, and only two misses in a row count as "didn't answer"
 // (selectDefaultModelSelection's `answered`), when the default moves to the best AI that did; a failed AI is tried once
 // more ten minutes later. Results are kept for a day per instance and sign-in, so a start or a settings save doesn't send
-// another test message.
-//
-// The first bot the app made follows the default (the `follower`, kept with the results) until the person writes to it
-// or chooses a model for it or one of its conversations. It moves only after a test result, only to an AI that answered,
-// and only away from one that didn't answer or up to a better one: a status read alone never moves it. A saved default
-// (Settings, `openmausbot setup`, the New Bot defaults) or a hosted workspace's is never tested here and never moves.
+// another test message. A saved default (Settings, `openmausbot setup`, the New Bot defaults) or a hosted workspace's is
+// never tested here and never moves.
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { aiSignInKey, rankAis, type AiTestState } from "../shared/ai-ranking.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import type { ModelSelection, ProviderSnapshot } from "./contracts.ts";
-import { readyToRun, signedOut, type DefaultSelectionContext, type SelectableInstance } from "./default-model-selection.ts";
+import { readyToRun, type DefaultSelectionContext, type SelectableInstance } from "./default-model-selection.ts";
 import { checkEngine, type CheckableEngine, type EngineCheck } from "./engine-check.ts";
-import type { Store } from "./store.ts";
 
 export interface TestedAiDeps {
   /** The live engine a test message goes through. */
@@ -29,15 +24,11 @@ export interface TestedAiDeps {
   /** A hosted workspace's models: its default is not the app's to choose either. */
   hosted?(): boolean;
   context: DefaultSelectionContext;
-  store(): Pick<Store, "bots" | "bot" | "tasks" | "messagesFor" | "applyModelDefault" | "needsSeed" | "seedIfEmpty" | "onChange">;
-  threadBusy(botId: string, threadId: string): boolean;
-  /** The selection the first bot gets when it follows the default: the new-bot effort added. */
-  forBot(selection: ModelSelection): ModelSelection;
   /** A test finished or a retry is due: the server reads the engines and the default again, which settles here. */
   changed(): Promise<unknown> | void;
   /** The engine's own settings (configIdentity): a changed key is a new sign-in. */
   identity?(instanceId: string): string;
-  /** Where the results and the follower are kept; none keeps them in memory. */
+  /** Where the results are kept; none keeps them in memory. */
   file?: string;
   /** Whether tests start on their own (backgroundAiChecks); a check asked for always runs. */
   background?: boolean;
@@ -74,11 +65,8 @@ export function configIdentity(entry: { driver?: unknown; config?: unknown; envi
 
 type Subject = { instanceId: string; snapshot: ProviderSnapshot };
 type Result = { key: string; state: "passed" | "failed" | "untestable"; misses: number; at: number; error?: string; retryAt?: number };
-type Follower = { botId: string; selection: ModelSelection };
-type Saved = { results: Record<string, Result>; follower?: Follower };
+type Saved = { results: Record<string, Result> };
 
-const same = (a: ModelSelection, b: ModelSelection) => a.instanceId === b.instanceId && a.model === b.model;
-const exactly = (a: ModelSelection, b: ModelSelection) => same(a, b) && a.effort === b.effort && a.variant === b.variant;
 const empty = (selection: ModelSelection | undefined) => !selection?.instanceId && !selection?.model;
 const hasModel = (instance: SelectableInstance) =>
   Boolean(instance.models.default.trim() || instance.models.options.some((option) => option.id.trim()));
@@ -92,9 +80,7 @@ function load(file: string | undefined, now: number): Saved {
       if (result && typeof result.key === "string" && ["passed", "failed", "untestable"].includes(result.state)
         && typeof result.at === "number" && now - result.at < RESULT_TTL_MS) results[id] = result;
     }
-    const follower = raw.follower && typeof raw.follower.botId === "string" && raw.follower.selection
-      && typeof raw.follower.selection.instanceId === "string" && typeof raw.follower.selection.model === "string" ? raw.follower : undefined;
-    return { results, ...(follower ? { follower } : {}) };
+    return { results };
   } catch {
     return { results: {} };
   }
@@ -117,10 +103,6 @@ export function createTestedAi(deps: TestedAiDeps) {
   let settledRead = 0;
   let lastSelection: ModelSelection | null = null;
   let lastInstances: readonly SelectableInstance[] = [];
-  /** A result landed before any read of the engines settled (a later start reads them one at a time): the first bot
-   * moves on it once one does, never on the last run's status. */
-  let followOwed = false;
-  let unsubscribe: (() => void) | null = null;
 
   const fixed = () => deps.hosted?.() === true || deps.saved().some((selection) => !empty(selection));
   const warn = (what: string, error: unknown) => console.warn(`[engines] ${what}: ${error instanceof Error ? error.message : String(error)}`);
@@ -178,40 +160,7 @@ export function createTestedAi(deps: TestedAiDeps) {
     save();
   };
 
-  const clearFollower = () => {
-    if (!saved.follower) return;
-    delete saved.follower;
-    save();
-  };
-
-  /** Only after a test result: to the default when that AI answered, away from one whose latest test missed or that is signed
-   * out or turned off, or up to a better one. */
-  const follow = () => {
-    const follower = saved.follower;
-    const target = lastSelection;
-    if (follower && !target) followOwed = true;
-    if (!follower || !target || empty(target) || fixed()) return;
-    const store = deps.store();
-    const bot = store.bot(follower.botId);
-    if (!bot || !exactly(bot.modelSelection, follower.selection)) return clearFollower();
-    if (same(bot.modelSelection, target)) return;
-    const to = lastInstances.find((instance) => instance.instanceId === target.instanceId);
-    const from = lastInstances.find((instance) => instance.instanceId === bot.modelSelection.instanceId);
-    if (!to || state(to) !== "passed" || !from) return;
-    // Only a plain "signed out" or "turned off" counts as can't run: a status read that timed out says neither, and moves nothing.
-    const leave = resultOf(from)?.state === "failed" || signedOut(from) || from.enabled === false;
-    if (!leave && rankAis([from, to])[0] !== to) return;
-    const tasks = store.tasks(bot.id);
-    if (tasks.some((task) => task.modelSelection !== undefined)
-      || tasks.some((task) => store.messagesFor(task.threadId).some((message) => message.role === "user"))) return clearFollower();
-    if (tasks.some((task) => deps.threadBusy(bot.id, task.threadId))) return;
-    saved.follower = { botId: bot.id, selection: structuredClone(deps.forBot(target)) };
-    save();
-    store.applyModelDefault(bot.id, saved.follower.selection);
-  };
-
-  /** A fresh test, or the one already under way for this sign-in. Every result reads the default again, then may move the
-   * first bot. */
+  /** A fresh test, or the one already under way for this sign-in. Every result reads the default again. */
   const test = (subject: Subject): Promise<EngineCheck> => {
     const engine = deps.engine(subject.instanceId);
     if (!engine) return Promise.resolve({ ok: null });
@@ -227,7 +176,6 @@ export function createTestedAi(deps: TestedAiDeps) {
       record(subject.instanceId, key, check);
       try {
         await deps.changed();
-        follow();
       } catch (error) {
         warn("reading the new-bot default again after a test message", error);
       } finally {
@@ -262,33 +210,6 @@ export function createTestedAi(deps: TestedAiDeps) {
     }
   };
 
-  /** The person writing to the first bot, or choosing its model or a conversation's, ends its following for good. */
-  const listen = () => {
-    if (unsubscribe) return;
-    const store = deps.store();
-    unsubscribe = store.onChange((change) => {
-      const follower = saved.follower;
-      if (!follower) return;
-      if (change.type === "bot.deleted" && change.botId === follower.botId) return clearFollower();
-      if (change.type === "message") {
-        if (change.message.role === "user" && store.tasks(follower.botId).some((task) => task.threadId === change.threadId)) clearFollower();
-        return;
-      }
-      if (change.type !== "bot" || change.botId !== follower.botId) return;
-      const bot = store.bot(follower.botId);
-      if (!bot) return;
-      if (store.tasks(bot.id).some((task) => task.modelSelection !== undefined)) return clearFollower();
-      if (exactly(bot.modelSelection, follower.selection)) return;
-      // A first bot made before any AI could run gets the default from the app once one can: that is still the app's pick.
-      if (empty(follower.selection) && lastSelection && same(bot.modelSelection, lastSelection)) {
-        saved.follower = { botId: bot.id, selection: structuredClone(bot.modelSelection) };
-        save();
-        return;
-      }
-      clearFollower();
-    });
-  };
-
   if (background) {
     for (const [instanceId, result] of Object.entries(saved.results)) if (result.retryAt !== undefined && result.retryAt > now()) arm(instanceId, result.retryAt);
   }
@@ -306,22 +227,7 @@ export function createTestedAi(deps: TestedAiDeps) {
       lastSelection = selection;
       lastInstances = instances;
       sweep();
-      if (followOwed) {
-        followOwed = false;
-        follow();
-      }
       return selection;
-    },
-    /** Replaces store.seedIfEmpty at start: the bot it makes follows the default. */
-    seed(): void {
-      const store = deps.store();
-      const first = store.needsSeed();
-      store.seedIfEmpty();
-      listen();
-      const bot = first ? store.bots.find((candidate) => candidate.chiefOfStaff) ?? store.bots[0] : undefined;
-      if (!bot) return;
-      saved.follower = { botId: bot.id, selection: structuredClone(bot.modelSelection) };
-      save();
     },
     answered,
     state,

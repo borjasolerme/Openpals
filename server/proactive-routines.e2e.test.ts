@@ -8,7 +8,7 @@ import { launchVerificationServer } from "../scripts/control-omb.ts";
 import { startFakeConnectedApps, type FakeConnectedApps } from "./testing/fake-connected-apps.ts";
 
 // The proactive main agent end to end on a real server (temporary home, the fake Claude CLI) against a stand-in Composio
-// project: MausBot's default watch, its checks, the one batched run, the brief, Dismiss, presence and
+// project: the Chief's default watch, its checks, the one batched run, the brief, Dismiss, presence and
 // the read-and-draft fence. Nothing here reaches a real Google account or a model.
 const MINUTE = 60_000;
 // The brief lists only the person's meetings today. Their zone is one where it is midday when the suite starts, so the
@@ -47,7 +47,7 @@ function inbox(apps: FakeConnectedApps, now: number) {
   }];
 }
 
-describe("MausBot keeps an eye on the day, hidden from the sidebar", () => {
+describe("the Chief keeps an eye on the day", () => {
   let apps: FakeConnectedApps;
   let fixture: Fixture;
   let api: ReturnType<typeof client>;
@@ -62,8 +62,7 @@ describe("MausBot keeps an eye on the day, hidden from the sidebar", () => {
     fixture = await launchVerificationServer({ ...process.env, TZ: MIDDAY_ZONE, ...apps.env, FAKE_CLAUDE_MARKER_REPLIES: markers });
     api = client(fixture);
     const bots = (await api("GET", "/api/bots")).bots as any[];
-    const found = bots.find((bot) => bot.defaultBot && !bot.defaultBot.person);
-    await api("PATCH", `/api/bots/${found.id}`, { sidebarHidden: true });
+    const found = bots.find((bot) => bot.chiefOfStaff);
     chief = { id: found.id, threadId: found.mainThreadId ?? found.threadId };
     watch = (await api("GET", "/api/routines")).routines.find((routine: any) => routine.botId === chief.id && routine.deliver === "brief");
   }, 120_000);
@@ -83,7 +82,7 @@ describe("MausBot keeps an eye on the day, hidden from the sidebar", () => {
     return (await runs()).find((run) => run.id === id);
   };
 
-  it("a personal install's MausBot has the one default watch: checks, reads and drafts only, delivered to the brief", async () => {
+  it("a personal install's Chief has the one default watch: checks, reads and drafts only, delivered to the brief", async () => {
     expect((await api("GET", "/api/routines")).routines.filter((routine: any) => routine.deliver === "brief")).toHaveLength(1);
     expect(watch).toMatchObject({ name: "Keep an eye on my day", enabled: true, checks: ["calendar", "mail", "runs"], access: "read-and-draft", deliver: "brief",
       schedule: { type: "interval", everyMinutes: 15 } });
@@ -133,7 +132,7 @@ describe("MausBot keeps an eye on the day, hidden from the sidebar", () => {
     expect(widgetActions(card.widget.root as WidgetRoot).map((entry) => entry.label)).toEqual(expect.arrayContaining(["Draft a reply to Ada", "Dismiss Ada's email", "Join"]));
     expect(rows.some((message) => message.automation?.runId === run.id)).toBe(false);
     const told = (await api("GET", "/api/notifications")).notifications as any[];
-    expect(told.findLast((entry) => entry.kind === "brief"), "the notification opens MausBot's chat").toMatchObject({ botId: chief.id, threadId: chief.threadId });
+    expect(told.findLast((entry) => entry.kind === "brief"), "the notification opens the Chief's chat").toMatchObject({ botId: chief.id, threadId: chief.threadId });
   });
 
   it("the same mail again is nothing new: no second turn", async () => {
@@ -220,7 +219,7 @@ describe("a read-and-draft run", () => {
   it("refuses sends, other apps and drafts to anyone but the thread's sender, outright and with no card; one reply draft gets through once", async () => {
     const api = client(fixture);
     const bots = (await api("GET", "/api/bots")).bots as any[];
-    const chief = bots.find((bot) => bot.defaultBot && !bot.defaultBot.person);
+    const chief = bots.find((bot) => bot.chiefOfStaff);
     const watch = (await api("GET", "/api/routines")).routines.find((routine: any) => routine.deliver === "brief");
     inbox(apps, Date.now());
     const { run } = await api("POST", `/api/routines/${watch.id}/run`, undefined, 201);

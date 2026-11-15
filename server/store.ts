@@ -35,7 +35,7 @@ import type {
 import { movesThreadToTop, nextOpenThread } from "../shared/wire.ts";
 import { parseConnectorTools } from "./connector-tools.ts";
 import { sameModelSelection } from "../shared/thread-model.ts";
-import { initialGreetingMessage } from "./initial-greeting.ts"; import { createDefaultBot, defaultBotRefusal } from "./default-bot.ts";
+import { initialGreetingMessage } from "./initial-greeting.ts";
 import { appsFromCreator } from "./inherited-apps.ts";
 import { ThreadCache, type ThreadState } from "./thread-cache.ts";
 import { titleFromMessage, UNTITLED_TASK } from "./thread-title.ts";
@@ -294,6 +294,23 @@ function dropDepartments(bots: BotRecord[], groups: GroupRecord[]): boolean {
   return changed;
 }
 
+/** Bots saved by older versions may carry the built-in helper's marks (`defaultBot`, `welcomed`, `sidebarHidden`): they
+ * are dropped, and a helper taken off the sidebar is archived. True when anything changed. */
+function dropDefaultBot(bots: BotRecord[]): boolean {
+  type Legacy = { defaultBot?: unknown; welcomed?: unknown; sidebarHidden?: unknown };
+  let changed = false;
+  for (const bot of bots) {
+    const legacy = bot as Legacy;
+    if (legacy.sidebarHidden === true) bot.hidden = true;
+    for (const key of ["defaultBot", "welcomed", "sidebarHidden"] as const) {
+      if (legacy[key] === undefined) continue;
+      delete legacy[key];
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 export class Store {
   bots: BotRecord[] = [];
   groups: GroupRecord[] = [];
@@ -341,6 +358,7 @@ export class Store {
     const browserProfileAliases = loadBrowserProfileIdAliases();
     let groupsMigrated = false;
     if (dropDepartments(this.bots, this.groups)) botsMigrated = groupsMigrated = true;
+    if (dropDefaultBot(this.bots)) botsMigrated = true;
     for (const b of this.bots) {
       if (b.busy || (b.activity !== undefined && b.activity !== "idle")) botsMigrated = true;
       b.busy = false;
@@ -1339,7 +1357,6 @@ export class Store {
   deleteBot(id: string, setupRequest?: TeamSetupRequest): boolean {
     const bot = this.bot(id);
     if (!bot) return false;
-    if (bot.defaultBot) throw Object.assign(new Error(defaultBotRefusal(bot.name)), { status: 409 });
     let nextBots = this.bots.filter((b) => b.id !== id);
     if (setupRequest) {
       const chief = this.bot(setupRequest.botId);
@@ -2108,11 +2125,4 @@ export class Store {
     return { bot, deleted, missing };
   }
 
-  needsSeed() { return this.bots.length === 0; }
-
-  /** A new place's first bot is its MausBot and its Chief. */
-  seedIfEmpty() {
-    if (!this.needsSeed()) return;
-    createDefaultBot(this, { chief: (id) => this.setChiefOfStaff(id) });
-  }
 }

@@ -20,7 +20,7 @@ import { answered, localDate, qualifies, validZone } from "./check-plan.ts";
 import { parseWatchResult } from "./check-prompts.ts";
 import { briefCard, clockTime, DISMISS_ACTION, DRAFT_ACTION, prepCard, reminderCard, type BriefEmail, type BriefFacts, type BriefRow, type BuiltCard, type NeedRow } from "./brief-cards.ts";
 import { briefWords, type BriefWords } from "./brief-words.ts";
-import { proactiveOwner } from "./proactive-owner.ts";
+import { mainChief } from "./proactive-owner.ts";
 import type { CheckReport } from "./routine-checks.ts";
 import { clip, oneLine } from "./text-clip.ts";
 
@@ -179,8 +179,8 @@ export function createBrief(deps: BriefDeps) {
     return start;
   };
 
-  /** The bot the brief belongs to: proactiveOwner decides. */
-  const chief = (): BotRecord | null => proactiveOwner(deps.store);
+  /** The bot the brief belongs to: the Chief of Staff. */
+  const chief = (): BotRecord | null => mainChief(deps.store);
 
   /** The brief's chat: chosen once, the bot's main chat at the time, and chosen again only if it is gone. */
   function home(bot: BotRecord): string | undefined {

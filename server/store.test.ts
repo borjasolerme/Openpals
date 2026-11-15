@@ -968,6 +968,26 @@ describe("Store", () => {
     expect(read("bots.json").filter((bot) => bot.chiefOfStaff).map((bot) => bot.id)).toEqual([unfiled.id]);
   });
 
+  it("drops the old helper's marks on load, archives a helper taken off the sidebar, and rewrites bots.json", () => {
+    const store = new Store(selection);
+    const pal = store.createBot();
+    const hiddenHelper = store.createBot();
+    type Saved = Record<string, unknown> & { id: string };
+    const read = (): Saved[] => JSON.parse(readFileSync(join(DATA_DIR, "bots.json"), "utf8"));
+    const bots = read();
+    Object.assign(bots.find((bot) => bot.id === pal.id)!, { defaultBot: {}, welcomed: true, sidebarHidden: false });
+    Object.assign(bots.find((bot) => bot.id === hiddenHelper.id)!, { defaultBot: {}, sidebarHidden: true });
+    writeFileSync(join(DATA_DIR, "bots.json"), JSON.stringify(bots));
+
+    const reloaded = new Store(selection);
+    expect(reloaded.bot(pal.id)?.hidden).toBeFalsy();
+    expect(reloaded.bot(hiddenHelper.id)?.hidden).toBe(true);
+    for (const record of read()) {
+      for (const key of ["defaultBot", "welcomed", "sidebarHidden"]) expect(record).not.toHaveProperty(key);
+    }
+    expect(reloaded.deleteBot(pal.id)).toBe(true);
+  });
+
   it("migrates legacy browser profile references without collapsing case-distinct accounts", () => {
     const store = new Store(selection);
     const first = store.createBot();
@@ -1244,45 +1264,6 @@ describe("Store", () => {
 
     const reloaded = new Store(selection);
     expect(reloaded.bot(bot.id)?.resumeCursors).toEqual({ claude: "sess-abc", codex: "thread-xyz" });
-  });
-
-  it("seedIfEmpty starts a fresh workspace with one bot, the Chief of Staff, once", () => {
-    const store = new Store(selection);
-    store.seedIfEmpty();
-    expect(store.bots).toHaveLength(1);
-    expect(store.bots[0], "the first bot a new person meets is their Chief of Staff").toMatchObject({ chiefOfStaff: true, hidden: false });
-    expect(store.bots[0], "the role is the flag, so an untouched starter still reads as unused when sending to the Cloud")
-      .toMatchObject({ title: "", description: "", soul: "" });
-    store.seedIfEmpty();
-    expect(store.bots).toHaveLength(1);
-
-    const reloaded = new Store(selection);
-    reloaded.seedIfEmpty();
-    expect(reloaded.bots).toHaveLength(1);
-    expect(reloaded.bots[0]?.chiefOfStaff).toBe(true);
-  });
-
-  it("seedIfEmpty makes the new install's Chief its MausBot in chrome, introduced, and no bot after it takes chrome or silver in turn", () => {
-    const store = new Store(selection);
-    store.seedIfEmpty();
-    const chief = store.bots[0]!;
-    expect(chief).toMatchObject({ name: "Pal", color: "chrome", chiefOfStaff: true, defaultBot: {} });
-    expect(store.messagesFor(chief.threadId).map((message) => [message.kind, message.helperIntro, message.card?.options.length])).toEqual([["options", true, 4]]);
-    expect(store.messagesFor(chief.threadId)[0]!.text).toContain("Hey! I'm Pal. I'm new here. I'm here to be your Chief of Staff.");
-    const later = Array.from({ length: 25 }, () => store.createBot());
-    expect(later.map((bot) => bot.color)).not.toContain("silver");
-    expect(later.map((bot) => bot.color)).not.toContain("chrome");
-    expect(later[0]?.color).toBe("blue");
-    expect(later.map((bot) => bot.name)).not.toContain("Pal");
-    expect(new Store(selection).bot(chief.id)).toMatchObject({ name: "Pal", color: "chrome", defaultBot: {} });
-  });
-
-  it("seedIfEmpty leaves an existing workspace without a Chief as it is", () => {
-    const store = new Store(selection);
-    const existing = store.createBot();
-    store.seedIfEmpty();
-    expect(store.bots.map((bot) => bot.id)).toEqual([existing.id]);
-    expect(new Store(selection).bot(existing.id)?.chiefOfStaff).toBeFalsy();
   });
 
   it("chains appended messages and keeps the newest as active leaf", () => {

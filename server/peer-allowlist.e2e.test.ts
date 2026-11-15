@@ -151,8 +151,8 @@ const mintCapability = async (botId: string, threadId: string): Promise<string> 
 
 let seededId = "";
 const hideSeededBot = async () => {
-  // The seeded bot is the Chief and the install's MausBot, which is never archived: it steps down, and the roster checks
-  // below leave it out, since every bot can reach it.
+  // The fixture's starter is the Chief: it steps down, and the roster checks below leave it out, since every bot can
+  // reach it.
   const seeded = (await api("GET", "/api/bots?messages=0")).body.bots[0];
   seededId = seeded.id;
   expect((await api("PATCH", `/api/bots/${seeded.id}`, { chiefOfStaff: false })).status).toBe(200);

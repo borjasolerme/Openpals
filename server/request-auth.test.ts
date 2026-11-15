@@ -190,7 +190,7 @@ describe("scopes", () => {
     const profile = { name: "Scout", title: "Trips", soul: "Plans trips.", color: "teal", avatarCrop: "square", voice: "alloy", modelSelection: { instanceId: "claude", model: "m" } };
     expect(adminOnlyBotSetting(profile)).toBeNull();
     for (const field of ["approvalMode", "autoApprove", "alwaysAllow", "chiefOfStaff", "computer", "cwd", "peers", "approvePeerComms",
-      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "visibility", "preset", "defaultBot", "installedPackage"]) {
+      "mcpServers", "browserProfile", "toolScope", "composio", "browser", "visibility", "preset", "installedPackage"]) {
       expect(adminOnlyBotSetting({ ...profile, [field]: true }), field).toBe(field);
     }
   });

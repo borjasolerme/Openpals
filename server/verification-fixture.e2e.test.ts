@@ -4,7 +4,6 @@ import { expect, it } from "vitest";
 import { FIXTURE_STARTER_BOT_NAME, launchVerificationServer } from "../scripts/control-omb.ts";
 
 it("pins the fixture starter bot's name deterministically (#1257)", async () => {
-  // The first-run seed draws a random name from server/names.ts, which includes "Quill": both launches must see the pinned name.
   for (let launch = 0; launch < 2; launch++) {
     const fixture = await launchVerificationServer({});
     try {

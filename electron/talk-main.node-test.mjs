@@ -221,9 +221,9 @@ test("a press, an open or a dismiss that throws is logged, never thrown at Elect
   h.talk.close();
 });
 
-test("clicking the box opens its chat by a link with both ids escaped, or else just shows MausBot", async () => {
+test("clicking the box opens its chat by a link with both ids escaped, or else just shows the Chief", async () => {
   const h = harness({ serve: route => {
-    if (route === "/api/bots?messages=0") return json({ bots: [{ id: "b?1&x", defaultBot: {}, tasks: [] }] });
+    if (route === "/api/bots?messages=0") return json({ bots: [{ id: "b?1&x", chiefOfStaff: true, tasks: [] }] });
     if (route === "/api/bots/b%3F1%26x/tasks") return json({ task: { threadId: "t 1/x" } });
     return undefined;
   } });

@@ -7,7 +7,7 @@ import { profileSnapshot } from "./profile-revision.ts";
 import { validateBotCwd } from "./bot-cwd.ts";
 import { UNDO_STALE, type DirectApply } from "./direct-apply.ts";
 import { harnessCapabilityLines, type DriverCapabilities } from "./harness-capabilities.ts";
-import { redactSecretsInText } from "./redact.ts"; import { chiefLevel } from "./chief-level.ts"; import { defaultBotRefusal } from "./default-bot.ts";
+import { redactSecretsInText } from "./redact.ts"; import { chiefLevel } from "./chief-level.ts";
 import type { BotRecord, OptionCardData } from "./store.ts";
 import type { TeamSetupFields, TeamSetupOperation, TeamSetupRequest, TeamSetupResult, TeamSetupUndo } from "../shared/team-setup.ts";
 
@@ -145,7 +145,6 @@ export class TeamSetupRequestService {
         if (this.options.targetBusy(target.id, sourceThreadId) && (confirming || target.id !== chief.id)) throw new TeamSetupError(`Stop @${target.name}'s work before changing its setup`, 409);
       }
       const fields = this.fields(operation.fields, target ?? undefined);
-      if (fields.chiefOfStaff !== undefined && !chief.chiefOfStaff) throw new TeamSetupError(`Only the Chief of Staff changes who the Chief is; ${chief.name} doesn't.`, 403);
       const next = { id: operation.botId, name: fields.name ?? target!.name, chiefOfStaff: fields.chiefOfStaff ?? target?.chiefOfStaff, hidden: false };
       const at = projected.findIndex((bot) => bot.id === operation.botId);
       if (at < 0) projected.push(next); else projected[at] = next;
@@ -159,7 +158,6 @@ export class TeamSetupRequestService {
     if (request.deletion) {
       const target = this.options.store.bot(request.deletion.botId);
       if (!target || target.hidden || target.id === chief.id || (Array.isArray(chief.peers) && !chief.peers.includes(target.id))) throw new TeamSetupError("This deletion target is no longer a teammate this Chief may reach", 403);
-      if (target.defaultBot) throw new TeamSetupError(defaultBotRefusal(target.name), 409);
       if (teamSetupRevision(target) !== request.deletion.expectedRevision || this.options.targetBusy(target.id)) throw new TeamSetupError("The deletion target changed or is working. Review a new deletion proposal.", 409);
     }
   }

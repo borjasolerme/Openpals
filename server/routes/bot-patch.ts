@@ -22,7 +22,7 @@ import type { MemoryUpkeep } from "../memory-upkeep.ts";
 import { phoneAppsFor } from "../phones/access.ts";
 import { profileSnapshot } from "../profile-revision.ts";
 import { recordProfileChange } from "../profile-versions.ts";
-import { clientBotPatchViolation, requestSource } from "../request-auth.ts"; import { defaultBotPatchRefusal } from "../default-bot.ts";
+import { clientBotPatchViolation, requestSource } from "../request-auth.ts";
 import type { RoutineManager } from "../routines.ts";
 import type { SessionRegistry } from "../sessions.ts";
 import { parseConnectorTools } from "../connector-tools.ts";
@@ -111,8 +111,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       if (body.pinned !== undefined && typeof body.pinned !== "boolean") {
         return json(res, 400, { error: "pinned must be true or false" });
       }
-      const existingBot = store.bot(m[1]); const defaultBotRefused = defaultBotPatchRefusal(existingBot, body);
-      if (defaultBotRefused) return json(res, 400, { error: defaultBotRefused });
+      const existingBot = store.bot(m[1]);
       const rawSelection = (body as Record<string, unknown>).modelSelection;
       if (body.threadId !== undefined && rawSelection === undefined) {
         return json(res, 400, { error: "threadId goes with modelSelection" });
@@ -164,7 +163,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
       }
       const patch: Record<string, unknown> = {};
       Object.assign(patch, profile.patch);
-      for (const key of ["unread", "cloudBackend", "color", "mascotExpression", "mascotBody", "pinned", "hidden", "sidebarHidden", "welcomed"] as const) {
+      for (const key of ["unread", "cloudBackend", "color", "mascotExpression", "mascotBody", "pinned", "hidden"] as const) {
         if (body[key] !== undefined) patch[key] = body[key];
       }
       const computerSpecified = Object.prototype.hasOwnProperty.call(body, "computer");

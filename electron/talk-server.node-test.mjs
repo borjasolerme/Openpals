@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createReplyTracker, createTalkServer, findMausBot, readFrames } from "./talk-server.mjs";
+import { createReplyTracker, createTalkServer, findTalkBot, readFrames } from "./talk-server.mjs";
 
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const turn = turnId => (turnId ? { turnId } : {});
@@ -42,34 +42,33 @@ function fakeServer({ bots, saved = null, sendStatus = 202, sendBody = { ok: tru
 const asking = (server, { signal = new AbortController().signal, onUpdate = () => {} } = {}) =>
   server.talk.ask({ chat: CHAT, text: "hi", sendId: "s1", signal, onUpdate });
 
-test("findMausBot picks this computer's MausBot, else the Chief of Staff", () => {
-  const mine = { id: "m", defaultBot: {} }, chief = { id: "c", chiefOfStaff: true };
-  assert.equal(findMausBot([chief, mine]).id, "m");
-  assert.equal(findMausBot([chief]).id, "c");
-  assert.equal(findMausBot([{ id: "x" }, { ...chief, hidden: true }]), null);
+test("findTalkBot picks the Chief of Staff", () => {
+  const other = { id: "m" }, chief = { id: "c", chiefOfStaff: true };
+  assert.equal(findTalkBot([other, chief]).id, "c");
+  assert.equal(findTalkBot([{ id: "x" }, { ...chief, hidden: true }]), null);
 });
 
-test("prepare reuses the saved Quick asks chat while MausBot still has it", async () => {
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [{ threadId: "t0" }, { threadId: "t1" }] }], saved: { botId: "m", threadId: "t1" } });
+test("prepare reuses the saved Quick asks chat while the Chief still has it", async () => {
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [{ threadId: "t0" }, { threadId: "t1" }] }], saved: { botId: "m", threadId: "t1" } });
   assert.deepEqual(await server.talk.prepare(), { botId: "m", threadId: "t1" });
   assert.deepEqual(server.calls.map(([method]) => method), ["GET"]);
   assert.deepEqual(server.saves, []);
 });
 
 test("prepare makes a Quick asks chat without selecting it when the saved one is gone, and keeps it", async () => {
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], saved: { botId: "m", threadId: "t-gone" } });
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [] }], saved: { botId: "m", threadId: "t-gone" } });
   assert.deepEqual(await server.talk.prepare(), { botId: "m", threadId: "t-new" });
   assert.deepEqual(server.calls.at(-1), ["POST", "/api/bots/m/tasks", { title: "Quick asks", select: false }]);
   assert.deepEqual(server.saves, [["server-a", { botId: "m", threadId: "t-new" }]]);
 });
 
 test("prepare makes a new chat when the saved one belongs to another bot", async () => {
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [{ threadId: "t1" }] }], saved: { botId: "old", threadId: "t1" } });
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [{ threadId: "t1" }] }], saved: { botId: "old", threadId: "t1" } });
   assert.deepEqual(await server.talk.prepare(), { botId: "m", threadId: "t-new" });
 });
 
 test("two prepares at once make one chat", async () => {
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }] });
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [] }] });
   const first = server.talk.prepare(), second = server.talk.prepare();
   assert.equal(first, second);
   assert.deepEqual(await Promise.all([first, second]), [{ botId: "m", threadId: "t-new" }, { botId: "m", threadId: "t-new" }]);
@@ -77,20 +76,20 @@ test("two prepares at once make one chat", async () => {
 });
 
 test("prepare says why it cannot ask", async () => {
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }] });
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [] }] });
   server.listing.down = true;
   await assert.rejects(server.talk.prepare(), { name: "TalkServerError", code: "server-down" });
   server.listing = { down: false, status: 503 };
   await assert.rejects(server.talk.prepare(), { code: "server-down" });
   server.listing.status = 200;
   assert.deepEqual(await server.talk.prepare(), { botId: "m", threadId: "t-new" });
-  await assert.rejects(fakeServer({ bots: [] }).talk.prepare(), { code: "no-mausbot" });
-  await assert.rejects(fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], made: { status: 500, body: {} } }).talk.prepare(), { code: "refused" });
+  await assert.rejects(fakeServer({ bots: [] }).talk.prepare(), { code: "no-chief" });
+  await assert.rejects(fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [] }], made: { status: 500, body: {} } }).talk.prepare(), { code: "refused" });
 });
 
 test("a server still on its way up says starting, not down", async () => {
   let starting = true;
-  const server = fakeServer({ bots: [{ id: "m", defaultBot: {}, tasks: [] }], starting: () => starting });
+  const server = fakeServer({ bots: [{ id: "m", chiefOfStaff: true, tasks: [] }], starting: () => starting });
   server.listing.down = true;
   await assert.rejects(server.talk.prepare(), { code: "starting" });
   starting = false;
@@ -131,7 +130,7 @@ test("an ask steered into the running turn follows that turn to its end", () => 
   assert.deepEqual(track(completed("t1", true, "turn-1")), { kind: "done", ok: true, text: "Both done" });
 });
 
-test("a waiting card or an opened request means MausBot needs the person", () => {
+test("a waiting card or an opened request means the Chief needs the person", () => {
   const track = createReplyTracker({ threadId: "t1", sendId: "s1" });
   track(userMessage("t1", "s1"));
   assert.equal(track(card("t1", { answered: "Allow" })), null);

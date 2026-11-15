@@ -17,8 +17,6 @@ export interface CatalogProfile {
   botId: string;
   /** features.chiefEscalations: raise_escalation is mounted. */
   escalations?: boolean;
-  /** The person's MausBot with a Chief's powers: its notification tools are mounted. */
-  mausbot?: boolean;
   /** A direct chat whose bot may pick where it works (Works on is not Off): select_computer
    * is mounted, and the harness refuses a pick on any turn but a person's own message. */
   computerSelection?: boolean;
@@ -38,7 +36,6 @@ export function catalogProfileFromEnv(env: NodeJS.ProcessEnv): CatalogProfile {
     chief: env.OMB_CHIEF_OF_STAFF === "1",
     botId: env.OMB_BOT_ID ?? "",
     escalations: env.OMB_ESCALATIONS === "1",
-    mausbot: env.OMB_MAUSBOT === "1",
     computerSelection: env.OMB_COMPUTER_SELECTION === "1",
     room: env.OMB_ROOM === "1",
   };

@@ -373,27 +373,21 @@ export async function launchVerificationServer(
     throw error;
   }
 
-  // Pinned: the random starter name shares a pool with names e2e suites plan.
+  // A new server starts with no bots; the suites start from one Chief of Staff with a pinned name.
   try {
-    // First-run filesystem work can exceed a second on Windows.
-    const timeout = AbortSignal.timeout(Math.max(1, deadline - Date.now()));
-    const list = await fetch(`${url}/api/bots`, {
-      headers: { origin: url },
-      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    });
-    const body = list.ok ? await list.json() as { bots?: Array<{ id: string }> } : null;
-    const seeded = body?.bots;
-    if (!Array.isArray(seeded) || seeded.length !== 1) {
-      throw new Error(`verification fixture did not seed exactly one starter bot; see ${logPath}`);
-    }
-    const renameTimeout = AbortSignal.timeout(Math.max(1, deadline - Date.now()));
-    const rename = await fetch(`${url}/api/bots/${seeded[0].id}/profile`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json", origin: url },
-      body: JSON.stringify({ name: FIXTURE_STARTER_BOT_NAME }),
-      signal: signal ? AbortSignal.any([signal, renameTimeout]) : renameTimeout,
-    });
-    if (!rename.ok) throw new Error(`verification starter rename failed (${rename.status}); see ${logPath}`);
+    const send = async (route: string, method: string, body: unknown) => {
+      const timeout = AbortSignal.timeout(Math.max(1, deadline - Date.now()));
+      const response = await fetch(`${url}${route}`, {
+        method,
+        headers: { "content-type": "application/json", origin: url },
+        body: JSON.stringify(body),
+        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+      });
+      if (!response.ok) throw new Error(`verification starter ${method} ${route} failed (${response.status}); see ${logPath}`);
+      return await response.json() as { bot: { id: string } };
+    };
+    const { bot } = await send("/api/bots", "POST", { name: FIXTURE_STARTER_BOT_NAME });
+    await send(`/api/bots/${bot.id}`, "PATCH", { chiefOfStaff: true });
   } catch (error) {
     await waitForExit(child, { signal: "SIGTERM" });
     await removeTempDir(dataDir);

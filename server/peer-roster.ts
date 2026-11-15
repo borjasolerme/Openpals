@@ -1,7 +1,7 @@
-import { sameAudience } from "./bot-visibility.ts"; import type { DefaultBotFields } from "../shared/default-bot.ts";
+import { sameAudience } from "./bot-visibility.ts";
 import type { BotActivity } from "./store.ts";
 
-export interface RosterMember extends Pick<DefaultBotFields, "defaultBot"> {
+export interface RosterMember {
   id: string;
   name: string;
   title?: string;
@@ -106,10 +106,10 @@ export function namesTeammate(target: Pick<RosterMember, "id" | "name">, raw: st
 /** Their audiences alone would let `from` reach `target`, whatever its own list of peers says. */
 export const reachesInAudience = (from: RosterMember, target: RosterMember): boolean => sameAudience(from.visibility, target.visibility);
 
-/** The teammate `raw` names when `from` may not reach it. A person's own MausBot is never named to anyone else. */
+/** The teammate `raw` names when `from` may not reach it. */
 export function unreachableTeammate<T extends RosterMember>(bots: readonly T[], from: RosterMember, raw: string): T | null {
   const target = bots.find((bot) => bot.id === raw.trim()) ?? bots.find((bot) => namesTeammate(bot, raw));
-  return target && target.id !== from.id && !target.hidden && !target.defaultBot && !canReach(from, target) ? target : null;
+  return target && target.id !== from.id && !target.hidden && !canReach(from, target) ? target : null;
 }
 
 /** A name resolves only inside reachablePeers, so it can never reach a bot its id could not. `elsewhere(name)`: why no bot
@@ -136,7 +136,7 @@ export function resolveTeammate<T extends RosterMember>(
   const offList = Array.isArray(from.peers) ? bots.find(bot => bot.id !== from.id && !bot.hidden && !from.peers!.includes(bot.id) &&
     sameAudience(from.visibility, bot.visibility) && (fold(bot.name) === name || loose(bot.name) === loose(wanted))) : undefined;
   if (offList) return { error: reachRefusal(from, offList)! };
-  const apart = bots.find(bot => bot.id !== from.id && !bot.hidden && !bot.defaultBot && !sameAudience(from.visibility, bot.visibility) && (fold(bot.name) === name || loose(bot.name) === loose(wanted)));
+  const apart = bots.find(bot => bot.id !== from.id && !bot.hidden && !sameAudience(from.visibility, bot.visibility) && (fold(bot.name) === name || loose(bot.name) === loose(wanted)));
   if (apart) return { error: reachRefusal(from, apart)! };
   return { error: `No bot with id or name "${shown}" — call list_bots and copy the exact id from the result.${teammateChoices(reachable)} ${peerAccessHelp(from)}` };
 }

@@ -110,7 +110,7 @@ describe("what is sent", () => {
     const bot = (extra: Record<string, unknown>) => ({ id: "b", name: "Pesto", title: "", description: "", ...extra }) as unknown as BotRecord;
     const made = bot({ id: "new", name: "Ledger", title: "Bookkeeper" });
     const bots = [made, bot({ id: "a", title: "Travel planner" }), bot({ id: "b", description: "Plans meals\nand shops" }),
-      bot({ id: "c", title: "Hidden", hidden: true }), bot({ id: "d", title: "Default", defaultBot: {} }),
+      bot({ id: "c", title: "Hidden", hidden: true }),
       bot({ id: "e", title: "Chief", chiefOfStaff: true })];
     const place = { bots, shared: false, aboutMe: "I keep the books for a bakery.", languageCode: "pt-BR", canBrowse: true };
     expect(suggestionBasis(made, place)).toEqual({ name: "Ledger", title: "Bookkeeper", aboutMe: "I keep the books for a bakery.",

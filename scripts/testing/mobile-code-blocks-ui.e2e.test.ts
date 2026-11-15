@@ -80,8 +80,6 @@ async function connect(url: string) {
     const save = () => writeFileSync(join(evidence!, "receipt.json"), JSON.stringify(receipts, null, 2));
     const api = fixtureApi(fixture.info.url);
     await api("PATCH", "/api/config", { language: "en" });
-    const { bots } = await api("GET", "/api/bots");
-    for (const bot of bots.filter((bot: { defaultBot?: unknown }) => bot.defaultBot)) await api("PATCH", `/api/bots/${bot.id}`, { welcomed: true });
     const created = await runControlOmb(["new-bot", "--name", "Pepper", "--url", fixture.info.url]) as { bot: { id: string; activeTaskId: string } };
     preview = await mountPreview(fixture, { entry: "/scripts/testing/threads-preview.tsx", route: "/__mobile-blocks.html", title: "Isolated mobile code blocks", logLevel: "warn" });
     const profile = join(fixture.info.dataDir, "chrome");

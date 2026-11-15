@@ -10,7 +10,7 @@ import type { BotAvatarCrop, MascotFaceColor } from "./bot-avatar.ts";
 import type { BotBodyId } from "./bot-body.ts";
 import type { ReplyStyle } from "./reply-style.ts";
 import type { CredentialTargetId, CUSTOM_SECRET_TARGET, SecretDelivery } from "./credential-request.ts";
-import type { TeamSetupRequest } from "./team-setup.ts"; import type { DefaultBotFields, HelperIntroField } from "./default-bot.ts";
+import type { TeamSetupRequest } from "./team-setup.ts";
 import type { SetupCardFields } from "./setup-card.ts";
 import type { RoutineRequestCardData } from "./routine-request.ts"; import type { SavedStepsMark } from "./saved-steps.ts";
 import type { WebhookRequestCardData } from "./webhook-request.ts"; import type { WaitCardField, WaitLineField } from "./wait-request.ts";
@@ -253,7 +253,7 @@ export const helperModelAllowed = (bot: { helperModel?: unknown }): boolean => b
 
 /** A bot as a client may see it. avatarUrl is always present (null when the
  * bot has none). */
-export interface WireBot extends DefaultBotFields {
+export interface WireBot {
   waitingForTeammates?: boolean;
   id: string;
   /** The task selected in the UI; running turns keep their own thread id. */
@@ -420,7 +420,7 @@ export type CardAnswerer = (
 export const EXCERPT_SUMMARY_HEADER = "Historical excerpts in chronological order; newer corrections override older requests. These excerpts may omit earlier details.";
 
 /** One transcript line, serialized as stored. */
-export interface WireMessage extends HelperIntroField, SetupCardFields, WaitLineField {
+export interface WireMessage extends SetupCardFields, WaitLineField {
   roomRequest?: { id: string; phase: "request" | "result" };
   id: string;
   role: "bot" | "user";

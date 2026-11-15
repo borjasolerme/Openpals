@@ -17,7 +17,6 @@ import { callResearchTool, RESEARCH_TOOL_NAMES } from "./agents-research-tools.t
 import { callHelperTool, HELPER_TOOL_NAMES } from "./agents-helper-tools.ts";
 import { callUsageLimitsTool, USAGE_LIMITS_TOOL } from "./agents-usage-tool.ts";
 import { callWaitTool, WAIT_TOOL_NAMES } from "./agents-wait-tools.ts";
-import { callMausBotTool, MAUSBOT_TOOL_NAMES } from "./agents-mausbot-tools.ts";
 
 export interface ToolCallContext {
   botId: string;
@@ -209,7 +208,6 @@ export async function callTool(called: string, input: Json, context: ToolCallCon
   if (CARD_TOOL_NAMES.has(name)) return callCardTool(name, args, context);
   if (RESEARCH_TOOL_NAMES.has(name)) return callResearchTool(name, args, context);
   if (HELPER_TOOL_NAMES.has(name)) return callHelperTool(name, args, context);
-  if (MAUSBOT_TOOL_NAMES.has(name)) return callMausBotTool(name, args, context);
   if (TRIGGER_TOOL_NAMES.has(name)) return callTriggerTool(name, args, context);
   if (WAIT_TOOL_NAMES.has(name)) return callWaitTool(name, args, context);
   if (name === USAGE_LIMITS_TOOL) return callUsageLimitsTool(context);

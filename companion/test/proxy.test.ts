@@ -137,6 +137,10 @@ beforeAll(async () => {
     if (harness.exitCode !== null) throw new Error(`harness exited ${harness.exitCode}:\n${stderr}`);
     await new Promise((r) => setTimeout(r, 150));
   }
+  // A new server has no bots; the device tests act on one.
+  const made = await fetch(`${HARNESS}/api/bots`, { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "Companion fixture" }), signal: AbortSignal.timeout(10_000) });
+  if (!made.ok) throw new Error(`could not create the fixture bot (${made.status}):\n${stderr}`);
 
   sidecar = createServer(
     createProxyHandler({

@@ -1,22 +1,10 @@
-import type { DefaultBotFields } from "../shared/default-bot.ts";
-
 /** A Chief of Staff's powers: creating, configuring and deleting bots, rooms and routines through its tools, retrying a
- * teammate's thread, and its approval level passing down to the work it hands out. The Chief holds them, and so does the
- * person's MausBot. Being the Chief (the brief, incidents,
- * escalations, who answers a room) stays with `chiefOfStaff`. */
-export function chiefLevel(bot: ({ chiefOfStaff?: boolean } & DefaultBotFields) | null | undefined): boolean {
-  if (!bot) return false;
-  return bot.chiefOfStaff === true || Boolean(bot.defaultBot);
+ * teammate's thread, and its approval level passing down to the work it hands out. */
+export function chiefLevel(bot: { chiefOfStaff?: boolean } | null | undefined): boolean {
+  return bot?.chiefOfStaff === true;
 }
 
-type RoleBot = ({ chiefOfStaff?: boolean } & DefaultBotFields) | null | undefined;
-
-/** The person's MausBot holding a Chief's powers: the only bot shown its notification tools. */
-export function holdsMausBotTools<T extends NonNullable<RoleBot>>(bot: T | null | undefined): bot is T {
-  return Boolean(bot?.defaultBot) && chiefLevel(bot);
-}
-
-/** The role switches a bot's agents tools are listed under: the Chief-only tools, and MausBot's notification pair. */
-export function roleToolEnv(bot: RoleBot): { OMB_CHIEF_OF_STAFF: "1" | "0"; OMB_MAUSBOT: "1" | "0" } {
-  return { OMB_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0", OMB_MAUSBOT: holdsMausBotTools(bot) ? "1" : "0" };
+/** The role switch a bot's agents tools are listed under: the Chief-only tools. */
+export function roleToolEnv(bot: { chiefOfStaff?: boolean } | null | undefined): { OMB_CHIEF_OF_STAFF: "1" | "0" } {
+  return { OMB_CHIEF_OF_STAFF: chiefLevel(bot) ? "1" : "0" };
 }

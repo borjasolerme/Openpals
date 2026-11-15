@@ -105,7 +105,7 @@ import { vpsLeftBehindNotice } from "./cloud-backend.ts";
 import * as composio from "./composio.ts";
 import { connectorCallFromFrame, connectorRefusalText, connectorScopeRefusalText, connectorUnrecognizedText, evaluateConnectorTools } from "./connector-verdict.ts";
 import { connectorCardDescription, connectorCardText, signInCardText } from "./connector-card-text.ts";
-import { chiefOfStaffSystemPrompt } from "./chief-of-staff.ts"; import { coordinateTooLong } from "./too-long.ts"; import { chiefLevel } from "./chief-level.ts"; import { defaultBotRefusal, ensureDefaultBot } from "./default-bot.ts";
+import { chiefOfStaffSystemPrompt } from "./chief-of-staff.ts"; import { coordinateTooLong } from "./too-long.ts"; import { chiefLevel } from "./chief-level.ts";
 import { buildRecall, recallRooms, recallThreadIds, withRecalled } from "./recall.ts";
 import { hostTimeZone, takesTurnClock, turnClockLine, withTurnClock } from "./turn-clock.ts";
 import { createMemoryUpkeep, dreamConversations, upkeepEnabled } from "./memory-upkeep.ts";
@@ -2363,8 +2363,8 @@ function checkedMemberIds(value: unknown): { ok: true; memberIds: string[] } | {
   return { ok: true, memberIds };
 }
 let bootSelection = { instanceId: "", model: "" }; // Settled by one tiny test message through each AI it could be (server/tested-ai.ts).
-const testedAi = createTestedAi({ engine: (instanceId) => registry.get(instanceId), store: () => store, threadBusy, context: selectionContext, changed: () => refreshUnsetModelSelections().then(() => broadcast({ kind: "config", ...configStatus() })),
-  saved: () => [cfg.defaultModelSelection, cfg.newBotDefaults?.profile.modelSelection], identity: (instanceId) => configIdentity(providerConfigs()[instanceId]), file: join(DATA_DIR, "providers", "ai-checks.json"), forBot: (selection) => withNewBotEffort(selection, cfg.newBots?.effort, registry.get(selection.instanceId)?.adapter.capabilities.effortLevels) });
+const testedAi = createTestedAi({ engine: (instanceId) => registry.get(instanceId), context: selectionContext, changed: () => refreshUnsetModelSelections().then(() => broadcast({ kind: "config", ...configStatus() })),
+  saved: () => [cfg.defaultModelSelection, cfg.newBotDefaults?.profile.modelSelection], identity: (instanceId) => configIdentity(providerConfigs()[instanceId]), file: join(DATA_DIR, "providers", "ai-checks.json") });
 /** The start-up read of every engine: routines and room handoffs wait for it; a turn waits only for its own engine's probe. */
 let enginesRead: Promise<void> | null = null;
 const presetStore = createPresetStore();
@@ -2404,8 +2404,7 @@ let followupsReady = false;
 const sendSequencer = new SendSequencer();
 // Before the new-bot default is read: a saved default may name the engine.
 await retryComputerEngineMove(); mcpServersHost.boot();
-if (store.needsSeed()) { firstEngineRead(); await refreshUnsetModelSelections(); }
-else enginesRead = registry.readAtStart(enginesByUse([cfg.defaultModelSelection, ...store.bots.map((bot) => bot.modelSelection)]), firstEngineRead).then(async ({ engines, changed }) => {
+enginesRead = registry.readAtStart(enginesByUse([cfg.defaultModelSelection, ...store.bots.map((bot) => bot.modelSelection)]), firstEngineRead).then(async ({ engines, changed }) => {
   await refreshUnsetModelSelections(engines); if (changed) broadcast({ kind: "config", ...configStatus() });
 }).catch((error) => console.warn(`[engines] reading the engines at start failed: ${error instanceof Error ? error.message : String(error)}`)).finally(() => { enginesRead = null; });
 const startupCatalogs = registry.instances().flatMap((instance) =>
@@ -2419,7 +2418,6 @@ for (const pending of startupCatalogs) {
     broadcast({ kind: "config", ...configStatus() });
   }, () => {});
 }
-testedAi.seed(); ensureDefaultBot(store, { dataDir: DATA_DIR });
 if (skillsLibraryEnabled(cfg)) {
   try {
     const sweep = runSkillsLibraryBootSweep({
@@ -8363,7 +8361,7 @@ async function deleteBotWithLifecycle(botId: string, revalidate: () => void = ()
   const deletionResponse = (status: number, body: { error?: string; ok?: boolean; notice?: string }) => ({ status, body });
       revalidate();
       const bot = store.bot(botId);
-      if (!bot) return deletionResponse( 404, { error: "no such bot" }); if (bot.defaultBot) return deletionResponse(409, { error: defaultBotRefusal(bot.name) });
+      if (!bot) return deletionResponse( 404, { error: "no such bot" });
       if (computerProviderConfigTransitions.size > 0) {
         return deletionResponse( 409, { error: "computer provider settings are being updated — wait before deleting this bot" });
       }
@@ -11626,7 +11624,7 @@ ROUTES.push(createBrowserViewerRoutes({
   restartRefusal: (session) => browserRestartRefusal(browserRuntime.interrupted(session), store.bots.filter((candidate) => candidate.busy
     && browserSessionsOf(candidate.id, candidate.browserProfile).includes(session)).map((candidate) => ({ waitingOnBrowser: computerControl.snapshot(candidate.id).help?.place === "browser" }))),
 }));
-const internalToolRoutes = createInternalToolRoutes({ engineLimits: { instances: () => registry.instances(), configs: () => instanceConfigs(cfg), status: (instanceId) => registry.knownSnapshot(instanceId), load: (accounts) => loadPlanUsage({ accounts }) }, helpers: { decider, extractor }, notifications: { bot: (id) => store.bot(id), team: sharedMembership, broadcast }, xResearch: { credential: () => researchCredential(cfg.treg?.key), botEnabled: (botId) => store.bot(botId)?.xResearch !== false } }); const waitRoutes = createWaitRoutes({ waits: botWaits }); ROUTES.push(createXConnectorRoutes({ credential: () => researchCredential(cfg.treg?.key) }));
+const internalToolRoutes = createInternalToolRoutes({ engineLimits: { instances: () => registry.instances(), configs: () => instanceConfigs(cfg), status: (instanceId) => registry.knownSnapshot(instanceId), load: (accounts) => loadPlanUsage({ accounts }) }, helpers: { decider, extractor }, xResearch: { credential: () => researchCredential(cfg.treg?.key), botEnabled: (botId) => store.bot(botId)?.xResearch !== false } }); const waitRoutes = createWaitRoutes({ waits: botWaits }); ROUTES.push(createXConnectorRoutes({ credential: () => researchCredential(cfg.treg?.key) }));
 
 // Live calls: the client holds the WebRTC audio; the key never leaves the harness, which creates the session.
 function liveBotFor(botId: string): LiveBot {

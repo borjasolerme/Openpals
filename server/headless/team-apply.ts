@@ -280,10 +280,10 @@ export async function reconcile(client: HeadlessClient, file: TeamFile, options:
     if (options.apply) await tool("update_channel", { channel_id: existing.id, ...change });
   }
 
-  // Only a file that says prune: true is pruned, and only with --prune. The helper bot stays: it cannot be deleted.
+  // Only a file that says prune: true is pruned, and only with --prune.
   if (file.prune) {
     const listed = new Set(file.bots.flatMap((bot) => [key(bot.name), ...(bot.was ? [key(bot.was)] : [])]));
-    for (const bot of (current.bots ?? []).filter((candidate: Rec) => !candidate.hidden && !candidate.defaultBot && !listed.has(key(candidate.name)))) {
+    for (const bot of (current.bots ?? []).filter((candidate: Rec) => !candidate.hidden && !listed.has(key(candidate.name)))) {
       if (!options.prune) { note(`bot "${bot.name}": not in file (kept; --prune deletes it)`, "kept"); continue; }
       note(`bot "${bot.name}": delete (not in file)`, "deleted");
       if (options.apply) await write(`/api/bots/${enc(bot.id)}`, { method: "DELETE" });
