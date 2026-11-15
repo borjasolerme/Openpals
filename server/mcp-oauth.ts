@@ -532,7 +532,7 @@ export class McpOAuthManager {
     if (!match) {
       response.setHeader("Cache-Control", "no-store");
       response.setHeader("Content-Type", "text/plain; charset=utf-8");
-      response.writeHead(400).end("Invalid sign-in callback. Return to OpenMausBot and try again.");
+      response.writeHead(400).end("Invalid sign-in callback. Return to Openpals and try again.");
       return;
     }
     void this.callback(match, request, response);
