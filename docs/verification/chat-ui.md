@@ -263,31 +263,11 @@ output just now` and the command's last two lines in the card.
 
 The bot's words appear as they arrive, keyed by the id the server streams each
 message under, and the saved message takes the streamed bubble's place in the
-same frame. One command streams every scripted case through the real renderer,
-once per engine, and checks each frame:
+same frame. The cases are `server/testing/live-reply-cases.ts`: short and long replies, Markdown, code fences, math, emoji and
+right-to-left text, links and images, text and tools interleaved, two messages in a row, a blank message, thinking,
+Stop, a steer, an error and a reconnect.
 
-```sh
-node --experimental-strip-types scripts/verify-live-reply.ts \
-  --engines claude,codex,acp,cline,copilot --out .omb-scratch/verify-evidence/live-reply
-```
-
-Each engine gets its own fixture (`ui launch --engine codex|acp|cline|copilot`);
-its fake plays the case named by a marker in the prompt from
-`FAKE_STREAM_SCRIPT` at `FAKE_STREAM_CADENCE` (the cases are
-`server/testing/live-reply-cases.ts`: short and long replies, Markdown, code
-fences, math, emoji and right-to-left text, links and images, text and tools
-interleaved, two messages in a row, a blank message, thinking, Stop, a steer,
-an error, a reconnect, a chat switch, and a room with two bots). Expected: a
-`pass` for every case in the printed table, which is also written to
-`results.md` with each case's screenshot and evidence. Steering is checked
-where the fake steers (Claude).
-
-`--engines opencode` with `OMB_VERIFY_OPENCODE_CLI` set to an OpenCode the
-recipe downloaded and checked against `server/drivers/acp/opencode-release.ts`
-runs real prompts on a free model OpenCode offers with no sign-in, in the
-fixture's temporary home.
-
-The engine-level checks, which need no browser, are
+The engine-level checks are
 `server/drivers/acp/live-reply-matrix.test.ts` (every ACP engine),
 `server/drivers/claude-live-reply.test.ts`, and the case runs in
 `server/drivers/codex.test.ts`, `server/drivers/pi.test.ts` and

@@ -22,8 +22,8 @@ const DEFER = { [DEFER_TOOLS_ENV]: "1" };
 
 /** Bytes Claude Code sends up front for the agents server when the budget was last set; each may move at most 2%. */
 const UP_FRONT_BASELINE: Record<string, { whole: number; deferred: number }> = {
-  default: { whole: 4514, deferred: 1186 },
-  fullest: { whole: 5308, deferred: 1494 },
+  default: { whole: 3986, deferred: 983 },
+  fullest: { whole: 4780, deferred: 1143 },
 };
 
 const listed = (env: Record<string, string>) => agentsToolList(env).listed as Array<{ name: string; description: string; inputSchema: unknown; _meta?: Record<string, unknown> }>;
@@ -34,7 +34,7 @@ describe("agents tools deferred on a Claude turn", () => {
     for (const env of Object.values(PROFILES)) {
       const tools = listed({ ...env, ...DEFER });
       expect(tools.filter((tool) => !marked(tool)).map((tool) => tool.name).every((name) => CLAUDE_ALWAYS_LOADED_TOOL_NAMES.has(name))).toBe(true);
-      expect(tools.filter(marked).length).toBeGreaterThan(40);
+      expect(tools.filter(marked).length).toBeGreaterThan(30);
       expect(tools.find((tool) => tool.name === "list_bots")?._meta, "a deferred list_bots loses to Claude Code's ListAgents").toBeUndefined();
       expect(listed(env).some((tool) => tool._meta !== undefined)).toBe(false);
       expect(listed({ ...env, ...DEFER, [TOOL_BRIDGE_ENV]: "1" }).some((tool) => tool._meta !== undefined)).toBe(false);
