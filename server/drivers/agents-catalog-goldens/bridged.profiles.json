@@ -225,47 +225,6 @@
       "use_tool"
     ]
   },
-  "default+mausbot": {
-    "bytes": 15974,
-    "sha256": "8b4868accb31a004398be882e96f84553f70bb9f31a0b7e65de69d9afdd34296",
-    "tools": [
-      "tool_result_read",
-      "list_room_targets",
-      "coordinate_bots",
-      "list_bots",
-      "list_rooms",
-      "select_computer",
-      "attach_file",
-      "post_to_room",
-      "request_credential",
-      "request_sign_in",
-      "fill_login",
-      "memory_update",
-      "find_tool",
-      "use_tool"
-    ]
-  },
-  "skills+voice+mausbot": {
-    "bytes": 16782,
-    "sha256": "713cb9a23d1b6968a104ca3b40f8675eea1881aa6bd8c7bfe06a6ad32fdc5b2a",
-    "tools": [
-      "tool_result_read",
-      "list_room_targets",
-      "coordinate_bots",
-      "list_bots",
-      "list_rooms",
-      "select_computer",
-      "attach_file",
-      "post_to_room",
-      "request_credential",
-      "request_sign_in",
-      "fill_login",
-      "send_voice_note",
-      "memory_update",
-      "find_tool",
-      "use_tool"
-    ]
-  },
   "default+no-computer-pick": {
     "bytes": 14716,
     "sha256": "23b9be8c2dc27927c111a390f304757c016f5f3af20da6e5fc5592e4465e1b46",
