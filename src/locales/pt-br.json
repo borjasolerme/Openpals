@@ -5050,6 +5050,5 @@
   "workComputer.screen.worksOn": "{name} trabalha neste seu Mac.",
   "workComputer.screen.hint": "Os bots usam a tela dele em segundo plano. Pause ou pare pelo Openpals nesse Mac.",
   "workComputer.screen.look": "Ver a tela dele",
-  "ask.settled.answeredInChat": "Respondida no chat",
   "botSettings.searchLoading": "Procurando nos apps conectados…"
 }

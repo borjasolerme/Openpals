@@ -3963,7 +3963,6 @@
   "ask.settled.answered": "Yanıtınız:",
   "ask.settled.stopped": "Siz yanıtlamadan önce durduruldu",
   "ask.settled.expired": "Kimse yanıtlamadan süresi doldu",
-  "ask.settled.answeredInChat": "Sohbette yanıtlandı",
   "ask.error": "Yanıtınız gönderilemedi. Tekrar deneyin.",
   "ask.detail.more": "Tümünü göster",
   "question.somethingElse": "Başka bir şey…",
