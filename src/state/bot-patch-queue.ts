@@ -30,8 +30,6 @@ export type BotUpdatePatch = Partial<
     | "xResearch"
     | "pinned"
     | "hidden"
-    | "sidebarHidden"
-    | "welcomed"
     | "pinnedMessageId"
     | "chiefOfStaff"
     | "approvePeerComms"

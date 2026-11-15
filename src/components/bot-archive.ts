@@ -8,11 +8,10 @@ export interface ArchiveNotice {
   restoreBot?: { id: string; name: string };
 }
 
-/** A Chief of Staff its delete dialog offers to archive instead, keeping its chats: never the place's own MausBot, and
- * never the last active bot. */
+/** A Chief of Staff its delete dialog offers to archive instead, keeping its chats: never the last active bot. */
 export function archivableChief(bots: readonly Bot[], id: string): Bot | undefined {
   const active = bots.filter((candidate) => !candidate.hidden);
-  return active.length > 1 ? active.find((candidate) => candidate.id === id && candidate.chiefOfStaff && !candidate.defaultBot) : undefined;
+  return active.length > 1 ? active.find((candidate) => candidate.id === id && candidate.chiefOfStaff) : undefined;
 }
 
 /**

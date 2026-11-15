@@ -8,7 +8,6 @@ import { ModelPicker } from "../ModelPicker";
 import type { SidebarMenuItem } from "../SidebarPopoverMenu";
 import type { useBotSettingsDerived } from "../bot-settings/useBotSettingsDerived";
 import type { SimplePageId } from "./page-registry";
-import { TryAsking } from "./TryAsking";
 import { Card, NavRow, RowIcon, rowCls, RowText } from "./rows";
 
 type Derived = ReturnType<typeof useBotSettingsDerived>;
@@ -83,7 +82,6 @@ export function DetailsTab({ bot, derived, onOpen }: {
         </Card>
       )}
 
-      <TryAsking bot={bot} />
 
       {conversationItems.length > 0 && (
         <Card label={t("botPanel.section.conversation")} anchor="conversation">

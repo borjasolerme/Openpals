@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { withTourFinished } from "@/lib/guided-tour";
 import { setLocale } from "@/lib/i18n";
 import { EMPTY_ONBOARDING, LOCAL_VIEWER, markWelcomeFinished, MET_CHIEF_HINT, type WelcomeViewer } from "@/lib/onboarding";
-import { launchDialogShown } from "@/lib/launch-dialogs";
 import { registerDesktopPrefs } from "../../electron/desktop-prefs.mjs";
 
 const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as EffectCallback[], state: {} as any, dispatch: null as any, brand: "default" }));
@@ -18,7 +17,7 @@ vi.mock("react", async original => ({ ...await original<typeof import("react")>(
   useSyncExternalStore: (_subscribe: unknown, snapshot: () => unknown) => snapshot(),
 }));
 vi.mock("@/state/store", () => ({ useStore: () => ({ state: f.state, dispatch: f.dispatch }), api: vi.fn().mockResolvedValue({}) }));
-vi.mock("@/lib/brand", () => ({ brandStatus: () => ({ brand: { name: "Openpals" }, source: f.brand, file: "" }), productName: () => "MausBot" }));
+vi.mock("@/lib/brand", () => ({ brandStatus: () => ({ brand: { name: "Openpals" }, source: f.brand, file: "" }), productName: () => "Openpals" }));
 vi.mock("./Avatar", async original => ({ ...await original<typeof import("./Avatar")>(), MausAvatar: () => null }));
 vi.mock("./lazy-screens", async original => ({ ...await original<typeof import("./lazy-screens")>(), GrokMoveDialog: () => "THE MOVE DIALOG" }));
 vi.mock("@/components/EngineLibrary", () => ({ engineReady: (instance: { snapshot: { state: string; authenticated?: boolean } }) =>
@@ -144,7 +143,6 @@ describe("the Move from Grok Bot popup", () => {
     for (const text of [TITLE, "Bring your Bots here, with their skills, routines and memories.", "Let&#x27;s start", "Not now"]) expect(html).toContain(text);
     for (const part of ['role="dialog"', 'aria-modal="true"', "data-grok-move-popup"]) expect(html).toContain(part);
     expect(launchNotice()).toBe(GROK_MOVE_NOTICE);
-    expect(launchDialogShown(), "MausBot's card waits for a later launch").toBe("notices");
     expect(await settle()).toContain(TITLE);
     expect(reads(), "showing it looks at neither Downloads nor the Grok Bot app").toEqual([]);
   });
@@ -258,7 +256,6 @@ describe("the Simple mode popup after the update", () => {
     const html = await launch();
     expect(html).toContain(TITLE);
     for (const part of ['role="dialog"', 'aria-modal="true"', 'role="switch"', 'aria-checked="false"', "Switch any time in Settings → General."]) expect(html).toContain(part);
-    expect(launchDialogShown()).toBe("notices");
     expect(await settle()).toContain(TITLE);
     press("Done"); await flush();
     expect(render(), "nothing else in this launch after it").toBe("");

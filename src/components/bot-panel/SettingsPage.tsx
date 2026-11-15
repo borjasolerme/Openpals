@@ -12,7 +12,6 @@ import type { ApprovalMode } from "../../../shared/approval-mode";
 import { BOT_PROFILE_LIMITS } from "../../../shared/bot-profile";
 import { ApprovalChip } from "../ComposerPlusMenu";
 import { useDesktopCapabilities } from "../DesktopCapabilities";
-import { DefaultBotHideRow } from "../DefaultBotControls";
 import { SoulField } from "../SoulField";
 import { useBotApps } from "../bot-settings/useBotApps";
 import type { useBotSettingsDerived } from "../bot-settings/useBotSettingsDerived";
@@ -196,7 +195,6 @@ export function SettingsPage({ bot, derived, onOpen, editingInstructions = false
         </label>
       </Card>
 
-      <DefaultBotHideRow bot={bot} />
       {approval.dialogs}
     </div>
   );

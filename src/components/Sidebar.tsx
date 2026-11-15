@@ -71,7 +71,6 @@ import { LiveCallPill, liveBadgeFor } from "./LiveCallPill";
 import { ShortcutHint } from "./ShortcutHint";
 import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { useWelcomingBot } from "@/lib/default-bot";
 import { PinnedBotRoster } from "./PinnedCircles";
 import { archiveBotWithNotice } from "./bot-archive";
 import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel";
@@ -387,7 +386,7 @@ function RoomContextMenu({
 export function currentArchivableBot(bots: readonly Bot[], id: string): Bot | undefined {
   const active = bots.filter((candidate) => !candidate.hidden);
   if (active.length <= 1) return undefined;
-  return active.find((candidate) => candidate.id === id && !candidate.chiefOfStaff && !candidate.defaultBot);
+  return active.find((candidate) => candidate.id === id && !candidate.chiefOfStaff);
 }
 
 export interface BotRowProps {
@@ -768,7 +767,7 @@ export const Sidebar = memo(function Sidebar({ open, onClose, collapseToIcons = 
         botPreview(b, visibleMessages(b), state.instances, advanced).toLowerCase().includes(q),
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
-  const parts = partitionSidebarBots(matchingBots, { universalPins, welcoming: useWelcomingBot() });
+  const parts = partitionSidebarBots(matchingBots, { universalPins });
   const saved = parts;
   // Shown order only: drag and Alt+Up/Down keep working on the saved order, so a reorder never stores this one.
   const { chief, pinnedBots, bots } = { ...saved, ...activeBotsFirst(saved, (bot) => {

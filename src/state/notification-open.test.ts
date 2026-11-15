@@ -145,18 +145,6 @@ describe("following a notification", () => {
     expect(server.tasks!.find((task) => task.threadId === "left-behind")!.unread).toBe(true);
   });
 
-  it("opens the brief in MausBot's chat while MausBot is hidden from the sidebar", async () => {
-    server = { ...server, defaultBot: {}, sidebarHidden: true };
-    stream().send({ kind: "bot", bot: structuredClone(server) });
-    await settle();
-    expect(scoutNow().sidebarHidden).toBe(true);
-    stream().send({ kind: "notify", notification: { id: "n2", at: 2, read: false, kind: "brief", botId: "scout", botName: "Scout", threadId: "main-chat", title: "Scout", body: "Your brief" } }, "run:2");
-    await settle();
-    FixtureNotification.shown.at(-1)!.onclick!();
-    await settle();
-    expect(state.selectedId).toBe("scout");
-    expect(scoutNow().threadId).toBe("main-chat");
-  });
 
   it("leaves the thread a failed switch stayed on as the one on screen", async () => {
     server = { ...server, tasks: server.tasks!.filter((task) => task.threadId !== "finished") };

@@ -43,7 +43,7 @@ function fixture(url: string, ai: boolean, bots: number): unknown {
   const path = new URL(url, location.href).pathname;
   if (path === "/api/bots") {
     return { bots: [
-      bot("maus", "Pal", "chrome", { defaultBot: {}, chiefOfStaff: true }),
+      bot("chief", "Chief", "chrome", { chiefOfStaff: true }),
       ...Array.from({ length: bots }, (_, i) => bot(`bot-${i}`, NAMES[i % NAMES.length]!, COLORS[i % COLORS.length]!, { title: i % 3 === 0 ? "Finds and summarises" : "" })),
     ], groups: [], sections: [] };
   }

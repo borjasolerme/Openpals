@@ -3,7 +3,6 @@ import { ChevronLeft, Loader2, Menu } from "lucide-react";
 import { openBot, StoreProvider, useStore } from "@/state/store";
 import { nextShortcutBot, shortcutBots, shownBotIds } from "@/lib/sidebar-shortcut-order";
 import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
-import { MausBotWelcome } from "@/components/MausBotWelcome";
 import { spotlightsQuiet, type WelcomeViewer } from "@/lib/onboarding";
 import { FirstConversationTour } from "@/components/onboarding/FirstConversationTour";
 import { GuidedTour } from "@/components/onboarding/GuidedTour";
@@ -27,6 +26,7 @@ import { AppNotices } from "@/components/AppNotices";
 import { LiveConnectionStrip } from "@/components/LiveConnectionStrip";
 import { DesktopCapabilitiesProvider, useCaptionChrome, useDesktopCapabilities, WindowDragStrip, windowFramed } from "@/components/DesktopCapabilities";
 import { WindowCaptionButtons } from "@/components/WindowCaptionButtons";
+import { Button } from "@/components/ui/Button";
 import { WindowFrameBar } from "@/components/WindowFrameBar";
 import { cn } from "@/lib/cn";
 import { NoEngines } from "@/components/NoEngines";
@@ -283,6 +283,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           <div className="w-full max-w-md"><ChatNotice notice={state.notice} /></div>
           {loading.busy && <Loader2 size={20} className="animate-spin" />}
           <div className="text-lg">{t(loading.text)}</div>
+          {!loading.busy && <Button variant="primary" data-empty-new-bot="" onClick={() => dispatch({ type: "newBot" })}>{t("app.loading.createBot")}</Button>}
           {loading.command && (
             <div className="text-sm">
             {t("app.loading.startServer")} <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
@@ -344,7 +345,6 @@ function Application() {
       <StoreProvider>
         <Shell viewer={viewer} />
         <WelcomeGate viewer={viewer} />
-        <MausBotWelcome viewer={viewer} />
         <GuidedTour />
         <LiveCallHost />
         <FirstConversationTour quiet={spotlightsQuiet(viewer)} />

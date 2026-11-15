@@ -5,7 +5,6 @@
 import { act, createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { introStaged, stageIntro } from "@/lib/default-bot";
 import { setLocale } from "@/lib/i18n";
 import { GROK_MOVE_NOTICE } from "@/lib/notices";
 import { EMPTY_ONBOARDING, MET_CHIEF_HINT, WELCOME_VERSION } from "@/lib/onboarding";
@@ -42,9 +41,9 @@ const freeOpenCode: InstanceInfo = {
   snapshot: { state: "available", authenticated: true, freeFallback: true }, models: { default: "opencode/big-pickle", options: [] }, aiTest: "passed",
 };
 const signIn = (): InstanceInfo => ({ ...claude(false), snapshot: { state: "available", authenticated: false }, authentication: { method: "paste-code" } } as InstanceInfo);
-const maus = { id: "maus", threadId: "t", name: "Pal", title: "", description: "", notifications: true, color: "chrome", unread: false,
-  modelSelection: { instanceId: "claude", model: "m" }, messages: [], defaultBot: {}, chiefOfStaff: true };
-const research = { ...maus, id: "research", threadId: "r", name: "Research", defaultBot: undefined, chiefOfStaff: false };
+const chief = { id: "chief", threadId: "t", name: "Chief", title: "", description: "", notifications: true, color: "chrome", unread: false,
+  modelSelection: { instanceId: "claude", model: "m" }, messages: [], chiefOfStaff: true };
+const research = { ...chief, id: "research", threadId: "r", name: "Research", chiefOfStaff: false };
 
 let host: HTMLDivElement, root: Root;
 const text = () => host.textContent ?? "";
@@ -105,8 +104,7 @@ beforeEach(() => {
     if (path.endsWith("/test")) return { ok: true };
     return JSON.parse(init?.body ?? "{}");
   });
-  f.state = { instances: [claude(true)], config: { onboarding: EMPTY_ONBOARDING, profile: { name: "" } }, bots: [maus] };
-  stageIntro(null);
+  f.state = { instances: [claude(true)], config: { onboarding: EMPTY_ONBOARDING, profile: { name: "" } }, bots: [chief] };
   // This computer's own server names it.
   vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ label: "Ada's MacBook Pro.local" }), { status: 200 })));
   host = document.createElement("div");
@@ -133,7 +131,7 @@ describe("the first run's window", () => {
     expect(button("Back"), "nothing before the first step").toBeUndefined();
   });
 
-  it("signs in, starts with Pal, skips the apps and lands in Pal's chat", async () => {
+  it("signs in, creates a bot, skips the apps and lands in its chat", async () => {
     await show();
     expect(f.checks, "the AI answered one tiny test message").toEqual(["/api/instances/claude/check"]);
     expect(host.querySelector('[data-ai-row="claude"]')?.textContent).toContain("Signed in");
@@ -143,13 +141,15 @@ describe("the first run's window", () => {
     expect(steps()[1]!.getAttribute("aria-current")).toBe("step");
     expect(host.querySelector('[data-key-row="composio"]'), "a Composio project's key").not.toBeNull();
     expect(host.querySelector("[data-composio-personal]"), "or a personal one").not.toBeNull();
-    await pick('[data-bots-choice="pal"]');
-    expect(f.dispatch).toHaveBeenCalledWith({ type: "updateBot", botId: "maus", patch: { welcomed: true } });
-    expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Pal");
-    expect(host.querySelector('[data-bots-choice="pal"]'), "started once").toBeNull();
+    await pick('[data-bots-choice="create"]');
+    const opened = f.dispatch.mock.calls.map((call) => call[0] as { type: string; onCreated?: (bot: typeof research) => void })
+      .find((action) => action.type === "newBot");
+    expect(opened, "the new-bot flow opens over the welcome").toMatchObject({ type: "newBot", preserveSelection: true });
+    await act(async () => opened?.onCreated?.(research));
+    expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Research");
+    expect(host.querySelector('[data-bots-choice="create"]'), "created once").toBeNull();
     await press("Open Openpals");
-    expect(f.onDone).toHaveBeenCalledExactlyOnceWith("maus");
-    expect(introStaged("maus"), "its first messages arrive one at a time").toBe(true);
+    expect(f.onDone).toHaveBeenCalledExactlyOnceWith("research");
     await act(async () => {});
     expect(saved(), "the Grok Bot popup has nothing left to offer").toEqual([{ onboarding: expect.objectContaining({ version: WELCOME_VERSION, hintsSeen: [MET_CHIEF_HINT, GROK_MOVE_NOTICE] }) }]);
   });
@@ -204,7 +204,6 @@ describe("the first run's window", () => {
     await show({ initialBeat: "bring" });
     await press("Open Openpals");
     expect(f.onDone).toHaveBeenCalledExactlyOnceWith(null);
-    expect(introStaged("maus")).toBe(false);
   });
 
   it("comes back to the step it was on after a reload", async () => {
@@ -402,7 +401,7 @@ describe("bringing bots and apps", () => {
   it("opens the chat with the first bot moved from Grok Bot", async () => {
     await show({ initialBeat: "bring" });
     await pick('[data-bots-choice="grok"]');
-    f.state = { ...f.state, bots: [maus, research] };
+    f.state = { ...f.state, bots: [chief, research] };
     await show({ initialBeat: "bring" });
     await press("Close Grok");
     expect(host.querySelector("[data-bots-brought]")?.textContent).toBe("Ready: Research");
@@ -436,10 +435,8 @@ describe("other first runs", () => {
   it("a replay from Settings records nothing about a first chat", async () => {
     f.state = { ...f.state, config: { onboarding: { ...EMPTY_ONBOARDING, completedAt: "2026-09-01T00:00:00.000Z", version: WELCOME_VERSION } } };
     await show({ replay: true, initialBeat: "bring" });
-    await pick('[data-bots-choice="pal"]');
     await press("Open Openpals");
     await act(async () => {});
     expect(saved()[0].onboarding).not.toHaveProperty("hintsSeen");
-    expect(introStaged("maus"), "a replay lands in a chat that may be long under way").toBe(false);
   });
 });

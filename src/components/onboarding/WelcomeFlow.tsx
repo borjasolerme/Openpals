@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Keyb
 import { ArrowRight, X } from "lucide-react";
 import { productName } from "@/lib/brand";
 import { cn } from "@/lib/cn";
-import { stageIntro } from "@/lib/default-bot";
 import { GLASS_POPUP_GUTTER, glassPopupTopInset } from "@/lib/glass-popup";
 import { t } from "@/lib/i18n";
 import { GROK_MOVE_NOTICE } from "@/lib/notices";
@@ -174,8 +173,6 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
       finishing.current = true;
       if (!replay && !embedded) markWelcomeFinished();
       if (keepsDraft) clearWelcomeDraft();
-      // Pal started here says its first lines one at a time as its chat opens.
-      if (!replay && botId && botId === brought.pal) stageIntro(botId);
       onDone(botId);
       try {
         // The bring step offered the move from Grok Bot, so its popup has nothing left to offer.
@@ -185,7 +182,7 @@ function Steps({ onDone, onClose, replay = false, initialBeat, embedded = false,
       } catch {
       }
     },
-    [dispatch, onDone, replay, embedded, keepsDraft, brought.pal, beats],
+    [dispatch, onDone, replay, embedded, keepsDraft, beats],
   );
 
   const at = beats.indexOf(beat);

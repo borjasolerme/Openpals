@@ -60,8 +60,8 @@ secure address, so it works from any country with no ports to open, and you can 
 
 ## Stuff you do in Openpals
 
-- **Chat with a bot like a contact.** One chat per bot, a flat list of bots, and a helper bot called Pal that sets
-  things up with you.
+- **Chat with a bot like a contact.** One chat per bot and a flat list of bots, with no built-in bot you can't
+  remove.
 - **Hand off routines.** "Every weekday at 8, check my calendar and inbox and send me a brief." The result lands in
   the bot's chat.
 - **Connect your apps.** Gmail, Calendar, Slack, GitHub, Notion and hundreds more through Composio, or any MCP
@@ -135,7 +135,7 @@ waiting. (That last hop is a personal setup, not a built-in feature. Bots can ru
 
 | ✅ Works today | 🚧 Being wired up | 💭 Ideas |
 | --- | --- | --- |
-| • One chat per bot, Pal the helper bot, a flat bot list<br>• Engines: Claude Code, Codex, Cursor, OpenCode, Gemini, GitHub Copilot and more<br>• Routines on daily, weekly, interval or cron schedules<br>• Memory and skills per bot<br>• Apps through Composio (project or personal key) and your own MCP servers<br>• Group chats with several bots<br>• Approvals before risky actions<br>• Always-on server set up from the app (Boat or SSH) or with a one-line installer<br>• A cloud desktop and browser per bot on Boat<br>• A work computer per bot: Boat, a Mac of yours lent from anywhere, or the server itself<br>• A Mac at home as the always-on brain, reached from your laptop and phone through Tailscale<br>• Phone pairing with a one-time link, and notifications<br>• Voice calls and dictation<br>• Moving bots over from Grok Bot<br>• 16 interface languages | • Finishing translations: German, French, Hindi and Ukrainian are under half done<br>• A new Openpals mascot and logo<br>• Renaming the documentation site | • Image generation in chat<br>• Email on any mail host, not only Gmail<br>• Meeting notes<br>• More voices |
+| • One chat per bot, a flat bot list<br>• Engines: Claude Code, Codex, Cursor, OpenCode, Gemini, GitHub Copilot and more<br>• Routines on daily, weekly, interval or cron schedules<br>• Memory and skills per bot<br>• Apps through Composio (project or personal key) and your own MCP servers<br>• Group chats with several bots<br>• Approvals before risky actions<br>• Always-on server set up from the app (Boat or SSH) or with a one-line installer<br>• A cloud desktop and browser per bot on Boat<br>• A work computer per bot: Boat, a Mac of yours lent from anywhere, or the server itself<br>• A Mac at home as the always-on brain, reached from your laptop and phone through Tailscale<br>• Phone pairing with a one-time link, and notifications<br>• Voice calls and dictation<br>• Moving bots over from Grok Bot<br>• 16 interface languages | • Finishing translations: German, French, Hindi and Ukrainian are under half done<br>• A new Openpals mascot and logo<br>• Renaming the documentation site | • Image generation in chat<br>• Email on any mail host, not only Gmail<br>• Meeting notes<br>• More voices |
 
 <sub>Translation coverage comes from <code>pnpm i18n:check</code>. Ideas are things worth considering, not promises.</sub>
 
@@ -153,7 +153,7 @@ corepack pnpm@10.33.0 install
 pnpm package:mac        # or: pnpm package:linux
 ```
 
-The app lands in `release/`. Open it, keep **This computer**, sign in to your AI, and Pal takes it from there.
+The app lands in `release/`. Open it, keep **This computer**, sign in to your AI, and create your first bot.
 
 ### I want my bots always on
 

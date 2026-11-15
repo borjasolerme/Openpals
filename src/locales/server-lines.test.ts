@@ -464,8 +464,6 @@ const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, sni
     ["server/auto-approve.ts", "the saved tool permission"],
     ["server/auto-approve.ts", "Full access"],
     ["server/auto-approve.ts", "The provider rejected this action despite  … ."],
-    ["server/default-bot.ts", "Hey! I'm  … . I'm new here."],
-    ["server/default-bot.ts", "Hi! I'm  … , your helper for everything here."],
     ["server/host/ask-cards.ts", "Waiting on your  …  in @ …"],
     ["server/host/ask-cards.ts", "Your bot has a question"],
     ["server/host/ask-cards.ts", "…  needs your input:  …"],

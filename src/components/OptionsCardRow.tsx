@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { Bot, Message } from "@/state/store";
 import { ApprovalCard } from "./ApprovalCard";
-import { HelperIntro } from "./HelperIntro";
 import { MessageBoundary } from "./MessageBoundary";
 import { OptionCard, shouldHideOnboardingCard } from "./OptionCard";
 import { QuestionCard } from "./QuestionCard";
@@ -27,12 +26,7 @@ export function optionsCardRow({ message: m, transcript, botId, botName, botColo
   /** The bot that asks. */
   asker?: Asker;
 }): ReactNode {
-  // MausBot's follow-up is drawn under its intro (HelperIntro), never as a row of its own.
-  if (m.helperFollowup) return null;
-  const card = m.helperIntro ? (
-    <HelperIntro botId={botId} threadId={threadId} message={m} answered={shouldHideOnboardingCard(m, transcript)}
-      followup={transcript.find((entry) => entry.helperFollowup)} />
-  ) : isQuestionCard(m.card) ? (
+  const card = isQuestionCard(m.card) ? (
     <QuestionCard threadId={threadId} asker={asker ?? (botColor ? { name: botName, color: botColor } : undefined)} message={m} typedPast={typedPast(m, transcript)} />
   ) : m.card?.requestId && m.card.tool ? (
     <ApprovalCard bot={{ name: botName }} message={m} threadId={threadId} />

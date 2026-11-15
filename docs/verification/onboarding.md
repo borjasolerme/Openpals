@@ -13,14 +13,13 @@ Need a pairing link?, the setup the desktop app does from a Boat API key
 installer as one line to copy. Settings → Where your bots live → Connect to a
 server… opens the same panel (`AddServerPanel`). The AI step lists Claude and
 ChatGPT as rows (Signed in, or Sign in ›) with Other ways to connect; Bots &
-apps offers Move from Grok Bot, Start with Pal, a personal Composio key saved
-as the `composio-personal` MCP server, or a Composio project key, all
-optional. Open Openpals opens the chat with the bot brought in (Pal first,
-else the first bot moved from Grok Bot), or the Chief's chat. A hosted place's
-admin sees only its welcome. Pal started here lands in a chat where MausBot's
-three lines, its follow-up (written once by the server,
-`POST /api/bots/:id/helper-followup`) and chips offer only what is still
-missing. The app tour starts only from Settings → Replay app tour.
+apps offers Create a bot (the new-bot flow), Move from Grok Bot, a personal
+Composio key saved as the `composio-personal` MCP server, or a Composio project
+key, all optional. Open Openpals opens the chat with the bot brought in (the one
+created first, else the first bot moved from Grok Bot), or the Chief's chat. A
+new install has no bots until the person creates one; with none, the main area
+offers Create your first bot. A hosted place's admin sees only its welcome. The
+app tour starts only from Settings → Replay app tour.
 
 Launch the isolated full-app fixture following [Chat UI](chat-ui.md):
 
@@ -40,9 +39,8 @@ the real renderer and fake-engine server. No provider login, real phone
 pairing, native permissions or user workspace is involved.
 
 Assertions cover the screens: no field, step count, Back or Skip on the first;
-a reload coming back to the screen it was on; starting with Pal landing in its
-chat with its first messages and one saved follow-up even when the completion
-save fails, and the next browser without this one's mark seeing the welcome
+a reload coming back to the screen it was on; the end landing in a chat even
+when the completion save fails, and the next browser without this one's mark seeing the welcome
 again, skipping every step and saving it (with `met-chief-v1`); no app tour after the welcome or a reload; automatic
 starter-model selection and a successful first composer message without opening
 the model picker; every app tour step from Settings, persistence after reload,
@@ -58,14 +56,13 @@ Stop the launcher with Ctrl-C; it owns and removes only its disposable home.
 The rules behind it run offline:
 
 ```sh
-pnpm exec vitest run src/components/onboarding/WelcomeFlow.test.ts src/components/onboarding/ConnectAi.test.ts src/lib/composio-personal.test.ts src/lib/place.test.ts src/components/BotsPlaceSection.dom.test.ts scripts/install-server.test.mjs src/components/HelperIntro.test.ts src/lib/default-bot.test.ts server/routes/helper-followup.test.ts electron/system-name.test.mjs src/components/CardHint.test.ts
+pnpm exec vitest run src/components/onboarding/WelcomeFlow.test.ts src/components/onboarding/ConnectAi.test.ts src/lib/composio-personal.test.ts src/lib/place.test.ts src/components/BotsPlaceSection.dom.test.ts scripts/install-server.test.mjs electron/system-name.test.mjs src/components/CardHint.test.ts
 ```
 
 They cover the window and its steps (where the bots live only in the desktop
 app), Escape and the close button, the Add a server panel and pairing errors, the
 personal Composio key, the installer's argument checks, the chips' order and
-cap, the follow-up written once and only by MausBot's own person, the default
-profile name's guards, and the Advanced intro and spotlights kept as they were.
+cap, the default profile name's guards, and the Advanced intro and spotlights kept as they were.
 
 ## Providers connected after first launch
 
@@ -114,12 +111,10 @@ rendered from a temporary preview entry, not reached through a hosted sign-in.
 ## Bring what you already use (Oct 16 2026)
 
 Skills and MCP servers another AI tool keeps on this computer, brought in with
-one button: in Settings → Import, and offered by MausBot's first messages as a
-"Bring in your skills" chip when its look around finds some within two seconds.
-Desktop app only.
+one button, in Settings → Import. Desktop app only.
 
 ```sh
-pnpm exec vitest run server/setup-import.test.ts server/imported-skills.test.ts server/toml-lite.test.ts server/routes/setup-import.test.ts server/setup-import.e2e.test.ts src/components/ImportSettings.test.ts src/components/HelperIntro.test.ts src/lib/setup-import.test.ts
+pnpm exec vitest run server/setup-import.test.ts server/imported-skills.test.ts server/toml-lite.test.ts server/routes/setup-import.test.ts server/setup-import.e2e.test.ts src/components/ImportSettings.test.ts src/lib/setup-import.test.ts
 ```
 
 Every test builds its own temporary home; none reads the real `~/.claude`,
@@ -135,32 +130,27 @@ get the skills in their turn's index, task folder links and `/name`, that a
 Claude turn with "Also use my Claude Code skills" on sees a Claude Code skill
 once, and that a bot can switch one off for itself. The rows, working, failed
 and with their result, are covered in Settings by
-`src/components/ImportSettings.test.ts`; the chip by
-`src/components/HelperIntro.test.ts`. Not covered here: the packaged Electron
+`src/components/ImportSettings.test.ts`. Not covered here: the packaged Electron
 window itself.
 
 ## Two screens, then the chat (Oct 27 2026)
 
 ```sh
-pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts src/lib/default-bot.test.ts src/lib/corner-popup.test.ts src/components/onboarding src/components/HelperIntro.test.ts src/components/AppNotices.test.ts src/components/MausBotWelcome.gate.test.ts
+pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts src/lib/corner-popup.test.ts src/components/onboarding src/components/AppNotices.test.ts
 ```
 
 - `src/components/onboarding/WelcomeFlow.test.ts` renders the flow in
-  happy-dom: two screens with an AI working (Next, then Create, landing in the
-  Chief's chat with its first messages staged); with none, the first screen
+  happy-dom: two screens with an AI working (Next, then Create a bot, landing in
+  its chat); with none, the first screen
   holding Connect an AI, Next held until one connects and Later moving on;
   Escape and Enter; a reload on the second screen; a hosted admin's one screen;
   a replay saving nothing about a first chat.
 - `src/components/onboarding/ConnectAi.test.ts` covers the recommended sign-in,
   Other ways and the failed check.
-- `src/components/HelperIntro.test.ts` covers MausBot's first messages: the
-  three bubbles, the look around, chips for only what is missing, and the
-  staged arrival.
 - `src/lib/corner-popup.test.ts` and `src/components/AppNotices.test.ts` keep
   every corner notice out of the first conversation until a reply;
   `src/components/onboarding/FirstConversationTour.test.ts` keeps its
-  spotlights off; `src/components/MausBotWelcome.gate.test.ts` keeps MausBot's
-  first-launch card for older installs only.
+  spotlights off.
 - `src/components/onboarding/GuidedTour.test.ts` and
   `src/components/onboarding/WelcomeGate.test.ts` check the app tour never
   starts by itself, also after a reload.

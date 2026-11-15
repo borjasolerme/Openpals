@@ -9,7 +9,6 @@ import { KeysPage } from "./keys/KeysPage";
 import { KEY_CATALOG, keyMatches, keySection, type KeyEntry } from "./keys/key-catalog";
 import { openKeySettings, useKeyFocus } from "./keys/key-focus";
 import { OpenAtLoginRow } from "./OpenAtLoginRow";
-import { DefaultBotSidebarRow } from "./DefaultBotControls";
 import { TalkShortcutRow, talkShortcutKeywords } from "./TalkShortcutRow";
 import { AttachmentStorageSettings } from "./AttachmentStorageSettings";
 import { DiagnosticsRow } from "./DiagnosticsRow";
@@ -306,7 +305,6 @@ export function SettingsModal() {
         return (
           <>
             <AdvancedModeRow />
-            <DefaultBotSidebarRow />
             <TalkShortcutRow />
 
             <Card title={t("settings.profile.title")} subtitle={t("settings.profile.sharedSubtitle")}>

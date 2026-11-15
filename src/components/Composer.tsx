@@ -335,7 +335,7 @@ export function Composer({
           ...(members ?? []).map((member) => ({ id: member.id, name: member.name, bot: member })),
         ]
       : bots
-          .filter((member) => member.id !== bot?.id && !member.hidden && !member.sidebarHidden)
+          .filter((member) => member.id !== bot?.id && !member.hidden)
           .map((member) => ({ id: member.id, name: member.name, bot: member }));
     return mentionChoicesForQuery(pool, mention.query);
   }, [mention, dismissedAt, bots, bot?.id, group, members]);

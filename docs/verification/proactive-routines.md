@@ -47,33 +47,6 @@ Expected:
   and OpenMausBot's answerer, and Gmail's answer reaches it as records. A later
   ordinary turn's conversation search does not find the run.
 
-## MausBot as the owner
-
-```sh
-pnpm exec vitest run server/host/proactive-mausbot.test.ts
-```
-
-Each step starts the store, the routines and the proactive side from the files
-on disk, as a restart does, with a stand-in for connected apps and no model.
-Expected:
-
-- A new install's MausBot is its Chief and gets the one watch. On an install
-  where MausBot came after the Chief, the watch is made on MausBot.
-- An existing install's watch moves from the Chief to MausBot once: same id,
-  paused if it was paused, the edited instructions, the checks' state file
-  unchanged, the day's run count kept. The brief's home becomes MausBot's chat,
-  its intro shows again, and the Chief keeps its past card. Starting again
-  changes nothing, and a routine the person puts back on the Chief stays there.
-  A `watch.json` from before the handover still hands over once.
-- A restart after the routine moved but before the brief and `watch.json`
-  followed finishes the handover with no second watch.
-- With a watch already on MausBot, the Chief's is kept and MausBot's own is
-  paused; a paused watch stays paused and nothing else is left on. A queued run
-  holds the handover until it ends.
-- MausBot hidden from the sidebar gets the brief card, its notification, the
-  first-open answer and the add-a-key card; today's earlier card stays in the
-  Chief's chat.
-
 ## Unit tests
 
 `server/routine-checks-engine.test.ts` covers the routine engine with checks:
@@ -82,9 +55,8 @@ cap, busy bots, and Run now. The others:
 
 - `server/host/routine-checks.test.ts`, `server/host/check-plan.test.ts` and
   `server/host/check-prompts.test.ts`: the checks, planner and prompts;
-- `server/host/brief.test.ts`, `server/host/proactive.test.ts` and
-  `server/host/proactive-mausbot.test.ts`: the brief, the default routine and
-  its owner;
+- `server/host/brief.test.ts` and `server/host/proactive.test.ts`: the brief
+  and the default routine;
 - `server/connected-reads.test.ts` and `server/records-block.test.ts`: the
   readers and the sanitiser;
 - `server/read-and-draft.test.ts`: the fence;
