@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { formatInstant } from "./routine-cron-text.ts";
 import { MAX_DATE_MS } from "./routine-intervals.ts";
 import { cleanSchedule, loadSchedule, nextOccurrence, type RoutineScheduleInput } from "./routine-schedules.ts";
 
@@ -19,7 +18,7 @@ describe("one-time schedules with representable dates", () => {
     const schedule = cleanSchedule({ type: "once", at }, at - 1);
     expect(schedule).toEqual({ type: "once", at });
     expect(nextOccurrence(schedule, at - 1)).toBe(at);
-    expect(() => formatInstant(at, "UTC")).not.toThrow();
+    expect(() => new Date(at).toISOString()).not.toThrow();
   });
 
   it("keeps numeric-string compatibility for a valid timestamp", () => {

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { ROUTINE_HANDOFF_WAIT, type RoutineRunReport } from "../shared/routines.ts";
 import "./server-line-packs.ts";
-import { clipRunOutput } from "./routine-lines.ts";
+import { clipRunOutput } from "./run-output.ts";
 import { automationContextText, createAutomationReports, newestAutomationLines, readRunReply, recoveredText, routineRunNeedsReview } from "./automation-reports.ts";
 import { DATA_DIR } from "./config.ts";
 import type { RoutineRun } from "./routines.ts";

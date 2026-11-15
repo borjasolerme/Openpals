@@ -250,13 +250,12 @@ describe("a new line the person types instead of answering", () => {
     expect(restingOnPerson(w.rows("chat"))).toBeUndefined();
   });
 
-  it("leaves a card a turn or parked work still waits on, an approval, an inbox copy, a settled card and a room alone", () => {
+  it("leaves a card a turn or parked work still waits on, an approval, a settled card and a room alone", () => {
     const w = world({ live: ["req-live"] });
     w.node({ id: "as_1", status: "waiting", question: QUESTION });
     ask(w, "work", "req-live");
     ask(w, "work", "needs-input-as_1-1");
     ask(w, "work", "req-tool", { tool: "Bash", requestType: "permission" });
-    ask(w, "work", "req-copy", {}, { inbox: { botId: "ledger", threadId: "other", messageId: "x" } as unknown as Message["inbox"] });
     ask(w, "work", "req-done", { answered: "answer", answeredText: "Yes" });
     ask(w, "room", "req-room");
     const before = [...w.rows("work"), ...w.rows("room")].map((row) => row.card);

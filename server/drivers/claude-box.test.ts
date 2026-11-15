@@ -10,13 +10,11 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { botBox, type WrappedSpawn } from "../bot-box/box.ts";
-import { boxEnvironment } from "../bot-box/env.ts";
 import { visibleInBox } from "../bot-box/plan.ts";
 import { DATA_DIR, ensureDirs } from "../config.ts";
 import type { ProviderInstance } from "../contracts.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { recordEvents } from "../testing/events.ts";
-import { DEFER_TOOLS_ENV } from "./agents-claude-defer.ts";
 import { ClaudeDriver, hookTokenFile } from "./claude.ts";
 
 const FAKE_CLI = join(dirname(fileURLToPath(import.meta.url)), "..", "testing", "fake-claude-cli.ts");

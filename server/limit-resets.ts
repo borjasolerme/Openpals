@@ -276,10 +276,10 @@ export class LimitResetClock {
     this.timer.unref?.();
   }
 
-  /** Every reset time known now: the holds' and each usage window's. */
+  /** Every reset time known now: the holds' and each engine's usage limit's. */
   private knownResets(): number[] {
     const resets = [...this.refusals.values()];
-    for (const limit of this.usage.values()) for (const window of limit.windows ?? []) if (window.resetsAt !== null) resets.push(window.resetsAt);
+    for (const limit of this.usage.values()) if (limit.resetsAt !== null) resets.push(limit.resetsAt);
     return resets;
   }
 
