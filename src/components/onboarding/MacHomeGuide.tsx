@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { api, useStore } from "@/state/store";
 import { deriveTailscalePairingStatus } from "../CompanionSection";
-import { companionBridge, PhoneSetupFlowView, usePhoneSetupController } from "../PhoneSetupFlow";
+import { companionBridge, PhoneSetupFlowView, usePhoneSetupController, type PhoneSetupController } from "../PhoneSetupFlow";
 import { Button } from "../ui/Button";
 
 export const TAILSCALE_DOWNLOAD = "https://tailscale.com/download";
@@ -36,7 +36,7 @@ export async function pauseAllRoutines(request: typeof api = api): Promise<numbe
 }
 
 /** "Move my bots here": the encrypted full backup, exported on the old server and restored here, in the right order. */
-export function MoveBotsGuide() {
+export function MoveBotsGuide({ titled = true }: { titled?: boolean }) {
   const { dispatch } = useStore();
   const [paused, setPaused] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,13 +51,13 @@ export function MoveBotsGuide() {
   };
   return (
     <div className="flex flex-col gap-2" data-move-bots-guide>
-      <div className="text-base font-medium text-ink">{t("macHome.move.title")}</div>
+      {titled && <div className="text-base font-medium text-ink">{t("macHome.move.title")}</div>}
       <p className="text-sm text-ink-secondary">{t("macHome.move.intro")}</p>
       <p className="rounded-lg bg-warning/12 px-3 py-2 text-sm text-warning" role="note">{t("macHome.move.warning")}</p>
       <ol className="flex flex-col gap-1">
         <GuideStep number={1} active={paused === null} done={paused !== null} title={t("macHome.move.pause.title")}>
           <p>{t("macHome.move.pause.body")}</p>
-          <Button size="sm" className="gap-1.5 self-start" disabled={busy} onClick={() => void pause()}>
+          <Button size="sm" className="h-auto min-h-7 gap-1.5 self-start whitespace-normal py-1 text-left" disabled={busy} onClick={() => void pause()}>
             {busy && <Loader2 size={13} className="animate-spin" />}{t("macHome.move.pause.button")}
           </Button>
           {paused !== null && <p className="text-success" role="status">{t("macHome.move.pause.done", { count: paused })}</p>}
@@ -81,15 +81,14 @@ export function MoveBotsGuide() {
 }
 
 /** The Tailscale part: status as Remote access reads it, the one button that checks, then the pairing code. */
-function TailscaleSteps() {
-  const c = usePhoneSetupController();
+function TailscaleSteps({ c }: { c: PhoneSetupController }) {
   const [pairing, setPairing] = useState(false);
   if (!companionBridge()) return <p className="text-sm text-ink-secondary">{t("macHome.desktopOnly")}</p>;
   const status = c.state ? deriveTailscalePairingStatus(c.state, c.tailscaleAvailable) : null;
   const ready = status?.kind === "ready";
   return (
     <>
-      <GuideStep number={3} active={!ready} done={ready} title={t("macHome.step.turnOn.title")}>
+      <GuideStep number={3} active={false} done={ready} title={t("macHome.step.turnOn.title")}>
         <div className="flex items-start gap-2 rounded-lg bg-inset px-3 py-2.5" aria-live="polite" data-tailscale-status={status?.kind ?? "checking"}>
           <ShieldCheck size={15} className={cn("mt-0.5 shrink-0", ready ? "text-success" : "text-ink-secondary")} />
           <div className="min-w-0">
@@ -113,27 +112,29 @@ function TailscaleSteps() {
 /** "A Mac at home": the bots' brain on an always-on Mac, reached from the laptop and phone through Tailscale. On that
  * Mac the place stays This computer. */
 export function MacHomeGuide() {
+  const c = usePhoneSetupController();
   const [downloaded, setDownloaded] = useState(false);
+  const ready = c.state ? deriveTailscalePairingStatus(c.state, c.tailscaleAvailable).kind === "ready" : false;
   return (
     <div className="flex flex-col gap-3 text-left" data-mac-home-guide>
       <p className="text-sm text-ink-secondary">{t("macHome.intro")}</p>
       <p className="rounded-lg bg-inset px-3 py-2 text-sm text-ink-secondary">{t("macHome.awake")}</p>
       <ol className="flex flex-col gap-1">
-        <GuideStep number={1} active={!downloaded} done={downloaded} title={t("macHome.step.download.title")}>
+        <GuideStep number={1} active={!downloaded && !ready} done={downloaded || ready} title={t("macHome.step.download.title")}>
           <Button size="sm" className="gap-1.5 self-start"
             onClick={() => { setDownloaded(true); void openExternalLink(TAILSCALE_DOWNLOAD).catch(() => {}); }}>
             {t("macHome.step.download.button")}<ExternalLink size={13} />
           </Button>
         </GuideStep>
-        <GuideStep number={2} active={false} title={t("macHome.step.signIn.title")}>
+        <GuideStep number={2} active={downloaded && !ready} done={ready} title={t("macHome.step.signIn.title")}>
           <p>{t("macHome.step.signIn.body")}</p>
         </GuideStep>
-        <TailscaleSteps />
+        <TailscaleSteps c={c} />
       </ol>
       <p className="text-sm text-ink-secondary">{t("macHome.sameAccount")}</p>
       <details className="rounded-xl bg-fill-subtle p-3">
         <summary className="cursor-pointer text-base font-medium text-ink">{t("macHome.move.title")}</summary>
-        <div className="mt-2"><MoveBotsGuide /></div>
+        <div className="mt-2"><MoveBotsGuide titled={false} /></div>
       </details>
     </div>
   );

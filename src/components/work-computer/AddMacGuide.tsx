@@ -13,7 +13,7 @@ import { WorkComputerBadge } from "./WorkComputerBadge";
 
 export const INSTALL_GUIDE = `${APP_REPOSITORY}#getting-started`;
 
-interface PairingLink { code: string; url: string | null; expiresAt: number; hint: string | null }
+interface PairingLink { code: string; url: string | null; expiresAt: number }
 
 /** A Mac new to this guide: online now, and not online when the guide opened. */
 export function newlyConnected(computers: readonly WorkComputer[] | null, onlineAtOpen: ReadonlySet<string>): WorkComputer | null {
@@ -131,7 +131,7 @@ export function AddMacGuide({ known, onBack, onUse }: { known: readonly string[]
               {link.url && <PairingQr value={link.url} size={120} label={t("workComputer.guide.step2.qr")} />}
               <div className="flex min-w-0 flex-1 flex-col gap-2">
                 {link.url ? <code className="break-all rounded-md bg-inset px-2 py-1 text-sm text-ink">{link.url}</code>
-                  : <p>{link.hint ?? t("workComputer.guide.step2.noLink")} <span className="font-mono text-ink">{link.code}</span></p>}
+                  : <p>{t("workComputer.guide.step2.noLink")} <span className="font-mono text-ink">{link.code}</span></p>}
                 <div className="flex flex-wrap gap-2">
                   {link.url && <Button size="sm" onClick={() => void copyText(link.url!).then((result) => { if (result !== "empty") setCopied(result); })}>
                     {t(copied === "copied" ? "workComputer.guide.step2.copied" : copied === "failed" ? "common.copyFailed" : "workComputer.guide.step2.copy")}

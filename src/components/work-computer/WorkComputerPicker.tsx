@@ -34,7 +34,7 @@ function ChoiceCard({ icon: Icon, title, description, note, selected, onClick, t
         <span className="min-w-0">{title}</span>
       </span>
       <span className="text-sm leading-5 text-ink-secondary">{description}</span>
-      {note}
+      {note && <span className="mt-auto flex min-w-0 max-w-full self-start pt-1">{note}</span>}
     </button>
   );
 }
