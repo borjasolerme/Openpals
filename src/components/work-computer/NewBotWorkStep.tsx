@@ -35,7 +35,8 @@ export function NewBotWorkStep() {
   const boatReady = state.config?.box?.configured === true;
   const [choice, setChoice] = useState<WorkChoice>({ kind: boatReady ? "boat" : "server" });
   const createRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => { if (pending) setChoice({ kind: boatReady ? "boat" : "server" }); }, [pending, boatReady]);
+  const asking = Boolean(pending);
+  useEffect(() => { if (asking) setChoice({ kind: boatReady ? "boat" : "server" }); }, [asking, boatReady]);
   const close = () => dispatch({ type: "newBotStep", action: null });
   const create = () => {
     if (!pending) return;

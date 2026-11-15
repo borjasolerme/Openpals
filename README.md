@@ -34,6 +34,30 @@ already pay for, like Claude Code or Codex, so there is no new bill and no new a
 Your bots live on this computer or on an always-on server you own. Nothing goes through a hosted cloud of ours,
 because there isn't one.
 
+### Where your bots think, and where they work
+
+Every bot has two places. Its **brain** (memory, chats, routines) lives in the Openpals server: on this computer, on
+an always-on server (Boat or your own VPS), or on a Mac at home you reach through Tailscale. The computer it **works
+on** (where it clicks, browses and installs things) is picked per bot:
+
+```
+                ┌──────────────────────────────────────────┐
+                │  Openpals server: the brain              │
+                │  memory · chats · routines               │
+                │  this computer, Boat/VPS, or a home Mac  │
+                └──────┬────────────────┬───────────────┬──┘
+                       │                │               │
+           ┌───────────▼───┐  ┌─────────▼────────┐  ┌───▼──────────────┐
+           │ Boat          │  │ A Mac of yours   │  │ The server itself│
+           │ Linux cloud   │  │ Mac mini, laptop │  │ commands and a   │
+           │ computer,     │  │ your apps, files │  │ browser, nothing │
+           │ always on     │  │ and Chrome       │  │ to set up        │
+           └───────────────┘  └──────────────────┘  └──────────────────┘
+```
+
+A Mac lends itself from the Openpals app on it ("Let my bots use this computer"). It connects out to the server's
+secure address, so it works from any country with no ports to open, and you can pause or stop it from its menu bar.
+
 ## Stuff you do in Openpals
 
 - **Chat with a bot like a contact.** One chat per bot, a flat list of bots, and a helper bot called Pal that sets
@@ -111,7 +135,7 @@ waiting. (That last hop is a personal setup, not a built-in feature. Bots can ru
 
 | ✅ Works today | 🚧 Being wired up | 💭 Ideas |
 | --- | --- | --- |
-| • One chat per bot, Pal the helper bot, a flat bot list<br>• Engines: Claude Code, Codex, Cursor, OpenCode, Gemini, GitHub Copilot and more<br>• Routines on daily, weekly, interval or cron schedules<br>• Memory and skills per bot<br>• Apps through Composio (project or personal key) and your own MCP servers<br>• Group chats with several bots<br>• Approvals before risky actions<br>• Always-on server set up from the app (Boat or SSH) or with a one-line installer<br>• A cloud desktop and browser per bot on Boat<br>• Phone pairing with a one-time link, and notifications<br>• Voice calls and dictation<br>• Moving bots over from Grok Bot<br>• 16 interface languages | • Finishing translations: German, French, Hindi and Ukrainian are under half done<br>• A new Openpals mascot and logo<br>• Renaming the documentation site | • Image generation in chat<br>• Email on any mail host, not only Gmail<br>• Meeting notes<br>• More voices |
+| • One chat per bot, Pal the helper bot, a flat bot list<br>• Engines: Claude Code, Codex, Cursor, OpenCode, Gemini, GitHub Copilot and more<br>• Routines on daily, weekly, interval or cron schedules<br>• Memory and skills per bot<br>• Apps through Composio (project or personal key) and your own MCP servers<br>• Group chats with several bots<br>• Approvals before risky actions<br>• Always-on server set up from the app (Boat or SSH) or with a one-line installer<br>• A cloud desktop and browser per bot on Boat<br>• A work computer per bot: Boat, a Mac of yours lent from anywhere, or the server itself<br>• Phone pairing with a one-time link, and notifications<br>• Voice calls and dictation<br>• Moving bots over from Grok Bot<br>• 16 interface languages | • Finishing translations: German, French, Hindi and Ukrainian are under half done<br>• A new Openpals mascot and logo<br>• Renaming the documentation site | • Image generation in chat<br>• Email on any mail host, not only Gmail<br>• Meeting notes<br>• More voices |
 
 <sub>Translation coverage comes from <code>pnpm i18n:check</code>. Ideas are things worth considering, not promises.</sub>
 
