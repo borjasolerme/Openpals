@@ -69,24 +69,20 @@ async function boot(home: string) {
   const tests = async () => Object.fromEntries(((await api("GET", "/api/instances")).instances as Array<{ instanceId: string; aiTest?: string }>)
     .filter((instance) => instance.instanceId === "claude" || instance.instanceId === "spare")
     .map((instance) => [instance.instanceId, instance.aiTest ?? null]));
-  const starter = async () => ((await api("GET", "/api/bots?messages=0")).bots as Array<{ chiefOfStaff?: boolean; modelSelection: { instanceId: string } }>)
-    .find((bot) => bot.chiefOfStaff)!;
   const stop = () => waitForExit(child, { signal: "SIGTERM" });
-  return { api, sent, tests, starter, stop };
+  return { api, sent, tests, stop };
 }
 
-it("moves nothing on one miss, then the default and the untouched first bot to the AI that answered, and remembers it", async () => {
+it("moves nothing on one miss, then the default for new bots to the AI that answered, and remembers it", async () => {
   const home = freshHome();
   const server = await boot(home);
   await expect.poll(server.tests, { timeout: 30_000, interval: 250 }).toEqual({ claude: "failed", spare: null });
   expect(server.sent("claude")).toEqual(["This is a connection check. Reply with the single word OK."]);
   const failed = (await server.api("GET", "/api/instances")).instances.find((instance: { instanceId: string }) => instance.instanceId === "claude");
   expect(failed.aiTestError).toEqual(expect.any(String));
-  expect((await server.starter()).modelSelection.instanceId).toBe("claude");
   // The person's Check again misses too: twice in a row, so Claude didn't answer.
   expect(await server.api("POST", "/api/instances/claude/check", {})).toMatchObject({ ok: false });
   await expect.poll(server.tests, { timeout: 30_000, interval: 250 }).toEqual({ claude: "failed", spare: "passed" });
-  await expect.poll(async () => (await server.starter()).modelSelection.instanceId, { timeout: 10_000 }).toBe("spare");
   const made = await server.api("POST", "/api/bots", { name: "Made after the test" });
   expect(made.bot.modelSelection.instanceId).toBe("spare");
   // A restart sends no new test message: the results are kept for a day.
@@ -95,7 +91,6 @@ it("moves nothing on one miss, then the default and the untouched first bot to t
   await new Promise((resolve) => setTimeout(resolve, 3_000));
   expect(await again.tests()).toEqual({ claude: "failed", spare: "passed" });
   expect([again.sent("claude").length, again.sent("spare").length]).toEqual([2, 1]);
-  expect((await again.starter()).modelSelection.instanceId).toBe("spare");
 }, 90_000);
 
 it("never tests or moves a saved default", async () => {
@@ -103,5 +98,5 @@ it("never tests or moves a saved default", async () => {
   await new Promise((resolve) => setTimeout(resolve, 3_000));
   expect(await server.tests()).toEqual({ claude: null, spare: null });
   expect(server.sent("claude")).toEqual([]);
-  expect((await server.starter()).modelSelection.instanceId).toBe("claude");
+  expect((await server.api("POST", "/api/bots", { name: "Made on the saved default" })).bot.modelSelection.instanceId).toBe("claude");
 }, 60_000);

@@ -211,33 +211,3 @@ it.each(["permissions", "branch"] as const)("rechecks guarded %s after held firs
   });
 }, 120_000);
 
-it("a genuine first install stays unset until its provider account becomes ready", async () => {
-  const fixture = await launchVerificationServer({ FAKE_CLAUDE_AUTH: "out", FAKE_CLAUDE_MODE: "not-logged-in" });
-  const { url, dataDir, logPath } = fixture.info;
-  const api = async (method: string, path: string, body?: unknown): Promise<any> => {
-    const response = await fetch(url + path, { method, headers: { "content-type": "application/json", origin: url },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(30_000),
-    });
-    const result = await response.json();
-    expect(response.ok, JSON.stringify(result)).toBe(true);
-    return result;
-  };
-  try {
-    const starter = (await api("GET", "/api/bots")).bots[0];
-    expect(starter.modelSelection).toEqual(EMPTY);
-    const signedInCli = join(dataDir, "signed-in-claude.mjs");
-    writeFileSync(signedInCli,
-      `#!/usr/bin/env node\nprocess.env.FAKE_CLAUDE_AUTH = "in";\nprocess.env.FAKE_CLAUDE_MODE = "happy";\nawait import(${JSON.stringify(new URL("./testing/fake-claude-cli.ts", import.meta.url).href)});\n`,
-      { mode: 0o700 });
-    await api("PATCH", "/api/instances/claude", { cli: signedInCli });
-    expect((await api("GET", "/api/bots")).bots[0].modelSelection).toEqual(DEFAULT);
-    const target = ["--bot", starter.id, "--task", starter.threadId, "--url", url];
-    await runControlOmb(["send", ...target, "--text", "FIRST_INSTALL_PROVIDER_READY_1R"]);
-    expect((await runControlOmb(["wait", ...target, "--timeout", "30"]) as any).status).toBe("settled");
-    expect((await api("GET", `/api/threads/${starter.threadId}/messages?limit=20`)).messages
-      .findLast((message: any) => message.role === "bot" && message.kind === "text")).toMatchObject({ turnSucceeded: true });
-  } finally {
-    await fixture.close();
-    console.info(JSON.stringify({ logPath }));
-  }
-}, 120_000);

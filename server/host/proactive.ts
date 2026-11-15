@@ -231,6 +231,7 @@ export function createProactive(deps: ProactiveDeps) {
   }
 
   let timer: ReturnType<typeof setInterval> | null = null;
+  let unsubscribe: (() => void) | null = null;
   return {
     checks: routineChecks, fence, brief,
     /** The brief is on: the proactive bot's briefing routine is. */
@@ -252,10 +253,21 @@ export function createProactive(deps: ProactiveDeps) {
         try { ensureWatch(); } catch (error) { console.warn("watch: not made yet", error); }
       }, 60_000);
       timer.unref?.();
+      // A new Chief gets its watch at once, not at the next minute.
+      let chiefId = owner()?.id;
+      unsubscribe = store.onChange((change) => {
+        if (change.type !== "bot" && change.type !== "bot.deleted") return;
+        const now = owner()?.id;
+        if (now === chiefId) return;
+        chiefId = now;
+        try { ensureWatch(); } catch (error) { console.warn("watch: not made yet", error); }
+      });
     },
     stop(): void {
       if (timer) clearInterval(timer);
       timer = null;
+      unsubscribe?.();
+      unsubscribe = null;
     },
   };
 }

@@ -124,7 +124,7 @@ posixOnly("a steered message does not lift the unattended mark on its own", () =
   });
 
   it("keeps asking after the turn POSTs into itself with no session", async () => {
-    const bot = (await api("GET", "/api/bots?messages=0")).body.bots[0];
+    const bot = (await api("POST", "/api/bots", { name: "Unattended" })).body.bot;
     // auto mode ON: an attended turn would sail straight through
     expect((await api("PATCH", `/api/bots/${bot.id}`, {
       autoApprove: true,

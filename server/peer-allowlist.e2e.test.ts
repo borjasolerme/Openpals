@@ -149,15 +149,6 @@ const mintCapability = async (botId: string, threadId: string): Promise<string> 
   return String(minted.body.token);
 };
 
-let seededId = "";
-const hideSeededBot = async () => {
-  // The fixture's starter is the Chief: it steps down, and the roster checks below leave it out, since every bot can
-  // reach it.
-  const seeded = (await api("GET", "/api/bots?messages=0")).body.bots[0];
-  seededId = seeded.id;
-  expect((await api("PATCH", `/api/bots/${seeded.id}`, { chiefOfStaff: false })).status).toBe(200);
-};
-
 const peerNames = async (selfId: string, token: string) => {
   const listed = await api(
     "GET",
@@ -166,7 +157,7 @@ const peerNames = async (selfId: string, token: string) => {
     { authorization: `Bearer ${token}` },
   );
   expect(listed.status).toBe(200);
-  return (listed.body.bots as Array<{ id: string; name: string }>).filter((bot) => bot.id !== seededId).map((bot) => bot.name).sort();
+  return (listed.body.bots as Array<{ id: string; name: string }>).map((bot) => bot.name).sort();
 };
 
 /** The bots a Chief may set up. */
@@ -178,7 +169,6 @@ const setupScope = async (token: string) => {
 
 describe("peer allow-list", () => {
   it("consults a teammate, and a Chief sets up exactly the teammates it may reach", async () => {
-    await hideSeededBot();
     const clive = await createBot("Clive", "plain");
     const specialist = await createBot("Engineer", "plain");
     try {
@@ -204,7 +194,6 @@ describe("peer allow-list", () => {
     }
   }, 45_000);
   it("gives an ordinary bot a roster, then narrows it and the comms endpoints", async () => {
-    await hideSeededBot();
     const asker = await createBot("Ada", "asker");
     const quill = await createBot("Quill", "plain");
     const patch = await createBot("Patch", "plain");
@@ -291,7 +280,6 @@ describe("peer allow-list", () => {
   }, 40_000);
 
   it("renders only the allow-listed peers into the roster the bot is given", async () => {
-    await hideSeededBot();
     const bound = await createBot("Dot", "bound");
     const near = await createBot("Near", "plain");
     const far = await createBot("Farside", "plain");
@@ -313,7 +301,6 @@ describe("peer allow-list", () => {
   }, 40_000);
 
   it("re-checks the allow-list after the approval card, not just before it", async () => {
-    await hideSeededBot();
     // On the dump fixture: the real per-turn comms token is only readable from a bot's MCP config.
     const asker = await createBot("Iris", "asker");
     const helper = await createBot("Hedge", "plain");
@@ -369,7 +356,6 @@ describe("peer allow-list", () => {
 
   it("refuses to loosen a bot from a bare loopback call while any bot is working", async () => {
     // A bot's own shell can PATCH loopback mid-turn, so an originless, session-less PATCH may loosen a bot only while every bot is idle.
-    await hideSeededBot();
     const held = await createBot("Held", "stuck");
     const bound = await createBot("Ivy", "plain");
     const peer = await createBot("Ash", "plain");
@@ -412,7 +398,6 @@ describe("peer allow-list", () => {
   }, 60_000);
 
   it("lets the loopback API narrow a bot's peers but never widen them unacknowledged", async () => {
-    await hideSeededBot();
     const bound = await createBot("Ivy", "plain");
     const peer = await createBot("Ash", "plain");
     const other = await createBot("Elm", "plain");

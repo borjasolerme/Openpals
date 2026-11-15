@@ -57,17 +57,18 @@ async function boot(home: string, knobs: Record<string, string> = {}) {
   return { get, control, stop };
 }
 
-it("makes a first run's starter bot on the engine a new bot gets", async () => {
+it("starts a first run with no bots, and a new bot gets the engine that is there", async () => {
   const server = await boot(freshHome());
-  const { bots } = await server.get("/api/bots?messages=0");
-  expect(bots).toHaveLength(1);
-  expect(bots[0].modelSelection).toMatchObject({ instanceId: "claude", model: expect.stringMatching(/.+/) });
+  expect((await server.get("/api/bots?messages=0")).bots).toEqual([]);
+  const { bot } = await server.control("new-bot", "--name", "Starter");
+  expect(bot.modelSelection).toMatchObject({ instanceId: "claude", model: expect.stringMatching(/.+/) });
 });
 
 it("answers on a later start while an engine CLI is still being probed, and runs turns once it has answered", async () => {
   const home = freshHome();
   const first = await boot(home);
-  const [starter] = (await first.get("/api/bots?messages=0")).bots;
+  const made = (await first.control("new-bot", "--name", "Starter")).bot;
+  const starter = (await first.get("/api/bots?messages=0")).bots.find((bot: { id: string }) => bot.id === made.id);
   const member = (await first.control("new-bot", "--name", "Room member")).bot;
   const room = (await first.control("new-channel", "--name", "Start room", "--members", member.id)).channel;
   await first.stop();
@@ -110,7 +111,8 @@ it.skipIf(process.platform === "win32")("runs a turn on a later start once its o
   writeFileSync(slowRelease, "");
   const home = freshHome({ slow: { driver: "claudeAgent", displayName: "Slow fixture", config: { cli: slowCli } } });
   const first = await boot(home);
-  const [starter] = (await first.get("/api/bots?messages=0")).bots;
+  const made = (await first.control("new-bot", "--name", "Starter")).bot;
+  const starter = (await first.get("/api/bots?messages=0")).bots.find((bot: { id: string }) => bot.id === made.id);
   expect(starter.modelSelection.instanceId).toBe("claude");
   await first.stop();
 
@@ -135,7 +137,8 @@ it.skipIf(process.platform === "win32")("runs a turn on a later start once its o
 it("starts the words a later start restored before a message sent while the engines are read", async () => {
   const home = freshHome();
   const first = await boot(home);
-  const [starter] = (await first.get("/api/bots?messages=0")).bots;
+  const made = (await first.control("new-bot", "--name", "Starter")).bot;
+  const starter = (await first.get("/api/bots?messages=0")).bots.find((bot: { id: string }) => bot.id === made.id);
   await first.stop();
   // Words still queued for the conversation when the last run stopped.
   const db = new DatabaseSync(join(home, "messages.db"));
