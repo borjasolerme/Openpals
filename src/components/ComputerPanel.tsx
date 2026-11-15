@@ -1267,7 +1267,7 @@ export function ComputerPanel({
         </div>
       ) : bot.computer === "cloud" && cloudBackend === "lent" ? (
         <div {...tabPanelProps("computer")} className={cn("flex-1 overflow-y-auto px-5 pb-5", TAB_PANEL_FOCUS)}>
-          <LentComputerScreen bot={bot} />
+          <LentComputerScreen key={bot.id} bot={bot} />
         </div>
       ) : (
       <div {...tabPanelProps("computer")} className={cn("flex-1 overflow-y-auto px-5 pb-5", TAB_PANEL_FOCUS)}>

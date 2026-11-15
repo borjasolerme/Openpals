@@ -79,10 +79,17 @@ export function installLending({
   });
   handle("lending:turn-off", () => sharing.turnOff());
   handle("lending:pause", () => sharing.pause());
-  handle("lending:resume", () => sharing.resume());
+  handle("lending:resume", async () => {
+    const paired = server();
+    if (paired && await dialogs.confirmLending(paired.name)) sharing.resume();
+  });
   handle("lending:rename", (name) => sharing.rename(typeof name === "string" ? name : ""));
   handle("lending:terminal", (on) => dialogs.lendTerminal(on === true, async () => { sharing.setTerminal(on === true); }));
-  handle("lending:screen", (on) => sharing.setScreen(on === true));
+  handle("lending:screen", async (on) => {
+    const paired = server();
+    if (on !== true) sharing.setScreen(false);
+    else if (paired && await dialogs.confirmLending(paired.name)) sharing.setScreen(true);
+  });
   handle("lending:add-folder", async () => {
     const folder = await dialogs.chooseFolder(`Choose a folder your bots may use on this ${device}`);
     const lent = sharing.lentFolders();

@@ -40,14 +40,32 @@ describe("New bot", () => {
     const request = server(() => post.promise);
     const dispatch = mount(request);
     const onCreated = vi.fn();
-    dispatch({ type: "newBot", onCreated });
-    dispatch({ type: "newBot", onCreated });
+    dispatch({ type: "newBot", onCreated, work: { computer: "browser" } });
+    dispatch({ type: "newBot", onCreated, work: { computer: "browser" } });
     await vi.waitFor(() => expect(creates(request)).toBe(1));
-    dispatch({ type: "newBot", onCreated });
+    dispatch({ type: "newBot", onCreated, work: { computer: "browser" } });
     post.resolve(response({ bot }));
     await vi.waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
     await flush();
     expect(creates(request)).toBe(1);
+  });
+
+  it("asks where the bot works before making it: New bot alone makes nothing", async () => {
+    const request = server(async () => response({ bot }));
+    const dispatch = mount(request);
+    dispatch({ type: "newBot" });
+    await flush();
+    expect(creates(request)).toBe(0);
+  });
+
+  it("makes the bot where the person chose, in the same create", async () => {
+    const request = server(async () => response({ bot }));
+    const dispatch = mount(request);
+    const onCreated = vi.fn();
+    dispatch({ type: "newBot", onCreated, work: { computer: "cloud", cloudBackend: "lent", lentComputerId: "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed" } });
+    await vi.waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
+    const patched = request.mock.calls.filter(([path, init]) => String(path).startsWith("/api/bots/") && init?.method === "PATCH").map(([, init]) => JSON.parse(String(init!.body)));
+    expect(patched.some((body) => body.cloudBackend === "lent" && body.lentComputerId === "1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed" && body.computer === "cloud")).toBe(true);
   });
 
   it("lets the next click try again after a failure", async () => {
@@ -59,11 +77,11 @@ describe("New bot", () => {
     const dispatch = mount(request);
     const onError = vi.fn();
     const onCreated = vi.fn();
-    dispatch({ type: "newBot", onError, onCreated });
+    dispatch({ type: "newBot", onError, onCreated, work: { computer: "browser" } });
     await vi.waitFor(() => expect(onError).toHaveBeenCalledWith("Couldn't make a new bot: offline"));
     expect(onCreated).not.toHaveBeenCalled();
     await flush();
-    dispatch({ type: "newBot", onCreated });
+    dispatch({ type: "newBot", onCreated, work: { computer: "browser" } });
     await vi.waitFor(() => expect(onCreated).toHaveBeenCalledOnce());
     expect(creates(request)).toBe(2);
   });

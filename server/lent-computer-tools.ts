@@ -3,7 +3,7 @@
 // Each call reaches the computer as one job, and the computer checks it again against what its owner lends there.
 import { controlRefusal, type ControlState } from "./control-client.ts";
 import { lentScreenResult } from "./lent-screen-guidance.ts";
-import type { SharedComputerOperation } from "./shared-computers.ts";
+import { sharedComputerOperation, type SharedComputerOperation } from "./shared-computers.ts";
 
 export const LENT_COMMAND_TOOL = "run_command";
 export const LENT_FILES_TOOL = "folder_files";
@@ -33,6 +33,7 @@ export interface LentComputerRpcDeps {
   assertActive(): void;
 }
 
+const LISTED = new Map<string, Tool[]>();
 const text = (value: string, isError = false): ToolResult => ({ content: [{ type: "text", text: value }], ...(isError ? { isError: true } : {}) });
 
 function commandTool(name: string): Tool {
@@ -70,6 +71,8 @@ function filesTool(name: string, folders: LentNow["folders"]): Tool {
   };
 }
 
+/** The only arguments a bot passes on: the computer and folder are this turn's own, never the bot's. */
+const FILE_FIELDS = ["path", "content", "encoding", "old_text", "new_text", "expected_sha256"] as const;
 const FILE_ACTIONS = { list: "list_files", read: "read_file", write: "write_file", edit: "edit_file", append: "append_file", delete: "delete_file" } as const;
 
 /** The screen tools the computer lists, as its desktop filtered them, from a computer_tools answer. */
@@ -101,9 +104,11 @@ async function callFiles(deps: LentComputerRpcDeps, now: LentNow, args: Record<s
   const action = FILE_ACTIONS[args.action as keyof typeof FILE_ACTIONS];
   if (!folder || !action) return text(`Give action and one of the lent folders: ${now.folders.map((entry) => entry.name).join(", ")}.`, true);
   if (action !== "list_files" && action !== "read_file") await deps.confirm("files");
-  const { folder: _folder, action: _action, ...rest } = args;
+  const fields = Object.fromEntries(FILE_FIELDS.filter((key) => args[key] !== undefined).map((key) => [key, args[key]]));
+  const operation = sharedComputerOperation.safeParse({ ...fields, computer_id: deps.computerId, action, folder_id: folder.id });
+  if (!operation.success) return text("Give path, content, encoding, old_text, new_text or expected_sha256 as the tool describes.", true);
   deps.assertActive();
-  return asResult(() => deps.request({ computer_id: deps.computerId, action, folder_id: folder.id, ...rest } as SharedComputerOperation));
+  return asResult(() => deps.request(operation.data));
 }
 
 /** Listing asks the computer for its screen tools; calls go through the turn's gate first, as on every computer. */
@@ -115,9 +120,13 @@ export async function lentComputerRpc(
     deps.assertActive();
     const now = deps.lends();
     if (!now) return { tools: [] };
-    const screen = now.computer
-      ? listedScreenTools(lentScreenResult({ action: "computer_tools" }, await deps.request({ computer_id: deps.computerId, action: "computer_tools" }).catch(() => null)))
-      : [];
+    let screen: Tool[] = [];
+    if (now.computer) {
+      const listed = listedScreenTools(lentScreenResult({ action: "computer_tools" }, await deps.request({ computer_id: deps.computerId, action: "computer_tools" }).catch(() => null)));
+      // A busy computer (another bot's command, a Test) answers no listing: the last one it gave stands in.
+      if (listed.length) LISTED.set(deps.computerId, listed);
+      screen = listed.length ? listed : LISTED.get(deps.computerId) ?? [];
+    }
     return { tools: [...screen, ...(now.terminal ? [commandTool(now.name)] : []), ...(now.folders.length ? [filesTool(now.name, now.folders)] : [])] };
   }
   if (request?.method !== "tools/call") throw Object.assign(new Error("unsupported computer method"), { status: 400 });

@@ -136,7 +136,9 @@ export class SharedComputers {
     this.reap();
     // A new id from the same session replaces its entry; no other session can reach, replace or squat this key.
     for (const [stale, entry] of this.computers) {
-      if (entry.owner.session !== owner.session) continue;
+      // The same session's older grant, or this same computer under an older pairing of the same person.
+      const sameComputer = entry.owner.person === owner.person && entry.registration.id === registration.id;
+      if (entry.owner.session !== owner.session && !sameComputer) continue;
       this.computers.delete(stale); entry.wake?.();
       for (const job of entry.jobs.values()) this.finish(entry, job, failure("This computer's access changed. An in-flight action may have completed; inspect before retrying."));
     }

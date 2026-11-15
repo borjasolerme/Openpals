@@ -62,7 +62,11 @@ export class LentComputers {
    * name: lending again from the same computer updates its one record. A person's newest computers are kept. */
   connected(person: string, input: { id: string; name: string; platform?: LentPlatform; folders: number; terminal: boolean; screen: boolean; internet?: boolean; chrome?: boolean }): void {
     const at = this.now();
-    const same = (computer: LentComputer) => computer.person === person && (computer.id === input.id || computer.name === input.name);
+    // A new grant from a computer lent before under another id keeps its history; two computers that share a name and
+    // are both lent stay two.
+    const byId = this.computers.some((computer) => computer.person === person && computer.id === input.id);
+    const same = (computer: LentComputer) => computer.person === person &&
+      (computer.id === input.id || (!byId && computer.name === input.name && computer.stoppedAt !== null));
     const previous = this.computers.find(same);
     const next: LentComputer = { id: input.id, person, name: input.name, platform: input.platform ?? previous?.platform ?? null, folders: input.folders,
       terminal: input.terminal, screen: input.screen, internet: input.internet === true, chrome: input.chrome === true, lastSeenAt: at, lastUsedAt: previous?.lastUsedAt ?? null, stoppedAt: null,

@@ -86,7 +86,7 @@ export const TeamLibraryPanel = lazyScreen("TeamLibraryPanel", async () => (awai
 // Most opened first: a server's page fetches these in this order.
 const SCREENS = [
   SettingsModal, BotSettingsDialog, PluginsPanel, ComputerPanel, TriggersPage, ActivityPanel, InspectorPanel, KeyboardShortcutsModal,
-  LocalVmWorkspace, NewBotDialog, RoomPanel,
+  LocalVmWorkspace, NewBotDialog, NewBotWorkStep, RoomPanel,
 ];
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);

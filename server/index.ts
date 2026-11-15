@@ -9055,6 +9055,7 @@ async function runClaimedGroupMemberTurn(
   let setupStallReason: string | undefined;
   let unregisterSetupStall = () => {};
   let roomComputerKind: "local" | "vps" | "box" | null = null;
+  let roomLent: LentMount | null = null;
   let roomVpsBotId: string | null = null;
   let roomScreenBotId: string | null = null;
   const releaseRoomVmLease = () => {
@@ -9357,7 +9358,7 @@ async function runClaimedGroupMemberTurn(
         const lent = readyBot.lentComputerId ? workComputers.mount(readyBot.lentComputerId) : null;
         if (!lent?.online) throw new Error(lent?.away ?? "this bot's work computer is no longer lent to this server");
         integrations.localComputer = mountLentComputer(readyBot.id, resourceOwner, lent, failRoomClaim);
-        roomComputerKind = "box";
+        roomLent = lent;
       } else if (turnProvider(readyBot) === "vps") {
         vpsThreadStarted(readyBot.id, threadId);
         roomVpsBotId = readyBot.id;
@@ -9415,7 +9416,7 @@ async function runClaimedGroupMemberTurn(
   } catch (error) {
     const place = roomPlan.computer;
     if (place !== "cloud" && place !== "vm" && place !== "local") throw error;
-    throw await asPlaceFailure(error, place, "room", readyBot, turnProvider(readyBot) === "vps" ? "vps" : "box");
+    throw await asPlaceFailure(error, place, "room", readyBot, turnProvider(readyBot) === "vps" || readyBot.cloudBackend === "lent" ? "vps" : "box");
   }
 
   const roomMembers = readyGroup.memberIds
@@ -9481,7 +9482,7 @@ async function runClaimedGroupMemberTurn(
   }
   const roomMemory = memorySystemPrompt(bot.id, { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false });
   const recentLines = recentWork(recentWorkSources(bot), bot, { userName: typeof userName === "string" ? userName : "the team", currentThreadId: threadId });
-  recordTurnPlace(bot.id, threadId, (roomVmTarget ? "vm" : surfaceOfComputerKind(roomComputerKind)) ?? (integrations.browser ? "browser" : null));
+  recordTurnPlace(bot.id, threadId, (roomVmTarget ? "vm" : roomLent ? "cloud" : surfaceOfComputerKind(roomComputerKind)) ?? (integrations.browser ? "browser" : null));
   const roomComputerPromptKind = resolveComputerPromptKind({
     kind: roomComputerKind === "box" ? "box" : roomVmTarget ? "vm" : roomComputerKind,
     vmPrivate: localVmMode(cfg) === "per-bot",
@@ -9505,8 +9506,8 @@ async function runClaimedGroupMemberTurn(
     { id: "files", label: "File locations", text: workspace ? workspaceLocationsPrompt(bot.id, cwd, readyBot.cwd, { attachFile: Boolean(integrations.agents) && !HOSTED_WORKSPACE }) : "" },
     { id: "shell", label: "Long-running commands", text: workspace ? longCommandsPrompt(roomComputerPromptKind) : "" },
     { id: "mcp", label: "MCP servers", text: customMcpPrompt(Object.keys(integrations.custom ?? {}), mcpServersHost.off(bot)) },
-    { id: "computer", label: "Computer", text: computerPrompt(roomComputerPromptKind) },
-    { id: "plan", label: "Surface", text: surfacePrompt({ computer: roomVmTarget ? "vm" : surfaceOfComputerKind(roomComputerKind), browser: Boolean(integrations.browser) }, { note: roomPlan.note }) },
+    { id: "computer", label: "Computer", text: roomLent ? workComputers.prompt(roomLent) + SIGN_IN_PROMPT : computerPrompt(roomComputerPromptKind) },
+    { id: "plan", label: "Surface", text: surfacePrompt({ computer: roomVmTarget ? "vm" : roomLent ? "cloud" : surfaceOfComputerKind(roomComputerKind), browser: Boolean(integrations.browser) }, { note: roomPlan.note }) },
     { id: "browser", label: "Browser", text: integrations.browser ? browserPromptFor(bot, Boolean(integrations.agents)) : "" },
     { id: "data", label: "Data", text: integrations.data ? BUILT_IN_DATA_SYSTEM_PROMPT : "" },
     { id: "highlevel", label: "HighLevel", text: integrations.highlevel ? highlevelHost.prompt(readyBot) : "" },

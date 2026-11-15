@@ -174,6 +174,7 @@ export function createComputerSharing({
   let busy = null;
   let screenNow = null;
   let closed = false;
+  let lastOrigin = server()?.origin ?? null;
 
   const store = next => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -390,7 +391,8 @@ export function createComputerSharing({
       store({
         version: 2, id: same ? record.id : randomUUID(), secret: same ? record.secret : randomBytes(32).toString("hex"), origin: paired.origin,
         enabled: true, paused: false, name: cleanName(name) || (same ? record.name : ""), folders: same ? record.folders : [],
-        terminal: same ? record.terminal : false, screen: same ? record.screen : true,
+        // Turning lending on lends what its dialog says: apps and screen, with commands off until turned on again.
+        terminal: false, screen: same ? record.screen : true,
       });
       startLoop();
       return view();
@@ -398,18 +400,20 @@ export function createComputerSharing({
     /** Stops lending at once; the server keeps the computer as no longer lent. */
     async turnOff() {
       if (!record?.enabled) return view();
-      await sayGoodbye(false);
+      const goodbye = sayGoodbye(false);
       store({ ...record, enabled: false, paused: false });
       stopLoop();
       setStatus({ state: "off" });
+      await goodbye;
       return view();
     },
     async pause() {
       if (!record?.enabled || record.paused) return view();
-      stopLoop();
-      await sayGoodbye(true);
+      const goodbye = sayGoodbye(true);
       store({ ...record, paused: true });
+      stopLoop();
       setStatus({ state: "paused" });
+      await goodbye;
       return view();
     },
     resume() {
@@ -426,6 +430,9 @@ export function createComputerSharing({
     activity: limit => activity.list(limit),
     /** The paired server changed: lending follows only the server it was turned on for. */
     serverChanged() {
+      const origin = server()?.origin ?? null;
+      if (origin === lastOrigin) return changed();
+      lastOrigin = origin;
       if (record?.enabled && !record.paused) startLoop();
       else changed();
     },

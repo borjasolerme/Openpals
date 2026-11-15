@@ -707,24 +707,24 @@ export function AccessSection({
         <WorkComputerPicker
           value={workChoiceOf(bot)}
           onChange={(choice) => patch(choice.kind === "server" ? { ...workPatch(choice), browser: true } : workPatch(choice))}
-          more={<>
-            {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
-              <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
-              <ProposalStatus bot={bot} kind="owner" />
-              <button
-                type="button"
-                onClick={() => {
-                  dispatch({ type: "toggleSettings", open: false });
-                  dispatch({ type: "toggleComputer", open: true });
-                }}
-                className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
-              >
-                {t("place.action.openComputerPanel")}
-              </button>
-            </>}
-            <CloudPreference bot={bot} patch={patch} />
-          </>}
         />
+        <div className="mt-4 border-t border-hairline/40 pt-4">
+          {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
+            <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
+            <ProposalStatus bot={bot} kind="owner" />
+            <button
+              type="button"
+              onClick={() => {
+                dispatch({ type: "toggleSettings", open: false });
+                dispatch({ type: "toggleComputer", open: true });
+              }}
+              className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
+            >
+              {t("place.action.openComputerPanel")}
+            </button>
+          </>}
+          <CloudPreference bot={bot} patch={patch} />
+        </div>
       </div>}
 
       {shows("folder") && <WorkingFolder bot={bot} />}

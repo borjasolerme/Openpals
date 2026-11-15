@@ -176,11 +176,11 @@ describe("Settings in Simple mode", () => {
     expect(html).not.toContain("API keys and connections");
   });
 
-  it("orders Computer as where your bots live, their computers, your devices, the browser, logins, then Connect from elsewhere", () => {
+  it("orders Computer as where your bots live, lending this computer, their computers, your devices, the browser, logins, then Connect from elsewhere", () => {
     fixture.section = "companion";
     const html = render();
     expect(currentPage(html)).toBe("computer");
-    expect(blocks(html)).toEqual(["place", "computer", "companion", "browser", "logins", "elsewhere", "remote"]);
+    expect(blocks(html)).toEqual(["place", "lend", "computer", "companion", "browser", "logins", "elsewhere", "remote"]);
     expect(groupLabels(html)).toEqual(["Your bots’ computers", "Your devices", "Built-in browser"].map((label) => label.replace("’", "&#x27;")));
     expect(html).toContain('aria-label="Enable the built-in browser"');
   });

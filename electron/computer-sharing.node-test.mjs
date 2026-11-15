@@ -117,3 +117,13 @@ test("turning on needs a paired server; a record from another version is ignored
   assert.equal(parseLendingRecord({ version: 1, records: {} }), null);
   assert.equal(parseLendingRecord({ version: 2, id: "not-a-uuid", secret: "a".repeat(64), origin: "https://x" }), null);
 });
+
+test("turning lending on again lends what its dialog says: commands stay off until turned on again", async t => {
+  const { make } = await setup(t);
+  const sharing = make();
+  t.after(() => sharing.close());
+  sharing.turnOn();
+  sharing.setTerminal(true);
+  await sharing.turnOff();
+  assert.equal(sharing.turnOn().terminal, false);
+});

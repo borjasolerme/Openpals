@@ -1,14 +1,15 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, useId, useState, type FormEvent, type ReactNode } from "react";
 import { Check, ChevronDown, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { openExternalLink } from "@/lib/app-links";
 import { cn } from "@/lib/cn";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
 import { connectServer, isServerPairingLink } from "@/lib/place";
-import { MacHomeGuide } from "./onboarding/MacHomeGuide";
 import { INSTALL_COMMAND, serverSetupAvailable, useServerSetup, type ServerSetupProgress, type ServerSetupRequest } from "@/lib/server-setup";
 
 const BOAT_SIGN_UP = "https://boat.dev";
+// Its Tailscale steps bring in the phone pairing flow, which the launch bundle leaves out.
+const MacHomeGuide = lazy(async () => ({ default: (await import("./onboarding/MacHomeGuide")).MacHomeGuide }));
 const FIELD = "h-9 w-full min-w-0 rounded-lg border border-hairline/60 bg-inset px-3 text-base text-ink placeholder:text-ink-tertiary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus/60 disabled:opacity-60";
 const TEXT_INPUT = { autoCapitalize: "none", autoCorrect: "off", autoComplete: "off", spellCheck: false } as const;
 const OPTION = "flex flex-col gap-2.5 rounded-lg bg-fill-subtle p-3";
@@ -155,7 +156,7 @@ function MacHomeOption() {
         </span>
         <ChevronDown size={16} aria-hidden="true" className={cn("mt-0.5 shrink-0 text-ink-secondary transition-transform duration-base", open && "rotate-180")} />
       </button>
-      {open && <div id={id}><MacHomeGuide /></div>}
+      {open && <div id={id}><Suspense fallback={<Loader2 size={16} className="animate-spin text-ink-secondary" />}><MacHomeGuide /></Suspense></div>}
     </div>
   );
 }

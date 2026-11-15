@@ -15,7 +15,7 @@ const lend = (extra: Record<string, unknown> = {}) => ({ id: randomUUID(), name:
   folders: [{ id: randomUUID(), name: "Plans", write: false }], terminal: false, computer: true, ...extra });
 
 describe("what a server remembers about computers lent to it", () => {
-  it("knows a computer by name across new grants, keeps when it was last online and used, and survives a restart", () => {
+  it("knows a computer lent again under a new id by its name once its old grant stopped, keeps when it was last online and used, and survives a restart", () => {
     let now = Date.UTC(2026, 9, 7, 14, 2);
     const path = file();
     const lent = new LentComputers(path, () => now);
@@ -27,6 +27,7 @@ describe("what a server remembers about computers lent to it", () => {
     expect(JSON.parse(readFileSync(path, "utf8")).computers[0].lastSeenAt).toBe(Date.UTC(2026, 9, 7, 14, 2));
     now += 60_000;
     lent.used("owner", first);
+    lent.stopped("owner", first);
     const again = randomUUID();
     now += 60_000;
     lent.connected("owner", { id: again, name: "ASH-PC", folders: 0, terminal: false, screen: true });
@@ -37,6 +38,10 @@ describe("what a server remembers about computers lent to it", () => {
     expect(reread.list(null)).toEqual([]);
     reread.stopped("owner", again);
     expect(new LentComputers(path).list("owner")[0]!.stoppedAt).toBe(now);
+    const twin = new LentComputers(file(), () => now);
+    twin.connected("owner", { id: randomUUID(), name: "MacBook Pro", folders: 0, terminal: false, screen: true });
+    twin.connected("owner", { id: randomUUID(), name: "MacBook Pro", folders: 0, terminal: false, screen: true });
+    expect(twin.list("owner")).toHaveLength(2);
     expect(readFileSync(path, "utf8")).not.toMatch(/Plans|secret/u);
   });
 
