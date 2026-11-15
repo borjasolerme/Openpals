@@ -18,6 +18,7 @@ import { EnginesSettings } from "./EnginesSettings";
 import { LocalComputerSection } from "./LocalComputerSection";
 import { CompanionSection } from "./CompanionSection";
 import { ServerPairingCard } from "./ServerPairingCard";
+import { LendThisComputerCard } from "./work-computer/LendThisComputerCard";
 import { PeopleSection } from "./PeopleSection";
 import { ActivitySection } from "./ActivitySection";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
@@ -291,6 +292,7 @@ export function SettingsModal() {
   const computerPairs = currentPhonePairingTarget() === "computer";
   const remoteAccess = {
     client: <BotsPlaceSection />,
+    lend: <LendThisComputerCard />,
     domain: <CustomDomainSettings />,
     // Security: the server decides who may pair (an owner or admin session), not this gate.
     pairing: <ServerPairingCard focusRequest={computerPairs ? 0 : phoneFocus} simple={!advanced} />,
@@ -364,7 +366,7 @@ export function SettingsModal() {
       case "backups": return <AdminOnly><WorkspaceBackupSettings /></AdminOnly>;
       case "import": return <AdminOnly><ImportSettings /></AdminOnly>;
       case "companion":
-        return <>{remoteAccess.client}{remoteAccess.domain}{remoteAccess.pairing}{remoteAccess.companion}</>;
+        return <>{remoteAccess.client}{remoteAccess.lend}{remoteAccess.domain}{remoteAccess.pairing}{remoteAccess.companion}</>;
       case "computer":
         return <><BuiltInBrowserRow /><ServerSitesRow /><BrowserProfilesRow /><AdminOnly><LocalComputerSection /></AdminOnly></>;
       case "logins":

@@ -113,12 +113,13 @@ export function SimpleAiPage({ has, disclose, connections }: { has: Has; disclos
   );
 }
 
-export type RemoteAccessCards = Record<"client" | "domain" | "pairing" | "companion", ReactNode>;
+export type RemoteAccessCards = Record<"client" | "lend" | "domain" | "pairing" | "companion", ReactNode>;
 
 export function SimpleComputerPage({ has, remoteAccess, disclose }: { has: Has; remoteAccess: RemoteAccessCards; disclose: Disclose }) {
   return (
     <>
       {has("companion") && <div data-settings-block="place" className="scroll-mt-4 empty:hidden">{remoteAccess.client}</div>}
+      {has("companion") && <div data-settings-block="lend" className="scroll-mt-4 empty:hidden">{remoteAccess.lend}</div>}
       {has("computer") && <SettingsGroup label={t("settings.simple.computer.bots")} block="computer"><AdminOnly><LocalComputerSection /></AdminOnly></SettingsGroup>}
       {has("companion") && (
         <SettingsGroup label={t("settings.simple.computer.devices")} block="companion">

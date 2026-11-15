@@ -16,7 +16,7 @@ import { SIDEBAR_AND_PANEL_FIT, TWO_SIDE_PANELS_FIT, useMediaQuery } from "@/lib
 import { preloadConnectedApps } from "@/lib/connected-apps";
 import {
   ActivityPanel, BotSettingsDialog, ComputerPanel, InspectorPanel, KeyboardShortcutsModal, LocalVmWorkspace,
-  PluginsPanel, preloadScreens, RoomPanel, SettingsModal, TriggersPage,
+  NewBotWorkStep, PluginsPanel, preloadScreens, RoomPanel, SettingsModal, TriggersPage,
 } from "@/components/lazy-screens";
 import { useAdvancedMode } from "@/lib/interface-mode";
 import { useRoomPanelShown } from "@/lib/room-panel";
@@ -313,6 +313,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       </div>
       </div>
       {state.appSettingsOpen && <SettingsModal />}
+      {state.newBotStep && <NewBotWorkStep />}
       {state.pluginsOpen && <PluginsPanel />}
       {state.shortcutsOpen && (
         <KeyboardShortcutsModal

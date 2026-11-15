@@ -40,7 +40,7 @@ const ALLOWED: Record<string, Partial<Record<Kind, number>> & { why: string }> =
   "lib/brand.ts": { "raw colour": 2, why: MATH },
   "components/CallView.tsx": { "raw colour": 1, why: MATH },
   "components/data/SqlEditor.tsx": { "raw colour": 6, why: "CodeMirror's syntax palette, one tone per light and dark scheme" },
-  "components/ServerPairingCard.tsx": { "raw colour": 2, why: QR },
+  "components/PairingQr.tsx": { "raw colour": 2, why: QR },
   "components/PhoneSetupFlow.tsx": { "raw colour": 2, why: QR },
   "components/app/app-host-context.ts": { "raw colour": 3, why: "the MCP Apps host theme variables an embedded app reads, fixed by that spec" },
 };

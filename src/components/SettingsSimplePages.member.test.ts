@@ -18,7 +18,7 @@ const { SimpleAiPage, SimpleBillingPage, SimpleComputerPage } = await import("./
 
 const has = () => true;
 const disclose: Disclose = (id) => ({ id, open: true, onToggle: () => {} });
-const remoteAccess = { client: null, domain: null, pairing: null, companion: null };
+const remoteAccess = { client: null, lend: null, domain: null, pairing: null, companion: null };
 const pages = () => [
   renderToStaticMarkup(createElement(SimpleAiPage, { has, disclose, connections: "KEYS" })),
   renderToStaticMarkup(createElement(SimpleComputerPage, { has, disclose, remoteAccess })),

@@ -15,6 +15,8 @@ import { isOwnThreadFolder } from "../../../shared/thread-folder";
 import { useDesktopCapabilities } from "../DesktopCapabilities";
 import { CloudBackendPicker } from "../CloudBackendPicker";
 import { WORKS_ON_CHOICES, WorksOnGrid, type WorksOnMode } from "../WorksOnGrid";
+import { WorkComputerPicker } from "../work-computer/WorkComputerPicker";
+import { workChoiceOf, workPatch } from "@/lib/work-computers";
 import { Switch } from "../SettingsPrimitives";
 import { PhoneAppsCard } from "./PhoneAppsCard";
 import { ProposalStatus } from "./ProposalStatus";
@@ -522,8 +524,8 @@ function RecordStepsRow({ on, browserOn, myChrome, onChange }: { on: boolean; br
   );
 }
 
-export function cloudPreferenceShown(bot: Pick<Bot, "computer">): boolean {
-  return !bot.computer || bot.computer === "cloud";
+export function cloudPreferenceShown(bot: Pick<Bot, "computer" | "cloudBackend">): boolean {
+  return (!bot.computer || bot.computer === "cloud") && bot.cloudBackend !== "lent";
 }
 
 /**
@@ -701,21 +703,28 @@ export function AccessSection({
   return (
     <div className="flex flex-col gap-4">
       {shows("worksOn") && <div className="rounded-xl bg-card p-4" data-testid="access-works-on">
-        {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
-          <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
-          <ProposalStatus bot={bot} kind="owner" />
-          <button
-            type="button"
-            onClick={() => {
-              dispatch({ type: "toggleSettings", open: false });
-              dispatch({ type: "toggleComputer", open: true });
-            }}
-            className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
-          >
-            {t("place.action.openComputerPanel")}
-          </button>
-        </>}
-        <CloudPreference bot={bot} patch={patch} />
+        <div className="mb-3 text-lg font-medium text-ink">{t("workComputer.settingsTitle", { name: bot.name || t("sidebar.newBotSimple") })}</div>
+        <WorkComputerPicker
+          value={workChoiceOf(bot)}
+          onChange={(choice) => patch(choice.kind === "server" ? { ...workPatch(choice), browser: true } : workPatch(choice))}
+          more={<>
+            {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
+              <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>
+              <ProposalStatus bot={bot} kind="owner" />
+              <button
+                type="button"
+                onClick={() => {
+                  dispatch({ type: "toggleSettings", open: false });
+                  dispatch({ type: "toggleComputer", open: true });
+                }}
+                className="mt-3 rounded-lg bg-control px-3 py-1.5 text-base text-ink hover:bg-raised-hover"
+              >
+                {t("place.action.openComputerPanel")}
+              </button>
+            </>}
+            <CloudPreference bot={bot} patch={patch} />
+          </>}
+        />
       </div>}
 
       {shows("folder") && <WorkingFolder bot={bot} />}

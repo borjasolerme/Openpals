@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
 
 import { t } from "@/lib/i18n";
 import { copyText, type CopyFeedback } from "@/lib/copy-text";
@@ -13,6 +12,7 @@ import { Card } from "./ui/Card";
 import { Select } from "./Select";
 import { cn } from "@/lib/cn";
 import { ComputerNameRow } from "./ComputerNameRow";
+import { PairingQr } from "./PairingQr";
 
 export interface PairingOffer {
   id: string;
@@ -145,9 +145,7 @@ export function ServerPairingCard({ initialSession = null, initialPairingCodes =
           ) : (
             <div className="flex flex-wrap items-start gap-5">
               {offer.url ? (
-                <div className="rounded-md bg-white p-2">
-                  <QRCodeSVG value={offer.url} size={160} level="M" bgColor="#ffffff" fgColor="#111111" />
-                </div>
+                <PairingQr value={offer.url} />
               ) : null}
               <div className="min-w-50 flex-1">
                 <div className="font-mono text-2xl tracking-widest text-ink">{offer.code}</div>

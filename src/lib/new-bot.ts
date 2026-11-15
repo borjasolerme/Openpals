@@ -30,10 +30,11 @@ export function announceNewBot(dispatch: (action: Action) => void, bot: Bot, war
 }
 
 /** Auto on this computer needs the person's own OK, so a bot whose defaults ask for it starts on Ask. */
-async function createNewBot(bots: readonly Bot[], request: typeof api) {
+async function createNewBot(bots: readonly Bot[], request: typeof api, work?: Extract<Action, { type: "newBot" }>["work"]) {
   const template = startingTemplate(await request<BotDefaultsAnswer>("/api/bot-defaults"), true);
   template.profile.name = freeName(template.profile.name!, bots);
   const draft = new BotCreationDraft(template, () => {}, request);
+  if (work) draft.patch(work);
   const startsOnAsk = draft.bot.approvalMode === "auto" && draft.bot.computer === "local";
   if (startsOnAsk) draft.patch({ approvalMode: "ask" });
   try {
@@ -48,7 +49,7 @@ export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bo
   request: typeof api = api): Promise<void> {
   let made: Awaited<ReturnType<typeof createNewBot>>;
   try {
-    made = await createNewBot(bots, request);
+    made = await createNewBot(bots, request, action.work);
   } catch (cause) {
     const message = t("newBot.failed", { error: cause instanceof Error ? cause.message : String(cause) });
     if (action.onError) action.onError(message);

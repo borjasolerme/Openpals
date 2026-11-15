@@ -559,6 +559,8 @@ export interface AppState {
   pluginsOpen: boolean;
   pluginsSurface: "apps" | "mcp";
   botCreationPending: boolean;
+  /** New bot asked "Where does this bot work?": the request waiting on that answer. */
+  newBotStep: Extract<Action, { type: "newBot" }> | null;
   computerOpen: boolean;
   inspectorOpen: boolean;
   activityOpen: boolean;
@@ -723,7 +725,10 @@ export type Action =
   | { type: "switchTask"; botId: string; threadId: string; whole?: true }
   | { type: "switchTaskFailed"; botId: string; threadId: string }
   | { type: "taskSwitched"; bot: Bot }
-  | { type: "newBot"; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void }
+  | { type: "newBot"; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void;
+    /** Where it works, answered in the new-bot step; without it the step asks first. */
+    work?: Pick<BotUpdatePatch, "computer" | "cloudBackend" | "lentComputerId"> }
+  | { type: "newBotStep"; action: Extract<Action, { type: "newBot" }> | null }
   | { type: "botCreationPending"; on: boolean }
   | { type: "updateTask"; botId: string; threadId: string; patch: TaskUpdatePatch }
   | { type: "botAdded"; bot: Bot; preserveSelection?: boolean }
@@ -1397,6 +1402,8 @@ export function reducer(state: AppState, action: Action): AppState {
     }
     case "botCreationPending":
       return { ...state, botCreationPending: action.on };
+    case "newBotStep":
+      return { ...state, newBotStep: action.action };
     case "notice":
       return { ...state, notice: action.notice };
     case "revealThread":
@@ -1808,6 +1815,7 @@ export const initialState: AppState = {
   pluginsOpen: false,
   pluginsSurface: "apps",
   botCreationPending: false,
+  newBotStep: null,
   computerOpen: false,
   inspectorOpen: false,
   activityOpen: false,
@@ -2526,6 +2534,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           break;
         }
         case "newBot": {
+          if (!action.work) { rawDispatch({ type: "newBotStep", action }); break; }
           // A double click lands before React paints the pending state.
           if (creatingBot || stateRef.current.botCreationPending) break;
           creatingBot = true;

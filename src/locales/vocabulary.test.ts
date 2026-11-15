@@ -46,6 +46,7 @@ const EN_ALLOWED: Record<string, string> = {
   "botAccess.cloud.vpsAutoDescription": "the own-key provider picker's VPS line names its Cloud choice",
   "homeLine.clean": "MausBot Cloud copy, left as it is until the Cloud is removed from Openpals",
   "serverSetup.boat.title": "the always-on server setup names Boat, where the person signs up for the server",
+  "workComputer.boat.title": "where a bot works: the card for a cloud computer from the person's own Boat account, beside their Mac and the server",
   "serverSetup.error.boatRefused": "the always-on server setup names Boat, where the person signs up for the server",
   "serverSetup.error.network": "the always-on server setup names Boat, where the person signs up for the server",
 };
