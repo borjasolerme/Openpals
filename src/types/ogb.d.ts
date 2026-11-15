@@ -104,6 +104,8 @@ const __APP_VERSION__: string;
         disconnect(): Promise<void>;
         onChanged(callback: (place: { kind: "local" } | { kind: "server"; url: string; label: string }) => void): () => void;
       };
+      /** "Let my bots use this computer": lending this computer to the paired server. */
+      lending?: import("../lib/lending").LendingBridge;
       /** This computer's page only: sets up an always-on server and switches this app to it. */
       serverSetup?: import("../../electron/server-setup.mjs").ServerSetupBridge;
       desktopNotices?: import("../../electron/desktop-prefs.mjs").DesktopNoticesBridge;

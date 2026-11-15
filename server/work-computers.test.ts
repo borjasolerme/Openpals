@@ -1,7 +1,6 @@
 // The lending protocol end to end, in one process: this server's routes and registry, the desktop's own lending client
 // (electron/computer-sharing.mjs) polling them over HTTP, and a stand-in for cua-driver on the lent computer. A bot turn
 // reaches that computer only through the rpc a turn's capability names.
-import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -14,7 +13,6 @@ import { json, readBody } from "./harness/http.ts";
 import { createWorkComputers } from "./host/work-computers.ts";
 import { LENT_COMMAND_TOOL } from "./lent-computer-tools.ts";
 import type { RequestAuth } from "./request-auth.ts";
-import { WORK_COMPUTER_OWNER } from "./routes/shared-computers.ts";
 import { PASS } from "./routes/table.ts";
 import { TurnResources } from "./turn-resources.ts";
 
@@ -115,7 +113,7 @@ describe("a Mac lent to this server, end to end", () => {
     const computer = await online();
     const listed = await work.rpc({ method: "tools/list" }, turn(computer.id)) as { tools: Array<{ name: string }> };
     expect(listed.tools.some((tool) => tool.name === LENT_COMMAND_TOOL)).toBe(false);
-    const refused = await work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo hi" } } }, turn(computer.id)) as { isError?: boolean; content: Array<{ text: string }> };
+    const refused = await work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo hi" } } }, turn(computer.id)) as unknown as { isError?: boolean; content: Array<{ text: string }> };
     expect(refused.isError).toBe(true);
     expect(refused.content[0]!.text).toMatch(/does not lend its terminal/);
 
@@ -124,10 +122,10 @@ describe("a Mac lent to this server, end to end", () => {
     for (let i = 0; i < 300 && !lent.work.list().find((one) => one.id === withTerminal.id)?.scopes.terminal; i++) await new Promise((resolve) => setTimeout(resolve, 10));
     let asked = 0;
     const declined = await lent.work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo hi" } } },
-      lent.turn(withTerminal.id, async () => { asked++; throw new Error("the person said no"); })) as { isError?: boolean; content: Array<{ text: string }> };
+      lent.turn(withTerminal.id, async () => { asked++; throw new Error("the person said no"); })) as unknown as { isError?: boolean; content: Array<{ text: string }> };
     expect(asked).toBe(1);
     expect(declined).toMatchObject({ isError: true, content: [{ text: "the person said no" }] });
-    const ran = await lent.work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo lent-ok" } } }, lent.turn(withTerminal.id)) as { content: Array<{ text: string }> };
+    const ran = await lent.work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo lent-ok" } } }, lent.turn(withTerminal.id)) as unknown as { content: Array<{ text: string }> };
     expect(JSON.parse(ran.content[0]!.text)).toMatchObject({ exitCode: 0, output: "lent-ok\n" });
   });
 
@@ -137,7 +135,7 @@ describe("a Mac lent to this server, end to end", () => {
     await desktop.pause();
     expect(work.list()).toEqual([expect.objectContaining({ id: computer.id, online: false, paused: true, lent: true })]);
     expect(work.mount(computer.id)).toMatchObject({ online: false });
-    const answer = await work.rpc({ method: "tools/call", params: { name: "list_apps", arguments: {} } }, turn(computer.id)) as { isError?: boolean; content: Array<{ text: string }> };
+    const answer = await work.rpc({ method: "tools/call", params: { name: "list_apps", arguments: {} } }, turn(computer.id)) as unknown as { isError?: boolean; content: Array<{ text: string }> };
     expect(answer.isError).toBe(true);
     expect(answer.content[0]!.text).toMatch(/Mac mini is paused/);
     expect(await work.rpc({ method: "tools/list" }, turn(computer.id))).toEqual({ tools: [] });

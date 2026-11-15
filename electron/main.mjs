@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildErrorPage, desktopViewerErrorPage } from "./error-pages.mjs";
-import { startCua, stopCua, registerCuaIpc, setCuaStateListener, grantLocalComputer } from "./cua.mjs";
+import { startCua, stopCua, registerCuaIpc, setCuaStateListener, grantLocalComputer, requestComputerUse } from "./cua.mjs";
 import { createAndroidDeviceController } from "./android-device.mjs";
 import { finishSpeech, speechBusy, startSpeech, stopSpeech } from "./speech.mjs";
 import { installTalk, isTalkPanel } from "./talk-main.mjs";
@@ -33,6 +33,8 @@ import { windowBackground, windowChromeOptions } from "./window-chrome.mjs";
 import { createAllWindowsClosedQuit } from "./window-all-closed.mjs";
 import { createStartupScreen } from "./startup-screen.mjs";
 import { createSystemTray } from "./system-tray.mjs";
+import { installLending } from "./lending-main.mjs";
+import { createHostScreenLease } from "./host-screen-lease.mjs";
 let startupScreen = null;
 let desktopTray = null;
 import { collisionFreeDownloadPath, defaultSaveName, openHtmlCopy, openLogsFolder, revealDownloadWhenDone, revealInFolder, withSavableFile } from "./save-file.mjs";
@@ -845,6 +847,8 @@ ipcMain.on("desktop:unread-count", (event, value) => {
 
 const { LOCAL_PLACE, activeServer, guardedOrigins, parseHostedWorkspaceLink, placeView, withMicrophone, withServer, workspaceNavigationAllowed, workspaceSenderAllowed, workspaceWindowTitle } = environmentsModule;
 let placeState = LOCAL_PLACE;
+/** Lending this computer to the paired server; made once the app is ready. */
+let lending = null;
 const placeFile = createPlaceFile({ file: () => path.join(app.getPath("userData"), "environments.json"), fs, path, log: slog });
 
 const loginItem = createOpenAtLogin({ app, home: os.homedir() });
@@ -878,6 +882,7 @@ function savePlace(next) {
   placeFile.write(next);
   placeState = next;
   refreshApplicationMenu();
+  lending?.serverChanged();
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(workspaceWindowTitle(placeState));
     mainWindow.webContents.send("place:changed", placeView(placeState));
@@ -1667,6 +1672,7 @@ async function broadcastDesktopCapabilities() {
 
 setCuaStateListener((connection) => {
   cuaReady = Promise.resolve(connection);
+  lending?.screenChanged();
   void broadcastDesktopCapabilities().catch((error) => {
     console.error("[desktop] capability broadcast failed:", error);
   });
@@ -1794,6 +1800,23 @@ app.whenReady().then(async () => {
     );
   }
   registerCuaIpc();
+  lending = installLending({
+    ipcMain, guard: workspaceOnly, dialog, shell, Tray, Menu, nativeImage, BrowserWindow, iconPath: APP_ICON,
+    background: () => windowBackground(nativeTheme.shouldUseDarkColors), locale: () => app.getLocale(),
+    userData: app.getPath("userData"), protectedPaths: [desktopDataDir()],
+    fetch: (...args) => session.defaultSession.fetch(...args), server: () => activeServer(placeState),
+    cuaConnection: () => cuaReady, requestComputerUse,
+    screenLocked: () => powerMonitor.getSystemIdleState(1) === "locked",
+    idleSeconds: () => (powerMonitor.getSystemIdleState(1) === "unknown" ? null : powerMonitor.getSystemIdleTime()),
+    hostControl: createHostScreenLease({
+      url: () => `http://127.0.0.1:${SERVER_PORT}/api/desktop/shared-computer-control`,
+      headers: () => desktopServerHeaders({}, { packaged: app.isPackaged, token: desktopMutationToken }),
+    }),
+    window: () => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null),
+    openSettings: () => { showHome(); mainWindow?.show(); mainWindow?.webContents.send("app:open-settings"); },
+    send: (channel, payload) => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload); },
+    loginItem, log: slog,
+  });
   androidDevice.registerIpc(ipcMain);
   desktopPrefs = createDesktopPrefs(jsonFile(path.join(app.getPath("userData"), "desktop-prefs.json")));
   registerDesktopPrefs({ ipcMain, prefs: desktopPrefs,
@@ -1901,4 +1924,5 @@ function releaseDesktopDataDirLease() {
 // before-quit is too early (this app defers it); will-quit is Electron's last boundary, and the process hook covers app.exit().
 app.on("will-quit", releaseDesktopDataDirLease);
 app.on("will-quit", () => desktopTray?.destroy());
+app.on("will-quit", () => lending?.close());
 process.once("exit", releaseDesktopDataDirLease);

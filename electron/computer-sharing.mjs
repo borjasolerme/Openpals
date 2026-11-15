@@ -421,6 +421,8 @@ export function createComputerSharing({
     setScreen: on => update({ screen: on === true }),
     /** `folders` were checked by validateSharedFolders already. */
     setFolders: folders => update({ folders }),
+    /** The lent folders with their paths, for main alone: a page and the server only ever see their names. */
+    lentFolders: () => (record?.folders ?? []).map(folder => ({ ...folder })),
     activity: limit => activity.list(limit),
     /** The paired server changed: lending follows only the server it was turned on for. */
     serverChanged() {

@@ -30,7 +30,7 @@ ipcRenderer.on("app:open-settings", () => {
 const localOrigin = process.argv.find((arg) => arg.startsWith("--omb-local-origin="))?.slice("--omb-local-origin=".length) ?? null;
 const isLocalPage = !localOrigin || location.origin === localOrigin;
 
-const REMOTE_SAFE = new Set(["platform", "softwareRendering", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "place", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
+const REMOTE_SAFE = new Set(["platform", "softwareRendering", "app", "getCapabilities", "onCapabilitiesChanged", "applySkin", "setUnreadCount", "permStatus", "place", "lending", "desktopNotices", "desktopLanguage", "windowControls", "onOpenAppSettings", "windowFrame"]);
 function savedLanguageChoice() {
   try { const saved = ipcRenderer.sendSync("desktop-language:read"); return typeof saved === "string" ? saved : null; } catch { return null; }
 }
@@ -50,6 +50,12 @@ function invokeWithPlainError(channel, ...args) {
     const message = String(error?.message ?? error);
     throw new Error(message.replace(/^Error invoking remote method '[^']*':\s*(?:Error:\s*)?/, ""));
   });
+}
+
+/** A change to lending is the person's click on this page, never a page acting alone. */
+function clicked(channel, ...args) {
+  return isLocalPage || navigator.userActivation?.isActive === true
+    ? invokeWithPlainError(channel, ...args) : Promise.reject(new Error("Choose the button to change this."));
 }
 
 const bridge = {
@@ -77,6 +83,36 @@ const bridge = {
       const handler = (_event, place) => cb(place);
       ipcRenderer.on("place:changed", handler);
       return () => ipcRenderer.removeListener("place:changed", handler);
+    },
+  },
+  /**
+   * "Let my bots use this computer": lends this computer to the server this app is paired with, so its bots can work on
+   * its screen, the folders chosen here and, when turned on, its terminal. Safe on that server's page: every change is
+   * the person's click, and turning lending, folders or the terminal on is confirmed in main's own dialog. Each call
+   * resolves the new state: `{ on, paused, name, defaultName, server, state, problem?, busy, terminal, lendsScreen,
+   * folders: [{ id, name, write }], available, serverName, device, platform, screen, openAtLogin }`.
+   */
+  lending: {
+    state: () => ipcRenderer.invoke("lending:state"),
+    turnOn: (name) => clicked("lending:turn-on", typeof name === "string" ? name : undefined),
+    turnOff: () => clicked("lending:turn-off"),
+    pause: () => clicked("lending:pause"),
+    resume: () => clicked("lending:resume"),
+    rename: (name) => clicked("lending:rename", String(name ?? "")),
+    setTerminal: (on) => clicked("lending:terminal", on === true),
+    setScreen: (on) => clicked("lending:screen", on === true),
+    addFolder: () => clicked("lending:add-folder"),
+    removeFolder: (id) => clicked("lending:remove-folder", String(id ?? "")),
+    /** Starts screen control again, which asks macOS for Accessibility and Screen Recording if it never did. */
+    allowScreen: () => clicked("lending:allow-screen"),
+    /** Opens macOS's own Privacy & Security pane: "accessibility" or "screen". */
+    openPrivacy: (pane) => clicked("lending:privacy", String(pane ?? "")),
+    setOpenAtLogin: (on) => clicked("lending:open-at-login", on === true),
+    showActivity: () => clicked("lending:activity"),
+    onChanged: (cb) => {
+      const handler = (_event, summary) => cb(summary);
+      ipcRenderer.on("lending:changed", handler);
+      return () => ipcRenderer.removeListener("lending:changed", handler);
     },
   },
   /** This computer's page only: sets up an always-on server and switches to it (electron/server-setup.d.mts). */
