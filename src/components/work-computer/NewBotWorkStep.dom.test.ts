@@ -47,7 +47,7 @@ const mac = (extra: Record<string, unknown> = {}) => ({
   lastSeenAt: Date.now(), lastUsedAt: null, scopes: { folders: 0, terminal: false, screen: true }, ...extra,
 });
 const settle = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
-const q = <T extends Element = HTMLElement>(selector: string) => document.querySelector<T>(selector);
+const q = <T extends HTMLElement = HTMLElement>(selector: string) => document.querySelector(selector) as T | null;
 const button = (text: string) => [...document.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.includes(text));
 const click = async (element: HTMLElement | null | undefined) => { expect(element).toBeTruthy(); await act(async () => { element!.click(); }); await settle(); };
 const created = () => fx.dispatch.mock.calls.map(([action]) => action).find((action) => action.type === "newBot");

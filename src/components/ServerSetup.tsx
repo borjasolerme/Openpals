@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
 import { connectServer, isServerPairingLink } from "@/lib/place";
+import { MacHomeGuide } from "./onboarding/MacHomeGuide";
 import { INSTALL_COMMAND, serverSetupAvailable, useServerSetup, type ServerSetupProgress, type ServerSetupRequest } from "@/lib/server-setup";
 
 const BOAT_SIGN_UP = "https://boat.dev";
@@ -141,6 +142,24 @@ function InstallCommand() {
   );
 }
 
+/** A third way: the bots' brain on an always-on Mac at home, reached from anywhere through Tailscale. */
+function MacHomeOption() {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <div data-server-setup="mac-home" className={OPTION}>
+      <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="flex items-start justify-between gap-2 text-left">
+        <span className="flex flex-col gap-0.5">
+          <span className="text-base font-medium leading-5 text-ink">{t("macHome.title")}</span>
+          <span className="text-sm text-ink-secondary [text-wrap:pretty]">{t("macHome.hint")}</span>
+        </span>
+        <ChevronDown size={16} aria-hidden="true" className={cn("mt-0.5 shrink-0 text-ink-secondary transition-transform duration-base", open && "rotate-180")} />
+      </button>
+      {open && <div id={id}><MacHomeGuide /></div>}
+    </div>
+  );
+}
+
 /** Adding the one always-on server the bots live on: its pairing link, or, under "Need a pairing link?", the setup the
  * desktop app does from a Boat API key or an own server's address, and the installer to run by hand. While a setup runs,
  * where it is. Shared by the first run and Settings. */
@@ -171,6 +190,7 @@ export function AddServerPanel() {
               <SetupOption kind="ssh" title={t("serverSetup.own.title")} hint={t("serverSetup.own.hint")}
                 label={t("serverSetup.own.address")} placeholder="root@203.0.113.7"
                 onStart={(address) => void start({ kind: "ssh", address })} />
+              <MacHomeOption />
             </>
           )}
           {failure && (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { openExternalLink } from "@/lib/app-links";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/state/store";
 import { cleanKey, saveCredential } from "../keys/key-save";
@@ -35,7 +36,8 @@ export function BoatKeyPanel({ onBack, onReady }: { onBack: () => void; onReady:
       <Button variant="ghost" size="sm" className="gap-1.5 self-start" onClick={onBack}><ArrowLeft size={14} />{t("workComputer.back")}</Button>
       <div className="text-lg font-medium text-ink">{t("workComputer.boat.keyTitle")}</div>
       <p className="text-base text-ink-secondary">{t("workComputer.boat.explain")}</p>
-      <a href={BOAT_SIGN_UP} target="_blank" rel="noreferrer" className={buttonClass({ variant: "secondary" }, "gap-1.5 self-start")}>
+      <a href={BOAT_SIGN_UP} target="_blank" rel="noreferrer" className={buttonClass({ variant: "secondary" }, "gap-1.5 self-start")}
+        onClick={(event) => { event.preventDefault(); void openExternalLink(BOAT_SIGN_UP).catch(() => {}); }}>
         {t("workComputer.boat.getKey")}<ExternalLink size={14} />
       </a>
       <form className="flex flex-col gap-2 sm:flex-row sm:items-center" onSubmit={(event) => { event.preventDefault(); void save(); }}>

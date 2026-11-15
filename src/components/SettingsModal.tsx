@@ -19,6 +19,7 @@ import { LocalComputerSection } from "./LocalComputerSection";
 import { CompanionSection } from "./CompanionSection";
 import { ServerPairingCard } from "./ServerPairingCard";
 import { LendThisComputerCard } from "./work-computer/LendThisComputerCard";
+import { MoveBotsGuide } from "./onboarding/MacHomeGuide";
 import { PeopleSection } from "./PeopleSection";
 import { ActivitySection } from "./ActivitySection";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
@@ -363,7 +364,7 @@ export function SettingsModal() {
         return <AdminOnly><KeysPage /></AdminOnly>;
       case "decisionModel": return <AdminOnly><DecisionModelSettings /></AdminOnly>;
       case "engines": return <AdminOnly><EnginesSettings /></AdminOnly>;
-      case "backups": return <AdminOnly><WorkspaceBackupSettings /></AdminOnly>;
+      case "backups": return <AdminOnly><div className="flex flex-col gap-4"><Card><MoveBotsGuide /></Card><WorkspaceBackupSettings /></div></AdminOnly>;
       case "import": return <AdminOnly><ImportSettings /></AdminOnly>;
       case "companion":
         return <>{remoteAccess.client}{remoteAccess.lend}{remoteAccess.domain}{remoteAccess.pairing}{remoteAccess.companion}</>;

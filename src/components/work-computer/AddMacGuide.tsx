@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, Check, ExternalLink, Laptop, Loader2, Server } from "lucide-react";
+import { APP_REPOSITORY, openExternalLink } from "@/lib/app-links";
 import { cn } from "@/lib/cn";
 import { copyText, type CopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
@@ -10,7 +11,7 @@ import { PairingQr } from "../PairingQr";
 import { Button, buttonClass } from "../ui/Button";
 import { WorkComputerBadge } from "./WorkComputerBadge";
 
-export const INSTALL_GUIDE = "https://github.com/borjasolerme/Openpals#getting-started";
+export const INSTALL_GUIDE = `${APP_REPOSITORY}#getting-started`;
 
 interface PairingLink { code: string; url: string | null; expiresAt: number; hint: string | null }
 
@@ -118,7 +119,8 @@ export function AddMacGuide({ known, onBack, onUse }: { known: readonly string[]
       <ol className="flex flex-col gap-1">
         <Step number={1} active={step === 1} done={step > 1} title={t("workComputer.guide.step1.title")}>
           <p>{t("workComputer.guide.step1.body")}</p>
-          <a href={INSTALL_GUIDE} target="_blank" rel="noreferrer" onClick={() => setReached((value) => Math.max(value, 2))}
+          <a href={INSTALL_GUIDE} target="_blank" rel="noreferrer"
+            onClick={(event) => { event.preventDefault(); void openExternalLink(INSTALL_GUIDE).catch(() => {}); setReached((value) => Math.max(value, 2)); }}
             className={buttonClass({ size: "sm" }, "gap-1.5 self-start")}>{t("workComputer.guide.step1.button")}<ExternalLink size={13} /></a>
           {step === 1 && <Button variant="ghost" size="sm" className="self-start" onClick={() => setReached(2)}>{t("workComputer.guide.installed")}</Button>}
         </Step>
