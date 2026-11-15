@@ -676,12 +676,11 @@ export class RoutineManager {
     return true;
   }
 
-  /** A run that waited for the person was cancelled: end its turn too, so its open cards stop and the bot no longer shows it waiting. */
+  /** A run that waited for the person was cancelled: end its turn too (not one the person started there), so its open cards stop and the bot no longer shows it waiting. */
   private stopWaitingTurns(runs: readonly RoutineRun[]) {
     for (const run of runs) {
       if (!run.threadId) continue;
       if (run.target === "room-goal") void this.options.interruptGoal?.(run.groupId, run.threadId).catch(() => {});
-      // A turn the person started in that conversation is theirs and keeps going.
       else if (!this.options.personTurn?.(run.threadId)) void this.options.interruptTurn?.(run.botId, run.threadId).catch(() => {});
     }
   }
