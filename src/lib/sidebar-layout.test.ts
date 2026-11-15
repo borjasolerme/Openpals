@@ -19,7 +19,6 @@ import {
   sidebarSectionLabel,
   simpleOrderedSections,
   simpleSidebarSections,
-  withPrimaryTile,
 } from "./sidebar-layout";
 
 describe("the sidebar's lists", () => {
@@ -222,27 +221,6 @@ describe("Simple-mode section order", () => {
   it("slots a section added after a Simple move in beside its neighbours from the default", () => {
     const saved = [work, CHANNELS_SECTION_ID, BOTS_SECTION_ID];
     expect(simpleOrderedSections([CHANNELS_SECTION_ID, BOTS_SECTION_ID, work, home], saved)).toEqual([work, home, CHANNELS_SECTION_ID, BOTS_SECTION_ID]);
-  });
-});
-
-describe("the primary tile", () => {
-  const bot = (id: string, extra: Partial<{ chiefOfStaff: boolean; pinned: boolean }> = {}) => ({ id, ...extra });
-
-  it("is the Chief of Staff, pinned or not, taken out of the lists", () => {
-    const parts = partitionSidebarBots([bot("chief", { chiefOfStaff: true, pinned: true }), bot("atlas", { pinned: true }), bot("bea")], { universalPins: true });
-    const tiled = withPrimaryTile(parts, undefined);
-    expect(tiled.primary?.id).toBe("chief");
-    expect(tiled.chief).toBeNull();
-    expect(tiled.pinnedBots.map((candidate) => candidate.id)).toEqual(["atlas"]);
-    expect(tiled.bots.map((candidate) => candidate.id)).toEqual(["bea"]);
-  });
-
-  it("falls back to the person's MausBot", () => {
-    const parts = partitionSidebarBots([bot("mausbot"), bot("bea")]);
-    const tiled = withPrimaryTile(parts, "mausbot");
-    expect(tiled.primary?.id).toBe("mausbot");
-    expect(tiled.bots.map((candidate) => candidate.id)).toEqual(["bea"]);
-    expect(withPrimaryTile(parts, undefined).primary).toBeNull();
   });
 });
 

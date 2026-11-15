@@ -96,16 +96,6 @@ export function partitionSidebarBots<T extends SidebarBot>(
   return { chief, pinnedBots, bots: rest };
 }
 
-export function withPrimaryTile<T extends SidebarBot>(parts: ReturnType<typeof partitionSidebarBots<T>>, defaultBotId: string | undefined) {
-  const primary = parts.chief
-    ?? parts.pinnedBots.find((bot) => bot.chiefOfStaff)
-    ?? [...parts.pinnedBots, ...parts.bots].find((bot) => bot.id === defaultBotId)
-    ?? null;
-  if (!primary) return { ...parts, primary };
-  const others = (bots: T[]) => bots.filter((bot) => bot.id !== primary.id);
-  return { ...parts, primary, chief: null, pinnedBots: others(parts.pinnedBots), bots: others(parts.bots) };
-}
-
 /** Bots that are working or waiting on the person move to the top of their own list (pinned, main), keeping the
  * person's order among them; the rest follow in that same order. Only how the list is shown changes. */
 export function activeBotsFirst<T>(parts: { pinnedBots: T[]; bots: T[] }, active: (bot: T) => boolean) {

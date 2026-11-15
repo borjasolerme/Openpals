@@ -37,7 +37,6 @@ import {
   partitionSidebarBots,
   partitionSidebarGroups,
   sidebarSectionLabel,
-  withPrimaryTile,
 } from "@/lib/sidebar-layout";
 import { stepKey, type BotDropPlace } from "@/lib/sidebar-bot-drop";
 import { BotDropLine, botRowDropClass, useSidebarBotDrag, type BotRowDrag } from "./SidebarBotDrag";
@@ -61,7 +60,6 @@ import { isSidebarToggle } from "@/lib/keyboard-shortcuts";
 import { SidebarRailSeparator, SimpleRailFooter } from "./SidebarSimpleRail";
 import { useBotUnread } from "./unread-notice";
 import { SidebarBotActivity, sidebarBotActivityTasks, sidebarBotStatus } from "./SidebarBotActivity";
-import { SidebarTileGrid } from "./SidebarTiles";
 import { BotContextMenu } from "./SidebarBotMenu";
 export { BotContextMenu };
 import { AvatarActivityDot, RowDot, RowStatusText, rowSurface } from "./SidebarRowMarkers";
@@ -72,7 +70,7 @@ import { LiveCallPill, liveBadgeFor } from "./LiveCallPill";
 import { ShortcutHint } from "./ShortcutHint";
 import { usePopoverDismiss } from "@/hooks/use-popover-dismiss";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { defaultBotIn, useWelcomingBot } from "@/lib/default-bot";
+import { useWelcomingBot } from "@/lib/default-bot";
 import { PinnedBotRoster } from "./PinnedCircles";
 import { archiveBotWithNotice } from "./bot-archive";
 import { ArchivedBotsPanel, botConfirmProps, type BotConfirmKind } from "./ArchivedBotsPanel";
@@ -740,7 +738,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   };
 
   // A framed window (WindowFrameBar) holds the traffic lights in its top bar, so the top row keeps
-  // no room for them; in Simple it is only the corner holding Search and New, with the bot tiles beside it. With the
+  // no room for them; in Simple it is only the corner holding Search and New. With the
   // frame off on macOS, the traffic lights sit in the top row's corner.
   const framed = windowFramed(capabilities), corner = framed && simpleDesk;
   const lights = capabilities.windowChrome === "mac-inset" && !framed;
@@ -770,9 +768,9 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     );
   const visibleGroups = state.groups.filter((g) => !q || g.name.toLowerCase().includes(q) || g.tasks?.some((task) => task.title.toLowerCase().includes(q)));
   const parts = partitionSidebarBots(matchingBots, { universalPins, welcoming: useWelcomingBot() });
-  const saved = simpleDesk ? withPrimaryTile(parts, defaultBotIn(state.bots)?.id) : { ...parts, primary: null };
+  const saved = parts;
   // Shown order only: drag and Alt+Up/Down keep working on the saved order, so a reorder never stores this one.
-  const { primary, chief, pinnedBots, bots } = { ...saved, ...activeBotsFirst(saved, (bot) => {
+  const { chief, pinnedBots, bots } = { ...saved, ...activeBotsFirst(saved, (bot) => {
     const { waiting, working } = sidebarBotStatus(bot, state.pendingQueued);
     return waiting || working;
   }) };
@@ -780,14 +778,13 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
 
   const drops = botDrag.arrange({ enabled: (sections.interactive || density === "icons") && !phone, list: saved.bots, bots: state.bots });
   const naturalSectionIds = [
-    ...(pinnedBots.length > 0 && !universalPins && !simpleDesk ? [PINNED_SECTION_ID] : []),
+    ...(pinnedBots.length > 0 && !universalPins ? [PINNED_SECTION_ID] : []),
     ...(rooms.length > 0 ? [CHANNELS_SECTION_ID] : []),
     ...(botChats.length > 0 ? [BOT_CHATS_SECTION_ID] : []),
     ...(bots.length > 0 ? [BOTS_SECTION_ID] : []),
   ];
   const layout = sections.arrange(naturalSectionIds);
   const sectionIds = layout.sectionIds;
-  const tiles = simpleDesk && (primary !== null || pinnedBots.length > 0);
   const { interactive: layoutInteractive, collapsed: sectionCollapsed, toggle: toggleSection } = sections;
   const archivedBots = state.bots.filter((bot) => bot.hidden);
   const archivedEntry = { count: archivedBots.length, open: () => setArchivedBotsOpen(true) };
@@ -894,7 +891,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         data-sidebar-top-row={corner ? "corner" : true}
         className={cn(
           "flex items-center",
-          // The corner is no drag region and takes no clicks but its buttons': the tiles rise into the rest of it.
+          // The corner is no drag region and takes no clicks but its buttons'.
           density === "icons" ? "flex-col gap-1 px-2 pt-3.5 pb-1" : corner ? "pointer-events-none relative h-8.5 items-start justify-end px-1.5 pt-1.5" : simpleDesk ? "relative h-15 items-start pl-4 pr-4 pt-3" : "relative pl-4 pr-2",
           density !== "icons" && !simpleDesk && !lights && "h-12 max-md:h-16",
         )}
@@ -966,14 +963,13 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         </div>
       )}
 
-      {tiles && <SidebarTileGrid primary={primary} pinned={pinnedBots} row={botRow} corner={corner} />}
       </GlassBar>
 
       {!collapseToIcons && !phone && <SidebarResizeHandle sizing={sizing} sidebarRef={sidebarRef} avatars={density === "icons"} avatarsWidth={rail ? 92 : 80}
         onAvatars={(avatars) => setSidebarDensity(avatars ? "icons" : "comfortable")} style={windowNoDragStyle} />}
 
       <GlassScroller className={rail ? "[scrollbar-gutter:stable_both-edges]" : simpleDesk ? "px-3" : "px-2"}>
-        <div className={cn("flex flex-col", simpleDesk ? cn("gap-0.5 pb-2", !tiles && "pt-2") : advanced ? "gap-0.5" : "gap-1 pb-2 pt-2")}>
+        <div className={cn("flex flex-col", simpleDesk ? "gap-0.5 pb-2 pt-2" : advanced ? "gap-0.5" : "gap-1 pb-2 pt-2")}>
           {matchingBots.length === 0 && visibleGroups.length === 0 && q && q.length < MIN_QUERY && (
             <div className="px-3 py-6 text-center text-base text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
           )}

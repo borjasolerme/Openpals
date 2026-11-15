@@ -48,8 +48,7 @@ import { Sidebar } from "./Sidebar";
 import { PinnedBotRoster } from "./PinnedCircles";
 import { SidebarFooter } from "./SidebarFooter";
 import { SidebarResizeHandle } from "./SidebarResizeHandle";
-import { SidebarTileGrid } from "./SidebarTiles";
-import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
+import { GlassScrollFrame } from "./GlassScrollFrame";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 import { SidebarSearchPill, SidebarSearchToggle } from "./SidebarSimpleTop";
 import { SidebarRailSeparator, SimpleRailFooter } from "./SidebarSimpleRail";
@@ -111,28 +110,21 @@ describe("Simple-mode sidebar layout", () => {
     expect(listedBots(tree)).toEqual(["atlas", "bea", "dodo"]);
     const lines = headers(tree);
     expect(lines.map((header) => [header.props.name, header.props.line, header.props.count])).toEqual([["Group chats", true, 1]]);
-    expect(tree.some((node) => node.type === SidebarTileGrid)).toBe(false);
   });
 
-  it("shows the Chief and the pinned bots as tiles above the rows, with no Pinned or Bots heading", () => {
+  it("shows the Chief as an ordinary row and the pinned bots under Pinned, with no big tiles", () => {
     fixture.state = { ...fixture.state, bots: [bot("chief", { chiefOfStaff: true, pinned: true }), bot("atlas", { pinned: true }), bot("bea"), bot("dodo", { pinned: true })] };
     const { tree } = render();
-    const grid = tree.find((node) => node.type === SidebarTileGrid)!.props as Parameters<typeof SidebarTileGrid>[0];
-    expect(grid.primary?.id).toBe("chief");
-    expect(grid.pinned.map((candidate) => candidate.id)).toEqual(["atlas", "dodo"]);
-    expect(sectionOrder(tree)).toEqual([BOTS_SECTION_ID, CHANNELS_SECTION_ID]);
-    expect(listedBots(tree)).toEqual(["bea"]);
-    expect(headers(tree).map((header) => header.props.name)).toEqual(["Group chats"]);
+    expect(sectionOrder(tree)).toEqual([PINNED_SECTION_ID, BOTS_SECTION_ID, CHANNELS_SECTION_ID]);
+    expect(listedBots(tree)).toEqual(["chief", "bea"]);
+    const roster = tree.find((node) => node.type === PinnedBotRoster)!.props as Parameters<typeof PinnedBotRoster>[0];
+    expect(roster.bots.map((candidate) => candidate.id)).toEqual(["atlas", "dodo"]);
   });
 
-  it("fades the list's edges in both modes, with the top buttons and the tiles fixed above it", () => {
+  it("fades the list's edges in both modes", () => {
     fixture.state = { ...fixture.state, bots: [bot("chief", { chiefOfStaff: true, pinned: true }), bot("atlas", { pinned: true }), bot("bea")] };
     const simple = render();
     expect(simple.tree.find((node) => node.type === GlassScrollFrame)!.props.fade).toBe(true);
-    const head = simple.tree.find((node) => node.type === GlassBar && node.props.edge === "top")!;
-    expect(nodes(head.props.children).some((node) => node.type === SidebarTileGrid)).toBe(true);
-    const list = simple.tree.find((node) => node.type === GlassScroller)!;
-    expect(nodes(list.props.children).some((node) => node.type === SidebarTileGrid)).toBe(false);
     expect(simple.root.props.className).toContain("max-md:[--scroll-fade-surface:var(--color-app)]");
     fixture.advanced = true;
     const advanced = render();
@@ -144,7 +136,6 @@ describe("Simple-mode sidebar layout", () => {
     fixture.advanced = true;
     fixture.state = { ...fixture.state, bots: [bot("chief", { chiefOfStaff: true }), bot("atlas", { pinned: true }), bot("bea")] };
     const { tree } = render();
-    expect(tree.some((node) => node.type === SidebarTileGrid)).toBe(false);
     expect(sectionOrder(tree)).toContain(PINNED_SECTION_ID);
     expect(listedBots(tree)).toEqual(["chief", "bea"]);
     const roster = tree.find((node) => node.type === PinnedBotRoster)!.props as Parameters<typeof PinnedBotRoster>[0];
