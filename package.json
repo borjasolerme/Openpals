@@ -4,10 +4,10 @@
   "private": true,
   "version": "0.1.140",
   "description": "A local-first chat app for running a team of AI agents.",
-  "homepage": "https://github.com/milind-soni/OpenMausBot",
+  "homepage": "https://github.com/borjasolerme/Openpals",
   "repository": {
     "type": "git",
-    "url": "https://github.com/milind-soni/OpenMausBot.git"
+    "url": "https://github.com/borjasolerme/Openpals.git"
   },
   "author": {
     "name": "Milind Soni",

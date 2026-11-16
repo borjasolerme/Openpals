@@ -613,7 +613,7 @@ export async function listManagedBoats(
     }
     const existing = ownedBoatByBot.get(owner.botId);
     if (existing && existing !== boxId) {
-      return invalidInventory("boat.dev returned conflicting cloud computers for one OpenMaus bot — repair them in boat.dev before continuing");
+      return invalidInventory("boat.dev returned conflicting cloud computers for one Openpals bot — repair them in boat.dev before continuing");
     }
     ownedBoatByBot.set(owner.botId, boxId);
   }
