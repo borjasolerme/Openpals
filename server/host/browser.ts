@@ -21,10 +21,13 @@ import {
   browserEngineStatus,
   inRunningBrowser,
   browserSessionId, isTemporaryBrowserSession,
+  browserProfileDirectory, browserSessionsDirectory,
   noteBrowserEngineUnavailable,
   setBrowserViewport,
 } from "../browser-engine.ts";
 import { BrowserSweep, browserIdleMs, type BrowserCleanupWireRequest } from "../browser-lifecycle-cleanup.ts";
+import { releaseBrowserProfile } from "../browser-processes.ts";
+import { browserProfileCarryable, carryBrowserProfile } from "../browser-profile-carry.ts";
 import type { BrowserSitesTarget } from "../browser-sites.ts";
 import { namedUploadPaths } from "../browser-upload.ts";
 import type { BrowserSitesRef } from "../routes/browser-sites.ts";
@@ -153,6 +156,27 @@ export function createBrowserHost(deps: BrowserHostDeps) {
     });
     if (closed) await browserRuntime.close(session);
     else console.warn(`temporary browser ${session}: could not close its session; run agent-browser --session ${session} close on this server`);
+  }
+  /** A bot turning on a shared profile nobody has used yet brings its own sign-ins along (agent-browser only: My Chrome keeps
+   * the person's own, the new engine keeps its profiles elsewhere). Both browsers stop first, so Chrome writes neither profile
+   * while it is copied; true once the copy is made. */
+  async function carryOwnBrowser(botId: string, profileId: string): Promise<boolean> {
+    const profile = cfg.browserProfiles?.find((entry) => entry.id === profileId);
+    if (!profile || profile.browser === "chrome" || onChrome(profileId)) return false;
+    const from = browserSessionId(botId, "");
+    const to = browserSessionId("", browserProfilePartitionId(profile));
+    const options = { sessionsDirectory: browserSessionsDirectory(browserRuntimeEnv({})) };
+    if (!browserProfileCarryable(from, to, options)) return false;
+    const engine = browserEngineStatus();
+    if (engine.kind !== "ready") return false;
+    browserLive.closeForBot(botId);
+    for (const session of [from, to]) {
+      const env = browserRuntimeEnv({ ...usedBrowserSessions.get(session)?.env, AGENT_BROWSER_SESSION: session });
+      if (!await closeBrowserSession(engine.binaryPath, env)) throw new Error(`browser ${session} did not close`);
+      await browserRuntime.close(session);
+      await releaseBrowserProfile(browserProfileDirectory(session), engine.binaryPath, env.AGENT_BROWSER_EXECUTABLE_PATH);
+    }
+    return carryBrowserProfile(from, to, options);
   }
   function myChromeAvailable(): boolean {
     return DESKTOP_MANAGED || browserEngineAttachCdpUrl(cfg) !== null;
@@ -334,7 +358,7 @@ export function createBrowserHost(deps: BrowserHostDeps) {
 
   return {
     browserRuntime, browserLive, usedBrowserSessions, browserSweep, temporaryBrowserSessions, browserIdleMs: idleMs,
-    currentBrowserSession, forgetTemporaryBrowser, myChromeAvailable, usesMyChrome, browserSessionSpec, browserIntegration,
+    currentBrowserSession, forgetTemporaryBrowser, carryOwnBrowser, myChromeAvailable, usesMyChrome, browserSessionSpec, browserIntegration,
     browserReady, currentBrowserSpec, loginInput, browserSystemPrompt, signedInSitesRefusal, closeBrowser, browserEngineSwitched,
     eraseDeletedBrowser, engineSummary, browserSessionsOf, signedInSitesTarget, uploadPaths,
   };

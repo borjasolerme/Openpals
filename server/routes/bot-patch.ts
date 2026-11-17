@@ -67,6 +67,8 @@ export interface BotPatchRouteDeps {
   runningTurnInstance(bot: BotRecord | null | undefined, threadId: string): ReturnType<ProviderRegistry["get"]>;
   closeOpenApprovals(threadId: string): void;
   forgetTemporaryBrowser(botId: string): Promise<void>;
+  /** Copies the bot's own browser data into a shared profile nobody has used yet; true once copied. */
+  carryOwnBrowser(botId: string, profileId: string): Promise<boolean>;
   /** The bot's conversations the main-thread resolver may pick. */
   mainThreadTasks(botId: string): readonly TaskRecord[];
 }
@@ -77,7 +79,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
     hostedWorkspace: HOSTED_WORKSPACE, hostedFullAccessRefusal: HOSTED_FULL_ACCESS_REFUSAL, desktopManaged: DESKTOP_MANAGED, maxWorkspaceBots: MAX_WORKSPACE_BOTS,
     broadcast, wireBot, publicGroupState, audienceChanged, storedAvatarExists, requestedTaskBot, threadBusy, activeGroupTurnForBot,
     checkedModelSelection, engineSwitchNeedsAsk, currentBrowserSession, interruptAllDirectThreads, cancelGroupTurnOperations,
-    revokeInternalCapabilitiesForThread, runningTurnInstance, closeOpenApprovals, forgetTemporaryBrowser,
+    revokeInternalCapabilitiesForThread, runningTurnInstance, closeOpenApprovals, forgetTemporaryBrowser, carryOwnBrowser,
   } = deps;
   const pinnedClientThread = pinnedClientThreadGuard(store);
   return async ({ req, res, path, method, auth, json, readBody }) => {
@@ -606,6 +608,11 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
           await runningTurnInstance(existingBot, groupTurn.threadId)?.adapter.interruptTurn(groupTurn.threadId).catch(() => {});
           closeOpenApprovals(groupTurn.threadId);
         }
+      }
+      // Turning on a shared profile nobody used yet carries the bot's sign-ins into it; a failed copy only means signing in again.
+      if (existingBot && existingBot.browserProfile === undefined && typeof patch.browserProfile === "string" && patch.browserProfile !== "guest") {
+        await carryOwnBrowser(existingBot.id, patch.browserProfile)
+          .catch((error) => console.warn(`bot ${existingBot.id}: could not carry its browser sign-ins into profile ${String(patch.browserProfile)}`, error));
       }
       let bot: BotRecord | null;
       const freshBrowserBot = store.bot(m[1]);

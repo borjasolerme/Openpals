@@ -1,9 +1,9 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { BUILT_IN_BROWSER_SYSTEM_PROMPT, browserEngineStatus, clearBrowserSessionState, closeBrowserSession, runningBrowserSessionNames } from "../browser-engine.ts";
+import { BUILT_IN_BROWSER_SYSTEM_PROMPT, browserEngineStatus, browserProfileDirectory, clearBrowserSessionState, closeBrowserSession, runningBrowserSessionNames } from "../browser-engine.ts";
 import { CHROME_BROWSER_SYSTEM_PROMPT } from "../browser/prompt.ts";
 import { LocalBackend } from "../browser/backends.ts";
 import { FakeBackend } from "../browser/testing/fake-chrome.ts";
@@ -203,5 +203,44 @@ describe("a deleted bot's browser", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(closed()).toEqual([]);
     await host.browserSweep.closeAll();
+  });
+});
+
+describe("a bot turning on a shared profile nobody used yet", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    for (const session of ["bot-scout", "p-work", "p-mine"]) rmSync(browserProfileDirectory(session), { recursive: true, force: true });
+  });
+
+  it("closes both browsers, then brings the bot's sign-ins along; never into My Chrome or the new engine's profiles", async () => {
+    vi.stubEnv("HOME", mkdtempSync(join(tmpdir(), "omb-host-carry-")));
+    vi.mocked(browserEngineStatus).mockReturnValue({ kind: "ready", binaryPath: "/usr/local/bin/agent-browser", version: "0.37.0", managed: true });
+    vi.mocked(closeBrowserSession).mockClear().mockResolvedValue(true);
+    mkdirSync(join(browserProfileDirectory("bot-scout"), "Default"), { recursive: true });
+    writeFileSync(join(browserProfileDirectory("bot-scout"), "Default", "Cookies"), "linkedin");
+
+    expect(await setup("chrome").host.carryOwnBrowser("scout", "work")).toBe(false);
+    const { host } = setup(undefined);
+    expect(await host.carryOwnBrowser("scout", "mine")).toBe(false);
+    expect(closeBrowserSession).not.toHaveBeenCalled();
+
+    expect(await host.carryOwnBrowser("scout", "work")).toBe(true);
+    expect(vi.mocked(closeBrowserSession).mock.calls.map(([, env]) => env.AGENT_BROWSER_SESSION)).toEqual(["bot-scout", "p-work"]);
+    expect(readFileSync(join(browserProfileDirectory("p-work"), "Default", "Cookies"), "utf8")).toBe("linkedin");
+    expect(existsSync(browserProfileDirectory("p-mine"))).toBe(false);
+
+    vi.mocked(closeBrowserSession).mockClear();
+    expect(await host.carryOwnBrowser("scout", "work")).toBe(false);
+    expect(closeBrowserSession).not.toHaveBeenCalled();
+  });
+
+  it("copies nothing when a browser does not close", async () => {
+    vi.stubEnv("HOME", mkdtempSync(join(tmpdir(), "omb-host-carry-")));
+    vi.mocked(browserEngineStatus).mockReturnValue({ kind: "ready", binaryPath: "/usr/local/bin/agent-browser", version: "0.37.0", managed: true });
+    vi.mocked(closeBrowserSession).mockClear().mockResolvedValue(false);
+    mkdirSync(join(browserProfileDirectory("bot-scout"), "Default"), { recursive: true });
+
+    await expect(setup(undefined).host.carryOwnBrowser("scout", "work")).rejects.toThrow("did not close");
+    expect(existsSync(browserProfileDirectory("p-work"))).toBe(false);
   });
 });

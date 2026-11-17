@@ -43,7 +43,8 @@ beforeEach(() => {
 function fixture() {
   const store = new Store(() => sonnet);
   const bot = store.createBot({ name: "Scout" });
-  const cfg = { vps: { sshAlias: "production-vps" } } as AppConfig;
+  const cfg = { vps: { sshAlias: "production-vps" }, browserProfiles: [{ id: "shared", name: "Shared" }] } as AppConfig;
+  const carryOwnBrowser = vi.fn(async (_botId: string, _profileId: string) => true);
   const activeVpsThreads = new Set<string>();
   const privateThreads = new Set<string>();
   // Only what a vpsAlias patch touches; any other dependency is absent, and a route that reached for one would throw.
@@ -60,6 +61,11 @@ function fixture() {
     // A member's session may chat with this bot: the level that still can't move it or change what it may do.
     levelOf: () => "chat",
     mainThreadTasks: (botId: string) => store.tasks(botId).filter((task) => !privateThreads.has(task.threadId)),
+    browserRuntime: { heldBy: () => null },
+    browserLive: { closeForBot: () => {} },
+    forgetTemporaryBrowser: async () => {},
+    currentBrowserSession: (botId: string, profile: string | undefined) => profile ?? `bot-${botId}`,
+    carryOwnBrowser,
   } as unknown as BotPatchRouteDeps;
   const handler = createBotPatchRoutes(deps);
   const patch = async (botId: string, body: Record<string, unknown>, as: { auth?: RequestAuth; headers?: Record<string, string> } = {}) => {
@@ -80,7 +86,7 @@ function fixture() {
     expect(sent).toHaveLength(1);
     return sent[0]!;
   };
-  return { store, bot, activeVpsThreads, privateThreads, patch };
+  return { store, bot, activeVpsThreads, privateThreads, patch, carryOwnBrowser };
 }
 
 describe("PATCH /api/bots/:id vpsAlias relocation guard", () => {
@@ -373,5 +379,45 @@ describe("PATCH /api/bots/:id mainThreadChoice", () => {
     expect(client.status).toBe(403);
     expect(paired.status).toBe(403);
     expect(store.bot(bot.id)?.mainThreadChoice).toBeUndefined();
+  });
+});
+
+describe("PATCH /api/bots/:id browserProfile: carrying the bot's sign-ins", () => {
+  it("carries the bot's own browser into the profile it turns on, before answering", async () => {
+    const { store, bot, patch, carryOwnBrowser } = fixture();
+    let switchedWhileCarrying: string | undefined = "not called";
+    carryOwnBrowser.mockImplementation(async () => { switchedWhileCarrying = store.bot(bot.id)?.browserProfile; return true; });
+
+    const shared = await patch(bot.id, { browserProfile: "shared" });
+
+    expect(shared.status).toBe(200);
+    expect(carryOwnBrowser).toHaveBeenCalledExactlyOnceWith(bot.id, "shared");
+    expect(switchedWhileCarrying).toBeUndefined();
+    expect(store.bot(bot.id)?.browserProfile).toBe("shared");
+  });
+
+  it("still switches the profile when the copy fails", async () => {
+    const { store, bot, patch, carryOwnBrowser } = fixture();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    carryOwnBrowser.mockRejectedValue(new Error("disk full"));
+
+    const shared = await patch(bot.id, { browserProfile: "shared" });
+
+    expect(shared.status).toBe(200);
+    expect(store.bot(bot.id)?.browserProfile).toBe("shared");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("could not carry its browser sign-ins"), expect.any(Error));
+    warn.mockRestore();
+  });
+
+  it("carries nothing into a temporary browser, from a profile, or back to the bot's own", async () => {
+    const { store, bot, patch, carryOwnBrowser } = fixture();
+
+    expect((await patch(bot.id, { browserProfile: "guest" })).status).toBe(200);
+    store.patchBot(bot.id, { browserProfile: "shared" });
+    expect((await patch(bot.id, { browserProfile: null })).status).toBe(200);
+    store.patchBot(bot.id, { browserProfile: "guest" });
+    expect((await patch(bot.id, { browserProfile: "shared" })).status).toBe(200);
+
+    expect(carryOwnBrowser).not.toHaveBeenCalled();
   });
 });
