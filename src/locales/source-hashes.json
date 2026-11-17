@@ -6645,7 +6645,9 @@
       "workComputer.guide.step3.settings": "007dcd2d51967242607580b417a48a115584c81ddfe840f84f72919581cd4dbb",
       "workComputer.guide.step3.mac": "2e44623589392aedd5b4c5c8464ec5c5188254d0b53ceb450ddd1bb4739d8a34",
       "workComputer.guide.keepAwake": "ae7f7267befeed548242eb1a03077ec30e89846c8a537be38f6f69d92fa72785",
-      "workComputer.guide.intro": "8f66809dd8a32b21455f6c40257a13229807afc1fa13e849b6020134873632ec"
+      "workComputer.guide.intro": "8f66809dd8a32b21455f6c40257a13229807afc1fa13e849b6020134873632ec",
+      "botPanel.tab.computer": "76ed42d22129dc354362704eb4b54208041b68736f976932aada43bc0035f7c0",
+      "settings.simple.page.computer": "76ed42d22129dc354362704eb4b54208041b68736f976932aada43bc0035f7c0"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

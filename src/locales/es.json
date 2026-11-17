@@ -4298,7 +4298,7 @@
   "workComputer.guide.step2.paste": "En el Openpals de ese ordenador, elige «Conectar a un servidor» y pega este enlace.",
   "workComputer.guide.step2.code": "Código {code}",
   "workComputer.guide.step3.turnOn": "Deja que tus bots lo usen",
-  "workComputer.guide.step3.settings": "En el Openpals de ese ordenador, abre Ajustes → Equipo y activa «Dejar que mis bots usen este equipo».",
+  "workComputer.guide.step3.settings": "En el Openpals de ese ordenador, abre Ajustes → Ordenador y activa «Dejar que mis bots usen este equipo».",
   "workComputer.guide.step3.mac": "En un Mac",
   "workComputer.guide.keepAwake": "Mantenlo encendido y sin suspender. Funciona desde cualquier lugar, sin abrir nada en tu red.",
   "workComputer.guide.step1.title": "Instala Openpals en ese ordenador",
@@ -4402,5 +4402,7 @@
   "workPlace.add": "Añadir un ordenador",
   "sharedLogins.title": "Inicios de sesión compartidos",
   "sharedLogins.hint": "Usa las mismas sesiones que tus otros bots que lo tengan activado.",
-  "sharedLogins.profileName": "Compartido"
+  "sharedLogins.profileName": "Compartido",
+  "botPanel.tab.computer": "Ordenador",
+  "settings.simple.page.computer": "Ordenador"
 }
