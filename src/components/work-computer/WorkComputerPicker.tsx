@@ -4,7 +4,8 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/state/store";
-import { useWorkComputers, type WorkChoice } from "@/lib/work-computers";
+import { sameChoice, useWorkComputers, type WorkChoice } from "@/lib/work-computers";
+import { WORKS_ON_CHOICES } from "../WorksOnGrid";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { AddMacGuide } from "./AddMacGuide";
@@ -12,6 +13,26 @@ import { BoatKeyPanel } from "./BoatKeyPanel";
 import { WorkComputerBadge } from "./WorkComputerBadge";
 
 type View = "cards" | "boat-key" | "mac-guide";
+
+/** The rest of "Works on": Auto, a private desktop, this computer, or none. */
+export function WorkMoreChoices({ value, onChange }: { value: WorkChoice; onChange: (choice: WorkChoice) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2" role="group" aria-label={t("workComputer.more")}>
+      {WORKS_ON_CHOICES.filter(([mode]) => mode !== "cloud" && mode !== "browser").map(([mode, labelKey, descriptionKey, Icon]) => {
+        const choice: WorkChoice = { kind: "other", computer: mode };
+        const selected = sameChoice(value, choice);
+        return (
+          <button key={mode ?? "auto"} type="button" aria-pressed={selected} onClick={() => onChange(choice)}
+            className={cn("min-w-0 rounded-lg border px-2.5 py-2.5 text-left", selected ? "border-accent/60 bg-accent/10" : "border-hairline/50 hover:bg-control/60")}>
+            <span className="flex items-center gap-2 text-sm font-medium text-ink"><Icon size={14} className="shrink-0 text-ink-secondary" />{t(labelKey)}</span>
+            <span className="mt-1 block text-xs leading-4 text-ink-secondary">{t(descriptionKey)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 
 function ChoiceCard({ icon: Icon, title, description, note, selected, onClick, testId }: {
   icon: LucideIcon; title: string; description: string; note?: ReactNode; selected: boolean; onClick: () => void; testId: string;
@@ -67,8 +88,8 @@ export function WorkComputerPicker({ value, onChange, more, live = true }: {
       onUse={(id) => { setView("cards"); setMacsOpen(true); refresh(); onChange({ kind: "mac", id }); }} />;
   }
   return (
-    <div className="flex flex-col gap-3" data-work-computer-picker>
-      <div role="group" aria-label={t("workComputer.title")} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+    <div className="@container flex flex-col gap-3" data-work-computer-picker>
+      <div role="group" aria-label={t("workComputer.title")} className="grid grid-cols-1 gap-2 @xl:grid-cols-3">
         <ChoiceCard testId="work-boat" icon={Cloud} title={t("workComputer.boat.title")} description={t("workComputer.boat.desc")}
           selected={value.kind === "boat"}
           note={<Badge tone={boatReady ? "success" : "outline"}>{t(boatReady ? "workComputer.boat.ready" : "workComputer.boat.needsKey")}</Badge>}

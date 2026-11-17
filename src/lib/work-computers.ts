@@ -1,6 +1,7 @@
 // Where a bot works: a Boat cloud computer, a computer of the owner's lent to this server (a Mac mini, a laptop), or
 // the server itself. The choice is a bot patch; the lent computers come from /api/work-computers.
 import { useEffect, useState } from "react";
+import { t } from "@/lib/i18n";
 import { api, type Bot } from "@/state/store";
 import type { BotUpdatePatch } from "@/state/bot-patch-queue";
 
@@ -37,6 +38,21 @@ export function workPatch(choice: WorkChoice): WorkPatch {
   if (choice.kind === "boat") return { computer: "cloud", cloudBackend: "box" };
   if (choice.kind === "mac") return { computer: "cloud", cloudBackend: "lent", lentComputerId: choice.id };
   return { computer: "browser" };
+}
+
+/** A choice in the picker's own words: Boat, A Mac of yours, The server itself, or the other place's name. */
+export function workChoiceLabel(choice: WorkChoice): string {
+  if (choice.kind === "boat") return t("workComputer.boat.title");
+  if (choice.kind === "mac") return t("workComputer.mac.title");
+  if (choice.kind === "server") return t("workComputer.server.title");
+  switch (choice.computer ?? null) {
+    case "vm": return t("vm.dest.vm");
+    case "local": return t("vm.dest.local");
+    case "browser": return t("vm.dest.browser");
+    case "cloud": return t("place.cloud");
+    case "off": return t("vm.dest.off");
+    default: return t("vm.dest.auto");
+  }
 }
 
 export function workChoiceOf(bot: Pick<Bot, "computer" | "cloudBackend" | "lentComputerId">): WorkChoice {
