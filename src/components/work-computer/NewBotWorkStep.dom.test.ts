@@ -9,6 +9,8 @@ const fx = vi.hoisted(() => ({
   step: { type: "newBot" as const },
   dispatch: vi.fn(),
   boat: false,
+  browser: false,
+  profiles: [] as Array<{ id: string; name: string }>,
   computers: [] as Array<Record<string, unknown>>,
   calls: [] as Array<{ path: string; method: string; body?: unknown }>,
   saved: [] as Array<[string, string]>,
@@ -21,6 +23,7 @@ vi.mock("@/state/store", async (original) => {
     fx.calls.push({ path, method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
     if (path === "/api/work-computers") return { computers: fx.computers };
     if (path === "/api/auth/pairing") return fx.pairing;
+    if (path === "/api/config" && method === "PATCH") return { browserProfiles: (JSON.parse(String(init!.body)) as { browserProfiles: unknown }).browserProfiles };
     if (path.endsWith("/test")) return { ok: true, image: { mimeType: "image/png", data: "c2NyZWVu" } };
     throw new Error(`unexpected ${method} ${path}`);
   };
@@ -28,7 +31,7 @@ vi.mock("@/state/store", async (original) => {
     ...actual,
     api,
     useStore: () => ({
-      state: { ...actual.initialState, config: { ...actual.initialState.config, box: { configured: fx.boat } }, newBotStep: fx.step, botCreationPending: false },
+      state: { ...actual.initialState, config: { ...actual.initialState.config, box: { configured: fx.boat }, features: { browser: fx.browser }, browserProfiles: fx.profiles }, newBotStep: fx.step, botCreationPending: false },
       dispatch: fx.dispatch,
     }),
   };
@@ -56,6 +59,8 @@ beforeEach(async () => {
   setLocale("en");
   fx.dispatch.mockReset();
   fx.boat = false;
+  fx.browser = false;
+  fx.profiles = [];
   fx.computers = [];
   fx.calls = [];
   fx.saved = [];
@@ -162,4 +167,42 @@ it("keeps Auto and the other places under More options", async () => {
   await click([...document.querySelectorAll<HTMLButtonElement>("[role=group][aria-label='More options'] button")][0]);
   await click(button("Create bot"));
   expect(created()).toEqual({ type: "newBot", work: { computer: null } });
+});
+
+it("asks for its own browser or a shared one; its own is the default and adds nothing", async () => {
+  fx.browser = true;
+  await open();
+  expect(q("#new-bot-browser-title")?.textContent).toBe("Browser");
+  expect(button("Its own browser")?.getAttribute("aria-pressed")).toBe("true");
+  await click(button("Create bot"));
+  expect(created()).toEqual({ type: "newBot", work: { computer: "browser" } });
+  expect(fx.calls.some((call) => call.path === "/api/config")).toBe(false);
+});
+
+it("Shared with no profile yet makes one named Shared on Create and puts the bot on it", async () => {
+  fx.browser = true;
+  await open();
+  await click(button("Shared"));
+  expect([...document.querySelectorAll("label")].find((label) => label.textContent?.includes("New profile's name"))?.querySelector("input")?.value).toBe("Shared");
+  await click(button("Create bot"));
+  const patch = fx.calls.find((call) => call.path === "/api/config" && call.method === "PATCH")?.body as { browserProfiles: Array<{ id: string; name: string }>; expectedBrowserProfiles: unknown[] };
+  expect(patch.expectedBrowserProfiles).toEqual([]);
+  expect(patch.browserProfiles).toEqual([{ id: expect.stringMatching(/^profile-/), name: "Shared" }]);
+  expect(created()).toEqual({ type: "newBot", work: { computer: "browser", browserProfile: patch.browserProfiles[0]!.id } });
+});
+
+it("Shared picks the first existing profile and saves nothing new", async () => {
+  fx.browser = true;
+  fx.profiles = [{ id: "profile-linkedin", name: "LinkedIn" }];
+  await open();
+  await click(button("Shared"));
+  expect(q<HTMLSelectElement>("select[aria-label='Shared profile']")?.value).toBe("profile-linkedin");
+  await click(button("Create bot"));
+  expect(fx.calls.some((call) => call.path === "/api/config")).toBe(false);
+  expect(created()).toEqual({ type: "newBot", work: { computer: "browser", browserProfile: "profile-linkedin" } });
+});
+
+it("shows no browser question while the built-in browser is off", async () => {
+  await open();
+  expect(q("#new-bot-browser-title")).toBeNull();
 });

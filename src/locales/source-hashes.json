@@ -6697,7 +6697,16 @@
       "macHome.move.openRemote": "f9713da9ec34dcca476e51b249c53b6a72a692a82d18ac81c250c013b8471c61",
       "workComputer.screen.worksOn": "298df33bc9a92e198d286d5b89b8dc5c182086fc10d3089e7b49feb3e7052625",
       "workComputer.screen.hint": "52b721b5103f009c116749bc7a1cb5a7ad96c17b874edcfb9b9c3a4196f572f7",
-      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da"
+      "workComputer.screen.look": "df10a597298da4f66876beb97c2931a3f49289141bb09d8ebcc2a2cc0a8024da",
+      "newBotBrowser.title": "d31de1a5c5c8ba2a210a167cf0d0dc2425c57ea7525f4b73a4b7ab934af79dfc",
+      "newBotBrowser.own": "7acb3af0386048788d1aab5deb4176d140da98e055222cffa6e39aebb78e972c",
+      "newBotBrowser.ownDesc": "4b2f03a81a1bc2406d2cdc7ac510cdfa1a7e89d4d1d62ef50698a4d70ffb3d32",
+      "newBotBrowser.shared": "e3c4b39d6d5013477c98cd58236fed455f37aa7017b7168ce1980a449aaf438a",
+      "newBotBrowser.sharedDesc": "20e563c5c5f2818e05eee7247715d0f927f5161f34c6bf94ef2b3b19817d0052",
+      "newBotBrowser.which": "a1e9c2417e87ef36ac7f8dff7089e72abc602cb11ddab21372a09cc1cd65757e",
+      "newBotBrowser.newProfile": "fb573d7c3e9077332878ef0ceabe8153f46bdace213885d1b4cd09a575fcbaad",
+      "newBotBrowser.defaultName": "e3c4b39d6d5013477c98cd58236fed455f37aa7017b7168ce1980a449aaf438a",
+      "newBotBrowser.nameLabel": "f485651440150941fd88a0eb4e0ef9858012a4f2391b910147865c531f499ad9"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

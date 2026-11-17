@@ -8,6 +8,7 @@ import { WORKS_ON_CHOICES } from "../WorksOnGrid";
 import { Button } from "../ui/Button";
 import { Dialog, DialogFooter, DialogPanel } from "../ui/Dialog";
 import { WorkComputerPicker } from "./WorkComputerPicker";
+import { browserProfileFor, defaultBrowserChoice, NewBotBrowserChoice, type BrowserChoice } from "./NewBotBrowserChoice";
 
 /** The rest of "Works on" for a new bot: Auto, a private desktop, this computer, the browser only, or none. */
 function MoreChoices({ value, onChange }: { value: WorkChoice; onChange: (choice: WorkChoice) => void }) {
@@ -34,17 +35,36 @@ export function NewBotWorkStep() {
   const pending = state.newBotStep;
   const boatReady = state.config?.box?.configured === true;
   const [choice, setChoice] = useState<WorkChoice>({ kind: boatReady ? "boat" : "server" });
+  const [browser, setBrowser] = useState<BrowserChoice>(defaultBrowserChoice);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const createRef = useRef<HTMLButtonElement>(null);
   const asking = Boolean(pending);
-  useEffect(() => { if (asking) setChoice({ kind: boatReady ? "boat" : "server" }); }, [asking, boatReady]);
+  useEffect(() => {
+    if (!asking) return;
+    setChoice({ kind: boatReady ? "boat" : "server" });
+    setBrowser(defaultBrowserChoice());
+    setError("");
+  }, [asking, boatReady]);
   const close = () => dispatch({ type: "newBotStep", action: null });
-  const create = () => {
-    if (!pending) return;
-    close();
-    dispatch({ ...pending, work: workPatch(choice) });
+  const create = async () => {
+    if (!pending || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const profiles = state.config?.browserProfiles ?? [];
+      const browserProfile = await browserProfileFor(browser, profiles, (config) => dispatch({ type: "configStatus", config }));
+      close();
+      dispatch({ ...pending, work: { ...workPatch(choice), ...(browserProfile ? { browserProfile } : {}) } });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : t("settings.profiles.saveError"));
+    } finally {
+      setSaving(false);
+    }
   };
+  const busy = saving || state.botCreationPending;
   return (
-    <Dialog open={Boolean(pending)} onClose={close} initialFocusRef={createRef} busy={state.botCreationPending}>
+    <Dialog open={Boolean(pending)} onClose={close} initialFocusRef={createRef} busy={busy}>
       {(panelRef) => (
         <DialogPanel ref={panelRef} aria-labelledby="new-bot-work-title" data-new-bot-work-step
           className="flex max-h-[90dvh] max-w-170 flex-col overflow-hidden p-0">
@@ -54,13 +74,15 @@ export function NewBotWorkStep() {
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
             <WorkComputerPicker value={choice} onChange={setChoice} more={<MoreChoices value={choice} onChange={setChoice} />} />
+            <NewBotBrowserChoice value={browser} onChange={setBrowser} />
           </div>
           <div className="shrink-0 border-t border-hairline/40 px-5 py-3">
+            {error ? <p role="alert" className="mb-2 text-sm text-danger">{error}</p> : null}
             <p className="text-sm text-ink-secondary">{t("workComputer.later")}</p>
             <DialogFooter className="mt-3">
               <Button onClick={close}>{t("common.cancel")}</Button>
-              <Button ref={createRef} variant="primary" className="gap-1.5" disabled={state.botCreationPending} onClick={create}>
-                {state.botCreationPending && <Loader2 size={14} className="animate-spin" />}{t("workComputer.create")}
+              <Button ref={createRef} variant="primary" className="gap-1.5" disabled={busy} onClick={() => void create()}>
+                {busy && <Loader2 size={14} className="animate-spin" />}{t("workComputer.create")}
               </Button>
             </DialogFooter>
           </div>

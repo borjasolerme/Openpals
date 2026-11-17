@@ -719,7 +719,7 @@ export type Action =
   | { type: "taskSwitched"; bot: Bot }
   | { type: "newBot"; preserveSelection?: boolean; onCreated?: (bot: Bot) => void; onError?: (message: string) => void;
     /** Where it works, answered in the new-bot step; without it the step asks first. */
-    work?: Pick<BotUpdatePatch, "computer" | "cloudBackend" | "lentComputerId"> }
+    work?: Pick<BotUpdatePatch, "computer" | "cloudBackend" | "lentComputerId" | "browserProfile"> }
   | { type: "newBotStep"; action: Extract<Action, { type: "newBot" }> | null }
   | { type: "botCreationPending"; on: boolean }
   | { type: "updateTask"; botId: string; threadId: string; patch: TaskUpdatePatch }

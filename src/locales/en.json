@@ -5737,5 +5737,14 @@
   "macHome.move.openRemote": "Open Remote access",
   "workComputer.screen.worksOn": "{name} works on this Mac of yours.",
   "workComputer.screen.hint": "Bots use its screen in the background. Pause or stop it from Openpals on that Mac.",
-  "workComputer.screen.look": "Look at its screen"
+  "workComputer.screen.look": "Look at its screen",
+  "newBotBrowser.title": "Browser",
+  "newBotBrowser.own": "Its own browser",
+  "newBotBrowser.ownDesc": "Its sign-ins are only its own.",
+  "newBotBrowser.shared": "Shared",
+  "newBotBrowser.sharedDesc": "Uses the same sign-ins as other bots on this profile.",
+  "newBotBrowser.which": "Shared profile",
+  "newBotBrowser.newProfile": "New shared profile…",
+  "newBotBrowser.nameLabel": "New profile's name",
+  "newBotBrowser.defaultName": "Shared"
 }

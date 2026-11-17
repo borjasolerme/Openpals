@@ -4417,5 +4417,14 @@
   "macHome.move.openRemote": "Abrir Acceso remoto",
   "workComputer.screen.worksOn": "{name} trabaja en este Mac tuyo.",
   "workComputer.screen.hint": "Los bots usan su pantalla en segundo plano. Pausa o detén esto desde Openpals en ese Mac.",
-  "workComputer.screen.look": "Ver su pantalla"
+  "workComputer.screen.look": "Ver su pantalla",
+  "newBotBrowser.title": "Navegador",
+  "newBotBrowser.own": "Su propio navegador",
+  "newBotBrowser.ownDesc": "Sus inicios de sesión son solo suyos.",
+  "newBotBrowser.shared": "Compartido",
+  "newBotBrowser.sharedDesc": "Usa los mismos inicios de sesión que los otros bots de este perfil.",
+  "newBotBrowser.which": "Perfil compartido",
+  "newBotBrowser.newProfile": "Nuevo perfil compartido…",
+  "newBotBrowser.nameLabel": "Nombre del perfil nuevo",
+  "newBotBrowser.defaultName": "Compartido"
 }
