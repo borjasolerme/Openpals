@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useWorkComputers, workChoiceLabel, workComputerState, type WorkChoice } from "@/lib/work-computers";
 import { Card, LinkRow, RadioRow } from "../bot-panel/rows";
-import { AddMacGuide } from "./AddMacGuide";
+import { AddComputerGuide } from "./AddComputerGuide";
 
 /**
  * Where a bot works, as one list: Your server, then each computer lent to it by its own name, and Add a computer.
@@ -16,7 +16,7 @@ export function WorkPlaceChooser({ value, onChange }: { value: WorkChoice; onCha
   const lent = (computers ?? []).filter((computer) => computer.lent || (value.kind === "mac" && value.id === computer.id));
   if (adding) {
     return (
-      <AddMacGuide known={lent.map((computer) => computer.id)}
+      <AddComputerGuide known={lent.map((computer) => computer.id)}
         onBack={() => { setAdding(false); refresh(); }}
         onUse={(id) => { setAdding(false); refresh(); onChange({ kind: "mac", id }); }} />
     );

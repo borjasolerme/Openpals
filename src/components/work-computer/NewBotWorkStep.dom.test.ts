@@ -90,23 +90,29 @@ it("lists each lent computer by its own name and state, and makes the bot work o
   expect(created()).toEqual({ type: "newBot", work: { computer: "cloud", cloudBackend: "lent", lentComputerId: mac().id } });
 });
 
-it("Add a computer walks the steps: a fresh pairing link with its code, how to allow, then Connected live and Test connection", async () => {
+it("Add a computer walks three steps: install, a pairing link made as step 2 opens, turn it on, then Connected live", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     await open();
     await click(button("Add a computer"));
-    expect(q("[data-add-mac-guide]")).toBeTruthy();
+    expect(q("[data-add-computer-guide]")?.textContent).toContain("a virtual machine with a desktop");
     expect(q("[data-guide-step='1']")?.getAttribute("aria-current")).toBe("step");
+    expect(fx.calls.some((call) => call.path === "/api/auth/pairing")).toBe(false);
     await click(button("It's installed"));
-    await click(button("Make a link"));
-    expect(fx.calls.find((call) => call.path === "/api/auth/pairing")?.body).toMatchObject({ scopes: ["admin", "client"] });
-    expect(q("[data-pairing-link]")?.textContent).toContain(fx.pairing.url);
-    await click(button("How to allow"));
+    expect(q("[data-guide-step='2']")?.getAttribute("aria-current")).toBe("step");
+    expect(fx.calls.filter((call) => call.path === "/api/auth/pairing").map((call) => call.body)).toEqual([expect.objectContaining({ scopes: ["admin", "client"] })]);
+    expect(q("[data-pairing-code]")?.textContent).toContain(fx.pairing.code);
+    expect(q("[data-pairing-link] [role=img]")).toBeTruthy();
+    expect(button("Make a link")).toBeUndefined();
+    await click(button("Copy link"));
+    expect(q("[data-guide-step='3']")?.getAttribute("aria-current")).toBe("step");
+    await click(button("On a Mac"));
     expect(q("[data-allow-steps]")?.textContent).toContain("Accessibility");
     fx.computers = [mac()];
     await act(async () => { await vi.advanceTimersByTimeAsync(3_100); });
     await settle();
-    expect(q("[data-guide-step='4']")?.textContent).toContain("Mac mini is connected ✓");
+    expect(q("[data-guide-connected]")?.textContent).toContain("Mac mini is connected ✓");
+    expect(q("[data-guide-step]")).toBeNull();
     await click(button("Test connection"));
     expect(q("[data-connection-test=ok] img")?.getAttribute("src")).toBe("data:image/png;base64,c2NyZWVu");
     await click(button("Use Mac mini"));

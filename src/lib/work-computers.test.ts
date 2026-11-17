@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sameChoice, workChoiceLabel, workChoiceOf, workComputerState, workPatch } from "./work-computers";
 import { lendingPhase, needsMacPermissions } from "./lending";
-import { guideStep, newlyConnected } from "@/components/work-computer/AddMacGuide";
+import { guideStep, newlyConnected } from "@/components/work-computer/AddComputerGuide";
 
 const mac = (extra = {}) => ({ id: "a", name: "Mac mini", platform: "darwin" as const, online: true, busy: false, lent: true, paused: false,
   lastSeenAt: 0, lastUsedAt: null, scopes: { folders: 0, terminal: false, screen: true }, ...extra });
@@ -35,11 +35,11 @@ describe("where a bot works", () => {
     expect(workComputerState(mac({ online: false, lent: false }))).toBe("stopped");
   });
 
-  it("the Add a Mac guide moves on as each step is done, and sees only a Mac that connected since it opened", () => {
-    expect(guideStep({ reached: 1, link: false, connected: false })).toBe(1);
-    expect(guideStep({ reached: 2, link: false, connected: false })).toBe(2);
-    expect(guideStep({ reached: 2, link: true, connected: false })).toBe(3);
-    expect(guideStep({ reached: 1, link: false, connected: true })).toBe(4);
+  it("the Add a computer guide moves on as each step is done, and sees only a computer that connected since it opened", () => {
+    expect(guideStep({ reached: 1, connected: false })).toBe(1);
+    expect(guideStep({ reached: 2, connected: false })).toBe(2);
+    expect(guideStep({ reached: 3, connected: false })).toBe(3);
+    expect(guideStep({ reached: 1, connected: true })).toBe("connected");
     expect(newlyConnected([mac()], new Set(["a"]))).toBeNull();
     expect(newlyConnected([mac({ id: "b" })], new Set(["a"]))?.id).toBe("b");
     expect(newlyConnected([mac({ id: "b", online: false })], new Set())).toBeNull();
