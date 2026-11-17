@@ -8,7 +8,7 @@ import { WORKS_ON_CHOICES } from "../WorksOnGrid";
 import { Button } from "../ui/Button";
 import { Dialog, DialogFooter, DialogPanel } from "../ui/Dialog";
 import { WorkComputerPicker } from "./WorkComputerPicker";
-import { browserProfileFor, defaultBrowserChoice, NewBotBrowserChoice, type BrowserChoice } from "./NewBotBrowserChoice";
+import { browserProfileFor, defaultBrowserChoice, NewBotBrowserChoice, type BrowserChoice } from "./BrowserChoice";
 
 /** The rest of "Works on" for a new bot: Auto, a private desktop, this computer, the browser only, or none. */
 function MoreChoices({ value, onChange }: { value: WorkChoice; onChange: (choice: WorkChoice) => void }) {

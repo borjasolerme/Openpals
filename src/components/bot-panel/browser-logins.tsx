@@ -4,6 +4,7 @@ import { t } from "@/lib/i18n";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { useStore, type Bot } from "@/state/store";
 import { SignedInSites } from "../SignedInSites";
+import { BotBrowserChoice } from "../work-computer/BrowserChoice";
 import { Card, ColRow, LinkRow, NoteRow } from "./rows";
 
 export function BrowserLogins({ bot, browserEnabled, onOpenBrowser }: {
@@ -31,6 +32,7 @@ export function BrowserLogins({ bot, browserEnabled, onOpenBrowser }: {
         <NoteRow>{t("settings.profiles.myChromeHint")}</NoteRow>
       ) : (
         <>
+          {ownerOrAdmin !== false && <ColRow><BotBrowserChoice bot={bot} className="w-full" /></ColRow>}
           {/* Security: reading and clearing a browser's sign-ins is the owner's or an admin's; the server refuses anyone else. */}
           {ownerOrAdmin !== false && (profileId === "" || profile) && (
             <ColRow>

@@ -6706,7 +6706,9 @@
       "newBotBrowser.which": "a1e9c2417e87ef36ac7f8dff7089e72abc602cb11ddab21372a09cc1cd65757e",
       "newBotBrowser.newProfile": "fb573d7c3e9077332878ef0ceabe8153f46bdace213885d1b4cd09a575fcbaad",
       "newBotBrowser.defaultName": "e3c4b39d6d5013477c98cd58236fed455f37aa7017b7168ce1980a449aaf438a",
-      "newBotBrowser.nameLabel": "f485651440150941fd88a0eb4e0ef9858012a4f2391b910147865c531f499ad9"
+      "newBotBrowser.nameLabel": "f485651440150941fd88a0eb4e0ef9858012a4f2391b910147865c531f499ad9",
+      "newBotBrowser.createAndUse": "f0e9a72595067bbd7d81bfe4011a3de5549c985201b128f4255e82859b86ceb6",
+      "newBotBrowser.signInOnce": "bd30145288082aa357d443364c858573c3c26e9e4004d74f2d8ffac7a064c7d1"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

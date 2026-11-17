@@ -5746,5 +5746,7 @@
   "newBotBrowser.which": "Shared profile",
   "newBotBrowser.newProfile": "New shared profile…",
   "newBotBrowser.nameLabel": "New profile's name",
-  "newBotBrowser.defaultName": "Shared"
+  "newBotBrowser.defaultName": "Shared",
+  "newBotBrowser.createAndUse": "Create and use",
+  "newBotBrowser.signInOnce": "Sign-ins made in its own browser stay there. On a shared profile, sign in once in the Browser tab of any bot that uses it."
 }

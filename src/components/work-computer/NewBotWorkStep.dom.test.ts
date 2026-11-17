@@ -172,7 +172,7 @@ it("keeps Auto and the other places under More options", async () => {
 it("asks for its own browser or a shared one; its own is the default and adds nothing", async () => {
   fx.browser = true;
   await open();
-  expect(q("#new-bot-browser-title")?.textContent).toBe("Browser");
+  expect(q("#bot-browser-title")?.textContent).toBe("Browser");
   expect(button("Its own browser")?.getAttribute("aria-pressed")).toBe("true");
   await click(button("Create bot"));
   expect(created()).toEqual({ type: "newBot", work: { computer: "browser" } });
@@ -204,5 +204,5 @@ it("Shared picks the first existing profile and saves nothing new", async () => 
 
 it("shows no browser question while the built-in browser is off", async () => {
   await open();
-  expect(q("#new-bot-browser-title")).toBeNull();
+  expect(q("#bot-browser-title")).toBeNull();
 });

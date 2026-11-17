@@ -4426,5 +4426,7 @@
   "newBotBrowser.which": "Perfil compartido",
   "newBotBrowser.newProfile": "Nuevo perfil compartido…",
   "newBotBrowser.nameLabel": "Nombre del perfil nuevo",
-  "newBotBrowser.defaultName": "Compartido"
+  "newBotBrowser.defaultName": "Compartido",
+  "newBotBrowser.createAndUse": "Crear y usar",
+  "newBotBrowser.signInOnce": "Los inicios de sesión hechos en su propio navegador se quedan ahí. En un perfil compartido, inicia sesión una vez en la pestaña Navegador de cualquier bot que lo use."
 }
