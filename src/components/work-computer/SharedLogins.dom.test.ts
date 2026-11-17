@@ -32,15 +32,18 @@ vi.mock("@/state/store", async (original) => {
   };
 });
 
-const { BotBrowserChoice } = await import("./BrowserChoice");
+const { BotSharedLogins } = await import("./SharedLogins");
 
 let host: HTMLDivElement;
 let root: Root;
 const settle = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
-const button = (text: string) => [...document.querySelectorAll<HTMLButtonElement>("button")].find((item) => item.textContent?.includes(text));
-const click = async (element: HTMLElement | null | undefined) => { expect(element).toBeTruthy(); await act(async () => { element!.click(); }); await settle(); };
+const toggle = () => document.querySelector<HTMLButtonElement>("[data-panel-row=shared-logins] [role=switch]");
+const flip = async () => { await act(async () => { toggle()!.click(); }); await settle(); };
 const botPatches = () => fx.calls.filter((call) => call.path === "/api/bots/bot-1" && call.method === "PATCH").map((call) => call.body);
-const render = async (bot: Record<string, unknown>) => { await act(async () => root.render(createElement(BotBrowserChoice, { bot: { id: "bot-1", name: "Chief", ...bot } as never }))); await settle(); };
+const render = async (bot: Record<string, unknown>) => {
+  await act(async () => root.render(createElement(BotSharedLogins, { bot: { id: "bot-1", name: "Chief", color: "blue", ...bot } as never })));
+  await settle();
+};
 
 beforeEach(() => {
   setLocale("en");
@@ -57,37 +60,35 @@ afterEach(async () => {
   host.remove();
 });
 
-it("moves a bot on its own browser onto the first shared profile at once", async () => {
+it("is one Shared sign-ins switch; turning it on puts the bot on the shared profile there is", async () => {
   fx.profiles = [{ id: "profile-linkedin", name: "LinkedIn" }];
   await render({});
-  expect(button("Its own browser")?.getAttribute("aria-pressed")).toBe("true");
-  await click(button("Shared"));
+  expect(document.body.textContent).toContain("Shared sign-ins");
+  expect(toggle()?.getAttribute("aria-checked")).toBe("false");
+  await flip();
   expect(fx.flush).toHaveBeenCalledWith("bot-1");
   expect(botPatches()).toEqual([{ browserProfile: "profile-linkedin" }]);
-  expect(fx.dispatch).toHaveBeenCalledWith({ type: "botPatched", bot: { id: "bot-1", browserProfile: "profile-linkedin" } });
+  expect(fx.calls.some((call) => call.path === "/api/config")).toBe(false);
 });
 
-it("with no shared profile yet, waits for a name and Create and use, then makes it and moves the bot", async () => {
+it("with no shared profile yet, makes one named Shared and puts the bot on it", async () => {
   await render({});
-  await click(button("Shared"));
-  expect(botPatches()).toEqual([]);
-  await click(button("Create and use"));
+  await flip();
   const config = fx.calls.find((call) => call.path === "/api/config")?.body as { browserProfiles: Array<{ id: string; name: string }> };
   expect(config.browserProfiles).toEqual([{ id: expect.stringMatching(/^profile-/), name: "Shared" }]);
   expect(botPatches()).toEqual([{ browserProfile: config.browserProfiles[0]!.id }]);
 });
 
-it("puts a shared bot back on its own browser", async () => {
+it("turning it off puts the bot back on its own browser", async () => {
   fx.profiles = [{ id: "profile-linkedin", name: "LinkedIn" }];
   await render({ browserProfile: "profile-linkedin" });
-  expect(button("Shared")?.getAttribute("aria-pressed")).toBe("true");
-  await click(button("Its own browser"));
+  expect(toggle()?.getAttribute("aria-checked")).toBe("true");
+  await flip();
   expect(botPatches()).toEqual([{ browserProfile: null }]);
 });
 
 it("can't switch while the bot is working, and says to stop it first", async () => {
-  fx.profiles = [{ id: "profile-linkedin", name: "LinkedIn" }];
   await render({ busy: true });
-  expect(button("Shared")?.disabled).toBe(true);
+  expect(toggle()?.disabled).toBe(true);
   expect(document.body.textContent).toContain("Stop this bot's turn before switching browser profiles.");
 });

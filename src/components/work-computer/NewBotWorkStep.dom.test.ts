@@ -8,12 +8,10 @@ import { setLocale } from "@/lib/i18n";
 const fx = vi.hoisted(() => ({
   step: { type: "newBot" as const },
   dispatch: vi.fn(),
-  boat: false,
   browser: false,
   profiles: [] as Array<{ id: string; name: string }>,
   computers: [] as Array<Record<string, unknown>>,
   calls: [] as Array<{ path: string; method: string; body?: unknown }>,
-  saved: [] as Array<[string, string]>,
   pairing: { code: "ABCD-EFGH-JKLM", url: "https://boat.example/pair#code=ABCD-EFGH-JKLM", expiresAt: Date.now() + 10 * 60_000, hint: null },
 }));
 vi.mock("@/state/store", async (original) => {
@@ -31,14 +29,10 @@ vi.mock("@/state/store", async (original) => {
     ...actual,
     api,
     useStore: () => ({
-      state: { ...actual.initialState, config: { ...actual.initialState.config, box: { configured: fx.boat }, features: { browser: fx.browser }, browserProfiles: fx.profiles }, newBotStep: fx.step, botCreationPending: false },
+      state: { ...actual.initialState, config: { ...actual.initialState.config, features: { browser: fx.browser }, browserProfiles: fx.profiles }, newBotStep: fx.step, botCreationPending: false },
       dispatch: fx.dispatch,
     }),
   };
-});
-vi.mock("../keys/key-save", async (original) => {
-  const actual = await original<typeof import("../keys/key-save")>();
-  return { ...actual, saveCredential: async (id: string, value: string) => { fx.saved.push([id, value]); return { box: { configured: true } }; } };
 });
 
 const { NewBotWorkStep } = await import("./NewBotWorkStep");
@@ -58,12 +52,10 @@ const created = () => fx.dispatch.mock.calls.map(([action]) => action).find((act
 beforeEach(async () => {
   setLocale("en");
   fx.dispatch.mockReset();
-  fx.boat = false;
   fx.browser = false;
   fx.profiles = [];
   fx.computers = [];
   fx.calls = [];
-  fx.saved = [];
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -74,79 +66,43 @@ afterEach(async () => {
 });
 const open = async () => { await act(async () => root.render(createElement(NewBotWorkStep))); await settle(); };
 
-it("asks where the bot works with three cards, and makes it on the server itself by default when there is no Boat key", async () => {
+const choices = () => [...document.querySelectorAll("[data-work-place] [role=radio]")].map((row) => [row.getAttribute("data-panel-choice"), row.getAttribute("aria-checked")]);
+const shared = () => document.querySelector<HTMLButtonElement>("[data-panel-row=shared-logins] [role=switch]");
+
+it("asks where the bot works as one list, Your server first and chosen, with no Boat and no More options", async () => {
   await open();
   expect(q("[data-new-bot-work-step] h2")?.textContent).toBe("Where does this bot work?");
-  expect([...document.querySelectorAll("[data-work-computer-picker] [role=group] > button")].map((card) => card.getAttribute("data-testid")))
-    .toEqual(["work-boat", "work-mac", "work-server"]);
-  expect(q("[data-testid=work-server]")?.getAttribute("aria-pressed")).toBe("true");
+  expect(choices()).toEqual([["server", "true"]]);
+  expect(document.body.textContent).toContain("Your server");
+  expect(document.body.textContent).not.toContain("Boat");
+  expect(button("More options")).toBeUndefined();
   await click(button("Create bot"));
   expect(created()).toEqual({ type: "newBot", work: { computer: "browser" } });
 });
 
-it("without a Boat key, Boat explains itself, links to boat.dev, saves the key like Settings and is then chosen", async () => {
-  await open();
-  await click(q("[data-testid=work-boat]"));
-  const panel = q("[data-boat-key-panel]")!;
-  expect(panel.textContent).toContain("paid service");
-  expect(q<HTMLAnchorElement>("[data-boat-key-panel] a")?.href).toBe("https://boat.dev/");
-  const input = q<HTMLInputElement>("[data-boat-key-panel] input")!;
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "not a key");
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  await click(button("Save key"));
-  expect(q("[data-boat-key-panel] [role=alert]")?.textContent).toContain("starts with boat_");
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "boat_fixture123");
-    input.dispatchEvent(new Event("input", { bubbles: true }));
-  });
-  await click(button("Save key"));
-  expect(fx.saved).toEqual([["box", "boat_fixture123"]]);
-  expect(fx.dispatch).toHaveBeenCalledWith({ type: "configStatus", config: { box: { configured: true } } });
-  expect(q("[data-testid=work-boat]")?.getAttribute("aria-pressed")).toBe("true");
-  await click(button("Create bot"));
-  expect(created()).toEqual({ type: "newBot", work: { computer: "cloud", cloudBackend: "box" } });
-});
-
-it("with a Boat key, Boat is ready and chosen first", async () => {
-  fx.boat = true;
-  await open();
-  expect(q("[data-testid=work-boat]")?.getAttribute("aria-pressed")).toBe("true");
-  expect(q("[data-testid=work-boat]")?.textContent).toContain("Ready");
-});
-
-it("lists the connected Macs with their state, and makes the bot work on the one chosen", async () => {
+it("lists each lent computer by its own name and state, and makes the bot work on the one chosen", async () => {
   fx.computers = [mac(), mac({ id: "2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", name: "Laptop", online: false, paused: true })];
   await open();
-  await click(q("[data-testid=work-mac]"));
-  const rows = [...document.querySelectorAll("[data-work-macs] [role=radio]")];
-  expect(rows.map((row) => [row.textContent?.includes("Mac mini") ? "Mac mini" : "Laptop", row.querySelector("[data-work-computer-state]")?.getAttribute("data-work-computer-state")]))
-    .toEqual([["Mac mini", "online"], ["Laptop", "paused"]]);
-  await click(rows[0] as HTMLElement);
+  const rows = [...document.querySelectorAll<HTMLElement>("[data-work-place] [role=radio]")];
+  expect(rows.map((row) => row.textContent)).toEqual(["Your serverWhere your bots live. Nothing to set up.", "Mac miniConnected", "LaptopPaused"]);
+  await click(rows[1]);
   await click(button("Create bot"));
   expect(created()).toEqual({ type: "newBot", work: { computer: "cloud", cloudBackend: "lent", lentComputerId: mac().id } });
 });
 
-it("Add a Mac walks the steps: a fresh pairing link with its code and Copy, how to allow, then Connected live and Test connection", async () => {
+it("Add a computer walks the steps: a fresh pairing link with its code, how to allow, then Connected live and Test connection", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   try {
     await open();
-    await click(q("[data-testid=work-mac]"));
+    await click(button("Add a computer"));
     expect(q("[data-add-mac-guide]")).toBeTruthy();
     expect(q("[data-guide-step='1']")?.getAttribute("aria-current")).toBe("step");
-    expect(q<HTMLAnchorElement>("[data-guide-step='1'] a")?.href).toBe("https://github.com/borjasolerme/Openpals#getting-started");
     await click(button("It's installed"));
-    expect(q("[data-guide-step='2']")?.getAttribute("aria-current")).toBe("step");
     await click(button("Make a link"));
     expect(fx.calls.find((call) => call.path === "/api/auth/pairing")?.body).toMatchObject({ scopes: ["admin", "client"] });
     expect(q("[data-pairing-link]")?.textContent).toContain(fx.pairing.url);
-    expect(q("[data-pairing-link] svg")).toBeTruthy();
-    expect(q("[data-guide-step='3']")?.getAttribute("aria-current")).toBe("step");
     await click(button("How to allow"));
     expect(q("[data-allow-steps]")?.textContent).toContain("Accessibility");
-    expect(q("[data-waiting-for-mac]")).toBeTruthy();
-
     fx.computers = [mac()];
     await act(async () => { await vi.advanceTimersByTimeAsync(3_100); });
     await settle();
@@ -161,48 +117,36 @@ it("Add a Mac walks the steps: a fresh pairing link with its code and Copy, how 
   }
 });
 
-it("keeps Auto and the other places under More options", async () => {
-  await open();
-  await click(button("More options"));
-  await click([...document.querySelectorAll<HTMLButtonElement>("[role=group][aria-label='More options'] button")][0]);
-  await click(button("Create bot"));
-  expect(created()).toEqual({ type: "newBot", work: { computer: null } });
-});
-
-it("asks for its own browser or a shared one; its own is the default and adds nothing", async () => {
+it("Shared sign-ins is off by default and adds nothing", async () => {
   fx.browser = true;
   await open();
-  expect(q("#bot-browser-title")?.textContent).toBe("Browser");
-  expect(button("Its own browser")?.getAttribute("aria-pressed")).toBe("true");
+  expect(shared()?.getAttribute("aria-checked")).toBe("false");
   await click(button("Create bot"));
   expect(created()).toEqual({ type: "newBot", work: { computer: "browser" } });
   expect(fx.calls.some((call) => call.path === "/api/config")).toBe(false);
 });
 
-it("Shared with no profile yet makes one named Shared on Create and puts the bot on it", async () => {
+it("Shared sign-ins on, with no shared profile yet, makes one named Shared and puts the bot on it", async () => {
   fx.browser = true;
   await open();
-  await click(button("Shared"));
-  expect([...document.querySelectorAll("label")].find((label) => label.textContent?.includes("New profile's name"))?.querySelector("input")?.value).toBe("Shared");
+  await click(shared());
   await click(button("Create bot"));
-  const patch = fx.calls.find((call) => call.path === "/api/config" && call.method === "PATCH")?.body as { browserProfiles: Array<{ id: string; name: string }>; expectedBrowserProfiles: unknown[] };
-  expect(patch.expectedBrowserProfiles).toEqual([]);
+  const patch = fx.calls.find((call) => call.path === "/api/config" && call.method === "PATCH")?.body as { browserProfiles: Array<{ id: string; name: string }> };
   expect(patch.browserProfiles).toEqual([{ id: expect.stringMatching(/^profile-/), name: "Shared" }]);
   expect(created()).toEqual({ type: "newBot", work: { computer: "browser", browserProfile: patch.browserProfiles[0]!.id } });
 });
 
-it("Shared picks the first existing profile and saves nothing new", async () => {
+it("Shared sign-ins on uses the shared profile there is", async () => {
   fx.browser = true;
   fx.profiles = [{ id: "profile-linkedin", name: "LinkedIn" }];
   await open();
-  await click(button("Shared"));
-  expect(q<HTMLSelectElement>("select[aria-label='Shared profile']")?.value).toBe("profile-linkedin");
+  await click(shared());
   await click(button("Create bot"));
   expect(fx.calls.some((call) => call.path === "/api/config")).toBe(false);
   expect(created()).toEqual({ type: "newBot", work: { computer: "browser", browserProfile: "profile-linkedin" } });
 });
 
-it("shows no browser question while the built-in browser is off", async () => {
+it("shows no Shared sign-ins while the built-in browser is off", async () => {
   await open();
-  expect(q("#bot-browser-title")).toBeNull();
+  expect(shared()).toBeNull();
 });

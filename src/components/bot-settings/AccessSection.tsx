@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { browserUnavailableReason } from "@/lib/feature-flags";
+import { browserUnavailableReason, builtInBrowserEnabled } from "@/lib/feature-flags";
 import { ChevronDown, ChevronRight, FolderOpen, Plus } from "lucide-react";
 
 import { api, useStore, type Bot } from "@/state/store";
@@ -15,9 +15,10 @@ import { isOwnThreadFolder } from "../../../shared/thread-folder";
 import { useDesktopCapabilities } from "../DesktopCapabilities";
 import { CloudBackendPicker } from "../CloudBackendPicker";
 import { WORKS_ON_CHOICES, WorksOnGrid, type WorksOnMode } from "../WorksOnGrid";
-import { WorkComputerPicker } from "../work-computer/WorkComputerPicker";
-import { BotBrowserChoice } from "../work-computer/BrowserChoice";
-import { workChoiceOf, workPatch } from "@/lib/work-computers";
+import { BotSharedLogins } from "../work-computer/SharedLogins";
+import { WorkPlaceChooser } from "../work-computer/WorkPlace";
+import { Card } from "../bot-panel/rows";
+import { sameChoice, workChoiceOf, workPatch } from "@/lib/work-computers";
 import { Switch } from "../SettingsPrimitives";
 import { PhoneAppsCard } from "./PhoneAppsCard";
 import { ProposalStatus } from "./ProposalStatus";
@@ -705,11 +706,14 @@ export function AccessSection({
     <div className="flex flex-col gap-4">
       {shows("worksOn") && <div className="rounded-xl bg-card p-4" data-testid="access-works-on">
         <div className="mb-3 text-lg font-medium text-ink">{t("workComputer.settingsTitle", { name: bot.name || t("sidebar.newBotSimple") })}</div>
-        <WorkComputerPicker
+        <WorkPlaceChooser
           value={workChoiceOf(bot)}
-          onChange={(choice) => patch(choice.kind === "server" ? { ...workPatch(choice), browser: true } : workPatch(choice))}
+          onChange={(choice) => {
+            if (sameChoice(workChoiceOf(bot), choice)) return;
+            patch(choice.kind === "server" ? { ...workPatch(choice), browser: true } : workPatch(choice));
+          }}
         />
-        {!draft && <BotBrowserChoice bot={bot} />}
+        {!draft && builtInBrowserEnabled(state.config) && <Card><BotSharedLogins bot={bot} /></Card>}
         <div className="mt-4 border-t border-hairline/40 pt-4">
           {draft ? <DraftWorksOn bot={bot} patch={patch} seat={placeSeat} /> : <>
             <div className="text-lg font-medium text-ink">{t("access.worksOn", { name: bot.name, short: worksOn.short })}</div>

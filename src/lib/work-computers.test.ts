@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sameChoice, workChoiceOf, workComputerState, workPatch } from "./work-computers";
+import { sameChoice, workChoiceLabel, workChoiceOf, workComputerState, workPatch } from "./work-computers";
 import { lendingPhase, needsMacPermissions } from "./lending";
 import { guideStep, newlyConnected } from "@/components/work-computer/AddMacGuide";
 
@@ -7,19 +7,24 @@ const mac = (extra = {}) => ({ id: "a", name: "Mac mini", platform: "darwin" as 
   lastSeenAt: 0, lastUsedAt: null, scopes: { folders: 0, terminal: false, screen: true }, ...extra });
 
 describe("where a bot works", () => {
-  it("turns each simple choice into the bot's own settings, and reads them back", () => {
-    expect(workPatch({ kind: "boat" })).toEqual({ computer: "cloud", cloudBackend: "box" });
+  it("turns each choice into the bot's own settings, and reads them back, with Auto as Your server", () => {
     expect(workPatch({ kind: "mac", id: "a" })).toEqual({ computer: "cloud", cloudBackend: "lent", lentComputerId: "a" });
     expect(workPatch({ kind: "server" })).toEqual({ computer: "browser" });
     expect(workPatch({ kind: "other", computer: "vm" })).toEqual({ computer: "vm" });
-    expect(workPatch({ kind: "other" })).toEqual({ computer: null });
     expect(workChoiceOf({ computer: "cloud", cloudBackend: "lent", lentComputerId: "a" })).toEqual({ kind: "mac", id: "a" });
-    expect(workChoiceOf({ computer: "cloud" })).toEqual({ kind: "boat" });
-    expect(workChoiceOf({ computer: "cloud", cloudBackend: "vps" })).toEqual({ kind: "other", computer: "cloud" });
     expect(workChoiceOf({ computer: "browser" })).toEqual({ kind: "server" });
-    expect(workChoiceOf({})).toEqual({ kind: "other", computer: null });
+    expect(workChoiceOf({})).toEqual({ kind: "server" });
+    expect(workChoiceOf({ computer: "cloud" })).toEqual({ kind: "other", computer: "cloud" });
+    expect(workChoiceOf({ computer: "off" })).toEqual({ kind: "other", computer: "off" });
     expect(sameChoice({ kind: "mac", id: "a" }, { kind: "mac", id: "b" })).toBe(false);
-    expect(sameChoice({ kind: "other", computer: null }, { kind: "other" })).toBe(true);
+    expect(sameChoice({ kind: "server" }, { kind: "server" })).toBe(true);
+  });
+
+  it("names a place in plain words: Your server, a lent computer by its own name", () => {
+    expect(workChoiceLabel({ kind: "server" })).toBe("Your server");
+    expect(workChoiceLabel({ kind: "mac", id: "a" }, [{ id: "a", name: "Mac mini" }])).toBe("Mac mini");
+    expect(workChoiceLabel({ kind: "mac", id: "gone" })).toBe("A computer of yours");
+    expect(workChoiceLabel({ kind: "other", computer: "vm" })).toBe("Private desktop");
   });
 
   it("says a lent Mac's state in one word", () => {

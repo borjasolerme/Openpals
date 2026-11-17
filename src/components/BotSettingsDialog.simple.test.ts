@@ -134,9 +134,8 @@ const { openBotSettings } = await import("./bot-panel/panel-link");
 const { PageHeader } = await import("./bot-panel/rows");
 const { ChatShareMenu } = await import("./ChatMoreMenu");
 const { SoulField } = await import("./SoulField");
-const { LocalComputerAutoWarning } = await import("./LocalComputerAutoWarning");
-const { WorkComputerPicker } = await import("./work-computer/WorkComputerPicker");
-const { BotBrowserChoice } = await import("./work-computer/BrowserChoice");
+const { WorkPlaceChooser } = await import("./work-computer/WorkPlace");
+const { BotSharedLogins } = await import("./work-computer/SharedLogins");
 const { ModelPicker } = await import("./ModelPicker");
 const { RoutineList } = await import("./routines/RoutineList");
 const { RoutineEditor } = await import("./RoutinesPage");
@@ -852,7 +851,7 @@ describe("the Computer tab", () => {
     expect(rendered.html).toContain(">Watch<");
     expect(rendered.html).toContain("Scout&#x27;s screen");
     expect(rendered.html).toContain("Where Scout works");
-    expect(rowValue(rendered, "where")).toBe("Auto");
+    expect(rowValue(rendered, "where")).toBe("Your server");
     expect(has(rendered, "attr", "data-place-choice")).toBe(false);
     expect(switches(rendered.html)).toBe(0);
     click(find(rendered, "data-panel-page", "where"));
@@ -860,16 +859,10 @@ describe("the Computer tab", () => {
     expect(computer(makeBot({ busy: true })).html).toContain("Working on a task.");
   });
 
-  it("values Where it works with the place chosen, and says where it works right now when that differs", () => {
-    expect(rowValue(computer(makeBot({ computer: "cloud" })), "where")).toBe("Boat");
-    expect(rowValue(computer(makeBot({ computer: "browser" })), "where")).toBe("The server itself");
+  it("values Where it works with the place chosen, in plain words", () => {
+    expect(rowValue(computer(makeBot({ computer: "browser" })), "where")).toBe("Your server");
     expect(rowValue(computer(makeBot({ computer: "vm" })), "where")).toBe("Private desktop");
-    const at = (surface: "local" | "browser" | undefined, extra: Partial<Bot> = {}) =>
-      computer(makeBot({ ...extra, tasks: [{ threadId: "thread-scout", title: "Main", ...(surface ? { surface } : {}) }] as Bot["tasks"] })).html;
-    expect(at("local")).toContain("Right now: This PC");
-    expect(at("browser")).toContain("Right now: Browser");
-    expect(at(undefined)).not.toContain("Right now");
-    expect(at("browser", { computer: "browser" })).not.toContain("Right now");
+    expect(rowValue(computer(makeBot({ computer: "cloud", cloudBackend: "lent", lentComputerId: "gone" })), "where")).toBe("A computer of yours");
   });
 
   it("leads to the signed-in sites, and opens the full view from the screen", () => {
@@ -892,44 +885,26 @@ describe("the Computer tab", () => {
 
 describe("the Where it works page", () => {
   const where = (bot: Bot) => capture(() => WherePage({ bot, derived: derived() }));
-  const picker = (rendered: Rendered) => ofType(rendered, WorkComputerPicker)!.props as { value: unknown; onChange: (choice: unknown) => void };
+  const chooser = (rendered: Rendered) => ofType(rendered, WorkPlaceChooser)!.props as { value: unknown; onChange: (choice: unknown) => void };
 
-  it("offers the same three work computers as New bot, with the bot's own choice, and its browser under them", () => {
-    expect(picker(where(makeBot())).value).toEqual({ kind: "other", computer: null });
-    expect(picker(where(makeBot({ computer: "browser" }))).value).toEqual({ kind: "server" });
-    expect(picker(where(makeBot({ computer: "cloud" }))).value).toEqual({ kind: "boat" });
-    expect(ofType(where(makeBot()), BotBrowserChoice)).toBeTruthy();
+  it("is one list of places with the bot's own checked, Auto as Your server, and Shared sign-ins under it", () => {
+    expect(chooser(where(makeBot())).value).toEqual({ kind: "server" });
+    expect(chooser(where(makeBot({ computer: "browser" }))).value).toEqual({ kind: "server" });
+    expect(chooser(where(makeBot({ computer: "cloud", cloudBackend: "lent", lentComputerId: "mac-1" }))).value).toEqual({ kind: "mac", id: "mac-1" });
+    expect(chooser(where(makeBot({ computer: "vm" }))).value).toEqual({ kind: "other", computer: "vm" });
+    fixture.storeState = { ...fixture.storeState, config: { features: { browser: true } } };
+    expect(ofType(where(makeBot()), BotSharedLogins)).toBeTruthy();
   });
 
-  it("saves each choice through the bot patch, and sends nothing for the one already chosen", () => {
-    const choose = (bot: Bot, choice: unknown) => picker(where(bot)).onChange(choice);
-    choose(makeBot(), { kind: "boat" });
-    expect(patch).toHaveBeenLastCalledWith({ computer: "cloud", cloudBackend: "box" });
+  it("saves a choice through the bot patch, and sends nothing for the one already chosen", () => {
+    const choose = (bot: Bot, choice: unknown) => chooser(where(bot)).onChange(choice);
     choose(makeBot(), { kind: "mac", id: "mac-1" });
     expect(patch).toHaveBeenLastCalledWith({ computer: "cloud", cloudBackend: "lent", lentComputerId: "mac-1" });
-    choose(makeBot(), { kind: "server" });
+    choose(makeBot({ computer: "vm" }), { kind: "server" });
     expect(patch).toHaveBeenLastCalledWith({ computer: "browser", browser: true });
-    choose(makeBot({ computer: "cloud" }), { kind: "other", computer: null });
-    expect(patch).toHaveBeenLastCalledWith({ computer: null });
     patch.mockReset();
-    choose(makeBot({ computer: "browser" }), { kind: "server" });
+    choose(makeBot(), { kind: "server" });
     expect(patch).not.toHaveBeenCalled();
-  });
-
-  it("says where the bot works right now when that is not the place chosen", () => {
-    const html = where(makeBot({ computer: "cloud", tasks: [{ threadId: "thread-scout", title: "Main", surface: "local" }] as Bot["tasks"] })).html;
-    expect(html).toContain("Right now: This PC");
-  });
-
-  it("warns before this computer for a bot that decides alone", () => {
-    fixture.derived.approvalMode = "auto";
-    const bot = makeBot();
-    picker(where(bot)).onChange({ kind: "other", computer: "local" });
-    expect(patch).not.toHaveBeenCalled();
-    const warning = ofType(where(bot), LocalComputerAutoWarning)!;
-    expect(warning.props.open).toBe(true);
-    (warning.props.onConfirm as () => void)();
-    expect(fixture.dispatch).toHaveBeenLastCalledWith({ type: "updateBot", botId: "scout", patch: { computer: "local", acknowledgeLocalAuto: true } });
   });
 });
 

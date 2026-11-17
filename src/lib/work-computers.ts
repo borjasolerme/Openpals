@@ -27,39 +27,35 @@ export function workComputerState(computer: Pick<WorkComputer, "online" | "busy"
   return computer.paused ? "paused" : "offline";
 }
 
-/** The simple choices the new-bot step offers first; "other" is any place set from More options (`computer` null:
- * Auto). */
-export type WorkChoice = { kind: "boat" } | { kind: "mac"; id: string } | { kind: "server" } | { kind: "other"; computer?: Bot["computer"] | null };
+/** Where a bot works: the server it lives on, a computer lent to it, or a place set elsewhere (a bot's own cloud
+ * computer, a private desktop, this computer, or none), which the chooser shows but no longer offers. */
+export type WorkChoice = { kind: "server" } | { kind: "mac"; id: string } | { kind: "other"; computer: Exclude<Bot["computer"], "browser"> };
 
 export type WorkPatch = Pick<BotUpdatePatch, "computer" | "cloudBackend" | "lentComputerId">;
 
 export function workPatch(choice: WorkChoice): WorkPatch {
-  if (choice.kind === "other") return { computer: choice.computer ?? null };
-  if (choice.kind === "boat") return { computer: "cloud", cloudBackend: "box" };
   if (choice.kind === "mac") return { computer: "cloud", cloudBackend: "lent", lentComputerId: choice.id };
+  if (choice.kind === "other") return { computer: choice.computer ?? null };
   return { computer: "browser" };
 }
 
-/** A choice in the picker's own words: Boat, A Mac of yours, The server itself, or the other place's name. */
-export function workChoiceLabel(choice: WorkChoice): string {
-  if (choice.kind === "boat") return t("workComputer.boat.title");
-  if (choice.kind === "mac") return t("workComputer.mac.title");
-  if (choice.kind === "server") return t("workComputer.server.title");
-  switch (choice.computer ?? null) {
+/** The place in plain words: Your server, the lent computer's own name, or the other place's name. */
+export function workChoiceLabel(choice: WorkChoice, computers: readonly Pick<WorkComputer, "id" | "name">[] = []): string {
+  if (choice.kind === "server") return t("workPlace.server.title");
+  if (choice.kind === "mac") return computers.find((computer) => computer.id === choice.id)?.name ?? t("workPlace.computer");
+  switch (choice.computer) {
     case "vm": return t("vm.dest.vm");
     case "local": return t("vm.dest.local");
-    case "browser": return t("vm.dest.browser");
     case "cloud": return t("place.cloud");
-    case "off": return t("vm.dest.off");
-    default: return t("vm.dest.auto");
+    default: return t("vm.dest.off");
   }
 }
 
+/** Auto works on the server unless told otherwise, so it reads as Your server. */
 export function workChoiceOf(bot: Pick<Bot, "computer" | "cloudBackend" | "lentComputerId">): WorkChoice {
   if (bot.computer === "cloud" && bot.cloudBackend === "lent" && bot.lentComputerId) return { kind: "mac", id: bot.lentComputerId };
-  if (bot.computer === "cloud" && (bot.cloudBackend ?? "box") === "box") return { kind: "boat" };
-  if (bot.computer === "browser") return { kind: "server" };
-  return { kind: "other", computer: bot.computer ?? null };
+  if (bot.computer == null || bot.computer === "browser") return { kind: "server" };
+  return { kind: "other", computer: bot.computer };
 }
 
 export function sameChoice(a: WorkChoice, b: WorkChoice): boolean {

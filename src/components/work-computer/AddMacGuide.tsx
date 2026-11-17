@@ -69,7 +69,7 @@ function AllowSteps() {
   );
 }
 
-/** "Add a Mac": install Openpals there, connect it with a fresh pairing link, turn lending on, and watch it arrive. */
+/** "Add a computer": install Openpals there, connect it with a fresh pairing link, turn lending on, and watch it arrive. */
 export function AddMacGuide({ known, onBack, onUse }: { known: readonly string[]; onBack: () => void; onUse: (id: string) => void }) {
   const { computers } = useWorkComputers(true);
   const onlineAtOpen = useRef<Set<string> | null>(null);
