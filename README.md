@@ -14,8 +14,9 @@
 </p>
 
 > [!NOTE]
-> Openpals is early. There is no download yet: you build the app from source, and some translations are still
-> incomplete. Everything below that is marked as working runs today.
+> Openpals is early. **[Download Openpals for Mac](https://github.com/borjasolerme/Openpals/releases/latest)** (Apple
+> silicon), or build it from source for Linux. Some translations are still incomplete. Everything below that is marked
+> as working runs today.
 
 <img src="docs/assets/screenshots/chat.png" alt="Openpals: a Chief of Staff bot posts a morning brief after checking the calendar, the inbox and a teammate's chat" width="100%">
 
@@ -144,6 +145,9 @@ waiting. (That last hop is a personal setup, not a built-in feature. Bots can ru
 ## Getting started
 
 ### I want to try it on my computer
+
+On a Mac with Apple silicon, [download Openpals](https://github.com/borjasolerme/Openpals/releases/latest), drag it to
+Applications and open it (the first time, right-click → Open). To build it yourself instead:
 
 You need macOS (Linux is in beta), **Node 24+**, **pnpm**, and at least one agent CLI installed and signed in:
 [`claude`](https://claude.com/claude-code) or [`codex`](https://github.com/openai/codex). Then build the desktop

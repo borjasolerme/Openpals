@@ -11,7 +11,8 @@ import { Card } from "../bot-panel/rows";
 import { PairingQr } from "../PairingQr";
 import { Button, buttonClass } from "../ui/Button";
 
-export const INSTALL_GUIDE = `${APP_REPOSITORY}#getting-started`;
+/** The newest Openpals for Mac, with the first-open steps. */
+export const INSTALL_GUIDE = `${APP_REPOSITORY}/releases/latest`;
 
 interface PairingLink { code: string; url: string | null; expiresAt: number }
 
