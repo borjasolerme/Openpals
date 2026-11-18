@@ -22,7 +22,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/declaration-imports.mjs dist",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
