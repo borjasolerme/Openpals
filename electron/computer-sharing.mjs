@@ -204,6 +204,18 @@ export function createComputerSharing({
   let closed = false;
   // A screen call waits for another one here, so two servers never drive the screen at once even without hostControl.
   let screenTurn = Promise.resolve();
+  // One connection to computer control for every server and every job: cua-driver remembers which windows were read
+  // (get_window_state) in it, so a click after a read must reach the same one. Replaced only once its process ended.
+  let cua = null;
+  const controlNow = async (signal) => {
+    if (cua && !cua.closed()) return cua;
+    const connection = await cuaConnection();
+    signal.throwIfAborted();
+    const mcp = sharedCuaConnection(connection);
+    if (!mcp) throw new Error(cuaUnavailable(connection?.reason, platform));
+    if (!cua || cua.closed()) cua = createSharedCua(mcp, { platform });
+    return cua;
+  };
 
   const store = next => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -288,7 +300,7 @@ export function createComputerSharing({
     };
   };
 
-  const runJob = async (target, job, grant, signal, session) => {
+  const runJob = async (target, job, grant, signal) => {
     const where = { origin: target.origin, name: target.serverName };
     const call = (action, body) => request(target, `/api/shared-computers/${target.id}/${action}`, body);
     busy = { action: job.operation.action, server: target.serverName };
@@ -318,20 +330,10 @@ export function createComputerSharing({
         control = await takeScreen(job.id, jobSignal);
         jobSignal.throwIfAborted();
       }
-      result = await executeSharedOperation(grant, job.operation, jobSignal, async () => {
-        if (!session.cua) {
-          const connection = await cuaConnection();
-          jobSignal.throwIfAborted();
-          const mcp = sharedCuaConnection(connection);
-          if (!mcp) throw new Error(cuaUnavailable(connection?.reason, platform));
-          session.cua = createSharedCua(mcp, { platform });
-        }
-        return session.cua;
-      });
+      result = await executeSharedOperation(grant, job.operation, jobSignal, () => controlNow(jobSignal));
     } catch (error) {
+      // A refused or failed action keeps the connection, and with it what the driver read; only a dead one is replaced.
       result = sharedComputerError(error);
-      session.cua?.close();
-      session.cua = null;
     } finally {
       clearInterval(heartbeat);
       ended = true;
@@ -349,7 +351,7 @@ export function createComputerSharing({
     await call("result", { jobId: job.id, result }).catch(error => log(`lending: result not delivered: ${error?.message ?? error}`));
   };
 
-  const connectOnce = async (target, signal, session) => {
+  const connectOnce = async (target, signal) => {
     const descriptor = await request(target, "/.well-known/openmausbot/environment");
     signal.throwIfAborted();
     // A folder moved or deleted since is left out, so the rest keeps working.
@@ -368,7 +370,7 @@ export function createComputerSharing({
         await request(target, `/api/shared-computers/${target.id}/result`, { jobId: job.id, result: sharedComputerError(new Error("Invalid computer request")) });
         continue;
       }
-      await runJob(target, job, grant, signal, session);
+      await runJob(target, job, grant, signal);
     }
   };
 
@@ -376,7 +378,6 @@ export function createComputerSharing({
     const live = loops.get(id);
     if (!live) return;
     live.abort.abort();
-    live.session.cua?.close();
     loops.delete(id);
   };
   const stopAll = () => { for (const id of loops.keys()) stopLoop(id); };
@@ -385,14 +386,14 @@ export function createComputerSharing({
     stopLoop(target.id);
     statuses.delete(target.id);
     if (closed || !lending() || target.paused) { changed(); return; }
-    const current = { abort: new AbortController(), session: { cua: null } };
+    const current = { abort: new AbortController() };
     loops.set(target.id, current);
     const { signal } = current.abort;
     setStatus(target.id, { state: "connecting" });
     void (async () => {
       for (let failures = 0; !signal.aborted;) {
         try {
-          await connectOnce(target, signal, current.session);
+          await connectOnce(target, signal);
           failures = 0;
         } catch (error) {
           if (signal.aborted) break;
@@ -528,6 +529,6 @@ export function createComputerSharing({
     activity: limit => activity.list(limit),
     readScreen,
     /** Quitting: nothing more reaches this computer; the servers see it go offline. */
-    close() { stopAll(); closed = true; },
+    close() { stopAll(); cua?.close(); cua = null; closed = true; },
   };
 }

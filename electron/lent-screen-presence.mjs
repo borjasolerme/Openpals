@@ -28,7 +28,8 @@ export function personActiveText(name) {
   return `The person is using this computer right now, so ${name} was not performed: it would take their mouse, keyboard or front window. ` +
     "Do it in the background instead: give the app's pid and window_id (from launch_app or list_windows) and act on an element from get_window_state, " +
     "without delivery_mode \"foreground\" or scope \"desktop\". " +
-    `If it can only be done in the foreground, wait until nobody has touched the computer for ${PERSON_AWAY_SECONDS} seconds, then observe it again and retry.`;
+    `If it can only be done in the foreground (a click inside a web page often is), wait until nobody has touched the computer for ${PERSON_AWAY_SECONDS} seconds, ` +
+    "then read the same window again with get_window_state and retry it with delivery_mode \"foreground\".";
 }
 
 /** `idleSeconds()`: seconds since the person last touched this computer, or null when this system cannot tell (then

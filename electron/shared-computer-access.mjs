@@ -286,6 +286,8 @@ export function createSharedCua(connection, { platform = process.platform } = {}
       }
       return request("tools/call", { name: operation.tool_name, arguments: lent.arguments }, signal);
     },
+    /** Its driver process ended: the next call needs a new connection. */
+    closed: () => closed,
     close() { lines.close(); fail(new Error("Computer sharing stopped")); },
   };
 }

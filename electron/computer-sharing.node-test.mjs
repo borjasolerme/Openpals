@@ -193,3 +193,73 @@ test("two servers' screen calls never run at once on this computer", async t => 
   assert.equal(taken, 2);
   assert.equal(most, 1);
 });
+
+/** cua-driver's own rule, as the real one keeps it: a click acts only on a window read with get_window_state first, in the
+ * same connection. Each start of the driver is counted. */
+const STATEFUL_DRIVER = `
+const fs = require("node:fs");
+fs.appendFileSync(process.env.STARTS, "start\\n");
+const read = new Set();
+const rl = require("node:readline").createInterface({ input: process.stdin });
+const send = (id, result) => process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id, result }) + "\\n");
+rl.on("line", (line) => {
+  const m = JSON.parse(line);
+  if (m.method === "initialize") return send(m.id, { serverInfo: { name: "cua-driver", version: "0.45.4" } });
+  if (m.method !== "tools/call") return;
+  const { name, arguments: args } = m.params;
+  if (name === "get_window_state") { read.add(args.window_id); return send(m.id, { content: [{ type: "text", text: "Chrome: LinkedIn" }] }); }
+  if (name === "click") return send(m.id, read.has(args.window_id)
+    ? { content: [{ type: "text", text: "clicked" }] }
+    : { isError: true, content: [{ type: "text", text: "Has not read the Chrome window: call get_window_state first" }] });
+});`;
+
+test("a click after get_window_state reaches the same computer control, even when a refused job came in between", async t => {
+  const { fake, make } = await setup(t);
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-driver-")));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const driver = path.join(dir, "driver.cjs");
+  const starts = path.join(dir, "starts.txt");
+  await writeFile(driver, STATEFUL_DRIVER);
+  await writeFile(starts, "");
+  const sharing = make({ cuaConnection: async () => ({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: { STARTS: starts } }) });
+  t.after(() => sharing.close());
+  const window = { pid: 501, window_id: 77 };
+  fake.seen["https://boat.example"].jobs.push(
+    { action: "computer_call", tool_name: "get_window_state", arguments: window },
+    // Refused before it reaches the driver: an argument a lent screen does not take.
+    { action: "computer_call", tool_name: "click", arguments: { ...window, x: 10, y: 10, path: "/etc" } },
+    { action: "computer_call", tool_name: "click", arguments: { ...window, x: 10, y: 10, delivery_mode: "foreground" } },
+  );
+  await sharing.addTarget({ origin: "https://boat.example", code: CODE }, { serverName: "Boat" });
+  await until(() => fake.seen["https://boat.example"].results.length === 3, "three answers");
+  const [state, refused, clicked] = fake.seen["https://boat.example"].results;
+  assert.equal(state.isError, undefined);
+  assert.equal(refused.isError, true);
+  assert.deepEqual(clicked.content, [{ type: "text", text: "clicked" }]);
+  assert.equal((await readFile(starts, "utf8")).trim().split("\n").length, 1, "one driver for all three jobs");
+});
+
+test("a foreground click that waited for the person works once they step away, on the window read before", async t => {
+  const { fake, make } = await setup(t);
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-driver-")));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const driver = path.join(dir, "driver.cjs");
+  const starts = path.join(dir, "starts.txt");
+  await writeFile(driver, STATEFUL_DRIVER);
+  await writeFile(starts, "");
+  let idle = 2;
+  const sharing = make({ idleSeconds: () => idle, cuaConnection: async () => ({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: { STARTS: starts } }) });
+  t.after(() => sharing.close());
+  const boat = fake.seen["https://boat.example"];
+  const window = { pid: 501, window_id: 77 };
+  const click = { action: "computer_call", tool_name: "click", arguments: { ...window, x: 10, y: 10, delivery_mode: "foreground" } };
+  boat.jobs.push({ action: "computer_call", tool_name: "get_window_state", arguments: window }, click);
+  await sharing.addTarget({ origin: "https://boat.example", code: CODE }, { serverName: "Boat" });
+  await until(() => boat.results.length === 2, "the read and the waiting click");
+  assert.match(boat.results[1].content[0].text, /The person is using this computer right now/);
+  idle = 120;
+  boat.jobs.push(click);
+  await until(() => boat.results.length === 3, "the click again");
+  assert.deepEqual(boat.results[2].content, [{ type: "text", text: "clicked" }]);
+  assert.equal((await readFile(starts, "utf8")).trim().split("\n").length, 1, "the driver that read the window is the one that clicked");
+});

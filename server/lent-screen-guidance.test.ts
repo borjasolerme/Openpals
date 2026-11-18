@@ -61,3 +61,15 @@ describe("a lent screen's answers carry the fix", () => {
     expect(lentScreenResult(call("get_desktop_state"), shot)).toBe(shot);
   });
 });
+
+describe("websites on a lent computer", () => {
+  it("send the bot to its own browser on the server, never to remote debugging, and to the foreground for a web page that ignores a background click", () => {
+    for (const text of [LENT_SCREEN_BROWSING, LENT_BROWSER_NO_ENDPOINT]) {
+      expect(text).toContain("your own browser on the server");
+      expect(text).toContain("Shared sign-ins");
+      expect(text).toContain("never ask the person to turn on remote debugging");
+    }
+    expect(LENT_SCREEN_BACKGROUND).toContain("Inside a web page");
+    expect(LENT_SCREEN_BACKGROUND).toContain("delivery_mode \"foreground\" on the same pid and window_id");
+  });
+});
