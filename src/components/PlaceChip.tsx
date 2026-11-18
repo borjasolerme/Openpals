@@ -29,12 +29,12 @@ export function usePlaceViews(bot: Bot): Record<Place, { view: PlaceView; reacha
     const listed = !(place === "local" && pageOnRemoteServer(capabilities));
     return { view, listed, reachable: !placeBlocked(view) };
   };
-  return { cloud: entry("cloud"), vm: entry("vm"), local: entry("local"), browser: entry("browser") };
+  return { cloud: entry("cloud"), local: entry("local"), browser: entry("browser") };
 }
 
 export function usePlaceAvailability(bot: Bot): PlaceAvailability {
   const views = usePlaceViews(bot);
-  return { cloud: views.cloud.reachable, vm: views.vm.reachable, local: views.local.reachable, browser: views.browser.reachable };
+  return { cloud: views.cloud.reachable, local: views.local.reachable, browser: views.browser.reachable };
 }
 
 /** The place chip as one + menu entry with the same choices, for a phone composer that has no room for the chip. */
@@ -87,8 +87,8 @@ export function usePlaceMenuItem({ bot, task, disabled = false, onPin }: {
   };
 }
 
-const DESCRIPTION: Record<Place, "computer.dest.cloudDesc" | "computer.dest.vmDesc" | "computer.dest.localDesc" | "computer.dest.browserDesc"> = {
-  cloud: "computer.dest.cloudDesc", vm: "computer.dest.vmDesc", local: "computer.dest.localDesc", browser: "computer.dest.browserDesc",
+const DESCRIPTION: Record<Place, "computer.dest.cloudDesc" | "computer.dest.localDesc" | "computer.dest.browserDesc"> = {
+  cloud: "computer.dest.cloudDesc", local: "computer.dest.localDesc", browser: "computer.dest.browserDesc",
 };
 
 export function PlaceChip({ bot, task, live, disabled = false, onPin }: {

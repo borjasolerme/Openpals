@@ -14,7 +14,7 @@ afterEach(() => vi.unstubAllGlobals());
 function config(fleet: boolean): ConfigStatus {
   return {
     composio: { configured: false }, box: { configured: false }, vps: { configured: false, sshAlias: "" },
-    rooms: { turnTimeoutMinutes: 30 }, localVm: { mode: "shared", maxInstances: 1 },
+    rooms: { turnTimeoutMinutes: 30 },
     fleet: { available: fleet },
   } as ConfigStatus;
 }

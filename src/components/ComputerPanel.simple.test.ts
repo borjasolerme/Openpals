@@ -34,7 +34,7 @@ const fixture = vi.hoisted(() => {
 });
 
 // The panel's useState calls in source order, counted from `phase`; keep in step with ComputerPanel.tsx.
-const PHASE_OFFSETS = { phase: 0, resolved: 2, vmStatus: 9, error: 15 } as const;
+const PHASE_OFFSETS = { phase: 0, resolved: 2, error: 13 } as const;
 let phaseIndex = -1;
 
 vi.mock("react", async (original) => ({
@@ -152,12 +152,12 @@ function makeBot(patch: Partial<Bot> = {}): Bot {
   } as Bot;
 }
 
-function render(forBot: Bot, props: { onOpenVmWorkspace?: (botId: string) => void } = {}) {
+function render(forBot: Bot) {
   fixture.values.length = Math.min(fixture.values.length, fixture.own);
   let tree: ReactNode = null;
   function Capture() {
     fixture.index = 0;
-    tree = ComputerPanel({ bot: forBot, ...props });
+    tree = ComputerPanel({ bot: forBot });
     fixture.own = fixture.index;
     return tree;
   }
@@ -371,27 +371,27 @@ function browserSwitch(rendered: ReturnType<typeof render>) {
 }
 
 describe("Where the bot works", () => {
-  it("offers six places in a 3-column grid with plain names", () => {
+  it("offers five places in a 3-column grid with plain names", () => {
     const rendered = render(makeBot());
     const card = rendered.nodes.find((node) => node.props["data-testid"] === "where-works")!;
     expect(rendered.html).toContain("Where Scout works");
     expect(nodes(card.props.children).find((node) => node.props.role === "group")!.props.className).toContain("grid-cols-3");
-    expect(grid(rendered).map((node) => text(node.props.children))).toEqual(["Auto", "Cloud desktop", "Private desktop", "This Mac", "Browser", "Off"]);
-    expect(placeLine(rendered)).toBe("Uses the built-in browser, a private desktop on this computer, or this computer's screen, whichever the task needs.");
+    expect(grid(rendered).map((node) => text(node.props.children))).toEqual(["Auto", "Cloud desktop", "This Mac", "Browser", "Off"]);
+    expect(placeLine(rendered)).toBe("Uses the built-in browser or this computer's screen, whichever the task needs.");
   });
 
-  it("says This PC off a Mac, and never names a Local VM in Auto's line there", () => {
+  it("says This PC off a Mac, and never names Boat in Auto's line there", () => {
     fixture.platform = "win32";
     const rendered = render(makeBot());
     expect(grid(rendered).map((node) => text(node.props.children))).toContain("This PC");
-    expect(placeLine(rendered)).not.toMatch(/Local VM|Boat|cloud box/i);
+    expect(placeLine(rendered)).not.toMatch(/Boat|cloud box/i);
   });
 
   it("leaves This Mac out on another server's page, where this computer can never be a bot's place", () => {
     fixture.localComputer = { available: false, support: "unsupported", enabled: false, status: "unavailable", reasonCode: "remote-server" };
     const rendered = render(makeBot());
-    expect(grid(rendered).map((node) => text(node.props.children))).toEqual(["Auto", "Cloud desktop", "Private desktop", "Browser", "Off"]);
-    expect(placeLine(rendered)).toBe("Uses the built-in browser, or a running private desktop when a task needs one.");
+    expect(grid(rendered).map((node) => text(node.props.children))).toEqual(["Auto", "Cloud desktop", "Browser", "Off"]);
+    expect(placeLine(rendered)).toBe("Uses the built-in browser.");
   });
 
   it("shows a bot set to This Mac as Auto on another server's page, without changing its setting", () => {
@@ -460,7 +460,6 @@ describe("Where the bot works", () => {
     const expected = [
       { computer: null },
       { computer: "cloud" },
-      { computer: "vm" },
       { computer: "local" },
       { computer: "browser", browser: true },
       { computer: "off" },
@@ -584,13 +583,6 @@ describe("Technical controls", () => {
     expect(advanced.buttons.some((node) => text(node.props.children).startsWith("Routines"))).toBe(true);
   });
 
-  it("hides the VM settings link in Simple", () => {
-    expect(render(makeBot({ computer: "vm" })).html).not.toContain("Private desktop settings");
-    fixture.advanced = true;
-    fixture.values = [];
-    expect(render(makeBot({ computer: "vm" })).html).toContain("Private desktop settings");
-  });
-
   it("shows Take control, Full screen and Sleep under a ready cloud screen", () => {
     fixture.seed = { phase: "ready", resolved: { botId: "scout", threadId: "thread-scout", computer: "cloud", cloudBackend: "box" } };
     const simple = render(cloud());
@@ -605,30 +597,6 @@ describe("Technical controls", () => {
     expect(advanced.nodes.some((node) => node.props["data-testid"] === "computer-actions")).toBe(false);
     expect(advanced.button("Take control")).toBeDefined();
     expect(advanced.button("Full screen")).toBeUndefined();
-  });
-
-  it("hides two desktops and Delete VM in Simple, keeps them in Advanced", () => {
-    fixture.ogb.desktopWorkspace = {};
-    fixture.seed = {
-      phase: "vm",
-      resolved: { botId: "scout", threadId: "thread-scout", computer: "vm", cloudBackend: "box" },
-      vmStatus: { mode: "per-bot", container: "running", ready: true, viewer_url: "http://127.0.0.1/viewer", target_key: `bot:${"a".repeat(64)}` },
-    };
-    const vm = () => makeBot({ computer: "vm" });
-    const onOpenVmWorkspace = () => {};
-    const simple = render(vm(), { onOpenVmWorkspace });
-    expect(simple.html).not.toContain("Open two desktops");
-    expect(simple.html).not.toContain("Delete this bot");
-    const row = simple.nodes.find((node) => node.props["data-testid"] === "computer-actions")!;
-    expect(actionLabels(row))
-      .toEqual(["Take control", "Full screen"]);
-
-    fixture.advanced = true;
-    fixture.values = [];
-    phaseIndex = -1;
-    const advanced = render(vm(), { onOpenVmWorkspace });
-    expect(advanced.html).toContain("two desktops");
-    expect(advanced.buttons.some((node) => node.props.title === "Delete Scout's VM" || /Delete/.test(text(node.props.children)))).toBe(true);
   });
 
   it("turns VPS setup into one friendly line and an Advanced switch", () => {

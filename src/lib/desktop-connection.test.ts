@@ -53,11 +53,11 @@ afterEach(() => {
 });
 
 describe("connecting to a desktop", () => {
-  it("speaks RFB through the app's own proxy, never the VM's page", async () => {
+  it("speaks RFB through the app's own proxy, never the desktop's page", async () => {
     const on = events();
-    await connectDesktop(document.createElement("div"), `local/bot-${"a".repeat(64)}`, { signal: new AbortController().signal, events: on });
-    expect(asked).toEqual([`GET /api/desktop-viewer/local/bot-${"a".repeat(64)}`]);
-    expect(clients[0]!.url).toBe(`ws://${location.host}/api/desktop-viewer/local/bot-${"a".repeat(64)}/websockify`);
+    await connectDesktop(document.createElement("div"), "vps/bot-1", { signal: new AbortController().signal, events: on });
+    expect(asked).toEqual(["POST /api/bots/bot-1/computer/join", "GET /api/desktop-viewer/vps/bot-1"]);
+    expect(clients[0]!.url).toBe(`ws://${location.host}/api/desktop-viewer/vps/bot-1/websockify`);
     expect(clients[0]!.password).toBe("fixture-secret");
     clients[0]!.emit("connect");
     clients[0]!.emit("clipboard", "copied");
@@ -78,14 +78,14 @@ describe("connecting to a desktop", () => {
 
   it("a viewer the server refuses is unreachable, not a hang", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 409 })));
-    await expect(connectDesktop(document.createElement("div"), "local/shared", { signal: new AbortController().signal, events: events() }))
+    await expect(connectDesktop(document.createElement("div"), "vps/bot-1", { signal: new AbortController().signal, events: events() }))
       .rejects.toBeInstanceOf(DesktopUnreachable);
   });
 
   it("a desktop that never answers is given up after 15 seconds, and says so once", async () => {
     vi.useFakeTimers();
     const on = events();
-    await connectDesktop(document.createElement("div"), "local/shared", { signal: new AbortController().signal, events: on });
+    await connectDesktop(document.createElement("div"), "vps/bot-1", { signal: new AbortController().signal, events: on });
     await vi.advanceTimersByTimeAsync(15_000);
     expect(clients[0]!.disconnected).toBe(1);
     expect(on.disconnected).toHaveBeenCalledTimes(1);
@@ -95,7 +95,7 @@ describe("connecting to a desktop", () => {
     vi.useFakeTimers();
     const left = new AbortController();
     const on = events();
-    await connectDesktop(document.createElement("div"), "local/shared", { signal: left.signal, events: on });
+    await connectDesktop(document.createElement("div"), "vps/bot-1", { signal: left.signal, events: on });
     left.abort();
     clients[0]!.emit("connect");
     await vi.advanceTimersByTimeAsync(20_000);

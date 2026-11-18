@@ -37,7 +37,7 @@ export const BOT_SECTIONS: Array<{
   { id: "memory", label: "Memory", labelKey: "botSettings.sections.memory", icon: Brain, keywords: ["memory", "notes", "remember", "topics"] },
   { id: "library", label: "Library", labelKey: "botPanel.tab.library", icon: Library, keywords: ["library", "made", "pages", "apps", "files", "published"] },
   { id: "routines", label: "Routines", labelKey: "botSettings.sections.routines", icon: CalendarClock, keywords: ["schedule", "routines", "cron", "tasks"] },
-  { id: "access", label: "Access", labelKey: "botSettings.sections.access", icon: Network, keywords: ["works on", "computer", "vm", "cloud", "vps", "folder", "workspace", "browser", "connected apps", "composio", "webhooks", "always allow", "grants", "tool selection", "tools", "mcp", "allow", "exclude"], headingKeys: [
+  { id: "access", label: "Access", labelKey: "botSettings.sections.access", icon: Network, keywords: ["works on", "computer", "cloud", "vps", "folder", "workspace", "browser", "connected apps", "composio", "webhooks", "always allow", "grants", "tool selection", "tools", "mcp", "allow", "exclude"], headingKeys: [
     "computer.worksOn", "botAccess.folder.title", "botAccess.apps.title", "botAccess.grants.header", "botAccess.phone.title",
     "research.title", "connectors.tab.mcp", "botAccess.tools.title", "botAccess.browser.title", "botAccess.recordSteps.title",
     "botAccess.webhooks.title", "botAccess.always.title",

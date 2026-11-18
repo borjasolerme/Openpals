@@ -27,15 +27,13 @@ const EVERYDAY_PREFIXES: Record<string, readonly string[]> = {
 
 const EVERYDAY_KEYS: Record<string, readonly string[]> = {
   "the Screen panel": [
-    "computer.close", "computer.sleepTitle", "computer.capturingVm", "computer.capturingLocal", "computer.chooseCloudWake",
-    "computer.chooseCloudOpen", "computer.chooseCloudManage", "computer.autoChooseCloudOpen", "computer.createVm", "computer.replaceVm",
-    "computer.openVmSetup", "computer.confirm.replaceVm", "computer.err.emptyFrame", "computer.err.frameTimeout", "computer.err.noDesktopLink",
-    "computer.err.vmNotReady", "computer.err.vmEngine", "computer.err.localEngine", "computer.err.vmOpenSettings", "computer.worksOnHint",
-    "computer.worksOnHintCloudHome", "computer.linux.waylandAfter", "vm.dest.vm", "vm.setup.start", "vm.setup.starting", "vm.stopped.detail",
-    "vm.stopped.idle",
+    "computer.close", "computer.sleepTitle", "computer.capturingLocal", "computer.chooseCloudWake",
+    "computer.chooseCloudOpen", "computer.chooseCloudManage", "computer.autoChooseCloudOpen",
+    "computer.err.emptyFrame", "computer.err.frameTimeout", "computer.err.noDesktopLink",
+    "computer.err.localEngine", "computer.worksOnHint", "computer.worksOnHintCloudHome", "computer.linux.waylandAfter",
   ],
   "the bot panel": [
-    "botOverview.line.computer", "botOverview.line.privateWorkspace", "botOverview.preference.cloud", "botOverview.preference.vm",
+    "botOverview.line.computer", "botOverview.line.privateWorkspace", "botOverview.preference.cloud",
     "botSettings.replyStyle.conversationalHint", "voice.engine",
   ],
   "adding and sharing a bot": ["newBot.presetKeeps", "presetShare.never"],
@@ -63,7 +61,6 @@ const INTERNAL_WORDS: readonly Word[] = [
   { word: "Composio", pattern: /composio/i, say: "connected apps" },
   { word: "Cloud computer", pattern: /\bcloud computers?\b/i, say: "cloud desktop" },
   { word: "VPS", pattern: /\bVPS\b/, say: "your own machine" },
-  { word: "Local VM", pattern: /\bLocal VMs?\b/i, say: "private desktop" },
   { word: "workspace", pattern: /\bworkspaces?\b/i, say: "installation, or leave it out" },
 ];
 
@@ -103,11 +100,11 @@ describe("everyday screens", () => {
   it("catch each internal word, and let placeholders, commands, MCP servers and Discord or Slack servers through", () => {
     for (const bad of [
       "Switch to another engine", "Add an instance", "Restart the server", "Connect apps through Composio",
-      "Start the cloud computer", "Self-hosted VPS", "Create Local VM", "Choose a workspace",
+      "Start the cloud computer", "Self-hosted VPS", "Choose a workspace",
     ]) expect(wordsIn(bad), bad).not.toEqual([]);
     for (const good of [
       "Switch this bot to another AI", "Pick a Discord server", "Post in your Slack servers", "Copy to {server}", "Add your own server",
-      "Run `openmausbot server start`", "Open the Cloud", "Start the cloud desktop", "Your MCP servers", "Add MCP server", "Private desktop",
+      "Run `openmausbot server start`", "Open the Cloud", "Start the cloud desktop", "Your MCP servers", "Add MCP server",
     ]) expect(wordsIn(good), good).toEqual([]);
   });
 

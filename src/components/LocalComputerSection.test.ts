@@ -12,36 +12,19 @@ vi.mock("@/state/store", async (importOriginal) => {
 
 import {
   CloudComputersCard,
-  LocalVmIdleTimeoutSetting,
-  LocalVmInventoryCard,
   cloudComputerActionPlan,
   cloudComputerInventoryState,
   computerInventoryRequest,
   confirmComputerAction,
-  localVmInventoryState,
-  parseLocalVmIdleTimeoutMinutes,
   reconcileCloudInventoryPayload,
-  perBotLocalVmDeletePlan,
   reconcileCloudInventorySnapshot,
   vpsComputerRemovePlan,
   vpsComputerInventoryState,
   vpsComputerShortId,
   type CloudComputerInventoryInstance,
-  type LocalVmInventoryInstance,
   type VpsComputerInventoryInstance,
 } from "./LocalComputerSection";
 import { VpsComputersCard } from "./VpsComputersCard";
-
-const cloudVm: LocalVmInventoryInstance = {
-  botId: "cloud-bot",
-  name: "Research",
-  destination: "cloud",
-  container: "running",
-  ready: true,
-  managed: true,
-  problem: null,
-  inUse: false,
-};
 
 const ownedCloudComputer: CloudComputerInventoryInstance = {
   boxId: "provider-id-must-not-render",
@@ -59,8 +42,6 @@ describe("computer inventory request wiring", () => {
   it("keeps every mount and refresh request observation-only", () => {
     const controller = new AbortController();
     const requests = ([
-      ["status", "/api/local-computer"],
-      ["local-vms", "/api/local-computer/instances"],
       ["cloud", "/api/computers/boxes"],
       ["vps", "/api/computers/vps"],
     ] as const).map(([kind, expectedUrl]) => ({
@@ -78,18 +59,17 @@ describe("computer inventory request wiring", () => {
 
   it("does not expose a destructive request when confirmation is cancelled", () => {
     const confirm = vi.fn(() => false);
-    const request = confirmComputerAction(perBotLocalVmDeletePlan(cloudVm), confirm);
+    const request = confirmComputerAction(cloudComputerActionPlan("delete", ownedCloudComputer), confirm);
 
     expect(request).toBeNull();
     expect(confirm).toHaveBeenCalledOnce();
     expect(confirm).toHaveBeenCalledWith(
-      "Delete Research's private desktop? Its durable folder and website sign-ins are kept. Apps installed inside the desktop and files outside the durable folder are deleted.",
+      "Permanently delete Research's cloud desktop? Its files and browser sign-ins will be erased. This cannot be undone.",
     );
   });
 
-  it("builds the exact confirmed Local VM, Boat, and VPS lifecycle requests", () => {
+  it("builds the exact confirmed Boat and VPS lifecycle requests", () => {
     const confirm = vi.fn(() => true);
-    const local = confirmComputerAction(perBotLocalVmDeletePlan(cloudVm), confirm);
     const cloudDelete = confirmComputerAction(cloudComputerActionPlan("delete", ownedCloudComputer), confirm);
     const cloudSleep = confirmComputerAction(cloudComputerActionPlan("sleep", ownedCloudComputer), confirm);
     const vpsName = "openmausbot-vps-current-123456abcdef";
@@ -103,14 +83,6 @@ describe("computer inventory request wiring", () => {
       inUse: false,
     }), confirm);
 
-    expect(local).toEqual([
-      "/api/bots/cloud-bot/local-computer/remove",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: "{}",
-      },
-    ]);
     expect(cloudDelete).toEqual([
       "/api/computers/boxes/provider-id-must-not-render/delete",
       {
@@ -135,105 +107,7 @@ describe("computer inventory request wiring", () => {
         body: JSON.stringify({ confirmName: vpsName, alias: "alpha-vps" }),
       },
     ]);
-    expect(confirm).toHaveBeenCalledTimes(3);
-  });
-});
-
-describe("Local VM inventory UI", () => {
-  it("shows capacity, current destinations, health, and an in-use deletion guard", () => {
-    const markup = renderToStaticMarkup(createElement(LocalVmInventoryCard, {
-      instances: [
-        cloudVm,
-        {
-          botId: "off-bot",
-          name: "Archive",
-          destination: "off",
-          container: "stopped",
-          ready: false,
-          managed: true,
-          problem: "This desktop image cannot safely resume; recreate the Local VM",
-          inUse: true,
-        },
-      ],
-      maxInstances: 4,
-      loading: false,
-      deletingBotId: null,
-      error: null,
-      unavailableReason: null,
-      onRefresh: vi.fn(),
-      onDelete: vi.fn(),
-    }));
-
-    expect(markup).toContain("2/4 created");
-    expect(markup).toContain("Current destination: Cloud");
-    expect(markup).toContain("Current destination: Off");
-    expect(markup).toContain("In use");
-    expect(markup).toContain("Stop this bot&#x27;s turn before deleting its desktop.");
-    expect(markup).toContain("disabled=\"\"");
-    expect(markup).not.toMatch(/viewer_url|workspace_path|password=/);
-  });
-
-  it("keeps state labels honest", () => {
-    expect(localVmInventoryState(cloudVm)).toBe("Running");
-    expect(localVmInventoryState({ ...cloudVm, ready: false })).toBe("Needs attention");
-    expect(localVmInventoryState({ ...cloudVm, container: "stopped", ready: false })).toBe("Stopped");
-    expect(localVmInventoryState({ ...cloudVm, inUse: true })).toBe("In use");
-  });
-
-  it("does not claim there are no VMs when the runtime cannot be inspected", () => {
-    const markup = renderToStaticMarkup(createElement(LocalVmInventoryCard, {
-      instances: [],
-      maxInstances: 4,
-      loading: false,
-      deletingBotId: null,
-      error: null,
-      unavailableReason: "Start docker first",
-      onRefresh: vi.fn(),
-      onDelete: vi.fn(),
-    }));
-
-    expect(markup).toContain("Inventory unavailable");
-    expect(markup).toContain("Start docker first");
-    expect(markup).not.toContain("No per-bot desktops have been created");
-  });
-
-  it("disables deletion while refreshing an existing inventory", () => {
-    const markup = renderToStaticMarkup(createElement(LocalVmInventoryCard, {
-      instances: [cloudVm],
-      maxInstances: 4,
-      loading: true,
-      deletingBotId: null,
-      error: null,
-      unavailableReason: null,
-      onRefresh: vi.fn(),
-      onDelete: vi.fn(),
-    }));
-
-    expect(markup.match(/disabled=""/g)).toHaveLength(2);
-  });
-
-  it("shows unmanaged containers without offering an unsafe delete action", () => {
-    const markup = renderToStaticMarkup(createElement(LocalVmInventoryCard, {
-      instances: [{
-        ...cloudVm,
-        managed: false,
-        ready: false,
-        problem: "Container labels do not match",
-      }],
-      maxInstances: 4,
-      loading: false,
-      deletingBotId: null,
-      error: null,
-      unavailableReason: null,
-      onRefresh: vi.fn(),
-      onDelete: vi.fn(),
-    }));
-
-    expect(markup).toContain("Not managed");
-    expect(markup).toContain("not managed by Openpals");
-    expect(markup).toContain("remove it directly in Docker or Podman");
-    expect(markup).not.toContain(">Delete</button>");
-    expect(markup).not.toContain("Container labels do not match");
+    expect(confirm).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -557,29 +431,5 @@ describe("VPS computer inventory UI", () => {
     expect(running).not.toContain(">Remove</button>");
     expect(renderCard({ instances: [{ ...ownedVps, state: "paused" }] }))
       .toContain('bg-control text-ink-secondary">Pausado</span>');
-  });
-});
-
-describe("Local VM idle timeout setting", () => {
-  it.each([["5", 5], ["30", 30], [" 480 ", 480], ["1440", 1_440]])("accepts %j", (value, minutes) => {
-    expect(parseLocalVmIdleTimeoutMinutes(value)).toBe(minutes);
-  });
-
-  it.each(["", "4", "1441", "1.5", "-30", "30m", "1e2"])("rejects %j", (value) => {
-    expect(parseLocalVmIdleTimeoutMinutes(value)).toBeNull();
-  });
-
-  it("shows the confirmed window as a bounded, labelled minutes field", () => {
-    const markup = renderToStaticMarkup(createElement(LocalVmIdleTimeoutSetting, {
-      minutes: 30,
-      disabled: false,
-      onSave: async () => {},
-    }));
-    expect(markup).toContain('for="local-vm-idle-timeout"');
-    expect(markup).toContain("Stop idle desktops after");
-    expect(markup).toContain('min="5"');
-    expect(markup).toContain('max="1440"');
-    expect(markup).toContain('value="30"');
-    expect(markup).toContain("minutes");
   });
 });

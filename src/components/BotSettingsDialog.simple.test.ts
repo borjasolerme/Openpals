@@ -267,7 +267,7 @@ beforeEach(() => {
   fixture.apps = { phase: "ready", apps: [], connectedSlugs: [] };
   fixture.mcp = { servers: [], error: false };
   fixture.places = {
-    cloud: [true, "Cloud desktop"], vm: [true, "Private desktop"], local: [true, "Your screen"], browser: [true, "Web pages only"],
+    cloud: [true, "Cloud desktop"], local: [true, "Your screen"], browser: [true, "Web pages only"],
   };
   (window as unknown as { ogb?: unknown }).ogb = undefined;
 });
@@ -861,7 +861,7 @@ describe("the Computer tab", () => {
 
   it("values Where it works with the place chosen, in plain words", () => {
     expect(rowValue(computer(makeBot({ computer: "browser" })), "where")).toBe("Your server");
-    expect(rowValue(computer(makeBot({ computer: "vm" })), "where")).toBe("Private desktop");
+    expect(rowValue(computer(makeBot({ computer: "local" })), "where")).toBe("This computer");
     expect(rowValue(computer(makeBot({ computer: "cloud", cloudBackend: "lent", lentComputerId: "gone" })), "where")).toBe("A computer of yours");
   });
 
@@ -891,7 +891,7 @@ describe("the Where it works page", () => {
     expect(chooser(where(makeBot())).value).toEqual({ kind: "server" });
     expect(chooser(where(makeBot({ computer: "browser" }))).value).toEqual({ kind: "server" });
     expect(chooser(where(makeBot({ computer: "cloud", cloudBackend: "lent", lentComputerId: "mac-1" }))).value).toEqual({ kind: "mac", id: "mac-1" });
-    expect(chooser(where(makeBot({ computer: "vm" }))).value).toEqual({ kind: "other", computer: "vm" });
+    expect(chooser(where(makeBot({ computer: "local" }))).value).toEqual({ kind: "other", computer: "local" });
     fixture.storeState = { ...fixture.storeState, config: { features: { browser: true } } };
     expect(ofType(where(makeBot()), BotSharedLogins)).toBeTruthy();
   });
@@ -900,7 +900,7 @@ describe("the Where it works page", () => {
     const choose = (bot: Bot, choice: unknown) => chooser(where(bot)).onChange(choice);
     choose(makeBot(), { kind: "mac", id: "mac-1" });
     expect(patch).toHaveBeenLastCalledWith({ computer: "cloud", cloudBackend: "lent", lentComputerId: "mac-1" });
-    choose(makeBot({ computer: "vm" }), { kind: "server" });
+    choose(makeBot({ computer: "local" }), { kind: "server" });
     expect(patch).toHaveBeenLastCalledWith({ computer: "browser", browser: true });
     patch.mockReset();
     choose(makeBot(), { kind: "server" });

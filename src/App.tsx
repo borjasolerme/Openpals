@@ -14,7 +14,7 @@ import { GroupView } from "@/components/GroupView";
 import { SIDEBAR_AND_PANEL_FIT, TWO_SIDE_PANELS_FIT, useMediaQuery } from "@/lib/use-media-query";
 import { preloadConnectedApps } from "@/lib/connected-apps";
 import {
-  ActivityPanel, BotSettingsDialog, ComputerPanel, InspectorPanel, KeyboardShortcutsModal, LocalVmWorkspace,
+  ActivityPanel, BotSettingsDialog, ComputerPanel, InspectorPanel, KeyboardShortcutsModal,
   NewBotWorkStep, PluginsPanel, preloadScreens, RoomPanel, SettingsModal, TriggersPage,
 } from "@/components/lazy-screens";
 import { useAdvancedMode } from "@/lib/interface-mode";
@@ -70,7 +70,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const sidebarHidden = useSidebarHidden();
   usePageLanguage(effectiveLanguage(useLanguageChoice(), state.config?.language));
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [localVmWorkspaceBotId, setLocalVmWorkspaceBotId] = useState<string | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeDrawer = useCallback(() => { setDrawerOpen(false); menuButtonRef.current?.focus(); }, []);
   const previousViewRef = useRef(state.activeView);
@@ -154,26 +153,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
     previousViewRef.current = state.activeView;
   }, [state.activeView]);
 
-  useEffect(() => {
-    if (
-      localVmWorkspaceBotId &&
-      (state.activeView !== "chat" || state.selectedId !== localVmWorkspaceBotId)
-    ) {
-      setLocalVmWorkspaceBotId(null);
-    }
-  }, [localVmWorkspaceBotId, state.activeView, state.selectedId]);
-
-  const openLocalVmWorkspace = (botId: string) => {
-    dispatch({ type: "toggleComputer", open: false });
-    setLocalVmWorkspaceBotId(botId);
-  };
-
-  const openComputerFromWorkspace = (botId: string) => {
-    setLocalVmWorkspaceBotId(null);
-    dispatch({ type: "select", id: botId });
-    dispatch({ type: "toggleComputer", open: true });
-  };
-
   const closeCalendar = useCallback(() => {
     if (calendarOriginRef.current === "web-panel" && state.webPanelId) {
       dispatch({ type: "showWebPanel", id: state.webPanelId });
@@ -184,16 +163,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const openCalendarRoom = useCallback((id: string) => {
     dispatch({ type: "select", id });
   }, [dispatch]);
-
-  const nativeViewOverlayOpen =
-    drawerOpen ||
-    paletteOpen ||
-    state.settingsOpen ||
-    state.computerOpen ||
-    state.inspectorOpen ||
-    state.activityOpen ||
-    state.appSettingsOpen ||
-    state.pluginsOpen;
 
   useEffect(() => {
     return window.ogb?.onOpenAppSettings?.(() => dispatch({ type: "toggleAppSettings", open: true }));
@@ -228,7 +197,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const framed = windowFramed(capabilities);
   const strips = <>
     <LiveConnectionStrip connected={state.connected} hydrated={state.hydrated === true} />
-    <AppNotices quiet={paletteOpen || drawerOpen || Boolean(localVmWorkspaceBotId)} viewer={viewer} />
+    <AppNotices quiet={paletteOpen || drawerOpen} viewer={viewer} />
   </>;
   return (
     <div className={cn("flex h-full flex-col", framed && "bg-frame")}>
@@ -268,13 +237,6 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         <WebPanelPage />
       ) : state.activeView === "routines" ? (
         <TriggersPage onBack={closeCalendar} onOpenRoom={openCalendarRoom} />
-      ) : localVmWorkspaceBotId ? (
-        <LocalVmWorkspace
-          primaryBotId={localVmWorkspaceBotId}
-          overlayOpen={nativeViewOverlayOpen}
-          onClose={() => setLocalVmWorkspaceBotId(null)}
-          onOpenComputer={openComputerFromWorkspace}
-        />
       ) : group ? (
         <GroupView key={group.id} group={group} />
       ) : bot ? (
@@ -300,11 +262,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         <BotSettingsDialog key={`settings:${bot.id}`} bot={bot} overlay={(state.inspectorOpen || state.computerOpen || (notificationFeed && state.notificationsOpen)) && !twoSidePanelsFit} />
       )}
       {state.computerOpen && bot && (
-        <ComputerPanel
-          key={`computer:${bot.id}`}
-          bot={bot}
-          onOpenVmWorkspace={openLocalVmWorkspace}
-        />
+        <ComputerPanel key={`computer:${bot.id}`} bot={bot} />
       )}
       {roomPanelOpen && group && (
         <RoomPanel key={`room:${group.id}`} group={group} overlay={notificationFeed && state.notificationsOpen && !twoSidePanelsFit} />

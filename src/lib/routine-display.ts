@@ -59,6 +59,5 @@ export function routineRunsOn({ roomGoal, runOn, computer }: {
   if (roomGoal) return { label: t("routines.runsOn.team"), hint };
   if (runOn === "cloud") return { label: t("routines.runsOn.boat"), hint: t("routines.runsOn.boatHint") };
   if (computer === "cloud") return { label: t("routines.runsOn.botCloud"), hint };
-  if (computer === "vm") return { label: t("routines.runsOn.botVm"), hint };
   return { label: t("routines.runsOn.local"), hint };
 }

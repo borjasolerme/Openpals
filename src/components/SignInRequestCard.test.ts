@@ -80,7 +80,6 @@ describe("SignInRequestCard while it waits", () => {
   });
 
   it.each([
-    ["vm", "the private desktop Pepper works on"],
     ["cloud", "the cloud desktop Pepper works on"],
     ["local", "on this computer, in the browser Pepper is using"],
   ])("names the place for %s", (place, words) => {
@@ -159,7 +158,7 @@ describe("SignInRequestCard while it waits", () => {
     expect(saveLoginFromCard).toHaveBeenLastCalledWith({ botId: "pepper", threadId: "thread-1", messageId: "card-1" }, fields, "login.microsoftonline.com");
   });
 
-  it.each(["vm", "cloud", "local"])("does not offer to save a login on %s, where fill_login cannot reach yet", (place) => {
+  it.each(["cloud", "local"])("does not offer to save a login on %s, where fill_login cannot reach yet", (place) => {
     expect(view({ place })).not.toContain("Save a login");
   });
 
@@ -206,7 +205,7 @@ describe("SignInRequestCard once settled", () => {
 });
 
 describe("SignInBanner", () => {
-  const help = { botId: "pepper", threadId: "thread-1", messageId: "card-1", site: "example.com", place: "vm" as const };
+  const help = { botId: "pepper", threadId: "thread-1", messageId: "card-1", site: "example.com", place: "cloud" as const };
   const banner = (takeControl?: { onClick: () => void }) => {
     let root!: ReactNode;
     function Capture() { root = SignInBanner({ help, askerName: "Pepper", takeControl }); return root; }

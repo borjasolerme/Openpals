@@ -102,7 +102,7 @@ export interface OptionCardData extends Pick<WireOptionCard, "fixedOptions" | "w
 
 export type ConnectorCardData = import("../../shared/connector-card").ConnectorCardData;
 
-export type SecretRequestCardData = Omit<import("../../shared/wire").SecretRequestCardData, "phoneOperationId" | "vm">;
+export type SecretRequestCardData = Omit<import("../../shared/wire").SecretRequestCardData, "phoneOperationId">;
 
 export type ComputerControlState = { held: boolean; helpReason: string | null; help?: import("../../shared/wire").ComputerHelpRef | null };
 
@@ -228,7 +228,7 @@ export interface Task extends Pick<WireTask, "private" | "setupRequest"> {
   unread?: boolean;
   lastReadMessageId?: string;
   pinnedMessageId?: string;
-  surface?: "cloud" | "vm" | "local" | "browser";
+  surface?: "cloud" | "local" | "browser";
   surfaceAuto?: true;
   openedBy?: ThreadOpener;
   closedBy?: ThreadCloser;
@@ -286,7 +286,7 @@ export interface Bot extends Pick<WireBot, "mascotFaceColor"> {
   activity?: "working" | "waiting-on-you" | "idle" | "no-signal" | "dead" | "parked.computer";
   turnStartedAt?: number | null;
   modelSelection: ModelSelection;
-  computer?: "cloud" | "vm" | "local" | "browser" | "off";
+  computer?: "cloud" | "local" | "browser" | "off";
   cloudBackend?: CloudBackend;
   lentComputerId?: string;
   autoStartVps?: boolean;
@@ -393,7 +393,7 @@ export type { BrowserEngineSummary, BrowserProfile, ConfigStatus };
 // A section left out here is wiped from state.config whenever a config frame lands.
 export type ConfigStatusFrame = Pick<
   ConfigStatus,
-  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "localVm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "budgets" | "billing"
+  "xai" | "mistral" | "cerebras" | "groq" | "greenference" | "meta" | "deepseek" | "treg" | "postiz" | "anthropic" | "openai" | "openrouter" | "openaiCompat" | "fleet" | "composio" | "box" | "vps" | "rooms" | "mcp" | "threads" | "automaticRecovery" | "cacheKeepWarm" | "opencodeGo" | "tts" | "decider" | "helpers" | "imageGen" | "live" | "savedKeys" | "profile" | "language" | "features" | "onboarding" | "browserEngine" | "browserProfiles" | "budgets" | "billing"
 >;
 
 export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
@@ -416,7 +416,6 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
     threads: frame.threads,
     automaticRecovery: frame.automaticRecovery,
     cacheKeepWarm: frame.cacheKeepWarm,
-    localVm: frame.localVm,
     opencodeGo: frame.opencodeGo,
     tts: frame.tts,
     decider: frame.decider, helpers: frame.helpers,
@@ -3071,7 +3070,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           break;
         case "computer":
           rawDispatch({ type: "computerStart", botId: frame.botId,
-            start: { state: frame.state, ...(frame.place ? { place: frame.place } : {}) } });
+            start: { state: frame.state } });
           break;
         case "computer-control":
           rawDispatch({

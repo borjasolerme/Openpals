@@ -63,14 +63,6 @@ vi.mock("@/state/store", async (importOriginal) => ({
       fixture.held = false;
       return { held: false, helpReason: null };
     }
-    if (route === "/api/bots/scout/local-computer") {
-      return {
-        mode: "per-bot", max_instances: 2, image: true, create_supported: true, container: "running", imageMatches: true,
-        managed: true, network: "loopback", security: "hardened", persistence: "durable", desktopReady: true, ready: true,
-        problem: null, viewer_url: "http://127.0.0.1:49152/vnc.html#password=fixture", target_key: `bot:${"a".repeat(64)}`,
-      };
-    }
-    if (route === "/api/bots/scout/local-computer/screenshot") return { image: "data:image/png;base64,FRAME" };
     if (route === "/api/bots/scout/computer") {
       return { configured: true, ready: true, managed: true, imageMatches: true, container: "running", problem: null, box: { state: "ready" } };
     }
@@ -96,6 +88,7 @@ const makeBot = (patch: Partial<Bot> = {}): Bot => ({
   tasks: [{ threadId: "thread", title: "Thread", createdAt: 1, approvalMode: "ask" }],
   ...patch,
 }) as unknown as Bot;
+const vpsBot = () => makeBot({ computer: "cloud", cloudBackend: "vps" });
 
 let root: Root | null = null;
 let state: AppState;
@@ -183,12 +176,12 @@ function pressEscape() {
   (document.activeElement ?? document.body).dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
 }
 
-describe("taking control of a Local VM", () => {
+describe("taking control of a VPS desktop in place", () => {
   it("turns the panel's own picture into the live desktop at once; no window or tab opens", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     await shownLive();
-    expect(liveDesktop()!.dataset.target).toBe(`local/bot-${"a".repeat(64)}`);
+    expect(liveDesktop()!.dataset.target).toBe("vps/scout");
     expect(window.ogb!.desktopViewer!.open, "nothing may open in another window").not.toHaveBeenCalled();
     expect(window.open).not.toHaveBeenCalled();
     expect(fixture.controls).toEqual([{ action: "take", controlLeaseId: expect.stringMatching(/^[0-9a-f]{36}$/) }]);
@@ -197,7 +190,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("hands back at once and returns to watching", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     await press("Hand control back");
     expect(fixture.controls.at(-1)).toEqual({ action: "release" });
@@ -206,7 +199,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("Full screen only watches: the bot keeps working until the person takes control from there", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Full screen");
     const watch = () => document.querySelector<HTMLElement>("[data-watch-full-screen]");
     expect(watch(), "Full screen must fill the window with the bot's screen").not.toBeNull();
@@ -243,7 +236,7 @@ describe("taking control of a Local VM", () => {
 
   it("full screen shows only errors from a Take control tried there, and leaves Escape to a dialog opened over it", async () => {
     fixture.refuse = true;
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     expect(fixture.controls.map((control) => control.action)).toEqual(["take"]);
     await press("Full screen");
@@ -266,7 +259,7 @@ describe("taking control of a Local VM", () => {
 
   it("a refused Take control in full screen keeps watching and says why", async () => {
     fixture.refuse = true;
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Full screen");
     const watch = () => document.querySelector<HTMLElement>("[data-watch-full-screen]");
     const take = [...watch()!.querySelectorAll("button")].find((candidate) => candidate.textContent?.trim() === "Take control")!;
@@ -284,7 +277,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("full screen keeps Tab inside and gives focus back to Full screen when it closes", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     const trigger = button("Full screen")!;
     trigger.focus();
     await press("Full screen");
@@ -300,7 +293,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("closing the panel, leaving its Screen view or closing the page gives back the hold it took", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     const lease = fixture.controls[0]!.controlLeaseId;
     root!.unmount();
@@ -310,7 +303,7 @@ describe("taking control of a Local VM", () => {
     ]);
 
     fixture.beacons = [];
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     await press("Browser");
     expect(releases(), "leaving the Screen view left the bot waiting").toHaveLength(1);
@@ -328,7 +321,7 @@ describe("taking control of a Local VM", () => {
     fixture.held = true;
     fixture.owned = false;
     heldElsewhere(true);
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Full screen");
     await shownLive();
     root!.unmount();
@@ -337,7 +330,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("a hand-back from elsewhere ends the live view once it lasts, and a flicker does not", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     await shownLive();
     heldElsewhere(false);
@@ -353,7 +346,7 @@ describe("taking control of a Local VM", () => {
   });
 
   it("a desktop that never comes up gives the computer back and says so", async () => {
-    await open(makeBot({ computer: "vm" }));
+    await open(vpsBot());
     await press("Take control");
     await shownLive();
     flushSync(() => fixture.live!.onUnreachable());

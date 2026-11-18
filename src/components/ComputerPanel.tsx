@@ -1,11 +1,9 @@
 import { boatCapableEngine, cloudEngineOf } from "@/lib/remote-desktop";
 import { canWorkOnCloud } from "../../shared/cloud-computer";
-import { viewerTargetId } from "../../shared/desktop-viewer";
 import { Switch } from "./SettingsPrimitives";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { waitForLocalVmReady } from "@/lib/local-vm-readiness";
-import { CalendarClock, ChevronRight, Columns2, Globe, Hand, Loader2, Maximize2, Monitor, Moon, Power, Settings, X } from "lucide-react";
+import { CalendarClock, ChevronRight, Globe, Hand, Loader2, Maximize2, Monitor, Moon, Power, Settings, X } from "lucide-react";
 import { api, ApiError, currentTaskBot, useStore, type Bot, type ConfigStatus } from "@/state/store";
 import { setAdvancedMode, useAdvancedMode } from "@/lib/interface-mode";
 import { ComputerFilesPane } from "./ComputerFilesPane";
@@ -70,8 +68,6 @@ type Phase =
   | "starting"
   | "busy-boat"
   | "ready"
-  | "vm"
-  | "vm-unavailable"
   | "vps-unconfigured"
   | "vps-incompatible"
   | "vps-stopped"
@@ -87,26 +83,6 @@ type Phase =
   | "off"
   | "error";
 
-interface LocalVmStatus {
-  resumable?: boolean;
-  stop_reason?: "idle" | null;
-  mode: "shared" | "per-bot" | "pool";
-  max_instances: number;
-  image: boolean;
-  create_supported: boolean;
-  container: "running" | "stopped" | "missing";
-  imageMatches: boolean;
-  managed: boolean;
-  network: "loopback" | "unsafe" | "unknown";
-  security: "hardened" | "unsafe" | "unknown";
-  persistence: "durable" | "unsafe" | "unknown";
-  desktopReady: boolean;
-  ready: boolean;
-  problem: string | null;
-  viewer_url: string;
-  target_key: string;
-}
-
 const computerControlSnapshotSchema = z.object({
   held: z.boolean().optional().default(false),
   helpReason: z.string().nullable().optional().default(null),
@@ -114,13 +90,7 @@ const computerControlSnapshotSchema = z.object({
   owned: z.boolean().optional(),
 }).passthrough();
 
-export function ComputerPanel({
-  bot: profileBot,
-  onOpenVmWorkspace,
-}: {
-  bot: Bot;
-  onOpenVmWorkspace?: (botId: string) => void;
-}) {
+export function ComputerPanel({ bot: profileBot }: { bot: Bot }) {
   const { dragProps } = useCaptionChrome();
   const { panelWidth, separatorRef, separatorWidth, onSeparatorKeyDown, onResizeStart, onResizeMove, onResizeEnd } = useComputerPanelResize();
   const { state, dispatch, flushBotPatches } = useStore();
@@ -144,7 +114,6 @@ export function ComputerPanel({
     `/api/bots/${profileBot.id}/${suffix}?threadId=${encodeURIComponent(profileBot.threadId)}`,
   [profileBot.id, profileBot.threadId]);
   const canManageCloud = profileBot.computer === "cloud" && livePlace === "cloud";
-  const canManageVm = profileBot.computer === "vm" && livePlace === "vm";
   const { capabilities, ready: capabilitiesReady } = useDesktopCapabilities();
   const localAvailable = capabilities.localComputer.available;
   const isLinux = capabilities.host.platform === "linux";
@@ -224,12 +193,10 @@ export function ComputerPanel({
   const [previewError, setPreviewError] = useState<Error | string | null>(null);
   const [previewRefreshing, setPreviewRefreshing] = useState(false);
   const [previewRetry, setPreviewRetry] = useState(0);
-  const [vmFrame, setVmFrame] = useState<string | null>(null);
-  const [vmStatus, setVmStatus] = useState<LocalVmStatus | null>(null);
   const [vpsStatus, setVpsStatus] = useState<VpsComputerStatus | null>(null);
   const [localFrame, setLocalFrame] = useState<string | null>(null);
   const [pending, setPending] = useState<
-    "join" | "sleep" | "provision" | "vps-replace" | "vm-start" | "vm-create" | "vm-recreate" | "vm-delete" | null
+    "join" | "sleep" | "provision" | "vps-replace" | null
   >(null);
   const [controlPending, setControlPending] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -258,7 +225,7 @@ export function ComputerPanel({
       if (controller.signal.aborted) return;
       const surface = status.surface;
       setAutoSurface({ key: connectionKey, surface:
-        surface === "cloud" || surface === "vm" || surface === "local" || surface === "browser" || surface === "off"
+        surface === "cloud" || surface === "local" || surface === "browser" || surface === "off"
           ? surface : undefined });
     }).catch((cause) => {
       if (controller.signal.aborted) return;
@@ -267,16 +234,6 @@ export function ComputerPanel({
     });
     return () => controller.abort();
   }, [connectionKey, livePlace, computerSelectionPersisted, threadPath, retry]);
-  const vmResumable = phase === "vm-unavailable" && vmStatus?.resumable === true;
-  const vmReadinessAttempts = useRef(0);
-  const vmActionController = useRef<AbortController | null>(null);
-  useEffect(() => {
-    if (vmActionController.current?.signal.aborted) {
-      vmActionController.current = null;
-      setPending(null);
-    }
-    return () => { vmActionController.current?.abort(); };
-  }, [bot.id, bot.threadId, bot.computer, panelView]);
   const selectedInstance = state.instances.find(
     (instance) => instance.instanceId === bot.modelSelection.instanceId,
   );
@@ -341,13 +298,6 @@ export function ComputerPanel({
   }, [bot.id]);
 
   useAndroidTabFallback(bot.id, androidStatus, setPanelView);
-  useEffect(() => {
-    vmReadinessAttempts.current = 0;
-  }, [bot.id, bot.computer]);
-  const vmSupported = Boolean(
-    selectedInstance?.snapshot.state === "available" &&
-      selectedInstance.capabilities?.computerMcp,
-  );
   const cloudSupported = canWorkOnCloud(cloudEngineOf(selectedInstance));
   const botRoutines = state.routines
     .filter((routine) => routine.botId === bot.id)
@@ -366,8 +316,6 @@ export function ComputerPanel({
     setPhase("checking");
     setPolledFrame(null);
     setPreviewError(null);
-    setVmFrame(null);
-    setVmStatus(null);
     setVpsStatus(null);
     setLocalFrame(null);
     setError(null);
@@ -393,59 +341,6 @@ export function ComputerPanel({
       setPhase(capabilitiesReady && localAvailable && providerSupportsLocal ? "local" : "local-unavailable");
       setResolvedComputerSelection({ botId: bot.id, threadId: bot.threadId, computer: bot.computer, cloudBackend });
       return;
-    }
-    if (bot.computer === "vm") {
-      if (!vmSupported) {
-        setError(new LocalizedPanelError("computer.err.vmEngine"));
-        setPhase("vm-unavailable");
-        return;
-      }
-      let retryTimer: number | undefined;
-      api(threadPath("local-computer"))
-        .then((rawStatus) => {
-          if (!alive) return;
-          const status: LocalVmStatus = rawStatus;
-          setResolvedComputerSelection({ botId: bot.id, threadId: bot.threadId, computer: bot.computer, cloudBackend });
-          setVmStatus(status);
-          if (status.ready) {
-            vmReadinessAttempts.current = 0;
-            setPhase("vm");
-          } else if (
-            status.container === "running" &&
-            status.imageMatches &&
-            status.managed &&
-            status.network === "loopback" &&
-            status.security === "hardened" &&
-            status.persistence === "durable" &&
-            !status.desktopReady &&
-            vmReadinessAttempts.current < 15
-          ) {
-            vmReadinessAttempts.current += 1;
-            setError(null);
-            setPhase("checking");
-            retryTimer = window.setTimeout(() => setRetry((n) => n + 1), 2000);
-          }
-          else {
-            const canCreateHere =
-              status.mode === "per-bot" &&
-              status.container === "missing" &&
-              status.image &&
-              status.create_supported;
-            setError(canCreateHere || status.resumable ? null : new LocalizedPanelError(
-              "computer.err.vmOpenSettings", status.problem, "computer.err.vmNotReady",
-            ));
-            setPhase("vm-unavailable");
-          }
-        })
-        .catch((e) => {
-          if (!alive) return;
-          setError(e.message);
-          setPhase("vm-unavailable");
-        });
-      return () => {
-        alive = false;
-        if (retryTimer !== undefined) window.clearTimeout(retryTimer);
-      };
     }
     if (bot.computer === "cloud" && !cloudSupported) {
       setPhase("error");
@@ -566,7 +461,6 @@ export function ComputerPanel({
     isLinux,
     providerSupportsLocal,
     selectedInstance?.driverKind,
-    vmSupported,
     cloudSupported,
     state.config?.vps?.sshAlias,
     panelView,
@@ -616,9 +510,7 @@ export function ComputerPanel({
     });
     return snap;
   }, [bot.id, dispatch]);
-  const liveTarget = !computerStatusCurrent ? null
-    : phase === "vm" && vmStatus?.viewer_url && vmStatus.target_key ? viewerTargetId({ key: vmStatus.target_key })
-      : cloudPreviewReady && cloudBackend === "vps" ? `vps/${bot.id}` : null;
+  const liveTarget = computerStatusCurrent && cloudPreviewReady && cloudBackend === "vps" ? `vps/${bot.id}` : null;
   const takeover = useComputerTakeover({
     botId: bot.id, session: `${viewerConnectionKey}:${panelView}`, held: control.held, request: requestControl,
     viewerClose: liveTarget?.startsWith("vps/") ? threadPath("computer/viewer-close") : null,
@@ -701,44 +593,6 @@ export function ComputerPanel({
     };
   }, [panelView, cloudPreviewReady, threadPath, cloudBackend, viewerOpen, liveHere, pageVisible, pending, controlPending, previewRetry]);
 
-  useEffect(() => {
-    if (panelView !== "computer" || phase !== "vm" || !computerStatusCurrent || viewerOpen || liveHere || !pageVisible) return;
-    const controller = new AbortController();
-    let inFlight = false;
-    let lastAttemptAt = -Infinity;
-    let retryDelay: number | null = null;
-    let initialAttempt = true;
-    const shoot = async () => {
-      if (inFlight || controller.signal.aborted) return;
-      if (Date.now() - lastAttemptAt < (retryDelay ?? (bot.busy ? 3000 : 30_000))) return;
-      inFlight = true;
-      retryDelay = null;
-      try {
-        const { image } = await api(threadPath("local-computer/screenshot"), { method: "POST", signal: controller.signal });
-        if (!controller.signal.aborted && typeof image === "string") {
-          setVmFrame(image);
-          setPreviewError(null);
-        }
-      } catch (e) {
-        if (!controller.signal.aborted) {
-          retryDelay = 5000;
-          if (initialAttempt) setError(e instanceof Error ? e.message : String(e));
-          else setPreviewError(e instanceof Error ? e : new LocalizedPanelError("computer.err.screenUnavailable"));
-        }
-      } finally {
-        inFlight = false;
-        initialAttempt = false;
-        lastAttemptAt = Date.now();
-      }
-    };
-    void shoot();
-    const timer = window.setInterval(() => void shoot(), bot.busy ? 3000 : 30_000);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-    };
-  }, [panelView, phase, computerStatusCurrent, threadPath, viewerOpen, liveHere, pageVisible, bot.busy, setError, setPreviewError, setVmFrame]);
-
   // The first capture attempt is what makes macOS show the Screen Recording prompt (no reliable pre-grant on macOS
   // 15+), so repeated empty frames mean denied.
   const [localMisses, setLocalMisses] = useState(0);
@@ -764,9 +618,7 @@ export function ComputerPanel({
   }, [panelView, phase, computerStatusCurrent, isLinux, pageVisible, bot.busy, bot.id, bot.threadId]);
 
   const frameSrc = !computerStatusCurrent ? null :
-    phase === "vm"
-      ? vmFrame
-      : phase === "local" && !isLinux
+    phase === "local" && !isLinux
       ? localFrame
       : cloudPreviewReady || (bot.computer === "cloud" && phase === "starting")
         ? polledFrame && `data:${polledFrame.mime};base64,${polledFrame.png}`
@@ -824,7 +676,7 @@ export function ComputerPanel({
   }, [transitionControl]);
 
   const bannerTakesControl = Boolean(signInHelp && signInHelp.place !== "browser" && signInHelp.place !== "local" &&
-    (cloudPreviewReady || phase === "vm"));
+    cloudPreviewReady);
   const signInBanner = (take?: () => void) => signInHelp && (
     <SignInBanner
       help={signInHelp}
@@ -858,7 +710,7 @@ export function ComputerPanel({
     }
   };
 
-  const takeBlocked = pending === "join" || (phase === "vm" && !liveTarget);
+  const takeBlocked = pending === "join";
   const takeControl = async (expand = false) => {
     if (!liveTarget) return cloudPreviewReady ? openDesktop() : undefined;
     if (takeover.here) return takeover.setExpanded(expand || takeover.expanded);
@@ -931,59 +783,6 @@ export function ComputerPanel({
       .finally(() => setPending(null));
   };
 
-  const runVmAction = async (action: "vm-start" | "vm-create" | "vm-recreate" | "vm-delete") => {
-    if (
-      (action === "vm-recreate" || action === "vm-delete") &&
-      !window.confirm(
-        action === "vm-delete"
-          ? t("computer.confirm.deleteVm", { name: bot.name })
-          : t("computer.confirm.replaceVm", { name: bot.name }),
-      )
-    ) return;
-    if (vmActionController.current) return;
-    const controller = new AbortController();
-    vmActionController.current = controller;
-    setPending(action);
-    setError(null);
-    vmReadinessAttempts.current = 0;
-    try {
-      if (action === "vm-recreate" || action === "vm-delete") {
-        await api(`/api/bots/${bot.id}/local-computer/remove`, {
-          method: "POST",
-          body: "{}",
-          signal: controller.signal,
-        });
-      }
-      if (action !== "vm-delete") {
-        const lifecyclePath = action === "vm-start" && vmStatus?.mode !== "per-bot"
-          ? "/api/local-computer/start"
-          : `/api/bots/${bot.id}/local-computer/${action === "vm-start" ? "start" : "run"}`;
-        const started: LocalVmStatus = await api(lifecyclePath, {
-          method: "POST",
-          body: "{}",
-          signal: controller.signal,
-        });
-        const status = await waitForLocalVmReady(started, () => api(threadPath("local-computer"), { signal: controller.signal }), controller.signal);
-        if (!status.ready) throw new Error(status.problem ?? t("computer.err.vmNotReady"));
-        setVmStatus(status);
-        setPhase("vm");
-      } else {
-        setVmStatus((current) => current ? { ...current, container: "missing", ready: false } : current);
-        setPhase("vm-unavailable");
-      }
-    } catch (e) {
-      if (controller.signal.aborted) return;
-      setError(e instanceof Error ? e.message : String(e));
-      setPhase("vm-unavailable");
-    } finally {
-      if (vmActionController.current === controller && !controller.signal.aborted) {
-        vmActionController.current = null;
-        setPending(null);
-        setRetry((n) => n + 1);
-      }
-    }
-  };
-
   const replaceVpsComputer = async () => {
     if (!window.confirm(t("computer.confirm.replaceVps", { name: bot.name }))) return;
     setPending("vps-replace");
@@ -1008,11 +807,6 @@ export function ComputerPanel({
       setPending(null);
       setRetry((n) => n + 1);
     }
-  };
-
-  const openVmSettings = () => {
-    window.sessionStorage.setItem("openmausbot.settings.section", "computer");
-    dispatch({ type: "toggleAppSettings", open: true });
   };
 
   const openConnectionSettings = () => dispatch(openKeySettings("vps"));
@@ -1092,7 +886,6 @@ export function ComputerPanel({
     if (id === "start" || id === "wake") return startCloudComputer();
     if (id === "try-again") return setRetry((n) => n + 1);
     if (id === "turn-on-browser") return void turnOnBrowser();
-    if (id === "open-vm-settings") return openVmSettings();
     openPlaceAction(id, { botId: profileBot.id, threadId: profileBot.threadId }, dispatch);
   };
   const panelOffers = (id: PlaceActionId | undefined): id is PlaceActionId => Boolean(id) && id !== "watch" && id !== "open-computer-panel"
@@ -1142,11 +935,10 @@ export function ComputerPanel({
     "vps-incompatible": t("computer.phase.vpsIncompatible"),
     "vps-stopped": t("computer.phase.vpsStopped"),
     "local-unavailable": localDisabledReason ?? t("computer.phase.localUnavailable"),
-    "vm-unavailable": t("computer.phase.vmUnavailable"),
     browser: viewOf("browser").line,
     off: viewOf("off").line,
     error: bot.computer === "cloud" && (cloudRefused || placeBlocked(cloudView)) ? cloudView.line : t("computer.phase.error"),
-  } satisfies Record<Exclude<Phase, "ready" | "local" | "vm">, string>;
+  } satisfies Record<Exclude<Phase, "ready" | "local">, string>;
 
   return (
     <>
@@ -1275,7 +1067,6 @@ export function ComputerPanel({
             <span>{t("computer.screenOf", { name: bot.name })}</span>
             {phase === "local" && <span className="text-xs">{t("computer.badge.local")}</span>}
             {liveHere && <span className="flex items-center gap-1.5 text-xs font-medium text-ink"><span className="size-1.5 rounded-full bg-success" />{t("computer.inControl")}</span>}
-            {phase === "vm" && !liveHere && <span className="text-xs">{t("vm.dest.vm")}</span>}
             {(phase === "show-ready-boat" || phase === "show-sleeping-boat" || phase === "show-pending-boat") && (
               <span className="text-xs">{t("computer.badge.autoBoat")}</span>
             )}
@@ -1335,11 +1126,10 @@ export function ComputerPanel({
               src={frameSrc}
               alt={t("computer.screenOf", { name: bot.name })}
               className="h-full w-full object-contain"
-              title={phase === "vm" ? t("computer.watchOnly") : undefined}
             />
           ) : (
             <div className="flex flex-col items-center gap-2 px-6 text-center text-ink-secondary">
-              {phase === "checking" || phase === "starting" || (phase === "busy-boat" && busyBoat.spinner) || phase === "vm" || (phase === "local" && !isLinux) ? (
+              {phase === "checking" || phase === "starting" || (phase === "busy-boat" && busyBoat.spinner) || (phase === "local" && !isLinux) ? (
                 <Loader2 size={18} className="animate-spin" />
               ) : phase === "off" ? (
                 <Power size={22} />
@@ -1351,17 +1141,13 @@ export function ComputerPanel({
                   ? t("computer.waitingFrame")
                   : phase === "ready"
                     ? t("computer.autoChooseCloudOpen")
-                  : phase === "vm"
-                    ? t("computer.capturingVm")
                   : phase === "local"
                     ? isLinux
                       ? t("computer.linuxReady")
                       : localMisses >= 3
                       ? t("computer.needsScreenPerm")
                       : t("computer.capturingLocal")
-                    : vmResumable
-                      ? t(pending === "vm-start" ? "vm.setup.starting" : "computer.phase.vmStopped")
-                      : emptyState[phase]}
+                    : emptyState[phase]}
               </span>
               {bot.computer === "cloud" && (phase === "unconfigured" || phase === "error") && cloudView.action?.id !== "add-boat-key" && placeActionButton(cloudView)}
               {phase === "local" && !isLinux && localMisses >= 3 && (
@@ -1394,42 +1180,6 @@ export function ComputerPanel({
                 </button>
               )}
               {pending === null && (phase === "cloud-new" || phase === "cloud-asleep") && placeActionButton(cloudView)}
-              {vmResumable && pending !== "vm-start" && (
-                <p className="text-sm">{t(vmStatus?.stop_reason === "idle" ? "vm.stopped.idle" : "vm.stopped.detail")}</p>
-              )}
-              {phase === "vm-unavailable" && (
-                canManageVm && vmResumable && vmStatus.mode !== "pool" ? (
-                  <button
-                    onClick={() => void runVmAction("vm-start")}
-                    disabled={pending !== null}
-                    aria-busy={pending === "vm-start"}
-                    className="mt-1 flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
-                  >
-                    {pending === "vm-start" && <Loader2 size={13} className="animate-spin" />}
-                    {t(pending === "vm-start" ? "vm.setup.starting" : "vm.setup.start")}
-                  </button>
-                ) : canManageVm && vmStatus?.mode === "per-bot" && vmStatus.image && vmStatus.create_supported ? (
-                  <button
-                    onClick={() => void runVmAction(vmStatus.container === "missing" ? "vm-create" : "vm-recreate")}
-                    disabled={pending !== null}
-                    className="mt-1 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
-                  >
-                    {(pending === "vm-create" || pending === "vm-recreate") && (
-                      <Loader2 size={13} className="mr-1.5 inline animate-spin" />
-                    )}
-                    {vmStatus.container === "missing"
-                      ? t("computer.createVm", { name: bot.name })
-                      : t("computer.replaceVm", { name: bot.name })}
-                  </button>
-                ) : (
-                  <button
-                    onClick={openVmSettings}
-                    className="mt-1 rounded-lg bg-control px-3 py-1.5 text-sm text-ink hover:bg-raised-hover"
-                  >
-                    {t("computer.openVmSetup")}
-                  </button>
-                )
-              )}
               {!advanced && computerStatusCurrent && (phase === "vps-unconfigured" || phase === "vps-stopped" || phase === "vps-incompatible") && (
                 <>
                   <p className="text-sm">{t("computer.simple.needsSetup", { name: bot.name })}</p>
@@ -1502,27 +1252,10 @@ export function ComputerPanel({
           </div>
         )}
 
-        {advanced &&
-          phase === "vm" &&
-          vmStatus?.mode === "per-bot" &&
-          window.ogb?.desktopWorkspace &&
-          onOpenVmWorkspace && (
-            <button
-              type="button"
-              onClick={() => onOpenVmWorkspace(bot.id)}
-              disabled={pending !== null}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-2 text-base font-medium text-ink hover:bg-accent/15 disabled:opacity-50"
-              title={t("computer.twoDesktopsTitle")}
-            >
-              <Columns2 size={14} />
-              {t("computer.twoDesktops")}
-            </button>
-          )}
-
         {signInHelp && signInHelp.place !== "browser" && signInBanner(bannerTakesControl && !control.held
-          ? () => phase === "vm" || cloudPreviewReady ? void takeControl() : void controlAction("take")
+          ? () => cloudPreviewReady ? void takeControl() : void controlAction("take")
           : undefined)}
-        {(cloudPreviewReady || phase === "vm") && control.held && (
+        {cloudPreviewReady && control.held && (
           <div className="mt-3 rounded-xl border border-accent/25 bg-accent/10 p-4">
             <div className="text-base leading-relaxed text-ink">
               {t("computer.youHaveWheel")}
@@ -1538,29 +1271,7 @@ export function ComputerPanel({
             </button>
           </div>
         )}
-        {advanced && phase === "vm" && (control.held || !bannerTakesControl) && (
-          <button
-            onClick={() => void takeControl(control.held)}
-            disabled={controlPending || !liveTarget}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-control py-2 text-base text-ink hover:bg-raised-hover disabled:opacity-50"
-            title={control.held ? t("computer.openLiveDesktop") : t("computer.takeControlTitle")}
-          >
-            {controlPending ? <Loader2 size={14} className="animate-spin" /> : control.held ? <Maximize2 size={14} /> : <Hand size={14} />}
-            {t(control.held ? "computer.fullScreen" : "computer.takeControl")}
-          </button>
-        )}
-        {advanced && canManageVm && phase === "vm" && vmStatus?.mode === "per-bot" && (
-          <button
-            onClick={() => void runVmAction("vm-delete")}
-            disabled={pending !== null || profileBot.busy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 py-2 text-base text-danger hover:bg-danger/10 disabled:opacity-50"
-            title={profileBot.busy ? t("computer.deleteVmBlocked") : t("computer.deleteVmTitle", { name: bot.name })}
-          >
-            {pending === "vm-delete" ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
-            {t("computer.deleteVm")}
-          </button>
-        )}
-        {!advanced && (cloudPreviewReady || phase === "vm") && (
+        {!advanced && cloudPreviewReady && (
           <div className="mt-3 flex gap-2" data-testid="computer-actions">
             {!control.held && !bannerTakesControl && (
               <button

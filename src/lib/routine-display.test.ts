@@ -11,14 +11,13 @@ describe("where a routine runs", () => {
     expect(routineRunsOn({ roomGoal: false, runOn: "cloud" })).toEqual({
       label: "Cloud desktop", hint: "Runs the whole job on the bot's cloud desktop while Openpals is open.",
     });
-    expect(routineRunsOn({ roomGoal: false, computer: "vm" }).label).toBe("The bot's private desktop");
     expect(routineRunsOn({ roomGoal: true }).label).toBe("This computer, with the whole group");
   });
 
   it("never names Boat or a cloud runner", () => {
     for (const input of [{ runOn: "cloud" }, { computer: "cloud" }, {}]) {
       const { label, hint } = routineRunsOn({ roomGoal: false, ...input });
-      expect(`${label} ${hint}`).not.toMatch(/boat|runner|VM\b/i);
+      expect(`${label} ${hint}`).not.toMatch(/boat|runner/i);
     }
   });
 });

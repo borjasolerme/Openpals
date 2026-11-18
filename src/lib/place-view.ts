@@ -76,7 +76,7 @@ export function placeRowViewFor(row: PlaceRow, seat: PlaceSeat, worksOnLabel?: s
 
 export function placeBlocked(view: PlaceView): boolean {
   return view.state === "cc-cannot" || view.state === "browser-off" || view.state === "browser-cannot"
-    || view.state === "vm-cannot" || view.state === "local-unavailable";
+    || view.state === "local-unavailable";
 }
 
 export function placeHasIssue(view: PlaceView): boolean {
@@ -104,10 +104,6 @@ export function openPlaceAction(
     case "sign-in": appSettings("engines"); return true;
     case "manage-computers": appSettings("computer"); return true;
     case "add-boat-key": dispatch(openKeySettings("box")); return true;
-    case "open-vm-settings":
-      window.sessionStorage?.setItem("openmausbot.settings.section", "computer");
-      appSettings("computer");
-      return true;
     case "clear-pin":
       if (!target.threadId) return false;
       dispatch({ type: "updateTask", botId: target.botId, threadId: target.threadId, patch: { surface: null } });
@@ -126,7 +122,6 @@ export function openPlaceAction(
 export const SIMPLE_PLACE_LABEL = {
   auto: "vm.dest.auto",
   cloud: "place.cloud",
-  vm: "vm.dest.vm",
   browser: "vm.dest.browser",
   off: "vm.dest.off",
 } as const satisfies Record<string, LocaleKey>;

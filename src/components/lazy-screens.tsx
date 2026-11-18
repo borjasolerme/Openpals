@@ -70,7 +70,6 @@ export const BotSettingsDialog = lazyScreen("BotSettingsDialog", async () => (aw
 export const ComputerPanel = lazyScreen("ComputerPanel", async () => (await import("./ComputerPanel")).ComputerPanel);
 export const InspectorPanel = lazyScreen("InspectorPanel", async () => (await import("./InspectorPanel")).InspectorPanel);
 export const KeyboardShortcutsModal = lazyScreen("KeyboardShortcutsModal", async () => (await import("./KeyboardShortcutsModal")).KeyboardShortcutsModal);
-export const LocalVmWorkspace = lazyScreen("LocalVmWorkspace", async () => (await import("./LocalVmWorkspace")).LocalVmWorkspace);
 export const NewBotDialog = lazyScreen("NewBotDialog", async () => (await import("./NewBotDialog")).NewBotDialog);
 export const NewBotWorkStep = lazyScreen("NewBotWorkStep", async () => (await import("./work-computer/NewBotWorkStep")).NewBotWorkStep);
 export const PluginsPanel = lazyScreen("PluginsPanel", async () => (await import("./PluginsPanel")).PluginsPanel);
@@ -86,7 +85,7 @@ export const TeamLibraryPanel = lazyScreen("TeamLibraryPanel", async () => (awai
 // Most opened first: a server's page fetches these in this order.
 const SCREENS = [
   SettingsModal, BotSettingsDialog, PluginsPanel, ComputerPanel, TriggersPage, ActivityPanel, InspectorPanel, KeyboardShortcutsModal,
-  LocalVmWorkspace, NewBotDialog, NewBotWorkStep, RoomPanel,
+  NewBotDialog, NewBotWorkStep, RoomPanel,
 ];
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);

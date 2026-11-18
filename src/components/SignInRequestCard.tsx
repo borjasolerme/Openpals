@@ -17,7 +17,6 @@ import { LoginForm } from "./LoginForm";
 
 const WHERE = {
   browser: "signIn.where.browser",
-  vm: "signIn.where.vm",
   cloud: "signIn.where.cloud",
   local: "signIn.where.local",
   host: "signIn.where.host",

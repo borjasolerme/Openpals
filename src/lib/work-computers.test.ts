@@ -10,7 +10,7 @@ describe("where a bot works", () => {
   it("turns each choice into the bot's own settings, and reads them back, with Auto as Your server", () => {
     expect(workPatch({ kind: "mac", id: "a" })).toEqual({ computer: "cloud", cloudBackend: "lent", lentComputerId: "a" });
     expect(workPatch({ kind: "server" })).toEqual({ computer: "browser" });
-    expect(workPatch({ kind: "other", computer: "vm" })).toEqual({ computer: "vm" });
+    expect(workPatch({ kind: "other", computer: "local" })).toEqual({ computer: "local" });
     expect(workChoiceOf({ computer: "cloud", cloudBackend: "lent", lentComputerId: "a" })).toEqual({ kind: "mac", id: "a" });
     expect(workChoiceOf({ computer: "browser" })).toEqual({ kind: "server" });
     expect(workChoiceOf({})).toEqual({ kind: "server" });
@@ -24,7 +24,7 @@ describe("where a bot works", () => {
     expect(workChoiceLabel({ kind: "server" })).toBe("Your server");
     expect(workChoiceLabel({ kind: "mac", id: "a" }, [{ id: "a", name: "Mac mini" }])).toBe("Mac mini");
     expect(workChoiceLabel({ kind: "mac", id: "gone" })).toBe("A computer of yours");
-    expect(workChoiceLabel({ kind: "other", computer: "vm" })).toBe("Private desktop");
+    expect(workChoiceLabel({ kind: "other", computer: "local" })).toBe("This computer");
   });
 
   it("says a lent Mac's state in one word", () => {

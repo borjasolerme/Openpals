@@ -1012,7 +1012,6 @@ describe("config status frames", () => {
         rooms: { turnTimeoutMinutes: 20 },
         mcp: { callTimeoutMinutes: 30 },
         threads: { maxConcurrentPerBot: 10 },
-        localVm: { mode: "per-bot", maxInstances: 3 },
         opencodeGo: { configured: true },
         tts: { configured: true, ready: true, voice: "Ada" },
         profile: { name: "Ian", email: "ian@example.test" },
@@ -1026,7 +1025,6 @@ describe("config status frames", () => {
       rooms: { turnTimeoutMinutes: 20 },
       mcp: { callTimeoutMinutes: 30 },
       threads: { maxConcurrentPerBot: 10 },
-      localVm: { mode: "per-bot", maxInstances: 3 },
       opencodeGo: { configured: true },
       tts: { configured: true, ready: true, voice: "Ada" },
       profile: { name: "Ian", email: "ian@example.test" },
@@ -1079,7 +1077,6 @@ describe("config status", () => {
     vps: { configured: false, sshAlias: "" },
     rooms: { turnTimeoutMinutes: 5 },
     mcp: { callTimeoutMinutes: 10 },
-    localVm: { mode: "shared", maxInstances: 2 },
     features: { skillAuthoring: true },
   });
 
@@ -2438,7 +2435,6 @@ describe("live config frames", () => {
     vps: { configured: false, sshAlias: "" },
     rooms: { turnTimeoutMinutes: 10 },
     mcp: { callTimeoutMinutes: 10 },
-    localVm: { mode: "shared", maxInstances: 1 },
   };
 
   it("keeps automatic recovery and its backup through live config refreshes", () => {

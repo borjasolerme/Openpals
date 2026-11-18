@@ -16,8 +16,8 @@ export class DesktopUnreachable extends Error {
   }
 }
 
-/** Security: only desktop pixels and input cross the VM boundary. The app's own noVNC client talks RFB through the
- * desktop proxy; the VM never supplies page code. A VPS opens its tunnel first; a Local VM's viewer runs with it. */
+/** Security: only desktop pixels and input cross the container boundary. The app's own noVNC client talks RFB through
+ * the desktop proxy, after the VPS opens its tunnel; the desktop never supplies page code. */
 export async function connectDesktop(screen: HTMLElement, target: string, options: {
   threadId?: string | null;
   signal: AbortSignal;
@@ -26,13 +26,11 @@ export async function connectDesktop(screen: HTMLElement, target: string, option
   if (!DESKTOP_VIEWER_TARGET.test(target)) throw new DesktopUnreachable(true);
   const { signal: cancelled, events } = options;
   const signal = AbortSignal.any([cancelled, AbortSignal.timeout(30_000)]);
-  if (target.startsWith("vps/")) {
-    const query = options.threadId ? `?${new URLSearchParams({ threadId: options.threadId })}` : "";
-    const joined = await fetch(`/api/bots/${target.slice(4)}/computer/join${query}`, {
-      method: "POST", headers: { "content-type": "application/json" }, body: "{}", signal,
-    });
-    if (!joined.ok) throw new DesktopUnreachable();
-  }
+  const query = options.threadId ? `?${new URLSearchParams({ threadId: options.threadId })}` : "";
+  const joined = await fetch(`/api/bots/${target.slice("vps/".length)}/computer/join${query}`, {
+    method: "POST", headers: { "content-type": "application/json" }, body: "{}", signal,
+  });
+  if (!joined.ok) throw new DesktopUnreachable();
   const path = `/api/desktop-viewer/${target}`;
   const response = await fetch(path, { signal, credentials: "same-origin", cache: "no-store" });
   if (!response.ok) throw new DesktopUnreachable();

@@ -179,7 +179,6 @@ describe("one name per thing", () => {
       "set OMB_PUBLIC_IPV4", "Choose Cloud desktop to wake", "Auto, Cloud desktop or Browser",
       "Add a Boat API key in Settings → API keys", "Connect Boat", "Check boat.dev",
       "Bots here can get their own cloud desktops from Boat, a paid service", "Cloud desktops by Boat",
-      "Local VM",
     ]) expect(retiredIn(good), good).toEqual([]);
   });
 });

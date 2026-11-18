@@ -30,7 +30,7 @@ export function workComputerState(computer: Pick<WorkComputer, "online" | "busy"
 }
 
 /** Where a bot works: the server it lives on, a computer lent to it, or a place set elsewhere (a bot's own cloud
- * computer, a private desktop, this computer, or none), which the chooser shows but no longer offers. */
+ * computer, this computer, or none), which the chooser shows but no longer offers. */
 export type WorkChoice = { kind: "server" } | { kind: "mac"; id: string } | { kind: "other"; computer: Exclude<Bot["computer"], "browser"> };
 
 export type WorkPatch = Pick<BotUpdatePatch, "computer" | "cloudBackend" | "lentComputerId">;
@@ -51,7 +51,6 @@ export function workChoiceLabel(choice: WorkChoice, computers: readonly Pick<Wor
   if (choice.kind === "server") return t("workPlace.server.title");
   if (choice.kind === "mac") return computers.find((computer) => computer.id === choice.id)?.name ?? t("workPlace.computer");
   switch (choice.computer) {
-    case "vm": return t("vm.dest.vm");
     case "local": return t("vm.dest.local");
     case "cloud": return t("place.cloud");
     default: return t("vm.dest.off");

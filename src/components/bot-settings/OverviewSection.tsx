@@ -42,7 +42,7 @@ export function OverviewSection({
     if (talks) return t("botOverview.line.talksToAll", { count: talks[1]! });
     const computer = line.match(/^Computer preference: (.+)\.$/);
     if (computer) {
-      const preference = computer[1] === "Auto; availability is checked when a task starts" ? t("botOverview.preference.auto") : computer[1] === "cloud computer" ? t("botOverview.preference.cloud") : computer[1] === "Local VM" ? t("botOverview.preference.vm") : computer[1] === "this computer" ? t("botOverview.preference.local") : computer[1] === "browser only" ? t("botOverview.preference.browser") : computer[1];
+      const preference = computer[1] === "Auto; availability is checked when a task starts" ? t("botOverview.preference.auto") : computer[1] === "cloud computer" ? t("botOverview.preference.cloud") : computer[1] === "this computer" ? t("botOverview.preference.local") : computer[1] === "browser only" ? t("botOverview.preference.browser") : computer[1];
       return t("botOverview.line.computer", { preference });
     }
     return line;

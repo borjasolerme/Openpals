@@ -199,7 +199,7 @@ describe("AccessSection Works on", () => {
     const markup = render(makeBot());
     expect(markup).toContain("Where Scout works: Chooses for you");
     expect(markup).toContain("Open the Screen panel");
-    expect([...markup.matchAll(/>(Auto|Cloud|Local VM|This computer|Browser|Off)<\/button>/g)]).toEqual([]);
+    expect([...markup.matchAll(/>(Auto|Cloud|This computer|Browser|Off)<\/button>/g)]).toEqual([]);
     expect(render(makeBot({ computer: "off" }))).toContain("Where Scout works: No screen");
 
     let tree!: ReturnType<typeof AccessSection>;

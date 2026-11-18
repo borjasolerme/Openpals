@@ -96,15 +96,15 @@ describe("the menu's first row", () => {
     expect(menu[0]).toEqual({ checked: true, text: "Auto Picks the right place for each task" });
     expect(html).not.toContain("Follow this bot");
     expect(html).toContain('aria-label="Where this conversation works: Auto"');
-    expect(menu).toHaveLength(5);
+    expect(menu).toHaveLength(4);
     expect(menu.filter((row) => row.text.startsWith("Auto"))).toHaveLength(1);
   });
 
   it("stays Auto, unchecked, when the conversation is pinned elsewhere", () => {
-    const { html, rows: menu } = rows({ bot: { ...bot, computer: undefined }, task: { surface: "vm" } });
+    const { html, rows: menu } = rows({ bot: { ...bot, computer: undefined }, task: { surface: "local" } });
     expect(menu[0]).toEqual({ checked: false, text: "Auto Picks the right place for each task" });
-    expect(menu.find((row) => row.checked)?.text).toBe("Private desktop Isolated local desktop");
-    expect(html).toContain('aria-label="Where this conversation works: Private desktop"');
+    expect(menu.find((row) => row.checked)?.text).toBe("This computer Your screen and apps");
+    expect(html).toContain('aria-label="Where this conversation works: This computer"');
   });
 
   it("keeps Auto checked for the place Auto picked, which is no pin of the person's", () => {
@@ -132,14 +132,14 @@ describe("another server's page", () => {
     fixture.menuOpen = true;
     const html = renderToStaticMarkup(createElement(PlaceChip, { bot: { ...bot, computer: undefined }, live: false, onPin: () => {} }));
     const rows = html.split('role="menuitemradio"').slice(1);
-    expect(rows).toHaveLength(4);
+    expect(rows).toHaveLength(3);
     expect(rows.some((row) => row.includes("This computer"))).toBe(false);
 
     let submenu: { label: unknown }[] = [];
     function Probe() { submenu = usePlaceMenuItem({ bot, onPin: () => {} }).submenu ?? []; return null; }
     renderToStaticMarkup(createElement(Probe));
     expect(labels(submenu)).not.toContain("This computer");
-    expect(submenu).toHaveLength(4);
+    expect(submenu).toHaveLength(3);
   });
 
   it("still lists This computer on a desktop", () => {
@@ -175,8 +175,8 @@ describe("the places a conversation can be pinned to", () => {
   };
   afterEach(() => { fixture.config = null; });
 
-  it("reaches this computer and a Local VM on a desktop or self-hosted server", () => {
-    expect(availability()).toMatchObject({ cloud: true, vm: true, local: true });
+  it("reaches this computer on a desktop or self-hosted server", () => {
+    expect(availability()).toMatchObject({ cloud: true, local: true });
   });
 
 });

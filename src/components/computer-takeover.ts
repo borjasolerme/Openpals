@@ -89,7 +89,7 @@ export function useComputerTakeover({ botId, session, held, request, viewerClose
   session: string;
   held: boolean;
   request: Request;
-  /** A VPS keeps its viewer tunnel until told; the Local VM's viewer runs with the VM. */
+  /** A VPS keeps its viewer tunnel until told. */
   viewerClose: string | null;
 }) {
   const [here, setHere] = useState(false);

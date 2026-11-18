@@ -1,4 +1,4 @@
-import { Box, Check, Cloud, Globe, Monitor, Power, Sparkles } from "lucide-react";
+import { Check, Cloud, Globe, Monitor, Power, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { PlaceView } from "../../shared/place-view";
 import { cn } from "@/lib/cn";
@@ -11,7 +11,6 @@ export type WorksOnMode = Place | "off" | null;
 export const WORKS_ON_CHOICES = [
   [null, "vm.dest.auto", "computer.dest.autoDesc", Sparkles],
   ["cloud", "place.cloud", "computer.dest.cloudDesc", Cloud],
-  ["vm", "vm.dest.vm", "computer.dest.vmDesc", Box],
   ["local", "vm.dest.local", "computer.dest.localDesc", Monitor],
   ["browser", "vm.dest.browser", "computer.dest.browserDesc", Globe],
   ["off", "vm.dest.off", "computer.dest.offDesc", Power],

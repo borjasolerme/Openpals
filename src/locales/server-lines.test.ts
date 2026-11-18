@@ -455,7 +455,6 @@ const PENDING: Readonly<Record<string, ReadonlyArray<readonly [file: string, sni
     ["server/computer-wait.ts", "Computer still busy after  …  … . Parked — it continues automatically"],
     ["server/index.ts", "Could not continue on  … :  …"],
     ["server/surface.ts", "the cloud computer"],
-    ["server/surface.ts", "the Local VM"],
     ["server/surface.ts", "this computer"],
     ["server/surface.ts", "the built-in browser"],
   ],
