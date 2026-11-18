@@ -5,8 +5,11 @@ import { dirname } from "node:path";
 import { z } from "zod";
 import { writeFileAtomic } from "./atomic.ts";
 
-export type Scope = "admin" | "client";
+/** `lend`: a computer lent to this server ("Add a computer") may register and take its jobs, and nothing else. */
+export type Scope = "admin" | "client" | "lend";
+/** What a pairing grants when it names no scopes. */
 export const SCOPES: readonly Scope[] = ["admin", "client"];
+const isScope = (value: unknown): value is Scope => value === "admin" || value === "client" || value === "lend";
 
 export const PAIRING_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 export const PAIRING_CODE_LENGTH = 12;
@@ -38,7 +41,7 @@ export const EXCHANGE_REPLAY_MS = 60_000;
 export const MAX_STREAM_TICKETS_PER_SESSION = 5;
 const LAST_SEEN_WRITE_INTERVAL_MS = 60_000;
 
-const scopeSchema = z.enum(["admin", "client"]);
+const scopeSchema = z.enum(["admin", "client", "lend"]);
 
 const sessionSchema = z.object({
   id: z.string().min(1),
@@ -184,7 +187,9 @@ export function pairingRequest(body: unknown): PairingRequest | { error: string 
   if (ttlMs === null) return { error: "ttlMs must be a whole number of milliseconds, from one minute to 24 hours" };
   const tokenTtlMs = within(record.tokenTtlMs, 60_000, SESSION_MAX_AGE_MS);
   if (tokenTtlMs === null) return { error: `a token lasts from one minute to ${Math.floor(SESSION_MAX_AGE_MS / DAY_MS)} days on this server (OMB_SESSION_MAX_DAYS)` };
-  const scopes = Array.isArray(record.scopes) ? record.scopes.filter((v): v is Scope => v === "admin" || v === "client") : undefined;
+  const asked = Array.isArray(record.scopes) ? record.scopes.filter(isScope) : undefined;
+  // A lending computer's pairing is never also a person's: it lends, and only that.
+  const scopes = asked?.includes("lend") ? ["lend" as const] : asked;
   return {
     ...(typeof record.label === "string" ? { label: record.label } : {}), ...(scopes ? { scopes } : {}),
     ...(ttlMs !== undefined ? { ttlMs } : {}), ...(tokenTtlMs !== undefined ? { tokenTtlMs } : {}),

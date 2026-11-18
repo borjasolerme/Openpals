@@ -14,20 +14,26 @@ import { Button, buttonClass } from "../ui/Button";
 /** The newest Openpals for Mac, with the first-open steps. */
 export const INSTALL_GUIDE = `${APP_REPOSITORY}/releases/latest`;
 
-interface PairingLink { code: string; url: string | null; expiresAt: number }
+interface PairingLink { id: string; code: string; url: string | null; expiresAt: number }
 
 /** A computer new to this guide: online now, and not online when the guide opened. */
 export function newlyConnected(computers: readonly WorkComputer[] | null, onlineAtOpen: ReadonlySet<string>): WorkComputer | null {
   return (computers ?? []).find((computer) => computer.online && !onlineAtOpen.has(computer.id)) ?? null;
 }
 
-/** The step the guide highlights: the furthest one reached, or "connected" once the computer shows up. */
-export function guideStep({ reached, connected }: { reached: number; connected: boolean }): 1 | 2 | 3 | "connected" {
-  if (connected) return "connected";
-  return reached >= 3 ? 3 : reached >= 2 ? 2 : 1;
+/** The step the guide highlights: install, then paste the link there. */
+export function guideStep(reached: number): 1 | 2 {
+  return reached >= 2 ? 2 : 1;
 }
 
-function Step({ number, step, title, children }: { number: 1 | 2 | 3; step: 1 | 2 | 3; title: string; children?: ReactNode }) {
+/** What the guide waits for: the link pasted there, the person's yes there, macOS's screen permissions, or nothing. */
+export type GuideStatus = "paste" | "turnOn" | "screen" | "ready";
+export function guideStatus({ claimed, computer }: { claimed: boolean; computer: Pick<WorkComputer, "screenReady"> | null }): GuideStatus {
+  if (computer) return computer.screenReady === false ? "screen" : "ready";
+  return claimed ? "turnOn" : "paste";
+}
+
+function Step({ number, step, title, children }: { number: 1 | 2; step: 1 | 2; title: string; children?: ReactNode }) {
   const active = number === step;
   const done = number < step;
   return (
@@ -46,8 +52,8 @@ function Step({ number, step, title, children }: { number: 1 | 2 | 3; step: 1 | 
   );
 }
 
-function OnAMac() {
-  const [open, setOpen] = useState(false);
+function OnAMac({ opened = false }: { opened?: boolean }) {
+  const [open, setOpen] = useState(opened);
   return (
     <>
       <Button size="sm" variant="ghost" className="gap-1 self-start" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
@@ -65,10 +71,9 @@ function OnAMac() {
   );
 }
 
-function PairingLinkView({ link, now, onCopied }: { link: PairingLink; now: number; onCopied: () => void }) {
+function PairingLinkView({ link, now }: { link: PairingLink; now: number }) {
   const [copied, setCopied] = useState<CopyFeedback>("idle");
   const copy = (url: string) => {
-    onCopied();
     void copyText(url).then((result) => { if (result !== "empty") setCopied(result); });
   };
   return (
@@ -87,7 +92,7 @@ function PairingLinkView({ link, now, onCopied }: { link: PairingLink; now: numb
   );
 }
 
-function Connected({ computer, onUse }: { computer: WorkComputer; onUse: (id: string) => void }) {
+function Connected({ computer, screen, onUse }: { computer: WorkComputer; screen: boolean; onUse: (id: string) => void }) {
   const [test, setTest] = useState<ConnectionTest | "testing" | null>(null);
   const runTest = async () => {
     setTest("testing");
@@ -95,9 +100,10 @@ function Connected({ computer, onUse }: { computer: WorkComputer; onUse: (id: st
   };
   return (
     <div className="flex flex-col gap-3 px-3.5 py-3" data-guide-connected>
-      <div className="text-base font-medium text-ink">{t("workComputer.guide.step4.connected", { name: computer.name })}</div>
+      <div className="text-base font-medium text-ink">{t(screen ? "workComputer.guide.screen" : "workComputer.guide.ready", { name: computer.name })}</div>
+      {screen && (computer.platform === "darwin" ? <OnAMac opened /> : <p className="text-sm text-ink-secondary">{t("workComputer.guide.screenOther")}</p>)}
       <div className="flex flex-wrap gap-2">
-        <Button variant="primary" onClick={() => onUse(computer.id)}>{t("workComputer.guide.use", { name: computer.name })}</Button>
+        <Button variant={screen ? "secondary" : "primary"} onClick={() => onUse(computer.id)}>{t("workComputer.guide.use", { name: computer.name })}</Button>
         <Button variant="ghost" className="gap-1.5" disabled={test === "testing"} onClick={() => void runTest()}>
           {test === "testing" && <Loader2 size={13} className="animate-spin" />}{t(test === "testing" ? "workComputer.guide.testing" : "workComputer.guide.test")}
         </Button>
@@ -113,9 +119,26 @@ function Connected({ computer, onUse }: { computer: WorkComputer; onUse: (id: st
   );
 }
 
+/** Whether the link was used: gone from the open pairings before it expired. */
+function usePairingClaimed(link: PairingLink | null, watching: boolean): boolean {
+  const [claimed, setClaimed] = useState(false);
+  useEffect(() => {
+    setClaimed(false);
+    if (!link || !watching) return;
+    let alive = true;
+    const check = () => void api<{ pairings: Array<{ id: string }> }>("/api/auth/pairing").then((answer) => {
+      if (alive && Date.now() < link.expiresAt && !answer.pairings.some((pairing) => pairing.id === link.id)) setClaimed(true);
+    }).catch(() => {});
+    check();
+    const timer = setInterval(check, 3_000);
+    return () => { alive = false; clearInterval(timer); };
+  }, [link, watching]);
+  return claimed;
+}
+
 /**
- * "Add a computer": a Mac mini, a laptop, a desktop PC or a cloud VM with a desktop. Install Openpals there, connect it
- * with a one-time pairing link made as that step opens, turn on lending there, and the guide sees it arrive by itself.
+ * "Add a computer": a Mac mini, a laptop, a desktop PC or a VM with a desktop. Install Openpals there and paste the link
+ * made here; that computer asks once and lends itself, and this guide says what is still missing until it is ready.
  */
 export function AddComputerGuide({ known, onBack, onUse }: { known: readonly string[]; onBack: () => void; onUse: (id: string) => void }) {
   const { computers } = useWorkComputers(true);
@@ -128,16 +151,17 @@ export function AddComputerGuide({ known, onBack, onUse }: { known: readonly str
   const [now, setNow] = useState(() => Date.now());
   const asked = useRef(false);
   const connected = newlyConnected(computers, onlineAtOpen.current ?? new Set(known));
-  const step = guideStep({ reached, connected: Boolean(connected) });
-  const at = step === "connected" ? 3 : step;
+  const step = guideStep(reached);
   const expired = link ? link.expiresAt <= now : false;
+  const claimed = usePairingClaimed(link, !connected);
+  const status = guideStatus({ claimed, computer: connected });
   const reach = (value: number) => setReached((current) => Math.max(current, value));
 
   const makeLink = async () => {
     setMaking(true);
     setError("");
     try {
-      setLink(await api<PairingLink>("/api/auth/pairing", { method: "POST", body: JSON.stringify({ scopes: ["admin", "client"], label: t("workComputer.guide.pairingLabel") }) }));
+      setLink(await api<PairingLink>("/api/auth/pairing", { method: "POST", body: JSON.stringify({ scopes: ["lend"], label: t("workComputer.guide.pairingLabel") }) }));
       setNow(Date.now());
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
@@ -159,38 +183,38 @@ export function AddComputerGuide({ known, onBack, onUse }: { known: readonly str
   }, [link]);
 
   return (
-    <div className="flex flex-col gap-2" data-add-computer-guide>
+    <div className="flex flex-col gap-2" data-add-computer-guide data-guide-status={status}>
       <Button variant="ghost" size="sm" className="gap-1.5 self-start" onClick={onBack}><ArrowLeft size={14} />{t("workComputer.back")}</Button>
       <div className="flex flex-col gap-0.5 px-1">
         <div className="text-lg font-medium text-ink">{t("workComputer.guide.title")}</div>
         <p className="text-sm text-ink-secondary [text-wrap:pretty]">{t("workComputer.guide.intro")}</p>
       </div>
       <Card>
-        {connected ? <Connected computer={connected} onUse={onUse} /> : (
+        {connected ? <Connected computer={connected} screen={status === "screen"} onUse={onUse} /> : (
           <ol className="flex flex-col divide-y divide-line-subtle">
-            <Step number={1} step={at} title={t("workComputer.guide.step1.title")}>
+            <Step number={1} step={step} title={t("workComputer.guide.step1.title")}>
               <div className="flex flex-wrap items-center gap-2">
                 <a href={INSTALL_GUIDE} target="_blank" rel="noreferrer"
                   onClick={(event) => { event.preventDefault(); void openExternalLink(INSTALL_GUIDE).catch(() => {}); reach(2); }}
-                  className={buttonClass({ size: "sm", variant: at === 1 ? "primary" : "secondary" }, "gap-1.5")}>
+                  className={buttonClass({ size: "sm", variant: step === 1 ? "primary" : "secondary" }, "gap-1.5")}>
                   {t("workComputer.guide.step1.download")}<ExternalLink size={13} />
                 </a>
-                {at === 1 && <Button variant="ghost" size="sm" onClick={() => reach(2)}>{t("workComputer.guide.installed")}</Button>}
+                {step === 1 && <Button variant="ghost" size="sm" onClick={() => reach(2)}>{t("workComputer.guide.installed")}</Button>}
               </div>
             </Step>
-            <Step number={2} step={at} title={t("workComputer.guide.step2.connect")}>
+            <Step number={2} step={step} title={t("workComputer.guide.step2.connect")}>
               <p>{t("workComputer.guide.step2.paste")}</p>
-              {link && !expired && <PairingLinkView link={link} now={now} onCopied={() => reach(3)} />}
+              {link && !expired && !claimed && <PairingLinkView link={link} now={now} />}
               {making && <p className="flex items-center gap-2"><Loader2 size={13} className="animate-spin" />{t("workComputer.guide.step2.creating")}</p>}
-              {!making && (expired || error) && (
+              {!making && !claimed && (expired || error) && (
                 <Button size="sm" className="self-start" onClick={() => void makeLink()}>{t("workComputer.guide.step2.again")}</Button>
               )}
               {error && <p role="alert" className="text-danger">{error}</p>}
-            </Step>
-            <Step number={3} step={at} title={t("workComputer.guide.step3.turnOn")}>
-              <p>{t("workComputer.guide.step3.settings")}</p>
-              <OnAMac />
-              {at !== 1 && <p className="flex items-center gap-2" data-waiting-for-computer><Loader2 size={13} className="motion-safe:animate-spin" />{t("workComputer.guide.step4.waiting")}</p>}
+              {step === 2 && link && !expired && (
+                <p className="flex items-center gap-2 text-ink" data-guide-waiting={status}>
+                  <Loader2 size={13} className="motion-safe:animate-spin" />{t(status === "turnOn" ? "workComputer.guide.waitingYes" : "workComputer.guide.waitingPaste")}
+                </p>
+              )}
             </Step>
           </ol>
         )}

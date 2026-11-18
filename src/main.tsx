@@ -8,7 +8,7 @@ import { applyChatWidth, readChatWidth } from "./lib/chat-width";
 import { applyFont, readFont } from "./lib/fonts";
 import { applySoftwareRendering } from "./lib/software-rendering";
 import { settleAdvancedModeDefault } from "./lib/interface-mode";
-import { PairPage } from "./pair/PairPage";
+import { LendLinkNotice, PairPage } from "./pair/PairPage";
 import { PageBoundary } from "./components/PageBoundary";
 import { endedBeforeReload, forgetEndedSession, SESSION_ENDED_REASON } from "./lib/session-ended";
 import "./styles.css";
@@ -27,6 +27,8 @@ const loadApp = () => import("./App").catch((error: unknown) => ({ default: (): 
 const appPage = PAGES_WITHOUT_THE_APP.has(location.pathname) ? null : loadApp();
 
 async function chooseRoot(): Promise<React.ReactNode> {
+  // A link from "Add a computer" is for Openpals on the computer being lent, never a browser sign-in.
+  if (location.pathname === "/pair" && new URLSearchParams(location.hash.slice(1)).get("lend") === "1") return <LendLinkNotice />;
   if (location.pathname === "/pair") return <PairPage initialCode={takePairingCodeFromLocation()} />;
   const session = await readSessionState();
   if (session.kind === "unauthenticated") {

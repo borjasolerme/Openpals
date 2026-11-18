@@ -46,12 +46,18 @@ async function lendingFixture({ owner = true, terminal = false } = {}) {
   const work = createWorkComputers({ dataDir: dir, environmentId: ENVIRONMENT, sessionLive: () => true, ownServer: () => own.now,
     turnResources: new TurnResources(), holderName: () => undefined });
   cleanups.push(() => work.close());
-  const session = { id: "desktop-session", scopes: ["admin", "client"], label: "Mac mini" };
-  const auth = { kind: "session", session, via: "cookie", scopes: session.scopes } as unknown as RequestAuth;
+  // The lend-only session the link from "Add a computer" trades its one-time code for.
+  const TOKEN = "omb_sess_lend-test";
+  const session = { id: "lend-session", scopes: ["lend"], label: "Mac mini" };
+  const auth = { kind: "session", session, via: "bearer", scopes: session.scopes } as unknown as RequestAuth;
   const server: Server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
-    if (url.pathname === "/api/auth/session") return json(res, 200, { kind: "session", id: session.id, scopes: session.scopes, ...(own.now ? { workComputers: true } : {}) });
-    if (url.pathname === "/.well-known/openmausbot/environment") return json(res, 200, { environmentId: ENVIRONMENT, capabilities: {} });
+    if (url.pathname === "/.well-known/openmausbot/environment") return json(res, 200, { environmentId: ENVIRONMENT, label: "Boat server", capabilities: {} });
+    if (url.pathname === "/api/auth/pair") {
+      const body = await readBody(req) as { code?: string };
+      return body?.code === "ABCD-EFGH-JKLM" ? json(res, 200, { token: TOKEN, environment: { label: "Boat server" } }) : json(res, 400, { error: "invalid code" });
+    }
+    if (req.headers.authorization !== `Bearer ${TOKEN}`) return json(res, 401, { error: "unauthorized" });
     try {
       const out = await work.routes({ req, res, url, path: url.pathname, method: req.method ?? "GET", auth, json, readBody });
       if (out === PASS) json(res, 404, { error: "no route" });
@@ -63,12 +69,12 @@ async function lendingFixture({ owner = true, terminal = false } = {}) {
   cleanups.push(() => new Promise<void>((resolve) => { server.closeAllConnections(); server.close(() => resolve()); }));
   const origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const desktop = createComputerSharing({
-    file: join(dir, "desktop", "computer-sharing.json"), fetch: globalThis.fetch, server: () => ({ origin, name: "Boat server" }),
+    file: join(dir, "desktop", "computer-sharing.json"), fetch: globalThis.fetch,
     computerName: () => "Mac mini", platform: "darwin", retryMs: [20],
     cuaConnection: async () => ({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: {} }),
   });
   cleanups.push(() => desktop.close());
-  desktop.turnOn();
+  await desktop.addTarget({ origin, code: "ABCD-EFGH-JKLM" }, { serverName: "fallback" });
   if (terminal) desktop.setTerminal(true);
   const online = async () => {
     for (let i = 0; i < 300; i++) {
@@ -85,6 +91,13 @@ async function lendingFixture({ owner = true, terminal = false } = {}) {
 }
 
 describe("a Mac lent to this server, end to end", () => {
+  it("trades the link's code for a lend-only session and lends under the server's own name", async () => {
+    const { desktop, online } = await lendingFixture();
+    await online();
+    for (let i = 0; i < 300 && desktop.summary().targets[0]?.state !== "online"; i++) await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(desktop.summary().targets).toEqual([expect.objectContaining({ serverName: "Boat server", state: "online", paused: false })]);
+  });
+
   it("comes online under its own name, and a bot's turn sees and uses only its lent screen tools", async () => {
     const { work, online, turn } = await lendingFixture();
     const computer = await online();
@@ -143,8 +156,9 @@ describe("a Mac lent to this server, end to end", () => {
 
   it("refuses lending once someone else can sign in here, and a desktop sees it can't lend", async () => {
     const { work, desktop, own } = await lendingFixture({ owner: false });
-    for (let i = 0; i < 300 && desktop.summary().problem !== "unsupported"; i++) await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(desktop.summary().problem).toBe("unsupported");
+    const problem = () => desktop.summary().targets[0]?.problem;
+    for (let i = 0; i < 300 && problem() !== "unsupported"; i++) await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(problem()).toBe("unsupported");
     expect(work.list()).toEqual([]);
     expect(own.now).toBe(false);
   });

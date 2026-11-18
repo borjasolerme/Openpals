@@ -44,7 +44,7 @@ function stubWorkspace() {
   state.answered = count => new Promise(resolve => { settle = () => { if (state.results.length >= count) resolve(state.results); }; settle(); });
   const fetchImpl = async (url, init) => {
     const route = new URL(url).pathname;
-    if (route === "/api/auth/session") return json({ kind: "session", id: sessionId, scopes: ["admin", "client"], workComputers: true });
+    if (route === "/api/auth/pair") return json({ token: `omb_sess_${sessionId}`, environment: { label: env.name } });
     if (route === "/.well-known/openmausbot/environment") return json({ environmentId, capabilities: {} });
     const body = init?.body ? JSON.parse(init.body) : {};
     if (route === "/api/shared-computers/connect") { state.connected = body; return json({}); }
@@ -645,11 +645,11 @@ test("with the whole home folder lent, keys, a browser profile and this app's da
     // Wired as main wires it: the grants file under the app's own profile, and this app's data folder in protectedPaths.
     sharing = createComputerSharing({
       file: path.join(home, "Library", "Application Support", "OpenMausBot", "computer-sharing.json"), fetch: stub.fetchImpl, home,
-      server: () => stub.env, cuaConnection: async () => null, protectedPaths: [path.join(home, ".openmausbot")],
+      cuaConnection: async () => null, protectedPaths: [path.join(home, ".openmausbot")],
     });
     // Lent as the picker lends it after its warning: the home folder itself, read only even when edits are asked for.
     const lent = await validateSharedFolders([{ id: randomUUID(), path: home, write: true, home: true }]);
-    sharing.turnOn();
+    await sharing.addTarget({ origin: stub.env.origin, code: "ABCD-EFGH-JKLM" }, { serverName: stub.env.name });
     sharing.setFolders(lent);
     const results = await stub.state.answered(secrets.length + 3);
     assert.deepEqual(stub.state.connected.folders.map(({ write }) => write), [false]);
@@ -679,11 +679,11 @@ test("the harness data directory is protected through a broad share", async t =>
   stub.state.work.push({ action: "read_file", path: ".openmausbot/config.json" });
   const sharing = createComputerSharing({
     file: path.join(dir, "profile", "computer-sharing.json"), fetch: stub.fetchImpl,
-    server: () => stub.env, cuaConnection: async () => null, protectedPaths: [dataDir],
+    cuaConnection: async () => null, protectedPaths: [dataDir],
   });
   t.after(() => sharing.close());
   const lent = await validateSharedFolders([{ id: randomUUID(), path: shared, write: true }]);
-  sharing.turnOn();
+  await sharing.addTarget({ origin: stub.env.origin, code: "ABCD-EFGH-JKLM" }, { serverName: stub.env.name });
   sharing.setFolders(lent);
   const result = await stub.state.delivered;
   assert.equal(result.isError, true);
@@ -699,11 +699,11 @@ test("a harness data directory that does not exist yet still saves and connects"
   stub.state.work.push({ action: "read_file", path: "note.txt" });
   const sharing = createComputerSharing({
     file: path.join(dir, "profile", "computer-sharing.json"), fetch: stub.fetchImpl,
-    server: () => stub.env, cuaConnection: async () => null, protectedPaths: [path.join(dir, "never-installed", ".openmausbot")],
+    cuaConnection: async () => null, protectedPaths: [path.join(dir, "never-installed", ".openmausbot")],
   });
   t.after(() => sharing.close());
   const lent = await validateSharedFolders([{ id: randomUUID(), path: shared, write: false }]);
-  sharing.turnOn();
+  await sharing.addTarget({ origin: stub.env.origin, code: "ABCD-EFGH-JKLM" }, { serverName: stub.env.name });
   assert.equal(sharing.setFolders(lent).on, true);
   const result = await stub.state.delivered;
   assert.equal(result.isError, undefined);

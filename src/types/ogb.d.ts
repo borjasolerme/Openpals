@@ -98,13 +98,14 @@ const __APP_VERSION__: string;
       place?: {
         /** Where the bots live now. */
         current(): Promise<{ kind: "local" } | { kind: "server"; url: string; label: string }>;
-        /** Pairs with an always-on server from its one-time pairing link (https://host/pair#code=…) and opens it. */
-        connect(link: string): Promise<{ ok: true } | { ok: false; error: string }>;
+        /** Pairs with an always-on server from its one-time pairing link (https://host/pair#code=…) and opens it. A link
+         * from "Add a computer" (…&lend=1) lends this computer to that server instead, and says so in `lent`. */
+        connect(link: string): Promise<{ ok: true; lent?: string } | { ok: false; error: string }>;
         /** Forgets the server and goes back to this computer. */
         disconnect(): Promise<void>;
         onChanged(callback: (place: { kind: "local" } | { kind: "server"; url: string; label: string }) => void): () => void;
       };
-      /** "Let my bots use this computer": lending this computer to the paired server. */
+      /** "Let bots use this computer": lending this computer to the servers added with a link from "Add a computer". */
       lending?: import("../lib/lending").LendingBridge;
       /** This computer's page only: sets up an always-on server and switches this app to it. */
       serverSetup?: import("../../electron/server-setup.mjs").ServerSetupBridge;

@@ -29,6 +29,20 @@ export function pairTitle(environment: EnvironmentDescriptor | null): string {
   return `Connect to ${environment?.label ?? `this ${productName()}`}`;
 }
 
+/** A link from "Add a computer" opened in a browser: it lends a computer, so it goes in Openpals on that computer. */
+export function LendLinkNotice() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-app px-6 text-ink" data-lend-link-notice>
+      <div className="w-full max-w-105">
+        <h1 className="text-2xl font-semibold">Paste this link in Openpals</h1>
+        <p className="mt-1.5 text-lg leading-relaxed text-ink-secondary">
+          This link lets your bots use a computer. Open {productName()} on that computer, choose Connect to a server, and paste the link there.
+        </p>
+      </div>
+    </main>
+  );
+}
+
 export function PairPage({ initialCode, reason }: { initialCode: string | null; reason?: string }) {
   const [code, setCode] = useState(initialCode ?? "");
   const [label, setLabel] = useState(defaultDeviceLabel());

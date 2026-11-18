@@ -20,6 +20,8 @@ export const sharedComputerRegistration = z.object({
   longCommands: z.literal(true).optional(),
   /** It takes edit_file, append_file and delete_file; sent only to a server that advertises fileEdits. */
   fileEdits: z.literal(true).optional(),
+  /** Its apps and screen can be used now: macOS allowed Accessibility and Screen Recording, and control is running. */
+  screenReady: z.boolean().optional(),
 }).strict();
 export const sharedComputerOperation = z.object({
   computer_id: z.string().uuid(),
@@ -48,6 +50,8 @@ export type SharedComputerStatus = {
 /** A computer lent now or before: what the server's page shows, online or not, across restarts. */
 export type KnownLentComputer = {
   id: string; name: string; platform: "darwin" | "win32" | "linux" | null; online: boolean; busy: boolean; lent: boolean; paused: boolean;
+  /** Online and lending its screen: whether the screen can be used now; null when offline or not lending it. */
+  screenReady: boolean | null;
   lastSeenAt: number; lastUsedAt: number | null; scopes: { folders: number; terminal: boolean; screen: boolean; internet: boolean; chrome: boolean };
 };
 type Job = {
@@ -181,7 +185,8 @@ export class SharedComputers {
     return (this.lent?.list(principal) ?? []).map(record => {
       const entry = live.find(candidate => candidate.registration.id === record.id);
       const online = entry ? this.online(entry) : false;
-      return { id: record.id, name: record.label ?? record.name, platform: record.platform, online, busy: (entry?.jobs.size ?? 0) > 0,
+      const screenReady = online && entry?.registration.computer ? entry.registration.screenReady ?? null : null;
+      return { id: record.id, name: record.label ?? record.name, platform: record.platform, online, busy: (entry?.jobs.size ?? 0) > 0, screenReady,
         lent: record.stoppedAt === null, paused: !online && record.stoppedAt === null && typeof record.pausedAt === "number", lastSeenAt: entry ? Math.max(entry.seen, record.lastSeenAt) : record.lastSeenAt, lastUsedAt: record.lastUsedAt,
         scopes: { folders: record.folders, terminal: record.terminal, screen: record.screen, internet: record.internet === true, chrome: record.chrome === true } };
     });

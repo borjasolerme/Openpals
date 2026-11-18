@@ -11888,8 +11888,6 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
               ...(auth.session.email ? { email: auth.session.email } : {}),
               ...(HOSTED_WORKSPACE ? { hosted: true } : {}),
               ...(reactorFor(auth).by !== "user" ? { reactor: reactorFor(auth).by } : {}),
-              // Told to the owner's own admin pairing only: the public description never says a server takes computers.
-              ...(auth.scopes.includes("admin") && workComputers.accepted() ? { workComputers: true } : {}),
             },
       );
     }
@@ -11922,13 +11920,15 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       const code = formatPairingCode(opened.code);
       // `inviteUrl` is the custom scheme the native companion scanners accept; they cannot take a typed code.
       const serverName = cfg.computerName || environmentDescriptor({ environmentId: ENVIRONMENT_ID, desktopManaged: DESKTOP_MANAGED }).label;
-      const invite = base ? phonePairingLink({ address: base, token: opened.credential, name: serverName }) : null;
+      // A lending link opens nothing on a phone, and tells the app that takes it to lend the computer it runs on.
+      const lend = requested.scopes?.includes("lend") === true;
+      const invite = base && !lend ? phonePairingLink({ address: base, token: opened.credential, name: serverName }) : null;
       return json(res, 200, {
         id: opened.id,
         code,
         credential: opened.credential,
         expiresAt: opened.expiresAt,
-        url: base ? `${base}/pair#code=${code}` : null,
+        url: base ? `${base}/pair#code=${code}${lend ? "&lend=1" : ""}` : null,
         inviteUrl: invite,
         serverName,
         hint: base

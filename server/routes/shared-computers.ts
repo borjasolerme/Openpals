@@ -69,8 +69,7 @@ export function createSharedComputerRoutes(deps: SharedComputerRouteDeps): Route
     }
     if (path !== "/api/shared-computers" && !path.startsWith("/api/shared-computers/")) return PASS;
     if (method !== "POST" || !deps.accepted()) return json(res, 404, { error: `no route: ${method} ${path}` });
-    if (auth.kind !== "session") return json(res, 403, { error: "Pair this desktop first" });
-    if (!auth.scopes.includes("admin")) return json(res, 403, { error: "Only a pairing that can change settings may lend a computer" });
+    if (auth.kind !== "session" || !auth.scopes.includes("lend")) return json(res, 403, { error: "Use the link from Add a computer to lend a computer" });
     if (!/^application\/json\b/i.test(String(req.headers["content-type"] ?? ""))) return json(res, 415, { error: "JSON required" });
     const body = await readBody(req, 4_000_000);
     if (!deps.accepted()) return json(res, 404, { error: `no route: ${method} ${path}` });

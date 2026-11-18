@@ -1,11 +1,11 @@
-// "Let my bots use this computer": main's side of lending this computer to the server this app is paired with. It owns
-// the lending client, the menu-bar item, main's own confirmations and the IPC the Settings card calls. A page can ask;
-// only the person's answer in main's dialog turns lending, folders or the terminal on.
+// "Let bots use this computer": main's side of lending this computer to the servers the person added with a link from
+// "Add a computer". It owns the lending client, the menu-bar item, main's own confirmations and the IPC the Settings card
+// calls. A page can ask; only the person's answer in main's dialog lends it, or turns folders or the terminal on.
 import os from "node:os";
 import path from "node:path";
 import { execFile } from "node:child_process";
 
-import { createComputerSharing, isHomeFolder, validateSharedFolders } from "./computer-sharing.mjs";
+import { createComputerSharing, isHomeFolder, parseLendLink, validateSharedFolders } from "./computer-sharing.mjs";
 import { createActivityWindow } from "./lending-activity-window.mjs";
 import { createLendingDialogs } from "./lending-dialogs.mjs";
 import { createLendingIndicator, deviceWord } from "./lending-indicator.mjs";
@@ -31,7 +31,7 @@ export function readComputerName({ platform = process.platform, run = execFile }
 
 export function installLending({
   ipcMain, guard, dialog, shell, Tray, Menu, nativeImage, BrowserWindow, iconPath, background, locale,
-  userData, protectedPaths, fetch, server, cuaConnection, requestComputerUse, screenLocked, idleSeconds, hostControl,
+  userData, protectedPaths, fetch, cuaConnection, requestComputerUse, screenLocked, idleSeconds, hostControl,
   window, openSettings, send, loginItem, platform = process.platform, log = () => {},
 }) {
   const device = deviceWord(platform);
@@ -51,7 +51,7 @@ export function installLending({
     onTerminal: (on) => void dialogs.lendTerminal(on, async () => { sharing.setTerminal(on); }).catch((error) => log(`lending terminal: ${error?.message ?? error}`)),
   });
   const sharing = createComputerSharing({
-    file: path.join(userData, "computer-sharing.json"), protectedPaths, fetch, server, platform,
+    file: path.join(userData, "computer-sharing.json"), protectedPaths, fetch, platform,
     cuaConnection, screen: screen.now, hostControl, screenLocked, idleSeconds, computerName: () => computerName, log,
     onChange: (summary) => {
       indicator.update(summary);
@@ -62,8 +62,6 @@ export function installLending({
 
   const state = async () => ({
     ...sharing.view(),
-    available: server() !== null,
-    serverName: server()?.name ?? null,
     device,
     platform,
     screen: await sharing.readScreen(),
@@ -71,24 +69,56 @@ export function installLending({
   });
   const handle = (channel, run) => ipcMain.handle(channel, guard(async (_event, ...args) => { await run(...args); return state(); }));
 
+  const servers = () => sharing.summary().targets.map((target) => target.serverName).join(", ");
+
+  /** On a Mac, straight to the two permissions macOS asks for, once lending starts and the screen can't be used yet. */
+  const walkToPermissions = async () => {
+    if (platform !== "darwin" || !sharing.summary().lendsScreen) return;
+    if ((await sharing.readScreen())?.ready) return;
+    await screen.start();
+    if ((await sharing.readScreen())?.reason === "permissions") await shell.openExternal(PRIVACY_PANES.accessibility).catch(() => {});
+  };
+
+  /**
+   * A link from "Add a computer", pasted here: the one question, in main's own dialog, then this computer's lend-only
+   * session on that server. Never changes which server this app shows. { ok, serverName } or { ok: false, error }.
+   */
+  const addLink = async (input) => {
+    const link = parseLendLink(input);
+    if (!link) return { ok: false, error: "This isn't a link from Add a computer." };
+    const serverName = await sharing.serverName(link.origin);
+    if (!(await dialogs.confirmLending(serverName))) return { ok: false, error: "cancelled" };
+    try {
+      await sharing.addTarget(link, { serverName });
+    } catch (error) {
+      return { ok: false, error: error?.message ?? String(error) };
+    }
+    openSettings();
+    void walkToPermissions();
+    return { ok: true, serverName };
+  };
+
   ipcMain.handle("lending:state", guard(() => state()));
-  handle("lending:turn-on", async (name) => {
-    const paired = server();
-    if (!paired) throw new Error("Connect this app to your server first");
-    if (await dialogs.confirmLending(paired.name)) sharing.turnOn({ name: typeof name === "string" ? name : undefined });
+  handle("lending:add-link", async (link) => {
+    const result = await addLink(String(link ?? ""));
+    if (!result.ok && result.error !== "cancelled") throw new Error(result.error);
+  });
+  handle("lending:target-pause", (id) => sharing.pauseTarget(String(id ?? "")));
+  handle("lending:target-resume", (id) => sharing.resumeTarget(String(id ?? "")));
+  handle("lending:target-remove", (id) => sharing.removeTarget(String(id ?? "")));
+  handle("lending:turn-on", async () => {
+    if (await dialogs.confirmLending(servers())) sharing.turnOn();
   });
   handle("lending:turn-off", () => sharing.turnOff());
   handle("lending:pause", () => sharing.pause());
   handle("lending:resume", async () => {
-    const paired = server();
-    if (paired && await dialogs.confirmLending(paired.name)) sharing.resume();
+    if (await dialogs.confirmLending(servers())) sharing.resume();
   });
   handle("lending:rename", (name) => sharing.rename(typeof name === "string" ? name : ""));
   handle("lending:terminal", (on) => dialogs.lendTerminal(on === true, async () => { sharing.setTerminal(on === true); }));
   handle("lending:screen", async (on) => {
-    const paired = server();
     if (on !== true) sharing.setScreen(false);
-    else if (paired && await dialogs.confirmLending(paired.name)) sharing.setScreen(true);
+    else if (await dialogs.confirmLending(servers())) sharing.setScreen(true);
   });
   handle("lending:add-folder", async () => {
     const folder = await dialogs.chooseFolder(`Choose a folder your bots may use on this ${device}`);
@@ -107,7 +137,7 @@ export function installLending({
 
   return {
     sharing,
-    serverChanged: () => sharing.serverChanged(),
+    addLink,
     screenChanged: () => void sharing.readScreen(),
     close() {
       sharing.close();

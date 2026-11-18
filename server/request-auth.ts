@@ -379,8 +379,12 @@ export const CLIENT_ALLOW: ReadonlyArray<{ methods: readonly string[]; path: Reg
   { methods: ["GET"], path: /^\/api\/needs-you$/ },
 ];
 
+/** A lent computer's own routes: register, poll, lease, answer, disconnect. Nothing else takes a `lend` session. */
+const LEND_PATH = /^\/api\/shared-computers\/(?:connect|[\w-]+\/(?:poll|lease|result|disconnect))$/;
+
 export function requiredScope(method: string, path: string): Scope {
   const upper = method.toUpperCase();
+  if (upper === "POST" && LEND_PATH.test(path)) return "lend";
   for (const rule of CLIENT_ALLOW) {
     if (rule.path.test(path) && rule.methods.includes(upper)) return "client";
   }
@@ -494,7 +498,9 @@ export function resolveRequestAuth(req: IncomingMessage, options: ResolveOptions
   if (session && via) {
     if (via === "cookie" && !isSameOrigin(req)) return deny(403, "forbidden: cross-origin request");
     const needed = requiredScope(method, path);
-    if (!session.scopes.includes(needed)) {
+    // A lending computer may still sign itself out when the person removes the server there.
+    const lenderSignsOut = needed === "client" && method.toUpperCase() === "POST" && path === "/api/auth/logout" && session.scopes.includes("lend");
+    if (!session.scopes.includes(needed) && !lenderSignsOut) {
       return deny(403, `forbidden: this session lacks the ${needed} scope`);
     }
     // Redeeming a stream ticket does not renew: an unattended open stream must not keep a session alive.

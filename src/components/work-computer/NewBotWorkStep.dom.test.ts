@@ -12,7 +12,9 @@ const fx = vi.hoisted(() => ({
   profiles: [] as Array<{ id: string; name: string }>,
   computers: [] as Array<Record<string, unknown>>,
   calls: [] as Array<{ path: string; method: string; body?: unknown }>,
-  pairing: { code: "ABCD-EFGH-JKLM", url: "https://boat.example/pair#code=ABCD-EFGH-JKLM", expiresAt: Date.now() + 10 * 60_000, hint: null },
+  pairing: { id: "pairing-1", code: "ABCD-EFGH-JKLM", url: "https://boat.example/pair#code=ABCD-EFGH-JKLM&lend=1", expiresAt: Date.now() + 10 * 60_000, hint: null },
+  /** The open pairings the server lists: the guide's link until it is pasted there. */
+  open: [] as Array<{ id: string }>,
 }));
 vi.mock("@/state/store", async (original) => {
   const actual = await original<typeof import("@/state/store")>();
@@ -20,7 +22,8 @@ vi.mock("@/state/store", async (original) => {
     const method = init?.method ?? "GET";
     fx.calls.push({ path, method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
     if (path === "/api/work-computers") return { computers: fx.computers };
-    if (path === "/api/auth/pairing") return fx.pairing;
+    if (path === "/api/auth/pairing" && method === "POST") { fx.open = [{ id: fx.pairing.id }]; return fx.pairing; }
+    if (path === "/api/auth/pairing") return { pairings: fx.open };
     if (path === "/api/config" && method === "PATCH") return { browserProfiles: (JSON.parse(String(init!.body)) as { browserProfiles: unknown }).browserProfiles };
     if (path.endsWith("/test")) return { ok: true, image: { mimeType: "image/png", data: "c2NyZWVu" } };
     throw new Error(`unexpected ${method} ${path}`);
@@ -56,6 +59,7 @@ beforeEach(async () => {
   fx.profiles = [];
   fx.computers = [];
   fx.calls = [];
+  fx.open = [];
   host = document.createElement("div");
   document.body.append(host);
   root = createRoot(host);
@@ -90,8 +94,9 @@ it("lists each lent computer by its own name and state, and makes the bot work o
   expect(created()).toEqual({ type: "newBot", work: { computer: "cloud", cloudBackend: "lent", lentComputerId: mac().id } });
 });
 
-it("Add a computer walks three steps: install, a pairing link made as step 2 opens, turn it on, then Connected live", async () => {
+it("Add a computer: install, a lend-only link made as step 2 opens, then it says what is missing until the computer is ready", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
+  const tick = async () => { await act(async () => { await vi.advanceTimersByTimeAsync(3_100); }); await settle(); };
   try {
     await open();
     await click(button("Add a computer"));
@@ -100,19 +105,25 @@ it("Add a computer walks three steps: install, a pairing link made as step 2 ope
     expect(fx.calls.some((call) => call.path === "/api/auth/pairing")).toBe(false);
     await click(button("It's installed"));
     expect(q("[data-guide-step='2']")?.getAttribute("aria-current")).toBe("step");
-    expect(fx.calls.filter((call) => call.path === "/api/auth/pairing").map((call) => call.body)).toEqual([expect.objectContaining({ scopes: ["admin", "client"] })]);
+    expect(fx.calls.filter((call) => call.path === "/api/auth/pairing" && call.method === "POST").map((call) => call.body)).toEqual([expect.objectContaining({ scopes: ["lend"] })]);
     expect(q("[data-pairing-code]")?.textContent).toContain(fx.pairing.code);
     expect(q("[data-pairing-link] [role=img]")).toBeTruthy();
-    expect(button("Make a link")).toBeUndefined();
-    await click(button("Copy link"));
-    expect(q("[data-guide-step='3']")?.getAttribute("aria-current")).toBe("step");
-    await click(button("On a Mac"));
+    expect(q("[data-guide-waiting]")?.textContent).toBe("Waiting for the link on that computer…");
+
+    fx.open = [];
+    await tick();
+    expect(q("[data-add-computer-guide]")?.getAttribute("data-guide-status")).toBe("turnOn");
+    expect(q("[data-guide-waiting]")?.textContent).toBe("Link pasted. Say yes on that computer.");
+    expect(q("[data-pairing-link]")).toBeNull();
+
+    fx.computers = [mac({ screenReady: false })];
+    await tick();
+    expect(q("[data-guide-connected]")?.textContent).toContain("Mac mini is connected. Allow its screen");
     expect(q("[data-allow-steps]")?.textContent).toContain("Accessibility");
-    fx.computers = [mac()];
-    await act(async () => { await vi.advanceTimersByTimeAsync(3_100); });
-    await settle();
-    expect(q("[data-guide-connected]")?.textContent).toContain("Mac mini is connected ✓");
-    expect(q("[data-guide-step]")).toBeNull();
+
+    fx.computers = [mac({ screenReady: true })];
+    await tick();
+    expect(q("[data-guide-connected]")?.textContent).toContain("Mac mini is ready ✓");
     await click(button("Test connection"));
     expect(q("[data-connection-test=ok] img")?.getAttribute("src")).toBe("data:image/png;base64,c2NyZWVu");
     await click(button("Use Mac mini"));

@@ -209,6 +209,24 @@ describe("resolveRequestAuth", () => {
   });
   afterEach(() => rmSync(dir, { recursive: true, force: true }));
 
+  it("a lend-only session (Add a computer) reaches a lent computer's own routes and signing out, and nothing else", () => {
+    const lend = pairedToken(["lend"]);
+    const bearer = { host: "box.example.test", authorization: `Bearer ${lend}` };
+    for (const path of ["/api/shared-computers/connect", "/api/shared-computers/9b7c1a4e-1f2d-4c3b-8a5e-6d7f8a9b0c1d/poll",
+      "/api/shared-computers/9b7c1a4e-1f2d-4c3b-8a5e-6d7f8a9b0c1d/lease", "/api/shared-computers/9b7c1a4e-1f2d-4c3b-8a5e-6d7f8a9b0c1d/result",
+      "/api/shared-computers/9b7c1a4e-1f2d-4c3b-8a5e-6d7f8a9b0c1d/disconnect", "/api/auth/logout"]) {
+      expect(resolve(bearer, path, "POST").auth?.kind, path).toBe("session");
+    }
+    for (const [method, path] of [
+      ["GET", "/api/bots"], ["GET", "/api/auth/session"], ["GET", "/api/config"], ["PATCH", "/api/bots/b"], ["GET", "/api/work-computers"],
+      ["POST", "/api/auth/pairing"], ["POST", "/api/bots/b/messages"], ["GET", "/api/events"], ["POST", "/api/auth/stream-ticket"],
+      ["GET", "/api/shared-computers/connect"], ["GET", "/api/files"], ["GET", "/api/health"],
+    ] as const) expect(resolve(bearer, path, method), `${method} ${path}`).toMatchObject({ auth: null, status: 403 });
+    // A person's own session never lends: only the link from Add a computer does.
+    const person = pairedToken(["admin", "client"]);
+    expect(resolve({ host: "box.example.test", authorization: `Bearer ${person}` }, "/api/shared-computers/connect", "POST")).toMatchObject({ auth: null, status: 403 });
+  });
+
   it("accepts authenticated relay mutations without exposing the desktop owner capability", () => {
     const headers = {
       host: "127.0.0.1:8799",
@@ -259,7 +277,7 @@ describe("resolveRequestAuth", () => {
     expect(check("GET", "/api/live/device-revoked").auth).toBeNull();
   });
 
-  function pairedToken(scopes: Array<"admin" | "client"> = ["admin", "client"]): string {
+  function pairedToken(scopes: Array<"admin" | "client" | "lend"> = ["admin", "client"]): string {
     const { code } = sessions.openPairing({ scopes });
     const result = sessions.exchange({ code, label: "test", source: "1.2.3.4" });
     if (!result.ok) throw new Error(result.error);

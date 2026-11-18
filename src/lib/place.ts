@@ -15,7 +15,7 @@ export function currentPlace(): Promise<BotsPlace | null> {
   return bridge()?.current() ?? Promise.resolve(null);
 }
 
-export function connectServer(link: string): Promise<{ ok: true } | { ok: false; error: string }> {
+export function connectServer(link: string): Promise<{ ok: true; lent?: string } | { ok: false; error: string }> {
   return bridge()?.connect(link) ?? Promise.resolve({ ok: false, error: "desktop-only" });
 }
 

@@ -9,6 +9,8 @@ export interface WorkComputer {
   id: string;
   name: string;
   platform: "darwin" | "win32" | "linux" | null;
+  /** Online and lending its screen: whether the screen can be used now (macOS allowed it); null otherwise. */
+  screenReady?: boolean | null;
   online: boolean;
   busy: boolean;
   /** Still lent: false once its owner stopped lending there. */

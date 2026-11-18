@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 
+import { parseLendLink } from "./computer-sharing.mjs";
+
 const require = createRequire(import.meta.url);
 const env = require("./environments.cjs");
 const MAIN = readFileSync(new URL("./main.mjs", import.meta.url), "utf8").replace(/\r\n/g, "\n");
@@ -21,10 +23,10 @@ function section(start, end) {
 }
 
 /** main's own place actions, with Electron faked: `answer` is the native dialog's button. */
-function harness({ state = env.LOCAL_PLACE, answer = 0, logout = async () => ({ ok: true }), health = async () => new Response(JSON.stringify({ app: "openmausbot" })) } = {}) {
+function harness({ state = env.LOCAL_PLACE, answer = 0, lending = null, logout = async () => ({ ok: true }), health = async () => new Response(JSON.stringify({ app: "openmausbot" })) } = {}) {
   const calls = { dialogs: [], saved: [], navigated: [], logouts: [], cleared: [], health: [] };
   const context = vm.createContext({
-    ...env, placeState: state, URL, AbortSignal, Promise,
+    ...env, placeState: state, URL, AbortSignal, Promise, URLSearchParams, lending, parseLendLink,
     fetch: async (url) => { calls.health.push(url); return health(url); },
     showMessage: async (options) => { calls.dialogs.push(options); return { response: answer }; },
     dialog: { showMessageBox: async (options) => { calls.dialogs.push(options); return { response: 0 }; } },
@@ -69,6 +71,16 @@ test("connect shows the server only once the person confirms its host natively, 
   assert.deepEqual(h.calls.logouts, [], "nothing to sign out of");
   assert.deepEqual(h.calls.health, [`${VPS}/api/health`]);
   assert.deepEqual(declined.calls.health, [], "nothing is probed before the person confirms");
+});
+
+test("a link from Add a computer lends this computer to that server and never changes which server this app shows", async () => {
+  const lent = [];
+  const h = harness({ lending: { addLink: async (link) => { lent.push(link); return { ok: true, serverName: "Boat server" }; } } });
+  assert.deepEqual(plain(await h.context.connectServer(`${LINK}&lend=1`)), { ok: true, lent: "Boat server" });
+  assert.deepEqual(lent, [`${LINK}&lend=1`]);
+  assert.deepEqual([h.calls.dialogs, h.calls.saved, h.calls.navigated, h.calls.health], [[], [], [], []], "main's lending dialog asks, not the connect one");
+  const declined = harness({ lending: { addLink: async () => ({ ok: false, error: "cancelled" }) } });
+  assert.deepEqual(plain(await declined.context.connectServer(`${LINK}&lend=1`)), { ok: false, error: "cancelled" });
 });
 
 test("connect keeps this computer when the server doesn't answer as Openpals", async () => {

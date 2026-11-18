@@ -168,7 +168,8 @@ export function ServerPairingCard({ initialSession = null, initialPairingCodes =
   // Loaded with the config.
   const nameRow = (className: string) => pairingCodes && computerName !== null
     ? <ComputerNameRow saved={computerName} onSaved={setComputerName} className={className} /> : null;
-  const scopeName = (device: PairedDevice) => t(device.scopes.includes("admin") ? "remote.serverPairing.scope.admin" : "remote.serverPairing.scope.client");
+  const scopeName = (device: PairedDevice) => t(device.scopes.includes("admin") ? "remote.serverPairing.scope.admin"
+    : device.scopes.includes("lend") ? "remote.serverPairing.scope.lend" : "remote.serverPairing.scope.client");
 
   if (simple) {
     return (
@@ -241,7 +242,7 @@ export function ServerPairingCard({ initialSession = null, initialPairingCodes =
                 {device.email ? <span className="text-ink-secondary"> · {device.email}</span> : null}
                 <span className="text-ink-secondary">
                   {" · "}
-                  {device.scopes.includes("admin") ? t("remote.serverPairing.scope.admin") : t("remote.serverPairing.scope.client")}
+                  {scopeName(device)}
                   {" · "}
                   {t("remote.serverPairing.seen", { when: lastSeen(device.lastSeenAt, now) })}
                   {device.id === current ? ` · ${t("remote.serverPairing.thisBrowser")}` : ""}

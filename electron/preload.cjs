@@ -86,15 +86,20 @@ const bridge = {
     },
   },
   /**
-   * "Let my bots use this computer": lends this computer to the server this app is paired with, so its bots can work on
-   * its screen, the folders chosen here and, when turned on, its terminal. Safe on that server's page: every change is
-   * the person's click, and turning lending, folders or the terminal on is confirmed in main's own dialog. Each call
-   * resolves the new state: `{ on, paused, name, defaultName, server, state, problem?, busy, terminal, lendsScreen,
-   * folders: [{ id, name, write }], available, serverName, device, platform, screen, openAtLogin }`.
+   * "Let bots use this computer": lends this computer to the servers added with a link from their "Add a computer", so
+   * their bots can work on its screen, the folders chosen here and, when turned on, its terminal. Safe on any page: every
+   * change is the person's click, and lending to a server, folders or the terminal are confirmed in main's own dialog.
+   * Each call resolves the new state: `{ on, paused, name, defaultName, server, state, targets: [{ id, serverName, paused,
+   * state, problem? }], busy, terminal, lendsScreen, folders: [{ id, name, write }], device, platform, screen, openAtLogin }`.
    */
   lending: {
     state: () => ipcRenderer.invoke("lending:state"),
-    turnOn: (name) => clicked("lending:turn-on", typeof name === "string" ? name : undefined),
+    /** A link from a server's "Add a computer": main asks the person, then lends this computer to that server. */
+    addLink: (link) => clicked("lending:add-link", String(link ?? "")),
+    pauseTarget: (id) => clicked("lending:target-pause", String(id ?? "")),
+    resumeTarget: (id) => clicked("lending:target-resume", String(id ?? "")),
+    removeTarget: (id) => clicked("lending:target-remove", String(id ?? "")),
+    turnOn: () => clicked("lending:turn-on"),
     turnOff: () => clicked("lending:turn-off"),
     pause: () => clicked("lending:pause"),
     resume: () => clicked("lending:resume"),

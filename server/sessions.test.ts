@@ -652,3 +652,10 @@ describe("telling the server a session opened", () => {
   });
 });
 
+describe("a lending pairing", () => {
+  it("grants lend and only lend, whatever else is asked with it", () => {
+    expect(pairingRequest({ scopes: ["lend"] })).toMatchObject({ scopes: ["lend"] });
+    expect(pairingRequest({ scopes: ["admin", "lend", "client"] })).toMatchObject({ scopes: ["lend"] });
+    expect(pairingRequest({ scopes: ["admin", "bogus"] })).toMatchObject({ scopes: ["admin"] });
+  });
+});

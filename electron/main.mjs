@@ -34,6 +34,7 @@ import { createAllWindowsClosedQuit } from "./window-all-closed.mjs";
 import { createStartupScreen } from "./startup-screen.mjs";
 import { createSystemTray } from "./system-tray.mjs";
 import { installLending } from "./lending-main.mjs";
+import { parseLendLink } from "./computer-sharing.mjs";
 import { createHostScreenLease } from "./host-screen-lease.mjs";
 let startupScreen = null;
 let desktopTray = null;
@@ -882,7 +883,6 @@ function savePlace(next) {
   placeFile.write(next);
   placeState = next;
   refreshApplicationMenu();
-  lending?.serverChanged();
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.setTitle(workspaceWindowTitle(placeState));
     mainWindow.webContents.send("place:changed", placeView(placeState));
@@ -896,6 +896,11 @@ function navigateMainWindow(url) {
 
 /** Security: a page asks to connect, but the person confirms the destination here, in a native dialog. */
 async function connectServer(input) {
+  // A link from "Add a computer" lends this computer to that server; it never changes which server this app shows.
+  if (lending && parseLendLink(input)) {
+    const lent = await lending.addLink(input);
+    return lent.ok ? { ok: true, lent: lent.serverName } : lent;
+  }
   const link = parseHostedWorkspaceLink(input);
   if (!link) {
     return { ok: false, error: "Enter an HTTPS server address or a full pairing link. Keep the pairing code after #, not in the URL query." };
@@ -1804,7 +1809,8 @@ app.whenReady().then(async () => {
     ipcMain, guard: workspaceOnly, dialog, shell, Tray, Menu, nativeImage, BrowserWindow, iconPath: APP_ICON,
     background: () => windowBackground(nativeTheme.shouldUseDarkColors), locale: () => app.getLocale(),
     userData: app.getPath("userData"), protectedPaths: [desktopDataDir()],
-    fetch: (...args) => session.defaultSession.fetch(...args), server: () => activeServer(placeState),
+    // Each server it is lent to is reached with that server's own lend-only session, never this app's cookies.
+    fetch: (...args) => fetch(...args),
     cuaConnection: () => cuaReady, requestComputerUse,
     screenLocked: () => powerMonitor.getSystemIdleState(1) === "locked",
     idleSeconds: () => (powerMonitor.getSystemIdleState(1) === "unknown" ? null : powerMonitor.getSystemIdleTime()),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sameChoice, serverHost, workChoiceLabel, workChoiceOf, workComputerState, workPatch } from "./work-computers";
-import { lendingPhase, needsMacPermissions } from "./lending";
-import { guideStep, newlyConnected } from "@/components/work-computer/AddComputerGuide";
+import { isLendLink, lendingPhase, needsMacPermissions } from "./lending";
+import { guideStatus, guideStep, newlyConnected } from "@/components/work-computer/AddComputerGuide";
 
 const mac = (extra = {}) => ({ id: "a", name: "Mac mini", platform: "darwin" as const, online: true, busy: false, lent: true, paused: false,
   lastSeenAt: 0, lastUsedAt: null, scopes: { folders: 0, terminal: false, screen: true }, ...extra });
@@ -35,21 +35,26 @@ describe("where a bot works", () => {
     expect(workComputerState(mac({ online: false, lent: false }))).toBe("stopped");
   });
 
-  it("the Add a computer guide moves on as each step is done, and sees only a computer that connected since it opened", () => {
-    expect(guideStep({ reached: 1, connected: false })).toBe(1);
-    expect(guideStep({ reached: 2, connected: false })).toBe(2);
-    expect(guideStep({ reached: 3, connected: false })).toBe(3);
-    expect(guideStep({ reached: 1, connected: true })).toBe("connected");
+  it("the Add a computer guide says what is missing, and sees only a computer that connected since it opened", () => {
+    expect(guideStep(1)).toBe(1);
+    expect(guideStep(2)).toBe(2);
+    expect(guideStatus({ claimed: false, computer: null })).toBe("paste");
+    expect(guideStatus({ claimed: true, computer: null })).toBe("turnOn");
+    expect(guideStatus({ claimed: true, computer: { screenReady: false } })).toBe("screen");
+    expect(guideStatus({ claimed: true, computer: { screenReady: true } })).toBe("ready");
+    expect(guideStatus({ claimed: false, computer: { screenReady: null } })).toBe("ready");
     expect(newlyConnected([mac()], new Set(["a"]))).toBeNull();
     expect(newlyConnected([mac({ id: "b" })], new Set(["a"]))?.id).toBe("b");
     expect(newlyConnected([mac({ id: "b", online: false })], new Set())).toBeNull();
   });
 
   it("the lending card's badge and the macOS permission hint", () => {
-    expect(lendingPhase({ on: false, paused: false, state: "off" })).toBe("off");
-    expect(lendingPhase({ on: true, paused: true, state: "paused" })).toBe("paused");
-    expect(lendingPhase({ on: true, paused: false, state: "online" })).toBe("online");
-    expect(lendingPhase({ on: true, paused: false, state: "waiting" })).toBe("problem");
+    expect(lendingPhase({ paused: false, state: "off" })).toBe("off");
+    expect(lendingPhase({ paused: true, state: "paused" })).toBe("paused");
+    expect(lendingPhase({ paused: false, state: "online" })).toBe("online");
+    expect(lendingPhase({ paused: false, state: "waiting" })).toBe("problem");
+    expect(isLendLink("https://box.on.boat.dev/pair#code=M9Z4-TV4D-A72W&lend=1")).toBe(true);
+    expect(isLendLink("https://box.on.boat.dev/pair#code=M9Z4-TV4D-A72W")).toBe(false);
     expect(needsMacPermissions({ platform: "darwin", lendsScreen: true, screen: { ready: false, lent: true, reason: "permissions", fix: "allow" } })).toBe(true);
     expect(needsMacPermissions({ platform: "win32", lendsScreen: true, screen: { ready: false, lent: false, reason: "permissions", fix: "allow" } })).toBe(false);
   });

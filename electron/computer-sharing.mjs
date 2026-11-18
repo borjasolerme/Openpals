@@ -1,7 +1,8 @@
-// Lending this computer to the one server this app is paired with, so bots there can work on it: its apps and screen,
-// the folders the person chose, and its terminal when they turn that on. Outbound HTTPS only: register, long-poll for a
-// job, run it under the grant saved here, send the result back. No listening port, and the server never holds a
-// credential of this computer: the poll carries this app's own paired session and a secret only main knows.
+// Lending this computer to the servers the person added with a link from "Add a computer" (theirs, and anyone's at home
+// they allow), so bots there can work on it: its apps and screen, the folders the person chose, and its terminal when
+// they turn that on. Outbound HTTPS only: register, long-poll for a job, run it under the grant saved here, send the
+// result back. No listening port. Each server gets its own lend-only session (it can do nothing else there) and a secret
+// only main knows; one screen call runs at a time across all of them.
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
@@ -128,9 +129,10 @@ const RETRY_MS = [2_000, 5_000, 15_000, 60_000];
 const POLL_TIMEOUT_MS = 35_000;
 const REQUEST_TIMEOUT_MS = 10_000;
 const LOOPBACK = new Set(["localhost", "127.0.0.1", "[::1]"]);
+const MAX_TARGETS = 10;
 
-/** Why lending is not online, in a word the app's pages and the menu word for themselves. */
-export const LENDING_PROBLEMS = Object.freeze(["no-server", "other-server", "unsupported", "signed-out", "not-admin", "unreachable", "refused"]);
+/** Why lending to a server is not online, in a word the app's pages and the menu word for themselves. */
+export const LENDING_PROBLEMS = Object.freeze(["unsupported", "signed-out", "unreachable", "refused"]);
 
 const problem = (code, message) => Object.assign(new Error(message ?? code), { problem: code });
 
@@ -138,28 +140,53 @@ function cleanName(value) {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, 120) : "";
 }
 
+const allowedOrigin = (url) => url.protocol === "https:" || (url.protocol === "http:" && LOOPBACK.has(url.hostname));
+
+/** A link from "Add a computer" (https://host/pair#code=…&lend=1): the server and its one-time code, else null. */
+export function parseLendLink(input) {
+  if (typeof input !== "string") return null;
+  const text = input.trim();
+  if (!text || /[\s\\]/.test(text)) return null;
+  try {
+    const url = new URL(text);
+    if (!allowedOrigin(url) || url.username || url.password || url.search || !["/pair", "/pair/"].includes(url.pathname)) return null;
+    const hash = new URLSearchParams(url.hash.slice(1));
+    const code = hash.get("code");
+    if (hash.get("lend") !== "1" || !code || !/^[A-Z0-9-]{12,16}$/i.test(code)) return null;
+    return { origin: url.origin, code };
+  } catch { return null; }
+}
+
+function parseTarget(raw) {
+  if (!raw || typeof raw !== "object" || !uuid(raw.id) || !/^[a-f0-9]{64}$/.test(raw.secret ?? "") || typeof raw.token !== "string" || !raw.token.startsWith("omb_sess_")) return null;
+  try { if (!allowedOrigin(new URL(raw.origin)) || new URL(raw.origin).origin !== raw.origin) return null; } catch { return null; }
+  return { id: raw.id, origin: raw.origin, serverName: cleanName(raw.serverName) || new URL(raw.origin).host, token: raw.token, secret: raw.secret, paused: raw.paused === true };
+}
+
 /** A saved record from computer-sharing.json, or null for anything this version did not write. */
 export function parseLendingRecord(raw) {
-  const record = raw && typeof raw === "object" && raw.version === 2 ? raw : null;
-  if (!record || !uuid(record.id) || !/^[a-f0-9]{64}$/.test(record.secret ?? "") || typeof record.origin !== "string") return null;
+  const record = raw && typeof raw === "object" && raw.version === 3 ? raw : null;
+  if (!record) return null;
   const folders = Array.isArray(record.folders) ? record.folders.filter(folder => uuid(folder?.id) && typeof folder.path === "string" && typeof folder.write === "boolean") : [];
+  const targets = (Array.isArray(record.targets) ? record.targets : []).map(parseTarget).filter(Boolean).slice(0, MAX_TARGETS);
   return {
-    version: 2, id: record.id, secret: record.secret, origin: record.origin,
-    enabled: record.enabled === true, paused: record.paused === true, name: cleanName(record.name),
+    version: 3, enabled: record.enabled !== false, paused: record.paused === true, name: cleanName(record.name),
     folders: folders.slice(0, 20).map(({ id, path: where, name, write, home }) => ({ id, path: where, name: cleanName(name) || path.basename(where), write, ...(home === true ? { home: true } : {}) })),
-    terminal: record.terminal === true, screen: record.screen !== false,
+    terminal: record.terminal === true, screen: record.screen !== false, targets,
   };
 }
 
+const EMPTY_RECORD = Object.freeze({ version: 3, enabled: true, paused: false, name: "", folders: [], terminal: false, screen: true, targets: [] });
+
 /**
- * `server()`: the server this app is paired with now ({ origin, name }), or null on this computer's own bots.
- * `fetch`: carries this app's paired session cookie (Electron's session.fetch). `cuaConnection()`: computer control's
- * connection as cua.mjs published it. `screen()`: its state for the menu (screen-status.mjs). `hostControl(id, signal)`:
- * this computer's own screen lock, so its own bots and a lent call never use the screen at once. `computerName()`: the
- * name this computer goes by. `onChange(summary)`: the menu-bar item and the app's pages follow every change.
+ * `fetch`: plain HTTPS, no cookies: each server is reached with its own lend-only session. `cuaConnection()`: computer
+ * control's connection as cua.mjs published it. `screen()`: its state for the menu (screen-status.mjs).
+ * `hostControl(id, signal)`: this computer's own screen lock, so its own bots and a lent call never use the screen at
+ * once. `computerName()`: the name this computer goes by. `onChange(summary)`: the menu-bar item and the app's pages
+ * follow every change.
  */
 export function createComputerSharing({
-  file, server, fetch: fetchImpl, cuaConnection = async () => null, screen = async () => null, hostControl = null,
+  file, fetch: fetchImpl, cuaConnection = async () => null, screen = async () => null, hostControl = null,
   screenLocked = () => false, idleSeconds = () => null, protectedPaths = [], home = os.homedir(),
   computerName = () => os.hostname(), platform = process.platform, onChange = () => {}, log = () => {},
   activityFile, retryMs = RETRY_MS, now = Date.now,
@@ -167,14 +194,16 @@ export function createComputerSharing({
   const protectedRoots = [path.dirname(file), ...protectedPaths.filter(entry => typeof entry === "string" && entry), ...personalSecretPaths(home)];
   const activity = createLendingActivity(activityFile ?? path.join(path.dirname(file), "lending-activity.jsonl"));
   const presence = createLentScreenPresence({ idleSeconds, now });
-  let record = null;
-  try { record = parseLendingRecord(JSON.parse(fs.readFileSync(file, "utf8"))); } catch {}
-  let live = null;
-  let status = { state: "off" };
+  let record = { ...EMPTY_RECORD };
+  try { record = parseLendingRecord(JSON.parse(fs.readFileSync(file, "utf8"))) ?? record; } catch {}
+  /** target id → its live loop and where it stands. */
+  const loops = new Map();
+  const statuses = new Map();
   let busy = null;
   let screenNow = null;
   let closed = false;
-  let lastOrigin = server()?.origin ?? null;
+  // A screen call waits for another one here, so two servers never drive the screen at once even without hostControl.
+  let screenTurn = Promise.resolve();
 
   const store = next => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -184,28 +213,43 @@ export function createComputerSharing({
     fs.renameSync(temporary, file);
     record = next;
   };
-  const target = () => {
-    const paired = server();
-    return paired && record && paired.origin === record.origin ? paired : null;
+  const nameNow = () => record.name || cleanName(computerName()) || "This computer";
+  const lending = () => record.enabled && !record.paused && record.targets.length > 0;
+  const targetState = target => {
+    if (!record.enabled) return { state: "off" };
+    if (record.paused || target.paused) return { state: "paused" };
+    return statuses.get(target.id) ?? { state: "connecting" };
   };
-  const nameNow = () => record?.name || cleanName(computerName()) || "This computer";
-  const summary = () => ({
-    on: record?.enabled === true, paused: record?.enabled === true && record.paused, name: nameNow(),
-    server: server()?.name ?? null, state: status.state, ...(status.problem ? { problem: status.problem } : {}),
-    busy, terminal: record?.terminal === true, lendsScreen: record?.screen !== false, screen: screenNow,
-  });
+  /** The whole computer in one word for the menu: online when any server can use it now. */
+  const overall = () => {
+    if (!record.enabled || record.targets.length === 0) return "off";
+    if (record.paused || record.targets.every(target => target.paused)) return "paused";
+    const states = record.targets.map(target => targetState(target).state);
+    for (const state of ["online", "connecting", "offline", "waiting"]) if (states.includes(state)) return state;
+    return "paused";
+  };
+  const summary = () => {
+    const targets = record.targets.map(target => ({ id: target.id, serverName: target.serverName, paused: target.paused, ...targetState(target) }));
+    const reachable = targets.filter(target => !target.paused);
+    return {
+      on: record.enabled && record.targets.length > 0, paused: record.enabled && record.paused, name: nameNow(),
+      server: reachable.map(target => target.serverName).join(", ") || null, state: overall(), targets,
+      busy, terminal: record.terminal, lendsScreen: record.screen, screen: screenNow,
+    };
+  };
   const changed = () => { if (!closed) try { onChange(summary()); } catch {} };
-  const setStatus = next => { status = next; changed(); };
+  const setStatus = (id, next) => { statuses.set(id, next); changed(); };
 
-  const request = async (where, route, body, signal, secret) => {
-    const origin = new URL(where.origin);
-    if (origin.protocol !== "https:" && !(origin.protocol === "http:" && LOOPBACK.has(origin.hostname))) throw problem("refused", "Lending needs the server's HTTPS address");
+  const request = async (target, route, body, signal) => {
     let response;
     try {
-      response = await fetchImpl(`${where.origin}${route}`, {
-        method: body === undefined ? "GET" : "POST", credentials: "include", redirect: "error", cache: "no-store",
+      response = await fetchImpl(`${target.origin}${route}`, {
+        method: body === undefined ? "GET" : "POST", redirect: "error", cache: "no-store",
         signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(POLL_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        headers: { origin: where.origin, ...(body === undefined ? {} : { "content-type": "application/json" }), ...(secret ? { "x-omb-computer-secret": secret } : {}) },
+        headers: {
+          ...(target.token ? { authorization: `Bearer ${target.token}` } : {}), ...(target.secret ? { "x-omb-computer-secret": target.secret } : {}),
+          ...(body === undefined ? {} : { "content-type": "application/json" }),
+        },
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       });
     } catch (error) {
@@ -216,21 +260,38 @@ export function createComputerSharing({
     if (text.length > 4_000_000) throw problem("refused", "Server response exceeded limit");
     let json = null;
     try { json = JSON.parse(text); } catch {}
-    if (response.status === 401) throw problem("signed-out", "Pair this app with the server again");
+    if (response.status === 401) throw problem("signed-out", "Add this computer again with a new link from Add a computer");
     if (response.status === 404 || (json === null && response.ok)) throw problem("unsupported", "This server does not take work computers. Update Openpals on it.");
     if (!response.ok) throw Object.assign(problem(response.status === 403 ? "refused" : "unreachable", typeof json?.error === "string" ? json.error.slice(0, 300) : `Server answered ${response.status}`), { status: response.status });
     return json;
   };
 
-  const registration = (folders, environmentId) => ({
-    id: record.id, name: nameNow(), environmentId,
+  const registration = (target, folders, environmentId) => ({
+    id: target.id, name: nameNow(), environmentId,
     folders: folders.map(({ id, name, write }) => ({ id, name, write })), terminal: record.terminal, computer: record.screen,
     ...(LENT_PLATFORMS.has(platform) ? { platform } : {}), commandTimeouts: true, longCommands: true, fileEdits: true,
+    ...(record.screen ? { screenReady: screenNow?.ready === true } : {}),
   });
 
-  const runJob = async (where, job, grant, signal, session) => {
-    const call = (action, body) => request(where, `/api/shared-computers/${record.id}/${action}`, body, undefined, record.secret);
-    busy = { action: job.operation.action };
+  /** One screen call at a time across every server this computer is lent to. */
+  const takeScreen = async (id, signal) => {
+    let release;
+    const mine = new Promise(resolve => { release = resolve; });
+    const before = screenTurn;
+    screenTurn = before.then(() => mine);
+    await before;
+    if (signal.aborted) { release(); signal.throwIfAborted(); }
+    const host = hostControl ? await hostControl(id, signal).catch(error => { release(); throw error; }) : null;
+    return {
+      renew: () => host?.renew() ?? Promise.resolve(),
+      release: async () => { try { await host?.release(); } finally { release(); } },
+    };
+  };
+
+  const runJob = async (target, job, grant, signal, session) => {
+    const where = { origin: target.origin, name: target.serverName };
+    const call = (action, body) => request(target, `/api/shared-computers/${target.id}/${action}`, body);
+    busy = { action: job.operation.action, server: target.serverName };
     changed();
     const jobAbort = new AbortController();
     const jobSignal = AbortSignal.any([signal, jobAbort.signal]);
@@ -249,12 +310,12 @@ export function createComputerSharing({
     try {
       await lease();
       jobSignal.throwIfAborted();
-      // Listing the tools never touches the screen, so only a call takes this computer's screen lock.
+      // Listing the tools never touches the screen, so only a call takes the screen.
       if (job.operation.action === "computer_call" && grant.computer) {
         if (screenLocked()) throw new Error(SCREEN_LOCKED);
         const waits = presence.refusal(job.operation.tool_name, job.operation.arguments);
         if (waits) throw new Error(waits);
-        if (hostControl) control = await hostControl(job.id, jobSignal);
+        control = await takeScreen(job.id, jobSignal);
         jobSignal.throwIfAborted();
       }
       result = await executeSharedOperation(grant, job.operation, jobSignal, async () => {
@@ -288,136 +349,173 @@ export function createComputerSharing({
     await call("result", { jobId: job.id, result }).catch(error => log(`lending: result not delivered: ${error?.message ?? error}`));
   };
 
-  const connectOnce = async (signal, session) => {
-    const where = target();
-    if (!where) throw problem(server() ? "other-server" : "no-server");
-    const [descriptor, auth] = await Promise.all([
-      request(where, "/.well-known/openmausbot/environment"),
-      request(where, "/api/auth/session"),
-    ]);
+  const connectOnce = async (target, signal, session) => {
+    const descriptor = await request(target, "/.well-known/openmausbot/environment");
     signal.throwIfAborted();
-    if (auth?.kind !== "session") throw problem("signed-out");
-    if (!Array.isArray(auth.scopes) || !auth.scopes.includes("admin")) throw problem("not-admin");
-    if (auth.workComputers !== true) throw problem("unsupported");
     // A folder moved or deleted since is left out, so the rest keeps working.
     const folders = await existingFolders(record.folders, validateSharedFolders);
     const grant = { enabled: true, folders, terminal: record.terminal, computer: record.screen, protectedPaths: protectedRoots };
     signal.throwIfAborted();
-    await request(where, "/api/shared-computers/connect", registration(folders, descriptor.environmentId), signal, record.secret);
-    setStatus({ state: "online" });
+    await request(target, "/api/shared-computers/connect", registration(target, folders, descriptor.environmentId), signal);
+    setStatus(target.id, { state: "online" });
     while (!signal.aborted) {
-      const { job } = await request(where, `/api/shared-computers/${record.id}/poll`, {}, signal, record.secret);
+      const { job } = await request(target, `/api/shared-computers/${target.id}/poll`, {}, signal);
       if (signal.aborted) break;
       if (!job) continue;
       if (!uuid(job.id)) throw problem("refused", "Invalid computer request");
-      if (!validSharedOperation(job.operation, record.id)) {
-        activity.record({ env: where, action: "invalid", detail: "", ok: false, error: "Refused a malformed request" });
-        await request(where, `/api/shared-computers/${record.id}/result`, { jobId: job.id, result: sharedComputerError(new Error("Invalid computer request")) }, undefined, record.secret);
+      if (!validSharedOperation(job.operation, target.id)) {
+        activity.record({ env: { origin: target.origin, name: target.serverName }, action: "invalid", detail: "", ok: false, error: "Refused a malformed request" });
+        await request(target, `/api/shared-computers/${target.id}/result`, { jobId: job.id, result: sharedComputerError(new Error("Invalid computer request")) });
         continue;
       }
-      await runJob(where, job, grant, signal, session);
+      await runJob(target, job, grant, signal, session);
     }
   };
 
-  const stopLoop = () => {
+  const stopLoop = id => {
+    const live = loops.get(id);
     if (!live) return;
     live.abort.abort();
     live.session.cua?.close();
-    live = null;
+    loops.delete(id);
   };
+  const stopAll = () => { for (const id of loops.keys()) stopLoop(id); };
 
-  const startLoop = () => {
-    stopLoop();
-    if (closed || !record?.enabled || record.paused) { setStatus({ state: record?.enabled && record.paused ? "paused" : "off" }); return; }
+  const startLoop = target => {
+    stopLoop(target.id);
+    statuses.delete(target.id);
+    if (closed || !lending() || target.paused) { changed(); return; }
     const current = { abort: new AbortController(), session: { cua: null } };
-    live = current;
+    loops.set(target.id, current);
     const { signal } = current.abort;
-    setStatus({ state: "connecting" });
+    setStatus(target.id, { state: "connecting" });
     void (async () => {
       for (let failures = 0; !signal.aborted;) {
         try {
-          await connectOnce(signal, current.session);
+          await connectOnce(target, signal, current.session);
           failures = 0;
         } catch (error) {
           if (signal.aborted) break;
           const code = error?.problem ?? "unreachable";
-          if (code !== "unreachable" || !error?.problem) log(`lending: ${code}: ${error?.message ?? error}`);
-          setStatus({ state: code === "unreachable" ? "offline" : "waiting", problem: code });
-          if (code === "other-server" || code === "no-server") break;
+          if (code !== "unreachable" || !error?.problem) log(`lending to ${target.serverName}: ${code}: ${error?.message ?? error}`);
+          setStatus(target.id, { state: code === "unreachable" ? "offline" : "waiting", problem: code });
           failures++;
         }
         try { await delay(retryMs[Math.min(failures, retryMs.length - 1)], undefined, { signal }); } catch { break; }
       }
     })();
   };
+  const startAll = () => { stopAll(); for (const target of record.targets) startLoop(target); changed(); };
 
-  /** Tells the server this computer is paused or no longer lent, so its bots say so instead of "offline". */
-  const sayGoodbye = (paused) => {
-    const where = target();
-    if (!where || !record) return Promise.resolve();
-    return request(where, `/api/shared-computers/${record.id}/disconnect`, paused ? { paused: true } : {}, undefined, record.secret).catch(() => {});
-  };
+  /** Tells a server this computer is paused or no longer lent there, so its bots say so instead of "offline". */
+  const sayGoodbye = (target, paused) =>
+    request(target, `/api/shared-computers/${target.id}/disconnect`, paused ? { paused: true } : {}).catch(() => {});
 
   const readScreen = async () => {
     const next = await Promise.resolve().then(screen).catch(() => null);
-    if (JSON.stringify(next) !== JSON.stringify(screenNow)) { screenNow = next; changed(); }
+    if (JSON.stringify(next) !== JSON.stringify(screenNow)) {
+      const readyChanged = (next?.ready === true) !== (screenNow?.ready === true);
+      screenNow = next;
+      // Each server hears whether its bots can use the screen now (its "Add a computer" guide says what is missing).
+      if (readyChanged && lending()) startAll();
+      else changed();
+    }
     return next;
   };
 
   const update = patch => {
-    if (!record) throw new Error("Turn lending on first");
     store({ ...record, ...patch });
-    startLoop();
+    startAll();
     return view();
+  };
+  const withTarget = (id, patch) => update({ targets: record.targets.map(target => (target.id === id ? { ...target, ...patch } : target)) });
+  const find = id => {
+    const target = record.targets.find(entry => entry.id === id);
+    if (!target) throw new Error("This server is no longer in the list");
+    return target;
   };
 
   const view = () => ({
     ...summary(),
-    folders: (record?.folders ?? []).map(({ id, name, write, home: whole }) => ({ id, name, write, ...(whole ? { home: true } : {}) })),
+    folders: record.folders.map(({ id, name, write, home: whole }) => ({ id, name, write, ...(whole ? { home: true } : {}) })),
     defaultName: cleanName(computerName()) || "This computer",
   });
 
-  if (record?.enabled) startLoop();
+  if (lending()) startAll();
   void readScreen();
 
   return {
     view,
     summary,
-    /** Lends this computer to the server shown now, with apps and screen; folders and the terminal are added later. */
-    turnOn({ name } = {}) {
-      const paired = server();
-      if (!paired) throw new Error("Connect this app to your server first");
-      const same = record?.origin === paired.origin;
-      store({
-        version: 2, id: same ? record.id : randomUUID(), secret: same ? record.secret : randomBytes(32).toString("hex"), origin: paired.origin,
-        enabled: true, paused: false, name: cleanName(name) || (same ? record.name : ""), folders: same ? record.folders : [],
-        // Turning lending on lends what its dialog says: apps and screen, with commands off until turned on again.
-        terminal: false, screen: same ? record.screen : true,
-      });
-      startLoop();
+    /** The server's own name, from its public description, to ask the person about before anything is exchanged. */
+    async serverName(origin) {
+      const descriptor = await request({ origin, token: "", secret: "" }, "/.well-known/openmausbot/environment").catch(() => null);
+      return cleanName(descriptor?.label) || new URL(origin).host;
+    },
+    /**
+     * Lends this computer to the server of a link from "Add a computer", once `confirm(serverName)` said yes: trades the
+     * one-time code for this computer's own lend-only session there and starts lending. The same server again replaces
+     * its old session. Throws when the link can't be used.
+     */
+    async addTarget({ origin, code }, { serverName }) {
+      if (!record.targets.some(target => target.origin === origin) && record.targets.length >= MAX_TARGETS) throw new Error(`This computer can be lent to at most ${MAX_TARGETS} servers`);
+      const response = await fetchImpl(`${origin}/api/auth/pair`, {
+        method: "POST", redirect: "error", cache: "no-store", signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ code, label: nameNow() }),
+      }).catch(error => { throw problem("unreachable", `The server didn't answer: ${error?.message ?? error}`); });
+      const answer = await response.json().catch(() => null);
+      if (!response.ok || typeof answer?.token !== "string" || !answer.token.startsWith("omb_sess_")) {
+        throw new Error(typeof answer?.error === "string" ? answer.error.slice(0, 300) : "This link was already used or has expired. Make a new one in Add a computer.");
+      }
+      const previous = record.targets.find(target => target.origin === origin);
+      if (previous) { stopLoop(previous.id); void sayGoodbye(previous, false); }
+      const target = { id: randomUUID(), origin, serverName: cleanName(answer?.environment?.label) || serverName, token: answer.token, secret: randomBytes(32).toString("hex"), paused: false };
+      // Lending to a new server lends what its question says: apps and screen, with commands off until turned on again.
+      update({ enabled: true, paused: false, terminal: false, targets: [...record.targets.filter(entry => entry.origin !== origin), target] });
       return view();
     },
-    /** Stops lending at once; the server keeps the computer as no longer lent. */
+    /** Stops lending to one server and signs this computer out there. */
+    async removeTarget(id) {
+      const target = find(id);
+      stopLoop(id);
+      await sayGoodbye(target, false);
+      await request(target, "/api/auth/logout", {}).catch(() => {});
+      return update({ targets: record.targets.filter(entry => entry.id !== id) });
+    },
+    async pauseTarget(id) {
+      const target = find(id);
+      if (target.paused) return view();
+      stopLoop(id);
+      await sayGoodbye(target, true);
+      return withTarget(id, { paused: true });
+    },
+    resumeTarget: id => { find(id); return withTarget(id, { paused: false }); },
+    /** Lending on again, to every server in the list. */
+    turnOn() {
+      if (record.targets.length === 0) throw new Error("Paste the link from Add a computer first");
+      return update({ enabled: true, paused: false, terminal: false });
+    },
+    /** Stops lending everywhere at once; the servers stay in the list for Turn on. */
     async turnOff() {
-      if (!record?.enabled) return view();
-      const goodbye = sayGoodbye(false);
+      if (!record.enabled) return view();
+      const goodbyes = record.targets.filter(target => !target.paused).map(target => sayGoodbye(target, false));
+      stopAll();
       store({ ...record, enabled: false, paused: false });
-      stopLoop();
-      setStatus({ state: "off" });
-      await goodbye;
+      changed();
+      await Promise.all(goodbyes);
       return view();
     },
     async pause() {
-      if (!record?.enabled || record.paused) return view();
-      const goodbye = sayGoodbye(true);
+      if (!lending()) return view();
+      const goodbyes = record.targets.filter(target => !target.paused).map(target => sayGoodbye(target, true));
+      stopAll();
       store({ ...record, paused: true });
-      stopLoop();
-      setStatus({ state: "paused" });
-      await goodbye;
+      changed();
+      await Promise.all(goodbyes);
       return view();
     },
     resume() {
-      if (!record?.enabled) return view();
+      if (!record.enabled) return view();
       return update({ paused: false });
     },
     rename: name => update({ name: cleanName(name) }),
@@ -425,19 +523,11 @@ export function createComputerSharing({
     setScreen: on => update({ screen: on === true }),
     /** `folders` were checked by validateSharedFolders already. */
     setFolders: folders => update({ folders }),
-    /** The lent folders with their paths, for main alone: a page and the server only ever see their names. */
-    lentFolders: () => (record?.folders ?? []).map(folder => ({ ...folder })),
+    /** The lent folders with their paths, for main alone: a page and the servers only ever see their names. */
+    lentFolders: () => record.folders.map(folder => ({ ...folder })),
     activity: limit => activity.list(limit),
-    /** The paired server changed: lending follows only the server it was turned on for. */
-    serverChanged() {
-      const origin = server()?.origin ?? null;
-      if (origin === lastOrigin) return changed();
-      lastOrigin = origin;
-      if (record?.enabled && !record.paused) startLoop();
-      else changed();
-    },
     readScreen,
-    /** Quitting: nothing more reaches this computer; the server sees it go offline. */
-    close() { stopLoop(); closed = true; },
+    /** Quitting: nothing more reaches this computer; the servers see it go offline. */
+    close() { stopAll(); closed = true; },
   };
 }

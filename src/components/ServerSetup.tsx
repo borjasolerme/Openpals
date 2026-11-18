@@ -92,6 +92,7 @@ function PairingLinkForm() {
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lent, setLent] = useState<string | null>(null);
   const id = useId();
 
   const connect = async (event: FormEvent) => {
@@ -103,6 +104,8 @@ function PairingLinkForm() {
     try {
       const result = await connectServer(link.trim());
       if (!result.ok) setError(connectErrorText(result.error));
+      // A link from "Add a computer" lent this computer; this app stays where it was.
+      else if (result.lent) { setLent(result.lent); setLink(""); }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -122,6 +125,7 @@ function PairingLinkForm() {
         </button>
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      {lent && <p role="status" className="text-sm text-success">{t("lending.added", { server: lent })}</p>}
     </form>
   );
 }
