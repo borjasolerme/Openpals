@@ -68,27 +68,38 @@ export function createSharedComputerRoutes(deps: SharedComputerRouteDeps): Route
       return json(res, 405, { error: "Method not allowed" });
     }
     if (path !== "/api/shared-computers" && !path.startsWith("/api/shared-computers/")) return PASS;
-    if (method !== "POST" || !deps.accepted()) return json(res, 404, { error: `no route: ${method} ${path}` });
-    if (auth.kind !== "session" || !auth.scopes.includes("lend")) return json(res, 403, { error: "Use the link from Add a computer to lend a computer" });
-    if (!/^application\/json\b/i.test(String(req.headers["content-type"] ?? ""))) return json(res, 415, { error: "JSON required" });
+    // A lent computer that keeps failing to connect leaves no other trace: one line per refusal, never a secret.
+    const refuse = (status: number, error: string) => {
+      console.warn(`lending: ${path.replace(/^\/api\/shared-computers\/?/, "") || "root"} refused ${status}: ${error}`);
+      return json(res, status, { error });
+    };
+    if (method !== "POST" || !deps.accepted()) return refuse(404, `no route: ${method} ${path}`);
+    if (auth.kind !== "session" || !auth.scopes.includes("lend")) return refuse(403, "Use the link from Add a computer to lend a computer");
+    if (!/^application\/json\b/i.test(String(req.headers["content-type"] ?? ""))) return refuse(415, "JSON required");
     const body = await readBody(req, 4_000_000);
-    if (!deps.accepted()) return json(res, 404, { error: `no route: ${method} ${path}` });
-    if (!deps.sessionLive(auth.session.id)) return json(res, 401, { error: "Session ended" });
+    if (!deps.accepted()) return refuse(404, `no route: ${method} ${path}`);
+    if (!deps.sessionLive(auth.session.id)) return refuse(401, "Session ended");
     const secret = String(req.headers["x-omb-computer-secret"] ?? "");
     if (path === "/api/shared-computers/connect") {
       const parsed = sharedComputerRegistration.safeParse(body);
-      if (!parsed.success) return json(res, 400, { error: "Invalid computer registration" });
-      if (parsed.data.environmentId !== deps.environmentId) return json(res, 409, { error: "This server changed. Pair again before lending this computer." });
+      if (!parsed.success) return refuse(400, `Invalid computer registration: ${parsed.error.issues.map((issue) => issue.path.join(".")).join(", ").slice(0, 200)}`);
+      if (parsed.data.environmentId !== deps.environmentId) return refuse(409, "This server changed. Pair again before lending this computer.");
       deps.computers.register(parsed.data, { session: auth.session.id, person: WORK_COMPUTER_OWNER }, secret);
+      console.log(`lending: ${parsed.data.name} connected`);
       return json(res, 200, { ok: true });
     }
     const route = /^\/api\/shared-computers\/([\w-]+)\/(poll|lease|result|disconnect)$/.exec(path);
-    if (!route) return json(res, 404, { error: "not found" });
+    if (!route) return refuse(404, "not found");
     const [, id, action] = route;
+    try {
     if (action === "poll") return json(res, 200, { job: await deps.computers.poll(id, auth.session.id, secret, responseGone(res)) });
     if (action === "lease") return json(res, 200, { active: deps.computers.liveJob(id, auth.session.id, secret, String(body?.jobId)) });
     if (action === "result") deps.computers.complete(id, auth.session.id, secret, String(body?.jobId), body?.result);
     if (action === "disconnect") deps.computers.disconnect(id, auth.session.id, secret, body?.paused === true);
+    } catch (error) {
+      console.warn(`lending: ${action} failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
     return json(res, 200, { ok: true });
   };
 }
