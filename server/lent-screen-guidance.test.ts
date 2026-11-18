@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LENT_BROWSER_NO_ENDPOINT, LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING, lentScreenResult } from "./lent-screen-guidance.ts";
+import { LENT_BROWSER_NO_ENDPOINT, LENT_NO_PROBES, LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING, lentScreenResult } from "./lent-screen-guidance.ts";
 import { omittedFromErrorNote } from "./mcp-error-result.ts";
 import { CLICK_SENT_UNCONFIRMED } from "./unconfirmed-click.ts";
 
@@ -72,5 +72,12 @@ describe("websites on a lent computer", () => {
     }
     expect(LENT_SCREEN_BACKGROUND).toContain("Inside a web page");
     expect(LENT_SCREEN_BACKGROUND).toContain("delivery_mode \"foreground\" on the same pid and window_id");
+  });
+});
+
+describe("probing a lent computer", () => {
+  it("sends the bot straight to the task, and has it name the missing macOS permissions", () => {
+    expect(LENT_NO_PROBES).toContain("Don't run commands to check whether this computer works");
+    expect(LENT_NO_PROBES).toContain("which macOS permissions to turn on");
   });
 });

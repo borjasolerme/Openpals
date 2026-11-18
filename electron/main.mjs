@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Tray, WebContentsView, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerMonitor, powerSaveBlocker, safeStorage, screen, session, shell, systemPreferences, utilityProcess, nativeTheme } from "electron";
+import { offerMoveToApplications } from "./move-to-applications.mjs";
 import { createRequire } from "node:module";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
@@ -1713,6 +1714,7 @@ setCuaStateListener((connection) => {
 });
 
 app.whenReady().then(async () => {
+  if (await offerMoveToApplications({ app, dialog, log: slog })) return;
   await evictStartupCacheOnce({
     userData: app.getPath("userData"),
     currentVersion: app.getVersion(),

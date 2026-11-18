@@ -13,6 +13,10 @@ const THIS_BROWSER = "For a website, use the browser on this lent computer, sign
 export const LENT_SCREEN_BROWSING =
   `${THIS_BROWSER} get_browser_state and the browser_* tools can't drive a browser on a lent computer: don't use them, and never ask the person to turn on remote debugging.`;
 
+/** Bots probed a lent Mac with uname or whoami before opening a page, and read a slow answer as the computer being gone. */
+export const LENT_NO_PROBES =
+  "Don't run commands to check whether this computer works: go straight to the task with its screen tools. If a screen call says Openpals needs permission, tell the person exactly which macOS permissions to turn on instead of saying the computer isn't responding.";
+
 /** The person may be using the computer while a bot does: background actions run, foreground ones wait for them to step away. */
 export const LENT_SCREEN_BACKGROUND =
   "The person may be using this computer while you work. Act in the background so you never take their mouse or keyboard: give the app's pid and window_id (from launch_app or list_windows) and act on elements from get_window_state. A call with delivery_mode \"foreground\", scope \"desktop\", drag, bring_to_front or no window waits until they have stepped away. Inside a web page (Chrome or another browser) a background click often doesn't land: read the window again with get_window_state, and if nothing changed, do it with delivery_mode \"foreground\" on the same pid and window_id; when the person is using the computer that call says so, so wait a minute and try again.";

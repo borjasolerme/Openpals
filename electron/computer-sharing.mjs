@@ -64,6 +64,19 @@ async function volumeRoot(canonical) {
 
 /** Whether `target` is exactly the person's home folder. Only the home folder itself may be lent on request (see
  * `home` in validateSharedFolders); the folders above it, and the system disk, never can. */
+
+/** `promise`, or a rejection as soon as `signal` aborts, whichever comes first. */
+function untilEnded(promise, signal) {
+  if (signal.aborted) return Promise.reject(new Error("The request ended"));
+  return new Promise((resolve, reject) => {
+    const ended = () => reject(new Error("The request ended"));
+    signal.addEventListener("abort", ended, { once: true });
+    Promise.resolve(promise).then(
+      value => { signal.removeEventListener("abort", ended); resolve(value); },
+      error => { signal.removeEventListener("abort", ended); reject(error); },
+    );
+  });
+}
 export async function isHomeFolder(target) {
   try {
     const [home] = homeCandidates();
@@ -285,18 +298,18 @@ export function createComputerSharing({
     ...(record.screen ? { screenReady: screenNow?.ready === true } : {}),
   });
 
-  /** One screen call at a time across every server this computer is lent to. */
+  /** One screen call at a time across every server this computer is lent to. A job its server ended stops waiting for the
+   * screen at once, so one stuck call never holds every later job. */
   const takeScreen = async (id, signal) => {
     let release;
     const mine = new Promise(resolve => { release = resolve; });
     const before = screenTurn;
     screenTurn = before.then(() => mine);
-    await before;
-    if (signal.aborted) { release(); signal.throwIfAborted(); }
+    try { await untilEnded(before, signal); } catch (error) { release(); throw error; }
     const host = hostControl ? await hostControl(id, signal).catch(error => { release(); throw error; }) : null;
     return {
       renew: () => host?.renew() ?? Promise.resolve(),
-      release: async () => { try { await host?.release(); } finally { release(); } },
+      release: async () => { try { await untilEnded(host?.release(), AbortSignal.timeout(5_000)); } catch {} finally { release(); } },
     };
   };
 
@@ -330,7 +343,8 @@ export function createComputerSharing({
         control = await takeScreen(job.id, jobSignal);
         jobSignal.throwIfAborted();
       }
-      result = await executeSharedOperation(grant, job.operation, jobSignal, () => controlNow(jobSignal));
+      // A step that ignores the abort (a hung helper, a dialog) still ends the job when its server ends it.
+      result = await untilEnded(executeSharedOperation(grant, job.operation, jobSignal, () => controlNow(jobSignal)), jobSignal);
     } catch (error) {
       // A refused or failed action keeps the connection, and with it what the driver read; only a dead one is replaced.
       result = sharedComputerError(error);

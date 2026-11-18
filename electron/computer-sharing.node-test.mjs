@@ -36,7 +36,7 @@ function fakeServers(names = { "https://boat.example": "Boat server", "https://h
       await delay(20, undefined, { signal: init.signal }).catch(() => {});
       return json({ job: null });
     }
-    if (route.endsWith("/lease")) return json({ active: true });
+    if (route.endsWith("/lease")) return json({ active: !at.endJobs });
     if (route.endsWith("/result")) { at.results.push(body.result); return json({ ok: true }); }
     if (route.endsWith("/disconnect")) { at.disconnects.push(body); return json({ ok: true }); }
     return json({ error: "not found" }, 404);
@@ -262,4 +262,44 @@ test("a foreground click that waited for the person works once they step away, o
   await until(() => boat.results.length === 3, "the click again");
   assert.deepEqual(boat.results[2].content, [{ type: "text", text: "clicked" }]);
   assert.equal((await readFile(starts, "utf8")).trim().split("\n").length, 1, "the driver that read the window is the one that clicked");
+});
+
+test("a job its server ended stops at once, even when its step never returns, and the next job gets the screen", async t => {
+  const { fake, make } = await setup(t);
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), "omb-driver-")));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const driver = path.join(dir, "driver.cjs");
+  // The very first call this computer ever gets hangs (a helper that never answers); every later one answers.
+  await writeFile(driver, `
+const fs = require("node:fs");
+const rl = require("node:readline").createInterface({ input: process.stdin });
+const send = (id, result) => process.stdout.write(JSON.stringify({ jsonrpc: "2.0", id, result }) + "\\n");
+rl.on("line", (line) => {
+  const m = JSON.parse(line);
+  if (m.method === "initialize") return send(m.id, { serverInfo: { name: "cua-driver", version: "0.45.4" } });
+  if (m.method !== "tools/call") return;
+  if (!fs.existsSync(process.env.HUNG)) { fs.writeFileSync(process.env.HUNG, "1"); return; }
+  send(m.id, { content: [{ type: "text", text: "ok" }] });
+});`);
+  const hung = path.join(dir, "hung");
+  const hostControl = async () => ({ renew: async () => {}, release: async () => {} });
+  // Starting computer control can hang too (a helper waiting on a macOS prompt): the first start never returns.
+  let starts = 0;
+  const cuaConnection = () => (++starts === 1 ? new Promise(() => {}) : Promise.resolve({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: { HUNG: hung } }));
+  await writeFile(hung, "1");
+  const sharing = make({ hostControl, cuaConnection });
+  t.after(() => sharing.close());
+  const boat = fake.seen["https://boat.example"];
+  const call = { action: "computer_call", tool_name: "get_desktop_state", arguments: {} };
+  boat.jobs.push(call);
+  await sharing.addTarget({ origin: "https://boat.example", code: CODE }, { serverName: "Boat" });
+  await until(() => boat.polls > 0 && boat.results.length === 0, "the job taken");
+  await delay(100);
+  boat.endJobs = true;
+  await until(() => boat.results.length === 1, "the ended job answered");
+  assert.match(boat.results[0].content[0].text, /request ended|stopped/i);
+  boat.endJobs = false;
+  boat.jobs.push(call);
+  await until(() => boat.results.length === 2, "the next job");
+  assert.deepEqual(boat.results[1].content, [{ type: "text", text: "ok" }]);
 });

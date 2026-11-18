@@ -4,7 +4,7 @@
 import { join } from "node:path";
 
 import { LENT_COMMAND_TOOL, LENT_FILES_TOOL, lentComputerRpc, type LentComputerRpcDeps, type LentNow } from "../lent-computer-tools.ts";
-import { LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING } from "../lent-screen-guidance.ts";
+import { LENT_NO_PROBES, LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING } from "../lent-screen-guidance.ts";
 import { createSharedComputerRoutes, WORK_COMPUTER_OWNER } from "../routes/shared-computers.ts";
 import { SharedComputerControl } from "../shared-computer-control.ts";
 import { deviceWord } from "../lent-computers.ts";
@@ -107,7 +107,10 @@ export function createWorkComputers(deps: WorkComputersDeps) {
       if (!mounted.online) return ` This bot works on ${mounted.name}, the person's own computer, but it can't be used now: ${mounted.away} Work that needs no screen can go ahead.`;
       const now = lendsNow(mounted.id);
       const extras = [now?.terminal ? `${LENT_COMMAND_TOOL} runs commands on it` : "", now?.folders.length ? `${LENT_FILES_TOOL} reads and changes the folders it lends` : ""].filter(Boolean).join("; ");
-      return ` This bot works on ${mounted.name}, the person's own computer, lent to this server: its screen, its apps and the browsers they are signed in to.${extras ? ` Besides its screen tools, ${extras}.` : ""} ${LENT_SCREEN_BROWSING} ${LENT_SCREEN_BACKGROUND}`;
+      const screen = find(mounted.id)?.screenReady === false
+        ? ` Its screen can't be used yet: macOS hasn't allowed Openpals to see and control it. Before trying, tell the person in one sentence to open System Settings → Privacy & Security on ${mounted.name} and turn on Openpals under Accessibility and under Screen Recording (removing any older Openpals entry first), then quit and reopen Openpals there.`
+        : "";
+      return ` This bot works on ${mounted.name}, the person's own computer, lent to this server: its screen, its apps and the browsers they are signed in to.${extras ? ` Besides its screen tools, ${extras}.` : ""} ${LENT_SCREEN_BROWSING} ${LENT_SCREEN_BACKGROUND}${screen} ${LENT_NO_PROBES}`;
     },
     close() {
       computers.close();
