@@ -7,12 +7,12 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'OpenMausBot Docs',
-    template: '%s · OpenMausBot Docs',
+    default: 'Openpals Docs',
+    template: '%s · Openpals Docs',
   },
   description: 'Install, configure, and extend your local-first team of AI agents.',
   openGraph: {
-    title: 'OpenMausBot Docs',
+    title: 'Openpals Docs',
     description: 'Your own team of AI agents, in a chat app.',
     type: 'website',
   },

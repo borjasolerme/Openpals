@@ -4,7 +4,7 @@ description: Configure project-key access, scoped permissions, and headless deve
 icon: KeyRound
 ---
 
-Each installation owner creates a Composio project and pastes that project's key into OpenMausBot, so usage stays attached to the owner's own Composio account.
+Each installation owner creates a Composio project and pastes that project's key into Openpals, so usage stays attached to the owner's own Composio account.
 
 ## Least-privilege scoped key
 
@@ -24,4 +24,4 @@ Set the key on the harness process:
 COMPOSIO_API_KEY=ak_your_project_key pnpm dev:server
 ```
 
-OpenMausBot creates a stable random Composio user identifier and reuses the returned Session. It does not store raw Gmail, Slack, GitHub, or other provider tokens.
+Openpals creates a stable random Composio user identifier and reuses the returned Session. It does not store raw Gmail, Slack, GitHub, or other provider tokens.

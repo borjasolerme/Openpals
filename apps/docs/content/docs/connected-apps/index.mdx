@@ -4,9 +4,9 @@ description: Give bots secure, user-authorized tools for Gmail, GitHub, Slack, N
 icon: PlugZap
 ---
 
-Open **Connected apps** from the sidebar, choose a service, and complete its authorization in your normal browser. OpenMausBot turns the resulting connection into tools that supported agent engines can use.
+Open **Connected apps** from the sidebar, choose a service, and complete its authorization in your normal browser. Openpals turns the resulting connection into tools that supported agent engines can use.
 
-<ProductScreenshot name="docs-connected-apps" alt="The clean OpenMausBot connected-app marketplace" caption="Search the marketplace or review every account from the Connected tab." />
+<ProductScreenshot name="docs-connected-apps" alt="The clean Openpals connected-app marketplace" caption="Search the marketplace or review every account from the Connected tab." />
 
 ## Add your Composio project key
 
@@ -14,7 +14,7 @@ Connected apps run through your own [Composio](https://composio.dev) project. Th
 
 1. In the [Composio Dashboard](https://dashboard.composio.dev), select or create a project and open **Settings → API Keys**.
 2. Copy a project key beginning with `ak_`.
-3. In OpenMausBot, open **App Settings → Connections** and save it under **Composio project key**.
+3. In Openpals, open **App Settings → Connections** and save it under **Composio project key**.
 4. Open **Connected apps**, search for Gmail, GitHub, Slack, Notion or another toolkit, and select **Connect**.
 5. Finish OAuth in the browser window that opens, then return to the app and ask a bot to use the service.
 
@@ -33,7 +33,7 @@ The steps below are only needed to **post** to X through Composio. Composio does
 3. Save the project's key under **App Settings → Connections**.
 4. Return to **Connected apps** and connect **X (Twitter)**.
 
-Older OpenMausBot tasks that refer to the connector as `x` continue to work; OpenMausBot translates that alias to Composio's `twitter` toolkit automatically.
+Older Openpals tasks that refer to the connector as `x` continue to work; Openpals translates that alias to Composio's `twitter` toolkit automatically.
 
 ## Apps that need your own OAuth app
 
@@ -43,11 +43,11 @@ Some apps, such as Xero and Buffer, have no sign-in that Composio provides, so t
 2. Save the project's key under **App Settings → Connections**.
 3. Connect the app from **Connected apps**, or let a bot ask for it in chat.
 
-OpenMausBot finds the auth config by itself, switches on what Composio needs before it uses it ("enabled for Tool Router", which a config you made yourself can have off), and tells the bot which config it used. If you have several for one app, it uses the most recently created. A connection you made in the Composio dashboard itself is not visible to OpenMausBot, so connect the app once from OpenMausBot.
+Openpals finds the auth config by itself, switches on what Composio needs before it uses it ("enabled for Tool Router", which a config you made yourself can have off), and tells the bot which config it used. If you have several for one app, it uses the most recently created. A connection you made in the Composio dashboard itself is not visible to Openpals, so connect the app once from Openpals.
 
 ## Multiple accounts
 
-Connect more than one account for the same toolkit and give each a clear alias such as `work`, `personal`, or `client-acme`. When several accounts could perform an action, OpenMausBot requires explicit selection instead of silently replacing the first connection.
+Connect more than one account for the same toolkit and give each a clear alias such as `work`, `personal`, or `client-acme`. When several accounts could perform an action, Openpals requires explicit selection instead of silently replacing the first connection.
 
 ## Limit which tools a bot may use
 
