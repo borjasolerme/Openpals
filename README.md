@@ -56,9 +56,11 @@ on** (where it clicks, browses and installs things) is picked per bot, from one 
               └──────────────────────┘  └────────────────────────┘
 ```
 
-Add a computer from that list: install Openpals on it, connect it with a one-time link, and turn on "Let my bots use
-this computer". It connects out to the server's secure address, so it works from any country with no ports to open,
-and you can pause or stop it from its menu bar. Bots can also share sign-ins: turn on **Shared sign-ins** for the
+**Add a computer** from that list gives you a one-time link. Paste it in Openpals on that computer and say yes once:
+the link only lends the computer, it never shows that computer your bots or chats. On a Mac, allow Accessibility and
+Screen Recording for Openpals. The computer connects out to the server's secure address, so it works from any country
+with no ports to open, and you can pause or stop it from its menu bar. Several people can lend the same computer to
+their own servers; bots take turns on its screen. Bots can also share sign-ins: turn on **Shared sign-ins** for the
 bots that should use the same logged-in browser.
 
 ## Stuff you do in Openpals
@@ -119,7 +121,8 @@ without moving anywhere.
 
 It stays simple on purpose. Openpals is a fork of [OpenMausBot](https://github.com/milind-soni/OpenMausBot) by
 Milind Soni, cut down to feel like a messaging app: no thread lists, no departments, no places switcher, no hosted
-cloud, plans, promos, telemetry or auto-updater. Removed features are deleted from the code, not hidden.
+cloud, plans, promos, telemetry or private desktops. Updates come from this repository's releases, from the app's own
+**Check for updates**. Removed features are deleted from the code, not hidden.
 
 ## Three little stories
 
@@ -146,8 +149,20 @@ waiting. (That last hop is a personal setup, not a built-in feature. Bots can ru
 
 ### I want to try it on my computer
 
-On a Mac with Apple silicon, [download Openpals](https://github.com/borjasolerme/Openpals/releases/latest), drag it to
-Applications and open it (the first time, right-click → Open). To build it yourself instead:
+On a Mac with Apple silicon:
+
+1. [Download **Openpals-mac-arm64.zip**](https://github.com/borjasolerme/Openpals/releases/latest), open it and drag
+   **Openpals** to **Applications**. Run it from Applications, not from Downloads: macOS keeps a downloaded app that runs
+   elsewhere in a hidden temporary copy, and its screen permissions don't stick.
+2. The first time, right-click Openpals → **Open**. The app is signed but not notarized (that needs a paid Apple
+   Developer account), so macOS asks once; if it still refuses, choose **Open Anyway** in System Settings → Privacy &
+   Security. If you open it from somewhere else, Openpals offers to move itself to Applications.
+3. To let bots use this Mac's screen, allow **Accessibility** and **Screen Recording** for Openpals in System Settings →
+   Privacy & Security. After replacing the app by hand, remove the old Openpals entries there and turn the new one on.
+4. From then on, update with **Settings → General → Check for updates** (or Openpals → Check for Updates…). It checks
+   the download is signed by the same developer before it replaces the app.
+
+To build it yourself instead:
 
 You need macOS (Linux is in beta), **Node 24+**, **pnpm**, and at least one agent CLI installed and signed in:
 [`claude`](https://claude.com/claude-code) or [`codex`](https://github.com/openai/codex). Then build the desktop
