@@ -348,6 +348,19 @@ export function createBrowserHost(deps: BrowserHostDeps) {
     if (refusal) return { status: 409, error: refusal };
     return { binaryPath: engine.binaryPath, session, env: browserSessionSpec(engine.binaryPath, session, profile, await browserEgress.open(session)).env, encryptionKey: browserEngineEncryptionKey() };
   }
+  /**
+   * This computer lent to another server, a bot there browsing in the person's own Chrome here: agent-browser attached to
+   * that Chrome (the one-time chrome://inspect switch), one session per server and bot so their tabs stay apart. The same
+   * runtime as My Chrome, so nothing saves or restores sign-ins: they are the person's Chrome's own.
+   */
+  async function lentChromeRpc(key: string, method: "tools/list" | "tools/call", params: unknown): Promise<unknown> {
+    const status = browserEngineStatus();
+    if (status.kind !== "ready") throw new Error(`The browser engine isn't ready on this computer: ${status.reason}`);
+    const session = `lent-${key}`;
+    const spec = agentBrowserIntegration({ binaryPath: status.binaryPath, session, encryptionKey: browserEngineEncryptionKey(), env: { ...process.env, PATH: augmentedPath() }, attach: {} });
+    usedBrowserSessions.set(session, spec);
+    return browserRuntime.agentRpc(session, spec, method, params);
+  }
   /** What Settings shows of the engine that runs bots' browsers here; My Chrome stays on agent-browser. */
   function engineSummary<T extends { myChrome: boolean }>(agentBrowser: T): (T | (ReturnType<ChromeEngine["summary"]> & { myChrome: boolean })) & { engine: BrowserEngineKind; serverSites?: boolean } {
     // Self-hosted servers only: the owner's switch for this server's own sites and its local network.
@@ -360,6 +373,6 @@ export function createBrowserHost(deps: BrowserHostDeps) {
     browserRuntime, browserLive, usedBrowserSessions, browserSweep, temporaryBrowserSessions, browserIdleMs: idleMs,
     currentBrowserSession, forgetTemporaryBrowser, carryOwnBrowser, myChromeAvailable, usesMyChrome, browserSessionSpec, browserIntegration,
     browserReady, currentBrowserSpec, loginInput, browserSystemPrompt, signedInSitesRefusal, closeBrowser, browserEngineSwitched,
-    eraseDeletedBrowser, engineSummary, browserSessionsOf, signedInSitesTarget, uploadPaths,
+    eraseDeletedBrowser, engineSummary, browserSessionsOf, signedInSitesTarget, uploadPaths, lentChromeRpc,
   };
 }

@@ -338,6 +338,7 @@ import { spillToolResult } from "./tool-result-spill.ts";
 import { gatedLocalComputer } from "./local-computer.ts";
 import { desktopComputer, thisComputerNotReady } from "./desktop-computer.ts";
 import { createWorkComputers, type LentMount } from "./host/work-computers.ts";
+import { createLentBrowserRoutes } from "./routes/lent-browser.ts";
 import { askToUseYourComputer, cancelYourComputerAsks, claimWithYourComputerConsent, dismissStaleYourComputerCards, yourComputerCallFrom, yourComputerWaiting } from "./your-computer-consent.ts"; 
 import { VPS_OUTDATED_HINT, vpsDesktopOutdated, withoutHostWhileUpdating } from "./vps-hints.ts";
 import { CLOUD_COMPUTER_DID_NOT_START, CLOUD_COMPUTER_START_BUDGET_MS, CLOUD_COMPUTER_STARTING, createCloudComputerPower } from "./host/cloud-computer-power.ts";
@@ -1935,7 +1936,7 @@ function cancelDirectTurnDispatch(botId: string, expectedThreadId?: string): Dir
 const {
   browserRuntime, browserLive, usedBrowserSessions, browserSweep, temporaryBrowserSessions,
   currentBrowserSession, forgetTemporaryBrowser, carryOwnBrowser, myChromeAvailable, usesMyChrome, browserSessionSpec, browserIntegration,
-  browserReady, currentBrowserSpec, loginInput, browserSystemPrompt, closeBrowser, browserEngineSwitched, eraseDeletedBrowser, engineSummary, browserSessionsOf, signedInSitesTarget, uploadPaths,
+  browserReady, currentBrowserSpec, loginInput, browserSystemPrompt, closeBrowser, browserEngineSwitched, eraseDeletedBrowser, engineSummary, browserSessionsOf, signedInSitesTarget, uploadPaths, lentChromeRpc,
 } = createBrowserHost({ cfg, store: () => store, turnResources, activeInternalGenerationByThread, mintInternalCapability, DESKTOP_MANAGED, PORT });
 
 const dataSheets = new DataSheetRegistry({
@@ -10788,7 +10789,7 @@ let restartRequested = false;
 const workspaceCopyAccess = { dataDir: DATA_DIR, appVersion: serverVersion(), readBody, restored: workspaceRestore, ...workspaceBackupAccess, ...(process.env.OMB_SUPERVISED === "1" ? { restart: () => { restartRequested = true; gracefulShutdown(); } } : {}) };
 const workspaceBackupRoutes = createWorkspaceBackupRoutes(workspaceCopyAccess);
 
-ROUTES.push(createBotPresetRoutes({ presets: presetStore }), workComputers.routes);
+ROUTES.push(createBotPresetRoutes({ presets: presetStore }), workComputers.routes, createLentBrowserRoutes({ run: lentChromeRpc }));
 // `routines` is assigned at boot, so it is read per request.
 ROUTES.push(createBotMessageRoutes({
   store, registry, handoffs, liveTurn: (threadId) => liveTurns.running(threadId), phoneSecretSubmissions, directTurnDispatchClaims, groupSpeakers,
@@ -11660,6 +11661,14 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (!bot || bot.browser === false || bot.computer === "off" || !builtInBrowserEnabled(cfg)) {
           return json(res, 403, { error: "browser tools are not enabled for this bot" });
         }
+        // A bot working on a lent computer whose person connected their Chrome browses there, in that Chrome.
+        const lentChrome = bot.computer === "cloud" && bot.cloudBackend === "lent" && bot.lentComputerId && workComputers.lendsChrome(bot.lentComputerId) ? bot.lentComputerId : null;
+        if (lentChrome) {
+          const abort = new AbortController();
+          res.once("close", () => { if (!res.writableEnded) abort.abort(); });
+          return json(res, 200, { result: await workComputers.browserRpc(body, { computerId: lentChrome, botId: bot.id, assertActive: requireActiveInternalCapability,
+            active: () => !abort.signal.aborted && internalCapabilityIsActive(internalCapability) }) });
+        }
         const browser = await browserIntegration(bot.id, bot.browserProfile);
         if (!browser || browser.session !== internalCapability.browserSession) {
           return json(res, 409, { error: "this browser profile changed; start a new turn" });
@@ -11668,7 +11677,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           return json(res, 400, { error: "unsupported browser method" });
         }
         if (body.method === "tools/call") {
-          const abort = new AbortController(); res.once("close", () => { if (!res.writableEnded) abort.abort(); });
+          const abort = new AbortController();
+          res.once("close", () => { if (!res.writableEnded) abort.abort(); });
           const refused = await browserSeats.take(internalCapability, browser.session, abort.signal); requireActiveInternalCapability();
           if (refused) return json(res, 200, { result: { isError: true, content: [{ type: "text", text: refused }] } });
         }

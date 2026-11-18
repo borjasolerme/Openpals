@@ -1,5 +1,6 @@
 import { app, BrowserWindow, Tray, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerMonitor, powerSaveBlocker, safeStorage, screen, session, shell, systemPreferences, utilityProcess, nativeTheme } from "electron";
 import { offerMoveToApplications } from "./move-to-applications.mjs";
+import { createLentBrowser } from "./lent-browser.mjs";
 import { createRequire } from "node:module";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
@@ -1776,6 +1777,10 @@ app.whenReady().then(async () => {
     idleSeconds: () => (powerMonitor.getSystemIdleState(1) === "unknown" ? null : powerMonitor.getSystemIdleTime()),
     hostControl: createHostScreenLease({
       url: () => `http://127.0.0.1:${SERVER_PORT}/api/desktop/shared-computer-control`,
+      headers: () => desktopServerHeaders({}, { packaged: app.isPackaged, token: desktopMutationToken }),
+    }),
+    lentBrowser: createLentBrowser({
+      url: () => `http://127.0.0.1:${SERVER_PORT}/api/desktop/lent-browser`,
       headers: () => desktopServerHeaders({}, { packaged: app.isPackaged, token: desktopMutationToken }),
     }),
     window: () => (mainWindow && !mainWindow.isDestroyed() ? mainWindow : null),

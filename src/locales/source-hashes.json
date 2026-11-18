@@ -6480,7 +6480,15 @@
       "workPlace.remove": "e6a3c4a1250a6ad3f10faa22333e5e50a6ba78e5b28a3b26f5743d9f8c7ede93",
       "workPlace.removeTitle": "01c1f0250884f59318b310f94ab575cdbf6fc21434dcc27756f349a6526b2bde",
       "workPlace.removeBody": "1195889cbda7f1dc0dac99145ce9683398ce18247d772365c4b347a4f77c6ccf",
-      "workPlace.removeConfirm": "c3812fc4acb861d5182fc2b8155f327f736fbe5e5eb86a7bd7afcb6dc5497282"
+      "workPlace.removeConfirm": "c3812fc4acb861d5182fc2b8155f327f736fbe5e5eb86a7bd7afcb6dc5497282",
+      "lending.chrome.title": "12304cdcc9ff45617e07b287c7809953508552d8ed0cf03840627e93ce045bef",
+      "lending.chrome.desc": "aa7735b6c47648f22d347e4567227f6287a6eb9ddff4edb3336acb763549a1f1",
+      "lending.chrome.on": "ab7f8b064e2255cd448251397c590d2c121e36459d2fcad22dc47d6187a057fd",
+      "lending.chrome.step1": "302d3a9392fb065e74386473b833eb0f4f8ba6aaa092d44b942e7fe5d22bcc8c",
+      "lending.chrome.step2": "ee9011a88ddd9364a5fc5c9cec686e835f7b46d5dc4d076b27569399d7a937bf",
+      "lending.chrome.step3": "9e4222105e9f49830aba19d5c0b35bba7574da15d200c12f0878391742c72e08",
+      "lending.chrome.open": "f763ba0493a6f8d8fc5c9c97609639c41e1f8e0abc5fa12bf0f10c332d25829b",
+      "lending.chrome.failed": "09ffe42027ba61312c6fcde240710e90d69f650a6993ebb73ec990084c75090f"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

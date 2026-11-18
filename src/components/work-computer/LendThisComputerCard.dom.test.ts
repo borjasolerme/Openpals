@@ -11,7 +11,7 @@ const { LendThisComputerCard } = await import("./LendThisComputerCard");
 const LINK = "https://boat.example/pair#code=ABCD-EFGH-JKLM&lend=1";
 const base = (extra: Partial<LendingState> = {}): LendingState => ({
   on: false, paused: false, name: "Mac mini", server: null, state: "off", targets: [], busy: null, terminal: false, lendsScreen: true,
-  screen: { ready: true, lent: true, reason: null, fix: null }, folders: [], defaultName: "Mac mini", device: "Mac", platform: "darwin", openAtLogin: null, ...extra,
+  screen: { ready: true, lent: true, reason: null, fix: null }, folders: [], defaultName: "Mac mini", device: "Mac", platform: "darwin", openAtLogin: null, chrome: false, chromeCheck: null, ...extra,
 });
 const lent = base({
   on: true, server: "Boat server, Ana's server", state: "online",
@@ -38,6 +38,8 @@ const render = async (state: LendingState) => {
     state: vi.fn(async () => state), onChanged: vi.fn(() => () => {}),
     addLink: vi.fn(async () => lent), removeTarget: vi.fn(async () => base()), pauseTarget: vi.fn(async () => state),
     resumeTarget: vi.fn(async () => state), turnOn: vi.fn(async () => state), turnOff: vi.fn(async () => state),
+    setChrome: vi.fn(async () => ({ ...state, chrome: false, chromeCheck: { ok: false, error: "No running Chrome with remote debugging" } })),
+    openChromeSetup: vi.fn(async () => state),
   };
   (window as unknown as { ogb: unknown }).ogb = { lending: bridge };
   await act(async () => root.render(createElement(LendThisComputerCard)));
@@ -81,4 +83,28 @@ it("lists each server with where it stands, says what to do about a problem, and
   expect(bridge.pauseTarget).toHaveBeenCalledWith("t-boat");
   await act(async () => { button("Remove Ana's server")!.click(); });
   expect(bridge.removeTarget).toHaveBeenCalledWith("t-home");
+});
+
+it("Use my Chrome without the mouse shows the one-time step, opens it in Chrome, and says why it isn't on yet", async () => {
+  await render(lent);
+  expect(q("[data-lending-chrome]")?.getAttribute("data-lending-chrome")).toBe("off");
+  expect([...document.querySelectorAll("[data-lending-chrome-steps] li")].map((item) => item.textContent)).toEqual([
+    "Open Chrome's remote debugging page with the button below.",
+    "Tick \"Allow remote debugging for this browser instance\".",
+    "Turn this switch on, then click Allow when Chrome asks.",
+  ]);
+  await act(async () => { button("Open the page in Chrome")!.click(); });
+  expect(bridge.openChromeSetup).toHaveBeenCalled();
+  await act(async () => { button("Use my Chrome without the mouse")!.click(); });
+  await settle();
+  expect(bridge.setChrome).toHaveBeenCalledWith(true);
+  expect(q("[data-lending-chrome]")?.getAttribute("data-lending-chrome")).toBe("failed");
+  expect(document.body.textContent).toContain("Couldn't reach Chrome yet: No running Chrome with remote debugging");
+});
+
+it("once Chrome is connected, says so and offers only turning it off", async () => {
+  await render({ ...lent, chrome: true });
+  expect(q("[data-lending-chrome]")?.getAttribute("data-lending-chrome")).toBe("on");
+  expect(document.body.textContent).toContain("Connected ✓");
+  expect(q("[data-lending-chrome-steps]")).toBeNull();
 });

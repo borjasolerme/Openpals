@@ -118,8 +118,11 @@ export async function validateSharedFolders(folders, { homeEdits = false } = {})
   return result;
 }
 
-const JOB_KEYS = new Set(["computer_id", "action", "folder_id", "path", "content", "encoding", "expected_sha256", "old_text", "new_text", "command", "timeout_seconds", "tool_name", "arguments"]);
-const JOB_ACTIONS = new Set(["list_files", "read_file", "write_file", "edit_file", "append_file", "delete_file", "run_command", "computer_tools", "computer_call"]);
+const JOB_KEYS = new Set(["computer_id", "action", "folder_id", "path", "content", "encoding", "expected_sha256", "old_text", "new_text", "command", "timeout_seconds", "tool_name", "arguments", "browser_session"]);
+const JOB_ACTIONS = new Set(["list_files", "read_file", "write_file", "edit_file", "append_file", "delete_file", "run_command", "computer_tools", "computer_call", "browser_tools", "browser_call"]);
+/** A browser call in the person's Chrome: one of agent-browser's own tools; an upload would name files on the server. */
+const BROWSER_TOOL = /^agent_browser_[a-z_]{1,60}$/;
+const browserJob = operation => operation.action === "browser_tools" || operation.action === "browser_call";
 const optionalText = (value, max) => value === undefined || (typeof value === "string" && value.length <= max);
 /** Refuses malformed input only; the grant still decides whether the operation is allowed. */
 export function validSharedOperation(operation, computerId) {
@@ -132,7 +135,9 @@ export function validSharedOperation(operation, computerId) {
     (operation.encoding === undefined || operation.encoding === "utf8" || operation.encoding === "base64") &&
     (operation.expected_sha256 === undefined || (typeof operation.expected_sha256 === "string" && /^[a-f0-9]{64}$/.test(operation.expected_sha256))) &&
     optionalText(operation.command, 8000) && validCommandSeconds(operation.timeout_seconds) && optionalText(operation.tool_name, 100) &&
-    (operation.arguments === undefined || (Boolean(operation.arguments) && typeof operation.arguments === "object" && !Array.isArray(operation.arguments)));
+    (operation.arguments === undefined || (Boolean(operation.arguments) && typeof operation.arguments === "object" && !Array.isArray(operation.arguments))) &&
+    (operation.browser_session === undefined || (typeof operation.browser_session === "string" && /^[A-Za-z0-9-]{1,64}$/.test(operation.browser_session))) &&
+    (operation.action !== "browser_call" || (BROWSER_TOOL.test(operation.tool_name ?? "") && operation.tool_name !== "agent_browser_upload"));
 }
 
 
@@ -185,11 +190,11 @@ export function parseLendingRecord(raw) {
   return {
     version: 3, enabled: record.enabled !== false, paused: record.paused === true, name: cleanName(record.name),
     folders: folders.slice(0, 20).map(({ id, path: where, name, write, home }) => ({ id, path: where, name: cleanName(name) || path.basename(where), write, ...(home === true ? { home: true } : {}) })),
-    terminal: record.terminal === true, screen: record.screen !== false, targets,
+    terminal: record.terminal === true, screen: record.screen !== false, chrome: record.chrome === true, targets,
   };
 }
 
-const EMPTY_RECORD = Object.freeze({ version: 3, enabled: true, paused: false, name: "", folders: [], terminal: false, screen: true, targets: [] });
+const EMPTY_RECORD = Object.freeze({ version: 3, enabled: true, paused: false, name: "", folders: [], terminal: false, screen: true, chrome: false, targets: [] });
 
 /**
  * `fetch`: plain HTTPS, no cookies: each server is reached with its own lend-only session. `cuaConnection()`: computer
@@ -199,7 +204,7 @@ const EMPTY_RECORD = Object.freeze({ version: 3, enabled: true, paused: false, n
  * follow every change.
  */
 export function createComputerSharing({
-  file, fetch: fetchImpl, cuaConnection = async () => null, screen = async () => null, hostControl = null,
+  file, fetch: fetchImpl, cuaConnection = async () => null, screen = async () => null, hostControl = null, lentBrowser = null,
   screenLocked = () => false, idleSeconds = () => null, protectedPaths = [], home = os.homedir(),
   computerName = () => os.hostname(), platform = process.platform, onChange = () => {}, log = () => {},
   activityFile, retryMs = RETRY_MS, now = Date.now,
@@ -259,7 +264,7 @@ export function createComputerSharing({
     return {
       on: record.enabled && record.targets.length > 0, paused: record.enabled && record.paused, name: nameNow(),
       server: reachable.map(target => target.serverName).join(", ") || null, state: overall(), targets,
-      busy, terminal: record.terminal, lendsScreen: record.screen, screen: screenNow,
+      busy, terminal: record.terminal, lendsScreen: record.screen, screen: screenNow, chrome: record.chrome,
     };
   };
   const changed = () => { if (!closed) try { onChange(summary()); } catch {} };
@@ -296,6 +301,7 @@ export function createComputerSharing({
     folders: folders.map(({ id, name, write }) => ({ id, name, write })), terminal: record.terminal, computer: record.screen,
     ...(LENT_PLATFORMS.has(platform) ? { platform } : {}), commandTimeouts: true, longCommands: true, fileEdits: true,
     ...(record.screen ? { screenReady: screenNow?.ready === true } : {}),
+    ...(record.chrome && lentBrowser ? { chrome: true } : {}),
   });
 
   /** One screen call at a time across every server this computer is lent to. A job its server ended stops waiting for the
@@ -311,6 +317,15 @@ export function createComputerSharing({
       renew: () => host?.renew() ?? Promise.resolve(),
       release: async () => { try { await untilEnded(host?.release(), AbortSignal.timeout(5_000)); } catch {} finally { release(); } },
     };
+  };
+
+  /** A bot's browser call in the person's Chrome: no screen, so it never waits for the screen or for the person. */
+  const browserCall = async (target, operation, signal) => {
+    if (!record.chrome || !lentBrowser) throw new Error("Chrome on this computer isn't connected for bots. In Openpals here, open Settings → Computer and turn on Use my Chrome without the mouse.");
+    // One agent-browser per server and bot, so two bots never act in one tab.
+    const key = `${target.id.slice(0, 8)}-${operation.browser_session ?? "bot"}`.slice(0, 80);
+    if (operation.action === "browser_tools") return lentBrowser.call(key, "tools/list", undefined, signal);
+    return lentBrowser.call(key, "tools/call", { name: operation.tool_name, arguments: operation.arguments ?? {} }, signal);
   };
 
   const runJob = async (target, job, grant, signal) => {
@@ -344,7 +359,9 @@ export function createComputerSharing({
         jobSignal.throwIfAborted();
       }
       // A step that ignores the abort (a hung helper, a dialog) still ends the job when its server ends it.
-      result = await untilEnded(executeSharedOperation(grant, job.operation, jobSignal, () => controlNow(jobSignal)), jobSignal);
+      result = browserJob(job.operation)
+        ? await untilEnded(browserCall(target, job.operation, jobSignal), jobSignal)
+        : await untilEnded(executeSharedOperation(grant, job.operation, jobSignal, () => controlNow(jobSignal)), jobSignal);
     } catch (error) {
       // A refused or failed action keeps the connection, and with it what the driver read; only a dead one is replaced.
       result = sharedComputerError(error);
@@ -536,6 +553,10 @@ export function createComputerSharing({
     rename: name => update({ name: cleanName(name) }),
     setTerminal: on => update({ terminal: on === true }),
     setScreen: on => update({ screen: on === true }),
+    /** Bots browse in the person's Chrome here; `check` must have reached it first (lending-main asks before). */
+    setChrome: on => update({ chrome: on === true }),
+    /** Whether agent-browser reaches the person's Chrome now. */
+    checkChrome: signal => lentBrowser ? lentBrowser.check(signal) : Promise.resolve({ ok: false, error: "This Openpals can't drive Chrome." }),
     /** `folders` were checked by validateSharedFolders already. */
     setFolders: folders => update({ folders }),
     /** The lent folders with their paths, for main alone: a page and the servers only ever see their names. */

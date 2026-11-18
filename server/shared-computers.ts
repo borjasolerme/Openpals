@@ -11,7 +11,7 @@ export const sharedComputerRegistration = z.object({
   platform: z.enum(LENT_PLATFORMS).optional(),
   /** Its internet connection, for the bots' browsers; sent only to a server that advertises deviceLink. */
   internet: z.boolean().optional(),
-  /** Its real Chrome, for the bots' browser; sent only to a server that advertises myChromeLink. */
+  /** Its person's real Chrome is connected for the bots' browser tools (agent-browser attached to it), without the mouse. */
   chrome: z.boolean().optional(),
   /** It takes and honours run_command's timeout_seconds; sent only to a server that advertises commandTimeouts. Older
    * desktops refuse a job with a field they do not know, and stop every command at 30 seconds. */
@@ -25,22 +25,27 @@ export const sharedComputerRegistration = z.object({
 }).strict();
 export const sharedComputerOperation = z.object({
   computer_id: z.string().uuid(),
-  action: z.enum(["list_files", "read_file", "write_file", "edit_file", "append_file", "delete_file", "run_command", "computer_tools", "computer_call"]),
+  action: z.enum(["list_files", "read_file", "write_file", "edit_file", "append_file", "delete_file", "run_command", "computer_tools", "computer_call", "browser_tools", "browser_call"]),
   folder_id: z.string().uuid().optional(), path: z.string().max(2048).optional(),
   content: z.string().max(350_000).optional(), encoding: z.enum(["utf8", "base64"]).optional(),
   old_text: z.string().min(1).max(350_000).optional(), new_text: z.string().max(350_000).optional(),
   expected_sha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   command: z.string().max(8000).optional(), timeout_seconds: z.number().int().min(1).max(900).optional(), tool_name: z.string().max(100).optional(),
   arguments: z.record(z.string(), z.unknown()).optional(),
+  /** browser_tools / browser_call: whose tabs in the person's Chrome these are (the bot), so two bots don't share one. */
+  browser_session: z.string().regex(/^[A-Za-z0-9-]{1,64}$/).optional(),
 }).strict();
 type Registration = z.infer<typeof sharedComputerRegistration>;
 type Operation = z.infer<typeof sharedComputerOperation>;
 export type SharedComputerOperation = Operation;
 const COMMAND_SECONDS = 120;
 const OLD_MAX_COMMAND_SECONDS = 240;
+/** A browser action there (open a page and wait for it) answers within agent-browser's own two-minute limit. */
+const BROWSER_CALL_MS = 135_000;
 /** A command's deadline is its own limit on the desktop plus time for the result to come back. */
 const jobDeadlineMs = (registration: Registration, operation: Operation) =>
-  operation.action === "run_command" && registration.commandTimeouts ? (operation.timeout_seconds ?? COMMAND_SECONDS) * 1000 + 15_000 : 45_000;
+  operation.action === "run_command" && registration.commandTimeouts ? (operation.timeout_seconds ?? COMMAND_SECONDS) * 1000 + 15_000
+    : operation.action === "browser_call" ? BROWSER_CALL_MS : 45_000;
 /** The registering session alone may poll, answer and disconnect; only that person's bot turns may see or use it. */
 export type SharedComputerOwner = { session: string; person: string };
 export type SharedComputerStatus = {
@@ -86,6 +91,9 @@ export function sharedComputerScopeRefusal(registration: Registration, operation
     case "computer_tools":
     case "computer_call":
       return registration.computer ? null : `Apps and screen are not lent to this server. ${lendScreenSteps(deviceWord(registration.platform))}`;
+    case "browser_tools":
+    case "browser_call":
+      return registration.chrome ? null : chromeNotConnected(registration.name, deviceWord(registration.platform));
     case "list_files":
     case "read_file":
     case "write_file":
@@ -100,6 +108,11 @@ export function sharedComputerScopeRefusal(registration: Registration, operation
         : `${registration.name} runs an older Openpals that only writes whole files: read the file and write it whole with write_file, and tell the person that updating Openpals there lets you change files by a passage.`;
     }
   }
+}
+
+/** What a bot says when the person's Chrome on a lent computer isn't connected for its browser tools. */
+export function chromeNotConnected(name: string, device: "PC" | "Mac" | "computer" = "computer"): string {
+  return `The person's Chrome on ${name} isn't connected for your browser tools now. If you haven't yet, tell the person once, in one sentence, that they can turn it on: in Openpals on that ${device}, open Settings → Computer and turn on "Use my Chrome without the mouse".`;
 }
 
 /** The person behind a request proven for this exact turn generation, not stopped, from a person's message; anything else is nobody. */

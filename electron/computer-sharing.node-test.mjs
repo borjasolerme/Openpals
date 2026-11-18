@@ -303,3 +303,51 @@ rl.on("line", (line) => {
   await until(() => boat.results.length === 2, "the next job");
   assert.deepEqual(boat.results[1].content, [{ type: "text", text: "ok" }]);
 });
+
+test("a bot's browser calls go to the person's Chrome here, per server and bot, without taking the screen", async t => {
+  const { fake, make } = await setup(t);
+  const calls = [];
+  let screenTaken = 0;
+  const lentBrowser = {
+    call: async (key, method, params) => { calls.push({ key, method, params }); return method === "tools/list" ? { tools: [{ name: "agent_browser_open", inputSchema: {} }] } : { content: [{ type: "text", text: "opened" }] }; },
+    check: async () => ({ ok: true }),
+  };
+  const sharing = make({ lentBrowser, hostControl: async () => { screenTaken++; return { renew: async () => {}, release: async () => {} }; } });
+  t.after(() => sharing.close());
+  const boat = fake.seen["https://boat.example"];
+  await sharing.addTarget({ origin: "https://boat.example", code: CODE }, { serverName: "Boat" });
+  await until(() => boat.connects.length === 1, "connected");
+  assert.equal(boat.connects[0].chrome, undefined, "Chrome isn't offered before the person turns it on");
+  sharing.setChrome(true);
+  await until(() => boat.connects.at(-1)?.chrome === true, "registered again with Chrome");
+  boat.jobs.push(
+    { action: "browser_tools", browser_session: "bot-1" },
+    { action: "browser_call", tool_name: "agent_browser_open", arguments: { url: "https://www.linkedin.com/" }, browser_session: "bot-1" },
+  );
+  await until(() => boat.results.length === 2, "both answered");
+  assert.deepEqual(boat.results[0], { tools: [{ name: "agent_browser_open", inputSchema: {} }] });
+  assert.deepEqual(boat.results[1].content, [{ type: "text", text: "opened" }]);
+  const target = sharing.summary().targets[0].id;
+  assert.deepEqual(calls.map(call => [call.key, call.method]), [[`${target.slice(0, 8)}-bot-1`, "tools/list"], [`${target.slice(0, 8)}-bot-1`, "tools/call"]]);
+  assert.deepEqual(calls[1].params, { name: "agent_browser_open", arguments: { url: "https://www.linkedin.com/" } });
+  assert.equal(screenTaken, 0);
+});
+
+test("a browser call with Chrome off says how to turn it on, and an upload or another tool is refused before it runs", async t => {
+  const { fake, make } = await setup(t);
+  const calls = [];
+  const sharing = make({ lentBrowser: { call: async (...args) => { calls.push(args); return {}; }, check: async () => ({ ok: true }) } });
+  t.after(() => sharing.close());
+  const boat = fake.seen["https://boat.example"];
+  boat.jobs.push(
+    { action: "browser_call", tool_name: "agent_browser_open", arguments: {} },
+    { action: "browser_call", tool_name: "agent_browser_upload", arguments: {} },
+    { action: "browser_call", tool_name: "click", arguments: {} },
+  );
+  await sharing.addTarget({ origin: "https://boat.example", code: CODE }, { serverName: "Boat" });
+  await until(() => boat.results.length === 3, "three answers");
+  assert.match(boat.results[0].content[0].text, /Use my Chrome without the mouse/);
+  assert.match(boat.results[1].content[0].text, /Invalid computer request/);
+  assert.match(boat.results[2].content[0].text, /Invalid computer request/);
+  assert.equal(calls.length, 0);
+});

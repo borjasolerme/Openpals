@@ -12,6 +12,7 @@ import { createComputerSharing } from "../electron/computer-sharing.mjs";
 import { json, readBody } from "./harness/http.ts";
 import { createWorkComputers } from "./host/work-computers.ts";
 import { LENT_COMMAND_TOOL } from "./lent-computer-tools.ts";
+import { LENT_BROWSER_FALLBACK } from "./lent-screen-guidance.ts";
 import type { RequestAuth } from "./request-auth.ts";
 import { PASS } from "./routes/table.ts";
 import { TurnResources } from "./turn-resources.ts";
@@ -37,7 +38,7 @@ rl.on("line", (line) => {
 const cleanups: Array<() => void | Promise<void>> = [];
 afterEach(async () => { for (const cleanup of cleanups.splice(0).reverse()) await cleanup(); });
 
-async function lendingFixture({ owner = true, terminal = false } = {}) {
+async function lendingFixture({ owner = true, terminal = false, lentBrowser = null as Parameters<typeof createComputerSharing>[0]["lentBrowser"] } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "omb-work-computers-"));
   cleanups.push(() => rmSync(dir, { recursive: true, force: true }));
   const driver = join(dir, "fake-driver.cjs");
@@ -71,11 +72,12 @@ async function lendingFixture({ owner = true, terminal = false } = {}) {
   const desktop = createComputerSharing({
     file: join(dir, "desktop", "computer-sharing.json"), fetch: globalThis.fetch,
     computerName: () => "Mac mini", platform: "darwin", retryMs: [20],
-    cuaConnection: async () => ({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: {} }),
+    cuaConnection: async () => ({ mcpCommand: process.execPath, mcpArgs: [driver], mcpEnv: {} }), lentBrowser,
   });
   cleanups.push(() => desktop.close());
   await desktop.addTarget({ origin, code: "ABCD-EFGH-JKLM" }, { serverName: "fallback" });
   if (terminal) desktop.setTerminal(true);
+  if (lentBrowser) desktop.setChrome(true);
   const online = async () => {
     for (let i = 0; i < 300; i++) {
       const listed = work.list().find((computer) => computer.online);
@@ -140,6 +142,32 @@ describe("a Mac lent to this server, end to end", () => {
     expect(declined).toMatchObject({ isError: true, content: [{ text: "the person said no" }] });
     const ran = await lent.work.rpc({ method: "tools/call", params: { name: LENT_COMMAND_TOOL, arguments: { command: "echo lent-ok" } } }, lent.turn(withTerminal.id)) as unknown as { content: Array<{ text: string }> };
     expect(JSON.parse(ran.content[0]!.text)).toMatchObject({ exitCode: 0, output: "lent-ok\n" });
+  });
+
+  it("keeps the screen tools when the person's Chrome fails a browser call there, and tells the bot to use them", async () => {
+    const calls: unknown[][] = [];
+    const lentBrowser = {
+      call: async (...args: unknown[]) => { calls.push(args); throw new Error("Chrome refused the connection: Allow wasn't clicked"); },
+      check: async () => ({ ok: true as const }),
+    };
+    const { work, online, turn } = await lendingFixture({ lentBrowser });
+    const computer = await online();
+    for (let i = 0; i < 300 && !work.lendsChrome(computer.id); i++) await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(work.lendsChrome(computer.id)).toBe(true);
+    const mounted = work.mount(computer.id)!;
+    expect(work.prompt(mounted)).toMatch(/agent_browser_\* tools first/);
+    expect(work.prompt(mounted)).toMatch(/Your screen tools stay available: .*a browser call fails, do the page with the screen instead/);
+
+    const browserTurn = { computerId: computer.id, botId: "bot-1", assertActive: () => {}, active: () => true };
+    const failed = await work.browserRpc({ method: "tools/call", params: { name: "agent_browser_open", arguments: { url: "https://example.com" } } }, browserTurn) as unknown as { isError?: boolean; content: Array<{ text: string }> };
+    expect(calls).toHaveLength(1);
+    expect(failed.isError).toBe(true);
+    expect(failed.content.map((part) => part.text)).toEqual(["Chrome refused the connection: Allow wasn't clicked", LENT_BROWSER_FALLBACK]);
+    expect(LENT_BROWSER_FALLBACK).toMatch(/launch_app with urls .* get_window_state .* click/);
+
+    const listed = await work.rpc({ method: "tools/list" }, turn(computer.id)) as { tools: Array<{ name: string }> };
+    expect(listed.tools.map((tool) => tool.name)).toEqual(["get_desktop_state", "list_apps"]);
+    expect(await work.rpc({ method: "tools/call", params: { name: "list_apps", arguments: {} } }, turn(computer.id))).toMatchObject({ content: [{ type: "text", text: "apps: Finder" }] });
   });
 
   it("tells the bot a paused computer is paused, and lists it as paused for the owner", async () => {

@@ -22,6 +22,10 @@ export function describeSharedOperation(grant, operation) {
     }
     case "run_command": return clean(operation.command, 300);
     case "computer_call": return clean(operation.tool_name, 100);
+    case "browser_call": {
+      const url = typeof operation.arguments?.url === "string" ? ` ${operation.arguments.url}` : "";
+      return clean(`Chrome: ${String(operation.tool_name ?? "").replace(/^agent_browser_/, "")}${url}`, 300);
+    }
     default: return "";
   }
 }

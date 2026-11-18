@@ -106,6 +106,10 @@ const bridge = {
     rename: (name) => clicked("lending:rename", String(name ?? "")),
     setTerminal: (on) => clicked("lending:terminal", on === true),
     setScreen: (on) => clicked("lending:screen", on === true),
+    /** On only after Openpals reached the person's Chrome; the card shows the check's reason when it didn't. */
+    setChrome: (on) => clicked("lending:chrome", on === true),
+    /** Opens chrome://inspect in Chrome, where the person allows bots once. */
+    openChromeSetup: () => clicked("lending:chrome-setup"),
     addFolder: () => clicked("lending:add-folder"),
     removeFolder: (id) => clicked("lending:remove-folder", String(id ?? "")),
     /** Starts screen control again, which asks macOS for Accessibility and Screen Recording if it never did. */

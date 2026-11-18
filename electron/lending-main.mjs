@@ -10,6 +10,7 @@ import { createActivityWindow } from "./lending-activity-window.mjs";
 import { createLendingDialogs } from "./lending-dialogs.mjs";
 import { createLendingIndicator, deviceWord } from "./lending-indicator.mjs";
 import { createScreenControl } from "./screen-control.mjs";
+import { chromeSetupCommand } from "./lent-browser.mjs";
 
 /** macOS's own Privacy & Security panes, opened for the person; nothing is granted from here. */
 export const PRIVACY_PANES = Object.freeze({
@@ -31,8 +32,8 @@ export function readComputerName({ platform = process.platform, run = execFile }
 
 export function installLending({
   ipcMain, guard, dialog, shell, Tray, Menu, nativeImage, BrowserWindow, iconPath, background, locale,
-  userData, protectedPaths, fetch, cuaConnection, requestComputerUse, screenLocked, idleSeconds, hostControl,
-  window, openSettings, send, loginItem, platform = process.platform, log = () => {},
+  userData, protectedPaths, fetch, cuaConnection, requestComputerUse, screenLocked, idleSeconds, hostControl, lentBrowser = null,
+  window, openSettings, send, loginItem, platform = process.platform, log = () => {}, run = execFile,
 }) {
   const device = deviceWord(platform);
   let computerName = os.hostname().replace(/\.local$/i, "");
@@ -52,7 +53,7 @@ export function installLending({
   });
   const sharing = createComputerSharing({
     file: path.join(userData, "computer-sharing.json"), protectedPaths, fetch, platform,
-    cuaConnection, screen: screen.now, hostControl, screenLocked, idleSeconds, computerName: () => computerName, log,
+    cuaConnection, screen: screen.now, hostControl, lentBrowser, screenLocked, idleSeconds, computerName: () => computerName, log,
     onChange: (summary) => {
       indicator.update(summary);
       try { send("lending:changed", summary); } catch {}
@@ -60,8 +61,11 @@ export function installLending({
   });
   indicator.update(sharing.summary());
 
+  /** The last check of the person's Chrome: null until "Use my Chrome without the mouse" was tried. */
+  let chromeCheck = null;
   const state = async () => ({
     ...sharing.view(),
+    chromeCheck,
     device,
     platform,
     screen: await sharing.readScreen(),
@@ -131,6 +135,17 @@ export function installLending({
   handle("lending:privacy", async (pane) => {
     if (platform !== "darwin" || !Object.hasOwn(PRIVACY_PANES, pane)) return;
     await shell.openExternal(PRIVACY_PANES[pane]);
+  });
+  // "Use my Chrome without the mouse": on only once agent-browser reached the person's Chrome, so bots never get a
+  // browser that isn't there; the check's reason shows on the card when it didn't.
+  handle("lending:chrome", async (on) => {
+    if (on !== true) { chromeCheck = null; sharing.setChrome(false); return; }
+    chromeCheck = await sharing.checkChrome();
+    if (chromeCheck.ok) sharing.setChrome(true);
+  });
+  handle("lending:chrome-setup", async () => {
+    const { command, args } = chromeSetupCommand(platform);
+    await new Promise((resolve) => run(command, args, { timeout: 10_000 }, () => resolve()));
   });
   handle("lending:open-at-login", (on) => { if (loginItem.available()) loginItem.choose(on === true); });
   ipcMain.handle("lending:activity", guard(() => { activityWindow.show(); }));

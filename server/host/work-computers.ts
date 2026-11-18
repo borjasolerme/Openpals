@@ -3,8 +3,9 @@
 // them gets that computer's screen, folders and terminal through lent-computer-tools.ts, one job at a time.
 import { join } from "node:path";
 
+import { lentBrowserRpc, type LentBrowserRpcDeps } from "../lent-browser-tools.ts";
 import { LENT_COMMAND_TOOL, LENT_FILES_TOOL, lentComputerRpc, type LentComputerRpcDeps, type LentNow } from "../lent-computer-tools.ts";
-import { LENT_NO_PROBES, LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING } from "../lent-screen-guidance.ts";
+import { LENT_CHROME_OFFER, LENT_NO_PROBES, LENT_SCREEN_BACKGROUND, LENT_SCREEN_BROWSING, lentChromeBrowsing } from "../lent-screen-guidance.ts";
 import { createSharedComputerRoutes, WORK_COMPUTER_OWNER } from "../routes/shared-computers.ts";
 import { SharedComputerControl } from "../shared-computer-control.ts";
 import { deviceWord } from "../lent-computers.ts";
@@ -44,6 +45,14 @@ export function createWorkComputers(deps: WorkComputersDeps) {
     const record = find(id);
     if (!live || !record) return null;
     return { name: record.name, computer: live.scopes.screen, terminal: live.scopes.terminal, folders: live.scopes.folders };
+  };
+
+  /** Online, and its person's Chrome is connected for the bots' browser tools. */
+  const chromeNow = (id: string) => {
+    if (!deps.ownServer()) return null;
+    const live = computers.status(WORK_COMPUTER_OWNER).find((computer) => computer.id === id && computer.online);
+    const record = find(id);
+    return live?.scopes.chrome && record ? { name: record.name, device: deviceWord(record.platform) } : null;
   };
 
   const awayText = (id: string): string => {
@@ -94,6 +103,20 @@ export function createWorkComputers(deps: WorkComputersDeps) {
       if (!record) return null;
       return { id, name: record.name, platform: record.platform, online: lendsNow(id) !== null, away: awayText(id) };
     },
+    /** Whether a bot on this computer browses in its person's Chrome there, instead of the server's own browser. */
+    lendsChrome: (id: string) => chromeNow(id) !== null,
+    browserRpc(body: Parameters<typeof lentBrowserRpc>[0], turn: Omit<LentBrowserRpcDeps, "chrome" | "away" | "request"> & { active(): boolean }) {
+      return lentBrowserRpc(body, {
+        ...turn,
+        chrome: () => {
+          const lends = lendsNow(turn.computerId);
+          const record = find(turn.computerId);
+          return lends && record ? { name: lends.name, device: deviceWord(record.platform), on: chromeNow(turn.computerId) !== null } : null;
+        },
+        away: () => awayText(turn.computerId),
+        request: (operation) => request(operation, turn.active),
+      });
+    },
     rpc(body: Parameters<typeof lentComputerRpc>[0], turn: Omit<LentComputerRpcDeps, "lends" | "away" | "request"> & { active(): boolean }) {
       return lentComputerRpc(body, {
         ...turn,
@@ -110,7 +133,8 @@ export function createWorkComputers(deps: WorkComputersDeps) {
       const screen = find(mounted.id)?.screenReady === false
         ? ` Its screen can't be used yet: macOS hasn't allowed Openpals to see and control it. Before trying, tell the person in one sentence to open System Settings → Privacy & Security on ${mounted.name} and turn on Openpals under Accessibility and under Screen Recording (removing any older Openpals entry first), then quit and reopen Openpals there.`
         : "";
-      return ` This bot works on ${mounted.name}, the person's own computer, lent to this server: its screen, its apps and the browsers they are signed in to.${extras ? ` Besides its screen tools, ${extras}.` : ""} ${LENT_SCREEN_BROWSING} ${LENT_SCREEN_BACKGROUND}${screen} ${LENT_NO_PROBES}`;
+      const browsing = chromeNow(mounted.id) ? lentChromeBrowsing(mounted.name) : `${LENT_SCREEN_BROWSING} ${LENT_CHROME_OFFER}`;
+      return ` This bot works on ${mounted.name}, the person's own computer, lent to this server: its screen, its apps and the browsers they are signed in to.${extras ? ` Besides its screen tools, ${extras}.` : ""} ${browsing} ${LENT_SCREEN_BACKGROUND}${screen} ${LENT_NO_PROBES}`;
     },
     close() {
       computers.close();

@@ -4332,5 +4332,13 @@
   "workPlace.remove": "Quitar {name}",
   "workPlace.removeTitle": "¿Quitar {name}?",
   "workPlace.removeBody": "Los bots dejarán de usarlo. Para volver a usarlo, añádelo con un enlace nuevo de «Añadir un ordenador».",
-  "workPlace.removeConfirm": "Quitar"
+  "workPlace.removeConfirm": "Quitar",
+  "lending.chrome.title": "Usar mi Chrome sin el ratón",
+  "lending.chrome.desc": "Los bots abren webs en tu propio Chrome de este ordenador, con tus sesiones, sin mover el ratón. Funciona aunque estés usando el ordenador.",
+  "lending.chrome.on": "Conectado ✓ Los bots navegan en tu Chrome de aquí, en sus propias pestañas.",
+  "lending.chrome.step1": "Abre la página de depuración remota de Chrome con el botón de abajo.",
+  "lending.chrome.step2": "Marca «Permitir la depuración remota para esta instancia del navegador».",
+  "lending.chrome.step3": "Activa este interruptor y pulsa Permitir cuando Chrome lo pida.",
+  "lending.chrome.open": "Abrir la página en Chrome",
+  "lending.chrome.failed": "Aún no se pudo conectar con Chrome: {reason}"
 }

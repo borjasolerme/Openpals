@@ -5587,5 +5587,13 @@
   "workPlace.remove": "Remove {name}",
   "workPlace.removeTitle": "Remove {name}?",
   "workPlace.removeBody": "Bots stop using it. To use it again, add it with a new link from Add a computer.",
-  "workPlace.removeConfirm": "Remove"
+  "workPlace.removeConfirm": "Remove",
+  "lending.chrome.title": "Use my Chrome without the mouse",
+  "lending.chrome.desc": "Bots open web pages in your own Chrome here, signed in as you, without moving the mouse. Works while you use the computer.",
+  "lending.chrome.on": "Connected ✓ Bots browse in your Chrome here, in their own tabs.",
+  "lending.chrome.step1": "Open Chrome's remote debugging page with the button below.",
+  "lending.chrome.step2": "Tick \"Allow remote debugging for this browser instance\".",
+  "lending.chrome.step3": "Turn this switch on, then click Allow when Chrome asks.",
+  "lending.chrome.open": "Open the page in Chrome",
+  "lending.chrome.failed": "Couldn't reach Chrome yet: {reason}"
 }

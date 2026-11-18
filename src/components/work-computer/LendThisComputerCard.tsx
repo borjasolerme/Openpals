@@ -51,6 +51,35 @@ function ScreenRow({ state, run }: { state: LendingState; run: Run }) {
   );
 }
 
+/** "Use my Chrome without the mouse": bots browse in the person's own Chrome here. On only once Openpals reached it; until
+ * then the one-time step (chrome://inspect, tick the box, Allow) and why the last try failed. */
+function ChromeRow({ state, run }: { state: LendingState; run: Run }) {
+  const bridge = lendingBridge()!;
+  const failed = state.chromeCheck && !state.chromeCheck.ok ? state.chromeCheck.error : null;
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-inset px-3 py-2.5" data-lending-chrome={state.chrome ? "on" : failed ? "failed" : "off"}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-base text-ink">{t("lending.chrome.title")}</div>
+          <div className="text-sm text-ink-secondary">{state.chrome ? t("lending.chrome.on") : t("lending.chrome.desc")}</div>
+        </div>
+        <Switch checked={state.chrome} aria-label={t("lending.chrome.title")} onClick={() => run(() => bridge.setChrome(!state.chrome))} />
+      </div>
+      {!state.chrome && (
+        <>
+          <ol className="list-decimal pl-5 text-sm text-ink-secondary" data-lending-chrome-steps>
+            <li>{t("lending.chrome.step1")}</li>
+            <li>{t("lending.chrome.step2")}</li>
+            <li>{t("lending.chrome.step3")}</li>
+          </ol>
+          <Button size="sm" className="self-start" onClick={() => run(() => bridge.openChromeSetup())}>{t("lending.chrome.open")}</Button>
+          {failed && <p className="text-sm text-warning" role="status">{t("lending.chrome.failed", { reason: failed.slice(0, 300) })}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
 /** One server this computer is lent to: its name, where it stands, Pause or Resume, and Remove. */
 function TargetRow({ target, state, run }: { target: LendingTarget; state: LendingState; run: Run }) {
   const bridge = lendingBridge()!;
@@ -142,6 +171,7 @@ export function LendThisComputerCard() {
               </div>
             </form>
             <ScreenRow state={state} run={run} />
+            <ChromeRow state={state} run={run} />
             <div className="flex flex-col gap-2 rounded-lg bg-inset px-3 py-2.5">
               <div className="text-base text-ink">{t("lending.folders.title")}</div>
               {state.folders.length === 0 && <div className="text-sm text-ink-secondary">{t("lending.folders.none")}</div>}

@@ -31,6 +31,8 @@ export interface LendingSummary {
   terminal: boolean;
   lendsScreen: boolean;
   screen: ScreenStatus | null;
+  /** Bots browse in the person's own Chrome here, without the mouse. */
+  chrome: boolean;
 }
 export interface LendingView extends LendingSummary {
   folders: Array<Omit<SharedFolder, "path">>;
@@ -59,6 +61,8 @@ export interface ComputerSharing {
   rename(name: string): LendingView;
   setTerminal(on: boolean): LendingView;
   setScreen(on: boolean): LendingView;
+  setChrome(on: boolean): LendingView;
+  checkChrome(signal?: AbortSignal): Promise<{ ok: true } | { ok: false; error: string }>;
   setFolders(folders: SharedFolder[]): LendingView;
   lentFolders(): SharedFolder[];
   activity(limit?: number): LendingActivityEntry[];
@@ -71,6 +75,7 @@ export function createComputerSharing(options: {
   cuaConnection?: () => Promise<unknown>;
   screen?: () => Promise<ScreenStatus | null>;
   hostControl?: ((id: string, signal: AbortSignal) => Promise<{ renew(): Promise<void>; release(): Promise<void> }>) | null;
+  lentBrowser?: { call(key: string, method: "tools/list" | "tools/call", params: unknown, signal?: AbortSignal): Promise<unknown>; check(signal?: AbortSignal): Promise<{ ok: true } | { ok: false; error: string }> } | null;
   screenLocked?: () => boolean;
   idleSeconds?: () => number | null;
   protectedPaths?: string[];

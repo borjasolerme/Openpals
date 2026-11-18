@@ -9,6 +9,8 @@ export interface LendingState extends LendingView {
   screen: ScreenStatus | null;
   /** Openpals opens at login here; null where this build can't set it. */
   openAtLogin: boolean | null;
+  /** The last try of "Use my Chrome without the mouse": null until tried. */
+  chromeCheck: { ok: true } | { ok: false; error: string } | null;
 }
 
 export interface LendingBridge {
@@ -25,6 +27,8 @@ export interface LendingBridge {
   rename(name: string): Promise<LendingState>;
   setTerminal(on: boolean): Promise<LendingState>;
   setScreen(on: boolean): Promise<LendingState>;
+  setChrome(on: boolean): Promise<LendingState>;
+  openChromeSetup(): Promise<LendingState>;
   addFolder(): Promise<LendingState>;
   removeFolder(id: string): Promise<LendingState>;
   allowScreen(): Promise<LendingState>;
