@@ -5741,5 +5741,12 @@
   "lending.notALendLink": "That isn't a link from “Add a computer”. Make one there and paste it here.",
   "lending.remove": "Remove {server}",
   "lending.added": "Bots on {server} can use this computer now.",
-  "remote.serverPairing.scope.lend": "Lends a computer"
+  "remote.serverPairing.scope.lend": "Lends a computer",
+  "workPlace.edit": "Edit",
+  "workPlace.done": "Done",
+  "workPlace.nameLabel": "Name of {name}",
+  "workPlace.remove": "Remove {name}",
+  "workPlace.removeTitle": "Remove {name}?",
+  "workPlace.removeBody": "Bots stop using it. To use it again, add it with a new link from Add a computer.",
+  "workPlace.removeConfirm": "Remove"
 }

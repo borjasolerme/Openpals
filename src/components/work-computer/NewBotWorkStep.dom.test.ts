@@ -22,6 +22,8 @@ vi.mock("@/state/store", async (original) => {
     const method = init?.method ?? "GET";
     fx.calls.push({ path, method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
     if (path === "/api/work-computers") return { computers: fx.computers };
+    if (path.startsWith("/api/work-computers/") && method === "PATCH") return { computer: null };
+    if (path.startsWith("/api/work-computers/") && method === "DELETE") return { ok: true };
     if (path === "/api/auth/pairing" && method === "POST") { fx.open = [{ id: fx.pairing.id }]; return fx.pairing; }
     if (path === "/api/auth/pairing") return { pairings: fx.open };
     if (path === "/api/config" && method === "PATCH") return { browserProfiles: (JSON.parse(String(init!.body)) as { browserProfiles: unknown }).browserProfiles };
@@ -166,4 +168,22 @@ it("Shared sign-ins on uses the shared profile there is", async () => {
 it("shows no Shared sign-ins while the built-in browser is off", async () => {
   await open();
   expect(shared()).toBeNull();
+});
+
+it("Edit lets the person rename a lent computer and remove an old one after confirming", async () => {
+  fx.computers = [mac(), mac({ id: "2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed", online: false })];
+  await open();
+  await click(button("Edit"));
+  const field = document.querySelector<HTMLInputElement>("[data-work-place-edit='" + mac().id + "'] input")!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(field, "Mac mini salón");
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => { field.focus(); field.blur(); });
+  await settle();
+  expect(fx.calls.find((call) => call.method === "PATCH")).toMatchObject({ path: `/api/work-computers/${mac().id}`, body: { name: "Mac mini salón" } });
+  await click(document.querySelector<HTMLButtonElement>("[data-work-place-edit='2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'] [data-panel-action=remove-computer]"));
+  expect(fx.calls.some((call) => call.method === "DELETE")).toBe(false);
+  await click(button("Remove"));
+  expect(fx.calls.find((call) => call.method === "DELETE")?.path).toBe("/api/work-computers/2c9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed");
 });

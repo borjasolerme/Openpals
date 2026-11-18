@@ -63,10 +63,11 @@ describe("a lent screen's answers carry the fix", () => {
 });
 
 describe("websites on a lent computer", () => {
-  it("send the bot to its own browser on the server, never to remote debugging, and to the foreground for a web page that ignores a background click", () => {
+  it("send the bot to the lent computer's own browser, never to remote debugging, and to the foreground for a web page that ignores a background click", () => {
     for (const text of [LENT_SCREEN_BROWSING, LENT_BROWSER_NO_ENDPOINT]) {
-      expect(text).toContain("your own browser on the server");
-      expect(text).toContain("Shared sign-ins");
+      expect(text).toContain("use the browser on this lent computer, signed in as the person");
+      expect(text).toContain("launch_app with urls");
+      expect(text).toContain("only when the person asks for it");
       expect(text).toContain("never ask the person to turn on remote debugging");
     }
     expect(LENT_SCREEN_BACKGROUND).toContain("Inside a web page");

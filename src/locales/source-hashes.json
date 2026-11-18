@@ -6658,7 +6658,14 @@
       "settings.updates.error.check": "2aa3e5c0338fe6a6787a3cf9e20165bfd7ea7cf4a3fe8a039a186784c517b80f",
       "settings.updates.error.unpackaged": "3ef3e14b494945c286a5413b37932b432d1f96b07160af78de9784a066606376",
       "settings.updates.error.verify": "fdeca0452f79a2a0adab047c7e7cbf2a63d236e38e9df9f8b79bd4f08519cc3f",
-      "settings.updates.error.install": "c41b2d3717447a134e696e5bc3c2e2af886b679624e2b537ae9d149c48f04fbc"
+      "settings.updates.error.install": "c41b2d3717447a134e696e5bc3c2e2af886b679624e2b537ae9d149c48f04fbc",
+      "workPlace.edit": "464c4ffd019e1e9691dcf0537c797353ef2b1c1d4833d3d463e5b74ae4547344",
+      "workPlace.done": "11a6767d5674c7e45f7e00dc525762275b3a48491ad6045427d2609cc496c516",
+      "workPlace.nameLabel": "4043533fc617413d41d4a86c0bd99e811f5fefb78e747587727281cd8bfcc460",
+      "workPlace.remove": "e6a3c4a1250a6ad3f10faa22333e5e50a6ba78e5b28a3b26f5743d9f8c7ede93",
+      "workPlace.removeTitle": "01c1f0250884f59318b310f94ab575cdbf6fc21434dcc27756f349a6526b2bde",
+      "workPlace.removeBody": "1195889cbda7f1dc0dac99145ce9683398ce18247d772365c4b347a4f77c6ccf",
+      "workPlace.removeConfirm": "c3812fc4acb861d5182fc2b8155f327f736fbe5e5eb86a7bd7afcb6dc5497282"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

@@ -7,17 +7,18 @@ type Part = { type?: unknown; text?: unknown };
 type ToolResult = { content?: Part[]; isError?: boolean };
 
 /** The bot's own browser on the server (its agent_browser_* tools), where Shared sign-ins gives it the person's logins. */
-const OWN_BROWSER = "For a website, use your own browser on the server (your agent_browser_* tools) when you have it: with Shared sign-ins on, it is signed in like the person's other bots.";
+/** The person chose this lent computer as where the bot works, so a website is done in its browser, signed in as they are. */
+const THIS_BROWSER = "For a website, use the browser on this lent computer, signed in as the person: launch_app with urls opens the page in their Chrome; read it with get_window_state (include_screenshot when the tree is thin) and act with click, type_text and press_key. Use your own browser on the server (agent_browser_*) only when the person asks for it.";
 
 export const LENT_SCREEN_BROWSING =
-  `${OWN_BROWSER} Use this lent screen for a website only when it must be the person's own Chrome: launch_app with urls opens the page there, signed in as they are; read it with get_window_state (include_screenshot when the tree is thin) and act with click, type_text and press_key. get_browser_state and the browser_* tools can't drive a browser on a lent computer: don't use them, and never ask the person to turn on remote debugging.`;
+  `${THIS_BROWSER} get_browser_state and the browser_* tools can't drive a browser on a lent computer: don't use them, and never ask the person to turn on remote debugging.`;
 
 /** The person may be using the computer while a bot does: background actions run, foreground ones wait for them to step away. */
 export const LENT_SCREEN_BACKGROUND =
   "The person may be using this computer while you work. Act in the background so you never take their mouse or keyboard: give the app's pid and window_id (from launch_app or list_windows) and act on elements from get_window_state. A call with delivery_mode \"foreground\", scope \"desktop\", drag, bring_to_front or no window waits until they have stepped away. Inside a web page (Chrome or another browser) a background click often doesn't land: read the window again with get_window_state, and if nothing changed, do it with delivery_mode \"foreground\" on the same pid and window_id; when the person is using the computer that call says so, so wait a minute and try again.";
 
 export const LENT_BROWSER_NO_ENDPOINT =
-  `get_browser_state and the browser_* tools can't drive a browser on a lent computer: do not retry them, and never ask the person to turn on remote debugging. ${OWN_BROWSER} If it must be the person's own Chrome, use the screen: launch_app with urls opens the page there; read it with get_window_state and act with click, type_text and press_key.`;
+  `get_browser_state and the browser_* tools can't drive a browser on a lent computer: do not retry them, and never ask the person to turn on remote debugging. ${THIS_BROWSER}`;
 
 /** cua-driver 0.12.6 and 0.28.2 name a browser that needs browser_prepare with these codes. */
 const NEEDS_SETUP = /\bbrowser_(?:requires_setup|route_unavailable)\b/u;
