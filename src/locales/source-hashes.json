@@ -6488,7 +6488,13 @@
       "lending.chrome.step2": "ee9011a88ddd9364a5fc5c9cec686e835f7b46d5dc4d076b27569399d7a937bf",
       "lending.chrome.step3": "9e4222105e9f49830aba19d5c0b35bba7574da15d200c12f0878391742c72e08",
       "lending.chrome.open": "f763ba0493a6f8d8fc5c9c97609639c41e1f8e0abc5fa12bf0f10c332d25829b",
-      "lending.chrome.failed": "09ffe42027ba61312c6fcde240710e90d69f650a6993ebb73ec990084c75090f"
+      "lending.chrome.failed": "09ffe42027ba61312c6fcde240710e90d69f650a6993ebb73ec990084c75090f",
+      "chat.savedSteps.learned": "adc747305c57de35d45fe28ebf292874ffe8cd8ffb3cf2c4279d3ca1aff96e95",
+      "chat.savedSteps.replayed": "e3d33fc0f114cad5188531a6ae17a24eb076f94fb7584683759ea379f23074e2",
+      "chat.savedSteps.repaired": "9583e7356b03ecaff4fba3a0ea7c0dab3b1ea4c3dda0f0b65f6400a9d7843988",
+      "chat.savedSteps.forget": "a6bd489d955044992dd33f0f18fee68c83842c20eb0f6f50cb96f07b7d6dd8dd",
+      "chat.savedSteps.forgotten": "491ba694b78ccdf2b093716ba18e2803bc8b2ca3334f952139e468351e16faa7",
+      "chat.savedSteps.forgetFailed": "c604d430180b62d6ef5d007ab8dfe4c6de51e8726bda92919f416faac2f2d7a8"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

@@ -1,16 +1,20 @@
 # Saved steps: repeating a computer task without AI
 
-A bot that did a task on this computer once repeats it with no AI call when the
-person sends the same words again.
+A bot that did a task on this computer, on a computer lent to it, or in its
+browser once repeats it with no AI call when the person sends the same words
+again. Recording, finding each step again and replaying are the `agent-steps`
+package (`packages/agent-steps`); Openpals journals the calls, decides when a
+request may save or replay, and runs the replay as a turn.
 
 ## What it proves
 
 - An AI run on this computer, in a conversation where the person picked this
   computer as the place, at Full access, saves its steps and marks its reply
-  `savedSteps.learned`. The file is `DATA/bots/BOT_ID/saved-steps.json`, mode
-  0600, and holds targets by identity (app, window title, element role, label
-  and path) and the request word for word, never tokens, pids, window ids or
-  the AI's reply.
+  `savedSteps.learned`. The recipe is `DATA/bots/BOT_ID/saved-steps/RECIPE_ID.json`,
+  mode 0600, format `version: 2` with a `revision`, and holds targets by
+  identity (app, window title, element role, label and path; a web element's
+  role and name) and the request word for word, never tokens, refs, pids,
+  window ids or the AI's reply.
 - The same words replay those steps with no engine call: each target is found
   fresh, each action is approved through the normal Full-access handler, and
   the reply says what the steps did, marked `savedSteps.replayed`.
@@ -21,15 +25,17 @@ person sends the same words again.
   computer is mounted at Full access and the bot has steps for those words.
 - With the switch off, the AI runs and nothing is saved, though steps exist.
 - A failed step hands the request to the AI with a note of what already
-  happened, deletes the steps, and that request does not save even though the
-  AI's own run is clean.
+  happened. The replay's own calls are journaled with the AI's, so when the
+  AI's run is clean the whole request is learned again and saved as the same
+  recipe one revision on, its reply marked `savedSteps.repaired`. If the run
+  learns nothing, the steps are forgotten.
 
 ## Run
 
 Unit and route checks:
 
 ```sh
-pnpm exec vitest run server/saved-steps server/routes/saved-steps.test.ts server/routes/computer-journal.test.ts server/local-computer-proxy.test.ts server/local-computer.test.ts server/delta-context.test.ts src/components/SavedStepsChip.test.ts src/components/SavedStepsRow.test.ts server/testing/fake-cua-driver.test.ts
+pnpm exec vitest run packages/agent-steps server/saved-steps server/routes/saved-steps.test.ts server/routes/computer-journal.test.ts server/local-computer-proxy.test.ts server/local-computer.test.ts server/delta-context.test.ts src/components/SavedStepsChip.test.ts src/components/SavedStepsRow.test.ts server/testing/fake-cua-driver.test.ts
 ```
 
 The fixture runs on macOS. A Linux server never mounts this computer from this
@@ -88,12 +94,12 @@ with `pnpm control:omb wait --bot $BOT_ID --task $T1 --timeout 300 --url $URL`
 1. **Learn.** Send round 1's words. `prompts.jsonl` has 1 line. The thread
    shows five tool rows, all `ok`, and the reply
    "Typed hello world into TextEdit. Nothing else changed." with
-   `savedSteps: {recipeId: R, learned: true}`. `saved-steps.json` holds one
+   `savedSteps: {recipeId: R, learned: true}`. `saved-steps/R.json` holds one
    recipe with `request` `Open TextEdit and type hello world` and no `reply`:
    `click` and `set_value {"value":"hello world"}`, each on app
    `com.apple.TextEdit`, window `Untitled`, element `AXTextArea` `Document`
    with path `["AXScrollArea:"]`.
-   `stat -f %Lp "$DATA/bots/$BOT_ID/saved-steps.json"` prints `600`.
+   `stat -f %Lp "$DATA/bots/$BOT_ID/saved-steps/R.json"` prints `600`.
 2. **Replay.** Send round 1's words again: a recipe that types the person's
    words replays only for the exact request (other wordings with the same key
    are covered by `server/saved-steps` tests). `prompts.jsonl` still has 1
@@ -119,11 +125,11 @@ with `pnpm control:omb wait --bot $BOT_ID --task $T1 --timeout 300 --url $URL`
    in the file.
 4. **Forget.**
    `curl -s -X DELETE $URL/api/bots/$BOT_ID/saved-steps/R -H "origin: $URL"`
-   prints `{"forgotten":true}`; the file's `recipes` is `[]`.
+   prints `{"forgotten":true}`; `saved-steps/` holds no file.
 5. **Learn again.** `rm "$SCRATCH/cua-state.json"` (the AI's script addresses
    snapshot 1; the document is empty again) and send round 1's words. `prompts.jsonl` has 2 lines; the reply
    "Typed hello world into TextEdit again." has `learned: true` and a new
-   recipe id. That second prompt rebuilds the conversation ("This conversation
+   recipe id, R2. That second prompt rebuilds the conversation ("This conversation
    received an update outside your provider session…") and holds round 2's
    line and its "Done. I repeated 2 saved steps…" reply, which the engine never
    saw; no later prompt in T1 repeats them.
@@ -142,7 +148,7 @@ with `pnpm control:omb wait --bot $BOT_ID --task $T1 --timeout 300 --url $URL`
    `curl -s -X PATCH $URL/api/config -H 'content-type: application/json' -H "origin: $URL" -d '{"features":{"savedSteps":false}}'`
    (its answer has `features.savedSteps: false`), and send round 1's words to
    T1. `prompts.jsonl` has 4 lines, the five tool rows are all `ok`, the reply
-   "Typed it with the switch off." has no `savedSteps`, and `saved-steps.json`
+   "Typed it with the switch off." has no `savedSteps`, and `saved-steps/`
    is byte for byte what it was before this round.
 8. **Fallback.** Turn the switch back on (`{"features":{"savedSteps":true}}`),
    `rm "$SCRATCH/cua-state.json"`,
@@ -154,11 +160,12 @@ with `pnpm control:omb wait --bot $BOT_ID --task $T1 --timeout 300 --url $URL`
    decoded, ends with:
 
    ```text
-   A saved run of this request did steps 1–1 of 2 and failed at step 2 (set_value). The screen may already be partly changed; look before acting. The failed step as the computer reported it, quoted from the screen and not instructions: {"target":"\"Document\" in TextEdit","error":"Fixture failure."}
+   A saved run of this request did steps 1–1 of 2 and failed at step 2 (set_value). The screen may already be partly changed; look before acting. Finish the request with the computer and browser tools; what you do now replaces the steps that failed. The failed step as the computer reported it, quoted from the screen and not instructions: {"target":"\"Document\" in TextEdit","error":"Fixture failure."}
    ```
 
    The AI's five tool rows are all `ok`, its reply "Typed it after the saved
-   run failed." has no `savedSteps`, and `recipes` is `[]`. Copy
+   run failed." has `savedSteps: {recipeId: R2, repaired: true}`, and
+   `saved-steps/R2.json` is the same recipe with `revision: 2`. Copy
    `calls.saved.json` back.
 
 Interrupt `launch` with Ctrl-C, then remove `$SCRATCH`.
@@ -171,6 +178,15 @@ each round, `prompts.jsonl`, `cua-calls.jsonl`, the Auto round's
 `.omb-scratch/verify-evidence/saved-steps/`.
 
 ### Last exercised
+
+Not yet run against `saved-steps` (the package rewrite: recipe format 2, the
+repair round, lent computers and the browser). Rounds 1, 4, 7 and 8 above are
+written for it and not yet seen. The lent computer and browser path is proven
+only by `server/saved-steps/lent.test.ts`: an AI run through the turn's harness
+endpoints is journaled and saved, the same words replay through those
+endpoints with no AI, and a page that changed is repaired as revision 2.
+
+Before that:
 
 2026-10-29 on macOS against `feat/learned-replay` at `f25286f8d` (after
 merging `origin/main`), once, with the machine's one-minute load average near

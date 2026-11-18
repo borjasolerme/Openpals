@@ -4340,5 +4340,11 @@
   "lending.chrome.step2": "Marca «Permitir la depuración remota para esta instancia del navegador».",
   "lending.chrome.step3": "Activa este interruptor y pulsa Permitir cuando Chrome lo pida.",
   "lending.chrome.open": "Abrir la página en Chrome",
-  "lending.chrome.failed": "Aún no se pudo conectar con Chrome: {reason}"
+  "lending.chrome.failed": "Aún no se pudo conectar con Chrome: {reason}",
+  "chat.savedSteps.learned": "Pasos guardados · la próxima vez sin IA",
+  "chat.savedSteps.replayed": "Pasos guardados repetidos · sin IA",
+  "chat.savedSteps.repaired": "Pasos guardados corregidos · la próxima vez sin IA",
+  "chat.savedSteps.forget": "Olvidar",
+  "chat.savedSteps.forgotten": "Olvidados",
+  "chat.savedSteps.forgetFailed": "No se pudieron olvidar estos pasos. Inténtalo de nuevo."
 }

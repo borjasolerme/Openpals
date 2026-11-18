@@ -36,6 +36,7 @@ beforeEach(() => { fixture.values = []; fixture.ownerOrAdmin = true; fixture.api
 describe("the saved-steps chip under a reply", () => {
   it("says the steps were saved", () => expect(render(LEARNED).html).toContain("Saved these steps · next time no AI"));
   it("says a reply came from saved steps", () => expect(render({ ...REPLY, savedSteps: { recipeId: "r1", replayed: true } } as Message).html).toContain("Repeated saved steps · no AI"));
+  it("says the AI fixed the saved steps after a step failed", () => expect(render({ ...REPLY, savedSteps: { recipeId: "r1", repaired: true } } as Message).html).toContain("Fixed the saved steps · next time no AI"));
   it("draws nothing on other replies", () => expect(render(REPLY).html).toBe(""));
 
   it.each<[string, boolean | null]>([["a person with the User role", false], ["someone whose role is not known yet", null]])(

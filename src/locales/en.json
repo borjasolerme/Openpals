@@ -5313,6 +5313,7 @@
   "sidebar.room.setDescription": "Set description",
   "chat.savedSteps.learned": "Saved these steps · next time no AI",
   "chat.savedSteps.replayed": "Repeated saved steps · no AI",
+  "chat.savedSteps.repaired": "Fixed the saved steps · next time no AI",
   "chat.savedSteps.forget": "Forget",
   "chat.savedSteps.forgotten": "Forgotten",
   "chat.savedSteps.forgetFailed": "Couldn't forget these steps. Try again.",

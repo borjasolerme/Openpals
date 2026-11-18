@@ -25,7 +25,7 @@ export function SavedStepsChip({ botId, message }: { botId: string; message: Mes
   return (
     <div className="flex flex-col items-start gap-1" data-testid="saved-steps-chip">
       <Badge tone="outline" className="max-w-[min(520px,100%)] font-normal" icon={<Repeat size={12} />}>
-        <span className="truncate">{t(saved.replayed ? "chat.savedSteps.replayed" : "chat.savedSteps.learned")}</span>
+        <span className="truncate">{t(saved.replayed ? "chat.savedSteps.replayed" : saved.repaired ? "chat.savedSteps.repaired" : "chat.savedSteps.learned")}</span>
         {status === "forgotten"
           ? <span className="shrink-0">{t("chat.savedSteps.forgotten")}</span>
           : canForget && <button type="button" onClick={forget} className="shrink-0 text-accent hover:underline" data-saved-steps-forget>{t("chat.savedSteps.forget")}</button>}
