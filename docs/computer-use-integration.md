@@ -148,7 +148,7 @@ capability is missing (e.g. OCR-anchored clicking), it is added to cua-driver
 upstream or requested as a driver tool — never bolted on beside it. This keeps
 one TCC identity, one binary to sign/notarize, and one behavior contract.
 
-[Saved steps](superpowers/specs/2026-10-27-saved-steps-design.md) repeats a
+Saved steps repeats a
 bot's earlier run on this computer by re-issuing the driver's own recorded tool
 calls through the same gated bridge (`server/local-computer-proxy.ts`), each
 target looked up fresh by app, window title and accessibility label, never by
@@ -191,4 +191,4 @@ app doesn't embed it).
 4. Packaging: extraResources + re-sign + notarize; wire
    `EmbeddedCuaDriverHost` for production.
 5. Later: extension bridge, playwright-mcp tier. (Macro record/replay shipped
-   as [saved steps](superpowers/specs/2026-10-27-saved-steps-design.md).)
+   as saved steps.)

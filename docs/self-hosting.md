@@ -38,7 +38,6 @@ Runs fully on a server:
 - a browser for bots, once the engine is installed on the server
   (`openmausbot browser install`, or nothing to do in the Docker image,
   which ships it): each bot gets its own isolated, persistent session.
-  Watching it live from the app is the next step (docs/plans/browser-engine.md).
   It reaches the public internet and the dev servers a bot starts itself,
   not this server's network or other services unless `browserEngine.egress.allow`
   lists them ([what a bot's browser can reach](browser-packaging.md#what-a-bots-browser-can-reach)).

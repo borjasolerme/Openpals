@@ -91,7 +91,7 @@ for sites that refuse the automated one, such as Google sign-in. That needs
 Chrome 144+ with remote debugging on at `chrome://inspect/#remote-debugging`
 and the desktop app showing this computer's own server. On a self-hosted
 server profiles stay built-in, unless `browserEngine.attachCdpUrl` says where
-a Chrome is. Details: [the browser engine plan, step 5](plans/browser-engine.md).
+a Chrome is.
 
 ## What a bot's browser can reach
 
