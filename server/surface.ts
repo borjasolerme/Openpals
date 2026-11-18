@@ -145,11 +145,15 @@ export function placeUnavailable(place: Surface, row: PlaceRow): PlaceUnavailabl
   return new PlaceUnavailableError(place, row);
 }
 
-/** `lentName`: a bot whose cloud is a computer the person lent goes by that computer's own name, never "the cloud computer". */
-export function surfaceLabel(surface: Surface, lentName?: string): string {
+/** For the bot only: a bot whose cloud is a computer the person lent knows it by that computer's own name. */
+export function botSurfaceLabel(surface: Surface, lentName?: string): string {
+  return surface === "cloud" && lentName ? `${lentName}, the person's own computer lent to this server` : surfaceLabel(surface);
+}
+
+export function surfaceLabel(surface: Surface): string {
   switch (surface) {
     case "cloud":
-      return lentName ? `${lentName}, the person's own computer lent to this server` : "the cloud computer";
+      return "the cloud computer";
     case "local":
       return "this computer";
     case "browser":

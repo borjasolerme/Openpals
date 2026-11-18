@@ -420,7 +420,7 @@ import { keepTransient, lazyClaimFailedText, lazyClaimRetryText, settledWithin, 
 import { CONTROL_ACT_WITHIN_MS, CONTROL_BUSY, CONTROL_HANDED_BACK, CONTROL_WAIT_MS, CONTROL_WAITED, type ControlState } from "./control-client.ts";
 import { computerFreeAfterText, computerParkedText, computerPersonAwayText, computerStoppedWaitingText, computerWaitingText, type ComputerHolder } from "./computer-wait.ts";
 import { modelContextWindow } from "./model-context-window.ts";
-import { browserIsThePlace, chosenPin, cloudPlaceRefusal, computerSkippedNote, computerToolsRefusal, handoffUsesOwnCloud, isHandedWork, ownCloudStateWithin, parseSurface, pinSource, PlaceUnavailableError, placeUnavailable, resolveSurface, surfaceLabel, surfaceOfComputerKind, surfacePrompt, type ComputerWant, type PlaceSource, type Surface } from "./surface.ts";
+import { browserIsThePlace, chosenPin, cloudPlaceRefusal, computerSkippedNote, computerToolsRefusal, handoffUsesOwnCloud, isHandedWork, ownCloudStateWithin, parseSurface, pinSource, PlaceUnavailableError, placeUnavailable, resolveSurface, botSurfaceLabel, surfaceLabel, surfaceOfComputerKind, surfacePrompt, type ComputerWant, type PlaceSource, type Surface } from "./surface.ts";
 import { cloudRefusal, type PlaceRow } from "../shared/place-view.ts";
 import {
   PendingTurnCancellations,
@@ -5380,7 +5380,7 @@ async function selectableComputers(bot: BotRecord) {
       }
     } catch (error) { reason = error instanceof Error ? error.message : String(error); }
     const available = ready || canStart || canCreate;
-    return { surface, label: surfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined), available, ready, canStart, canCreate, ...(!available ? { reason } : {}) };
+    return { surface, label: botSurfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined), available, ready, canStart, canCreate, ...(!available ? { reason } : {}) };
   })), ownDesktopAwaitsUpdate);
 }
 
@@ -5418,7 +5418,7 @@ function continueComputerSelection(threadId: string, generation: string | undefi
     if (hasQueuedSteeredMessages(bot.id, threadId)) { drainQueuedSends(); return; }
     if (store.activePath(threadId).findLast(message => message.role === "user" && message.kind === "text")?.id !== selection.source.id) return;
     store.patchTask(bot.id, threadId, { surface, surfaceSource: "auto" });
-    const text = `The computer selection is now ${surfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined)}. Continue the user's original request using the tools mounted for this turn; verify the result before claiming success.\n\n${selection.text}`;
+    const text = `The computer selection is now ${botSurfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined)}. Continue the user's original request using the tools mounted for this turn; verify the result before claiming success.\n\n${selection.text}`;
     void startTurn(bot.id, text, { threadId, userMessage: selection.source, computerSelectionContinuation: true, dataContext: selection.dataContext }).catch(error => {
       if (store.taskByThread(bot.id, threadId)) store.appendMessage(threadId, { role: "bot", kind: "activity",
         tool: { name: `Could not continue on ${surfaceLabel(surface)}: ${error instanceof Error ? error.message : String(error)}`, ok: false } });
