@@ -36,6 +36,8 @@ export interface DispatchDeps {
   taint(threadId: string): boolean;
   /** Whether the thread's request can be marked; a replay runs only then, so one stopped halfway never saves. */
   markable(threadId: string): boolean;
+  /** This server's own desktop can replay: steps run on it only on a Mac. */
+  hostDesktop: boolean;
   /** The engine never sees a replayed turn: what the turn would have handed it stays unreceived; the call returned hands it on if the AI takes over. */
   withholdHandoff(threadId: string): (turnId: string) => void;
   /** A replay answered without the engine, so the engine's session must learn that line and its reply from the conversation. */
@@ -83,7 +85,7 @@ export class SavedStepsDispatch {
     this.runs.delete(input.threadId);
     this.replayable.delete(input.threadId);
     if (request && this.replayHolds(request, input)) {
-      this.replayable.set(input.threadId, { toolScope: input.toolScope, drivers: turnDrivers(request, input) });
+      this.replayable.set(input.threadId, { toolScope: input.toolScope, drivers: turnDrivers(request, input, this.deps.hostDesktop) });
       while (this.replayable.size > REMEMBERED_REPLIES) this.replayable.delete(this.replayable.keys().next().value!);
     }
     if (request && request.turnText !== request.message.text) {
@@ -175,7 +177,7 @@ export class SavedStepsDispatch {
   }
 
   private replayHolds(request: ReplayRequest, input: SendTurnInput): boolean {
-    return this.deps.enabled() && input.approvalMode === "full" && turnDrivers(request, input).size > 0
+    return this.deps.enabled() && input.approvalMode === "full" && turnDrivers(request, input, this.deps.hostDesktop).size > 0
       && personTextRequest(request.message) && request.turnText === request.message.text;
   }
 
@@ -183,7 +185,7 @@ export class SavedStepsDispatch {
     if (!this.replayHolds(request, input)) return undefined;
     const text = request.turnText;
     const recipe = this.deps.recipes.find(request.botId, requestKey(text));
-    return recipe && recipeFitsRequest(recipe, text) && driversThere(recipe, turnDrivers(request, input)) && toolsAllowed(recipe, input.toolScope) ? recipe : undefined;
+    return recipe && recipeFitsRequest(recipe, text) && driversThere(recipe, turnDrivers(request, input, this.deps.hostDesktop)) && toolsAllowed(recipe, input.toolScope) ? recipe : undefined;
   }
 
   private standIn(run: Run, approval: Approval, asked: ReadonlySet<string>): ProviderInstance {
@@ -329,11 +331,14 @@ export class SavedStepsDispatch {
   }
 }
 
-/** The drivers a turn can replay through: this computer or the lent one when the person picked it, and the bot's browser. */
-function turnDrivers(request: ReplayRequest, input: SendTurnInput): ReadonlySet<DriverKind> {
+/** The drivers a turn can replay through: a Mac the person picked as the bot's place (this computer, when this server is
+ * a Mac, or a lent one), and the bot's browser, wherever the server runs. Cua's Linux and Windows builds have not been
+ * shown to answer list_windows and elements_complete as a replay needs. */
+function turnDrivers(request: ReplayRequest, input: SendTurnInput, hostDesktop: boolean): ReadonlySet<DriverKind> {
   const drivers = new Set<DriverKind>();
-  const scope = input.integrations?.localComputer?.scope;
-  if (request.placePicked && (scope === "local-computer" || scope === "lent-computer")) drivers.add("cua");
+  const computer = input.integrations?.localComputer;
+  const mac = computer?.scope === "local-computer" ? hostDesktop : computer?.scope === "lent-computer" && computer.platform === "darwin";
+  if (request.placePicked && mac) drivers.add("cua");
   if (input.integrations?.browser) drivers.add("agent-browser");
   return drivers;
 }

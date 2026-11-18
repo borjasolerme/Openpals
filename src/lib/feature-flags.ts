@@ -1,7 +1,7 @@
 import { t } from "./i18n";
 
 export interface FeatureFlagConfig {
-  features?: { skillAuthoring?: boolean; skillReview?: boolean; skillReviewSteps?: number; showToolCalls?: boolean; browser?: boolean; claudeUserMcp?: boolean; claudeUserSkills?: boolean; llmThreadTitles?: boolean; skillsLibrary?: boolean; shareLearnedSkills?: "off" | "ask" | "auto"; roomMemoryCapture?: boolean; savedSteps?: boolean; savedStepsHere?: boolean };
+  features?: { skillAuthoring?: boolean; skillReview?: boolean; skillReviewSteps?: number; showToolCalls?: boolean; browser?: boolean; claudeUserMcp?: boolean; claudeUserSkills?: boolean; llmThreadTitles?: boolean; skillsLibrary?: boolean; shareLearnedSkills?: "off" | "ask" | "auto"; roomMemoryCapture?: boolean; savedSteps?: boolean };
   browserEngine?: { kind: "engine" | "unavailable"; reason?: string; installable?: boolean; installing?: boolean; installError?: string };
 }
 
@@ -83,9 +83,4 @@ export function roomMemoryCaptureEnabled(config: FeatureFlagConfig | null | unde
 
 export function savedStepsEnabled(config: FeatureFlagConfig | null | undefined): boolean {
   return config?.features?.savedSteps !== false;
-}
-
-/** The server can run saved steps (only on a Mac); unsaid counts as no. */
-export function savedStepsHere(config: FeatureFlagConfig | null | undefined): boolean {
-  return config?.features?.savedStepsHere === true;
 }

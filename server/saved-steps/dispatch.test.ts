@@ -135,6 +135,7 @@ beforeEach(() => {
     openCaller,
     taint,
     markable,
+    hostDesktop: true,
     withholdHandoff,
     contextChanged,
   };
@@ -835,7 +836,7 @@ describe("SavedStepsDispatch with the quick model fallback", () => {
 });
 
 describe("SavedStepsDispatch on a lent computer and in the bot's browser", () => {
-  const LENT = { command: process.execPath, args: ["harness-mcp-proxy", "computer"], env: { OMB_HARNESS_URL: "http://127.0.0.1:1" }, scope: "lent-computer" as const };
+  const LENT = { command: process.execPath, args: ["harness-mcp-proxy", "computer"], env: { OMB_HARNESS_URL: "http://127.0.0.1:1" }, platform: "darwin" as const, scope: "lent-computer" as const };
   const BROWSER = { command: process.execPath, args: ["harness-mcp-proxy", "browser"], env: { OMB_HARNESS_URL: "http://127.0.0.1:1" } };
   const WEB: Recipe = { ...RECIPE, steps: [{ driver: "agent-browser", tool: "click", args: {}, target: { role: "link", name: "Billing" } }] };
   const page = (): ComputerCaller => ({
@@ -859,10 +860,25 @@ describe("SavedStepsDispatch on a lent computer and in the bot's browser", () =>
     expect(events.filter((event) => event.type === "request.opened").every((event) => !("approvalScope" in event))).toBe(true);
   });
 
-  it("leaves a lent computer the person did not pick to the AI", async () => {
-    await dispatch.sendTurn(engine, { ...REQ, placePicked: false }, { ...INPUT, integrations: { localComputer: LENT } }, start);
+  it.each<[string, ReplayRequest, NonNullable<SendTurnInput["integrations"]>["localComputer"]]>([
+    ["the person did not pick", { ...REQ, placePicked: false }, LENT],
+    ["is not a Mac", REQ, { ...LENT, platform: "win32" }],
+    ["does not say what it is", REQ, { ...LENT, platform: undefined }],
+  ])("leaves a lent computer the person %s to the AI", async (_, request, computer) => {
+    await dispatch.sendTurn(engine, request, { ...INPUT, integrations: { localComputer: computer } }, start);
     expect(start).toHaveBeenCalledTimes(1);
     expect(openCaller).not.toHaveBeenCalled();
+  });
+
+  it("on a server that is not a Mac, replays on a lent Mac and in the browser but never on the server's own desktop", async () => {
+    dispatch = new SavedStepsDispatch({ ...deps, hostDesktop: false });
+    await dispatch.sendTurn(engine, REQ, INPUT, start);
+    expect(start).toHaveBeenCalledWith(INPUT);
+    expect(dispatch.wouldReplay("t1", RECIPE)).toBe(false);
+    await dispatch.sendTurn(engine, REQ, { ...INPUT, integrations: { localComputer: LENT } }, start);
+    await vi.waitFor(() => expect(turnCompleted()).toHaveLength(1));
+    expect(acted).toEqual(["click", "set_value"]);
+    expect(dispatch.wouldReplay("t1", RECIPE)).toBe(true);
   });
 
   it("replays browser steps in the bot's own browser, wherever the bot works", async () => {

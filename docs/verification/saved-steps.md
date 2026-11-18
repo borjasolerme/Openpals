@@ -184,7 +184,10 @@ repair round, lent computers and the browser). Rounds 1, 4, 7 and 8 above are
 written for it and not yet seen. The lent computer and browser path is proven
 only by `server/saved-steps/lent.test.ts`: an AI run through the turn's harness
 endpoints is journaled and saved, the same words replay through those
-endpoints with no AI, and a page that changed is repaired as revision 2.
+endpoints with no AI, and a page that changed is repaired as revision 2. That
+test runs the server as Linux (a Boat) with a lent Mac: saved steps follow where
+the steps run (a lent Mac, the bot's browser), not the server's own system; only
+this computer's own desktop needs the server to be a Mac.
 
 Before that:
 
@@ -222,7 +225,8 @@ the AI; the cases that never save (an answered in-turn question, a
 side-effecting tool beside the computer calls, several queued lines sent as one
 turn, another computer in the request, a journal that lost the thread or went
 past its byte budget, `type_text`, a click on a toggle, a key press with no
-window, a tree that does not say it is complete, a server not on macOS, a turn
+window, a tree that does not say it is complete, this computer when the server is
+not on macOS, a lent computer that is not a Mac, a turn
 that would not replay (Ask, Auto, a place the person did not pick), a final
 action such as Send, Delete or Pay in any shipped language, Return into a
 window that shows one, a secret field, a field whose text the driver did not

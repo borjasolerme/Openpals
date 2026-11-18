@@ -1,6 +1,6 @@
-// Saved steps on a lent computer, end to end with fakes: an AI run through the turn's harness endpoints is journaled and
-// saved, the same words replay it with no AI through those same endpoints, and a step that no longer fits is handed to
-// the AI, whose run becomes the recipe's next revision.
+// Saved steps on a lent Mac and in the bot's browser, served by a Linux server (a Boat), end to end with fakes: an AI run
+// through the turn's harness endpoints is journaled and saved, the same words replay it with no AI through those same
+// endpoints, and a step that no longer fits is handed to the AI, whose run becomes the recipe's next revision.
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -82,7 +82,7 @@ describe("saved steps on a lent computer", () => {
       withholdHandoff: () => () => {},
       contextChanged: () => {},
       folder: (botId) => join(dir, botId),
-      platform: "darwin",
+      platform: "linux",
     });
     // The turn's harness endpoints, as server/index.ts serves them for a lent computer: each call journaled for the turn.
     server = createServer((req, res) => {
@@ -106,8 +106,9 @@ describe("saved steps on a lent computer", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  let lentPlatform: "darwin" | "win32" = "darwin";
   const places = () => ({
-    localComputer: { command: process.execPath, args: [], env: { OMB_HARNESS_URL: url, [harnessMcpTokenEnv("computer")]: "turn-token" }, scope: "lent-computer" as const },
+    localComputer: { command: process.execPath, args: [], env: { OMB_HARNESS_URL: url, [harnessMcpTokenEnv("computer")]: "turn-token" }, platform: lentPlatform, scope: "lent-computer" as const },
     browser: { command: process.execPath, args: [], env: { OMB_HARNESS_URL: url, [harnessMcpTokenEnv("browser")]: "turn-token" } },
   });
   const line = (id: string): Message => ({ id, at: 1, role: "user", kind: "text", text: REQUEST });
@@ -184,6 +185,31 @@ describe("saved steps on a lent computer", () => {
     expect(repaired).toMatchObject({ id: learned.id, revision: 2, createdAt: learned.createdAt });
     expect(repaired.steps[3]).toEqual({ driver: "agent-browser", tool: "click", args: {}, target: { role: "link", name: "Billing", near: "Account", url: SITE } });
     expect(patches.at(-1)).toEqual(["reply-m3", { savedSteps: { recipeId: learned.id, repaired: true } }]);
+  });
+
+  it("saves nothing from a run whose screen steps were on a lent computer that is not a Mac, since they would not repeat", async () => {
+    lentPlatform = "win32";
+    const first = await send("m1");
+    await aiRun();
+    settle("m1", first.turnId);
+    expect(saved()).toBeUndefined();
+    expect(patches).toEqual([]);
+    lentPlatform = "darwin";
+  });
+
+  it("learns and repeats a run done in the browser alone", async () => {
+    const first = await send("m1");
+    const web = openHarnessCaller(places().browser, "browser");
+    await web.call("agent_browser_open", { url: SITE }, new AbortController().signal);
+    await clickBilling();
+    settle("m1", first.turnId);
+    expect(saved()?.steps.map((step) => step.driver)).toEqual(["agent-browser", "agent-browser"]);
+    generation = "g2";
+    lent.acted = [];
+    const second = await send("m2");
+    await vi.waitFor(() => expect(events.some((event) => event.type === "turn.completed" && event.turnId === second.turnId)).toBe(true));
+    expect(second.start).not.toHaveBeenCalled();
+    expect(lent.acted).toEqual(["agent_browser_open", "agent_browser_click"]);
   });
 
   it("forgets a recipe whose failed run the AI could not turn into steps", async () => {

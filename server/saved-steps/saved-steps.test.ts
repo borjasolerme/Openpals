@@ -246,17 +246,9 @@ describe("SavedSteps.requestSettled", () => {
     expect(steps.journals({ origin: { kind: "outside" } })).toBe(false);
     expect(steps.journals({ origin: { kind: "bot" } })).toBe(false);
     expect(steps.journals({})).toBe(false);
+    expect(facade({ platform: "linux" }).journals(person)).toBe(true);
     enabled = false;
     expect(steps.journals(person)).toBe(false);
-    expect(facade({ platform: "linux" }).journals(person)).toBe(false);
-  });
-
-  it("says saved steps can run only on a Mac, setting or not, so clients hide the switch elsewhere", () => {
-    expect(facade({ platform: "darwin" }).here()).toBe(true);
-    enabled = false;
-    expect(facade({ platform: "darwin" }).here()).toBe(true);
-    expect(facade({ platform: "linux" }).here()).toBe(false);
-    expect(facade({ platform: "win32" }).here()).toBe(false);
   });
 
   it("never records a turn a peer handed on, though it carries the person's origin", () => {
@@ -266,8 +258,9 @@ describe("SavedSteps.requestSettled", () => {
     expect(steps.journals({ ...handed, personLine: true })).toBe(true);
   });
 
-  it.each(["linux", "win32"] as const)("neither saves nor replays on %s", async (platform) => {
+  it.each(["linux", "win32"] as const)("neither saves nor replays steps on the desktop of a %s server", async (platform) => {
     steps = facade({ platform });
+    await sentThrough();
     record(textEditJournal().calls);
     steps.requestSettled(settled());
     expect(saved()).toBeUndefined();

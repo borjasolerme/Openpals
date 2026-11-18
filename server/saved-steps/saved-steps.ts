@@ -51,8 +51,6 @@ export interface SavedSteps {
   dispatch: SavedStepsDispatch;
   gateChecked(capability: JournalCapability): void;
   journals(owner: RequestOwner | undefined): boolean;
-  /** Saved steps can run on this server (macOS only in v1), whatever the setting says; clients show the switch only then. */
-  here(): boolean;
   routes: RouteHandler;
   journalRoutes(internal: { capability: JournalCapability; readBody(): Promise<unknown> }): RouteHandler;
   /** Runs one MCP request a lent computer or a bot's browser answers here, and journals it when it is a tool call of a
@@ -99,8 +97,7 @@ const keepsFromSaving = (event: RuntimeEvent): boolean =>
 
 export function createSavedSteps(deps: SavedStepsDeps): SavedSteps {
   const platform = deps.platform ?? process.platform;
-  // Linux and Windows ship the cua-driver 0.41.3 Rust build; neither has been shown to answer list_windows and elements_complete as replay needs.
-  const enabled = () => platform === "darwin" && deps.enabled();
+  const enabled = () => deps.enabled();
   const journal = new ComputerJournal();
   const now = deps.now ?? Date.now;
   const recipes = new BotRecipes({ folder: deps.folder ?? botFolder, ...(deps.now ? { now: deps.now } : {}) });
@@ -119,6 +116,7 @@ export function createSavedSteps(deps: SavedStepsDeps): SavedSteps {
     openCaller: openTurnCaller,
     taint,
     markable: (threadId) => deps.generation(threadId) !== undefined,
+    hostDesktop: platform === "darwin",
     withholdHandoff: deps.withholdHandoff,
     contextChanged: deps.contextChanged,
   });
@@ -156,7 +154,6 @@ export function createSavedSteps(deps: SavedStepsDeps): SavedSteps {
       else if (capability.kind === "computer") journal.taint({ threadId: capability.threadId, generation: capability.generation });
     },
     journals: (owner) => owner?.personLine === true && personRequest(owner) && enabled(),
-    here: () => platform === "darwin",
     journalRoutes: (internal) => createComputerJournalRoutes({ ...internal, enabled, record: (scope, entry) => journal.record(scope, entry) }),
     async journalCall(capability, owner, kind, body, run) {
       const call = toolCall(body);
