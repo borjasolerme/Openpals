@@ -5379,7 +5379,7 @@ async function selectableComputers(bot: BotRecord) {
       }
     } catch (error) { reason = error instanceof Error ? error.message : String(error); }
     const available = ready || canStart || canCreate;
-    return { surface, label: surfaceLabel(surface), available, ready, canStart, canCreate, ...(!available ? { reason } : {}) };
+    return { surface, label: surfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined), available, ready, canStart, canCreate, ...(!available ? { reason } : {}) };
   })), ownDesktopAwaitsUpdate);
 }
 
@@ -5417,7 +5417,7 @@ function continueComputerSelection(threadId: string, generation: string | undefi
     if (hasQueuedSteeredMessages(bot.id, threadId)) { drainQueuedSends(); return; }
     if (store.activePath(threadId).findLast(message => message.role === "user" && message.kind === "text")?.id !== selection.source.id) return;
     store.patchTask(bot.id, threadId, { surface, surfaceSource: "auto" });
-    const text = `The computer selection is now ${surfaceLabel(surface)}. Continue the user's original request using the tools mounted for this turn; verify the result before claiming success.\n\n${selection.text}`;
+    const text = `The computer selection is now ${surfaceLabel(surface, bot.cloudBackend === "lent" && bot.lentComputerId ? workComputers.mount(bot.lentComputerId)?.name : undefined)}. Continue the user's original request using the tools mounted for this turn; verify the result before claiming success.\n\n${selection.text}`;
     void startTurn(bot.id, text, { threadId, userMessage: selection.source, computerSelectionContinuation: true, dataContext: selection.dataContext }).catch(error => {
       if (store.taskByThread(bot.id, threadId)) store.appendMessage(threadId, { role: "bot", kind: "activity",
         tool: { name: `Could not continue on ${surfaceLabel(surface)}: ${error instanceof Error ? error.message : String(error)}`, ok: false } });
