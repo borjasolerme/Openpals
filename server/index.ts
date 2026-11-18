@@ -5200,7 +5200,7 @@ function mountLentComputer(botId: string, owner: TurnOwner, computer: LentMount,
     command: process.execPath,
     args: [SPAWNED_PROXIES.harnessMcp, "computer"],
     env: { ...AGENTS_NODE_FLAG, OMB_HARNESS_URL: `http://127.0.0.1:${PORT}`, [harnessMcpTokenEnv("computer")]: control.token },
-    ...(computer.platform ? { platform: computer.platform } : {}),
+    ...(computer.platform ? { platform: computer.platform } : {}), scope: "lent-computer",
   };
 }
 
@@ -7470,7 +7470,7 @@ async function beginTurn(
       const startupRecovery = (opts?.automaticRecoveryIndex ?? 0) < startupBackups(liveBot ?? bot, cfg.automaticRecovery).length;
       const held = limitTakeover.heldAtStart(bot, { instanceId, model }, startupRecovery); // a limit or a sign-out already known: straight to an AI that can carry on, with the reset only when one was named
       if (held) throw held.scope === "signed-out" ? new TurnAuthenticationRefusedError(`signed-out-${randomUUID()}`, `${engineName(instanceId)} is signed out.`, true) : new TurnUsageLimitRefusedError(`limit-${randomUUID()}`, `${engineName(instanceId)} is at its usage limit.`, held.resetsAt, held.scope, true);
-      const dispatch = await guardTurnDispatch(shareNote.after(savedSteps.dispatch.sendTurn(instance, personLine && !opts?.unattended && !opts?.app?.context ? { botId: bot.id, message: userMessage, turnText: text, placePicked: wants === "local" && placeSource !== "auto-pin" } : null, {
+      const dispatch = await guardTurnDispatch(shareNote.after(savedSteps.dispatch.sendTurn(instance, personLine && !opts?.unattended && !opts?.app?.context ? { botId: bot.id, message: userMessage, turnText: text, placePicked: (wants === "local" || (wants === "cloud" && cloudBackend === "lent")) && placeSource !== "auto-pin" } : null, {
         threadId,
         botId: bot.id,
         startupRecovery,
@@ -11666,8 +11666,8 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (lentChrome) {
           const abort = new AbortController();
           res.once("close", () => { if (!res.writableEnded) abort.abort(); });
-          return json(res, 200, { result: await workComputers.browserRpc(body, { computerId: lentChrome, botId: bot.id, assertActive: requireActiveInternalCapability,
-            active: () => !abort.signal.aborted && internalCapabilityIsActive(internalCapability) }) });
+          return json(res, 200, { result: await savedSteps.journalCall(internalCapability, directRequestOwners.get(internalCapability.threadId), "agent-browser", body, () => workComputers.browserRpc(body, { computerId: lentChrome, botId: bot.id, assertActive: requireActiveInternalCapability,
+            active: () => !abort.signal.aborted && internalCapabilityIsActive(internalCapability) })) });
         }
         const browser = await browserIntegration(bot.id, bot.browserProfile);
         if (!browser || browser.session !== internalCapability.browserSession) {
@@ -11690,7 +11690,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             params = { ...params, arguments: { ...params.arguments, files: await uploadPaths(upload.files.map((file, i) => ({ file, name: attachmentNameInThread(internalCapability.threadId, params.arguments.files[i]) })), browser.session, browser.spec) } };
           } catch (error) { requireActiveInternalCapability(); if (!(error instanceof BrowserUploadRefusal)) throw error; return json(res, 200, { result: { isError: true, content: [{ type: "text", text: error.message }] } }); }
         }
-        const result = await browserRuntime.agentRpc(browser.session, browser.spec, body.method, params, () => {
+        const result = await savedSteps.journalCall(internalCapability, directRequestOwners.get(internalCapability.threadId), "agent-browser", { ...body, params }, () => browserRuntime.agentRpc(browser.session, browser.spec, body.method, params, () => {
           requireActiveInternalCapability();
           const current = store.bot(bot.id);
           if (!current || current.browser === false || current.computer === "off" || !builtInBrowserEnabled(cfg) ||
@@ -11700,7 +11700,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           if (body.method === "tools/call" && !claimTurnResource(internalCapability, `browser:${browser.session}`)) {
             throw Object.assign(new Error("another thread is using this browser — pause browser work until that thread finishes"), { status: 409 });
           }
-        }, stepContext(bot, internalCapability, () => liveTurnByThread.get(internalCapability.threadId) ?? null));
+        }, stepContext(bot, internalCapability, () => liveTurnByThread.get(internalCapability.threadId) ?? null)));
         requireActiveInternalCapability(); if (body.method === "tools/call") browserSeats.used(internalCapability, browser.session);
         return json(res, 200, { result });
       }
@@ -11711,11 +11711,11 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         if (lentComputerId) {
           const abort = new AbortController();
           res.once("close", () => { if (!res.writableEnded) abort.abort(); });
-          return json(res, 200, { result: await workComputers.rpc(body, {
+          return json(res, 200, { result: await savedSteps.journalCall(internalCapability, directRequestOwners.get(internalCapability.threadId), "cua", body, () => workComputers.rpc(body, {
             computerId: lentComputerId, gate: () => computerCallGate(internalCapability, abort.signal),
             confirm: (kind) => confirmLentAction(internalCapability, kind), assertActive: requireActiveInternalCapability,
             active: () => !abort.signal.aborted && internalCapabilityIsActive(internalCapability),
-          }) });
+          })) });
         }
         if (internalCapability.boxId === undefined) return json(res, 403, { error: "this turn has no cloud computer" });
         const abort = new AbortController();
