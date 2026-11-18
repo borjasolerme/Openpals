@@ -242,7 +242,8 @@ export function verificationServerArgs(childEnv: NodeJS.ProcessEnv): string[] {
 export async function launchVerificationServer(
   parentEnv: NodeJS.ProcessEnv = process.env,
   signal?: AbortSignal,
-  localVm?: { binDir: string; host: string; sshKey: string; staticDir: string },
+  /** Fake command-line tools on the server's PATH, and the built UI it serves. */
+  fakeTools?: { binDir: string; staticDir: string },
   browser?: { binaryPath: string; executablePath: string },
   room?: { scripted: boolean },
   /** Optional repository-owned fake providers for multi-engine setup checks. */
@@ -258,12 +259,6 @@ export async function launchVerificationServer(
     }
     try { new URL(boatFixtureApi); }
     catch { throw new ControlOmbError("Boat verification requires a valid loopback port"); }
-  }
-  if (localVm) {
-    const endpoint = new URL(localVm.host);
-    if (endpoint.protocol !== "ssh:" || endpoint.hostname !== "127.0.0.1" || endpoint.password) {
-      throw new ControlOmbError("Local VM verification requires an explicit loopback Podman machine");
-    }
   }
   // OMB_TEST_PORTS=19975-19999 keeps a recipe's fixture in a range of its own.
   const range = /^(\d+)-(\d+)$/.exec((parentEnv.OMB_TEST_PORTS ?? process.env.OMB_TEST_PORTS)?.trim() ?? "");
@@ -319,13 +314,9 @@ export async function launchVerificationServer(
 
   const log = openSync(logPath, "a", 0o600);
   const childEnv = verificationServerEnvironment(parentEnv, dataDir, port);
-  // Opt-in live Local VM fixture: keep the temporary home and fake engine,
-  // granting only the explicitly selected machine connection and static UI.
-  if (localVm) Object.assign(childEnv, {
-    OMB_EXTRA_PATH: [localVm.binDir, ...(process.platform === "win32" ? [join(childEnv.SYSTEMROOT || "C:\\Windows", "System32")] : [])].join(delimiter),
-    CONTAINER_HOST: localVm.host,
-    CONTAINER_SSHKEY: localVm.sshKey,
-    OMB_STATIC_DIR: localVm.staticDir,
+  if (fakeTools) Object.assign(childEnv, {
+    OMB_EXTRA_PATH: [fakeTools.binDir, ...(process.platform === "win32" ? [join(childEnv.SYSTEMROOT || "C:\\Windows", "System32")] : [])].join(delimiter),
+    OMB_STATIC_DIR: fakeTools.staticDir,
   });
   if (browser) Object.assign(childEnv, {
     OMB_AGENT_BROWSER_PATH: browser.binaryPath,

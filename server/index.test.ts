@@ -165,7 +165,6 @@ let oneShotTextFile: string;
 let oneShotTextDump: string;
 let setupAnswersFile: string;
 let setupAnswersDump: string;
-let fakeDockerFixture: string;
 let fakeVpsFixture: string;
 let fakeDockerLog: string;
 let fakeSshLog: string;
@@ -409,7 +408,6 @@ beforeAll(async () => {
   setupAnswersDump = join(home, "fake-claude-setup-answers-dump.json");
   const fakeDockerDir = join(home, "fake-docker-bin");
   const fakeDockerProgram = join(fakeDockerDir, "docker-empty.mjs");
-  fakeDockerFixture = join(home, ".openmausbot", "fake-unmanaged-container");
   fakeVpsFixture = join(home, ".openmausbot", "fake-vps-container.json");
   fakeDockerLog = join(home, ".openmausbot", "fake-docker-calls.log");
   fakeSshLog = join(home, ".openmausbot", "fake-ssh-calls.log");
@@ -418,7 +416,6 @@ beforeAll(async () => {
   writeFileSync(fakeDockerProgram, [
     'import { appendFileSync, existsSync, readFileSync, rmSync } from "node:fs";',
     'const args = process.argv.slice(2);',
-    `const fixture = ${JSON.stringify(fakeDockerFixture)};`,
     `const vpsFixture = ${JSON.stringify(fakeVpsFixture)};`,
     `const log = ${JSON.stringify(fakeDockerLog)};`,
     'if (existsSync(vpsFixture) && args[0] === "-H") {',
@@ -430,20 +427,6 @@ beforeAll(async () => {
     '    process.exit(0);',
     '  }',
     '  if (args[2] === "rm" && args[3] === "-f" && args[4] === spec.id) { rmSync(vpsFixture, { force: true }); process.exit(0); }',
-    '  process.exit(127);',
-    '}',
-    'if (existsSync(fixture)) {',
-    '  appendFileSync(log, `${args.join(" ")}\\n`);',
-    '  const raw = readFileSync(fixture, "utf8").trim();',
-    '  let spec = null; try { spec = JSON.parse(raw); } catch {}',
-    '  const expected = spec?.name ?? raw;',
-    '  if (args[0] === "info") { process.stdout.write("29\\n"); process.exit(0); }',
-    '  if (args[0] === "inspect" && args[1] === expected) {',
-    '    const labels = spec?.managed ? { "com.openmausbot.local-vm": "1", "com.openmausbot.workspace": "1", "com.openmausbot.local-vm-target": spec.targetLabel } : {};',
-    '    process.stdout.write(JSON.stringify([{ Config: { Image: "fixture", Labels: labels }, State: { Running: false }, Mounts: spec?.workspace ? [{ Type: "bind", Source: spec.workspace, Destination: "/home/cua/workspace", RW: true }] : [] }]));',
-    '    process.exit(0);',
-    '  }',
-    '  if (args[0] === "rm" && args.at(-1) === expected && spec?.managed) { rmSync(fixture, { force: true }); process.exit(0); }',
     '  process.exit(127);',
     '}',
     'if (args[0] === "-H" && args[2] === "container" && args[3] === "ls") process.exit(0);',
@@ -3302,33 +3285,6 @@ describe("harness HTTP API", () => {
     }
   });
 
-  it("refuses a room Works-on Local VM turn for an engine without computer tools", async () => {
-    let roomId: string | undefined;
-    let botId: string | undefined;
-    try {
-      const member = (await api("POST", "/api/bots", {
-        name: "Room VM refusal",
-        modelSelection: { instanceId: "plainApi", model: "fixture-plain-model" },
-      })).body.bot;
-      botId = member.id;
-      expect((await api("PATCH", `/api/bots/${member.id}`, { computer: "vm" })).status).toBe(200);
-      const room = (await api("POST", "/api/groups", {
-        name: "Plain model VM refusal",
-        memberIds: [member.id],
-        setup: { bulletin: "", defaultResponder: { kind: "member", botId: member.id } },
-      })).body.group;
-      roomId = room.id;
-      expect((await api("POST", `/api/groups/${room.id}/messages`, { text: "work in the virtual machine" })).status).toBe(202);
-      await expect.poll(async () => JSON.stringify((await api("GET", `/api/threads/${room.threadId}/messages`)).body),
-        { timeout: 5_000 }).toMatch(/fixture-plain-model can't use a private desktop\. Choose a model that can, such as Claude or ChatGPT\. Choose another model in Room VM refusal's settings\./);
-      expect(JSON.stringify((await api("GET", `/api/threads/${room.threadId}/messages`)).body)).not.toContain("Works on to Auto");
-    } finally {
-      if (roomId) await api("POST", `/api/groups/${roomId}/interrupt`, {}).catch(() => undefined);
-      if (roomId) await api("DELETE", `/api/groups/${roomId}`).catch(() => undefined);
-      if (botId) await api("DELETE", `/api/bots/${botId}`).catch(() => undefined);
-    }
-  });
-
   it("queues computer waiters in arrival order and estimates the wait only from history", async () => {
     let botId = "";
     let holderThread = "";
@@ -4003,14 +3959,11 @@ describe("harness HTTP API", () => {
       expect((await api("PATCH", `/api/groups/${room.id}`, {
         defaultResponder: { kind: "mentions" },
       })).status).toBe(200);
-      expect((await api("PATCH", "/api/config", {
-        localVm: { mode: "per-bot", maxInstances: 2 },
-      })).status).toBe(200);
       const listGate = deferredGate();
       managedBoatListGate = listGate;
       boatRouteCalls.length = 0;
       const deletion = api("DELETE", `/api/bots/${bot.id}`);
-      // Deletion first probes local runtimes, which can outlast poll's 1 s default on CI.
+      // Deletion can outlast poll's 1 s default on CI.
       await Promise.race([
         listGate.entered,
         deletion.then(({ status }) => {
@@ -4023,9 +3976,6 @@ describe("harness HTTP API", () => {
       const racedTurn = await api("POST", `/api/bots/${bot.id}/messages`, { text: "do not provision during deletion" });
       expect(racedTurn.status).toBe(409);
       expect(racedTurn.body.error).toMatch(/cloud computer is being changed/i);
-      const racedLocalVm = await api("POST", `/api/bots/${bot.id}/local-computer/run`, {});
-      expect(racedLocalVm.status).toBe(409);
-      expect(racedLocalVm.body.error).toMatch(/computer is being changed or deleted/i);
       expect((await api("POST", `/api/groups/${room.id}/messages`, { text: "@Target do not race deletion" })).status).toBe(202);
       await expect.poll(async () => {
         const snapshot = (await api("GET", "/api/bots?messages=30")).body;
@@ -4046,7 +3996,6 @@ describe("harness HTTP API", () => {
       if (roomId) await api("DELETE", `/api/groups/${roomId}`).catch(() => undefined);
       if (botId) await api("DELETE", `/api/bots/${botId}`).catch(() => undefined);
       if (guardBotId) await api("DELETE", `/api/bots/${guardBotId}`).catch(() => undefined);
-      await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } }).catch(() => undefined);
       await api("PUT", "/api/config", { box: { token: "" } });
       boatRouteCalls.length = 0;
     }
@@ -7717,20 +7666,7 @@ describe("harness HTTP API", () => {
       expect(boatRouteCalls).toEqual([]);
       await api("POST", `/api/bots/${bot.id}/interrupt`, {}); await idle();
 
-      // The fixture has no ready Local VM: fail there, never click the host or Box.
-      await api("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
-      await api("PATCH", `/api/bots/${bot.id}/tasks/${bot.threadId}`, { surface: "vm" });
-      rmSync(fakeClaudeDump, { force: true });
-      expect((await api("POST", `/api/bots/${bot.id}/messages`, { text: "Open Chrome on the Local VM" })).status).toBe(202);
-      await idle();
-      expect(existsSync(fakeClaudeDump)).toBe(false);
-      expect(boatPromptBodies).toHaveLength(0);
-      const saved = (await api("GET", "/api/bots?messages=0")).body.bots.find((b: { id: string }) => b.id === bot.id);
-      expect(saved.tasks.find((task: { threadId: string }) => task.threadId === bot.threadId).surface).toBe("vm");
-      expect((await api("GET", `/api/bots/${bot.id}/computer?threadId=${bot.threadId}`)).body.surface).toBe("vm");
-      expect((await api("POST", `/api/bots/${bot.id}/computer/join?threadId=${bot.threadId}`, {})).status).toBe(409);
-
-      await api("PATCH", `/api/bots/${bot.id}`, { computer: "vm" });
+      await api("PATCH", `/api/bots/${bot.id}`, { computer: "browser" });
       await api("PATCH", `/api/bots/${bot.id}/tasks/${bot.threadId}`, { surface: "cloud" });
       rmSync(fakeClaudeDump, { force: true });
       expect((await api("POST", `/api/bots/${bot.id}/messages`, { text: "Open Chrome on the cloud VM" })).status).toBe(202);
@@ -9571,19 +9507,11 @@ describe("harness HTTP API", () => {
       expect((await api("PATCH", `/api/bots/${bot.id}`, { computer: "off" })).status).toBe(200);
       expect(await computerSection(bot.id)).toBeUndefined();
       const off = await turnPrompt(messagesPath);
-      for (const paragraph of ["isolated Cua sandbox", "assigned cloud computer", "This is a VPS", "user's computer"]) {
+      for (const paragraph of ["assigned cloud computer", "This is a VPS", "user's computer"]) {
         expect(off).not.toContain(paragraph);
       }
       await api("POST", `/api/bots/${bot.id}/interrupt`, {});
       await idle(bot.id);
-
-      // The CI fleet has no VM runtime, so a real VM turn cannot be dispatched; the preview uses the same wiring.
-      expect((await api("PATCH", `/api/bots/${bot.id}`, { computer: "vm" })).status).toBe(200);
-      expect((await computerSection(bot.id)).text).toBe(computerPrompt("vm-shared"));
-      expect((await api("PATCH", "/api/config", { localVm: { mode: "per-bot", maxInstances: 1 } })).status).toBe(200);
-      expect((await computerSection(bot.id)).text).toBe(computerPrompt("vm-private"));
-      expect((await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } })).status).toBe(200);
-      expect((await computerSection(bot.id)).text).toBe(computerPrompt("vm-shared"));
 
       // Direct only: the room leg mounts through the identical attachBotBoat seam.
       if (target === "direct") {
@@ -9598,7 +9526,7 @@ describe("harness HTTP API", () => {
         expect((await computerSection(boatBot.id)).text).toBe(computerPrompt("box"));
         const boatTurn = await turnPrompt(`/api/bots/${boatBot.id}/messages`);
         expect(boatTurn).toContain(computerPrompt("box"));
-        for (const paragraph of ["isolated Cua sandbox", "This is a VPS", "user's computer"]) {
+        for (const paragraph of ["This is a VPS", "user's computer"]) {
           expect(boatTurn).not.toContain(paragraph);
         }
         expect(boatPromptBodies).toHaveLength(0);
@@ -9614,7 +9542,6 @@ describe("harness HTTP API", () => {
       }
       managedBoatRows = [];
       boatPromptBodies.length = 0;
-      await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } }).catch(() => undefined);
       await api("PUT", "/api/config", { box: { token: "" } }).catch(() => undefined);
       if (room) await api("DELETE", `/api/groups/${room.id}`).catch(() => undefined);
       await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
@@ -9829,285 +9756,6 @@ describe("harness HTTP API", () => {
       }, { timeout: 5_000 }).toBeFalsy();
       await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
       await api("PATCH", "/api/config", { browserProfiles: [] }).catch(() => undefined);
-    }
-  });
-
-  it("hands out a Local VM's viewer only to the lease holding the computer, once the VM is ready", async () => {
-    const previous = (await api("GET", "/api/config")).body.localVm;
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    const lease = "phone-lease-0123456789";
-    const join = (controlLeaseId = lease) =>
-      api("POST", `/api/bots/${bot.id}/local-computer/join?controlLeaseId=${controlLeaseId}`, {});
-    try {
-      expect((await api("PATCH", "/api/config", { localVm: { ...previous, mode: "per-bot" } })).status).toBe(200);
-      expect((await api("POST", `/api/bots/${bot.id}/local-computer/join`, {})).status).toBe(400);
-      const unheld = await join();
-      expect(unheld.status).toBe(409);
-      expect(unheld.body.error).toMatch(/take control/i);
-
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "take" })).status).toBe(200);
-      expect((await join()).status).toBe(409);
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "check", controlLeaseId: lease })).body)
-        .toMatchObject({ held: true, owned: false });
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "release" })).status).toBe(200);
-
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "take", controlLeaseId: lease })).body)
-        .toMatchObject({ held: true, owned: true });
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "check", controlLeaseId: lease })).body)
-        .toMatchObject({ held: true, owned: true });
-      // This suite's container runtime is unavailable, so the VM is never ready.
-      const notReady = await join();
-      expect(notReady.status).toBe(409);
-      expect(notReady.body.joinUrl).toBeUndefined();
-
-      await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "release", controlLeaseId: lease });
-      expect((await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "check", controlLeaseId: lease })).body)
-        .toMatchObject({ held: false, owned: false });
-      expect((await api("POST", "/api/bots/no-such-bot/local-computer/join", {})).status).toBe(404);
-    } finally {
-      await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "release" }).catch(() => undefined);
-      await api("PATCH", "/api/config", { localVm: previous }).catch(() => undefined);
-      await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
-    }
-  });
-
-  it("lets a phone paired directly with Full access ask for the Local VM desktop under its lease, and nobody else", async () => {
-    const previous = (await api("GET", "/api/config")).body.localVm;
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    const lease = "phone-lease-0123456789";
-    const owner = await asPairedPerson("Owner's phone");
-    const chatOnlyWindow = await api("POST", "/api/auth/pairing", { scopes: ["client"] });
-    const chatOnlyPaired = await fetch(`${BASE}/api/auth/pair`, {
-      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: chatOnlyWindow.body.code }),
-    });
-    const chatOnlyToken = ((await chatOnlyPaired.json()) as any).token as string;
-    const asChatOnly = async (method: string, path: string, payload?: unknown) => {
-      const res = await fetch(`${BASE}${path}`, {
-        method, headers: { authorization: `Bearer ${chatOnlyToken}`, ...(payload ? { "content-type": "application/json" } : {}) },
-        body: payload ? JSON.stringify(payload) : undefined,
-      });
-      return { status: res.status, body: await res.json() as any };
-    };
-    const join = `/api/bots/${bot.id}/local-computer/join?controlLeaseId=${lease}`;
-    const target = `local/bot-${createHash("sha256").update(bot.id).digest("hex")}`;
-    const proxy = `/api/desktop-viewer/${target}?botId=${bot.id}&controlLeaseId=${lease}`;
-    try {
-      expect((await api("PATCH", "/api/config", { localVm: { ...previous, mode: "per-bot" } })).status).toBe(200);
-      expect((await asChatOnly("POST", `/api/bots/${bot.id}/computer/control`, { action: "take", controlLeaseId: lease })).status).toBe(403);
-      expect((await asChatOnly("POST", join, {})).status).toBe(403);
-      expect((await asChatOnly("GET", proxy)).status).toBe(403);
-      expect((await asChatOnly("POST", `/api/bots/${bot.id}/computer/viewer-close`, {})).status).toBe(403);
-
-      const unheld = await owner.call("POST", join, {});
-      expect(unheld.status).toBe(409);
-      expect(unheld.body.error).toMatch(/take control/i);
-      const unheldProxy = await owner.call("GET", proxy);
-      expect(unheldProxy.status).toBe(409);
-      expect(unheldProxy.body.error).toMatch(/take control/i);
-
-      expect((await owner.call("POST", `/api/bots/${bot.id}/computer/control`, { action: "take", controlLeaseId: lease })).body)
-        .toMatchObject({ held: true, owned: true });
-      const notReady = await owner.call("POST", join, {});
-      expect(notReady.status).toBe(409);
-      expect(notReady.body.error).not.toMatch(/take control/i);
-      expect(notReady.body.joinUrl).toBeUndefined();
-      expect(notReady.body.socketPath).toBeUndefined();
-      const boundProxy = await owner.call("GET", proxy);
-      expect(boundProxy.status).toBe(409);
-      expect(boundProxy.body.error).not.toMatch(/take control/i);
-      expect((await owner.call("GET", `/api/desktop-viewer/${target}?botId=${bot.id}&controlLeaseId=phone-lease-9876543210`)).status).toBe(409);
-
-      expect((await owner.call("POST", `/api/bots/${bot.id}/computer/viewer-close`, {})).body).toEqual({ closed: false });
-      await owner.call("POST", `/api/bots/${bot.id}/computer/control`, { action: "release", controlLeaseId: lease });
-      expect((await owner.call("GET", proxy)).status).toBe(409);
-    } finally {
-      await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "release" }).catch(() => undefined);
-      await api("PATCH", "/api/config", { localVm: previous }).catch(() => undefined);
-      await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
-    }
-  });
-
-  it.each(["shared", "pool"])("refuses Local VM phone joins in %s mode for direct and companion callers", async testedMode => {
-    const { mode, maxInstances } = (await api("GET", "/api/config")).body.localVm;
-    const previous = { mode, maxInstances };
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    const owner = await asPairedPerson("Pool viewer phone");
-    const lease = "phone-pool-lease-0123456789";
-    try {
-      expect((await api("PATCH", "/api/config", { localVm: { ...previous, mode: testedMode } })).status).toBe(200);
-      expect((await owner.call("POST", `/api/bots/${bot.id}/computer/control`, { action: "take", controlLeaseId: lease })).body.owned).toBe(true);
-      const join = `/api/bots/${bot.id}/local-computer/join?controlLeaseId=${lease}`;
-      for (const response of [await owner.call("POST", join, {}), await api("POST", join, {})]) {
-        expect(response.status).toBe(409);
-        expect(response.body.error).toContain("per-bot Local VM");
-        expect(response.body.joinUrl).toBeUndefined();
-        expect(response.body.socketPath).toBeUndefined();
-        expect(response.body.password).toBeUndefined();
-      }
-    } finally {
-      await api("POST", `/api/bots/${bot.id}/computer/control`, { action: "release", controlLeaseId: lease });
-      await api("PATCH", "/api/config", { localVm: previous });
-      await api("DELETE", `/api/bots/${bot.id}`);
-    }
-  });
-
-  it("keeps shared Local VM mode by default and resolves isolated targets per bot when enabled", async () => {
-    const first = (await api("POST", "/api/bots")).body.bot;
-    const second = (await api("POST", "/api/bots")).body.bot;
-    const before = await api("GET", "/api/config");
-    expect(before.body.localVm).toEqual({ mode: "shared", maxInstances: 2, idleTimeoutMinutes: 480, preserveInstalledApps: false });
-
-    const shared = await api("GET", `/api/bots/${first.id}/local-computer`);
-    expect(shared.status).toBe(200);
-    expect(shared.body).toMatchObject({ mode: "shared", target_key: "shared" });
-
-    const saved = await api("PATCH", "/api/config", {
-      localVm: { mode: "per-bot", maxInstances: 5 },
-    });
-    expect(saved.status).toBe(200);
-    expect(saved.body.localVm).toEqual({ mode: "per-bot", maxInstances: 5, idleTimeoutMinutes: 480, preserveInstalledApps: false });
-
-    const [firstStatus, secondStatus] = await Promise.all([
-      api("GET", `/api/bots/${first.id}/local-computer`),
-      api("GET", `/api/bots/${second.id}/local-computer`),
-    ]);
-    expect(firstStatus.body).toMatchObject({ mode: "per-bot", max_instances: 5 });
-    expect(secondStatus.body).toMatchObject({ mode: "per-bot", max_instances: 5 });
-    expect(firstStatus.body.target_key).not.toBe(secondStatus.body.target_key);
-    expect(firstStatus.body.container_name).not.toBe(secondStatus.body.container_name);
-    expect(firstStatus.body.workspace_path).not.toBe(secondStatus.body.workspace_path);
-
-    const inventory = await fetch(`${BASE}/api/local-computer/instances`);
-    expect(inventory.status).toBe(200);
-    expect(inventory.headers.get("cache-control")).toBe("private, no-store");
-    const inventoryBody = await inventory.json() as any;
-    expect(inventoryBody).toMatchObject({
-      maxInstances: 5,
-      instances: expect.any(Array),
-      available: expect.any(Boolean),
-    });
-    for (const instance of inventoryBody.instances) {
-      expect(Object.keys(instance).sort()).toEqual([
-        "botId",
-        "container",
-        "destination",
-        "inUse",
-        "managed",
-        "name",
-        "problem",
-        "ready",
-      ]);
-    }
-    expect(JSON.stringify(inventoryBody)).not.toMatch(/viewer_url|workspace_path|container_name|target_key/);
-
-    const invalid = await api("PATCH", "/api/config", { localVm: { maxInstances: 9 } });
-    expect(invalid.status).toBe(400);
-    expect(invalid.body.error).toContain("localVm.maxInstances");
-
-    const disk = JSON.parse(readFileSync(join(home, ".openmausbot", "config.json"), "utf8"));
-    expect(disk.localVm).toEqual({ mode: "per-bot", maxInstances: 5, idleTimeoutMinutes: 480, preserveInstalledApps: false });
-    await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } });
-  });
-
-  it("validates, persists and applies the Local VM idle timeout in shared and per-bot modes", async () => {
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    try {
-      const shared = await api("GET", `/api/bots/${bot.id}/local-computer`);
-      expect(shared.status).toBe(200);
-      expect(shared.body).toMatchObject({ mode: "shared", idle_timeout_ms: 480 * 60_000 });
-
-      for (const idleTimeoutMinutes of [0, 4, 1.5, 1441, "30", null]) {
-        const invalid = await api("PATCH", "/api/config", { localVm: { idleTimeoutMinutes } });
-        expect(invalid.status).toBe(400);
-        expect(invalid.body.error).toContain("localVm.idleTimeoutMinutes");
-      }
-
-      const saved = await api("PATCH", "/api/config", { localVm: { idleTimeoutMinutes: 30 } });
-      expect(saved.status).toBe(200);
-      expect(saved.body.localVm).toEqual({ mode: "shared", maxInstances: 2, idleTimeoutMinutes: 30, preserveInstalledApps: false });
-      expect((await api("GET", "/api/config")).body.localVm.idleTimeoutMinutes).toBe(30);
-      expect((await api("GET", "/api/local-computer")).body.idle_timeout_ms).toBe(30 * 60_000);
-
-      const disk = JSON.parse(readFileSync(join(home, ".openmausbot", "config.json"), "utf8"));
-      expect(disk.localVm).toMatchObject({ idleTimeoutMinutes: 30 });
-
-      expect((await api("PATCH", "/api/config", { localVm: { mode: "per-bot" } })).status).toBe(200);
-      const perBot = await api("GET", `/api/bots/${bot.id}/local-computer`);
-      expect(perBot.body).toMatchObject({ mode: "per-bot", idle_timeout_ms: 30 * 60_000 });
-    } finally {
-      await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2, idleTimeoutMinutes: 480 } }).catch(() => undefined);
-      await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
-    }
-  });
-
-  it("never removes an unmanaged container that squats on a bot's exact Local VM name", async () => {
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    try {
-      expect((await api("PATCH", "/api/config", {
-        localVm: { mode: "per-bot", maxInstances: 2 },
-      })).status).toBe(200);
-      const status = await api("GET", `/api/bots/${bot.id}/local-computer`);
-      expect(status.status).toBe(200);
-      writeFileSync(fakeDockerFixture, status.body.container_name);
-      rmSync(fakeDockerLog, { force: true });
-
-      const inventory = await api("GET", "/api/local-computer/instances");
-      expect(inventory.status).toBe(200);
-      expect(inventory.body.instances).toContainEqual(expect.objectContaining({
-        botId: bot.id,
-        managed: false,
-      }));
-
-      const removed = await api("POST", `/api/bots/${bot.id}/local-computer/remove`, {});
-      expect(removed.status).toBe(409);
-      expect(removed.body.error).toMatch(/not created by Openpals.*remove it manually/i);
-      expect(readFileSync(fakeDockerLog, "utf8").split("\n")).not.toContain(
-        `rm -f ${status.body.container_name}`,
-      );
-    } finally {
-      rmSync(fakeDockerFixture, { force: true });
-      rmSync(fakeDockerLog, { force: true });
-      await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } }).catch(() => undefined);
-      await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
-    }
-  });
-
-  it("removes a managed per-bot Local VM and its private files with the bot", async () => {
-    const bot = (await api("POST", "/api/bots")).body.bot;
-    let workspacePath = "";
-    try {
-      expect((await api("PATCH", "/api/config", {
-        localVm: { mode: "per-bot", maxInstances: 2 },
-      })).status).toBe(200);
-      const status = await api("GET", `/api/bots/${bot.id}/local-computer`);
-      expect(status.status).toBe(200);
-      workspacePath = status.body.workspace_path;
-      mkdirSync(workspacePath, { recursive: true });
-      writeFileSync(join(workspacePath, "private-session.txt"), "delete me");
-      writeFileSync(fakeDockerFixture, JSON.stringify({
-        name: status.body.container_name,
-        workspace: workspacePath,
-        targetLabel: String(status.body.target_key).replace(/^bot:/, ""),
-        managed: true,
-      }));
-      rmSync(fakeDockerLog, { force: true });
-
-      const deleted = await api("DELETE", `/api/bots/${bot.id}`);
-
-      expect(deleted).toMatchObject({ status: 200, body: { ok: true } });
-      expect(readFileSync(fakeDockerLog, "utf8").split("\n")).toContain(
-        `rm -f ${status.body.container_name}`,
-      );
-      expect(existsSync(workspacePath)).toBe(false);
-      expect((await api("GET", "/api/bots?messages=0")).body.bots.some(
-        (candidate: { id: string }) => candidate.id === bot.id,
-      )).toBe(false);
-    } finally {
-      rmSync(fakeDockerFixture, { force: true });
-      rmSync(fakeDockerLog, { force: true });
-      if (workspacePath) rmSync(workspacePath, { recursive: true, force: true });
-      await api("DELETE", `/api/bots/${bot.id}`).catch(() => undefined);
-      await api("PATCH", "/api/config", { localVm: { mode: "shared", maxInstances: 2 } }).catch(() => undefined);
     }
   });
 
@@ -12155,9 +11803,9 @@ describe("bot memory API", () => {
       expect((await serve(messages[1]!.id, first.attachments![0]!.path)).status).toBe(403);
       expect((await serve(first.id, join(workspace, "budget.xlsx"))).status).toBe(403);
 
-      const missing = await attach({ path: "/home/cua/workspace/none.pdf" });
+      const missing = await attach({ path: "none.pdf" });
       expect(missing.status).toBe(404);
-      expect(((await missing.json()) as { error: string }).error).toContain("/home/cua/workspace");
+      expect(((await missing.json()) as { error: string }).error).toContain("Save it under your working folder");
       const unsupported = await attach({ path: "page.html" });
       expect(unsupported.status).toBe(415);
       expect(((await unsupported.json()) as { error: string }).error).toContain("Supported:");
@@ -12174,14 +11822,6 @@ describe("bot memory API", () => {
       expect((await attach({ path: "escape/secret.pdf" })).status).toBeGreaterThanOrEqual(403);
       const afterRefusals = await api("GET", `/api/threads/${bot.threadId}/export?format=json`);
       expect((afterRefusals.body.messages as Array<{ attachments?: unknown[] }>).filter((message) => message.attachments?.length)).toHaveLength(2);
-
-      const exec = await fetch(`${BASE}/api/internal/vm-exec`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-        body: JSON.stringify({ command: "ls" }),
-      });
-      expect(exec.status).toBe(409);
-      expect(((await exec.json()) as { error: string }).error).toContain("no Local VM desktop");
 
       for (let count = 2; count < 10; count += 1) expect((await attach({ path: "song.mp3" })).status).toBe(200);
       const flooded = await attach({ path: "song.mp3" });
@@ -12904,11 +12544,11 @@ describe("bot memory API", () => {
       expect(after.body.sections[1].text).toContain("Never file noise.");
       expect(after.body.sections[1].bytes).toBe(Buffer.byteLength(after.body.sections[1].text, "utf8"));
       expect((await api("PATCH", `/api/bots/${bot.id}`, {
-        computer: "vm",
+        computer: "cloud",
         modelSelection: { instanceId: "claude", model: "claude-sonnet-5" },
       })).status).toBe(200);
       const withComputer = await api("GET", `/api/bots/${bot.id}/system-prompt`);
-      expect(withComputer.body.sections.find((section: { id: string }) => section.id === "plan").text).toContain("Local VM is an isolated desktop");
+      expect(withComputer.body.sections.find((section: { id: string }) => section.id === "plan").text).toContain("the cloud computer is remote");
       const computerSection = withComputer.body.sections.find((section: { id: string }) => section.id === "computer");
       expect(computerSection.text).toContain(SIGN_IN_PROMPT);
       expect(computerSection.text).not.toMatch(/never type their (?:credentials|password)/i);

@@ -259,27 +259,27 @@ describe("Store", () => {
     store.patchTask(bot.id, autoMismatch.threadId, { surface: "local", surfaceSource: "auto" });
     store.patchTask(bot.id, personMismatch.threadId, { surface: "local", surfaceSource: "user" });
     store.patchTask(bot.id, legacyMismatch.threadId, { surface: "local" });
-    store.patchTask(bot.id, autoMatch.threadId, { surface: "vm", surfaceSource: "auto" });
+    store.patchTask(bot.id, autoMatch.threadId, { surface: "cloud", surfaceSource: "auto" });
     const changes = vi.fn();
     store.onChange(changes);
-    expect(store.clearAutoSurfacePins(bot.id, "vm")).toBe(1);
+    expect(store.clearAutoSurfacePins(bot.id, "cloud")).toBe(1);
     const cleared = store.taskByThread(bot.id, autoMismatch.threadId)!;
     expect(cleared.surface).toBeUndefined();
     expect(cleared.surfaceSource).toBeUndefined();
     expect(store.taskByThread(bot.id, personMismatch.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
     expect(store.taskByThread(bot.id, legacyMismatch.threadId)).toMatchObject({ surface: "local" });
-    expect(store.taskByThread(bot.id, autoMatch.threadId)).toMatchObject({ surface: "vm" });
+    expect(store.taskByThread(bot.id, autoMatch.threadId)).toMatchObject({ surface: "cloud" });
     expect(changes).toHaveBeenCalledTimes(1);
     const saved = JSON.parse(readFileSync(join(DATA_DIR, "bots.json"), "utf8")) as any[];
     const savedCleared = saved[0].tasks.find((task: any) => task.threadId === autoMismatch.threadId);
     expect(savedCleared).not.toHaveProperty("surface");
     expect(savedCleared).not.toHaveProperty("surfaceSource");
-    expect(store.clearAutoSurfacePins(bot.id, "vm")).toBe(0);
+    expect(store.clearAutoSurfacePins(bot.id, "cloud")).toBe(0);
     const reloaded = new Store(selection);
     expect(reloaded.taskByThread(bot.id, personMismatch.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
     expect(reloaded.taskByThread(bot.id, legacyMismatch.threadId)).toMatchObject({ surface: "local" });
     expect(reloaded.taskByThread(bot.id, legacyMismatch.threadId)?.surfaceSource).toBeUndefined();
-    expect(reloaded.taskByThread(bot.id, autoMatch.threadId)).toMatchObject({ surface: "vm" });
+    expect(reloaded.taskByThread(bot.id, autoMatch.threadId)).toMatchObject({ surface: "cloud" });
     expect(reloaded.taskByThread(bot.id, autoMismatch.threadId)!.surface).toBeUndefined();
   });
 
@@ -986,6 +986,33 @@ describe("Store", () => {
       for (const key of ["defaultBot", "welcomed", "sidebarHidden"]) expect(record).not.toHaveProperty(key);
     }
     expect(reloaded.deleteBot(pal.id)).toBe(true);
+  });
+
+  it("moves a bot set to its own private desktop to Your server on load, unpins its conversations there, and rewrites bots.json", () => {
+    const store = new Store(selection);
+    const desktopBot = store.createBot();
+    const cloudBot = store.createBot();
+    const pinned = store.createTask(desktopBot.id, "Pinned to the desktop", false)!;
+    const local = store.createTask(desktopBot.id, "Pinned to this computer", false)!;
+    type Saved = Record<string, unknown> & { id: string; tasks?: Array<Record<string, unknown> & { threadId: string }> };
+    const read = (): Saved[] => JSON.parse(readFileSync(join(DATA_DIR, "bots.json"), "utf8"));
+    const bots = read();
+    const saved = bots.find((bot) => bot.id === desktopBot.id)!;
+    saved.computer = "vm";
+    Object.assign(saved.tasks!.find((task) => task.threadId === pinned.threadId)!, { surface: "vm", surfaceSource: "user" });
+    Object.assign(saved.tasks!.find((task) => task.threadId === local.threadId)!, { surface: "local", surfaceSource: "user" });
+    bots.find((bot) => bot.id === cloudBot.id)!.computer = "cloud";
+    writeFileSync(join(DATA_DIR, "bots.json"), JSON.stringify(bots));
+
+    const reloaded = new Store(selection);
+    expect(reloaded.bot(desktopBot.id)?.computer).toBe("browser");
+    expect(reloaded.bot(cloudBot.id)?.computer).toBe("cloud");
+    expect(reloaded.taskByThread(desktopBot.id, pinned.threadId)?.surface).toBeUndefined();
+    expect(reloaded.taskByThread(desktopBot.id, pinned.threadId)?.surfaceSource).toBeUndefined();
+    expect(reloaded.taskByThread(desktopBot.id, local.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
+    const rewritten = read().find((bot) => bot.id === desktopBot.id)!;
+    expect(rewritten.computer).toBe("browser");
+    expect(rewritten.tasks!.find((task) => task.threadId === pinned.threadId)).not.toHaveProperty("surface");
   });
 
   it("migrates legacy browser profile references without collapsing case-distinct accounts", () => {

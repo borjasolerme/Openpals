@@ -29,7 +29,7 @@ async function call(path: string, body: unknown, deps: { ask?: Ask; extract?: Ex
   const route = createHelperToolRoutes({ decider: { ask: ask as unknown as Ask }, extractor: { extract } });
   const json = vi.fn();
   const res = {} as never;
-  const outcome = await route({ method: "POST", path, res, json, botId: "bot-1", readBody: async () => body, folders: async () => ({ roots: [work], vmWorkspace: null }) });
+  const outcome = await route({ method: "POST", path, res, json, botId: "bot-1", readBody: async () => body, folders: async () => [work] });
   const [, status, payload] = json.mock.calls[0] ?? [];
   return { outcome, status: status as number | undefined, payload: payload as { text?: string; error?: string } | undefined, ask, extract };
 }

@@ -7,12 +7,9 @@ import { join } from "node:path";
 import type { Duplex } from "node:stream";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { SessionRegistry } from "../sessions.ts";
-import { resolveRequestAuth, type RequestAuth } from "../request-auth.ts";
+import { resolveRequestAuth } from "../request-auth.ts";
 import { json, readBody } from "../harness/http.ts";
-import { SHARED_LOCAL_VM_TARGET, perBotLocalVmTarget, poolLocalVmTarget, type ContainerComputerStatus } from "../container-computer.ts";
-import { createDesktopViewer, desktopViewerUrl, type DesktopTarget } from "./desktop-viewer.ts";
-import { viewerTargetId } from "../../shared/desktop-viewer.ts";
-import { localDesktopTarget, localVmViewerStatus } from "../desktop-viewer-targets.ts";
+import { createDesktopViewer, type DesktopConnection, type DesktopTarget } from "./desktop-viewer.ts";
 
 let dir: string;
 let sessions: SessionRegistry;
@@ -23,21 +20,19 @@ let appPort: number;
 let desktopPort: number;
 let admin: ReturnType<SessionRegistry["issue"]>;
 let member: ReturnType<SessionRegistry["issue"]>;
-let vpsTarget: DesktopTarget | undefined;
+let overrideTarget: DesktopTarget | undefined;
 let inspected: string[];
 let seenHeaders: IncomingHttpHeaders;
 let seenPath: string | undefined;
 let touched: string[];
-let statusOverrides: Partial<ContainerComputerStatus>;
+let connectionOverrides: Partial<DesktopConnection> & { unavailable?: boolean };
 let inspection: Promise<void> | undefined;
 let now: number;
 let targetLookups: number;
 let handled: () => void;
-let leases: Set<string>;
-const leaseKey = (id: string, botId: string, lease: string) => `${id} ${botId} ${lease}`;
-let targets = [SHARED_LOCAL_VM_TARGET, perBotLocalVmTarget("test-bot"), poolLocalVmTarget(1)];
+let desktops: Set<string>;
 const peers = new Set<Duplex>();
-const base = "/api/desktop-viewer/local/shared";
+const base = "/api/desktop-viewer/vps/test-bot";
 const remoteHeaders = { host: "workspace.example", origin: "https://workspace.example", "x-forwarded-proto": "https" };
 
 async function listen(server: Server): Promise<number> {
@@ -81,11 +76,10 @@ beforeEach(async () => {
   sessions = new SessionRegistry({ file: join(dir, "sessions.json"), now: () => now });
   admin = sessions.issue({ label: "Mac", scopes: ["admin", "client"] });
   member = sessions.issue({ label: "Member", scopes: ["client"] });
-  inspected = []; touched = []; statusOverrides = {}; inspection = undefined; seenPath = undefined;
-  vpsTarget = undefined;
+  inspected = []; touched = []; connectionOverrides = {}; inspection = undefined; seenPath = undefined;
+  overrideTarget = undefined;
   targetLookups = 0; handled = () => {};
-  leases = new Set();
-  targets = [SHARED_LOCAL_VM_TARGET, perBotLocalVmTarget("test-bot"), poolLocalVmTarget(1)];
+  desktops = new Set(["test-bot", "other-bot"]);
   desktop = createServer((_req, res) => res.writeHead(404).end());
   desktop.on("upgrade", (req, socket) => {
     peers.add(socket);
@@ -100,26 +94,18 @@ beforeEach(async () => {
   viewer = createDesktopViewer({
     target: id => {
       targetLookups++;
-      if (id === "vps/test-bot") return vpsTarget;
-      const target = targets.find(target => viewerTargetId(target) === id);
-      return target && localDesktopTarget(target, {
-        status: async target => {
-          inspected.push(target.key);
-          await inspection;
-          return {
-            managed: true, imageMatches: true, network: "loopback", container: "running", viewer_port: desktopPort,
-            viewer_url: `http://127.0.0.1:${desktopPort}/vnc.html#password=fixture-secret`, ...statusOverrides,
-          } as ContainerComputerStatus;
-        },
-        touch: target => touched.push(target.key),
-      });
+      if (overrideTarget) return overrideTarget;
+      const botId = id.slice("vps/".length);
+      if (!desktops.has(botId)) return;
+      return { key: id, resolve: async () => {
+        inspected.push(botId);
+        await inspection;
+        const { unavailable, ...connection } = connectionOverrides;
+        if (unavailable) throw Object.assign(new Error("VPS viewer is not open"), { status: 409 });
+        return { port: desktopPort, password: "fixture-secret", touch: () => touched.push(botId), ...connection };
+      } };
     },
     live: auth => auth.kind === "loopback" || sessions.isLive(auth.session.id),
-    lease: (id, botId, lease, threadId) => {
-      if (!leases.has(leaseKey(id, botId, lease)) || (threadId !== undefined && threadId !== "th-1")) return;
-      // Settled at open; afterwards only the lease is asked about.
-      return () => leases.has(leaseKey(id, botId, lease));
-    },
   });
   sessions.onSessionRevoked(id => viewer.closeForOwner(id));
   const handle = async (req: Parameters<typeof resolveRequestAuth>[0], res: Parameters<typeof json>[0]) => {
@@ -142,7 +128,7 @@ afterEach(async () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-it("proxies opaque bytes and keeps workspace credentials out of the VM", async () => {
+it("proxies opaque bytes and keeps workspace credentials out of the desktop", async () => {
   const answer = await open(`${base}/websockify?host=evil.example&token=do-not-forward`, { authorization: `Bearer ${admin.token}`, "sec-websocket-protocol": "binary" });
   expect(answer.status).toBe(101);
   const socket = answer.socket!;
@@ -155,7 +141,7 @@ it("proxies opaque bytes and keeps workspace credentials out of the VM", async (
   expect(seenHeaders.authorization).toBeUndefined();
   expect(seenHeaders["x-forwarded-proto"]).toBeUndefined();
   expect(seenHeaders["sec-websocket-protocol"]).toBeUndefined();
-  expect(touched).toContain("shared");
+  expect(touched).toContain("test-bot");
 });
 
 it("protects HTTP and upgrade requests with the existing session and scope checks", async () => {
@@ -169,25 +155,23 @@ it("protects HTTP and upgrade requests with the existing session and scope check
   expect(inspected).toEqual([]);
 });
 
-it("returns fresh credentials only to admins and selects shared, per-bot and pool targets", async () => {
-  for (const target of targets) {
-    const path = `/api/desktop-viewer/${viewerTargetId(target)}`;
+it("returns fresh credentials only to admins and selects each bot's desktop", async () => {
+  for (const botId of desktops) {
+    const path = `/api/desktop-viewer/vps/${botId}`;
     const response = await get(path);
     expect(response.headers["cache-control"]).toContain("no-store");
     expect(response.body).toEqual({ password: "fixture-secret" });
     expect((await open(`${path}/websockify`)).status).toBe(101);
   }
-  expect(inspected).toContain(targets[1].key);
-  expect(inspected).toContain("pool:1");
-  expect((await open("/api/desktop-viewer/local/pool-999/websockify")).status).toBe(404);
-  expect((await open("/api/desktop-viewer/local/127.0.0.1:22/websockify")).status).toBe(404);
+  expect(inspected).toContain("other-bot");
+  expect((await open("/api/desktop-viewer/vps/no-such-bot/websockify")).status).toBe(404);
+  expect((await open("/api/desktop-viewer/local/shared/websockify")).status).toBe(404);
 });
 
 it.each([
-  { managed: false }, { imageMatches: false }, { network: "unsafe" }, { container: "stopped" },
-  { viewer_port: null }, { viewer_port: null, viewer_url: "" }, { viewer_port: 0 }, { viewer_port: 65536 },
-])("refuses unavailable or untrusted containers: %j", async override => {
-  statusOverrides = override as Partial<ContainerComputerStatus>;
+  { unavailable: true }, { port: 0 }, { port: 65536 }, { port: 1.5 },
+])("refuses an unavailable or untrusted desktop: %j", async override => {
+  connectionOverrides = override;
   expect((await open()).status).toBe(409);
 });
 
@@ -278,7 +262,7 @@ it("closes viewers whose target disappears, and keeps active viewers from idle r
   const socket = (await open()).socket!;
   await expect.poll(() => touched.length, { timeout: 7000 }).toBeGreaterThan(1);
   const closed = new Promise<void>(resolve => socket.once("close", () => resolve()));
-  targets = [];
+  desktops.clear();
   await closed;
 }, 15_000);
 
@@ -303,17 +287,9 @@ it("times out an upstream that never answers the handshake", async () => {
   expect((await open()).status).toBe(502);
 }, 13_000);
 
-it("preserves local desktop URLs and removes passwords from paired viewer links", () => {
-  const original = { target_key: targets[1].key, viewer_url: "http://127.0.0.1:49152/vnc.html#password=secret" };
-  const local: RequestAuth = { kind: "loopback", scopes: ["admin", "client"] };
-  expect(localVmViewerStatus(original, local)).toBe(original);
-  const remote: RequestAuth = { kind: "session", session: sessions.authenticate(admin.token)!, via: "cookie", scopes: admin.session.scopes };
-  expect(localVmViewerStatus(original, remote).viewer_url).toBe(desktopViewerUrl(viewerTargetId(targets[1])));
-});
-
-it("uses the same authenticated proxy for VPS and releases only its own connection", async () => {
+it("releases only its own connection", async () => {
   let holds = 0;
-  vpsTarget = { key: "vps/test-bot", resolve: async () => ({
+  overrideTarget = { key: "vps/test-bot", resolve: async () => ({
     port: desktopPort, password: "fixture-secret",
     retain: () => { holds++; return () => { holds--; }; },
   }) };
@@ -332,79 +308,16 @@ it("uses the same authenticated proxy for VPS and releases only its own connecti
   expect(holds).toBe(0);
 });
 
-const lease = "phone-lease-0123456789";
-const phoneTarget = viewerTargetId(perBotLocalVmTarget("test-bot"));
-const phoneBase = `/api/desktop-viewer/${phoneTarget}`;
-const bound = (query = `botId=test-bot&controlLeaseId=${lease}`) => `${phoneBase}/websockify?${query}`;
-
-it.each([SHARED_LOCAL_VM_TARGET, poolLocalVmTarget(1)])("refuses phone control of a shared desktop even with a valid bot lease: %j", async desktop => {
-  const target = viewerTargetId(desktop);
-  leases.add(leaseKey(target, "test-bot", lease));
-  const query = `botId=test-bot&threadId=th-1&controlLeaseId=${lease}`;
-  for (const response of [
-    await open(`/api/desktop-viewer/${target}/websockify?${query}`),
-    await get(`/api/desktop-viewer/${target}?${query}`),
-  ]) {
-    expect(response.status).toBe(409);
-    expect(JSON.stringify(response.body)).toContain("per-bot Local VM");
-  }
-  expect(inspected).toEqual([]);
-});
-
-it("opens a lease-bound viewer only while that lease holds the bot's computer", async () => {
-  const refused = await open(bound());
-  expect(refused.status).toBe(409);
-  expect(refused.body).toContain("Take control");
-  expect(inspected).toEqual([]);
-
-  leases.add(leaseKey(phoneTarget, "test-bot", lease));
-  const answer = await open(bound(), { authorization: `Bearer ${admin.token}`, "sec-websocket-protocol": "binary" });
-  expect(answer.status).toBe(101);
-  const socket = answer.socket!;
-  const echo = new Promise<Buffer>(resolve => socket.once("data", resolve));
-  const bytes = Buffer.from("RFB 003.008\n");
-  socket.write(bytes);
-  expect(await echo).toEqual(bytes);
-  expect(seenPath).toBe("/websockify");
-  expect(seenHeaders.authorization).toBeUndefined();
-
-  const closed = new Promise<void>(resolve => socket.once("close", () => resolve()));
-  leases.clear();
-  await closed;
-  expect((await open(bound())).status).toBe(409);
-}, 10_000);
-
-it("binds a lease to one bot's desktop and refuses malformed or half-given lease names", async () => {
-  leases.add(leaseKey(phoneTarget, "test-bot", lease));
-  expect((await open(bound(`botId=other-bot&controlLeaseId=${lease}`))).status).toBe(409);
-  expect((await open(`/api/desktop-viewer/${viewerTargetId(perBotLocalVmTarget("other-bot"))}/websockify?botId=test-bot&controlLeaseId=${lease}`)).status).toBe(409);
-  for (const query of ["botId=test-bot", `controlLeaseId=${lease}`, "botId=test-bot&controlLeaseId=short", `botId=bad%20bot&controlLeaseId=${lease}`,
-    "threadId=th-1", `botId=test-bot&threadId=bad%20thread&controlLeaseId=${lease}`]) {
-    expect((await open(bound(query))).status).toBe(400);
-  }
-  expect((await open(bound(`botId=test-bot&threadId=th-1&controlLeaseId=${lease}`))).status).toBe(101);
-  expect((await open(bound(`botId=test-bot&threadId=th-2&controlLeaseId=${lease}`))).status).toBe(409);
-  expect((await get(`${phoneBase}?botId=test-bot&controlLeaseId=${lease}`)).body).toEqual({ password: "fixture-secret" });
-  leases.clear();
-  expect((await get(`${phoneBase}?botId=test-bot&controlLeaseId=${lease}`)).status).toBe(409);
-});
-
-it("keeps the session and scope checks ahead of the lease, and closes a session's viewers per bot or all at once", async () => {
-  leases.add(leaseKey(phoneTarget, "test-bot", lease));
-  leases.add(leaseKey(phoneTarget, "other-bot", lease));
-  expect((await open(bound(), { cookie: `test_session=${member.token}` })).status).toBe(403);
-  expect((await open(bound(), { cookie: "test_session=revoked" })).status).toBe(401);
-  const mine = (await open(bound())).socket!;
-  const other = (await open(bound(`botId=other-bot&controlLeaseId=${lease}`))).socket!;
-  const browser = (await open()).socket!;
+it("closes a session's viewers per desktop or all at once", async () => {
+  const mine = (await open()).socket!;
+  const other = (await open("/api/desktop-viewer/vps/other-bot/websockify")).socket!;
   const closedMine = once(mine, "close");
-  expect(viewer.closeForOwner("nobody", "test-bot")).toBe(0);
-  expect(viewer.closeForOwner(admin.session.id, "test-bot")).toBe(1);
-  expect(viewer.closeForOwner(admin.session.id, "test-bot")).toBe(0);
+  expect(viewer.closeForOwner("nobody", "vps/test-bot")).toBe(0);
+  expect(viewer.closeForOwner(admin.session.id, "vps/test-bot")).toBe(1);
+  expect(viewer.closeForOwner(admin.session.id, "vps/test-bot")).toBe(0);
   await closedMine;
   expect(other.destroyed).toBe(false);
-  expect(browser.destroyed).toBe(false);
-  const rest = Promise.all([other, browser].map(socket => once(socket, "close")));
-  expect(viewer.closeForOwner(admin.session.id)).toBe(2);
+  const rest = once(other, "close");
+  expect(viewer.closeForOwner(admin.session.id)).toBe(1);
   await rest;
 });

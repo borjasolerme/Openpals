@@ -3,8 +3,6 @@
 // Everything left out is named to the bot, except the secret folder, which a page never mentions.
 import { lstat, readdir, readFile, realpath, stat } from "node:fs/promises";
 import { basename, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { guestWorkspaceToHost } from "../bot-attachment.ts";
-import { VM_WORKSPACE_GUEST } from "../container-computer.ts";
 import { inSecretFolder, SECRET_FILE_REFUSAL } from "../secret-folder.ts";
 import { PAGE_FILE_EXTENSIONS } from "./page-file-types.ts";
 
@@ -185,19 +183,15 @@ export function skippedNote(skipped: readonly SkippedFile[]): string {
   return parts.length ? `Left out ${inWords(parts)}.` : "";
 }
 
-/** The bot's own folders for a turn, and its Local VM's workspace on this computer when it has one. */
-export type BotFolders = () => Promise<{ roots: readonly string[]; vmWorkspace: string | null }>;
+/** The bot's own folders for a turn. */
+export type BotFolders = () => Promise<readonly string[]>;
 
-/** A chat page's bundle, videos included: readPageBundle within a bot's own folders; a path inside its Local VM's workspace means the same file here. */
+/** A chat page's bundle, videos included: readPageBundle within a bot's own folders. */
 export async function readBotPageBundle(requested: string, folders: BotFolders): Promise<PageBundle> {
-  const { roots, vmWorkspace } = await folders();
-  const path = vmWorkspace ? guestWorkspaceToHost(requested, VM_WORKSPACE_GUEST, vmWorkspace) ?? requested : requested;
-  return readPageBundle(path, vmWorkspace ? [vmWorkspace, ...roots] : roots, undefined, { videos: true });
+  return readPageBundle(requested, await folders(), undefined, { videos: true });
 }
 
-/** A file inside a bot's own folders (or its Local VM's workspace), by the same rules as a page: the `extract` tool's. */
+/** A file inside a bot's own folders, by the same rules as a page: the `extract` tool's. */
 export async function botFileSource(requested: string, folders: BotFolders): Promise<string> {
-  const { roots, vmWorkspace } = await folders();
-  const path = vmWorkspace ? guestWorkspaceToHost(requested, VM_WORKSPACE_GUEST, vmWorkspace) ?? requested : requested;
-  return pageSource(path, vmWorkspace ? [vmWorkspace, ...roots] : roots);
+  return pageSource(requested, await folders());
 }

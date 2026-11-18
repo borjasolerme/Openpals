@@ -177,7 +177,7 @@ export function createBotPatchRoutes(deps: BotPatchRouteDeps): RouteHandler {
           patch.computer = undefined;
         } else if (
           typeof body.computer === "string" &&
-          ["cloud", "vm", "local", "browser", "off"].includes(body.computer)
+          ["cloud", "local", "browser", "off"].includes(body.computer)
         ) {
           requestedComputer = body.computer;
           patch.computer = body.computer;

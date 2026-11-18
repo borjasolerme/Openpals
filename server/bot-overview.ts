@@ -193,8 +193,6 @@ function computerReach(computer: BotRecord["computer"]): string | null {
   switch (computer) {
     case "cloud":
       return "Computer preference: cloud computer.";
-    case "vm":
-      return `Computer preference: Local VM.`;
     case "local":
       return `Computer preference: this computer.`;
     case "browser":

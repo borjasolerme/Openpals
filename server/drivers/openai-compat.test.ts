@@ -37,7 +37,7 @@ describe("OpenAICompatDriver", () => {
 
   it.each([
     ["I'll open the browser first.", {}, 2],
-    ["I'm working in the Cua Local VM and will launch XFCE Terminal first.", {}, 2],
+    ["I'm working in the cloud desktop and will launch XFCE Terminal first.", {}, 2],
     ["The terminal is open and the task is complete.", {}, 1],
     ["Should I open the terminal?", {}, 1],
     ["I'll open the browser first.", { tools: false }, 1],

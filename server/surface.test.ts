@@ -65,7 +65,7 @@ describe("handoffUsesOwnCloud", () => {
       resolveSurface({ destination: "local", browserOn: true }),
       resolveSurface({ destination: "off", browserOn: true }),
       resolveSurface({ destination: undefined, pinnedSurface: "browser", browserOn: true }),
-      resolveSurface({ destination: undefined, pinnedSurface: "vm", browserOn: true }),
+      resolveSurface({ destination: undefined, pinnedSurface: "local", browserOn: true }),
     ]) expect(handoffUsesOwnCloud({ plan, handoffWork: true, ownCloudState: "running" })).toBe(false);
   });
 });
@@ -74,7 +74,7 @@ describe("pinSource", () => {
   it("counts a turn's own pin to the place Works on names as Works on, so This computer is not asked for again", () => {
     expect(pinSource("local", { surfaceSource: "auto" }, "local")).toBe("works-on");
     expect(pinSource("local", { surfaceSource: "auto" }, undefined)).toBe("auto-pin");
-    expect(pinSource("local", { surfaceSource: "auto" }, "vm")).toBe("auto-pin");
+    expect(pinSource("local", { surfaceSource: "auto" }, "cloud")).toBe("auto-pin");
     expect(pinSource("local", { surfaceSource: "user" }, "local")).toBe("pin");
     expect(pinSource("local", {}, undefined)).toBe("pin");
     expect(pinSource("local", undefined, "cloud")).toBe("pin");
@@ -122,18 +122,18 @@ describe("resolveSurface", () => {
   });
 
   it("a computer destination mounts only that computer: one place per turn", () => {
-    for (const destination of ["cloud", "vm", "local"] as const) {
+    for (const destination of ["cloud", "local"] as const) {
       expect(resolveSurface({ destination, browserOn: true })).toEqual({ computer: destination, browser: false, pinned: null, note: "" });
       expect(resolveSurface({ destination, browserOn: false })).toMatchObject({ computer: destination, browser: false });
     }
   });
 
   it("a thread a bot opened mounts the built-in browser beside any computer, since no person watches it", () => {
-    for (const destination of ["cloud", "vm", "local"] as const) {
+    for (const destination of ["cloud", "local"] as const) {
       expect(resolveSurface({ destination, browserOn: true, botOpened: true })).toEqual({ computer: destination, browser: true, pinned: null, note: "", botOpened: true });
       expect(resolveSurface({ destination, browserOn: false, botOpened: true })).toMatchObject({ computer: destination, browser: false });
     }
-    expect(resolveSurface({ destination: undefined, pinnedSurface: "vm", browserOn: true, botOpened: true })).toMatchObject({ computer: "vm", browser: true, pinned: "vm" });
+    expect(resolveSurface({ destination: undefined, pinnedSurface: "local", browserOn: true, botOpened: true })).toMatchObject({ computer: "local", browser: true, pinned: "local" });
     expect(resolveSurface({ destination: undefined, browserOn: true, botOpened: true })).toMatchObject({ computer: undefined, browser: true, botOpened: true });
     expect(resolveSurface({ destination: "off", browserOn: true, botOpened: true })).toMatchObject({ computer: "off", browser: false });
   });
@@ -168,7 +168,7 @@ describe("resolveSurface", () => {
     expect(resolveSurface({ destination: "cloud", pinnedSurface: "browser", browserOn: true }))
       .toEqual({ computer: "off", browser: true, pinned: "browser", note: "" });
     for (const destination of ["browser", undefined] as const) {
-      for (const pin of ["cloud", "vm", "local"] as const) {
+      for (const pin of ["cloud", "local"] as const) {
         expect(resolveSurface({ destination, pinnedSurface: pin, browserOn: true }))
           .toEqual({ computer: pin, browser: false, pinned: pin, note: "" });
       }
@@ -176,7 +176,7 @@ describe("resolveSurface", () => {
   });
 
   it("keeps an unavailable browser pin instead of silently moving to another computer", () => {
-    for (const destination of [undefined, "local", "vm", "cloud", "browser"] as const) {
+    for (const destination of [undefined, "local", "cloud", "browser"] as const) {
       expect(resolveSurface({ destination, pinnedSurface: "browser", browserOn: false }))
         .toMatchObject({ computer: "off", browser: false, pinned: "browser",
           note: expect.stringMatching(/No computer is mounted instead/) });
@@ -205,21 +205,21 @@ describe("surfacePrompt", () => {
   });
 
   it("starts a new task on the computer where the bot already saw its site signed in, without a check that would start it", () => {
-    for (const computer of ["vm", "cloud"] as const) {
+    for (const computer of ["cloud"] as const) {
       const text = surfacePrompt({ computer, browser: true });
-      const label = computer === "vm" ? "the Local VM" : "the cloud computer";
+      const label = "the cloud computer";
       expect(text).toContain(`The built-in browser and ${label} may not share sign-ins.`);
       expect(text).toContain(`When you pick the surface for a new task and the user did not name a place, if you already saw its site signed in on ${label} with the account it needs, pick ${label} instead of the Browser tab, unless the task needs something already in the Browser tab, such as a cart; if the site turns out signed out on ${label}, use the Browser tab when it is signed in there.`);
       expect(text).not.toMatch(/check whether the site is already signed in/);
     }
-    expect(surfacePrompt({ computer: "vm", browser: false })).not.toContain("share sign-ins");
+    expect(surfacePrompt({ computer: "cloud", browser: false })).not.toContain("share sign-ins");
     expect(surfacePrompt({ computer: null, browser: true })).not.toContain("share sign-ins");
     expect(surfacePrompt({ computer: "local", browser: true })).not.toContain("share sign-ins");
   });
 
   it("names only the computer when it is the only surface", () => {
-    const text = surfacePrompt({ computer: "vm", browser: false });
-    expect(text).toMatch(/happens on the Local VM, web pages included/);
+    const text = surfacePrompt({ computer: "cloud", browser: false });
+    expect(text).toMatch(/happens on the cloud computer, web pages included/);
     expect(text).toMatch(/no separate built-in browser/);
     expect(text).toMatch(/say in one short sentence where you are working/);
     expect(text).not.toMatch(/Two surfaces/);
@@ -239,7 +239,7 @@ describe("surfacePrompt", () => {
     expect(alone).toContain("use, in this order: a connected app that does it, web search and fetching pages, a cloud computer if select_computer offers one.");
     expect(alone).toContain("Use their own browser or screen only when the task needs their own signed-in session");
     // Other computers are the bot's own: their wording is unchanged.
-    expect(surfacePrompt({ computer: "vm", browser: false })).not.toContain("the person's own");
+    expect(surfacePrompt({ computer: "cloud", browser: false })).not.toContain("the person's own");
     expect(surfacePrompt({ computer: "cloud", browser: true })).not.toContain("the person's own");
   });
 
@@ -262,11 +262,11 @@ describe("surfacePrompt", () => {
     expect(surfacePrompt({ computer: null, browser: false }, { note: " NOTE." })).toBe(" NOTE.");
   });
 
-  it.each(["local", "vm", "cloud", "browser"] as const)("requires observed results on the actual %s tools", (place) => {
+  it.each(["local", "cloud", "browser"] as const)("requires observed results on the actual %s tools", (place) => {
     const text = surfacePrompt({ computer: place === "browser" ? null : place, browser: place === "browser" });
     expect(text).toContain("verify its result before claiming success");
     expect(text).toContain("Announcing an action is not performing it");
-    expect(text).toContain("never act on a different computer or describe a host window as a VM");
+    expect(text).toContain("never act on a different computer.");
     expect(text).toContain("use Openpals' mounted browser/computer tools first");
     expect(text).toContain("Do not substitute the provider's own desktop");
   });
@@ -276,7 +276,7 @@ describe("surfacePrompt", () => {
     expect(text).toContain("use select_computer with no arguments");
     expect(text).toContain("surface auto instead of asking them to operate the menu");
     expect(text).toContain("highlight the selected target");
-    expect(text).toContain("when it needs desktop apps or capabilities the current Browser lacks, select an available Local VM");
+    expect(text).toContain("when it needs desktop apps or capabilities the current Browser lacks, select an available computer");
     expect(text).toContain("then you must carry out the task");
     expect(text).not.toContain("ask the user to choose and connect a computer");
   });
@@ -285,7 +285,7 @@ describe("surfacePrompt", () => {
     const text = surfacePrompt({ computer: "local", browser: false }, { pinned: "local", canSelect: true });
     expect(text).toContain("select the requested available place");
     expect(text).toContain("changing places requires select_computer");
-    expect(text).toContain("Never silently replace an explicitly requested VM with the host desktop");
+    expect(text).toContain("Never silently replace an explicitly requested computer with the host desktop");
     expect(text).not.toContain("ask the user to change where this conversation works");
   });
 
@@ -297,14 +297,14 @@ describe("surfacePrompt", () => {
   });
 
   it("tells a bot in a thread a bot opened to report back, not to wait for a person at the Screen panel", () => {
-    const mismatch = surfacePrompt({ computer: "vm", browser: false }, { botOpened: true });
+    const mismatch = surfacePrompt({ computer: "cloud", browser: false }, { botOpened: true });
     expect(mismatch).toContain("tell the bot that gave you this job which place you need and end your turn");
     expect(mismatch).not.toContain("ask the user to change where this conversation works");
     const none = surfacePrompt({ computer: null, browser: false }, { botOpened: true });
     expect(none).toContain("tell the bot that gave you this job which place you need and end your turn");
     expect(none).not.toContain("ask the user to choose where this conversation works");
-    expect(surfacePrompt({ computer: "vm", browser: false }, { botOpened: true, canSelect: true }))
-      .toBe(surfacePrompt({ computer: "vm", browser: false }, { canSelect: true }));
+    expect(surfacePrompt({ computer: "cloud", browser: false }, { botOpened: true, canSelect: true }))
+      .toBe(surfacePrompt({ computer: "cloud", browser: false }, { canSelect: true }));
   });
 
   const mounts: Array<{ computer: "cloud" | null; browser: boolean }> = [
@@ -318,12 +318,12 @@ describe("surfacePrompt", () => {
       expect(surfacePrompt(mounted, { ...opts})).toBe(surfacePrompt(mounted, opts));
     }
     expect(surfacePrompt({ computer: "cloud", browser: true }, { canSelect: true }))
-      .toContain("this computer is the user's host, Local VM is an isolated desktop, the cloud computer is remote");
+      .toContain("this computer is the user's host, the cloud computer is remote");
   });
 });
 
 describe("surface parsing", () => {
-  it("accepts only the four surfaces off the wire", () => {
+  it("accepts only the three surfaces off the wire", () => {
     expect(parseSurface("browser")).toBe("browser");
     expect(parseSurface("cloud")).toBe("cloud");
     expect(parseSurface("box")).toBeUndefined();
@@ -334,7 +334,6 @@ describe("surface parsing", () => {
   it("folds both cloud backends into one surface", () => {
     expect(surfaceOfComputerKind("box")).toBe("cloud");
     expect(surfaceOfComputerKind("vps")).toBe("cloud");
-    expect(surfaceOfComputerKind("vm")).toBe("vm");
     expect(surfaceOfComputerKind("local")).toBe("local");
     expect(surfaceOfComputerKind(null)).toBeNull();
   });
@@ -392,13 +391,13 @@ describe("placeUnavailable", () => {
     expect(cause("auto-pin")).toBe("Scout's cloud desktop didn't start. This conversation is back on Auto. Send your message again.");
     expect(cause("routine")).toBe("Scout's cloud desktop didn't start. Change where this routine runs.");
     expect(cause("room")).toBe("Scout's cloud desktop didn't start.");
-    expect(placeUnavailable("vm", { state: "place-failed", params: { bot: "Scout", cause: "The private desktop isn't ready." }, source: "works-on" }))
-      .toMatchObject({ name: "PlaceUnavailableError", place: "vm", message: "The private desktop isn't ready. Check it in the Screen panel." });
+    expect(placeUnavailable("cloud", { state: "place-failed", params: { bot: "Scout", cause: "The VPS computer isn't ready." }, source: "works-on" }))
+      .toMatchObject({ name: "PlaceUnavailableError", place: "cloud", message: "The VPS computer isn't ready. Check it in the Screen panel." });
   });
 
   it("keeps the whole cause: no row cuts it", () => {
     const long = `${"x".repeat(400)}.`;
-    expect(placeUnavailable("vm", { state: "place-failed", params: { bot: "Scout", cause: long }, source: "works-on" }).message)
+    expect(placeUnavailable("cloud", { state: "place-failed", params: { bot: "Scout", cause: long }, source: "works-on" }).message)
       .toBe(`${long} Check it in the Screen panel.`);
   });
 });

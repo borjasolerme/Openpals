@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { writeFileAtomic } from "./atomic.ts";
 import { CONTROL_BUSY, CONTROL_HANDED_BACK, CONTROL_REFUSAL_PLAIN, CONTROL_WAITED, controlRefusal, createControlClient } from "./control-client.ts";
 import { computerPersonAwayText } from "./computer-wait.ts";
 import { hostTimeout } from "./testing/host-timeout.ts";
@@ -22,16 +21,13 @@ describe("lazy host claim and pin on use (issue #1650)", () => {
   let home = "";
   let data = "";
   let ui = "";
-  let stateFile = "";
   let dumpFile = "";
   let finishFile = "";
   let output = "";
   let child: ChildProcess | null = null;
   let base = "";
 
-  // No Local VM anywhere, so an Auto turn falls past attachLocalVm to the host fallback.
-  const vmState = () => writeFileAtomic(stateFile, JSON.stringify({ noContainers: true }));
-  const resetTurn = () => { vmState(); rmSync(dumpFile, { force: true }); rmSync(finishFile, { force: true }); };
+  const resetTurn = () => { rmSync(dumpFile, { force: true }); rmSync(finishFile, { force: true }); };
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(base + path, {
       method, headers: { "content-type": "application/json" },
@@ -83,14 +79,13 @@ describe("lazy host claim and pin on use (issue #1650)", () => {
     base = `http://127.0.0.1:${port}`;
     output = "";
     // The desktop app's own server: it hears the app's driver record over its parent port, as Electron hands it over.
-    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/group-local-vm-hooks.mjs")).href,
-      "--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
+    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
         HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
         TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui, OMB_TEST_VM_STATE: stateFile,
+        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
         OMB_USER_DATA: join(home, "user-data"), OMB_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"),
         OMB_COMPUTER_CALL_WAIT_MS: String(CALL_WAIT_MS),
         OMB_COMPUTER_CALL_ACT_WITHIN_MS: String(ACT_WITHIN_MS), ...env,
@@ -120,10 +115,8 @@ describe("lazy host claim and pin on use (issue #1650)", () => {
     home = mkdtempSync(join(tmpdir(), "omb-host-lazy-claim-"));
     data = join(home, "data");
     ui = join(home, "static");
-    stateFile = join(home, "vm.json");
     dumpFile = join(home, "dump.json");
     finishFile = join(home, "finish");
-    vmState();
     mkdirSync(data);
     mkdirSync(join(ui, "assets"), { recursive: true });
     writeFileSync(join(ui, "index.html"), "<title>Host lazy claim</title>");

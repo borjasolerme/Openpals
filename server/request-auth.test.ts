@@ -147,8 +147,7 @@ describe("scopes", () => {
     ] as const) expect(requiredScope(method, path), `${method} ${path}`).toBe("client");
     for (const [method, path] of [
       ["POST", "/api/cli-test"], ["GET", "/api/cli-candidates"], ["GET", "/api/instances"], ["PATCH", "/api/instances/claude"],
-      ["POST", "/api/bots/x/computer/exec"], ["POST", "/api/bots/x/computer/join"], ["POST", "/api/local-computer/run"],
-      ["POST", "/api/bots/x/local-computer/join"], ["POST", "/api/bots/x/local-computer/screenshot"],
+      ["POST", "/api/bots/x/computer/exec"], ["POST", "/api/bots/x/computer/join"],
       ["GET", "/api/computers/boxes"], ["POST", "/api/computers/boxes/bx_23456789/delete"],
       ["POST", "/api/webhooks"], ["POST", "/api/webhooks/w/rotate"], ["POST", "/api/bots/x/skills"], ["PATCH", "/api/bots/x/skills/s"],
       ["PATCH", "/api/bots/x/model"], ["PATCH", "/api/groups/g/setup"], ["POST", "/api/teams/import"], ["GET", "/api/teams/scout"],
@@ -375,13 +374,12 @@ describe("resolveRequestAuth", () => {
     );
     expect(connectorRefresh.auth).toBeNull();
     expect(connectorRefresh.status).toBe(403);
-    for (const path of ["/api/desktop-viewer/vps/bot-1", "/api/desktop-viewer/local/shared/websockify", "/api/webhooks/hook-1/address", "/api/setup-import/grok",
-      "/api/local-computer", "/api/bots/bot-1/local-computer"]) {
+    for (const path of ["/api/desktop-viewer/vps/bot-1", "/api/desktop-viewer/vps/bot-1/websockify", "/api/webhooks/hook-1/address", "/api/setup-import/grok"]) {
       expect(resolveRequestAuth(request({ host: "127.0.0.1:8799" }, "GET"), options(path)).status, path).toBe(403);
       expect(resolveRequestAuth(request({ host: "127.0.0.1:8799", "x-openmausbot-desktop-owner": "owner-token-123" }, "GET"), options(path)).auth?.kind, path)
         .toBe("loopback");
     }
-    for (const path of ["/api/webhooks", "/api/local-computer/instances", "/api/bots/bot-1/local-computer/screenshot"]) {
+    for (const path of ["/api/webhooks", "/api/computers/vps"]) {
       expect(resolveRequestAuth(request({ host: "127.0.0.1:8799" }, "GET"), options(path)).auth?.kind, path).toBe("loopback");
     }
     expect(resolveRequestAuth(

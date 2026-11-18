@@ -1,4 +1,4 @@
-// Security: the private folder, inside a bot's own workspace or Local VM workspace, where a secret the person gave for the
+// Security: the private folder, inside a bot's own workspace, where a secret the person gave for the
 // bot's commands lives for a day. Nothing that syncs, backs up, moves, links, attaches, publishes, uploads or snapshots
 // workspace files may carry anything under it.
 export const SECRET_FOLDER = ".openmausbot-secrets";

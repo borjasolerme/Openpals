@@ -6,7 +6,7 @@ import { inSecretFolder } from "./secret-folder.ts";
 // Connection sections stay on the destination whole: a restored URL must never redirect an API key kept from that device.
 const PORTABLE_CONFIG_KEYS = [
   "profile", "language", "budgets", "billing", "rooms", "threads",
-  "localVm", "features", "browserProfiles",
+  "features", "browserProfiles",
 ] as const;
 
 export function portableWorkspaceConfig(value: unknown): Record<string, unknown> {
@@ -32,6 +32,7 @@ export function excludedWorkspaceAuthPath(path: string): boolean {
   if (/^(?:highlevel\.json\.enc|highlevel-key)(?:$|\.\d+\.[0-9a-f-]+\.tmp$)/.test(path)) return true;
   return /^(?:(?:providers|caddy|chrome-profile|\.agent-browser)(?:\/|$)|workspace-credentials\.json$|external-runtimes\.json$|browser-engine-key$)/.test(path) ||
     /^(?:config\.json|webhooks\.json|workspace-credentials\.json|external-runtimes\.json|browser-engine-key|sessions\.json|tunnel-account\.json)\.\d+(?:\.[0-9a-f-]+)?\.tmp$/.test(path) ||
+    // Website sign-ins a removed desktop left in its folders on this computer.
     /^(?:vm-home|vm-homes\/[^/]+)\/\.browser-profiles(?:\/|$)/.test(path);
 }
 

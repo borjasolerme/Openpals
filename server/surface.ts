@@ -8,7 +8,7 @@ export type { Surface, PlaceSource };
 /** The bot's "Works on" setting; undefined = Auto. */
 export type Destination = Surface | "off" | undefined;
 
-export type ComputerWant = "cloud" | "vm" | "local" | "off" | undefined;
+export type ComputerWant = "cloud" | "local" | "off" | undefined;
 
 export interface MountedSurfaces {
   computer: Surface | null;
@@ -24,14 +24,14 @@ export interface SurfacePlan {
   botOpened?: true;
 }
 
-const SURFACES: ReadonlySet<string> = new Set(["cloud", "vm", "local", "browser"]);
+const SURFACES: ReadonlySet<string> = new Set(["cloud", "local", "browser"]);
 
 export function parseSurface(value: unknown): Surface | undefined {
-  // SAFETY: the set membership check is the narrowing; only the four literals pass.
+  // SAFETY: the set membership check is the narrowing; only the three literals pass.
   return typeof value === "string" && SURFACES.has(value) ? (value as Surface) : undefined;
 }
 
-export function surfaceOfComputerKind(kind: "box" | "vps" | "vm" | "local" | null): Surface | null {
+export function surfaceOfComputerKind(kind: "box" | "vps" | "local" | null): Surface | null {
   if (kind === "box" || kind === "vps") return "cloud";
   return kind;
 }
@@ -149,8 +149,6 @@ export function surfaceLabel(surface: Surface): string {
   switch (surface) {
     case "cloud":
       return "the cloud computer";
-    case "vm":
-      return "the Local VM";
     case "local":
       return "this computer";
     case "browser":
@@ -181,7 +179,7 @@ const ASK_TO_SWITCH = `explain the mismatch and ask the user to change where thi
 const REPORT_BACK = "tell the bot that gave you this job which place you need and end your turn, because no person watches this conversation";
 
 const SURFACE_AUTHORITY =
-  ` For browser and computer tasks, use Openpals' mounted browser/computer tools first: inspect the target, perform the action, and verify its result before claiming success. Discover deferred tools by their server/name when needed. Do not substitute the provider's own desktop, a shell-launched browser, or another automation path for the selected Openpals surface. Ordinary code and file tasks may still use their normal tools. Announcing an action is not performing it. A request naming another place does not move these tools: this computer is the user's host, Local VM is an isolated desktop, the cloud computer is remote, and the built-in browser is a separate browser. If the requested place differs from the mounted one, ${ASK_TO_SWITCH}; never act on a different computer or describe a host window as a VM.`;
+  ` For browser and computer tasks, use Openpals' mounted browser/computer tools first: inspect the target, perform the action, and verify its result before claiming success. Discover deferred tools by their server/name when needed. Do not substitute the provider's own desktop, a shell-launched browser, or another automation path for the selected Openpals surface. Ordinary code and file tasks may still use their normal tools. Announcing an action is not performing it. A request naming another place does not move these tools: this computer is the user's host, the cloud computer is remote, and the built-in browser is a separate browser. If the requested place differs from the mounted one, ${ASK_TO_SWITCH}; never act on a different computer.`;
 
 /** Built from what was actually mounted, never from the setting, so the model is only told about tools it can call. */
 export function surfacePrompt(
@@ -216,7 +214,7 @@ export function surfacePrompt(
   if (opts.pinned) {
     text += ` This conversation is pinned to ${surfaceLabel(opts.pinned)}; changing places requires ${opts.canSelect ? "select_computer or " : ""}the user's choice in ${PLACE_CONTROL}, not a different tool name.`;
   }
-  if (opts.canSelect) text += " For a screen task, use select_computer with no arguments when you need to inspect the actual available targets. Choose the requested place from its result; if the user left the place open, use a suitable available target or surface auto instead of asking them to operate the menu. Browser-only work can stay in Browser; when it needs desktop apps or capabilities the current Browser lacks, select an available Local VM without asking the user to switch it manually. Choose before taking actions, and do not repeat actions already completed if the task must continue elsewhere. Openpals can start an existing configured computer and highlight the selected target. If the right tools are already mounted, use them directly. On a pending switch, end this turn: the original request resumes automatically with the new tools, and then you must carry out the task. Only ask for input for a genuine blocker, such as missing setup, required sign-in or an approval. Never silently replace an explicitly requested VM with the host desktop.";
+  if (opts.canSelect) text += " For a screen task, use select_computer with no arguments when you need to inspect the actual available targets. Choose the requested place from its result; if the user left the place open, use a suitable available target or surface auto instead of asking them to operate the menu. Browser-only work can stay in Browser; when it needs desktop apps or capabilities the current Browser lacks, select an available computer without asking the user to switch it manually. Choose before taking actions, and do not repeat actions already completed if the task must continue elsewhere. Openpals can start an existing configured computer and highlight the selected target. If the right tools are already mounted, use them directly. On a pending switch, end this turn: the original request resumes automatically with the new tools, and then you must carry out the task. Only ask for input for a genuine blocker, such as missing setup, required sign-in or an approval. Never silently replace an explicitly requested computer with the host desktop.";
   if (opts.canSelect) text += " If no suitable computer is running but its provider is configured, select_computer can provision one for this computer task; reuse existing resources first. Do not provision merely for ordinary chat or inspection.";
   if (opts.canSelect && !computer && !mounted.browser) text += " No computer or browser tools are mounted yet; select_computer is the way to connect them before screen work, not a reason to claim you already performed it.";
   if (computer || mounted.browser) text += CONNECTED_APP_FIRST;

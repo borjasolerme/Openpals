@@ -3,12 +3,11 @@ import { describe, expect, it } from "vitest";
 import { soulSystemPrompt } from "./bot-folder.ts";
 import { BUILT_IN_BROWSER_SYSTEM_PROMPT } from "./browser-engine.ts";
 import {
-  longCommandsPrompt,
+  LONG_COMMANDS_TEXT,
   buildSystemPrompt,
   CONVERSATIONAL_STYLE_PROMPT,
   userProfileSystemPrompt,
   computerPrompt,
-  resolveComputerPromptKind,
   mentionPrompt,
   COMPOSIO_PROMPT,
   composioSystemPrompt,
@@ -47,26 +46,10 @@ describe("sign-ins with a Google or Microsoft account", () => {
   });
 });
 
-describe("resolveComputerPromptKind", () => {
-  // Rows the mounts already refuse are pinned here because no dispatchable engine in the test fleet lacks the capability.
-  it.each([
-    [{ kind: "vm", vmPrivate: false }, "vm-shared"],
-    [{ kind: "vm", vmPrivate: true }, "vm-private"],
-    [{ kind: "box", vmPrivate: false }, "box"],
-    [{ kind: "vps", vmPrivate: false }, "vps"],
-    [{ kind: "local", vmPrivate: false }, "local"],
-    [{ kind: null, vmPrivate: true }, null],
-  ] as const)("resolves %j to %s", (input, expected) => {
-    expect(resolveComputerPromptKind(input)).toBe(expected);
-  });
-});
-
 describe("computerPrompt", () => {
   it("gives every kind its own paragraph plus the sign-in policy, and silence to none", () => {
     expect(computerPrompt(null)).toBe("");
     const paragraphs: Record<string, string> = {
-      "vm-private": "your own isolated Cua sandbox",
-      "vm-shared": "shared, isolated Cua sandbox",
       box: "You control the assigned cloud computer",
       vps: "This is the user's own VPS",
       local: "act on the user's computer",
@@ -196,10 +179,10 @@ describe("computerPrompt", () => {
     expect(prompt).toContain("Do not silently retry a background refusal");
     expect(prompt).toContain("including through shell scripts, AppleScript/System Events");
     expect(prompt).toContain("If a background action unexpectedly changes focus");
-    expect(computerPrompt("vm-private")).not.toContain("user asked for foreground control");
+    expect(computerPrompt("vps")).not.toContain("user asked for foreground control");
   });
   it("tells sandbox desktops, and never the user's own computer, to send keys in the foreground", () => {
-    for (const kind of ["vm-private", "vm-shared", "vps"] as const) {
+    for (const kind of ["vps"] as const) {
       expect(computerPrompt(kind)).toContain(SANDBOX_DESKTOP_INPUT);
       expect(computerPrompt(kind).indexOf(SANDBOX_DESKTOP_INPUT)).toBeLessThan(computerPrompt(kind).indexOf(SIGN_IN_PROMPT));
     }
@@ -212,12 +195,10 @@ describe("computerPrompt", () => {
   });
 
   it("shares the authorized sign-in policy across every computer and browser surface", () => {
-    expect(computerPrompt("vm-private")).toContain("your own isolated Cua sandbox");
-    expect(computerPrompt("vm-shared")).toContain("a shared, isolated Cua sandbox");
     expect(computerPrompt("box")).toContain("You control the assigned cloud computer");
     expect(computerPrompt("vps")).toContain("self-hosted remote Linux computer");
     expect(computerPrompt("local")).toContain("act on the user's computer");
-    for (const kind of ["vm-private", "vm-shared", "box", "vps", "local"] as const) {
+    for (const kind of ["box", "vps", "local"] as const) {
       expect(computerPrompt(kind).endsWith(SIGN_IN_PROMPT)).toBe(true);
       expect(computerPrompt(kind).startsWith(" ")).toBe(true);
     }
@@ -360,37 +341,19 @@ describe("composioSystemPrompt", () => {
   });
 });
 
-describe("longCommandsPrompt", () => {
-  it("names Bash's limit everywhere and vm_exec's own limit only with a Local VM", () => {
-    for (const kind of [null, "local", "vps", "box"] as const) {
-      const text = longCommandsPrompt(kind);
-      expect(text).toContain("`timeout` in milliseconds, up to 86400000, which is 1440 minutes, unless a lower limit is set here");
-      expect(text).toContain("Never wait inside a command for CI, a deploy or any other job to finish (no sleep loops or repeated polls): check it once");
-      expect(text).toContain("tell the person what you made (with links). Only on a turn the person started in their own chat, set wait_until or a one-time trigger to check back and end your turn");
-      expect(text).toContain("When the person writes while you work, answer them first.");
-      expect(text).not.toContain("vm_exec");
-    }
-    for (const kind of ["vm-private", "vm-shared"] as const) {
-      expect(longCommandsPrompt(kind)).toContain("vm_exec takes `timeout_seconds` instead (default 60, at most 300)");
-    }
-  });
-
-  it("keeps a long command in the foreground, and trusts only its own fresh exit code", () => {
-    for (const kind of [null, "local", "vps", "box"] as const) {
-      const text = longCommandsPrompt(kind);
-      expect(text).toContain("keep the command in the foreground until it exits");
-      expect(text).toContain("split work that cannot finish within that into shorter pieces");
-      expect(text).toContain("A detached job may be killed when the call ends");
-      expect(text).not.toContain("nohup");
-      expect(text).toContain("trust only the command's own fresh exit code and output");
-      expect(text).toContain("cannot set a wait, so finish it in this turn");
-    }
-  });
-
-  it("keeps the Local VM's own detached path, where the container outlives the call", () => {
-    for (const kind of ["vm-private", "vm-shared"] as const) {
-      expect(longCommandsPrompt(kind)).toContain("may start detached inside it (`nohup <command> > /tmp/<job>.log 2>&1 &`)");
-    }
+describe("LONG_COMMANDS_TEXT", () => {
+  it("names Bash's limit and keeps a long command in the foreground, trusting only its own fresh exit code", () => {
+    const text = LONG_COMMANDS_TEXT;
+    expect(text).toContain("`timeout` in milliseconds, up to 86400000, which is 1440 minutes, unless a lower limit is set here");
+    expect(text).toContain("Never wait inside a command for CI, a deploy or any other job to finish (no sleep loops or repeated polls): check it once");
+    expect(text).toContain("tell the person what you made (with links). Only on a turn the person started in their own chat, set wait_until or a one-time trigger to check back and end your turn");
+    expect(text).toContain("When the person writes while you work, answer them first.");
+    expect(text).toContain("keep the command in the foreground until it exits");
+    expect(text).toContain("split work that cannot finish within that into shorter pieces");
+    expect(text).toContain("A detached job may be killed when the call ends");
+    expect(text).not.toContain("nohup");
+    expect(text).toContain("trust only the command's own fresh exit code and output");
+    expect(text).toContain("cannot set a wait, so finish it in this turn");
   });
 });
 

@@ -26,7 +26,7 @@ export const botDefaultsProfileSchema = profilePatchSchema.extend({
   color: z.enum(MAUS_COLOR_NAMES).optional(),
   mascotExpression: z.string().max(60).nullable().optional(),
   modelSelection: botDefaultModelSchema.optional(),
-  computer: z.enum(["cloud", "vm", "local", "browser", "off"]).nullable().optional(),
+  computer: z.enum(["cloud", "local", "browser", "off"]).nullable().optional(),
   cloudBackend: z.enum(["box", "vps", "lent"]).optional(),
   lentComputerId: z.string().uuid().optional(),
   autoStartVps: z.boolean().optional(),

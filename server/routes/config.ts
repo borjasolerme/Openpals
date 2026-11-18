@@ -16,7 +16,6 @@ import {
   changedInstanceIds,
   engineLaunches,
   loadConfig,
-  localVmMode,
   mergeOpenCodeProviderKeys,
   parseConfigPatch,
   saveConfig,
@@ -29,7 +28,6 @@ import type { RequestAuth } from "../request-auth.ts";
 import { DECIDER_KEY_REJECTED, deciderPatchKey, deciderSavePatch, deciderSharedKeyUsable, type Decider } from "../decider/index.ts";
 import type { ProviderRegistry } from "../harness/registry.ts";
 import { forgetKey } from "../key-rejections.ts";
-import type { ComputerIdleTimer } from "../computer-idle.ts";
 import { PROVIDER_KEY_KINDS } from "../provider-key-check.ts";
 import type { SessionRegistry } from "../sessions.ts";
 import { parseSkillMd } from "../skills.ts";
@@ -67,17 +65,10 @@ export interface ConfigRouteDeps {
    * person's bots would then get that person's apps. */
   sharedMembership: () => boolean;
   providerConfigs(): InstanceConfigMap;
-  localVmIdleMs(): number;
-  localVmIdles: { values(): Iterable<Pick<ComputerIdleTimer, "setIdleMs">> };
-  localVmActiveThreads: { readonly size: number };
-  localVmLifecycleBusy: { readonly size: number };
-  localVmImageBusy: Pick<BusyFlag, "get">;
-  localVmModeChangeBusy: Pick<BusyFlag, "set">;
   providerConfigBusy: BusyFlag;
   computerProviderConfigTransitions: Pick<Set<RemoteComputerProvider>, "add" | "delete">;
   managedBoatOwners(): boat.ManagedBoatOwner[];
   providerOperationConflict(provider: RemoteComputerProvider): string | null;
-  perBotLocalVmCountForModeChange(): Promise<number | null>;
   checkedModelSelection(raw: unknown, current?: { selection: ModelSelection; busy: boolean }, requireAvailableModel?: boolean): ModelSelectionCheck;
   browserSessionSpec(binaryPath: string, session: string, profile: string | undefined): { command: string; env: Record<string, string> };
   configStatus(): ConfigStatus;
@@ -96,9 +87,8 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
   const {
     store, cfg, registry, sessions, browserCleanup, browserLive, browserRuntime, usedBrowserSessions, decider,
     closeBrowser, browserEngineSwitched, sharedMembership, providerConfigs,
-    localVmIdleMs, localVmIdles, localVmActiveThreads, localVmLifecycleBusy, localVmImageBusy, localVmModeChangeBusy,
     providerConfigBusy, computerProviderConfigTransitions, managedBoatOwners, providerOperationConflict,
-    perBotLocalVmCountForModeChange, checkedModelSelection, browserSessionSpec, configStatus,
+    checkedModelSelection, browserSessionSpec, configStatus,
     configForAccess, resyncOpenCodeProviderKeys, revokeEngineCapabilities, reloadProviders, broadcast, drainQueuedSends, postiz,
   } = deps;
   return async ({ req, res, url, path, method, auth, json, readBody }) => {
@@ -209,8 +199,6 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
         ...(changingVpsAlias ? ["vps" as const] : []),
       ];
       providerConfigBusy.set(true);
-      const changingLocalVmMode = patch.localVm?.mode !== undefined && patch.localVm.mode !== localVmMode(cfg);
-      if (changingLocalVmMode) localVmModeChangeBusy.set(true);
       try {
         for (const provider of transitioningProviders) {
           const conflict = providerOperationConflict(provider);
@@ -303,24 +291,6 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
           }
         }
 
-        if (changingLocalVmMode) {
-          if (localVmActiveThreads.size > 0 || localVmLifecycleBusy.size > 0 || localVmImageBusy.get()) {
-            return json(res, 409, { error: "stop Local VM turns and setup actions before changing the Local VM isolation mode" });
-          }
-          if (localVmMode(cfg) === "per-bot" && patch.localVm?.mode === "shared") {
-            const existing = await perBotLocalVmCountForModeChange();
-            if (existing === null) {
-              return json(res, 409, {
-                error: "start the container runtime and delete every per-bot VM before switching to shared mode",
-              });
-            }
-            if (existing > 0) {
-              return json(res, 409, {
-                error: `delete the ${existing} per-bot Local VM${existing === 1 ? "" : "s"} before switching to shared mode`,
-              });
-            }
-          }
-        }
       const requestedComposioKey = patch.composio?.apiKey;
       if (requestedComposioKey !== undefined) {
         if (requestedComposioKey.trim()) {
@@ -538,9 +508,6 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
       postiz?.configSaved(patch);
       // A saved key reaches an engine through the environment its status read uses, often with no reload.
       registry.forgetSnapshots();
-      if (patch.localVm?.idleTimeoutMinutes !== undefined) {
-        for (const idle of localVmIdles.values()) idle.setIdleMs(localVmIdleMs());
-      }
       let browserReferenceCleanupError: unknown = null;
       if (patch.signIn !== undefined) {
         sessions.revalidateEmailSessions();
@@ -612,7 +579,6 @@ export function createConfigRoutes(deps: ConfigRouteDeps): RouteHandler {
       return json(res, 200, configForAccess(finalized.value, auth));
       } finally {
         for (const provider of transitioningProviders) computerProviderConfigTransitions.delete(provider);
-        if (changingLocalVmMode) localVmModeChangeBusy.set(false);
         providerConfigBusy.set(false);
       }
     }

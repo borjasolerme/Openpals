@@ -10,7 +10,7 @@ import {
 const PARAMS: PlaceParams = {
   bot: "Scout", engine: "Claude", model: "Llama", computer: "Team desk", hours: 50, month: "November",
   words: "Start the Boat plan to create sandboxes.", reason: "CUA Driver is not ready.",
-  cause: "the Local VM is not ready",
+  cause: "the VPS computer is not ready",
 };
 
 const facts = (patch: Partial<PlaceFacts> = {}): PlaceFacts => ({
@@ -82,7 +82,7 @@ describe("U1: one line and at most one action for every state", () => {
       short: "Not available now", line: "Cloud desktops can't start right now. It isn't anything you did.", action: { id: "try-again" },
     });
     expect(placeViewOf("auto", {}, admin).line)
-      .toBe("Uses the built-in browser, a private desktop on this computer, or this computer's screen, whichever the task needs.");
+      .toBe("Uses the built-in browser or this computer's screen, whichever the task needs.");
     expect(placeViewOf("cc-provider", { bot: "Scout", words: "Start the $20/month Boat plan." }, admin))
       .toMatchObject({ short: "Couldn't start", line: "Your Boat account couldn't start Scout's cloud desktop: Start the $20/month Boat plan." });
   });
@@ -106,7 +106,7 @@ describe("placeState", () => {
     expect(placeState(facts({ backend: "vps" })).state).toBe("vps");
   });
 
-  it("reads Auto, Off, the browser, this computer and a Local VM", () => {
+  it("reads Auto, Off, the browser and this computer", () => {
     expect(placeState(facts({ place: "auto" })).state).toBe("auto");
     expect(placeState(facts({ place: "off" })).state).toBe("off");
     expect(placeState(facts({ place: "browser" })).state).toBe("browser");
@@ -115,13 +115,11 @@ describe("placeState", () => {
     expect(placeState(facts({ place: "local", local: { ready: false, reason: "Not yet." } }))).toEqual({
       state: "local-unavailable", params: { bot: "Scout", reason: "Not yet." },
     });
-    expect(placeState(facts({ place: "vm", engine: { name: "X", computer: false, browser: true, signedIn: true } })).state).toBe("vm-cannot");
   });
 
   it("words the Auto line for where this server runs", () => {
-    expect(placeView(facts({ place: "auto" })).line).toMatch(/a private desktop on this computer/);
-    expect(placeView(facts({ place: "auto", server: "pc" })).line).not.toMatch(/Local VM/);
-    expect(placeView(facts({ place: "auto", server: "linux" })).line).toMatch(/a running private desktop/);
+    expect(placeView(facts({ place: "auto" })).line).toMatch(/this computer's screen/);
+    expect(placeView(facts({ place: "auto", server: "linux" })).line).toBe("Uses the built-in browser.");
     expect(placeView(facts({ engine: { name: "Claude", computer: true, browser: true, signedIn: false } })).line)
       .toBe(placeViewOf("cc-sign-in", { bot: "Scout", engine: "Claude" }, { role: "admin", server: "mac" }).line);
   });

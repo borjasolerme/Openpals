@@ -1,6 +1,6 @@
 // A bot's browser has one page and one set of refs, so one conversation drives it at a time. Another conversation's call
 // waits for it in plain sight instead of being refused, and a holder that has stopped browsing gives it up to a waiter.
-import { settledWithin } from "../auto-vm-claims.ts";
+import { settledWithin } from "../lazy-computer-claims.ts";
 import type { ComputerHolder } from "../computer-wait.ts";
 import { serverLine } from "../server-lines.ts";
 import type { TurnOwner, TurnResources } from "../turn-resources.ts";

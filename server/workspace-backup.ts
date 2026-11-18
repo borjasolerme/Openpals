@@ -1,7 +1,7 @@
 // Encrypted filesystem snapshot: quiesce writers before create/commit; restore runs before config/store load.
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID, scrypt } from "node:crypto";
 import {
-  chmodSync, closeSync, constants, cpSync, createReadStream, createWriteStream, existsSync,
+  chmodSync, closeSync, constants, createReadStream, createWriteStream, existsSync,
   fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync, readdirSync,
   readSync, realpathSync, renameSync, rmSync, writeFileSync, writeSync,
 } from "node:fs";
@@ -45,7 +45,7 @@ const EXCLUSION_NOTES = [
   "Downloaded tools and caches (they can be installed again), and recorded browser step screenshots (export them from a conversation to keep them).",
   "Installed dependency folders (node_modules) and symbolic links inside conversation work folders; reinstall or recreate them in the project.",
   "External project folders, CLI login homes, browser session homes, OS keychains, companion devices and other servers.",
-  "VM/container disk layers and remote cloud data; durable files inside this workspace are included.",
+  "Container disk layers and remote cloud data; durable files inside this workspace are included.",
   "Waits bots set up: they end within a week, so ask the bot again after restoring.",
 ];
 const RESTORE_WARNING = "Restoring pauses routines, webhooks and calendar calls, ends every wait, and does not resume pending delegations, queued chat messages or queued runs. Definitions and historical receipts are retained; review before enabling them again.";
@@ -721,21 +721,6 @@ function prepareRestore(dataDir: string, id: string, manifest: Manifest): string
   const newConfig = join(prepared, "config.json");
   if (existsSync(oldConfig) || existsSync(newConfig)) {
     writeJson(newConfig, restoredWorkspaceConfig(existsSync(newConfig) ? privateJson(newConfig) : {}, existsSync(oldConfig) ? privateJson(oldConfig) : {}));
-  }
-  const browserHomes = ["vm-home"];
-  const vmHomes = join(dataDir, "vm-homes");
-  if (entryExists(vmHomes)) {
-    if (!lstatSync(vmHomes).isDirectory()) throw new Error("Stop managed desktops and repair the VM home directory before restoring.");
-    for (const name of readdirSync(vmHomes)) if (validRelative(name)) browserHomes.push(`vm-homes/${name}`);
-  }
-  for (const home of browserHomes) {
-    const homePath = join(dataDir, home);
-    if (!entryExists(homePath)) continue;
-    if (!lstatSync(homePath).isDirectory()) throw new Error("Stop managed desktops and repair the VM home directory before restoring.");
-    const source = join(dataDir, home, ".browser-profiles");
-    if (!entryExists(source)) continue;
-    folder(join(prepared, home));
-    cpSync(source, join(prepared, home, ".browser-profiles"), { recursive: true, dereference: false, verbatimSymlinks: true, errorOnExist: true, force: false });
   }
   changeJson("routines.json", (value) => {
     if (!record(value)) throw new Error("Invalid routine definitions in workspace backup.");

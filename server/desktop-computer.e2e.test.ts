@@ -7,7 +7,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { writeFileAtomic } from "./atomic.ts";
 import { freePortBlock } from "./testing/ports.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 
@@ -18,7 +17,6 @@ describe("this computer belongs to the desktop app's own server", () => {
   let home = "";
   let data = "";
   let ui = "";
-  let stateFile = "";
   let dumpFile = "";
   let finishFile = "";
   let output = "";
@@ -27,7 +25,6 @@ describe("this computer belongs to the desktop app's own server", () => {
   const record = { mode: "embedded", status: "ready", socketPath: "", mcpCommand: "/fixture/cua-driver", mcpArgs: ["mcp"], mcpEnv: {} };
 
   const resetTurn = () => {
-    writeFileAtomic(stateFile, JSON.stringify({ noContainers: true }));
     rmSync(dumpFile, { force: true });
     rmSync(finishFile, { force: true });
   };
@@ -69,15 +66,14 @@ describe("this computer belongs to the desktop app's own server", () => {
     const port = await freePortBlock([0, 1]);
     base = `http://127.0.0.1:${port}`;
     output = "";
-    const hooks = ["--import", pathToFileURL(join(ROOT, "server/testing/group-local-vm-hooks.mjs")).href,
-      ...(desktop ? ["--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href] : [])];
+    const hooks = desktop ? ["--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href] : [];
     const proc = spawn(process.execPath, [...hooks, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
         HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
         TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui, OMB_TEST_VM_STATE: stateFile,
+        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
         // The app's record, where the app keeps it and where this server is pointed: neither lets it in.
         OMB_USER_DATA: join(home, "user-data"),
         ...(desktop ? { OMB_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json") } : {}),
@@ -105,7 +101,6 @@ describe("this computer belongs to the desktop app's own server", () => {
     home = mkdtempSync(join(tmpdir(), "omb-desktop-computer-"));
     data = join(home, "data");
     ui = join(home, "static");
-    stateFile = join(home, "vm.json");
     dumpFile = join(home, "dump.json");
     finishFile = join(home, "finish");
     record.socketPath = join(home, "cua.sock");

@@ -14,7 +14,7 @@ import {
   IMAGE_LAYER_LABEL,
   IMAGE_LAYER_VERSION,
   MANAGED_LABEL,
-} from "./container-computer.ts";
+} from "./cua-image.ts";
 import { VPS_CONTAINER_LABEL, VPS_IMAGE, VPS_MANAGED_LABEL, VPS_VIEWER_LABEL, vpsContainerName } from "./vps-computer.ts";
 import { CONTROL_BUSY, CONTROL_REFUSAL_PLAIN, controlRefusal, createControlClient } from "./control-client.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
@@ -563,7 +563,7 @@ createServer(socket => socket.end()).listen(port, '127.0.0.1');
       expect(bridgeArgs.includes("production-vps")).toBe(true);
       expect(bridgeArgs.includes(CONTAINER_ID)).toBe(true);
 
-      // The Local VM boot probe also hits the fake docker, without -H.
+      // Only the VPS calls count: the fake docker also answers calls without -H.
       const invocations = readFileSync(dockerLog, "utf8")
         .split("\n")
         .filter((line) => line.startsWith("-H ssh://"));

@@ -270,7 +270,7 @@ describe("cloud computer power", () => {
     const machine = await power.start(bot("bot-a"), turn("t1"));
     expect(machine).toMatchObject({ id: boxIdOf("bot-a"), state: "ready" });
     expect(fake.readyBoat).toHaveBeenCalledOnce();
-    expect(broadcasts).toEqual([{ kind: "computer", botId: "bot-a", state: "waking", place: "cloud" }]);
+    expect(broadcasts).toEqual([{ kind: "computer", botId: "bot-a", state: "waking" }]);
     power.released(turn("t1"));
     await vi.advanceTimersByTimeAsync(10 * MINUTE);
     expect(sleeps()).toEqual(["bot-a"]);
@@ -283,7 +283,7 @@ describe("cloud computer power", () => {
   it("the first use creates the computer, and a start that fails still leaves it timed", async () => {
     expect(await power.start(bot("new"), turn("t1"))).toMatchObject({ state: "ready" });
     expect(fake.provisionBoat).toHaveBeenCalledOnce();
-    expect(broadcasts).toEqual([{ kind: "computer", botId: "new", state: "provisioning", place: "cloud" }]);
+    expect(broadcasts).toEqual([{ kind: "computer", botId: "new", state: "provisioning" }]);
 
     fake.states.set("slow", "archived");
     fake.readyBoat = vi.fn(async () => { fake.states.set("slow", "ready"); throw new Error("the cloud computer did not wake in time"); });

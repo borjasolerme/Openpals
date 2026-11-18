@@ -58,8 +58,8 @@ describe(`POST ${COMPUTER_JOURNAL_PATH}`, () => {
     expect(recorded).toEqual([]);
   });
 
-  it("refuses a Local VM or cloud turn with 403", async () => {
-    for (const capability of [{ ...HOST, localVmTarget: {} }, { ...HOST, boxId: null }, { ...HOST, boxId: "box1" }, { ...HOST, kind: "browser" }]) {
+  it("refuses a cloud turn with 403", async () => {
+    for (const capability of [{ ...HOST, boxId: null }, { ...HOST, boxId: "box1" }, { ...HOST, kind: "browser" }]) {
       const { recorded, send } = await fixture(capability);
       expect((await send(ENTRY)).status).toBe(403);
       expect(recorded).toEqual([]);

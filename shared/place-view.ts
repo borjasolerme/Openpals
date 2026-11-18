@@ -4,7 +4,7 @@
 // English mirrors src/locales/en.json `place.*` exactly (a test holds them
 // together): the server has no i18n.
 
-export type Place = "cloud" | "vm" | "local" | "browser";
+export type Place = "cloud" | "local" | "browser";
 
 /** Every state a place can be in. cc-* is the cloud computer. */
 export const PLACE_STATES = [
@@ -13,7 +13,7 @@ export const PLACE_STATES = [
   "cc-unavailable", "cc-no-start", "cc-clearing", "cc-provider",
   "cc-needs-key", "vps",
   "browser", "browser-off", "browser-cannot",
-  "local", "local-unavailable", "vm", "vm-cannot", "place-failed",
+  "local", "local-unavailable", "place-failed",
   "off",
 ] as const;
 export type PlaceState = (typeof PLACE_STATES)[number];
@@ -27,7 +27,7 @@ export type PlaceSource = "works-on" | "pin" | "auto-pin" | "routine" | "room";
  * stored row, one sentence a phone can read. */
 export const PLACE_ACTIONS = [
   "choose-model", "open-tools", "sign-in", "start", "wake", "watch", "manage-computers",
-  "try-again", "add-boat-key", "turn-on-browser", "open-vm-settings",
+  "try-again", "add-boat-key", "turn-on-browser",
   "clear-pin", "change-routine", "open-computer-panel",
 ] as const;
 export type PlaceActionId = (typeof PLACE_ACTIONS)[number];
@@ -105,8 +105,8 @@ export interface PlaceFacts {
 /** The English catalog, mirrored by en.json. */
 export const PLACE_EN = {
   "place.view.auto.short": "Chooses for you",
-  "place.view.auto.lineDesktop": "Uses the built-in browser, a private desktop on this computer, or this computer's screen, whichever the task needs.",
-  "place.view.auto.lineLinux": "Uses the built-in browser, or a running private desktop when a task needs one.",
+  "place.view.auto.lineDesktop": "Uses the built-in browser or this computer's screen, whichever the task needs.",
+  "place.view.auto.lineLinux": "Uses the built-in browser.",
   "place.view.ccCannot.short": "Not with this model",
   "place.view.ccCannot.line": "{model} can't use a desktop. Choose a model that can, such as Claude or ChatGPT.",
   "place.view.ccToolsOff.short": "Not allowed",
@@ -145,10 +145,6 @@ export const PLACE_EN = {
   "place.view.local.line": "Uses your screen, mouse, and keyboard.",
   "place.view.localUnavailable.short": "Can't use it yet",
   "place.view.localUnavailable.line": "{reason}",
-  "place.view.vm.short": "Separate from your screen",
-  "place.view.vm.line": "A private Linux desktop on this device, separate from your own screen.",
-  "place.view.vmCannot.short": "Not with this model",
-  "place.view.vmCannot.line": "{model} can't use a private desktop. Choose a model that can, such as Claude or ChatGPT.",
   "place.view.placeFailed.short": "Didn't start",
   "place.view.placeFailed.line": "{cause}",
   "place.view.off.short": "No screen",
@@ -163,7 +159,6 @@ export const PLACE_EN = {
   "place.action.tryAgain": "Try again",
   "place.action.addBoatKey": "Connect Boat",
   "place.action.turnOnBrowser": "Turn on the browser",
-  "place.action.openVmSettings": "Private desktop settings",
   "place.action.clearPin": "Clear this conversation's place",
   "place.action.usePlace": "Use {place}",
   "place.action.changeRoutine": "Change where it runs",
@@ -187,7 +182,6 @@ export const PLACE_WORDS: Record<PlaceActionId, string> = {
   "try-again": "Try again.",
   "add-boat-key": "Connect your Boat account in Settings → API keys.",
   "turn-on-browser": "Turn on the built-in browser in the Screen panel.",
-  "open-vm-settings": "Check it in Settings → Bot desktops.",
   "clear-pin": "Clear this conversation's place in the composer to continue.",
   "change-routine": "Change where this routine runs.",
   "open-computer-panel": "Check it in the Screen panel.",
@@ -225,8 +219,6 @@ const STATE: Record<PlaceState, { key: string; action: PlaceActionId | null }> =
   "browser-cannot": { key: "browserCannot", action: "choose-model" },
   local: { key: "local", action: null },
   "local-unavailable": { key: "localUnavailable", action: null },
-  vm: { key: "vm", action: "open-vm-settings" },
-  "vm-cannot": { key: "vmCannot", action: "choose-model" },
   "place-failed": { key: "placeFailed", action: "open-computer-panel" },
   off: { key: "off", action: null },
 };
@@ -239,7 +231,7 @@ const PASSING: ReadonlySet<PlaceState> = new Set(["cc-unavailable", "cc-no-start
  * them, so the line ends "Ask an Admin to change it." instead. */
 const ADMIN_ONLY: ReadonlySet<PlaceActionId> = new Set([
   "choose-model", "open-tools", "sign-in", "manage-computers",
-  "add-boat-key", "turn-on-browser", "open-vm-settings", "change-routine",
+  "add-boat-key", "turn-on-browser", "change-routine",
 ]);
 /** Starting or waking a computer early: a User's own message does it, so
  * there is nothing to ask anyone for. */
@@ -256,7 +248,6 @@ const ACTION_KEY: Record<PlaceActionId, PlaceKey> = {
   "try-again": "place.action.tryAgain",
   "add-boat-key": "place.action.addBoatKey",
   "turn-on-browser": "place.action.turnOnBrowser",
-  "open-vm-settings": "place.action.openVmSettings",
   "clear-pin": "place.action.clearPin",
   "change-routine": "place.action.changeRoutine",
   "open-computer-panel": "place.action.openComputerPanel",
@@ -277,9 +268,6 @@ export function placeState(facts: PlaceFacts): { state: PlaceState; params: Plac
     return facts.local?.ready === false
       ? { state: "local-unavailable", params: { bot, reason: facts.local.reason ?? "" } }
       : { state: "local", params: { bot } };
-  }
-  if (facts.place === "vm") {
-    return facts.engine.computer ? { state: "vm", params: { bot } } : { state: "vm-cannot", params: { bot, model } };
   }
   // On the person's own server (VPS) or on Boat, one rule for both.
   const vps = facts.backend === "vps";
@@ -358,8 +346,6 @@ export function placeViewOf(state: PlaceState, params: PlaceParams, context: Pla
   // A failed row never offers what only the panel can do on the spot.
   if (context.source && (action === "start" || action === "wake" || action === "watch")) action = null;
   if (context.source === "auto-pin") line = `${line} ${translate("place.backOnAuto")}`;
-  // Simple mode leaves Local VM setup to Advanced.
-  if (action === "open-vm-settings" && context.mode === "simple") action = null;
   if (action && context.role === "user" && ADMIN_SHORTCUT.has(action)) action = null;
   if (action && context.role === "user" && ADMIN_ONLY.has(action)) {
     action = null;
@@ -386,7 +372,7 @@ export function placeView(facts: PlaceFacts, options: { translate?: PlaceTransla
   return placeViewOf(state, params, { server: facts.server, role: facts.role, mode: facts.mode, ...options });
 }
 
-/** A state a stored row may carry from before Cloud plans were removed reads as a passing cause. */
+/** A state a stored row may carry from a removed place reads as a passing cause. */
 export function knownPlaceState(state: string): PlaceState {
   return (PLACE_STATES as readonly string[]).includes(state) ? state as PlaceState : "cc-unavailable";
 }

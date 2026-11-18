@@ -8,9 +8,8 @@ import { z } from "zod";
 import { CREDENTIAL_TARGETS, CUSTOM_SECRET_LABEL_MAX, CUSTOM_SECRET_REASON_MAX, CUSTOM_SECRET_TARGET, SECRET_DELIVERIES, credentialIsConfigured, isCredentialTargetId, isPendingCredentialRequest, isPendingCustomSecretRequest, type CredentialTargetId, type SecretDelivery } from "../../shared/credential-request.ts";
 import type { SecretRequestCardData } from "../../shared/wire.ts";
 import type { AppConfig } from "../config.ts";
-import { perBotLocalVmTarget, poolLocalVmTarget, SHARED_LOCAL_VM_TARGET, VM_WORKSPACE_GUEST } from "../container-computer.ts";
 import { addHeldSecretScrubber } from "../redact.ts";
-import { SECRET_VALUE_MAX_BYTES, SecretVault, type SavedSecret, type SecretFileHome } from "../secret-vault.ts";
+import { SECRET_VALUE_MAX_BYTES, SecretVault, type SavedSecret } from "../secret-vault.ts";
 import {
   PHONE_SECRET_PROTOCOL_VERSION,
   PhoneSecretError,
@@ -47,8 +46,6 @@ export interface SecretCardsDeps {
   /** A newer card replaced `from`: a turn parked on it waits on `to`. */
   followCard(threadId: string, from: string, to: string): void;
   dataDir: string;
-  /** The Local VM (its target key) this conversation's turn holds right now, if any. */
-  turnVm(threadId: string): string | undefined;
   /** The language a line in this conversation is written in for its person (server/server-lines.ts). */
   threadLanguage?(threadId: string): string | undefined;
 }
@@ -72,15 +69,6 @@ export function savedSecretText(label: string, saved: SavedSecret | null): strin
 
 function deliveryNote(botName: string, delivery: SecretDelivery, language: string | undefined): string {
   return serverLine(language, delivery === "file" ? "server.connect.secretFile" : "server.connect.secretRef", { bot: botName });
-}
-
-/** Where a file secret goes: the Local VM workspace its card names, else the bot's own folder. */
-function vmFileHome(botId: string, vm: string): SecretFileHome | null {
-  const pool = /^pool:(\d{1,4})$/.exec(vm);
-  const target = vm === SHARED_LOCAL_VM_TARGET.key ? SHARED_LOCAL_VM_TARGET
-    : pool ? poolLocalVmTarget(Number(pool[1]))
-      : perBotLocalVmTarget(botId).key === vm ? perBotLocalVmTarget(botId) : null;
-  return target ? { host: target.workspaceDir, shown: VM_WORKSPACE_GUEST } : null;
 }
 
 function customRequest(body: Record<string, unknown>): { label: string; reason: string; placeholder: string; delivery: SecretDelivery } | { error: string } {
@@ -115,14 +103,12 @@ export function createSecretCards(deps: SecretCardsDeps) {
   }
 
   function sweepBases(): string[] {
-    const under = (folder: string) => {
-      try {
-        return readdirSync(folder).map((name) => join(folder, name));
-      } catch {
-        return [];
-      }
-    };
-    return [...under(join(deps.dataDir, "workspaces")), join(deps.dataDir, "vm-home"), ...under(join(deps.dataDir, "vm-homes"))];
+    const folder = join(deps.dataDir, "workspaces");
+    try {
+      return readdirSync(folder).map((name) => join(folder, name));
+    } catch {
+      return [];
+    }
   }
   const threadExists = (threadId: string) => Boolean(store.botByThread(threadId) || store.groupByThread(threadId));
   const savedAt = (threadId: string, messageId: string) =>
@@ -145,8 +131,7 @@ export function createSecretCards(deps: SecretCardsDeps) {
     const secret = message.secret!;
     const owner = { botId, threadId };
     if (secret.delivery === "file") {
-      const home = (secret.vm ? vmFileHome(botId, secret.vm) : null) ?? { host: workspaceDir(botId), shown: workspaceDir(botId) };
-      vault.saveFile(owner, message.id, value, home);
+      vault.saveFile(owner, message.id, value, workspaceDir(botId));
     } else {
       vault.saveRef(owner, message.id, secret.label, value);
     }
@@ -378,7 +363,6 @@ export function createSecretCards(deps: SecretCardsDeps) {
     const kept = earlier ? vault.savedFor(earlier.id) : null;
     if (earlier && kept && earlier.secret!.delivery === asked.delivery) return { status: 200, body: { label: asked.label, text: savedSecretText(asked.label, kept) } };
     const mismatch = earlier && kept ? earlier.secret!.delivery : undefined;
-    const vm = asked.delivery === "file" ? deps.turnVm(threadId) : undefined;
     const language = deps.threadLanguage?.(threadId);
     const message = store.appendMessage(threadId, {
       role: "bot",
@@ -393,7 +377,6 @@ export function createSecretCards(deps: SecretCardsDeps) {
         placeholder: asked.placeholder,
         helpUrl: "",
         delivery: asked.delivery,
-        ...(vm ? { vm } : {}),
         requestKey: randomUUID(),
       },
     });

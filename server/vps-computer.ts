@@ -10,7 +10,7 @@ import {
   IMAGE as CUA_IMAGE,
   cuaExecArgs,
   dockerSecurityIsHardened,
-  imageBuildArgs,
+  dockerImageBuildArgs,
   imageLabelsMatch,
   managedImageDockerfile,
   wholeScreenshot,
@@ -21,7 +21,7 @@ import {
   IMAGE_LAYER_LABEL,
   IMAGE_LAYER_VERSION,
   MANAGED_LABEL,
-} from "./container-computer.ts";
+} from "./cua-image.ts";
 import { PIDS_LIMIT, raisePidsLimit } from "./container-limits.ts";
 import { DATA_DIR, isValidSshAlias, vpsSshAlias, type AppConfig } from "./config.ts";
 import { augmentedPath } from "./env-path.ts";
@@ -801,7 +801,7 @@ function assertUsableContainer(status: VpsComputerStatus) {
 
 async function prepareVpsImage(alias: string, runner: VpsCommandRunner) {
   await runner(vpsDockerArgs(alias, ["pull", BASE_IMAGE]), { timeoutMs: 10 * 60_000 });
-  await runner(vpsDockerArgs(alias, imageBuildArgs("docker", VPS_IMAGE, "-")), {
+  await runner(vpsDockerArgs(alias, dockerImageBuildArgs(VPS_IMAGE, "-")), {
     input: managedImageDockerfile(),
     timeoutMs: 10 * 60_000,
   });

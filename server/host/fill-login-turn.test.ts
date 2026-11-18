@@ -39,7 +39,7 @@ function harness(over: Partial<FillLoginTurnDeps> & { at?: Surface | null } = {}
 }
 
 describe("fill_login outside the bot's own browser", () => {
-  it.each(["local", "vm", "cloud"] as const)("moves a request on %s to the bot's browser and tells the bot to end the turn", async (at) => {
+  it.each(["local", "cloud"] as const)("moves a request on %s to the bot's browser and tells the bot to end the turn", async (at) => {
     const { fill, moveToBrowser, target } = harness({ at });
     const answer = await fill(bot, turn, undefined, undefined);
     expect(moveToBrowser).toHaveBeenCalledWith(turn);

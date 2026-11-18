@@ -311,6 +311,25 @@ function dropDefaultBot(bots: BotRecord[]): boolean {
   return changed;
 }
 
+/** Bots saved while private desktops existed: one set to work on its own (`computer: "vm"`) works on Your server, and a
+ * conversation pinned to one goes back to the bot's setting. True when anything changed. */
+function dropPrivateDesktop(bots: BotRecord[]): boolean {
+  let changed = false;
+  for (const bot of bots) {
+    if ((bot.computer as string | undefined) === "vm") {
+      bot.computer = "browser";
+      changed = true;
+    }
+    for (const task of bot.tasks ?? []) {
+      if ((task.surface as string | undefined) !== "vm") continue;
+      delete task.surface;
+      delete task.surfaceSource;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 export class Store {
   bots: BotRecord[] = [];
   groups: GroupRecord[] = [];
@@ -359,6 +378,7 @@ export class Store {
     let groupsMigrated = false;
     if (dropDepartments(this.bots, this.groups)) botsMigrated = groupsMigrated = true;
     if (dropDefaultBot(this.bots)) botsMigrated = true;
+    if (dropPrivateDesktop(this.bots)) botsMigrated = true;
     for (const b of this.bots) {
       if (b.busy || (b.activity !== undefined && b.activity !== "idle")) botsMigrated = true;
       b.busy = false;

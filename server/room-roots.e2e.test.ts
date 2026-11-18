@@ -290,7 +290,6 @@ itHost("R5 queues a member's root on the computer seat at the wait ceiling, FIFO
   const home = mkdtempSync(join(tmpdir(), "omb-room-roots-seat-"));
   const data = join(home, "data");
   const ui = join(home, "static");
-  const stateFile = join(home, "vm.json");
   const dumpFile = join(home, "dump.json");
   const finishFile = join(home, "finish");
   let output = "";
@@ -328,7 +327,6 @@ itHost("R5 queues a member's root on the computer seat at the wait ceiling, FIFO
   const eventsOf = (id: string) => readRuntimeDb(data).events.filter((event) => event.assignmentId === id).map((event) => event.kind);
   const chat = async (threadId: string) => (await api("GET", `/api/threads/${threadId}/messages?limit=100`)).body.messages as any[];
   try {
-    writeFileSync(stateFile, JSON.stringify({ noContainers: true }));
     mkdirSync(data);
     mkdirSync(join(ui, "assets"), { recursive: true });
     writeFileSync(join(ui, "index.html"), "<title>Room roots</title>");
@@ -341,12 +339,11 @@ itHost("R5 queues a member's root on the computer seat at the wait ceiling, FIFO
       driver: "claudeAgent", config: { cli: join(ROOT, "server/testing/fake-claude-cli.ts") },
       environment: { FAKE_CLAUDE_MODE: "slow", FAKE_CLAUDE_DUMP: dumpFile, FAKE_CLAUDE_SLOW_FINISH_GATE: finishFile },
     } } }));
-    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/group-local-vm-hooks.mjs")).href,
-      "--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
+    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
         HOME: home, USERPROFILE: home, OMB_DATA_DIR: data, APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
-        TEMP: home, TMP: home, TMPDIR: home, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui, OMB_TEST_VM_STATE: stateFile,
+        TEMP: home, TMP: home, TMPDIR: home, OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
         OMB_TEST_DESKTOP_CUA_CONNECTION: join(home, "user-data", "cua-connection.json"), OMB_COMPUTER_CALL_WAIT_MS: "4000", OMB_COMPUTER_CALL_ACT_WITHIN_MS: "1000",
         OMB_COMPUTER_WAIT_MAX_MS: String(CEILING_MS),
       }, stdio: ["ignore", "pipe", "pipe"],

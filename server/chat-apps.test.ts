@@ -216,7 +216,7 @@ describe("a folder page", () => {
       mkdirSync(dir, { recursive: true });
       for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
     }
-    return { mine, theirs, of: async () => ({ roots: [mine], vmWorkspace: null }) };
+    return { mine, theirs, of: async () => [mine] };
   }
   const FILES = { origin: "http://127.0.0.1:5174", folder: () => "/api/page-files/tok/" };
 

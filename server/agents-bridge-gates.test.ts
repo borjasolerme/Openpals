@@ -30,7 +30,7 @@ const BRIDGED: Server = {
   args: [join(HERE, "drivers", "agents-proxy.ts")],
   env: { OMB_HARNESS_URL: "http://127.0.0.1:9", OMB_BOT_ID: "bot-gated", OMB_THREAD_ID: "thread-gated", OMB_COMMS_TOKEN: "unused", OMB_TURN_DEPTH: "0", [TOOL_BRIDGE_ENV]: "1" },
 };
-const DENY_VM: ToolScope = { deny: ["mcp:agents:vm_exec"] };
+const DENY_DELETE_TRIGGER: ToolScope = { deny: ["mcp:agents:delete_trigger"] };
 const ONLY_LIST_BOTS: ToolScope = { allow: ["mcp:agents:list_bots"] };
 const NO_NEW_TRIGGERS: ToolScope = { deny: ["mcp:agents:create_trigger"] };
 const EXCLUDED = { code: -32602, message: "Tool selection excludes this tool. Check the bot's Access settings." };
@@ -81,7 +81,7 @@ describe("a gate's upstream", () => {
     gateServer({ name: "agents", server: BRIDGED, threadId: "thread-gated", budget: 0, toolScope, ...extra });
 
   it("is the agents server unbridged whenever there is a selection, whatever the integration says", () => {
-    for (const toolScope of [DENY_VM, ONLY_LIST_BOTS, { allow: ["mcp:agents:*"] }, { allow: [] }, {}] satisfies ToolScope[]) {
+    for (const toolScope of [DENY_DELETE_TRIGGER, ONLY_LIST_BOTS, { allow: ["mcp:agents:*"] }, { allow: [] }, {}] satisfies ToolScope[]) {
       const upstream = upstreamOf(mount(toolScope)!);
       expect(upstream.env[TOOL_BRIDGE_ENV], JSON.stringify(toolScope)).toBe("0");
       // and nothing else about it is touched
@@ -89,7 +89,7 @@ describe("a gate's upstream", () => {
     }
     // Codex hands each mount its settings under a private name
     const configEnvName = `OMB_GATE_CONFIG_${"a".repeat(64)}`;
-    expect(upstreamOf(mount(DENY_VM, { configEnvName })!, configEnvName).env[TOOL_BRIDGE_ENV]).toBe("0");
+    expect(upstreamOf(mount(DENY_DELETE_TRIGGER, { configEnvName })!, configEnvName).env[TOOL_BRIDGE_ENV]).toBe("0");
     // the integration the turn holds is not rewritten: the prompt was built from it
     expect(BRIDGED.env[TOOL_BRIDGE_ENV]).toBe("1");
   });
@@ -112,14 +112,14 @@ describe("every mount that puts a selection in front of the agents server", () =
   const turn = (toolScope?: ToolScope): SendTurnInput => ({ threadId: "thread-gated", text: "hi", integrations: { agents: BRIDGED }, ...(toolScope ? { toolScope } : {}) });
 
   it("the ACP mounts start it unbridged, and bridged as built without one", () => {
-    const gated = turnStdioMcpServers(turn(DENY_VM)).find((server) => server.name === "agents")!;
+    const gated = turnStdioMcpServers(turn(DENY_DELETE_TRIGGER)).find((server) => server.name === "agents")!;
     expect(gated.args).toEqual([SPAWNED_PROXIES.mcpGate]);
     expect(upstreamOf(gated).env[TOOL_BRIDGE_ENV]).toBe("0");
     expect(turnStdioMcpServers(turn()).find((server) => server.name === "agents")!.env[TOOL_BRIDGE_ENV]).toBe("1");
   });
 
   it("Pi's mount starts it unbridged, and bridged as built without one", () => {
-    const gated = buildMcpServers(turn(DENY_VM))!.agents as Server;
+    const gated = buildMcpServers(turn(DENY_DELETE_TRIGGER))!.agents as Server;
     expect(gated.args).toEqual([SPAWNED_PROXIES.mcpGate]);
     expect(upstreamOf(gated).env[TOOL_BRIDGE_ENV]).toBe("0");
     expect((buildMcpServers(turn())!.agents as Server).env[TOOL_BRIDGE_ENV]).toBe("1");
@@ -134,13 +134,13 @@ describe("every mount that puts a selection in front of the agents server", () =
     };
 
     it("lists the whole catalog but what the selection leaves out, with no bridge tools", async () => {
-      const names = await mounted(DENY_VM);
-      for (const absent of ["agents_find_tool", "agents_use_tool", "agents_vm_exec"]) expect(names, absent).not.toContain(absent);
+      const names = await mounted(DENY_DELETE_TRIGGER);
+      for (const absent of ["agents_find_tool", "agents_use_tool", "agents_delete_trigger"]) expect(names, absent).not.toContain(absent);
       expect(names).toEqual(expect.arrayContaining(["agents_coordinate_bots", "agents_trigger", "agents_trigger_info", "agents_session_search"]));
       expect(names).not.toContain("agents_list_triggers");
       // still OpenMausBot's own server, which never asks
       expect(session!.view("agents_trigger_info", {})).toMatchObject({ ask: false });
-      expect(() => session!.validate("agents_use_tool", { name: "vm_exec" })).toThrow("not advertised for this turn");
+      expect(() => session!.validate("agents_use_tool", { name: "delete_trigger" })).toThrow("not advertised for this turn");
     });
 
     it("answers an action's own name without listing it, and holds both names to the selection", async () => {
@@ -171,16 +171,16 @@ describe("every mount that puts a selection in front of the agents server", () =
 describe("the gate and the proxy as processes", () => {
   it("a deny over a proxy that was asked to bridge: no bridge tools, the denied tool refused, use_tool unknown", async () => {
     // The reproduction from the review: before the mount unbridged the
-    // proxy, use_tool({ name: "vm_exec" }) passed this gate and ran.
-    await withServer(gateServer({ name: "agents", server: BRIDGED, threadId: "thread-gated", budget: 0, toolScope: DENY_VM })!, async (ask) => {
+    // proxy, use_tool({ name: "delete_trigger" }) passed this gate and ran.
+    await withServer(gateServer({ name: "agents", server: BRIDGED, threadId: "thread-gated", budget: 0, toolScope: DENY_DELETE_TRIGGER })!, async (ask) => {
       const names = namesOf(await ask("tools/list"));
-      for (const absent of ["find_tool", "use_tool", "vm_exec"]) expect(names, absent).not.toContain(absent);
+      for (const absent of ["find_tool", "use_tool", "delete_trigger"]) expect(names, absent).not.toContain(absent);
       expect(names).toEqual(expect.arrayContaining(["coordinate_bots", "trigger", "trigger_info", "post_to_room"]));
       expect(names.length).toBeGreaterThan(20);
-      expect((await call(ask, "vm_exec", { command: "true" })).error).toEqual(EXCLUDED);
+      expect((await call(ask, "delete_trigger", { command: "true" })).error).toEqual(EXCLUDED);
       // through use_tool the gate refuses it by the tool it names, and for any
       // other tool there is no use_tool behind the gate to call
-      expect((await use(ask, "vm_exec", { command: "true" })).error).toEqual(EXCLUDED);
+      expect((await use(ask, "delete_trigger", { command: "true" })).error).toEqual(EXCLUDED);
       expect((await use(ask, "list_triggers")).error).toEqual({ code: -32602, message: "Unknown tool: use_tool" });
       expect((await call(ask, "find_tool", { query: "run a shell command" })).error).toEqual({ code: -32602, message: "Unknown tool: find_tool" });
     });
@@ -216,9 +216,9 @@ describe("the gate and the proxy as processes", () => {
       args: [SPAWNED_PROXIES.mcpGate],
       env: { OMB_GATE_NAME: "agents", OMB_GATE_UPSTREAM: JSON.stringify(BRIDGED), OMB_GATE_BUDGET: "0", OMB_GATE_TOOL_SCOPE: JSON.stringify(toolScope) },
     });
-    await withServer(forgetful(DENY_VM), async (ask) => {
+    await withServer(forgetful(DENY_DELETE_TRIGGER), async (ask) => {
       expect(namesOf(await ask("tools/list")).slice(-2)).toEqual(["find_tool", "use_tool"]);
-      expect((await use(ask, "vm_exec", { command: "true" })).error).toEqual(EXCLUDED);
+      expect((await use(ask, "delete_trigger", { command: "true" })).error).toEqual(EXCLUDED);
       // a tool the selection does not exclude goes through to the proxy, which has its own answer
       const unknown = await use(ask, "made_up");
       expect(unknown.error).toBeUndefined();
@@ -228,7 +228,7 @@ describe("the gate and the proxy as processes", () => {
     });
     // with an allow-list, naming the two bridge tools does not let a tool outside it through
     await withServer(forgetful({ allow: ["mcp:agents:use_tool", "mcp:agents:find_tool", "mcp:agents:list_triggers"] }), async (ask) => {
-      expect((await use(ask, "vm_exec", { command: "true" })).error).toEqual(EXCLUDED);
+      expect((await use(ask, "delete_trigger", { command: "true" })).error).toEqual(EXCLUDED);
       expect((await use(ask, "start_thread", { title: "t", message: "m" })).error).toEqual(EXCLUDED);
     });
   });

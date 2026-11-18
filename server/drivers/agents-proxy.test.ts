@@ -23,9 +23,6 @@ let lastCoordinateBody: any = null;
 let coordinateResponse: unknown = { ok: true };
 let lastRoomsQuery = "";
 let lastPostBody: any = null;
-let lastExecBody: any = null;
-let execStatus = 200;
-let execResponse: unknown = { exitCode: 0, stdout: "PDF_OK\n", stderr: "", timedOut: false };
 let lastAttachBody: any = null;
 let attachStatus = 200;
 let attachResponse: unknown = { ok: true, name: "report.pdf", bytes: 48639 };
@@ -50,7 +47,7 @@ let threadCalls = 0;
 let threadsList: unknown = { threads: [] };
 let threadResponse: unknown = { threadId: "thread-new", title: "QA: PR #1", botId: "bot-asker", botName: "Asker", self: true, state: "running", limit: 3 };
 let computerRequests: { method: string; url: string; body: unknown }[] = [];
-let computerResponse: unknown = { current: "local", available: ["local", "vm"] };
+let computerResponse: unknown = { current: "local", available: ["local", "cloud"] };
 let computerStatus = 200;
 let lastCreateBody: any = null;
 let lastCreateRoomBody: unknown = null;
@@ -138,7 +135,7 @@ afterEach(() => {
   teamRequestResponse = DEFAULT_TEAM_RESPONSE;
   skillStageResponse = DEFAULT_SKILL_RESPONSE;
   computerRequests = [];
-  computerResponse = { current: "local", available: ["local", "vm"] };
+  computerResponse = { current: "local", available: ["local", "cloud"] };
   computerStatus = 200;
 });
 
@@ -212,16 +209,6 @@ beforeAll(async () => {
       lastRoomsQuery = req.url;
       res.writeHead(200, { "content-type": "application/json" });
       return res.end(JSON.stringify(roomsResponse));
-    }
-    if (req.method === "POST" && req.url === "/api/internal/vm-exec") {
-      let data = "";
-      req.on("data", (c) => (data += c));
-      req.on("end", () => {
-        lastExecBody = JSON.parse(data);
-        res.writeHead(execStatus, { "content-type": "application/json" });
-        res.end(JSON.stringify(execResponse));
-      });
-      return;
     }
     if (req.method === "POST" && req.url === "/api/internal/attach-file") {
       let data = "";
@@ -637,7 +624,6 @@ describe("agents-proxy MCP surface", () => {
       "list_threads",
       "close_thread",
       "start_thread",
-      "vm_exec",
       "attach_file",
       "show_widget",
       "show_html",
@@ -708,7 +694,7 @@ describe("agents-proxy MCP surface", () => {
     const list = await rpc("tools/list");
     const tool = list.result.tools.find((entry: { name: string }) => entry.name === "select_computer");
     expect(tool.inputSchema).toMatchObject({ type: "object", additionalProperties: false,
-      properties: { surface: { type: "string", enum: ["auto", "cloud", "vm", "local", "browser"] } } });
+      properties: { surface: { type: "string", enum: ["auto", "cloud", "local", "browser"] } } });
     expect(tool.inputSchema.required ?? []).not.toContain("surface");
     expect(tool.description).toContain("end this turn immediately");
     expect(tool.description).toContain("with a configured provider it can start or provision one when needed");
@@ -716,8 +702,8 @@ describe("agents-proxy MCP surface", () => {
     expect(tool.annotations?.readOnlyHint).not.toBe(true);
   });
 
-  it.each(["auto", "cloud", "vm", "local", "browser"])("select_computer posts the requested %s target without inventing success", async (surface) => {
-    computerResponse = { state: "pending", surface: surface === "auto" ? "vm" : surface, instruction: "End this turn; the original request will resume." };
+  it.each(["auto", "cloud", "local", "browser"])("select_computer posts the requested %s target without inventing success", async (surface) => {
+    computerResponse = { state: "pending", surface: surface === "auto" ? "cloud" : surface, instruction: "End this turn; the original request will resume." };
     const response = await callTool("select_computer", { surface });
     expect(response.result.isError).toBeFalsy();
     expect(JSON.parse(response.result.content[0].text)).toEqual(computerResponse);
@@ -725,10 +711,10 @@ describe("agents-proxy MCP surface", () => {
     expect(lastAuth).toBe(`Bearer ${TOKEN}`);
   });
 
-  it.each(["other", "off", " VM ", 42, null, {}, ["vm"]].map((surface) => ({ surface })))("select_computer rejects invalid target $surface before contacting the server", async ({ surface }) => {
+  it.each(["other", "off", " Cloud ", 42, null, {}, ["cloud"]].map((surface) => ({ surface })))("select_computer rejects invalid target $surface before contacting the server", async ({ surface }) => {
     const response = await callTool("select_computer", { surface });
     expect(response.result.isError).toBe(true);
-    expect(response.result.content[0].text).toContain("Choose auto, cloud, vm, local or browser");
+    expect(response.result.content[0].text).toContain("Choose auto, cloud, local or browser");
     expect(computerRequests).toEqual([]);
   });
 
@@ -892,39 +878,12 @@ describe("agents-proxy MCP surface", () => {
     });
   });
 
-  it("vm_exec returns the exit code and output as text, and marks a failure as an error", async () => {
-    const ok = await callTool("vm_exec", { command: "python3 make.py && ls -l report.pdf", timeout_seconds: 120 });
-    expect(ok.result.isError).toBeFalsy();
-    expect(ok.result.content[0].text).toBe("exit code 0\n--- stdout ---\nPDF_OK");
-    expect(lastExecBody).toEqual({ command: "python3 make.py && ls -l report.pdf", timeout_seconds: 120 });
-
-    execResponse = { exitCode: 1, stdout: "", stderr: "ModuleNotFoundError: No module named 'reportlab'\n", timedOut: false };
-    const failed = await callTool("vm_exec", { command: "python3 make.py" });
-    expect(failed.result.isError).toBe(true);
-    expect(failed.result.content[0].text).toBe("exit code 1\n--- stderr ---\nModuleNotFoundError: No module named 'reportlab'");
-    expect(lastExecBody).toEqual({ command: "python3 make.py" });
-
-    execResponse = { exitCode: 124, stdout: "partial", stderr: "", timedOut: true };
-    const slow = await callTool("vm_exec", { command: "sleep 999" });
-    expect(slow.result.isError).toBe(true);
-    expect(slow.result.content[0].text).toContain("ran past its time limit");
-    expect(slow.result.content[0].text).toContain("partial");
-
-    execStatus = 409;
-    execResponse = { error: "You have no Local VM desktop in this turn, so there is nowhere to run a command." };
-    const none = await callTool("vm_exec", { command: "ls" });
-    expect(none.result.isError).toBe(true);
-    expect(none.result.content[0].text).toContain("no Local VM desktop");
-    execStatus = 200;
-    execResponse = { exitCode: 0, stdout: "PDF_OK\n", stderr: "", timedOut: false };
-  });
-
   it("attach_file sends only the path and name, and tells the model the file is in the chat", async () => {
-    const res = await callTool("attach_file", { path: "/home/cua/workspace/report.pdf", name: "Q3 report.pdf" });
+    const res = await callTool("attach_file", { path: "report.pdf", name: "Q3 report.pdf" });
     expect(res.result.isError).toBeFalsy();
     expect(res.result.content[0].text).toContain("Attached report.pdf");
     expect(res.result.content[0].text).toContain("48639 bytes");
-    expect(lastAttachBody).toEqual({ path: "/home/cua/workspace/report.pdf", name: "Q3 report.pdf" });
+    expect(lastAttachBody).toEqual({ path: "report.pdf", name: "Q3 report.pdf" });
     await callTool("attach_file", { path: "clip.mp4" });
     expect(lastAttachBody).toEqual({ path: "clip.mp4" });
   });

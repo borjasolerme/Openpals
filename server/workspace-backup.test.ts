@@ -343,7 +343,6 @@ describe("encrypted full workspace backups", () => {
       "providers/account/auth.json", "providers/antigravity/account/acp_token.json",
       "caddy/data/private.key", "chrome-profile/Cookies", ".agent-browser/auth.json",
       `${basename(browserProfilesRoot())}/0123456789abcdef/Default/Cookies`,
-      "vm-home/.browser-profiles/chrome/Cookies", "vm-homes/abc/.browser-profiles/chromium/Cookies",
       "tmp/omb-mcp-123/mcp.json", ".tmp/secret",
       "logins.json.enc", "logins-key", "logins.json.enc.123.05a7b3e0-1234.tmp",
       "highlevel.json.enc", "highlevel-key", "webhook-key",
@@ -356,7 +355,6 @@ describe("encrypted full workspace backups", () => {
     }
     mkdirSync(join(source, "attachments"));
     writeFileSync(join(source, "attachments", "user-note.txt"), "A user-pasted secret is not silently redacted.");
-    writeFileSync(join(source, "vm-home", "project.txt"), "ordinary managed VM file");
     json(join(source, "config.json"), { xai: { key: "SOURCE_SAVED_SECRET", url: "https://source.example" }, language: "ja" });
     json(join(source, "webhooks.json"), { webhooks: [{ id: "same", endpointId: "same-endpoint", secretHash: "a".repeat(64), sealedSecret: "SOURCE_SAVED_SECRET", enabled: true, verificationPending: true }] });
     json(join(target, "config.json"), { xai: { key: "DESTINATION_SAVED_SECRET", url: "https://destination.example" }, language: "en" });
@@ -372,7 +370,6 @@ describe("encrypted full workspace backups", () => {
     commitPendingWorkspaceRestore(target, staged.id);
     applyPendingWorkspaceRestore(target);
     for (const path of authPaths) expect(readFileSync(join(target, path), "utf8")).toBe("DESTINATION_SAVED_SECRET");
-    expect(readFileSync(join(target, "vm-home", "project.txt"), "utf8")).toBe("ordinary managed VM file");
     expect(readFileSync(join(target, "attachments", "user-note.txt"), "utf8")).toBe("A user-pasted secret is not silently redacted.");
     expect(readJson(join(target, "config.json"))).toEqual({ xai: { key: "DESTINATION_SAVED_SECRET", url: "https://destination.example" }, language: "ja" });
     expect(readJson(join(target, "webhooks.json")).webhooks[0]).toMatchObject({ secretHash: "b".repeat(64), sealedSecret: "DESTINATION_SEALED", enabled: false, verificationPending: false });

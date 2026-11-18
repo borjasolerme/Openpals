@@ -1,17 +1,17 @@
 import type { YourComputerCall } from "../shared/your-computer.ts";
 
-export interface AutoVmClaimOwner {
+export interface LazyClaimOwner {
   threadId: string;
   generation: string;
 }
 
-export interface AutoVmClaimSlot {
-  owner: AutoVmClaimOwner;
+export interface LazyClaimSlot {
+  owner: LazyClaimOwner;
   /** Bind, lease, boot; again only after a network failure. `call` is what the first screen call would open. */
   claim: (call?: YourComputerCall) => Promise<void>;
-  /** Set by startAutoVmClaim; presence means the claim already fired. */
+  /** Set by startLazyClaim; presence means the claim already fired. */
   begin?: Promise<void>;
-  /** The fired claim rejected; the slot stays so the gate keeps refusing screen calls instead of forwarding them to an unclaimed VM. */
+  /** The fired claim rejected; the slot stays so the gate keeps refusing screen calls instead of forwarding them to an unclaimed computer. */
   failed?: boolean;
   failure?: string;
   /** What went wrong in the computer's own words, when `failure` is the line the person sees. */
@@ -25,7 +25,6 @@ export interface AutoVmClaimSlot {
   /** Dispatch mounted the computer tools without claiming, so the gate fires the claim on the first screen call. */
   lazy?: boolean;
   label?: string;
-  localVm?: boolean;
   pendingReason?: string;
   boxId?: string;
   startsComputer?: true;
@@ -33,7 +32,7 @@ export interface AutoVmClaimSlot {
   onRejected?: (failure: string, error?: unknown) => void;
 }
 
-export type AutoVmClaimTable = Map<string, AutoVmClaimSlot>;
+export type LazyClaimTable = Map<string, LazyClaimSlot>;
 
 export const MAX_CLAIM_ATTEMPTS = 3;
 const NETWORK_CODES = new Set(["ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENOTFOUND", "EAI_AGAIN", "EPIPE", "UND_ERR_SOCKET", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_HEADERS_TIMEOUT"]);
@@ -54,7 +53,7 @@ export function keepTransient(original: unknown, shown: unknown): unknown {
 
 /** Once per dispatch generation, or again after a network failure, at most MAX_CLAIM_ATTEMPTS times. Any other rejection keeps
  * its slot marked failed, and a rejection mutates only the slot it fired from, so a stale claim never touches a newer generation's. */
-export function startAutoVmClaim(table: AutoVmClaimTable, threadId: string, generation: string, call?: YourComputerCall): void {
+export function startLazyClaim(table: LazyClaimTable, threadId: string, generation: string, call?: YourComputerCall): void {
   const slot = table.get(threadId);
   if (!slot || slot.owner.threadId !== threadId || slot.owner.generation !== generation || slot.begin || slot.failed) return;
   const attempt = (slot.attempts ?? 0) + 1;
@@ -79,7 +78,7 @@ export function startAutoVmClaim(table: AutoVmClaimTable, threadId: string, gene
 }
 
 /** What every screen call hears for the rest of a turn whose computer could not be claimed. */
-export function lazyClaimFailedText(slot: Pick<AutoVmClaimSlot, "label" | "failure" | "cause" | "startsComputer" | "backOnAuto">): string {
+export function lazyClaimFailedText(slot: Pick<LazyClaimSlot, "label" | "failure" | "cause" | "startsComputer" | "backOnAuto">): string {
   const label = slot.label ?? "this computer";
   const why = (slot.cause ?? slot.failure)?.trim().replace(/[\s.]+$/, "");
   if (!slot.startsComputer) {
@@ -89,7 +88,7 @@ export function lazyClaimFailedText(slot: Pick<AutoVmClaimSlot, "label" | "failu
     `${slot.backOnAuto ? " This conversation is back on Auto." : ""} Do not retry computer work in this turn; tell the person what you could not do.`;
 }
 
-export function lazyClaimRetryText(slot: Pick<AutoVmClaimSlot, "label" | "retryReason">): string {
+export function lazyClaimRetryText(slot: Pick<LazyClaimSlot, "label" | "retryReason">): string {
   return `This turn could not reach ${slot.label ?? "this computer"} just now (${slot.retryReason}). This call was not performed; try it again in a moment.`;
 }
 

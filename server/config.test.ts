@@ -15,9 +15,6 @@ import { cacheUntilConfigChanges,
   isValidSshAlias,
   loadBrowserProfileIdAliases,
   loadConfig,
-  localVmIdleTimeoutMinutes,
-  localVmMaxInstances,
-  localVmMode,
   parseConfigPatch,
   parseStoredConfig,
   persistableInstanceConfigs,
@@ -549,30 +546,6 @@ describe("configuration boundaries", () => {
     expect(() => parseConfigPatch({ mcp: { callTimeoutMinutes: 10, surprise: 1 } })).toThrow("mcp");
   });
 
-  it("preserves shared Local VM behavior by default and accepts bounded per-bot mode", () => {
-    expect(localVmMode({})).toBe("shared");
-    expect(localVmMaxInstances({})).toBe(2);
-    expect(parseConfigPatch({ localVm: { mode: "per-bot", maxInstances: 4 } })).toEqual({
-      localVm: { mode: "per-bot", maxInstances: 4 },
-    });
-    expect(parseConfigPatch({ localVm: { maxInstances: 5 } })).toEqual({
-      localVm: { maxInstances: 5 },
-    });
-    expect(parseConfigPatch({ localVm: { mode: "per-bot", maxInstances: 8 } })).toEqual({
-      localVm: { mode: "per-bot", maxInstances: 8 },
-    });
-    expect(localVmMode({ localVm: { mode: "per-bot" } })).toBe("per-bot");
-    expect(localVmMaxInstances({ localVm: { maxInstances: 3 } })).toBe(3);
-  });
-
-  it("accepts pool mode with the same bounded seat count", () => {
-    expect(parseConfigPatch({ localVm: { mode: "pool", maxInstances: 4 } })).toEqual({
-      localVm: { mode: "pool", maxInstances: 4 },
-    });
-    expect(localVmMode({ localVm: { mode: "pool" } })).toBe("pool");
-    expect(localVmMode({})).toBe("shared");
-  });
-
   it("keeps skill authoring on by default with an explicit opt-out, and the browser off by default", () => {
     expect(skillAuthoringEnabled({})).toBe(true);
     expect(skillAuthoringEnabled({ features: {} })).toBe(true);
@@ -626,31 +599,6 @@ describe("configuration boundaries", () => {
     expect(showToolCallsEnabled({ features: { showToolCalls: true } })).toBe(true);
   });
 
-  it.each([0, 1.5, 9, "2", null])("rejects an invalid per-bot VM limit: %j", (maxInstances) => {
-    expect(() => parseConfigPatch({ localVm: { maxInstances } })).toThrow("localVm.maxInstances");
-  });
-
-  it("keeps the 8-hour Local VM idle timeout by default and accepts a bounded override", () => {
-    expect(localVmIdleTimeoutMinutes({})).toBe(480);
-    expect(localVmIdleTimeoutMinutes({ localVm: { mode: "per-bot" } })).toBe(480);
-    expect(parseStoredConfig({ localVm: { mode: "per-bot", maxInstances: 3 } })).toMatchObject({
-      localVm: { mode: "per-bot", maxInstances: 3 },
-    });
-    for (const idleTimeoutMinutes of [5, 30, 1_440]) {
-      expect(parseConfigPatch({ localVm: { idleTimeoutMinutes } })).toEqual({ localVm: { idleTimeoutMinutes } });
-      expect(localVmIdleTimeoutMinutes({ localVm: { idleTimeoutMinutes } })).toBe(idleTimeoutMinutes);
-    }
-    expect(parseStoredConfig({ localVm: { idleTimeoutMinutes: 30 } })).toMatchObject({ localVm: { idleTimeoutMinutes: 30 } });
-  });
-
-  it.each([0, 4, 1.5, 1_441, "30", null])("rejects an invalid Local VM idle timeout: %j", (idleTimeoutMinutes) => {
-    expect(() => parseConfigPatch({ localVm: { idleTimeoutMinutes } })).toThrow("localVm.idleTimeoutMinutes");
-    expect(() => parseStoredConfig({ localVm: { idleTimeoutMinutes } })).toThrow("localVm.idleTimeoutMinutes");
-  });
-
-  it.each(["one-per-bot", "windows", 1, null])("rejects an invalid Local VM mode: %j", (mode) => {
-    expect(() => parseConfigPatch({ localVm: { mode } })).toThrow("localVm.mode");
-  });
 });
 
 describe("a config.json saved with a byte order mark", () => {
@@ -1410,6 +1358,15 @@ describe("legacy feature flag migration", () => {
     writeFileSync(path, nulled);
     ensureDirs();
     expect(readFileSync(path, "utf8")).toBe(nulled);
+  });
+
+  it("drops the removed private desktops' settings once, at startup, and keeps the rest", () => {
+    writeFileSync(path, JSON.stringify({ profile: { name: "Ada" }, localVm: { mode: "per-bot", maxInstances: 3, idleTimeoutMinutes: 30 } }));
+    ensureDirs();
+    expect(readDisk()).toEqual({ profile: { name: "Ada" } });
+    expect(loadConfig()).not.toHaveProperty("localVm");
+    expect(parseStoredConfig({ localVm: { mode: "pool" }, profile: { name: "Ada" } })).toEqual({ profile: { name: "Ada" } });
+    expect(parseConfigPatch({ localVm: { mode: "per-bot" } })).toEqual({});
   });
 
   it("leaves a config without the legacy key untouched", () => {

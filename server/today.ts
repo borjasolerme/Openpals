@@ -50,7 +50,7 @@ export interface TodaySources {
 /** Place failures a person fixes by changing a setting; the rest pass or retry by themselves. */
 const OWNER_PLACES: ReadonlySet<PlaceState> = new Set([
   "cc-cannot", "cc-tools-off", "cc-sign-in", "cc-needs-key",
-  "browser-off", "browser-cannot", "vm-cannot",
+  "browser-off", "browser-cannot",
 ]);
 /** A connected app refusing for want of a working sign-in, as Composio and the apps behind it word it. */
 const BROKEN_CONNECTION = /\b(?:401|unauthori[sz]ed|invalid[_ ]grant|(?:token|credentials?) (?:has |have )?(?:expired|been revoked)|expired (?:token|credentials?)|re-?authori[sz]e|re-?authenticate|reconnect|no (?:active )?connected account|connected ?account (?:not found|is (?:inactive|expired|disabled))|connection (?:is )?(?:inactive|expired|revoked|not found)|insufficient[_ ](?:scopes?|permissions?)|ACCESS_TOKEN_SCOPE_INSUFFICIENT|not connected)\b/i;

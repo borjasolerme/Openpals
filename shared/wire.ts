@@ -55,7 +55,7 @@ export interface ModelSelection {
 export type CloudBackend = "box" | "vps" | "lent";
 
 /** A place a bot can act. `cloud` covers both cloud backends. */
-export type Surface = "cloud" | "vm" | "local" | "browser";
+export type Surface = "cloud" | "local" | "browser";
 
 export const MAUS_COLOR_NAMES = [
   "green", "blue", "red", "orange", "purple", "cyan", "pink",
@@ -703,8 +703,6 @@ export interface SecretRequestCardData {
   delivery?: SecretDelivery;
   /** A custom secret: the bot's own words on why; `description` adds what the bot may do with it, and helpUrl is empty. */
   reason?: string;
-  /** A file secret's Local VM target key, when the asking turn ran in one. */
-  vm?: string;
   /** When a custom secret was saved; its file goes a day later. */
   savedAt?: number;
   requestKey: string;
@@ -937,10 +935,9 @@ export type ServerFrame =
   | { kind: "mcp.changed" }
   /** `surface` names what the frame shows: the bot's desktop (`computer`) or its built-in browser. */
   | { kind: "screen"; botId: string; threadId: string; png: string; mime?: string; surface?: "browser" | "computer" }
-  /** A bot's computer is being set up or woken for a turn; the chat shows
-   * one progress line until its first screen frame. `place` names a cloud
-   * computer (absent: a Local VM). */
-  | { kind: "computer"; botId: string; state: "provisioning" | "waking"; place?: "cloud" }
+  /** A bot's cloud computer is being set up or woken for a turn; the chat
+   * shows one progress line until its first screen frame. */
+  | { kind: "computer"; botId: string; state: "provisioning" | "waking" }
   | { kind: "computer-control"; botId: string; held: boolean; helpReason: string | null; help?: ComputerHelpRef | null }
   /** A bot's data sheet changed. Whole sheet each time. */
   | DataBroadcast

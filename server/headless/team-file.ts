@@ -43,7 +43,7 @@ const botFields = {
   model: z.string().regex(/^[\w.-]+\/\S.*$/, "must be INSTANCE/MODEL, such as claude/claude-sonnet-5-5").optional(),
   effort: z.enum(["none", "low", "medium", "high", "xhigh", "max"]).optional(),
   approval: z.enum(["ask", "edits", "auto", "full"], { error: "must be ask, edits, auto or full (custom is set in the desktop app)" }).optional(),
-  computer: z.enum(["auto", "off", "browser", "local", "vm", "cloud"]).optional(),
+  computer: z.enum(["auto", "off", "browser", "local", "cloud"]).optional(),
   cwd: z.string().min(1).optional(),
   browser: z.union([z.boolean(), z.object({ enabled: z.boolean(), profile: z.string().trim().min(1).max(100).optional() }).strict()]).optional(),
   tools: z.object({ allow: z.array(z.string()).optional(), deny: z.array(z.string()).optional() }).strict().optional(),
@@ -84,7 +84,7 @@ export interface DesiredBot {
   model?: { instanceId: string; model: string };
   effort?: string;
   approval?: "ask" | "edits" | "auto" | "full";
-  computer?: "auto" | "off" | "browser" | "local" | "vm" | "cloud";
+  computer?: "auto" | "off" | "browser" | "local" | "cloud";
   cwd?: string;
   browser?: { enabled: boolean; profile?: string };
   /** null: no selection, so every tool (a file's `tools: {}` or `{ deny: [] }`). */

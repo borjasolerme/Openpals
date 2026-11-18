@@ -1878,7 +1878,7 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
     }
   });
 
-  it("mounts the Local VM computer MCP server without placing credentials in argv", async () => {
+  it("mounts a computer MCP server without placing credentials in argv", async () => {
     await create();
     const dump = join(scratch, "local-computer.json");
     process.env.FAKE_CODEX_DUMP = dump;
@@ -1890,8 +1890,8 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
       integrations: {
         localComputer: {
           command: process.execPath,
-          args: ["/tmp/container-mcp.js", "podman", "openmausbot-computer", "/run/cua.sock"],
-          env: { ELECTRON_RUN_AS_NODE: "1", OMB_VM_TOKEN: "vm-secret" },
+          args: ["/tmp/vps-container-mcp.js", "fixture-vps", "openmausbot-vps-bot", "/run/cua.sock"],
+          env: { ELECTRON_RUN_AS_NODE: "1", OMB_CONTROL_TOKEN: "control-secret" },
         },
       },
     });
@@ -1901,10 +1901,10 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
     expect(seen.argv.join(" ")).toContain("mcp_servers.computer.command");
     // Codex would end a cloud computer file copy after its own 60 s default.
     expect(seen.argv).toContain("mcp_servers.computer.tool_timeout_sec=560");
-    expect(seen.argv.join(" ")).toContain("/tmp/container-mcp.js");
-    expect(seen.argv.join(" ")).toContain("OMB_VM_TOKEN");
-    expect(seen.argv.join(" ")).not.toContain("vm-secret");
-    expect(seen.env.OMB_VM_TOKEN).toBe("vm-secret");
+    expect(seen.argv.join(" ")).toContain("/tmp/vps-container-mcp.js");
+    expect(seen.argv.join(" ")).toContain("OMB_CONTROL_TOKEN");
+    expect(seen.argv.join(" ")).not.toContain("control-secret");
+    expect(seen.env.OMB_CONTROL_TOKEN).toBe("control-secret");
   });
 
   it("sends the local provider when the picker id is custom-encoded", async () => {
@@ -3095,7 +3095,7 @@ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:m.id,result})+'\\n');});`)
       threadId: "t-vm-scope",
       text: "clean up",
       integrations: {
-        localComputer: { command: process.execPath, args: ["/tmp/container-mcp.js"], env: {} },
+        localComputer: { command: process.execPath, args: ["/tmp/vps-container-mcp.js"], env: {} },
       },
     });
     const vm = await recorder.until((e) => e.type === "request.opened" && e.threadId === "t-vm-scope");

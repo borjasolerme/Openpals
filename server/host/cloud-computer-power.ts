@@ -132,14 +132,14 @@ export function createCloudComputerPower(deps: CloudComputerPowerDeps) {
     let lifecycle = lifecycleOf();
     if (lifecycle === "provision" && existingOnly) return null;
     if (lifecycle === "provision") {
-      broadcast({ kind: "computer", botId: bot.id, state: "provisioning", place: "cloud" });
+      broadcast({ kind: "computer", botId: bot.id, state: "provisioning" });
       await provisionOnceRemoved(bot, deadline);
       b = await boat.findBoat(cfg, bot.id);
       lifecycle = lifecycleOf();
     }
     // An archived Boat answers every action with an error until it resumes: wake it once here.
     if (lifecycle === "wake") {
-      broadcast({ kind: "computer", botId: bot.id, state: "waking", place: "cloud" });
+      broadcast({ kind: "computer", botId: bot.id, state: "waking" });
       b = (await boat.readyBoat(cfg, bot.id, Math.max(1_000, deadline - Date.now()))) ?? b;
       lifecycle = lifecycleOf();
     }

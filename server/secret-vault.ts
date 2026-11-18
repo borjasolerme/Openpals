@@ -1,7 +1,7 @@
 // Values a person typed into a bot's card for a secret OpenMausBot does not keep itself.
 // Security: a `ref` value stays in this process's memory, behind a one-use reference bound to the asking bot and
 // conversation that only OpenMausBot's own tools accept. A `file` value goes to an owner-only file in a private folder
-// of that bot's own workspace (or the Local VM workspace its turn runs in); nothing that syncs, backs up, moves, links,
+// of that bot's own workspace; nothing that syncs, backs up, moves, links,
 // attaches, publishes or uploads workspace files carries that folder (inSecretFolder). Neither value is ever logged,
 // and while either lives, held-secret redaction masks it in transcripts, events and logs.
 import { randomBytes } from "node:crypto";
@@ -26,12 +26,6 @@ const HELD_LIMIT = 200;
 export interface SecretOwner {
   botId: string;
   threadId: string;
-}
-
-/** The folder that holds SECRET_FOLDER: its path on this computer, and the path the bot's commands use for it. */
-export interface SecretFileHome {
-  host: string;
-  shown: string;
 }
 
 export type SavedSecret = { ref: string } | { file: string };
@@ -97,12 +91,11 @@ export class SecretVault {
     return ref;
   }
 
-  /** Writes the card's value to `<home>/.openmausbot-secrets/<thread>/<card>` (0600, in 0700 folders); returns its path
-   * as the bot's commands see it. */
-  saveFile(owner: SecretOwner, messageId: string, value: string, home: SecretFileHome): string {
+  /** Writes the card's value to `<home>/.openmausbot-secrets/<thread>/<card>` (0600, in 0700 folders); returns its path. */
+  saveFile(owner: SecretOwner, messageId: string, value: string, home: string): string {
     if (!ID.test(owner.threadId) || !ID.test(messageId)) throw new Error("invalid conversation or card id");
-    privateFolder(home.host, "all");
-    const folder = join(home.host, SECRET_FOLDER);
+    privateFolder(home, "all");
+    const folder = join(home, SECRET_FOLDER);
     privateFolder(folder, "one");
     const threadFolder = join(folder, owner.threadId);
     privateFolder(threadFolder, "one");
@@ -116,11 +109,10 @@ export class SecretVault {
     } finally {
       closeSync(fd);
     }
-    const shown = home.shown === home.host ? file : [home.shown, SECRET_FOLDER, owner.threadId, messageId].join("/");
     const until = this.now() + SECRET_FILE_TTL_MS;
-    this.byCard.set(messageId, { file: shown, until });
+    this.byCard.set(messageId, { file, until });
     this.hold(value, until);
-    return shown;
+    return file;
   }
 
   /** What this card's save gave the bot, while it still works; null after a restart, its use or its expiry. */

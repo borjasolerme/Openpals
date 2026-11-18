@@ -183,7 +183,6 @@ describe("computer journal", () => {
   it("journals only this computer's turns", () => {
     expect(hostScope({ ...scope, kind: "computer" })).toEqual(scope);
     expect(hostScope({ ...scope, kind: "computer", boxId: null })).toBeNull();
-    expect(hostScope({ ...scope, kind: "computer", localVmTarget: {} })).toBeNull();
     expect(hostScope({ ...scope, kind: "computer", teamComputerId: "tc" })).toBeNull();
     expect(hostScope({ ...scope, kind: "browser" })).toBeNull();
   });

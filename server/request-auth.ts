@@ -452,8 +452,8 @@ function mutatingPublicRoute(method: string, path: string): boolean {
   ) return true;
   // Hands out a desktop's VNC password and control.
   if (path.startsWith("/api/desktop-viewer/")) return true;
-  // Hand out a stored secret to a loopback reader: a webhook's address, a Local VM's viewer password.
-  if (upper === "GET" && (/^\/api\/webhooks\/[\w-]+\/address$/.test(path) || /^\/api\/(?:bots\/[\w-]+\/)?local-computer$/.test(path))) return true;
+  // Hand out a stored secret to a loopback reader: a webhook's address.
+  if (upper === "GET" && /^\/api\/webhooks\/[\w-]+\/address$/.test(path)) return true;
   // Hands out what a Grok Bot wrote about the person, from their Downloads folder.
   if (upper === "GET" && path === "/api/setup-import/grok") return true;
   // Drives a bot's browser: a WebSocket upgrade is a GET, but what it carries is input.

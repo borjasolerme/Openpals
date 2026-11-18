@@ -66,8 +66,8 @@ const STARTUP_TIMED_OUT = "MCP startup timed out";
 const REQUEST_TIMED_OUT = "MCP request timed out; execution outcome may be uncertain";
 /** How much of a server's stderr is kept, and how much of its last line is ever shown. */
 const STDERR_TAIL_CHARS = 4_000, STDERR_LINE_CHARS = 300;
-/** Built-ins a turn can go on without, saying so. A turn can't run without the agents server, nor without a Local VM it
- * was given (mountChatTools `mustHave`). */
+/** Built-ins a turn can go on without, saying so. A turn can't run without the agents server, nor without a computer it
+ * was given other than this desktop's own (mountChatTools `mustHave`). */
 const OPTIONAL_BUILT_INS: ReadonlySet<string> = new Set(["computer", "browser", "composio", "data", "highlevel", "device"]);
 
 /** How long a server that runs a command gets to start here. */
@@ -495,8 +495,8 @@ export async function mountChatTools(integrations: SendTurnInput["integrations"]
   if (integrations?.device && eligible("device")) servers.push(["device", integrations.device]);
   // A failed mount of an optional built-in is skipped like a configured server's, which the model is told about, so one
   // dead helper can't fail every later turn. (CLI engines already drop them and go on.)
-  // Safety: a turn never runs without the agents server, or without a Local VM it was given (any computer but this
-  // desktop's own): without the VM's tools the model would do the work some other way, outside the VM. Such a server that
+  // Safety: a turn never runs without the agents server, or without a computer it was given (any computer but this
+  // desktop's own): without that computer's tools the model would do the work some other way, outside it. Such a server that
   // can't start, lists no tools, or fails during the turn ends the turn, as every server did before.
   const mustHave = (descriptor: Server) => descriptor === agentsServer || (descriptor === integrations?.localComputer && integrations?.localComputer?.scope !== "local-computer");
   const startupMs = mcpStartupMs();
@@ -653,7 +653,7 @@ export async function mountChatTools(integrations: SendTurnInput["integrations"]
       const include = (tool: unknown) => keeps(tool) && (scope === undefined || (object(tool) && typeof tool.name === "string"
         && ((searchable.has(name) && isDirectoryTool(tool.name)) || allowsTool(scope, { kind: "mcp", server: name, name: tool.name }))));
       const tools = await client.tools(signal, include, searchable.has(name) ? REMOTE_MCP_STARTUP_MS : startupMs, observers.get(name));
-      if (!tools.length && scope === undefined && descriptor === integrations?.localComputer) throw new Error("The Local VM listed no tools");
+      if (!tools.length && scope === undefined && descriptor === integrations?.localComputer) throw new Error("The computer listed no tools");
       // Harness mounts are known by descriptor, never by a name a configured server could claim. A grant
       // hashes the descriptor (no credential kept); machine bridges mint a bearer per turn, so theirs last a turn.
       const launch = createHash("sha256").update(JSON.stringify(descriptor)).digest("hex");

@@ -35,7 +35,7 @@ const CONTEXT_NOTE = "Context from Openpals updated since this conversation star
 const MEMORY = "Your memory (MEMORY.md):\n# Memory\n- Fixture prefers concise replies.";
 // Team availability changes whenever a teammate starts or finishes, so it must never reach the cached system message.
 const AVAILABILITY = "Team availability";
-const ANNOUNCEMENT = "I'm working in the Cua Local VM and will launch XFCE Terminal first.";
+const ANNOUNCEMENT = "I'm working in the cloud desktop and will launch XFCE Terminal first.";
 function delivered(request: ChatRequest) {
   const system = request.messages.find((message) => message.role === "system")?.content ?? "";
   const turn = request.messages.findLast((message) => message.role === "user")?.content ?? "";

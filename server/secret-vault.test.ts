@@ -80,7 +80,7 @@ describe("secretRef", () => {
 });
 
 posix("secret files", () => {
-  const home = () => ({ host: join(root, "workspaces", "atlas"), shown: join(root, "workspaces", "atlas") });
+  const home = () => join(root, "workspaces", "atlas");
 
   it("writes an owner-only file in owner-only folders and returns its path", () => {
     const vault = new SecretVault(clock);
@@ -96,25 +96,18 @@ posix("secret files", () => {
 
   it("closes a secrets folder someone else opened up before writing into it", () => {
     const vault = new SecretVault(clock);
-    mkdirSync(join(home().host, SECRET_FOLDER), { recursive: true, mode: 0o755 });
-    chmodSync(join(home().host, SECRET_FOLDER), 0o755);
+    mkdirSync(join(home(), SECRET_FOLDER), { recursive: true, mode: 0o755 });
+    chmodSync(join(home(), SECRET_FOLDER), 0o755);
     vault.saveFile(ATLAS, "card-1", "sk_canary_file", home());
-    expect(statSync(join(home().host, SECRET_FOLDER)).mode & 0o777).toBe(0o700);
-  });
-
-  it("gives a Local VM's path as the bot's commands there see it", () => {
-    const vault = new SecretVault(clock);
-    const shown = vault.saveFile(ATLAS, "card-1", "sk_canary_file", { host: join(root, "vm-home"), shown: "/home/cua/workspace" });
-    expect(shown).toBe(`/home/cua/workspace/${SECRET_FOLDER}/thread-1/card-1`);
-    expect(readFileSync(join(root, "vm-home", SECRET_FOLDER, "thread-1", "card-1"), "utf8")).toBe("sk_canary_file");
+    expect(statSync(join(home(), SECRET_FOLDER)).mode & 0o777).toBe(0o700);
   });
 
   it("refuses a folder the bot replaced with a link, so the value never lands where it points", () => {
     const vault = new SecretVault(clock);
     const elsewhere = join(root, "synced-folder");
     mkdirSync(elsewhere, { recursive: true });
-    mkdirSync(home().host, { recursive: true });
-    symlinkSync(elsewhere, join(home().host, SECRET_FOLDER));
+    mkdirSync(home(), { recursive: true });
+    symlinkSync(elsewhere, join(home(), SECRET_FOLDER));
     expect(() => vault.saveFile(ATLAS, "card-1", "sk_canary_file", home())).toThrow(/not a plain folder/);
     expect(existsSync(join(elsewhere, "thread-1"))).toBe(false);
   });

@@ -69,7 +69,7 @@ describe("a cloud computer starts only when the bot uses it", () => {
   }
   const starts = (botId: string) => events.frames
     .filter(frame => frame.kind === "computer" && frame.botId === botId)
-    .map(({ state, place }) => ({ state, place }));
+    .map(({ state }) => ({ state }));
   const creates = () => requests.filter(request => request.method === "POST" && request.path === "/sandboxes").length;
   const resumes = () => requests.filter(request => request.method === "POST" && request.path.endsWith("/resume")).length;
   const task = async (botId: string) =>
@@ -308,7 +308,7 @@ describe("a cloud computer starts only when the bot uses it", () => {
     expect(second.body.result.isError).toBeFalsy();
     expect(creates()).toBe(1);
     expect(resumes()).toBe(0);
-    expect(starts(bot.id)).toEqual([{ state: "provisioning", place: "cloud" }]);
+    expect(starts(bot.id)).toEqual([{ state: "provisioning" }]);
     await finish(bot.id);
 
     // The wake (four looks, ten seconds) outlasts CONTROL_ACT_WITHIN_MS, so that call is answered unperformed and the next acts at once.
@@ -323,7 +323,7 @@ describe("a cloud computer starts only when the bot uses it", () => {
     expect(woken.body.result.content[0]).toMatchObject({ type: "image", mimeType: "image/jpeg" });
     expect(resumes()).toBe(1);
     expect(creates()).toBe(1);
-    expect(starts(bot.id)).toEqual([{ state: "provisioning", place: "cloud" }, { state: "waking", place: "cloud" }]);
+    expect(starts(bot.id)).toEqual([{ state: "provisioning" }, { state: "waking" }]);
     await finish(bot.id);
     await apiOk("DELETE", `/api/bots/${bot.id}`);
   }, 60_000);

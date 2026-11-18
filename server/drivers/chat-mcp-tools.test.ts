@@ -323,7 +323,7 @@ describe("Chat MCP session", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       try {
         const dead = fixture(broken), agents = fixture();
-        // This desktop's own computer is the optional one; a Local VM is not (below).
+        // This desktop's own computer is the optional one; any other computer is not (below).
         const integrations = key === "hostComputer" ? { localComputer: { ...dead.server, scope: "local-computer" as const } } : { [key]: dead.server };
         const session = await mountChatTools({ ...integrations, agents: agents.server } as SendTurnInput["integrations"], dead.controller.signal, true);
         sessions.push(session);
@@ -337,7 +337,7 @@ describe("Chat MCP session", () => {
 
   describe("a server the turn must not run without", () => {
     const broken = `if (message.method === "tools/list") { process.stdout.write('{"result":1}\\n'); continue; }`;
-    it("fails setup, naming it, when a Local VM can't start, and leaves no server running", async () => {
+    it("fails setup, naming it, when a cloud computer can't start, and leaves no server running", async () => {
       const vm = fixture(broken), other = fixture();
       await expect(mountChatTools({ localComputer: vm.server, data: other.server } as SendTurnInput["integrations"], vm.controller.signal, true))
         .rejects.toThrow(/^MCP server "computer" didn't start: MCP/);
@@ -346,7 +346,7 @@ describe("Chat MCP session", () => {
     });
 
     it.each([
-      ["a Local VM", "computer", (server: Record<string, unknown>) => ({ localComputer: server })],
+      ["a cloud computer", "computer", (server: Record<string, unknown>) => ({ localComputer: server })],
       ["the agents server", "agents", (server: Record<string, unknown>) => ({ agents: server })],
     ] as const)("ends the turn's session when %s fails during a call, instead of going on without it", async (_label, name, integrationsOf) => {
       const failing = fixture(`if (message.method === "tools/call") { process.exit(3); }`), other = fixture();
@@ -545,9 +545,9 @@ describe("Chat MCP session", () => {
     warn.mockRestore();
   });
 
-  it("fails setup when the Local VM lists no tools, but not when the owner's selection leaves none", async () => {
+  it("fails setup when a cloud computer lists no tools, but not when the owner's selection leaves none", async () => {
     const empty = fixture(`if(message.method === "tools/list") { reply(message,{tools:[]}); continue; }`);
-    await expect(empty.mount(true, true)).rejects.toThrow("The Local VM listed no tools");
+    await expect(empty.mount(true, true)).rejects.toThrow("The computer listed no tools");
     expect(alive(empty.read().pid)).toBe(false);
     expect((await empty.mount(false)).definitions).toEqual([]);
     expect((await fixture().mount(true, true, { allow: ["mcp:computer:screenshot"] })).definitions).toEqual([]);
@@ -942,8 +942,8 @@ describe("Chat MCP tool limit", () => {
   it("gives the agents server its whole list before a computer mounted ahead of it", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      const { session, names } = await mount({ localComputer: catalog(syntheticToolNames("vm", 100)), agents: catalog(syntheticToolNames("agent", 51)) });
-      expect(names).toEqual([...syntheticToolNames("computer_vm", 76), ...syntheticToolNames("agents_agent", 51)]);
+      const { session, names } = await mount({ localComputer: catalog(syntheticToolNames("desk", 100)), agents: catalog(syntheticToolNames("agent", 51)) });
+      expect(names).toEqual([...syntheticToolNames("computer_desk", 76), ...syntheticToolNames("agents_agent", 51)]);
       expect(session.trimmed).toEqual([{ server: "computer", listed: 76, of: 100 }]);
     } finally { warn.mockRestore(); }
   });
@@ -965,7 +965,7 @@ describe("Chat MCP tool limit", () => {
   it("keeps room for the tool search when built-ins alone would fill the limit", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
-      const { session, names } = await mount({ agents: catalog(syntheticToolNames("agent", 51)), localComputer: catalog(syntheticToolNames("vm", 100)), custom: { notes: catalog(syntheticToolNames("note", 5)) } });
+      const { session, names } = await mount({ agents: catalog(syntheticToolNames("agent", 51)), localComputer: catalog(syntheticToolNames("desk", 100)), custom: { notes: catalog(syntheticToolNames("note", 5)) } });
       expect(names).toHaveLength(127);
       expect(names.filter((name) => name.startsWith("agents_"))).toHaveLength(51);
       expect(session.trimmed).toEqual([{ server: "computer", listed: 73, of: 100 }]);

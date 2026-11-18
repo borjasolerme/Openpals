@@ -7,7 +7,6 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { writeFileAtomic } from "./atomic.ts";
 import { freePortBlock } from "./testing/ports.ts";
 import { removeTempDir, waitForExit } from "./testing/cleanup.ts";
 import { decodeCuaConnection } from "./local-computer.ts";
@@ -18,7 +17,6 @@ describe("surface pin provenance against the real server", () => {
   let home = "";
   let data = "";
   let ui = "";
-  let stateFile = "";
   let dumpFile = "";
   let finishFile = "";
   let cuaDescriptor = "";
@@ -30,8 +28,7 @@ describe("surface pin provenance against the real server", () => {
   let boatApi = "";
   let boatDown = false;
 
-  const vmState = (state: Record<string, unknown> = {}) => writeFileAtomic(stateFile, JSON.stringify(state));
-  const resetTurn = () => { vmState(); rmSync(dumpFile, { force: true }); rmSync(finishFile, { force: true }); };
+  const resetTurn = () => { rmSync(dumpFile, { force: true }); rmSync(finishFile, { force: true }); };
   const api = async (method: string, path: string, body?: unknown) => {
     const response = await fetch(base + path, {
       method, headers: { "content-type": "application/json" },
@@ -58,10 +55,6 @@ describe("surface pin provenance against the real server", () => {
     try { return JSON.parse(readFileSync(dumpFile, "utf8")); } catch { return null; }
   }, Boolean);
   const mountedComputer = (sent: any) => sent.mcpConfig.mcpServers.computer;
-  // The first screen tools/call, exactly as the mounted proxy issues it: a claim and its pin land on use, not on mount.
-  const gate = (c: any) => fetch(c.env.OMB_CONTROL_URL, {
-    headers: { authorization: `Bearer ${c.env.OMB_CONTROL_TOKEN}` },
-  }).then(response => response.json() as Promise<any>);
   const threadState = (botId: string, threadId: string) =>
     api("GET", "/api/bots?messages=0").then(({ body }) =>
       body.bots.find((bot: any) => bot.id === botId)?.tasks.find((task: any) => task.threadId === threadId));
@@ -80,14 +73,13 @@ describe("surface pin provenance against the real server", () => {
     const port = await freePortBlock([0, 1]);
     base = `http://127.0.0.1:${port}`;
     output = "";
-    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/group-local-vm-hooks.mjs")).href,
-      "--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
+    const proc = spawn(process.execPath, ["--import", pathToFileURL(join(ROOT, "server/testing/desktop-parent.mjs")).href, join(ROOT, "server/index.ts")], {
       cwd: ROOT, env: {
         PATH: dirname(process.execPath), ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
         HOME: home, USERPROFILE: home, OMB_DATA_DIR: data,
         APPDATA: join(home, "appdata"), LOCALAPPDATA: join(home, "localappdata"),
         TEMP: home, TMP: home, TMPDIR: home,
-        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui, OMB_TEST_VM_STATE: stateFile,
+        OMB_PORT: String(port), OMB_WEBHOOK_PORT: String(port + 1), OMB_STATIC_DIR: ui,
         OMB_BOAT_API: boatApi, OMB_USER_DATA: join(home, "user-data"), OMB_TEST_DESKTOP_CUA_CONNECTION: cuaDescriptor,
         ...(withBrowser ? { OMB_AGENT_BROWSER_PATH: inertBrowser, AGENT_BROWSER_EXECUTABLE_PATH: inertBrowser } : {}),
       }, stdio: ["ignore", "pipe", "pipe"],
@@ -117,13 +109,11 @@ describe("surface pin provenance against the real server", () => {
     home = mkdtempSync(join(tmpdir(), "omb-surface-pins-"));
     data = join(home, "data");
     ui = join(home, "static");
-    stateFile = join(home, "vm.json");
     dumpFile = join(home, "dump.json");
     finishFile = join(home, "finish");
     cuaDescriptor = join(home, "user-data", "cua-connection.json");
     inertBrowser = join(home, "agent-browser");
     writeFileSync(inertBrowser, "#!/bin/sh\nexit 0\n", { mode: 0o755 });
-    vmState();
     mkdirSync(data);
     mkdirSync(join(ui, "assets"), { recursive: true });
     writeFileSync(join(ui, "index.html"), "<title>Surface pins</title>");
@@ -174,13 +164,10 @@ describe("surface pin provenance against the real server", () => {
     resetTurn();
     await apiOk("POST", `/api/bots/${bot.id}/messages`, { text: "Work slowly.", threadId: task.threadId });
     await busy(bot.id, task.threadId);
-    expect(await gate(mountedComputer(await dump()))).toEqual({ held: false, helpOpen: false });
-    await until(() => savedTask(bot.id, task.threadId)?.surface === "vm", Boolean);
-    const refused = await api("PATCH", `/api/bots/${bot.id}/tasks/${task.threadId}`, { surface: "vm" });
+    await dump();
+    const refused = await api("PATCH", `/api/bots/${bot.id}/tasks/${task.threadId}`, { surface: "local" });
     expect(refused.status).toBe(409);
-    const pinned = savedTask(bot.id, task.threadId)!;
-    expect(pinned.surface).toBe("vm");
-    expect(pinned.surfaceSource).toBe("auto");
+    expect(savedTask(bot.id, task.threadId)?.surface).toBeUndefined();
     writeFileSync(finishFile, "finish");
     await idle(bot.id, task.threadId);
     await apiOk("DELETE", `/api/bots/${bot.id}`);
@@ -199,18 +186,18 @@ describe("surface pin provenance against the real server", () => {
     await stop();
     editSavedBot(bot.id, saved => {
       Object.assign(saved.tasks.find((task: any) => task.threadId === autoMismatch.threadId), { surface: "local", surfaceSource: "auto" });
-      Object.assign(saved.tasks.find((task: any) => task.threadId === autoMatch.threadId), { surface: "vm", surfaceSource: "auto" });
+      Object.assign(saved.tasks.find((task: any) => task.threadId === autoMatch.threadId), { surface: "cloud", surfaceSource: "auto" });
     });
     await start();
     expect(output).not.toContain("auto-pinned");
     expect(savedTask(bot.id, autoMismatch.threadId)?.surface).toBe("local");
-    await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "vm" });
+    await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "cloud" });
     expect(savedTask(bot.id, autoMismatch.threadId)?.surface).toBeUndefined();
     expect(savedTask(bot.id, personMismatch.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
-    expect(savedTask(bot.id, autoMatch.threadId)?.surface).toBe("vm");
+    expect(savedTask(bot.id, autoMatch.threadId)?.surface).toBe("cloud");
     await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: null });
     expect(savedTask(bot.id, personMismatch.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
-    expect(savedTask(bot.id, autoMatch.threadId)?.surface).toBe("vm");
+    expect(savedTask(bot.id, autoMatch.threadId)?.surface).toBe("cloud");
     expect(savedTask(bot.id, autoMismatch.threadId)?.surface).toBeUndefined();
     await apiOk("DELETE", `/api/bots/${bot.id}`);
     await stop();
@@ -223,7 +210,7 @@ describe("surface pin provenance against the real server", () => {
     await apiOk("PATCH", `/api/bots/${bot.id}/tasks/${task.threadId}`, { surface: "local" });
     await stop();
     editSavedBot(bot.id, saved => {
-      saved.computer = "vm";
+      saved.computer = "cloud";
       const target = saved.tasks.find((entry: any) => entry.threadId === task.threadId);
       target.surface = "local";
       delete target.surfaceSource;
@@ -244,36 +231,37 @@ describe("surface pin provenance against the real server", () => {
     await stop();
   });
 
-  it("mounts the VM for a turn into a thread auto-pinned to this computer", async () => {
-    await start();
+  it("works where Works on says in a thread auto-pinned to this computer", async () => {
+    await start(true);
     const { bot } = await apiOk("POST", "/api/bots", { name: "Incident Bot" });
     const { task } = await apiOk("POST", `/api/bots/${bot.id}/tasks`, {});
     await apiOk("PATCH", `/api/bots/${bot.id}/tasks/${task.threadId}`, { surface: "local" });
     await stop();
     editSavedBot(bot.id, saved => {
-      saved.computer = "vm";
+      saved.computer = "browser";
+      saved.browserProfile = "guest";
       saved.tasks.find((entry: any) => entry.threadId === task.threadId).surfaceSource = "auto";
     });
-    await start();
+    await start(true);
     expect(output.match(/auto-pinned thread/g)).toHaveLength(1);
     await stop();
-    await start();
+    await start(true);
     expect(output).not.toContain("auto-pinned thread");
     resetTurn();
     await apiOk("POST", `/api/bots/${bot.id}/messages`, { text: "Work where you should.", threadId: task.threadId });
     const sent = await dump();
-    expect(sent.systemPrompt).toContain("Local VM");
-    expect(mountedComputer(sent).args.some((arg: string) => arg.includes("container-mcp"))).toBe(true);
+    expect(sent.mcpConfig.mcpServers.browser).toBeDefined();
+    expect(mountedComputer(sent)).toBeUndefined();
     expect(sent.systemPrompt).not.toContain("You can act on the user's computer");
     writeFileSync(finishFile, "finish");
     await idle(bot.id, task.threadId);
     expect(savedTask(bot.id, task.threadId)?.surface).toBeUndefined();
-    await apiOk("DELETE", `/api/bots/${bot.id}`);
     await stop();
   });
 
   it("mounts the built-in browser beside the computer in a thread a teammate opened, and not in a person's thread", async () => {
     await start(true);
+    await apiOk("PUT", "/api/config", { box: { token: "box_fixture" } });
     const { bot } = await apiOk("POST", "/api/bots", { name: "Delegated Browser Bot" });
     const [own, delegated] = (await Promise.all([
       apiOk("POST", `/api/bots/${bot.id}/tasks`, {}),
@@ -292,48 +280,37 @@ describe("surface pin provenance against the real server", () => {
       await idle(bot.id, threadId);
       return servers;
     };
-    for (const computer of [undefined, "vm"]) {
-      if (computer) {
-        await stop();
-        editSavedBot(bot.id, saved => { saved.computer = computer; });
-        for (const threadId of [own.threadId, delegated.threadId]) {
-          editSavedBot(bot.id, saved => {
-            const task = saved.tasks.find((entry: any) => entry.threadId === threadId);
-            delete task.surface;
-            delete task.surfaceSource;
-          });
-        }
-      }
-      await start(true);
-      const person = await turnIn(own.threadId);
-      expect(person.computer?.args.some((arg: string) => arg.includes("container-mcp")), `${computer} person`).toBe(true);
-      expect(person.browser, `${computer} person`).toBeUndefined();
-      const teammate = await turnIn(delegated.threadId);
-      expect(teammate.computer?.args.some((arg: string) => arg.includes("container-mcp")), `${computer} teammate`).toBe(true);
-      expect(teammate.browser, `${computer} teammate`).toBeDefined();
-    }
+    editSavedBot(bot.id, saved => { saved.computer = "cloud"; });
+    await start(true);
+    const person = await turnIn(own.threadId);
+    expect(person.computer, "person").toBeDefined();
+    expect(person.browser, "person").toBeUndefined();
+    const teammate = await turnIn(delegated.threadId);
+    expect(teammate.computer, "teammate").toBeDefined();
+    expect(teammate.browser, "teammate").toBeDefined();
     await stop();
   }, 60_000);
 
   it("records future auto pins and moves them when Works on changes", async () => {
-    await start();
+    await start(true);
     const { bot } = await apiOk("POST", "/api/bots", { name: "New Auto Pin Bot" });
     const { task } = await apiOk("POST", `/api/bots/${bot.id}/tasks`, {});
+    await stop();
+    editSavedBot(bot.id, saved => { saved.browserProfile = "guest"; });
+    await start(true);
     resetTurn();
     await apiOk("POST", `/api/bots/${bot.id}/messages`, { text: "Use the available computer.", threadId: task.threadId });
-    expect(mountedComputer(await dump()).args.some((arg: string) => arg.includes("container-mcp"))).toBe(true);
-    expect(savedTask(bot.id, task.threadId)).not.toHaveProperty("surface");
-    expect(await gate(mountedComputer(await dump()))).toEqual({ held: false, helpOpen: false });
-    await until(() => savedTask(bot.id, task.threadId)?.surface === "vm", Boolean);
-    expect(savedTask(bot.id, task.threadId)).toMatchObject({ surface: "vm", surfaceSource: "auto" });
+    expect((await dump()).mcpConfig.mcpServers.browser).toBeDefined();
+    await until(() => savedTask(bot.id, task.threadId)?.surface === "browser", Boolean);
+    expect(savedTask(bot.id, task.threadId)).toMatchObject({ surface: "browser", surfaceSource: "auto" });
     expect(await threadState(bot.id, task.threadId)).not.toHaveProperty("surfaceSource");
-    expect(await threadState(bot.id, task.threadId)).toMatchObject({ surface: "vm", surfaceAuto: true });
+    expect(await threadState(bot.id, task.threadId)).toMatchObject({ surface: "browser", surfaceAuto: true });
     expect(savedTask(bot.id, task.threadId)).not.toHaveProperty("surfaceAuto");
     writeFileSync(finishFile, "finish");
     await idle(bot.id, task.threadId);
     await stop();
-    await start();
-    expect(savedTask(bot.id, task.threadId)).toMatchObject({ surface: "vm", surfaceSource: "auto" });
+    await start(true);
+    expect(savedTask(bot.id, task.threadId)).toMatchObject({ surface: "browser", surfaceSource: "auto" });
     await apiOk("PATCH", `/api/bots/${bot.id}`, { computer: "off" });
     expect(savedTask(bot.id, task.threadId)?.surface).toBeUndefined();
     expect(savedTask(bot.id, task.threadId)?.surfaceSource).toBeUndefined();
@@ -342,7 +319,6 @@ describe("surface pin provenance against the real server", () => {
     expect(mountedComputer(await dump())).toBeUndefined();
     writeFileSync(finishFile, "finish");
     await idle(bot.id, task.threadId);
-    await apiOk("DELETE", `/api/bots/${bot.id}`);
     await stop();
   });
 
@@ -352,7 +328,7 @@ describe("surface pin provenance against the real server", () => {
     const { task } = await apiOk("POST", `/api/bots/${bot.id}/tasks`, {});
     await apiOk("PATCH", `/api/bots/${bot.id}/tasks/${task.threadId}`, { surface: "local" });
     await stop();
-    editSavedBot(bot.id, saved => { saved.computer = "vm"; });
+    editSavedBot(bot.id, saved => { saved.computer = "cloud"; });
     await start();
     expect(output).not.toContain("auto-pinned thread");
     expect(savedTask(bot.id, task.threadId)).toMatchObject({ surface: "local", surfaceSource: "user" });
@@ -377,7 +353,6 @@ describe("surface pin provenance against the real server", () => {
         const sent = await dump();
         expect(sent.systemPrompt).toContain("You can act on the user's computer");
         expect(mountedComputer(sent).env.OMB_CUA_COMMAND).toBe("/fixture/cua-driver");
-        expect(mountedComputer(sent).args.some((arg: string) => arg.includes("container-mcp"))).toBe(false);
         writeFileSync(finishFile, "finish");
         await idle(bot.id, task.threadId);
       }

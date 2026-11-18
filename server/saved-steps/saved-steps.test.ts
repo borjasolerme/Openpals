@@ -371,7 +371,6 @@ describe("SavedSteps.requestSettled", () => {
   });
 
   it.each([
-    ["Local VM", { localVmTarget: { kind: "vm" } }],
     ["Cloud Boat", { boxId: "bx_1" }],
     ["Cloud Boat not created yet", { boxId: null }],
     ["team computer", { teamComputerId: "tc_1" }],

@@ -28,7 +28,7 @@ import {
   IMAGE_LAYER_LABEL,
   IMAGE_LAYER_VERSION,
   MANAGED_LABEL,
-} from "./container-computer.ts";
+} from "./cua-image.ts";
 import { PIDS_LIMIT } from "./container-limits.ts";
 import type { AppConfig } from "./config.ts";
 import {
@@ -1176,7 +1176,7 @@ describe("VPS computer", () => {
     expect(vpsStartsForTurn({ wants: undefined, autoStartVps: true })).toBe(true);
     expect(vpsStartsForTurn({ wants: undefined, automationSource: "schedule" })).toBe(true);
     expect(vpsStartsForTurn({ wants: undefined, automationSource: "manual" })).toBe(true);
-    expect(vpsStartsForTurn({ wants: "vm", automationSource: "schedule" })).toBe(false);
+    expect(vpsStartsForTurn({ wants: "local", automationSource: "schedule" })).toBe(false);
     expect(vpsStartsForTurn({ wants: "off", autoStartVps: true })).toBe(false);
   });
 

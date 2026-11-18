@@ -22,8 +22,8 @@ const DEFER = { [DEFER_TOOLS_ENV]: "1" };
 
 /** Bytes Claude Code sends up front for the agents server when the budget was last set; each may move at most 2%. */
 const UP_FRONT_BASELINE: Record<string, { whole: number; deferred: number }> = {
-  default: { whole: 3986, deferred: 983 },
-  fullest: { whole: 4780, deferred: 1143 },
+  default: { whole: 3817, deferred: 962 },
+  fullest: { whole: 4611, deferred: 1143 },
 };
 
 const listed = (env: Record<string, string>) => agentsToolList(env).listed as Array<{ name: string; description: string; inputSchema: unknown; _meta?: Record<string, unknown> }>;

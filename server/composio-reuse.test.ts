@@ -140,7 +140,6 @@ describe("who may look for an earlier installation's user", () => {
       store: { bots: [] },
       browserRuntime: { heldBy: () => false },
       providerConfigBusy: { get: () => false, set: () => undefined },
-      localVmModeChangeBusy: { set: () => undefined },
       computerProviderConfigTransitions: { add: () => undefined, delete: () => undefined },
     } as unknown as ConfigRouteDeps;
     await createConfigRoutes(deps)({
