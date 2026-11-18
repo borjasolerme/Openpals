@@ -1,6 +1,5 @@
-import { app, BrowserWindow, Tray, WebContentsView, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerMonitor, powerSaveBlocker, safeStorage, screen, session, shell, systemPreferences, utilityProcess, nativeTheme } from "electron";
+import { app, BrowserWindow, Tray, clipboard, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, powerMonitor, powerSaveBlocker, safeStorage, screen, session, shell, systemPreferences, utilityProcess, nativeTheme } from "electron";
 import { offerMoveToApplications } from "./move-to-applications.mjs";
-import { createRequire } from "node:module";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -78,7 +77,6 @@ const { createDisplayMediaGuard, invokeDisplayMediaCallback, selectCaptureSource
 );
 const { STAGE_PREFIX: APPIMAGE_CUA_STAGE_PREFIX } = require("./cua-linux-bundle.cjs");
 const { desktopViewerUrl, sameDesktopViewerOrigin } = require("./desktop-viewer.cjs");
-const { createDesktopWorkspaceManager } = require("./desktop-workspace.cjs");
 const { createTrustedApprovalModeCoordinator } = require("./approval-trusted-mode.cjs");
 const { DESKTOP_MUTATION_HEADER, desktopServerHeaders } = require("./desktop-server-auth.cjs");
 const { MIN_BOUNDS, normalizeUnreadCount, resolveWindowState } = require("./window-state.cjs");
@@ -91,8 +89,6 @@ const APP_ICON = path.join(__dirname, "resources/app-icon.png");
 let desktopViewerWindow = null;
 let desktopViewerOwner = null;
 let desktopViewerContextId = null;
-let desktopWorkspaceManager = null;
-let desktopWorkspaceOwner = null;
 function appWindows() {
   return BrowserWindow.getAllWindows().filter((win) => !isTalkPanel(win));
 }
@@ -789,54 +785,6 @@ function openDesktopViewer(owner, rawUrl, rawTitle, contextId) {
   return true;
 }
 
-function ensureDesktopWorkspace(owner) {
-  if (!owner || owner.isDestroyed()) throw new Error("The Openpals window is unavailable");
-  if (desktopWorkspaceManager) {
-    if (desktopWorkspaceOwner !== owner) {
-      throw new Error("The two-desktop view belongs to another app window");
-    }
-    return desktopWorkspaceManager;
-  }
-
-  desktopWorkspaceOwner = owner;
-  const manager = createDesktopWorkspaceManager({
-    owner,
-    createView: (options) => new WebContentsView(options),
-    partitionPrefix: `openmausbot-desktop-workspace-${randomUUID()}`,
-    notify: (state) => {
-      if (!owner.isDestroyed() && !owner.webContents.isDestroyed()) {
-        owner.webContents.send("desktop-workspace:state", state);
-      }
-    },
-  });
-  desktopWorkspaceManager = manager;
-
-  // Native child views outlive the renderer DOM; close both panes so no secret-bearing noVNC URL survives.
-  owner.webContents.on("did-start-navigation", (_event, _url, isInPlace, isMainFrame) => {
-    if (isMainFrame && !isInPlace) manager.closeAll();
-  });
-  owner.webContents.on("render-process-gone", () => manager.closeAll());
-  owner.once("closed", () => {
-    manager.closeAll();
-    if (desktopWorkspaceManager === manager) {
-      desktopWorkspaceManager = null;
-      desktopWorkspaceOwner = null;
-    }
-  });
-  return manager;
-}
-
-function desktopWorkspaceForEvent(event, create = false) {
-  const owner = mainWindow;
-  if (!owner || owner.isDestroyed() || event.sender !== owner.webContents) {
-    throw new Error("The two-desktop view is available only to the main app window");
-  }
-  if (desktopWorkspaceManager && desktopWorkspaceOwner !== owner) {
-    throw new Error("The two-desktop view belongs to another app window");
-  }
-  return create ? ensureDesktopWorkspace(owner) : desktopWorkspaceManager;
-}
-
 ipcMain.on("screen:preview-intent", localOnlySync("screen:preview-intent", (event) => {
   event.returnValue = displayMediaGuard.begin(event.senderFrame);
 }));
@@ -1448,26 +1396,6 @@ ipcMain.handle("desktop:open-external", localOnly("desktop:open-external", async
 ipcMain.handle("desktop-viewer:open", localOnly("desktop-viewer:open", (event, rawUrl, title, contextId) => {
   const owner = BrowserWindow.fromWebContents(event.sender);
   return openDesktopViewer(owner, rawUrl, title, contextId);
-}));
-
-// URL validation, sandboxing, session isolation and the one-interactive-pane rule stay here, not in the renderer.
-ipcMain.handle("desktop-workspace:open", localOnly("desktop-workspace:open", (event, input) =>
-  desktopWorkspaceForEvent(event, true).open(input),
-));
-ipcMain.handle("desktop-workspace:layout", localOnly("desktop-workspace:layout", (event, items) => {
-  const manager = desktopWorkspaceForEvent(event);
-  if (!manager) return false;
-  return manager.layout(items);
-}));
-ipcMain.handle("desktop-workspace:set-interactive", localOnly("desktop-workspace:set-interactive", (event, contextId) => {
-  const manager = desktopWorkspaceForEvent(event);
-  if (!manager) return contextId == null;
-  return manager.setInteractive(contextId);
-}));
-ipcMain.handle("desktop-workspace:close", localOnly("desktop-workspace:close", (event, contextId) => {
-  const manager = desktopWorkspaceForEvent(event);
-  if (!manager) return true;
-  return manager.close(contextId);
 }));
 
 // Only the owner of the current viewer may close it.

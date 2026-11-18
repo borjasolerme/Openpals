@@ -254,7 +254,6 @@ describe("the sidecar in front of an unmodified harness", () => {
     expect((await device("PUT", "/api/config", { body: { xai: { apiKey: "x" } } })).status).toBe(403);
     expect((await device("GET", "/api/devices")).status).toBe(403);
     expect((await device("GET", "/api/companion")).status).toBe(403);
-    expect((await device("POST", "/api/local-computer/start")).status).toBe(403);
     expect((await device("GET", "/api/internal/peers")).status).toBe(404);
     expect((await device("GET", "/")).status).toBe(404);
     expect((await device("GET", "/api/config")).status).toBe(200);

@@ -14,20 +14,11 @@ interface ViewerSession {
   origin: string;
   expiresAt: number;
   sockets: Set<{ destroy(): void }>;
-  /** A Local VM viewer lives only as long as its control lease holds. */
-  watch?: ReturnType<typeof setInterval>;
 }
 
-/** Whether `controlLeaseId` still holds `botId`'s computer, asked on behalf of
- * the paired device. Any failure must answer false. */
-export type ControlCheck = (deviceId: string, botId: string, controlLeaseId: string) => Promise<boolean>;
-
 const VIEWER_PATH = /^\/vps-viewer\/([A-Za-z0-9_-]{32})(\/.*)?$/;
-/** Both joins hand back a loopback noVNC address: a VPS through its SSH
- * tunnel, and the Local VM's own published port. */
-const BOT_JOIN_PATH = /^\/api\/bots\/([\w-]+)\/(computer|local-computer)\/join$/;
-const CONTROL_LEASE = /^[A-Za-z0-9_-]{16,120}$/;
-const CONTROL_CHECK_MS = 3_000;
+/** A VPS join hands back a loopback noVNC address through its SSH tunnel. */
+const BOT_JOIN_PATH = /^\/api\/bots\/([\w-]+)\/computer\/join$/;
 const SESSION_TTL_MS = 8 * 60 * 60_000;
 const MAX_SESSIONS = 64;
 
@@ -122,13 +113,6 @@ function acceptUpgrade(socket: Duplex, response: IncomingMessage): void {
 export class CompanionViewerRelay {
   readonly #sessions = new Map<string, ViewerSession>();
   readonly #upgrades = new Set<Duplex>();
-  readonly #checkControl?: ControlCheck;
-  readonly #checkMs: number;
-
-  constructor(options: { checkControl?: ControlCheck; checkIntervalMs?: number } = {}) {
-    this.#checkControl = options.checkControl;
-    this.#checkMs = options.checkIntervalMs ?? CONTROL_CHECK_MS;
-  }
 
   #prune(): void {
     const now = Date.now();
@@ -143,7 +127,6 @@ export class CompanionViewerRelay {
   }
 
   #remove(session: ViewerSession): void {
-    if (session.watch) clearInterval(session.watch);
     this.#sessions.delete(session.id);
     for (const socket of session.sockets) socket.destroy();
     session.sockets.clear();
@@ -178,7 +161,7 @@ export class CompanionViewerRelay {
     return BOT_JOIN_PATH.test(path);
   }
 
-  rewriteJoinResponse(path: string, value: unknown, deviceId?: string, controlLeaseId?: string | null): unknown {
+  rewriteJoinResponse(path: string, value: unknown, deviceId?: string): unknown {
     const join = BOT_JOIN_PATH.exec(path);
     const botId = join?.[1];
     if (!botId || !value || typeof value !== "object" || Array.isArray(value)) return value;
@@ -186,13 +169,6 @@ export class CompanionViewerRelay {
     const viewer = safeLoopbackViewer(body.joinUrl);
     if (!viewer) return value;
     if (!deviceId) throw new Error("the paired device has no viewer identity");
-    // A Local VM viewer is bound to the control lease that asked for it, and
-    // is closed the moment that lease stops holding the computer. Without a
-    // lease, or nothing to check it with, it is never handed out at all.
-    const localVm = join[2] === "local-computer";
-    if (localVm && (!controlLeaseId || !CONTROL_LEASE.test(controlLeaseId) || !this.#checkControl)) {
-      throw new Error("a Local VM viewer needs a control lease");
-    }
 
     this.#prune();
     this.close(deviceId, botId);
@@ -206,23 +182,6 @@ export class CompanionViewerRelay {
       sockets: new Set(),
     };
     this.#sessions.set(id, session);
-    if (localVm) {
-      const check = this.#checkControl!;
-      const lease = controlLeaseId!;
-      let checking = false;
-      session.watch = setInterval(() => {
-        if (checking) return;
-        checking = true;
-        check(deviceId, botId, lease)
-          .catch(() => false)
-          .then((owned) => {
-            checking = false;
-            if (!owned && this.#isActive(session)) this.#remove(session);
-          });
-      }, this.#checkMs);
-      session.watch.unref?.();
-    }
-
     const settings = new URLSearchParams(viewer.hash.slice(1));
     settings.set("path", `vps-viewer/${id}/websockify`);
     return {

@@ -1,4 +1,4 @@
-// Cloud viewers must use HTTPS; the one HTTP exception is the Local VM's passworded noVNC bound to loopback.
+// Cloud viewers must use HTTPS; the one HTTP exception is a passworded viewer on loopback, such as this app's own VPS viewer proxy.
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 
@@ -17,7 +17,7 @@ function desktopViewerUrl(rawUrl) {
 
   const localHttp = url.protocol === "http:" && LOOPBACK_HOSTS.has(url.hostname);
   if (url.protocol !== "https:" && !localHttp) {
-    throw new Error("The desktop viewer must use HTTPS or the local VM address");
+    throw new Error("The desktop viewer must use HTTPS or a loopback address");
   }
   if (url.username || url.password) {
     throw new Error("Desktop viewer credentials must not use URL user info");

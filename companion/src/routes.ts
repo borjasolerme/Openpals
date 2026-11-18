@@ -42,18 +42,6 @@ export const BROWSER_ACTION_ROUTE = {
   path: /^\/api\/bots\/[\w-]+\/browser\/action$/,
 } as const;
 
-/** The harness grants it only while a person holds that bot's computer. */
-export const LOCAL_VM_JOIN_ROUTE = {
-  method: "POST",
-  path: /^\/api\/bots\/[\w-]+\/local-computer\/join$/,
-} as const;
-
-/** A still of a bot's Local VM; its lifecycle stays on the host. */
-export const LOCAL_VM_SCREENSHOT_ROUTE = {
-  method: "POST",
-  path: /^\/api\/bots\/[\w-]+\/local-computer\/screenshot$/,
-} as const;
-
 export function isCloudDesktopJoin(method: string, path: string): boolean {
   return method === CLOUD_DESKTOP_JOIN_ROUTE.method && CLOUD_DESKTOP_JOIN_ROUTE.path.test(path);
 }
@@ -65,9 +53,7 @@ export function isMessageFileDownload(method: string, path: string): boolean {
 /** Needs the device's computer-access capability, not just a token. */
 export function isCloudDesktopAccess(method: string, path: string): boolean {
   return isCloudDesktopJoin(method, path)
-    || (method === CLOUD_DESKTOP_CONTROL_ROUTE.method && CLOUD_DESKTOP_CONTROL_ROUTE.path.test(path))
-    || (method === LOCAL_VM_SCREENSHOT_ROUTE.method && LOCAL_VM_SCREENSHOT_ROUTE.path.test(path))
-    || (method === LOCAL_VM_JOIN_ROUTE.method && LOCAL_VM_JOIN_ROUTE.path.test(path));
+    || (method === CLOUD_DESKTOP_CONTROL_ROUTE.method && CLOUD_DESKTOP_CONTROL_ROUTE.path.test(path));
 }
 
 /** Watching and driving are one permission: seeing a logged-in session is
@@ -145,10 +131,6 @@ const ALLOWED: ReadonlyArray<{ method: string; path: RegExp }> = [
   // Behind a second per-device capability check in the proxy.
   BROWSER_LIVE_ROUTE,
   BROWSER_ACTION_ROUTE,
-  // Behind the computer-access capability, like the cloud desktop.
-  LOCAL_VM_SCREENSHOT_ROUTE,
-  // Behind the same capability, while a person holds the computer.
-  LOCAL_VM_JOIN_ROUTE,
   { method: "POST", path: /^\/api\/groups$/ },
   { method: "POST", path: /^\/api\/groups\/[\w-]+\/messages$/ },
   { method: "POST", path: /^\/api\/groups\/[\w-]+\/interrupt$/ },
@@ -252,7 +234,6 @@ const EXPLAINED: ReadonlyArray<{ path: RegExp; error: string }> = [
     error: "Remote access settings are managed on the host computer",
   },
   { path: /^\/api\/config$/, error: "API keys can only be changed on your computer" },
-  { path: /^\/api\/local-computer(\/|$)/, error: "the Local VM is set up on your computer" },
   {
     // Creating one exposes an endpoint to the internet.
     path: /^\/api\/webhooks(\/|$)/,
