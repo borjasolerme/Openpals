@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sameChoice, workChoiceLabel, workChoiceOf, workComputerState, workPatch } from "./work-computers";
+import { sameChoice, serverHost, workChoiceLabel, workChoiceOf, workComputerState, workPatch } from "./work-computers";
 import { lendingPhase, needsMacPermissions } from "./lending";
 import { guideStep, newlyConnected } from "@/components/work-computer/AddComputerGuide";
 
@@ -53,4 +53,10 @@ describe("where a bot works", () => {
     expect(needsMacPermissions({ platform: "darwin", lendsScreen: true, screen: { ready: false, lent: true, reason: "permissions", fix: "allow" } })).toBe(true);
     expect(needsMacPermissions({ platform: "win32", lendsScreen: true, screen: { ready: false, lent: false, reason: "permissions", fix: "allow" } })).toBe(false);
   });
+});
+
+it("names Boat as the host of a server on an on.boat.dev address, and nothing else", () => {
+  expect(serverHost("box-node-a25322d3423c1bce-8799.on.boat.dev")).toBe("Boat");
+  expect(serverHost("127.0.0.1")).toBeNull();
+  expect(serverHost("boat.dev.example.com")).toBeNull();
 });

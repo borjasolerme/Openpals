@@ -5722,5 +5722,6 @@
   "workPlace.add": "Add a computer",
   "sharedLogins.title": "Shared sign-ins",
   "sharedLogins.hint": "Uses the same sign-ins as your other bots that have this on.",
-  "sharedLogins.profileName": "Shared"
+  "sharedLogins.profileName": "Shared",
+  "workPlace.server.livesOn": "Your bots live here: {place}. Nothing to set up."
 }

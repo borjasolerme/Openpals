@@ -4404,5 +4404,6 @@
   "sharedLogins.hint": "Usa las mismas sesiones que tus otros bots que lo tengan activado.",
   "sharedLogins.profileName": "Compartido",
   "botPanel.tab.computer": "Ordenador",
-  "settings.simple.page.computer": "Ordenador"
+  "settings.simple.page.computer": "Ordenador",
+  "workPlace.server.livesOn": "Tus bots viven aquí: {place}. No hay nada que configurar."
 }

@@ -60,6 +60,7 @@ const isSource = (name: string) => /\.(?:ts|tsx|mjs|cjs|js)$/.test(name) && !/\.
 const ALLOWED: ReadonlyArray<{ file: string; snippet?: string; why: string }> = [
   { file: "shared/credential-request.ts", snippet: "when Boat is selected", why: "the card that asks for a person's own Boat key" },
   { file: "server/boat-create-idempotency.ts", snippet: "unnamed Boat", why: "own-key repair: boat.dev's own name for a machine" },
+  { file: "src/lib/work-computers.ts", snippet: "Boat", why: "names the host of the person's own server when its address is on boat.dev" },
   { file: "electron/boat-setup.mjs", why: "setting up a server on the person's own Boat account, with their Boat API key" },
   { file: "server/workspace-backup.ts", snippet: "OMB-WORKSPACE-1", why: "a backup file's format marker" },
   { file: "electron/desktop-server-auth.cjs", snippet: "X-OpenMausBot-Desktop-Owner", why: "a wire header the server checks" },

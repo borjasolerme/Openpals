@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { useWorkComputers, workChoiceLabel, workComputerState, type WorkChoice } from "@/lib/work-computers";
+import { useThisComputerName } from "@/lib/place";
+import { serverHost, useWorkComputers, workChoiceLabel, workComputerState, type WorkChoice } from "@/lib/work-computers";
 import { Card, LinkRow, RadioRow } from "../bot-panel/rows";
 import { AddComputerGuide } from "./AddComputerGuide";
 
@@ -13,6 +14,9 @@ import { AddComputerGuide } from "./AddComputerGuide";
 export function WorkPlaceChooser({ value, onChange }: { value: WorkChoice; onChange: (choice: WorkChoice) => void }) {
   const [adding, setAdding] = useState(false);
   const { computers, refresh } = useWorkComputers(true);
+  const serverName = useThisComputerName(true);
+  const host = serverHost();
+  const serverHint = serverName ? t("workPlace.server.livesOn", { place: host ? `${serverName} (${host})` : serverName }) : t("workPlace.server.hint");
   const lent = (computers ?? []).filter((computer) => computer.lent || (value.kind === "mac" && value.id === computer.id));
   if (adding) {
     return (
@@ -24,7 +28,7 @@ export function WorkPlaceChooser({ value, onChange }: { value: WorkChoice; onCha
   return (
     <Card>
       <div role="radiogroup" aria-label={t("workPlace.label")} className="flex flex-col divide-y divide-line-subtle" data-work-place>
-        <RadioRow data-panel-choice="server" title={t("workPlace.server.title")} hint={t("workPlace.server.hint")}
+        <RadioRow data-panel-choice="server" title={t("workPlace.server.title")} hint={serverHint}
           checked={value.kind === "server"} onClick={() => onChange({ kind: "server" })} />
         {lent.map((computer) => (
           <RadioRow key={computer.id} data-panel-choice={computer.id} title={computer.name}

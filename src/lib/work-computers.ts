@@ -39,6 +39,11 @@ export function workPatch(choice: WorkChoice): WorkPatch {
   return { computer: "browser" };
 }
 
+/** Who hosts the server this window talks to, from its address: Boat for *.on.boat.dev, else none. */
+export function serverHost(hostname: string = typeof location === "undefined" ? "" : location.hostname): string | null {
+  return /\.on\.boat\.dev$/i.test(hostname) ? "Boat" : null;
+}
+
 /** The place in plain words: Your server, the lent computer's own name, or the other place's name. */
 export function workChoiceLabel(choice: WorkChoice, computers: readonly Pick<WorkComputer, "id" | "name">[] = []): string {
   if (choice.kind === "server") return t("workPlace.server.title");
