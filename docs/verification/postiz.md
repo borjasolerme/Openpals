@@ -2,7 +2,7 @@
 
 The Postiz card in Apps (the Social category) connects the social media
 scheduler [Postiz](https://postiz.com) as one MCP server named `postiz`, so the
-MCP gate and each bot's server selection treat it like any other server. OpenMausBot only calls Postiz's public
+MCP gate and each bot's server selection treat it like any other server. Openpals only calls Postiz's public
 MCP and OAuth endpoints; Postiz is AGPL-3.0 and none of its code is copied.
 
 - **Sign in with Postiz** (the default) uses Postiz Cloud's
@@ -13,7 +13,7 @@ MCP and OAuth endpoints; Postiz is AGPL-3.0 and none of its code is copied.
   `<address>/mcp`, Postiz Cloud unless the person enters their own Postiz
   server. The key is checked (MCP `initialize` and `tools/list`) before it is
   saved, saved like other app keys (the desktop's encrypted store, the server's
-  config on a Cloud), and sent only to the entry at the address it was saved
+  config on a server), and sent only to the entry at the address it was saved
   for (`server/postiz/connection.ts`).
 
 ## Isolated checks

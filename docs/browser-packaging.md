@@ -95,9 +95,9 @@ a Chrome is.
 
 ## What a bot's browser can reach
 
-Every Chrome OpenMausBot launches for a bot sends all of its connections
+Every Chrome Openpals launches for a bot sends all of its connections
 through an egress gate: a SOCKS5 server on `127.0.0.1`, one per browser
-session, run by the OpenMausBot server (`server/browser/egress/`). The gate
+session, run by the Openpals server (`server/browser/egress/`). The gate
 resolves names itself and checks every address a name resolves to before it
 connects, so redirects and DNS rebinding reach nothing it would refuse. It
 carries bytes only, so TLS, HTTP/2 and WebSockets are unchanged. Chrome sends
@@ -108,13 +108,13 @@ connects nowhere.
 | Destination | Desktop | Self-hosted server |
 |---|---|---|
 | Public internet | yes | yes |
-| OpenMausBot's own ports (loopback and this machine's addresses) | no | no |
+| Openpals' own ports (loopback and this machine's addresses) | no | no |
 | Other ports on this computer | yes, by `localhost` or an address, not by a public name | only servers a bot's own processes opened (Linux), or allowed below; with "Open sites on this server" on, yes, by `localhost`, an address or a name that points at this server's own addresses, not a public name that points at loopback |
 | Local network: 10/8, 172.16/12, 192.168/16, 100.64/10, fc00::/7 | yes, unless `browserEngine.egress.localNetwork` is `false` | only what `browserEngine.egress.allow` lists, or all of it with "Open sites on this server" on |
 | Link-local and cloud metadata (169.254/16, fe80::/10, `fd00:ec2::254`, 100.100.100.200) | no | no |
 | 0/8, 198.18/15, multicast | no | no |
 
-OpenMausBot's own ports are the server's and its webhook receiver's, the
+Openpals' own ports are the server's and its webhook receiver's, the
 desktop client relay, the companion and its control page and gateway, the Vite
 dev server, every port the server process has listened
 on, the ports the desktop app reports, each gate, and agent-browser's stream
@@ -135,19 +135,19 @@ A self-hosted server opens more with `config.json`:
 Each entry is an address or CIDR range with an optional `:port` (IPv6 in
 brackets for a port: `[fd12::1]:443`). `localhost` resolves to both loopback
 addresses, so `127.0.0.1:9000` also allows `[::1]:9000` and the other way
-round, on that port only. OpenMausBot's own ports, metadata and
+round, on that port only. Openpals' own ports, metadata and
 link-local addresses stay closed whatever it lists.
 
 Settings > Computer > "Open sites on this server" (`browserEngine.egress.localNetwork: true`, off by default and
 shown only to the server's owner or an admin) opens this server's own sites and its local network without listing
-them. OpenMausBot's own ports, metadata and link-local addresses stay closed, also through a private address such as
+them. Openpals' own ports, metadata and link-local addresses stay closed, also through a private address such as
 a Docker host's gateway, and a public name that resolves to loopback is still refused. It applies to new connections;
 a page already open keeps the ones it has until it closes them. Every refused connection shows up in the bot's next browser result:
-`The page tried to reach "127.0.0.1:8799" (blocked: OpenMausBot's own service)`.
+`The page tried to reach "127.0.0.1:8799" (blocked: Openpals' own service)`.
 
 `agent_browser_read` reads the page open in the browser. Given an address,
 agent-browser 0.37 would fetch it with its own HTTP client, around the browser
-and the gate, so OpenMausBot does not offer that parameter and refuses a call
+and the gate, so Openpals does not offer that parameter and refuses a call
 that passes one; the bot opens the address first.
 
 My Chrome is the person's own browser and does not go through the gate; the
@@ -159,7 +159,7 @@ control page needs its per-launch token.
 
 Each built-in browser is an agent-browser daemon and the Chrome it starts.
 agent-browser starts the daemon in a session of its own and Chrome in a
-process group of its own, so neither stops with OpenMausBot, and a daemon
+process group of its own, so neither stops with Openpals, and a daemon
 nothing closes keeps its Chrome for the engine's one-hour idle timeout. The
 same rules hold on the desktop and on a server:
 
@@ -201,7 +201,7 @@ same rules hold on the desktop and on a server:
   data dir's browsers: each bot's own, each built-in profile's, and its
   temporary browsers, whose names carry a tag of the data dir.
   Deleting a bot or profile closes its browser and erases its saved
-  sign-ins with the agent-browser OpenMausBot installed; an agent-browser found only on PATH elsewhere just has
+  sign-ins with the agent-browser Openpals installed; an agent-browser found only on PATH elsewhere just has
   the running browser closed, since a wrapper there could fail the erase
   for good. A Chrome whose
   daemon was killed under it (by the OOM killer, by hand) can never be used
@@ -218,14 +218,14 @@ same rules hold on the desktop and on a server:
 **Containers.** Chrome's helper processes need something to collect them
 once their parent exits, and Chrome needs shared memory. Both Docker compose
 files and the Podman one set `init: true` and `shm_size: 512m`, as
-OpenMausBot's desktop containers do (`--shm-size 512m`); a plain
+Openpals' desktop containers do (`--shm-size 512m`); a plain
 `docker run` wants `--init --shm-size=512m`. agent-browser 0.37.0 itself
 adds `--no-sandbox` and `--disable-dev-shm-usage` when it sees
 `/.dockerenv` or `/run/.containerenv`, runs as root or under CI, or finds
 docker, kubepods or lxc in `/proc/1/cgroup`. A runtime that shows none of
 these (a Kubernetes pod on cgroup v2, for one) needs `/dev/shm` room of its
 own (on Kubernetes, an `emptyDir` with `medium: Memory`). The image does
-not set `AGENT_BROWSER_ARGS`: OpenMausBot hands its browsers a curated
+not set `AGENT_BROWSER_ARGS`: Openpals hands its browsers a curated
 environment that would not carry it.
 
 ## Video recording
@@ -243,7 +243,7 @@ There is no recording control in OMB's browser panel.
 ## Linux sandbox
 
 Use the `.deb` on Ubuntu 24.04. Its package hooks install a narrowly scoped
-AppArmor policy for the root-owned browser executable under `/opt/OpenMausBot`.
+AppArmor policy for the root-owned browser executable under `/opt/Openpals`.
 They do not disable the browser sandbox or change the global user-namespace
 restriction. See [Linux desktop](linux-desktop.md).
 
@@ -267,9 +267,9 @@ Run the real browser check against an unpacked app:
 node scripts/smoke-browser-bundle.mjs --resources /absolute/app/resources
 ```
 
-On macOS, use `/absolute/OpenMausBot.app/Contents/Resources`. On Linux, run as
+On macOS, use `/absolute/Openpals.app/Contents/Resources`. On Linux, run as
 an unprivileged user against the installed `.deb` at
-`/opt/OpenMausBot/resources`. This check creates its own empty home and local
+`/opt/Openpals/resources`. This check creates its own empty home and local
 web page, checks automatic discovery, navigation, typing/clicking, the
 loopback command relay the server reads, pictures and types through
 (`server/browser-relay.ts`), screenshot delivery and two-bot cookie/storage
@@ -287,7 +287,7 @@ browser updater in the desktop bundle.
 
 ### Temporary Windows engine backport
 
-Windows uses an explicitly identified OpenMausBot build of agent-browser
+Windows uses an explicitly identified Openpals build of agent-browser
 0.36.0, with the handle-inheritance fix from
 [upstream PR #1781](https://github.com/vercel-labs/agent-browser/pull/1781).
 The official 0.37.0 release does not contain this fix, so Windows stays on the

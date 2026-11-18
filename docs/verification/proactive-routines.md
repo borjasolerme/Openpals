@@ -18,7 +18,7 @@ result picked by a marker in its prompt (`FAKE_CLAUDE_MARKER_REPLIES`).
 
 Expected:
 
-- MausBot, hidden from the sidebar for the whole scenario, has the one default
+- The Chief of Staff has the one default
   routine, "Keep an eye on my day", with checks, `read-and-draft` and
   `deliver: brief`.
 - The first open of the day, with nothing for the person yet, posts no brief,
@@ -30,7 +30,7 @@ Expected:
   defused. It runs at `--permission-mode default`, and its system prompt has no
   recent work. Only Gmail and Calendar reads reach the service, and none names
   an account.
-- The 10-minute reminder, the prep card and the brief rows appear in MausBot's
+- The 10-minute reminder, the prep card and the brief rows appear in the Chief's
   chat, and the brief's notification names that chat. The brief is edited in
   place, not posted twice.
 - The same mail again is nothing new: there is no second turn.
@@ -44,7 +44,7 @@ Expected:
   draft to a stranger, draft twice and read. Only one reply draft to the
   thread's sender and the read reach the service. No card is shown, and the
   refusals are in the decision log. The run mounts only `agents`, `composio`
-  and OpenMausBot's answerer, and Gmail's answer reaches it as records. A later
+  and Openpals' answerer, and Gmail's answer reaches it as records. A later
   ordinary turn's conversation search does not find the run.
 
 ## Unit tests
@@ -74,7 +74,7 @@ cap, busy bots, and Run now. The others:
 2. Serve the renderer against it:
    `OMB_PORT=<fixture port> pnpm exec vite --port 19872 --strictPort`.
 3. Open `http://127.0.0.1:19872/` in a headless Chromium. Dismiss the welcome
-   tour, then open MausBot's chat and Automations. In the chat, the cards are
+   tour, then open the Chief's chat and Automations. In the chat, the cards are
    `[data-widget]` elements.
 
 Not verified this way: a real Google account. The Composio slugs and answer

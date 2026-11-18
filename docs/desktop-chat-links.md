@@ -50,8 +50,7 @@ openmausbot://bot/<bot-id>
   instead." — the window moves to that bot, the same way a dead in-app thread
   reference behaves.
 
-Like the `openmausbot://cloud` and `openmausbot://organization` links, these are
-local-shell actions: a page loaded from a remote server never receives them, and
+These links are local-shell actions: a page loaded from a remote server never receives them, and
 the browser build has no such links at all. An app connected to another
 computer as its companion (**Settings → Remote access → Connect to another
 computer**) opens them against that computer's chats, the ones it shows.

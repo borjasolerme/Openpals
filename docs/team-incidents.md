@@ -7,7 +7,7 @@ in and nothing anywhere else — the person found it hours later, from a phone,
 by opening the desktop and reading every thread, then retried by hand.
 
 Now the team's coordinator hears first. When a run breaks on a bot and the
-team has a **Chief of Staff** (other than that bot), OpenMausBot:
+team has a **Chief of Staff** (other than that bot), Openpals:
 
 1. opens — once — a **Problems to look at** thread (older ones are still called Team incidents) on the Chief and leaves a chip
    there naming what broke, linked to the broken thread;

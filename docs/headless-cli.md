@@ -1,6 +1,6 @@
-# Run OpenMausBot from scripts and CI
+# Run Openpals from scripts and CI
 
-The `openmausbot` command can drive a running workspace without a screen: set
+The `openmausbot` command (the CLI keeps its original name `openmausbot`) can drive a running workspace without a screen: set
 up a team from a file, give a bot a job, wait until it and every teammate it
 asked are done, and keep what they made. It works against the server on this
 computer or one somewhere else, and it is built for scripts, CI and other
@@ -110,7 +110,7 @@ one of its conversations.
 | `connect [URL]` | Gets a token for a workspace elsewhere. |
 | `token create NAME`, `token list`, `token revoke ID` | Access tokens for CI that end on their date (above). |
 | `new-bot`, `new-channel`, `set-model`, `edit` | Make a bot or a room, change a bot's model, rewrite an earlier message. |
-| `mcp` | The OpenMausBot MCP server on stdin and stdout ([docs/mcp-server.md](mcp-server.md)). |
+| `mcp` | The Openpals MCP server on stdin and stdout ([docs/mcp-server.md](mcp-server.md)). |
 
 The message for `send` and `run` can be the next word, `--text TEXT`,
 `--message-file FILE`, or `-` to read it from stdin.
@@ -120,7 +120,7 @@ The message for `send` and `run` can be the next word, `--text TEXT`,
 Before you install a server, check the machine it will run on:
 
 ```text
-$ sudo openmausbot doctor --host --data-dir /srv/mausbot
+$ sudo openmausbot doctor --host --data-dir /srv/openpals
 ok    Ubuntu 24.04.1 LTS, kernel 6.8.0-45-generic
 ok    x86_64
 ok    Docker 27.3.1
@@ -128,8 +128,8 @@ FAIL  Bot sandbox: AppArmor blocks unprivileged user namespaces
       fix: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0   (and put it in /etc/sysctl.d/ to keep it after a reboot)
 ok    seccomp is available
 ok    cgroup v2
-ok    412 GB free for /srv/mausbot
-warn  /srv/mausbot is not on an encrypted disk
+ok    412 GB free for /srv/openpals
+warn  /srv/openpals is not on an encrypted disk
       fix: use LUKS full-disk encryption, unless your provider encrypts the disk at rest
 ok    8 CPUs, 31 GB memory (a team of 20 needs 8 CPUs and 16 GB)
 ok    Port 8799 is free for the server
@@ -305,8 +305,8 @@ case), or by `was:` when you rename one. A rename onto a name another bot has
 is refused. A field the file leaves out is left as it is (a new `model` on the
 same engine keeps the bot's effort). Skills the file does not list are never
 deleted. Bots and rooms the file leaves out are deleted only with `--prune`,
-and only from a file marked `prune: true`; the workspace's default bot and
-hidden bots are never deleted. Apply is not atomic: if a step is
+and only from a file marked `prune: true`; hidden bots are never
+deleted. Apply is not atomic: if a step is
 refused it stops, says what it had already done, and exits 1; applying again
 carries on. A bot that is in the middle of a turn is changed once it is idle,
 waiting up to `--wait-idle` (2 minutes) and then reporting it.

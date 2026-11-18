@@ -1,9 +1,9 @@
-# Self-hosting the OpenMausBot server
+# Self-hosting the Openpals server
 
 Run the harness server on an always-on Linux box (a VPS, a home server, a
 Mac mini in a closet) and pair browsers, the desktop app, or phones with it.
 Openpals has no npm package: it runs from a clone of its source, and its
-`openmausbot` command supports Tailscale, your own domain, or your own proxy.
+`openmausbot` command (the CLI keeps its original name `openmausbot`) supports Tailscale, your own domain, or your own proxy.
 On this page `openmausbot …` stands for
 `node --experimental-strip-types server/openmausbot.ts …` run from that clone
 (`corepack pnpm omb …` is the same).
@@ -566,7 +566,7 @@ them.
 
 ### Who may answer a card
 
-Approval cards are the provider's own (see the approval modes); OpenMausBot
+Approval cards are the provider's own (see the approval modes); Openpals
 adds none. On a workspace several people share — portal membership, or an
 email sign-in list that names users — it narrows only whose answer counts,
 and only when the card can be traced to a person:
@@ -698,7 +698,7 @@ is the reference implementation.
 
 In a paired admin browser, as in the desktop app, **Take control** turns the
 Computer panel's picture into the live desktop for your own VPS,
-through the same address as OpenMausBot; **Full screen** fills the window with
+through the same address as Openpals; **Full screen** fills the window with
 the same session. VPS desktops connect through an SSH tunnel opened by the
 server, so they need no additional public port or viewer origin setting. Keep
 VPS VNC ports private.
@@ -715,8 +715,8 @@ leaving the page gives the computer back to the bot.
 
 Use **Keyboard** to send text from a phone and **Clipboard** to exchange text
 with the desktop; clipboard edits sync automatically. The desktop fits the
-window, with fullscreen available when the browser supports it. Hosted Cloud
-keeps its provider-issued viewer in its own window or tab.
+window, with fullscreen available when the browser supports it. A Boat cloud
+computer keeps its provider-issued viewer in its own window or tab.
 
 These controls are in the web app. The native phone apps have their own
 computer viewers; use a paired browser for interactive VPS access.
@@ -996,8 +996,7 @@ curl -H "Authorization: Bearer $TOKEN" -o activity.csv \
 `decisions` (every decision, automatic ones too), or one of `config`,
 `people`, `session`, `webhook`, `mcp`, `engine`, `bot`, `budget`,
 `visibility`; `who` matches part of a name or email; without `from` the list
-starts 30 days ago. Nothing here is sent to your organization's cloud Admin,
-which keeps its own activity log.
+starts 30 days ago.
 
 ## Spend limits and sell prices
 

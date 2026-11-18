@@ -150,7 +150,7 @@ no `title`, because nothing was asked; and the snapshot's transcript has
   Electron shell. The e2e is POSIX-only (its fakes are shebang scripts), so
   Windows is not exercised.
 - Phone builds read the same wire fields and, when they do not know the kind,
-  the row's text; their own record is verified in SupaMaus/mausbot-mobile.
+  the row's text; their own record is verified in the phone apps' own repository.
 - Approval lines in a record ("Allowed", "Denied", "Expired", "by voice"), a
   hang-up while a turn is still working, a step that never reported how it went
   (running only while the chat works) and a call that began before the loaded

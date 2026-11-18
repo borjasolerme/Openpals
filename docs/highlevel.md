@@ -45,7 +45,7 @@ OMB server                                 your OAuth relay (optional)          
 ### "Please reach out to the agency admin for assistance with installation"
 
 HighLevel's Marketplace install page shows this when the agency that owns the sub-account (often a white-label agency,
-e.g. Growably) does not let sub-account users install apps. It comes from HighLevel, not OpenMausBot, and Connect
+e.g. Growably) does not let sub-account users install apps. It comes from HighLevel, not Openpals, and Connect
 cannot get past it. Either ask the agency admin to install the app for that sub-account (or to allow sub-account
 installs), or use **Use a Private Integration token instead** on the card: a sub-account admin can create one under Settings →
 Private Integrations when the agency allows it.
@@ -62,9 +62,7 @@ Private Integrations when the agency allows it.
 | `DELETE /api/highlevel` | disconnects → the status |
 
 `GET /api/connectors/tools` also carries a `highlevel` entry with the twenty tool names. Bot settings do not use it for
-HighLevel (see [Per-bot scope](#per-bot-scope)). Cloud health merges `{ highlevel: { connected } }` into its connectors
-report while a HighLevel connection is saved (signed in, or needing sign-in again); a HighLevel never connected is not
-listed.
+HighLevel (see [Per-bot scope](#per-bot-scope)).
 
 ## Environment
 
@@ -127,11 +125,7 @@ The same rules as other connected apps, with slug `highlevel`:
 ## Permissions (scopes)
 
 Each call needs one HighLevel scope. A Private Integration is given them by name on HighLevel's Private Integrations
-page; the Marketplace app asks for `HIGHLEVEL_SCOPES` (`cloudflare/control-plane/wrangler.jsonc`), which must match the
-scopes approved for the app in HighLevel's developer dashboard. That list does not include
-`locations/customFields.readonly` or `conversations/message.readonly` yet, so a Marketplace connection reads custom
-fields keyed by id and, per HighLevel's API reference, cannot read a conversation's messages until both are added in
-both places.
+page.
 
 | Permission (Private Integrations page) | Scope | Used by |
 |---|---|---|

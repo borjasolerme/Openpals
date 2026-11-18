@@ -104,7 +104,7 @@ One container for the server plus Caddy for HTTPS at `https://maus.example.com`.
 
    Caddy requests the certificate on its own; give it a minute. Then `https://maus.example.com` shows a page asking for a pairing code. That is correct: nothing works until you pair.
 
-In this path, every `node --experimental-strip-types server/openmausbot.ts …`
+Openpals' CLI keeps its original name, `server/openmausbot.ts`. In this path, every `node --experimental-strip-types server/openmausbot.ts …`
 command below is run inside the container as `node dist-server/openmausbot.js …`
 instead, from `Openpals/deploy`:
 

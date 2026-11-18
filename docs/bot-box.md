@@ -1,7 +1,7 @@
 # The bot box
 
 With `OMB_BOT_BOX=1` (off by default) every bot turn runs in a box: the engine (Claude Code, Codex, Grok, OpenCode, the ACP agents),
-every shell command it runs, the MCP servers it starts and OpenMausBot's own helper proxies all live inside one
+every shell command it runs, the MCP servers it starts and Openpals' own helper proxies all live inside one
 unprivileged [bubblewrap](https://github.com/containers/bubblewrap) sandbox for that process's lifetime. The server,
 its database, its settings, other bots' folders and other turns' processes are not in it. Code: `server/bot-box/`.
 

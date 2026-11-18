@@ -1,4 +1,4 @@
-# Voice in OpenMausBot
+# Voice in Openpals
 
 Historical decision doc, 2026-08-14. It records the original ElevenLabs-only
 shape; the current product also supports Fish Audio, built-in Mac voices, and
@@ -97,9 +97,7 @@ hand real work to specialists with `coordinate_bots` — no new machinery requir
 - **Take-turns calls are macOS-only**, because dictation is. The voice half
   works everywhere. Live calls (GPT-Live, `server/live-call.ts`) need no
   dictation, so they work in the desktop app on any computer and on the
-  phones, with the person's own OpenAI key. A Cloud's page, in a web browser
-  or the desktop app, runs the same code, but no Live call has been made end
-  to end on a real Cloud yet.
+  phones, with the person's own OpenAI key.
 - **Rooms don't speak yet**, though per-bot voices already exist (`bot.voice`).
 - **No spend meter.** ElevenLabs bills per character. Auto-speak is off by
   default partly for that reason, but the app should eventually show usage.

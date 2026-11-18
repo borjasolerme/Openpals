@@ -11,7 +11,7 @@ corepack pnpm omb
 ```
 
 `corepack pnpm omb` runs `node --experimental-strip-types server/openmausbot.ts`;
-this page writes it as `openmausbot`. Use the same command, from the clone, next time. The first launch guides you through setup; later launches reuse your saved AI connection and phone-access choice. `openmausbot start` is the same as the bare command. If that workspace is already running, OpenMausBot opens it instead of starting a second server.
+this page writes it as `openmausbot` (the CLI keeps its original name `openmausbot`). Use the same command, from the clone, next time. The first launch guides you through setup; later launches reuse your saved AI connection and phone-access choice. `openmausbot start` is the same as the bare command. If that workspace is already running, Openpals opens it instead of starting a second server.
 
 ## First launch
 
@@ -39,8 +39,8 @@ Choose one connection method:
 
 After the connection is ready:
 
-- **iPhone/iPad:** scan the QR with Camera to open Safari. If you already have the OpenMausBot iOS app, use its pairing scanner or paste the full link there.
-- **Android:** the QR is an app link, so scan it inside the OpenMausBot app. To use a browser instead, open the web address printed above it and type the code.
+- **iPhone/iPad:** scan the QR with Camera to open Safari. If you already have the Openpals iOS app, use its pairing scanner or paste the full link there.
+- **Android:** the QR is an app link, so scan it inside the Openpals app. To use a browser instead, open the web address printed above it and type the code.
 
 Choose **Connect** on the phone. Scanning alone is not a successful pairing. The code is private, single-use, and expires after five minutes. Guided phone pairing grants client access for chat and approvals, not settings or pairing administration.
 

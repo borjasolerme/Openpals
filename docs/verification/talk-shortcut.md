@@ -1,6 +1,6 @@
 # Talk shortcut (hold to talk from any app)
 
-Hold ⌃⌥Space from any app, speak, let go. The words go to MausBot's "Quick asks"
+Hold ⌃⌥Space from any app, speak, let go. The words go to the Chief of Staff's "Quick asks"
 chat and a never-focused box at the bottom of the screen shows the reply.
 
 The real hotkey, the microphone, window focus and Spaces are macOS behavior:
@@ -20,8 +20,7 @@ the person's own, the press/release state machine
 with injected clocks and speech, the box's window flags, states, skin theme and
 pinned display, the local-server ask (thread, owner header, send id, SSE follow,
 needs-you, timeout, a 409 `moved`, a server still starting), preference storage,
-the Settings row, scoped speech stop, the call-presence signal and the quiet
-update waiting for a talk ask.
+the Settings row, scoped speech stop and the call-presence signal.
 They do not prove the real hotkey, the microphone, that the box never takes
 focus, that it shows over full-screen apps and other Spaces, or the release of
 ⌃⌥ after speech (no unit test covers that release path).
@@ -51,16 +50,16 @@ or taller than the card shows a box the app never draws.
 ## Setup
 
 - A packaged build of the branch installed beside, never over, the installed
-  OpenMausBot (maintainers: the OMB2 side-by-side build). Never touch
-  `/Applications/OpenMausBot.app` or `~/.openmausbot`.
+  Openpals (maintainers: the OMB2 side-by-side build). Never touch
+  `/Applications/Openpals.app` or `~/.openmausbot`.
 - Launch with `OMB_DATA_DIR=$HOME/.openmausbot-test` unless the check needs real
-  bots. Only one running app may hold the key: quit any other MausBot first.
+  bots. Only one running app may hold the key: quit any other Openpals first.
 - Use composer dictation once first so Microphone and Speech Recognition are
   granted.
 
 ## By hand
 
-1. **Settings row.** Settings → General shows "Talk to MausBot from any app",
+1. **Settings row.** Settings → General shows "Talk to your Chief from any app",
    on, "Hold ⌃⌥Space, speak, let go".
 2. **Hold, speak, release in another app.** In Safari's address bar: hold ⌃⌥,
    tap Space, say "what can you do", let go of ⌃⌥ (not Space). Expect live
@@ -68,22 +67,22 @@ or taller than the card shows a box the app never draws.
    then the reply, bottom-centre of that display. `osascript -e 'tell
    application "System Events" to name of first application process whose
    frontmost is true'` prints `Safari` before and after; the caret still blinks
-   in Safari; the box never takes focus and the MausBot window never raises.
+   in Safari; the box never takes focus and the Openpals window never raises.
 3. **Hide timing.** The box hides 12 s after the reply; with the pointer on it,
    it stays until the pointer leaves.
-4. **Click opens the chat.** Clicking it brings MausBot forward on the "Quick
+4. **Click opens the chat.** Clicking it brings Openpals forward on the "Quick
    asks" chat; the chat open before the ask had not changed until then.
 5. **Spaces and full screen.** In a full-screen app and on another Space, the
    box shows there.
 6. **No speech.** Tap and let go without speaking: the box closes, no error.
 7. **Voice already in use.** During a voice call, and while composer dictation
-   is on: "Voice is in use in MausBot"; the call or dictation carries on.
+   is on: "Voice is in use in Openpals"; the call or dictation carries on.
 8. **Mic indicator off after every speech use (scoped speech stop).** Start and
    stop composer dictation, take one push-to-talk call turn and one Live call
    turn: after each, the orange microphone indicator in the menu bar is off.
 9. **Chat recreated.** Delete the Quick asks chat, ask again: a new Quick asks
    chat.
-10. **Other key presets.** Switch to ⌃⇧Space: ⌃⌥Space does nothing in MausBot
+10. **Other key presets.** Switch to ⌃⇧Space: ⌃⌥Space does nothing in Openpals
     any more; ⌃⇧Space works and ends on letting go of ⌃ or ⇧. Repeat for
     ⌥⇧Space.
 11. **Off.** Turn it off: the key does nothing.
@@ -103,8 +102,8 @@ or taller than the card shows a box the app never draws.
     at most 240 px with its bottom edge showing (a Japanese reply is cut at ten
     lines).
 15. **A server of your own as home.** After moving this computer's bots to a
-    server of your own (**Make … my home**): ⌃⌥Space does nothing in MausBot and
+    server of your own (**Make … my home**): ⌃⌥Space does nothing in Openpals and
     another app can take it (`talk-shortcut:state` says unavailable, so no
     Settings row).
 16. **Server starting.** Quit, relaunch and press at once, before the window
-    loads: "MausBot is still starting. Try again in a moment."
+    loads: "Openpals is still starting. Try again in a moment."

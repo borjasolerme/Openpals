@@ -1,6 +1,6 @@
 # iOS companion architecture
 
-The iOS app is a thin, native client for the OpenMausBot instance running on
+The iOS app is a thin, native client for the Openpals instance running on
 your Mac. The Mac remains the only machine that persists agent processes,
 credentials, SQLite data, transcripts, and computers. The iPhone trusts a Mac
 by scanning the QR code shown in desktop **Settings → Remote access**; it needs no
@@ -33,7 +33,7 @@ after moving to the background. Once iOS suspends or closes the app, new alerts
 cannot arrive. Closed-app push delivery, voice, and App Store release
 automation are not part of this version.
 
-The Mac must be running OpenMausBot and must not be asleep. Desktop
+The Mac must be running Openpals and must not be asleep. Desktop
 **Settings → Remote access** offers an off-by-default **Keep this computer awake**
 switch that prevents system sleep while device access is on; the display may
 still turn off. A sleeping or powered-off computer cannot receive phone
@@ -70,7 +70,7 @@ of this version.
  credential ciphertext only)
             │ loopback only
             ▼
- OpenMausBot harness :8799
+ Openpals harness :8799
    HTTP API + event stream
    agent processes and approvals
             │ private Electron utility-process channel
@@ -140,7 +140,7 @@ isolate clients. Install or open Tailscale
 on both devices, sign in to the same tailnet, leave MagicDNS enabled, and
 choose **Turn on device access & check** followed by **Pair over Tailscale**.
 That first action explicitly starts Remote access so the phone has a listener
-to reach. OpenMausBot then places the computer's MagicDNS name in that
+to reach. Openpals then places the computer's MagicDNS name in that
 dedicated QR. Manual entry remains available as a fallback.
 
 The URL is still `http`, but the path is encrypted and authenticated by
@@ -173,7 +173,7 @@ event stream and in-memory chat state, but keeps every saved pairing; removing
 one computer deletes only that computer's Keychain credential from the phone.
 An app upgrade migrates the previous single saved pairing automatically.
 
-The Mac must remain awake with OpenMausBot running for chats, approvals, and
+The Mac must remain awake with Openpals running for chats, approvals, and
 routines to work, including through Tailscale.
 
 After pairing, the phone periodically reads the authenticated, sidecar-owned
@@ -295,7 +295,7 @@ skip the remaining gap.
 
 The phone registers the apps it allows with `PUT /api/phones/self`. Behind the sidecar it is identified by the companion header; on a self-hosted server it uses its own session. It long-polls `GET /api/phones/self/jobs` (20 s), leases a job with `POST /api/phones/self/jobs/:id/lease`, and answers with `POST /api/phones/self/jobs/:id/result`, sending `{ ok: true, result }` or `{ ok: false, error, code }`. Results over 256 KB are refused as `too_large`. The SSE frame `{ kind: "device.job", phone, id }` tells an open app to poll now.
 
-Bots see these apps as `PHONE_*` tools through the `device` MCP kind. Reads run silently and writes show up as activity rows. A send opens a sheet on the phone and goes only when the person taps Send there; OpenMausBot adds no card of its own. A turn that came from the phone does phone things on the phone; a turn at the computer works the usual way and changes the phone only when the person names it. Only the owner's phone is reachable. The contract fixture `server/testing/fixtures/phone-jobs.json` is what the phone apps copy into their own test fixtures.
+Bots see these apps as `PHONE_*` tools through the `device` MCP kind. Reads run silently and writes show up as activity rows. A send opens a sheet on the phone and goes only when the person taps Send there; Openpals adds no card of its own. A turn that came from the phone does phone things on the phone; a turn at the computer works the usual way and changes the phone only when the person names it. Only the owner's phone is reachable. The contract fixture `server/testing/fixtures/phone-jobs.json` is what the phone apps copy into their own test fixtures.
 
 ## A bot's MCP servers
 

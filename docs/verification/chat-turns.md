@@ -148,7 +148,7 @@ This does not prove resumption or cleanup of real provider sessions after a cras
 
 Every hand-off between bots is an assignment on the job runtime
 (docs/runtime-contract.md §9): `coordinate_bots` from a chat, a room, a
-routine run, a webhook run, a goal run, a Cloud guest's turn or a standing
+routine run, a webhook run, a goal run or a standing
 external runtime. There is no mailbox: a queued assignment is bounded by
 the runtime's queue clock (§6, 24 hours, `failed(expired)` and reported), its
 windows restart at boot, and nothing outside `server/runtime/` holds hand-off
@@ -276,8 +276,8 @@ question stayed unanswered for 30 s and the test failed.
 
 ## Threads of one bot at the same time
 
-Different threads of one bot run at once. A saved `threads.maxConcurrentPerBot` sets how many. With none saved, a Cloud
-runs up to 16 and its memory gate decides; a machine without the gate runs one per 2 GB of memory, 3 to 16. The bot's main
+Different threads of one bot run at once. A saved `threads.maxConcurrentPerBot` sets how many. With none saved, a machine
+runs one per 2 GB of memory, 3 to 16. The bot's main
 chat always starts, and takes a slot.
 `server/parallel-threads.e2e.test.ts` holds a turn open in each thread with a gate only
 the test releases, on a desktop server, on the Claude CLI, ACP and OpenAI-compatible
@@ -287,4 +287,3 @@ engines. What stays one at a time, and what the person sees:
 - One bot's browser: a call from another thread waits, the row says who has it, and a holder quiet for a minute gives it
   to the waiter. The holder's next call is refused once, so nothing lands on a page it did not open.
 - One computer: a turn takes it at its first screen call, not when it starts, and keeps it until it ends.
-- Memory on a Linux Cloud: a turn that would run the machine out says "Waiting for memory" and starts by itself.
