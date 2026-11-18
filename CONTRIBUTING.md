@@ -217,7 +217,7 @@ commit used as the comparison base, the head branch, and the checks run after th
 Fork maintainers own the binaries and update channels they publish. Before distributing a fork,
 review the application name and identifiers, signing configuration, update metadata, and every
 `electron-builder` publish target. Never upload fork artifacts or update metadata to the official
-OpenMausBot release repository, and never change the upstream publish target in a feature PR unless
+Openpals release repository, and never change the upstream publish target in a feature PR unless
 that release migration was explicitly agreed with the maintainer.
 
 An upstream PR should contain only the portable product change. Keep local build paths, account

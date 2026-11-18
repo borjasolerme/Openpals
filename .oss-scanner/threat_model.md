@@ -1,4 +1,4 @@
-# OpenMausBot threat model
+# Openpals threat model
 
 Guidance for automated security scanning (Anthropic OSS Scanner). The scope
 notes in `/src/SECURITY.md` and the documents named below describe the same
@@ -8,13 +8,13 @@ product decisions.
 
 ## What this project is
 
-OpenMausBot runs AI agents, called **bots**, on a person's own computer or
+Openpals runs AI agents, called **bots**, on a person's own computer or
 server. A bot is a conversation plus settings that drives an **engine**: a
 real agent CLI (Claude Code, Codex, Grok, Gemini, Cursor, OpenCode, ACP
 agents) or an API-key chat-completions provider. Engines run as child
 processes with the person's own OS privileges.
 
-The same TypeScript **harness server** (`server/`) runs in four places:
+The same TypeScript **harness server** (`server/`) runs in three places:
 
 - **Desktop app** (`electron/`, macOS, Windows, Linux). The app starts the
   server on `127.0.0.1` and shows the web UI (`src/`, React) in its window.
@@ -24,9 +24,6 @@ The same TypeScript **harness server** (`server/`) runs in four places:
   (email sign-in, members, `openmausbot fleet`). A portal-managed workspace
   (`server/hosted-workspace.ts`) refuses sign-in: its portal adapter is not
   part of Openpals.
-- **MausBot Cloud home.** Each customer gets one Fly app with one machine
-  (the `cloud-home` stage of the root `Dockerfile`, plus `deploy/fly/`). Caddy
-  terminates TLS, and the server stays on loopback. See `docs/cloud-pro.md`.
 
 Bots have tools:
 
@@ -34,13 +31,11 @@ Bots have tools:
 - a per-bot Chrome (agent-browser) whose traffic goes through an egress gate;
 - computer use: the local desktop, paid cloud computers, a self-hosted VPS, and computers lent to the server;
 - MCP servers, both custom ones and the harness's own;
-- Composio connected apps, through `cloudflare/composio-broker/`;
+- Composio connected apps, with the person's own Composio key;
 - routines (scheduled turns), rooms (several bots in one conversation),
   webhooks and app-event triggers;
 - file-based memory, saved website logins and 1Password;
-- a phone companion (`companion/`), reached over the LAN, Tailscale, or a
-  managed Cloudflare tunnel (`cloudflare/control-plane/`,
-  `electron/managed-companion-tunnel.mjs`).
+- a phone companion (`companion/`), reached over the LAN or Tailscale.
 
 ## Trust boundaries
 
@@ -80,7 +75,6 @@ Bots have tools:
      `SERVICE_ALLOW`.
    - It must not reach admin routes, settings, keys, people, sessions or
      pairing, and it must not approve or answer a card.
-   - A Cloud home always uses `service` trust.
 5. **Phone and tunnel pairing.**
    - The companion sidecar (`companion/src/`) is the only thing a phone talks
      to. Pairing uses a QR credential or a six-digit fallback; both are
@@ -90,20 +84,15 @@ Bots have tools:
      carry an `Origin` are refused.
    - The pairing page (`companion/src/control.ts`) is loopback-only and needs
      a per-launch token.
-   - The managed Cloudflare tunnel reaches only the desktop's own gateway
-     on `:8812`, or the server's tunnel socket (`openmausbot serve --tunnel`,
-     `OMB_TUNNEL_SOCKET`). It never reaches the LAN listener on `:8810`.
-     Requests that arrive over the tunnel socket always need a paired session.
 6. **Egress gate for bots' browsers** (`server/browser/egress/`).
    - Every connection a bot's Chrome makes goes through a SOCKS5 gate on
      loopback. The gate resolves names itself and checks every address before
      it connects.
-   - These are always refused, on every host: OpenMausBot's own ports,
+   - These are always refused, on every host: Openpals' own ports,
      link-local addresses, cloud metadata (`169.254.169.254`,
      `fd00:ec2::254`, `100.100.100.200`) and reserved ranges.
-   - The local network (including `fc00::/7`, which holds Fly's private
-     network) is closed on self-hosted servers unless
-     `browserEngine.egress.allow` lists it, and always closed on Cloud.
+   - The local network (including `fc00::/7`) is closed on self-hosted
+     servers unless `browserEngine.egress.allow` lists it.
    - Other loopback ports open only to servers the bot's own processes
      started.
    - The full table is in `docs/browser-packaging.md`, under "What a bot's
@@ -124,8 +113,6 @@ Bots have tools:
    - Provider API keys and tokens live in `config.json` (mode 0600), and the
      API reports only whether each is configured. Saved logins and the
      1Password token are in a separately sealed store (`server/login-store.ts`).
-   - On a Cloud home, launch secrets come over a pipe, never the environment
-     (`server/cloud-secrets.ts`).
    - Text that crosses a boundary is redacted (`shared/redact.ts`).
 9. **Per-bot workspaces and memory.**
    - Each bot's workspace (`~/.openmausbot/workspaces/<botId>`) holds its
@@ -135,14 +122,6 @@ Bots have tools:
    - A member session must see only the bots shown to that member.
    - Paths that the harness builds from IDs or from request input must stay
      inside the intended directory.
-10. **Cloud tenant isolation.**
-    - Each Cloud customer has its own Fly app, volume and private network.
-      Pairing on a home opens only for a request signed with that machine's
-      secret (`/api/cloud/pairing`).
-    - The Cloudflare Workers `cloudflare/control-plane/` and
-      `cloudflare/composio-broker/` serve every installation. One
-      installation's credential must never read or act on another's
-      endpoints, tunnels, Composio sessions or trigger events.
 11. **Webhook ingress.**
     - Webhooks arrive on a separate listener (`OMB_WEBHOOK_PORT`;
       `server/webhook-ingress.ts`, `server/webhooks.ts`).
@@ -158,7 +137,7 @@ These are deliberate product decisions. Do not report them.
   `shared/approval-mode.ts`). At Full access each engine runs in its own most
   permissive mode. Where an engine has no such mode, the harness answers the
   permission requests it leaves.
-- **OpenMausBot adds no approval prompts of its own.** Approvals belong to
+- **Openpals adds no approval prompts of its own.** Approvals belong to
   each engine's native permission system, at the level the person picked.
   When a bot changes its own routines, skills, webhooks, profile or model,
   the change applies at once and the conversation gets a receipt with Undo,
@@ -234,8 +213,7 @@ These are deliberate product decisions. Do not report them.
 
   URLs the owner configured (custom MCP servers, provider base URLs) are
   trusted.
-- Cross-tenant access on hosted workspaces, fleet installations, Cloud homes,
-  or the two Workers.
+- Cross-tenant access on hosted workspaces or fleet installations.
 - Webhook or app-event authentication bypass, and replays that start bot
   turns.
 - A user-influenced string reaching a shell (`shell: true`, or a command
@@ -246,8 +224,7 @@ These are deliberate product decisions. Do not report them.
 - **Critical:**
   - remote code execution without authentication;
   - unauthenticated access to the server from off the machine;
-  - cross-tenant data access (another Cloud customer, another fleet
-    workspace, or another installation in a Worker).
+  - cross-tenant data access (another fleet workspace).
 - **High:**
   - disclosure of a stored secret;
   - a pairing or session bypass;
@@ -275,11 +252,10 @@ These are deliberate product decisions. Do not report them.
   - the router and internal capabilities in `server/index.ts`;
   - `server/browser/egress/`;
   - `companion/src/`;
-  - `electron/` (preload, the companion origin gateway, the managed tunnel);
+  - `electron/` (preload, the companion origin gateway);
   - `shared/redact.ts`, `server/config.ts`, `server/login-*.ts`;
   - `server/webhook*.ts`;
-  - `server/cloud-*.ts` and `deploy/fly/Caddyfile`;
-  - `cloudflare/`.
+  - `server/cloud-*.ts` (paid cloud computers).
 - **Less:**
   - `src/` (the web UI): in scope for script injection and for CSRF against
     the server;
@@ -287,9 +263,9 @@ These are deliberate product decisions. Do not report them.
 - **Out of scope:**
   - `apps/docs/` (the documentation site), `evals/`, and test fixtures under
     `server/testing/`;
-  - `third_party/` (vendored upstream code), unless OpenMausBot's own use of
+  - `third_party/` (vendored upstream code), unless Openpals' own use of
     it creates the issue;
-  - the mobile apps and the Cloud Admin, which live in other repositories;
+  - the mobile apps, which live in other repositories;
   - CI workflows under `.github/`.
 
 ## How to exercise it
@@ -307,8 +283,6 @@ pnpm exec vitest run server/request-auth.test.ts server/request-auth.e2e.test.ts
 pnpm exec vitest run server/browser/egress/
 pnpm exec vitest run companion/
 pnpm exec vitest run server/webhooks.test.ts server/webhook-ingress.test.ts
-pnpm broker:test                                             # composio-broker Worker
-pnpm --filter @openmausbot/control-plane test                # control-plane Worker
 ```
 
 The whole suite runs one file at a time and takes over an hour, so run
@@ -334,7 +308,7 @@ Set `OMB_LOOPBACK_TRUST=service` to act as a shared workspace. Send a
 - Give a minimal reproducer against the server
   (`server/openmausbot.ts serve --data-dir <tmp>`), as a script or a few
   `curl` commands, and say which host type it needs: desktop, self-hosted,
-  `service` trust, or Cloud.
+  or `service` trust.
 - State the boundary crossed (from the list above), the attacker's starting
   position, and the observed impact.
 - Give a patch as a unified diff, with a focused vitest test next to the
