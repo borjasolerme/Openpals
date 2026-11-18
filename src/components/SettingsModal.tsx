@@ -9,6 +9,7 @@ import { KeysPage } from "./keys/KeysPage";
 import { KEY_CATALOG, keyMatches, keySection, type KeyEntry } from "./keys/key-catalog";
 import { openKeySettings, useKeyFocus } from "./keys/key-focus";
 import { OpenAtLoginRow } from "./OpenAtLoginRow";
+import { AppUpdateRow } from "./AppUpdateRow";
 import { TalkShortcutRow, talkShortcutKeywords } from "./TalkShortcutRow";
 import { AttachmentStorageSettings } from "./AttachmentStorageSettings";
 import { DiagnosticsRow } from "./DiagnosticsRow";
@@ -169,7 +170,7 @@ export function SettingsModal() {
   const section: AppSettingsSection =
     requested === "remote"
       ? "companion"
-      : advanced && requested === "about" ? "general" : requested;
+      : requested === "updates" || (advanced && requested === "about") ? "general" : requested;
   const dialogRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchFirst = useRef(advanced);
@@ -220,9 +221,9 @@ export function SettingsModal() {
   ));
 
   const sectionIndex = currentPage?.sections.indexOf(section) ?? 0;
-  const revealBlock = !advanced && requested === "remote" ? "remote" : section;
+  const revealBlock = (!advanced && requested === "remote") || requested === "updates" ? requested : section;
   useEffect(() => {
-    if (scrollRef.current) revealSettingsBlock(scrollRef.current, revealBlock as AppSettingsSection, advanced ? 0 : revealBlock === section ? sectionIndex : 1);
+    if (scrollRef.current) revealSettingsBlock(scrollRef.current, revealBlock as AppSettingsSection, revealBlock !== section ? 1 : advanced ? 0 : sectionIndex);
   }, [advanced, revealBlock, section, sectionIndex]);
   useEffect(() => {
     if (!reveal) return;
@@ -313,6 +314,7 @@ export function SettingsModal() {
 
             <LanguageRow />
             <OpenAtLoginRow />
+            <AppUpdateRow />
             <NewBotEffortRow />
             <SavedStepsRow />
             <DefaultBotSettings />

@@ -1,5 +1,7 @@
-import { chmod, lstat, readdir } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { chmod, lstat, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { BUILD_INFO_FILE } from "../electron/app-update.mjs";
 import { LICENSE_FILES } from "./cua-linux-release.mjs";
 import { fileURLToPath } from "node:url";
 import { verifyBrowserBundle } from "./prepare-browser.mjs";
@@ -60,6 +62,16 @@ async function thinMacPlatformTools(resources, arch) {
   }
 }
 
+/** The commit and time this package is built from, which the app's Check for updates compares with the latest release. */
+export async function writeBuildInfo(resources, {
+  commit = process.env.OPENPALS_BUILD_COMMIT || execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }),
+  builtAt = new Date().toISOString(),
+} = {}) {
+  const sha = commit.trim().toLowerCase();
+  if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`The build commit must be a full git sha: ${commit}`);
+  await writeFile(path.join(resources, BUILD_INFO_FILE), `${JSON.stringify({ commit: sha, builtAt })}\n`, { mode: 0o644 });
+}
+
 // electron-builder normalizes copied resource directories to 0775. That is
 // unsafe for a root-owned executable path after DEB/AppImage installation, so
 // repair and revalidate the exact tree after resources are copied and before
@@ -70,6 +82,7 @@ export default async function afterPack(context) {
       ? path.join(context.appOutDir, "Openpals.app", "Contents", "Resources")
       : path.join(context.appOutDir, "resources")
   );
+  if (context.packager) await writeBuildInfo(resources);
   const browserRoot = path.join(resources, "browser-engine");
   const hasBrowser = await lstat(browserRoot).then(() => true, (error) => {
     if (error?.code === "ENOENT") return false;

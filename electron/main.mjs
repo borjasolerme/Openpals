@@ -58,6 +58,7 @@ import capabilitiesModule from "./capabilities.cjs";
 import environmentsModule from "./environments.cjs";
 import localOriginModule from "./local-origin.cjs";
 import { buildApplicationMenu } from "./menu.mjs";
+import { BUILD_INFO_FILE, createAppUpdater, installAppUpdateIpc, readBuildInfo } from "./app-update.mjs";
 import { acquireDataDirLease } from "./data-dir-lease.mjs";
 import { createDesktopPrefs, DESKTOP_PORTS, jsonFile, registerDesktopPrefs } from "./desktop-prefs.mjs";
 import { createOpenAtLogin, installOpenAtLogin } from "./open-at-login.mjs";
@@ -855,6 +856,33 @@ const placeFile = createPlaceFile({ file: () => path.join(app.getPath("userData"
 const loginItem = createOpenAtLogin({ app, home: os.homedir() });
 installOpenAtLogin({ ipcMain, guard: localOnly, loginItem, changed: refreshApplicationMenu });
 
+const appUpdater = createAppUpdater({
+  packaged: app.isPackaged,
+  build: app.isPackaged ? readBuildInfo(path.join(process.resourcesPath, BUILD_INFO_FILE)) : { commit: "", builtAt: "" },
+  executable: app.getPath("exe"),
+  trash: (file) => shell.trashItem(file),
+  relaunch: () => relaunchApp(),
+  emit: (state) => { if (mainWindow && !mainWindow.isDestroyed() && !activeServer(placeState)) mainWindow.webContents.send("updates:changed", state); },
+  log: slog,
+});
+installAppUpdateIpc({ ipcMain, guard: localOnly, installGuard: requireMainWindowSender, updater: appUpdater });
+
+/** The menu's Check for Updates…: this computer's Settings at the update row, already checking. A server's page has no
+ * such row, so there the answer is a dialog. */
+async function checkForUpdatesFromMenu() {
+  showHome(); mainWindow?.show();
+  if (!activeServer(placeState)) {
+    mainWindow?.webContents.send("updates:open");
+    void appUpdater.check();
+    return;
+  }
+  const result = await appUpdater.check();
+  const message = result.state === "available" ? "A new version of Openpals is available."
+    : result.state === "current" ? "You're up to date." : "Could not check for updates.";
+  const { response } = await showMessage({ type: "info", message, buttons: result.state === "current" ? ["OK"] : ["Open Download Page", "OK"], defaultId: 0 });
+  if (result.state !== "current" && response === 0) await shell.openExternal(result.downloadPage);
+}
+
 function refreshApplicationMenu() {
   Menu.setApplicationMenu(
     buildApplicationMenu({
@@ -862,6 +890,7 @@ function refreshApplicationMenu() {
       onConnectFromClipboard: () => void menuAction(connectFromClipboard),
       onDisconnect: () => void menuAction(disconnectFromMenu),
       onOpenSettings: () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("app:open-settings"); },
+      onCheckForUpdates: () => void checkForUpdatesFromMenu(),
       openAtLogin: loginItem.available() ? { checked: loginItem.chosen(), onToggle: on => { loginItem.choose(on); refreshApplicationMenu(); } } : null,
     }),
   );

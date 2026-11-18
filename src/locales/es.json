@@ -4410,5 +4410,18 @@
   "lending.notALendLink": "Ese no es un enlace de «Añadir un ordenador». Crea uno allí y pégalo aquí.",
   "lending.remove": "Quitar {server}",
   "lending.added": "Los bots de {server} ya pueden usar este ordenador.",
-  "remote.serverPairing.scope.lend": "Presta un ordenador"
+  "remote.serverPairing.scope.lend": "Presta un ordenador",
+  "settings.updates.version": "{app} {commit} · {date}",
+  "settings.updates.check": "Buscar actualizaciones",
+  "settings.updates.checking": "Buscando…",
+  "settings.updates.current": "Tienes la última versión",
+  "settings.updates.available": "Hay una versión nueva",
+  "settings.updates.install": "Actualizar y reiniciar",
+  "settings.updates.downloading": "Descargando {percent} %…",
+  "settings.updates.installing": "Instalando…",
+  "settings.updates.openPage": "Abrir la página de descarga",
+  "settings.updates.error.check": "No se pudo buscar actualizaciones. Revisa tu conexión y vuelve a intentarlo.",
+  "settings.updates.error.unpackaged": "Esta copia de {app} no es una versión publicada, así que no puede actualizarse sola.",
+  "settings.updates.error.verify": "La descarga no está firmada por el mismo desarrollador que esta app, así que no se ha instalado.",
+  "settings.updates.error.install": "No se pudo instalar la actualización. Tu versión actual sigue igual."
 }

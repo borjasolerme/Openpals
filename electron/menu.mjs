@@ -7,10 +7,11 @@ import { Menu, app } from "electron";
  * @param {() => void} input.onConnectFromClipboard
  * @param {() => void} input.onDisconnect
  * @param {() => void} input.onOpenSettings
+ * @param {() => void} [input.onCheckForUpdates] Check for Updates…, in the macOS app menu.
  * @param {{ checked: boolean, onToggle: (on: boolean) => void } | null} [input.openAtLogin] Open at Login, in the app
  *   menu on macOS and the File menu elsewhere; absent when this build cannot add a login item.
  */
-export function buildApplicationMenu({ server, onConnectFromClipboard, onDisconnect, onOpenSettings, openAtLogin = null }) {
+export function buildApplicationMenu({ server, onConnectFromClipboard, onDisconnect, onOpenSettings, onCheckForUpdates, openAtLogin = null }) {
   const isMac = process.platform === "darwin";
   const serverMenu = {
     label: "Server",
@@ -19,8 +20,9 @@ export function buildApplicationMenu({ server, onConnectFromClipboard, onDisconn
       : [{ id: "server-connect", label: "Connect to a Server from Copied Pairing Link…", click: () => onConnectFromClipboard() }],
   };
   const atLogin = openAtLogin ? [{ id: "open-at-login", label: "Open at Login", type: "checkbox", checked: openAtLogin.checked, click: () => openAtLogin.onToggle(!openAtLogin.checked) }] : [];
+  const updates = onCheckForUpdates ? [{ id: "check-for-updates", label: "Check for Updates…", click: () => onCheckForUpdates() }] : [];
   const template = [
-    ...(isMac ? [{ label: app.name, submenu: [{ role: "about" }, { label: "Preferences…", accelerator: "CmdOrCtrl+,", click: () => onOpenSettings() }, ...atLogin, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] }] : []),
+    ...(isMac ? [{ label: app.name, submenu: [{ role: "about" }, ...updates, { label: "Preferences…", accelerator: "CmdOrCtrl+,", click: () => onOpenSettings() }, ...atLogin, { type: "separator" }, { role: "hide" }, { role: "hideOthers" }, { role: "unhide" }, { type: "separator" }, { role: "quit" }] }] : []),
     !isMac && openAtLogin ? { label: "File", submenu: [...atLogin, { type: "separator" }, { role: "quit" }] } : { role: "fileMenu" },
     { role: "editMenu" },
     serverMenu,

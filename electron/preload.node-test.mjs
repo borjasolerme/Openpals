@@ -107,3 +107,20 @@ test("a Settings request from the menu names no section: whatever main's message
   assert.deepEqual(calls, [[], [], []]);
   unsubscribe();
 });
+
+test("the updates bridge asks main over its own channels with no arguments, and hears states and the menu's open", async () => {
+  const before = invocations.length;
+  await exposed.api.updates.state("/tmp/anything");
+  await exposed.api.updates.check("https://evil.example");
+  await exposed.api.updates.install("/Applications/Other.app");
+  assert.deepEqual(invocations.slice(before), [["updates:state"], ["updates:check"], ["updates:install"]]);
+  const states = [];
+  let opened = 0;
+  const offState = exposed.api.updates.onState((state) => states.push(state));
+  const offOpen = exposed.api.updates.onOpen((...args) => { opened += 1; assert.deepEqual(args, []); });
+  emit("updates:changed", { state: "checking" });
+  emit("updates:open", "https://other.example");
+  assert.deepEqual([states, opened], [[{ state: "checking" }], 1]);
+  offState(); offOpen();
+  assert.equal(subscriberCount("updates:changed") + subscriberCount("updates:open"), 0);
+});

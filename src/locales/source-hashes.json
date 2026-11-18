@@ -6645,7 +6645,20 @@
       "lending.notALendLink": "2cee2f1a2ee8c3c03e02b5e37188eef3b7268010bfa50db50838b2f239b4b2fb",
       "lending.remove": "f058cb48b56b6342d5e0f8f1703ae28a2fec0f7d35fd0799faefd1e78a2f5f13",
       "lending.added": "1285dde58a67f8ef82bf50ace1ba553991d66abdf7b6a732ae4f7e49b5fd1d36",
-      "remote.serverPairing.scope.lend": "a71d6014a00d25c9f8704eb60a3a8ab21617e2fc1fc72c45c43a82cac4d56df7"
+      "remote.serverPairing.scope.lend": "a71d6014a00d25c9f8704eb60a3a8ab21617e2fc1fc72c45c43a82cac4d56df7",
+      "settings.updates.version": "5a9203166cb47908259ed6ecdf48ed0866a10559fe4f24337a38d22dedc09b66",
+      "settings.updates.check": "f26f3275e735bdf6268532ca7cbea3887c9adad21d8df74e84b2bc7791475c0d",
+      "settings.updates.checking": "ec963ffc911b840134fc738b41a8bb0493489c402a4a761efd36c16dea7d984b",
+      "settings.updates.current": "df7d1cc1aa81245a8dcef0c127c2ed6f7b7801c8fc213cebdd0c36ad1725851f",
+      "settings.updates.available": "5f2c8067cc3f3b28f606c13dc62ffc48b5a5db77ee95b8bf739a7c2f705fa2b7",
+      "settings.updates.install": "853c6a3cc7ff193c1f6ace227245030ed64f215f93d38c2291562649d3f1a6a7",
+      "settings.updates.downloading": "ea9e3582dc3631181767dc34916b456534b0cc474219084befee4f8b356129ab",
+      "settings.updates.installing": "530bcc355f0a3cd6a75a5216f1648e3dc48da5615ee41f56e033f4732982a3df",
+      "settings.updates.openPage": "c1c304e33661e243a91927692867e5fd48198b71870c7021eea88afac3b20bf6",
+      "settings.updates.error.check": "2aa3e5c0338fe6a6787a3cf9e20165bfd7ea7cf4a3fe8a039a186784c517b80f",
+      "settings.updates.error.unpackaged": "3ef3e14b494945c286a5413b37932b432d1f96b07160af78de9784a066606376",
+      "settings.updates.error.verify": "fdeca0452f79a2a0adab047c7e7cbf2a63d236e38e9df9f8b79bd4f08519cc3f",
+      "settings.updates.error.install": "c41b2d3717447a134e696e5bc3c2e2af886b679624e2b537ae9d149c48f04fbc"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

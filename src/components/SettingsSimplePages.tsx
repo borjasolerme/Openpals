@@ -5,6 +5,7 @@ import { appVersion } from "@/lib/app-links";
 import type { LocaleKey } from "@/locales";
 import { productName } from "../lib/brand";
 import { OpenAtLoginRow } from "./OpenAtLoginRow";
+import { AppUpdateRow } from "./AppUpdateRow";
 import { TalkShortcutRow } from "./TalkShortcutRow";
 import { AttachmentStorageSettings } from "./AttachmentStorageSettings";
 import { DiagnosticsRow } from "./DiagnosticsRow";
@@ -72,6 +73,7 @@ export function SimpleGeneralPage({ has, peopleOpen, onLooks }: { has: Has; peop
       {has("general") && (
         <SettingsGroup label={t("settings.simple.group.system")}>
           <SettingsRows>
+            <AppUpdateRow />
             <OpenAtLoginRow simple />
             <TalkShortcutRow />
             <AttachmentStorageSettings />

@@ -70,6 +70,17 @@ describe("buildApplicationMenu", () => {
     expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
 
+  it("macOS app menu offers Check for Updates… right after About, and only when the app can check", () => {
+    const onCheckForUpdates = vi.fn();
+    const items = build("darwin", { onCheckForUpdates })[0].submenu;
+    const index = items.findIndex((entry) => entry.id === "check-for-updates");
+    expect(index).toBe(1);
+    expect(items[index].label).toBe("Check for Updates…");
+    items[index].click();
+    expect(onCheckForUpdates).toHaveBeenCalledTimes(1);
+    expect(build("darwin")[0].submenu.some((entry) => entry.id === "check-for-updates")).toBe(false);
+  });
+
   it.each(["linux", "win32"])("does not add an app menu on %s", (platform) => {
     const template = build(platform);
     expect(template[0].role).toBe("fileMenu");

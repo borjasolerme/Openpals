@@ -255,6 +255,15 @@ const __APP_VERSION__: string;
       revealInFolder?(filePath: string): Promise<"shown" | "missing" | "invalid">;
       /** Opens this app's logs folder in Explorer or Finder and says where it is. */
       openLogsFolder?(): Promise<{ folder: string; opened: boolean; error?: string }>;
+      /** Check for updates against this app's own releases; this computer's page only, absent on an older app. */
+      updates?: {
+        state(): Promise<import("../../electron/app-update.mjs").AppUpdateState>;
+        check(): Promise<import("../../electron/app-update.mjs").AppUpdateState>;
+        install(): Promise<import("../../electron/app-update.mjs").AppUpdateState>;
+        onState(cb: (state: import("../../electron/app-update.mjs").AppUpdateState) => void): () => void;
+        /** The app menu's Check for Updates… was chosen. */
+        onOpen(cb: () => void): () => void;
+      };
       /** This app's own login item, which opens the window. `available`: false in a build that cannot add one. */
       openAtLogin?: { state(): Promise<{ available: boolean; on: boolean }>; set(on: boolean): Promise<{ available: boolean; on: boolean }> };
       /** Saved keys this launch could not read, and "Reset saved keys" (the desktop asks the person first, then restarts). */

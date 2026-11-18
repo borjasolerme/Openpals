@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import afterPack from "./after-pack.mjs";
+import afterPack, { writeBuildInfo } from "./after-pack.mjs";
 import { LICENSE_FILES } from "./cua-linux-release.mjs";
 
 const temporaryDirectories = [];
@@ -156,5 +156,25 @@ describe.skipIf(!canBuildMachO)("macOS afterPack platform-tools slices", () => {
     const { appOutDir } = macApp();
     await expect(afterPack({ electronPlatformName: "darwin", arch: 4, appOutDir }))
       .rejects.toThrow(/Unsupported macOS package architecture/);
+  });
+});
+
+describe("build info", () => {
+  it("writes the full commit and build time the app's update check reads, and refuses anything but a full sha", async () => {
+    const resources = fs.mkdtempSync(path.join(os.tmpdir(), "omb-build-info-"));
+    temporaryDirectories.push(resources);
+    const commit = "A".repeat(40);
+    await writeBuildInfo(resources, { commit: `${commit}\n`, builtAt: "2026-11-18T10:00:00.000Z" });
+    expect(JSON.parse(fs.readFileSync(path.join(resources, "build-info.json"), "utf8")))
+      .toEqual({ commit: "a".repeat(40), builtAt: "2026-11-18T10:00:00.000Z" });
+    await expect(writeBuildInfo(resources, { commit: "abc1234" })).rejects.toThrow(/full git sha/);
+  });
+
+  it("defaults to this checkout's HEAD", async () => {
+    const resources = fs.mkdtempSync(path.join(os.tmpdir(), "omb-build-info-"));
+    temporaryDirectories.push(resources);
+    await writeBuildInfo(resources);
+    const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    expect(JSON.parse(fs.readFileSync(path.join(resources, "build-info.json"), "utf8")).commit).toBe(head);
   });
 });

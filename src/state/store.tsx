@@ -501,7 +501,9 @@ export type AppSettingsSection =
   | "activity"
   | "backups"
   | "workspaces"
-  | "skills" | "import" | "about";
+  | "skills" | "import" | "about"
+  /** General, scrolled to Check for updates (the app menu's Check for Updates…). */
+  | "updates";
 
 export type BotSettingsSection =
   | "overview"

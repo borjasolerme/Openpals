@@ -120,6 +120,26 @@ const bridge = {
       return () => ipcRenderer.removeListener("lending:changed", handler);
     },
   },
+  /**
+   * This computer's page only: Check for updates against this app's own releases (electron/app-update.d.mts). Main does
+   * the network and the install; the page sees states, never a file path.
+   */
+  updates: {
+    state: () => ipcRenderer.invoke("updates:state"),
+    check: () => ipcRenderer.invoke("updates:check"),
+    install: () => invokeWithPlainError("updates:install"),
+    onState: (cb) => {
+      const handler = (_event, state) => cb(state);
+      ipcRenderer.on("updates:changed", handler);
+      return () => ipcRenderer.removeListener("updates:changed", handler);
+    },
+    /** The app menu's Check for Updates…: open Settings at the update row. */
+    onOpen: (cb) => {
+      const handler = () => cb();
+      ipcRenderer.on("updates:open", handler);
+      return () => ipcRenderer.removeListener("updates:open", handler);
+    },
+  },
   /** This computer's page only: sets up an always-on server and switches to it (electron/server-setup.d.mts). */
   serverSetup: {
     start: (request) => ipcRenderer.invoke("server-setup:start", request?.kind === "ssh"

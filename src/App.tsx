@@ -200,6 +200,10 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   }, [dispatch]);
 
   useEffect(() => {
+    return window.ogb?.updates?.onOpen(() => dispatch({ type: "toggleAppSettings", open: true, section: "updates" }));
+  }, [dispatch]);
+
+  useEffect(() => {
     return window.ogb?.desktopViewer?.onState((viewer) => {
       if (viewer.open || !viewer.contextId) return;
       const botId = viewer.contextId;
