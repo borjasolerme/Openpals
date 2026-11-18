@@ -75,6 +75,9 @@ bots that should use the same logged-in browser.
   the desktop app, a browser or your phone.
 - **Bring your bots over.** Move the bots you made in Grok Bot. Each one writes down its own setup, and Openpals
   rebuilds it here.
+- **Teach a task once.** The first time a bot does a computer task it is recorded; ask the same thing again and it
+  repeats it without the AI, finding each button by what it is, not where it was. Built on
+  **[agent-steps](https://github.com/borjasolerme/agent-steps)**, our open-source package for any agent.
 
 ## A look inside
 
@@ -285,6 +288,8 @@ The server owns the bots and their state; every screen, on any device, is a wind
 - **[Custom engines](docs/custom-engines.md)**: plugging in another agent CLI.
 - **[Phone web app](docs/phone-web-app.md)**: using your bots from your phone.
 - **[Localization](docs/localization.md)**: adding or finishing a language.
+- **[agent-steps](https://github.com/borjasolerme/agent-steps)**: the open-source package behind saved steps, as an MCP
+  server or npm library for Claude Code, Codex, Cursor or your own agent.
 
 <details>
 <summary>Configuration</summary>
