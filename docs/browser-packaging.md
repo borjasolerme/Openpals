@@ -116,7 +116,7 @@ connects nowhere.
 
 OpenMausBot's own ports are the server's and its webhook receiver's, the
 desktop client relay, the companion and its control page and gateway, the Vite
-dev server, the Local VM viewer, every port the server process has listened
+dev server, every port the server process has listened
 on, the ports the desktop app reports, each gate, and agent-browser's stream
 servers and Chrome DevTools ports. Servers add their HTTPS edge (8080),
 Caddy's admin API (2019) and the ports of fleet workspaces.

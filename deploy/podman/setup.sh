@@ -8,7 +8,6 @@ if [ "$(podman info --format '{{.Host.Security.Rootless}}')" != true ]; then
     echo 'This deployment requires a rootless Podman engine.' >&2
     exit 1
 fi
-systemctl --user enable --now podman.socket >/dev/null
 if [ ! -f .env ]; then
     data_root="$HOME/openmausbot/data"
     mkdir -p "$data_root"
@@ -17,7 +16,6 @@ if [ ! -f .env ]; then
     cat > .env <<EOF
 COMPOSE_PROJECT_NAME=openmausbot-podman
 OMB_DATA_ROOT=$data_root
-PODMAN_SOCKET=/run/user/$(id -u)/podman/podman.sock
 OMB_PORT=8799
 OMB_WEBHOOK_PORT=8800
 OMB_HTTP_PORT=8080

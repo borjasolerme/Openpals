@@ -126,7 +126,7 @@ entry of a pattern list and for a settings file alike. A rule **has a
 wildcard in a tool's name** when a `*` or `?` occurs outside parentheses,
 where "outside" is a single flag set at `(` and cleared at `)`, exactly as the
 CLI splits a tool list: `Bash(git *)` and `Read(./src/**)` have none,
-`mcp__a*__vm_exec`, `*exec*` and `Bash(a),*` do. No pattern is ever built from
+`mcp__a*__delete_trigger`, `*trigger*` and `Bash(a),*` do. No pattern is ever built from
 configuration text.
 
 The files read are the ones the CLI reads. A bot's turn is launched with

@@ -42,7 +42,6 @@ export const scenarioBotSchema = z.object({
   name: z.string(),
   chiefOfStaff: z.boolean().optional(),
   acknowledgePeerScope: z.boolean().optional(),
-  computer: z.enum(["vm", "browser", "off"]).optional(),
   browser: z.boolean().optional(),
   /** The scripted turns this bot replays, in order. */
   turns: z.array(scriptedTurnSchema),
@@ -68,10 +67,6 @@ export const stepSchema = z.discriminatedUnion("kind", [
    * surface's PUT), so a scenario can prove an assignment change alters
    * what the next turn sees. */
   z.object({ kind: z.literal("setSkillAssignment"), bot: z.string(), skills: z.array(z.string()) }),
-  z.object({ kind: z.literal("setVmState"), state: z.record(z.string(), z.unknown()) }),
-  z.object({ kind: z.literal("consumeDump"), timeoutMs: z.number().optional() }),
-  z.object({ kind: z.literal("captureComputer"), bot: z.string() }),
-  z.object({ kind: z.literal("pollComputerGate"), bot: z.string(), saveAs: z.string() }),
 ]);
 
 export const assertionSchema = z.discriminatedUnion("kind", [
@@ -91,17 +86,6 @@ export const assertionSchema = z.discriminatedUnion("kind", [
     equals: z.array(z.object({ bot: z.string(), status: z.string(), hasParent: z.boolean().optional() })),
   }),
   z.object({ kind: z.literal("transcriptIncludes"), bot: z.string(), thread: z.enum(["active", "node"]), text: z.string() }),
-  z.object({
-    kind: z.literal("gateAnswer"),
-    of: z.string(),
-    held: z.boolean().optional(),
-    blockedReasonIncludes: z.string().optional(),
-    blockedReasonOmits: z.string().optional(),
-    /** Pins the HTTP status a saved gate observation answered with, for
-     * answers whose failure mode is the status itself (a revoked bridge
-     * capability answers 401 with no held or blockedReason body). */
-    httpStatus: z.number().int().optional(),
-  }),
   z.object({ kind: z.literal("routineRunSnapshot"), of: z.string(), status: z.string(), deferred: z.boolean() }),
   z.object({ kind: z.literal("activitySeen"), bot: z.string(), namePrefix: z.string() }),
   z.object({ kind: z.literal("noActivityPrefix"), bot: z.string(), prefix: z.string() }),
@@ -117,7 +101,7 @@ export const scenarioSchema = z.object({
   /** One sentence stating the behavior this scenario pins. */
   behavior: z.string(),
   issue: z.number().optional(),
-  world: z.enum(["coordination", "localVm"]),
+  world: z.literal("coordination"),
   /** Gate keys the scenario uses; the runner materializes each as a file. */
   gates: z.array(z.string()).default([]),
   /** Library skills the runner installs before any turn (approved, as a

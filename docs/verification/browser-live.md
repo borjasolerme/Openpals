@@ -223,11 +223,12 @@ and open/read the dialog. Routine tool actions should not produce repeated
 approval cards; provider review may still ask about other actions.
 
 Ask for Chrome on an unconfigured cloud computer. It must inspect real choices
-and report the blocker, not act on a host and claim that it is a VM. The
+and report the blocker, not act on a host and claim that it is the cloud
+computer. The
 composer and panel must keep the real destination highlighted during sends.
 
 Ctrl-C closes the exact fixture and removes the copied sign-in and browser
-data. VM/cloud transport and turn-bound switching are separately covered by
-`server/group-local-vm.e2e.test.ts`, `server/vps-routing.test.ts` and
+data. Cloud transport and turn-bound switching are separately covered by
+`server/vps-routing.test.ts`, `server/surface-pins.e2e.test.ts` and
 `server/index.test.ts` with
 isolated providers. These are not evidence of real cloud provisioning.

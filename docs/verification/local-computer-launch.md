@@ -22,7 +22,7 @@ outage refusal, and draining a large final response at shutdown.
 
 This proves the helper launch/transport, not arbitrary macOS background input
 or the user's reported session. No real CUA daemon, provider, user app, or
-screen is controlled. Browser and VNC/VM transports are separate and unchanged
+screen is controlled. Browser and VNC transports are separate and unchanged
 by this fix. The prompt prefers background window-targeted actions and asks
 before escalating to foreground control; that is guidance, not an OS-level
 background-input guarantee.

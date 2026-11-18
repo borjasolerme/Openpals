@@ -23,11 +23,14 @@ checks wait for received RFB events, with bounded waits. Set
 `OMB_UI_EVIDENCE_DIR` to retain screenshots in a chosen directory, as in the
 other renderer recipes; otherwise they stay beside the printed server log.
 
-The script pairs the browser through the real HTTP API, follows the same
-status and WebSocket routes as a remote admin, and verifies:
+The script pairs the browser through the real HTTP API, opens a VPS bot's
+desktop through the real join route and a synthetic loopback SSH forward,
+follows the same WebSocket routes as a remote admin, and verifies:
 
 - The built noVNC page displays the synthetic desktop's pixels.
-- Paired status returns a viewer link on the app origin, without a password.
+- The join returns a viewer link on the app origin, without a password; two
+  simultaneous joins share one tunnel, and reconnect reuses it without a
+  public viewer port.
 - The Keyboard panel sends text, newline, Unicode keysyms and Ctrl–Alt–Del.
 - Clipboard text arrives from the desktop; editing or clearing the field syncs
   automatically without a Send button or device clipboard permissions.
@@ -45,15 +48,10 @@ status and WebSocket routes as a remote admin, and verifies:
 - Reconnect opens a new working desktop connection.
 - Page exit aborts a pending connection request; a persisted-page restore
   opens a fresh connection.
-- The same built viewer opens a VPS through the real join route and a synthetic
-  loopback SSH forward; two simultaneous joins share one tunnel, and reconnect
-  reuses it without a public viewer port.
-- Changing the link target disconnects the previous desktop and clears its
-  keyboard/clipboard drafts.
 - Logout closes the already-open WebSocket.
 - noVNC notices and their source pointer are served from the built UI.
 
-The focused server tests exercise shared, per-bot and pool target selection,
+The focused server tests exercise target selection,
 HTTP and upgrade authentication, client-scope and foreign-origin refusal,
 VPS connection retention/release, session revocation/expiry, shutdown and revocation during inspection,
 established-connection shutdown, disconnect during inspection, target deletion,
@@ -61,11 +59,11 @@ upstream rejection/timeouts, and stripping workspace credentials from the
 upstream request:
 
 ```sh
-pnpm exec vitest run server/routes/desktop-viewer.test.ts server/container-computer.test.ts server/request-auth.test.ts server/vps-computer.test.ts
+pnpm exec vitest run server/routes/desktop-viewer.test.ts server/cua-image.test.ts server/request-auth.test.ts server/vps-computer.test.ts
 pnpm exec vitest run scripts/testing/verification-docs.test.ts
 ```
 
-The page is built with the app; VM-controlled HTML and JavaScript never run
+The page is built with the app; desktop-controlled HTML and JavaScript never run
 under the app origin. The proxy forwards only the RFB WebSocket, never workspace
 cookies or tokens. Revocation closes connections immediately; expiry and target
 availability are rechecked every five seconds.

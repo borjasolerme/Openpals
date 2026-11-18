@@ -698,12 +698,10 @@ is the reference implementation.
 ## Opening a desktop from another device
 
 In a paired admin browser, as in the desktop app, **Take control** turns the
-Computer panel's picture into the live desktop for Local VMs and your own VPS,
+Computer panel's picture into the live desktop for your own VPS,
 through the same address as OpenMausBot; **Full screen** fills the window with
-the same session. Shared, per-bot and pool Local VMs connect through their
-managed container's loopback port. VPS desktops connect
-through an SSH tunnel opened by the server. Neither needs an additional public
-port or viewer origin setting. Keep Local VM VNC ports bound to loopback and
+the same session. VPS desktops connect through an SSH tunnel opened by the
+server, so they need no additional public port or viewer origin setting. Keep
 VPS VNC ports private.
 
 Your app reverse proxy must support WebSocket upgrades, preserve `Host`, and
@@ -712,8 +710,7 @@ using Tailscale Serve. Viewer requests require an admin session. Logging out
 or revoking that session closes open viewers. Client-only pairing does not
 grant desktop control.
 
-An open Local VM viewer keeps that VM's idle timer active. Remote VPS viewers
-share a tunnel; it closes 30 seconds after the last viewer leaves, allowing
+Remote VPS viewers share a tunnel; it closes 30 seconds after the last viewer leaves, allowing
 reconnects during that interval. **Hand control back**, closing the panel or
 leaving the page gives the computer back to the bot.
 
@@ -723,7 +720,7 @@ window, with fullscreen available when the browser supports it. Hosted Cloud
 keeps its provider-issued viewer in its own window or tab.
 
 These controls are in the web app. The native phone apps have their own
-computer viewers; use a paired browser for interactive Local VM or VPS access.
+computer viewers; use a paired browser for interactive VPS access.
 For the proxy boundary and offline regression checks, see the
 [viewer verification recipe](verification/desktop-viewer.md).
 

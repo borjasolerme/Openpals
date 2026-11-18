@@ -91,7 +91,7 @@ and service-specific limits remain separate from the implemented protocol.
 
 The OpenAI-compatible driver opts into structured image input and mounts the
 harness-provided `localComputer` and `browser` stdio descriptors. It does not
-discover or grant a desktop itself. Host, VM, VPS, Boat and room routing
+discover or grant a desktop itself. Host, VPS, Boat and room routing
 continue to use the harness's existing ownership and permission gates. A Boat
 cloud computer arrives in the same `localComputer` slot as every other
 computer (`harness-mcp-proxy computer`), so the selected API model is kept, as

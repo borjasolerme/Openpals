@@ -12,7 +12,7 @@ OpenMausBot team while the desktop app and its harness are running.
 - list configured model instances and switch an idle bot to an exact available model.
 
 The v1 server intentionally cannot approve requests, remember permission grants, delete data, import teams,
-change credentials, or control computer/VM lifecycle. Those actions stay in the human-facing app.
+change credentials, or control computer lifecycle. Those actions stay in the human-facing app.
 
 ## From the openmausbot command
 

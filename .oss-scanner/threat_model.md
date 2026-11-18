@@ -32,7 +32,7 @@ Bots have tools:
 
 - the engine's shell and file tools;
 - a per-bot Chrome (agent-browser) whose traffic goes through an egress gate;
-- computer use: the local desktop, a local VM, and paid cloud computers;
+- computer use: the local desktop, paid cloud computers, a self-hosted VPS, and computers lent to the server;
 - MCP servers, both custom ones and the harness's own;
 - Composio connected apps, through `cloudflare/composio-broker/`;
 - routines (scheduled turns), rooms (several bots in one conversation),

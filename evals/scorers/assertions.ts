@@ -160,20 +160,6 @@ function score(assertion: Assertion, world: WorldSnapshot): { pass: boolean; det
         ? { pass: true, detail: "transcript contains the pinned text" }
         : { pass: false, detail: "transcript lacked: " + assertion.text + "\n" + fmt(messages.map((message) => message.text)) };
     }
-    case "gateAnswer": {
-      const answer = world.observations[assertion.of] as { held?: boolean; blockedReason?: string; httpStatus?: number } | undefined;
-      if (answer === undefined) return { pass: false, detail: "no saved gate answer \"" + assertion.of + "\"" };
-      const checks = [
-        assertion.held === undefined || answer.held === assertion.held,
-        assertion.httpStatus === undefined || answer.httpStatus === assertion.httpStatus,
-        assertion.blockedReasonIncludes === undefined ||
-          (answer.blockedReason ?? "").includes(assertion.blockedReasonIncludes),
-        assertion.blockedReasonOmits === undefined || !(answer.blockedReason ?? "").includes(assertion.blockedReasonOmits),
-      ];
-      return checks.every(Boolean)
-        ? { pass: true, detail: fmt(answer) }
-        : { pass: false, detail: "expected " + fmt(assertion) + ", got " + fmt(answer) };
-    }
     case "routineRunSnapshot": {
       const snapshot = world.observations[assertion.of] as { status?: string; deferredAt?: number } | undefined;
       if (snapshot === undefined) return { pass: false, detail: "no saved routine snapshot \"" + assertion.of + "\"" };

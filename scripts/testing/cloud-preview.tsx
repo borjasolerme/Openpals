@@ -23,28 +23,15 @@ function frame(label: string, color: string) {
   return canvas.toDataURL("image/png").split(",")[1];
 }
 const screenshot = frame("Cloud screen connected", "#134e4a");
-const vmScreenshot = `data:image/png;base64,${frame("Local VM connected", "#1e3a8a")}`;
 let mode = "connected";
-let surfaceScenario = "default";
-let vmRunning = false;
-let vmDesktopReady = false;
-const vmResumeStatus = () => ({
-  platform: "linux", runtime: "docker", available: ["docker"], mode: "shared", daemonUp: true,
-  image: true, create_supported: true, container: vmRunning ? "running" : "stopped", resumable: !vmRunning,
-  imageMatches: true, managed: true, network: "loopback", security: "hardened", persistence: "durable",
-  desktopReady: vmDesktopReady, ready: vmDesktopReady, stop_reason: vmRunning ? null : "idle",
-  problem: vmDesktopReady ? null : vmRunning ? "Desktop is starting" : "The Local VM is stopped",
-  viewer_url: "http://127.0.0.1/fixture-viewer", idle_timeout_ms: 480 * 60_000, max_instances: 2,
-  commands: {}, workspace_path: "/fixture/workspace", workspace_guest_path: "/home/cua/workspace",
-});
 // A host capture outlives an aborted renderer fetch. Keep this work pending
 // until explicitly released, so reconnects exercise real lifecycle contention.
 const transport = {
-  resetVm: () => { vmRunning = false; vmDesktopReady = false; }, vmStarts: 0, vmReadinessReads: 0, requests: 0, aborted: 0, conflicts: 0, capturing: false,
+  requests: 0, aborted: 0, conflicts: 0, capturing: false,
   joining: false, duringJoin: 0, controlCalls: 0, opened: 0, abortedJoins: 0,
   releaseCapture: () => {}, releaseJoin: () => {},
   screenshot: `data:image/png;base64,${screenshot}`,
-  vmScreenshot, paths: [] as string[], vmRequests: 0, vmPending: false, releaseVm: () => {},
+  paths: [] as string[],
 };
 Object.assign(window, { cloudPreviewFixture: transport });
 const viewerListeners = new Set<(state: { open: boolean; contextId: string }) => void>();
@@ -65,33 +52,11 @@ const originalFetch = window.fetch.bind(window);
 window.fetch = async (input, init) => {
   const requested = typeof input === "string" ? input : "";
   const path = requested.split("?")[0];
-  if (path.includes("/computer") || path.includes("/local-computer")) transport.paths.push(requested);
+  if (path.includes("/computer")) transport.paths.push(requested);
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
     status, headers: { "content-type": "application/json" },
   });
-  if (/^\/api\/bots\/[\w-]+\/computer$/.test(path)) return json({ surface: surfaceScenario === "auto-vm" ? "vm" : "cloud", configured: true, box: { state: "idle" } });
-  if (path.endsWith("/local-computer/start")) {
-    transport.vmStarts++;
-    vmRunning = true;
-    return json(vmResumeStatus());
-  }
-  if (path.endsWith("/local-computer") && surfaceScenario === "vm-stopped") {
-    if (vmRunning && !vmDesktopReady) transport.vmReadinessReads++;
-    return json(vmResumeStatus());
-  }
-  if (path.endsWith("/local-computer")) return json({ daemonUp: true, mode: "per-bot", max_instances: 2, image: true, create_supported: true,
-    container: "running", imageMatches: true, managed: true, network: "loopback", security: "hardened", persistence: "durable",
-    desktopReady: true, ready: true, problem: null, viewer_url: "http://127.0.0.1/fixture-viewer" });
-  if (path.endsWith("/local-computer/screenshot")) {
-    transport.vmRequests++;
-    if (mode === "held") {
-      transport.vmPending = true;
-      // Deliberately finish even after cancellation to prove an old frame
-      // cannot replace the next conversation's preview.
-      await new Promise<void>((resolve) => { transport.releaseVm = () => { transport.vmPending = false; resolve(); }; });
-    }
-    return json({ image: vmScreenshot });
-  }
+  if (/^\/api\/bots\/[\w-]+\/computer$/.test(path)) return json({ surface: "cloud", configured: true, box: { state: "idle" } });
   // The real server refuses provision/sleep while a turn owns the boat.
   if (path.endsWith("/computer/provision")) {
     if (turnActive) return json({ error: CLOUD_COMPUTER_BUSY_ERROR }, 409);
@@ -177,11 +142,10 @@ function Fixture() {
   const fixtureBot: Bot | undefined = bot && (scenario === "default"
     ? { ...bot, busy, tasks: bot.tasks?.map((task) => ({ ...task, busy })) }
     : { ...bot, busy: false, browser: true,
-      computer: scenario === "vm-stopped" ? "vm" : scenario === "auto-vm" ? undefined : scenario === "cloud-pin" ? "local" : scenario === "off" ? "off" : "cloud",
-      modelSelection: scenario === "vm-pin" ? { ...bot.modelSelection, instanceId: "unavailable-profile-engine" } : bot.modelSelection,
+      computer: scenario === "cloud-pin" ? "local" : scenario === "off" ? "off" : "cloud",
       threadId: `fixture-${scenario}`,
       tasks: [{ threadId: `fixture-${scenario}`, title: scenario, createdAt: 1, busy: false, modelSelection: bot.modelSelection,
-        ...(scenario === "auto-vm" ? {} : { surface: scenario === "browser-pin" ? "browser" : scenario === "cloud-pin" ? "cloud" : "vm" }) }],
+        ...(scenario === "off" ? {} : { surface: scenario === "browser-pin" ? "browser" : "cloud" }) }],
     });
   return <div className="flex h-screen justify-center">
     <div className="fixed left-2 top-2 grid max-w-32 gap-3 text-lg">
@@ -189,29 +153,20 @@ function Fixture() {
         {["connected", "slow", "held", "contended", "failed", "unconfigured", "corrupt", "timeout"].map((value) => <option key={value}>{value}</option>)}
       </select></label>
       <label>Panel<select aria-label="Panel" value={panel} onChange={(event) => setPanel(event.target.value)}>
-        <option value="computer">Computer</option><option value="settings">VM settings</option>
+        <option value="computer">Computer</option><option value="settings">Computer settings</option>
       </select></label>
       {/* Stays mounted while the panel is up, like the chat header's own button. */}
       <button onClick={(event) => {
         if (fixtureBot) rememberComputerPanelOpen({ botId: fixtureBot.id, opener: event.currentTarget, tabs: event.detail === 0 });
         dispatch({ type: "toggleComputer", open: true });
       }}>Open computer panel</button>
-      <label>Conversation<select aria-label="Conversation surface" value={scenario} onChange={(event) => {
-        const previousScenario = surfaceScenario;
-        surfaceScenario = event.target.value; vmRunning = false; vmDesktopReady = false;
-        if (bot && (surfaceScenario === "vm-stopped" || previousScenario === "vm-stopped")) {
-          dispatch({ type: "updateBot", botId: bot.id, patch: { computer: surfaceScenario === "vm-stopped" ? "vm" : "cloud" } });
-        }
-        setScenario(surfaceScenario);
-      }}>
-        {["default", "vm-stopped", "vm-pin", "auto-vm", "cloud-pin", "browser-pin", "off"].map((value) => <option key={value}>{value}</option>)}
+      <label>Conversation<select aria-label="Conversation surface" value={scenario} onChange={(event) => setScenario(event.target.value)}>
+        {["default", "cloud-pin", "browser-pin", "off"].map((value) => <option key={value}>{value}</option>)}
       </select></label>
       <button onClick={() => setGeneration((n) => n + 1)}>Reconnect panel</button>
       <button onClick={() => { turnActive = !busy; setBusy(!busy); }}>Busy: {String(busy)}</button>
       <button onClick={() => transport.releaseCapture()}>Release held capture</button>
       <button onClick={() => transport.releaseJoin()}>Release desktop join</button>
-      <button onClick={() => transport.releaseVm()}>Release VM capture</button>
-      <button onClick={() => { vmDesktopReady = true; }}>Finish VM startup</button>
       <button disabled={!fixtureBot} onClick={() => fixtureBot && publishLiveFrame({
         kind: "screen", botId: fixtureBot.id, threadId: fixtureBot.threadId, png: frame("New live frame", "#312e81"), mime: "image/png",
       })}>Publish live frame</button>

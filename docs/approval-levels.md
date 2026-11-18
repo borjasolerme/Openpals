@@ -142,7 +142,7 @@ driver repeats your answer for that exact operation until the native session
 ends. API models (OpenAI-compatible, MiniMax, Mistral, Grok API) have no
 native session, so their driver keeps the allow for that bot, that exact tool
 and that exact server (as launched: a changed command, URL or credential is
-another server, and a bridge into a VM or a Boat is new each turn) for the
+another server, and a bridge into a VPS or a Boat is new each turn) for the
 rest of the conversation, in memory until the server restarts. Another bot in
 the same room asks again.
 

@@ -19,12 +19,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl git \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 1001 --create-home --home-dir /data --shell /bin/bash maus
-# Only the remote client runs here. The engine and desktop containers are siblings.
-RUN curl -fsSL https://github.com/podman-container-tools/podman/releases/download/v5.8.3/podman-remote-static-linux_amd64.tar.gz -o /tmp/podman.tgz \
-    && echo '8431e989a1383e4dc2582a178538b3a686160e15db9f5f2de2501a61dbf91c62  /tmp/podman.tgz' | sha256sum -c - \
-    && tar -xzf /tmp/podman.tgz -C /tmp bin/podman-remote-static-linux_amd64 \
-    && install -m 0755 /tmp/bin/podman-remote-static-linux_amd64 /usr/local/bin/podman \
-    && rm /tmp/podman.tgz /tmp/bin/podman-remote-static-linux_amd64
 WORKDIR /app
 COPY --from=build --chown=maus:maus /src/dist-native/duckdb/linux-x64 ./duckdb
 COPY --from=build --chown=maus:maus /src/dist-server ./dist-server

@@ -88,7 +88,7 @@ computer tools, and deletion cleanup. The Settings inventory spans every server 
 computer with the alias that holds it.
 
 A bot cannot be moved to another server while its computer still lives on the old one, and the default alias
-cannot change while any computer it manages still exists: remove the computer first from Settings → Local VM →
+cannot change while any computer it manages still exists: remove the computer first from Settings → Computer →
 Self-hosted VPS computers (or by hand: `docker -H ssh://old-server rm -f openmausbot-vps-<bot>-<hash>`). A server
 that cannot be reached never traps a bot: moving the bot to another server, switching its computer, or deleting
 it goes ahead, and the app says what may be left on that server and the command that removes it once the server

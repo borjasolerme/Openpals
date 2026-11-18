@@ -14,17 +14,14 @@ services:
     userns_mode: keep-id:uid=1001,gid=1001
     user: "1001:1001"
     restart: unless-stopped
-    # On Windows this is the Linux Podman machine. The app must reach the
-    # dynamically allocated, loopback-only desktop ports on that same host.
+    # Caddy reaches the app on the host's loopback; on Windows the host is the Linux Podman machine.
     network_mode: host
     volumes:
       - ${OMB_DATA_ROOT:?Run setup.sh first}:${OMB_DATA_ROOT}
-      - ${PODMAN_SOCKET:?Run setup.sh first}:/run/omb-podman.sock
     environment:
       HOME: ${OMB_DATA_ROOT}
       OMB_DATA_DIR: ${OMB_DATA_ROOT}/.openmausbot
       OMB_STATIC_DIR: /app/dist
-      CONTAINER_HOST: unix:///run/omb-podman.sock
       OMB_PORT: ${OMB_PORT:-8799}
       OMB_WEBHOOK_PORT: ${OMB_WEBHOOK_PORT:-8800}
       OMB_PUBLIC_URL: ${OMB_PUBLIC_URL:-http://localhost:8080}

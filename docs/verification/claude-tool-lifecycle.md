@@ -53,7 +53,7 @@ the harness honours it only while one of that thread's turns runs. Stop, a
 stall, a deleted bot or thread, a changed grant or approval level, or a
 provider reload gives the next turn a new bearer. The computer gets a new
 bearer every turn: its tools bridge into a machine that can stop between
-turns (an idle Local VM, a VPS that Auto starts), and a warm engine would not
+turns (a sleeping Boat, a VPS that Auto starts), and a warm engine would not
 restart a bridge whose machine went away. The per-turn limits (bots
 created, threads opened, room posts, and not checking a delegation in the
 turn that made it) are counted by the harness for each turn, not by the

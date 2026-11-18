@@ -1,4 +1,4 @@
-// Full server + built viewer + synthetic Docker/RFB, in disposable homes.
+// Full server + built viewer + synthetic Docker/SSH/RFB for a VPS desktop, in disposable homes.
 // Build first, then run with explicit OMB_AGENT_BROWSER_PATH and
 // AGENT_BROWSER_EXECUTABLE_PATH if reusing installed browser binaries.
 import assert from "node:assert/strict";
@@ -10,7 +10,7 @@ import { launchVerificationServer, runControlOmb, type VerificationServer } from
 import { agentBrowser, ensureUiBrowser, sessionEnv } from "./testing/control-omb-ui.ts";
 import { fixtureApi } from "./testing/preview-fixture.ts";
 import { fakeVnc } from "./testing/fake-vnc.ts";
-import { BASE_IMAGE_DIGEST, CUA_DRIVER_VERSION, IMAGE, IMAGE_LAYER_VERSION } from "../server/container-computer.ts";
+import { BASE_IMAGE_DIGEST, CUA_DRIVER_VERSION, IMAGE, IMAGE_LAYER_VERSION } from "../server/cua-image.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const scratch = mkdtempSync(join(tmpdir(), "omb-viewer-fixture-"));
@@ -26,7 +26,7 @@ try {
   writeFileSync(join(bin, "docker"), `#!${process.execPath}
 let args = process.argv.slice(2);
 if (args[0] === "-H") args = args.slice(2);
-const labels = ${JSON.stringify({ "com.openmausbot.local-vm": "1", "com.openmausbot.cua-driver": CUA_DRIVER_VERSION, "com.openmausbot.cua-base": BASE_IMAGE_DIGEST, "com.openmausbot.image-layer": IMAGE_LAYER_VERSION, "com.openmausbot.workspace": "1" })};
+const labels = ${JSON.stringify({ "com.openmausbot.local-vm": "1", "com.openmausbot.cua-driver": CUA_DRIVER_VERSION, "com.openmausbot.cua-base": BASE_IMAGE_DIGEST, "com.openmausbot.image-layer": IMAGE_LAYER_VERSION })};
 let result;
 const imageId = 'sha256:' + 'a'.repeat(64);
 if (args[0] === 'inspect' && /^openmausbot-vps-/.test(args[1])) result = [{
@@ -42,12 +42,6 @@ else if (args[0] === 'exec') result = args.includes('--version') ? 'cua-driver $
   : args.includes('health_report') ? {schema_version:'1',overall:'ok',checks:[]} : {};
 else if (args[0] === 'info') result = 'fixture';
 else if (args[0] === 'image' && args[1] === 'inspect') result = [{Id:imageId,Config:{Labels:labels}}];
-else if (args[0] === 'inspect' && args[1] === 'openmausbot-computer') result = [{
-  Config:{Image:${JSON.stringify(IMAGE)},Labels:labels,Env:['VNC_PW=fixture-password']},
-  State:{Running:true},Image:imageId,
-  HostConfig:{PortBindings:{'6901/tcp':[{HostIp:'127.0.0.1',HostPort:'${desktop.port}'}]}},
-  NetworkSettings:{Ports:{'6901/tcp':[{HostIp:'127.0.0.1',HostPort:'${desktop.port}'}]}}
-}];
 else if (args[0] === 'ps') result = '';
 else process.exit(1);
 process.stdout.write(typeof result === 'string' ? result : JSON.stringify(result));
@@ -70,7 +64,7 @@ server.listen(Number(forward.split(':')[1]),'127.0.0.1',()=>fs.appendFileSync(lo
 process.on('SIGTERM',()=>{fs.appendFileSync(log,'close ');process.exit(0)});
 `, { mode: 0o700 });
   fixture = await launchVerificationServer(process.env, undefined, {
-    binDir: bin, host: "ssh://127.0.0.1:1", sshKey: join(scratch, "unused-key"), staticDir: join(root, "dist"),
+    binDir: bin, staticDir: join(root, "dist"),
   });
   console.log(JSON.stringify(fixture.info));
   const api = fixtureApi(fixture.info.url);
@@ -80,21 +74,30 @@ process.on('SIGTERM',()=>{fs.appendFileSync(log,'close ');process.exit(0)});
   browser = { binary, env };
   const command = (...args: string[]) => agentBrowser(binary, env, args);
   const evaluate = async <T = unknown>(js: string) => (await command("eval", js)).result as T;
-  await command("open", `${fixture.info.url}/desktop-viewer#target=local%2Fshared`);
+  await command("open", fixture.info.url);
   // Pair through the actual HTTP endpoint in this disposable browser. The
   // resulting cookie forces both status and upgrades through session auth.
   assert.equal(await evaluate(`(async () => (await fetch('/api/auth/pair', {method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:${JSON.stringify(pairing.code)},cookie:true,label:'Viewer fixture'})})).status)()`), 200);
-  await command("wait", "--fn", "document.getElementById('retry') !== null");
+  // The real VPS join route and SSH process lifecycle open the viewer.
+  await runControlOmb(["new-bot", "--name", "VPS fixture", "--url", fixture.info.url]);
+  const { bots } = await api("GET", "/api/bots?messages=0");
+  const vpsBot = bots.find((bot: { name: string }) => bot.name === "VPS fixture");
+  await api("PATCH", "/api/config", { vps: { sshAlias: "viewer-fixture" } });
+  await api("PATCH", `/api/bots/${vpsBot.id}`, { computer: "cloud", cloudBackend: "vps" });
+  // Two tabs opening at once share one join instead of the second being refused.
+  const [joined] = await evaluate<{joinUrl:string}[]>(`Promise.all([0, 1].map(() => fetch('/api/bots/${vpsBot.id}/computer/join',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}).then(async r=>{if(!r.ok)throw new Error(await r.text());return r.json()})))`);
+  const viewer = new URL(joined.joinUrl, fixture.info.url);
+  assert.equal(viewer.pathname, "/desktop-viewer");
+  const target = new URLSearchParams(viewer.hash.slice(1));
+  assert.equal(target.get("target"), `vps/${vpsBot.id}`);
+  assert.ok(target.get("threadId"));
+  assert.equal(target.has("password"), false);
   let nextConnection = desktop.nextConnection();
-  await command("click", "#retry");
-  await nextConnection;
+  await Promise.all([nextConnection, command("open", `${fixture.info.url}${joined.joinUrl}`)]);
   await command("wait", "--fn", "document.getElementById('status').textContent === 'Desktop connected'");
   assert.equal(await evaluate("document.querySelector('canvas').width"), 16);
   await command("wait", "--fn", "document.querySelector('canvas').getContext('2d').getImageData(0,0,1,1).data[0] === 255");
   assert.equal(await evaluate("document.querySelector('canvas').getContext('2d').getImageData(0,0,1,1).data[0]"), 255);
-  const status = await evaluate<{ viewer_url: string }>("fetch('/api/local-computer').then(r=>r.json())");
-  assert.equal(status.viewer_url, "/desktop-viewer#target=local%2Fshared");
-  assert.equal(status.viewer_url.includes("password"), false);
   const matchingBackgrounds = "getComputedStyle(document.querySelector('#screen > div')).backgroundColor === getComputedStyle(document.querySelector('main')).backgroundColor";
   assert.equal(await evaluate(matchingBackgrounds), true);
   const evidenceDir = process.env.OMB_UI_EVIDENCE_DIR ? resolve(root, process.env.OMB_UI_EVIDENCE_DIR) : dirname(fixture.info.logPath);
@@ -135,7 +138,6 @@ process.on('SIGTERM',()=>{fs.appendFileSync(log,'close ');process.exit(0)});
   assert.equal(await evaluate("document.getElementById('keyboard').title"), "Keyboard");
   assert.equal(await evaluate("document.getElementById('viewer-notice').title"), "noVNC licenses and source");
   assert.equal(await evaluate("document.getElementById('viewer-notice').target"), "_blank");
-  assert.ok((await api("GET", "/api/local-computer")).viewer_url);
   const notice = await fetch(await evaluate<string>("document.getElementById('viewer-notice').href"));
   assert.equal(notice.status, 200);
   assert.equal(notice.headers.get("content-type"), "text/plain; charset=utf-8");
@@ -218,7 +220,7 @@ process.on('SIGTERM',()=>{fs.appendFileSync(log,'close ');process.exit(0)});
   await evaluate(`(() => {
     const fetch = window.fetch;
     window.fetch = async (input, init) => {
-      if (input !== '/api/desktop-viewer/local/shared') return fetch(input, init);
+      if (input !== '/api/desktop-viewer/vps/${vpsBot.id}') return fetch(input, init);
       window.fetch = fetch;
       window.viewerSignal = init.signal;
       const response = await fetch(input, init);
@@ -234,43 +236,13 @@ process.on('SIGTERM',()=>{fs.appendFileSync(log,'close ');process.exit(0)});
   await evaluate("window.dispatchEvent(new PageTransitionEvent('pageshow', {persisted:true}))");
   await nextConnection;
   await command("wait", "--fn", "document.getElementById('status').textContent === 'Desktop connected'");
-  // Exercise the real VPS join route, SSH process lifecycle and the same UI.
-  await runControlOmb(["new-bot", "--name", "VPS fixture", "--url", fixture.info.url]);
-  const { bots } = await api("GET", "/api/bots?messages=0");
-  const vpsBot = bots.find((bot: { name: string }) => bot.name === "VPS fixture");
-  await api("PATCH", "/api/config", { vps: { sshAlias: "viewer-fixture" } });
-  await api("PATCH", `/api/bots/${vpsBot.id}`, { computer: "cloud", cloudBackend: "vps" });
-  // Two tabs opening at once share one join instead of the second being refused.
-  const [joined] = await evaluate<{joinUrl:string}[]>(`Promise.all([0, 1].map(() => fetch('/api/bots/${vpsBot.id}/computer/join',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}).then(async r=>{if(!r.ok)throw new Error(await r.text());return r.json()})))`);
-  const viewer = new URL(joined.joinUrl, fixture.info.url);
-  assert.equal(viewer.pathname, "/desktop-viewer");
-  const target = new URLSearchParams(viewer.hash.slice(1));
-  assert.equal(target.get("target"), `vps/${vpsBot.id}`);
-  assert.ok(target.get("threadId"));
-  assert.equal(target.has("password"), false);
-  await command("click", "#clipboard");
-  desktop.sendClipboard("Only on the previous desktop");
-  await command("wait", "--fn", "document.getElementById('clipboard-text').value === 'Only on the previous desktop'");
-  nextConnection = desktop.nextConnection();
-  await Promise.all([nextConnection, command("open", `${fixture.info.url}${joined.joinUrl}`)]);
-  await command("wait", "--fn", "document.getElementById('status').textContent === 'Desktop connected'");
-  assert.equal(await evaluate("document.querySelector('section') === null || document.querySelector('section').inert"), true);
-  await command("click", "#clipboard");
-  assert.equal(await evaluate("document.getElementById('clipboard-text').value"), "");
-  await command("click", "#clipboard");
-  await command("wait", "--fn", "document.getElementById('status').textContent === 'Desktop connected'");
-  await command("wait", "--fn", "document.querySelector('canvas').getContext('2d').getImageData(0,0,1,1).data[0] === 255");
-  nextConnection = desktop.nextConnection();
-  await command("click", "#retry");
-  await nextConnection;
-  await command("wait", "--fn", "document.getElementById('status').textContent === 'Desktop connected'");
   assert.equal(readFileSync(join(scratch, "tunnels.log"), "utf8").split("open").length - 1, 1);
   const beforeLogout = desktop.connections();
   assert.equal(await evaluate("fetch('/api/auth/session').then(r=>r.json()).then(s=>s.kind)"), "session");
   assert.equal(await evaluate("fetch('/api/auth/logout',{method:'POST',headers:{'content-type':'application/json'},body:'{}'}).then(r=>r.status)"), 200);
   await command("wait", "--fn", "document.getElementById('status').textContent.includes('disconnected')");
   assert.ok(beforeLogout >= 2);
-  console.log(JSON.stringify({ ok: true, checks: ["built noVNC renders RFB pixels", "paired status uses app URL", "keyboard, Unicode and Ctrl-Alt-Del", "clipboard sync without Send, including clearing", "matching desktop backgrounds in both themes", "Foundry accent text", "95% fit, full-height fullscreen and fit restoration", "balanced collapsed margins and compact panel header", "native tooltips and reduced-motion panels", "phone and landscape viewports", "reconnect", "page exit aborts pending connection and restore reconnects", "VPS join, synthetic SSH forward and reconnect", "logout closes socket"], logPath: fixture.info.logPath, screenshots: [desktopScreenshot, clipboardScreenshot, phoneScreenshot, lightScreenshot, foundryScreenshot] }));
+  console.log(JSON.stringify({ ok: true, checks: ["built noVNC renders RFB pixels", "VPS join through the app URL, synthetic SSH forward", "keyboard, Unicode and Ctrl-Alt-Del", "clipboard sync without Send, including clearing", "matching desktop backgrounds in both themes", "Foundry accent text", "95% fit, full-height fullscreen and fit restoration", "balanced collapsed margins and compact panel header", "native tooltips and reduced-motion panels", "phone and landscape viewports", "reconnect", "page exit aborts pending connection and restore reconnects", "logout closes socket"], logPath: fixture.info.logPath, screenshots: [desktopScreenshot, clipboardScreenshot, phoneScreenshot, lightScreenshot, foundryScreenshot] }));
 } catch (error) {
   if (browser) console.error(await agentBrowser(browser.binary, browser.env, ["eval", "document.body.innerText"]).catch(() => "Browser unavailable"));
   throw error;

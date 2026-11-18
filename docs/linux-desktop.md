@@ -186,7 +186,7 @@ mouse remains under their control.
 
 On GNOME Wayland, **This computer** remains unavailable and an older persisted opt-in is reset to off with private
 file permissions. Sign out and choose **Ubuntu on Xorg** from the login-screen session menu, or continue using Chat,
-preview-only capture, Cloud, or Local VM. Wayland re-enablement requires its own real-seat evidence and will not be
+preview-only capture, or Cloud. Wayland re-enablement requires its own real-seat evidence and will not be
 controlled by an environment override.
 
 Upstream release assets are mutable, so the build uses an explicit reviewed digest as its trust anchor (the release's
@@ -216,7 +216,7 @@ The packaged runtime remains outside ASAR for deterministic provenance and valid
 The Xorg runtime uses private sockets, standard permission mode, per-action OpenMausBot approvals,
 telemetry/update-check suppression, strict driver identity, overlay-free startup, and lifecycle cleanup tests. Those
 defenses remain necessary, but none substitutes for the real-seat acceptance evidence required to enable Wayland. Linux
-**Auto** never routes to the user's desktop, and no Cloud or Local VM approval can authorize it.
+**Auto** never routes to the user's desktop, and no Cloud approval can authorize it.
 
 ## Validate a package change
 
@@ -249,7 +249,7 @@ considered for automatic discovery.
 
 ### A bot needs computer tools
 
-Choose **Cloud** (Boat) and add a Boat token in App Settings, or use Local VM. Linux **This computer** remains disabled
+Choose **Cloud** (Boat) and add a Boat token in App Settings. Linux **This computer** remains disabled
 on Wayland. On Xorg, enable it from the **Local control** card first.
 
 ### Local control is not ready

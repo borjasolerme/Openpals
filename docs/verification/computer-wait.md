@@ -7,7 +7,7 @@ pnpm exec vitest run server/index.test.ts -t 'dispatches the conversation.s pinn
 pnpm exec vitest run server/index.test.ts -t 'queues computer waiters in arrival order'
 pnpm exec vitest run server/index.test.ts -t 'parks the turn at the wait ceiling'
 pnpm exec vitest run server/runtime-roots.e2e.test.ts server/room-roots.e2e.test.ts
-pnpm exec vitest run server/turn-resources.test.ts server/group-local-vm.e2e.test.ts
+pnpm exec vitest run server/turn-resources.test.ts
 ```
 
 The arrival-order case proves:

@@ -83,8 +83,7 @@ copies. Shareable team templates remain separate from full backups.
 - Saved account credentials, API keys, connection settings, operating-system
   keychains, browser login/session homes, and phone pairing keys. Sign in or
   reconnect on the new machine; destination credentials remain untouched.
-- VM/container disk layers and remote Boat/VPS files. Durable mounted files
-  inside the workspace data directory are included, but the VM itself is not.
+- Container disk layers and remote Boat/VPS files.
 - Other fleet workspaces, downloaded tools, caches, running processes, and
   active device sessions. Existing destination pairing and server identity stay
   in place; moving to a new server requires pairing with that server.
@@ -114,4 +113,4 @@ and automatic restore safety copies must be protected separately.
 
 ## Disposable computer filesystems
 
-Local VM workspaces are mounted durably, but a self-hosted VPS container filesystem is intentionally disposable. Move important artifacts to a durable workspace, repository, or connected app before removing or upgrading a container.
+A self-hosted VPS container filesystem is intentionally disposable. Move important artifacts to a durable workspace, repository, or connected app before removing or upgrading a container.

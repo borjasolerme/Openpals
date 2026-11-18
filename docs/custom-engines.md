@@ -125,7 +125,7 @@ entry:
 - The driver lists the endpoint's `/models` when it can and keeps your
   `model` as a custom option either way.
 - OpenAI-compatible instances support structured tools and image input. With a
-  model that accepts both, the harness can mount the approved host, Local VM,
+  model that accepts both, the harness can mount the approved host,
   VPS, Boat cloud or built-in browser tools and return their screenshots to the model.
   The existing platform, computer-selection and approval checks still apply.
   Boat turns retain the selected API model in direct chats, rooms and cloud
