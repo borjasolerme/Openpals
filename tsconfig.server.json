@@ -23,7 +23,8 @@
   },
   "include": [
     "server",
-    "companion"
+    "companion",
+    "packages/agent-steps/src"
   ],
   "exclude": [
     "server/drivers/pi-mcp-extension.ts"

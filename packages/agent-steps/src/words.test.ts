@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { namesFinalAction, namesSecret } from "./screen-words.ts";
+import { namesFinalAction, namesSecret } from "./words.ts";
 
 describe("screen words", () => {
   it.each<[string, string[]]>([

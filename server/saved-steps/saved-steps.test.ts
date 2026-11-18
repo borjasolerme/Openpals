@@ -6,10 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProviderInstance, RuntimeEvent, SendTurnInput, TurnStartResult } from "../contracts.ts";
 import type { Message } from "../store.ts";
 import { textEditJournal } from "../testing/saved-steps-fixtures.ts";
+import { requestKey, type CuaStep as RecipeStep, type Recipe } from "../../packages/agent-steps/src/index.ts";
 import type { RecordedCall } from "./journal.ts";
-import { requestKey } from "./key.ts";
 import type { ReplayRequest } from "./dispatch.ts";
-import type { Recipe, RecipeStep } from "./rules.ts";
 import { createSavedSteps, savedStepsEnabled, type SavedSteps, type SavedStepsDeps, type SettledRequest } from "./saved-steps.ts";
 
 const FAKE = fileURLToPath(new URL("../testing/fake-mcp-server.ts", import.meta.url));
@@ -20,8 +19,9 @@ const TARGET: Pick<RecipeStep, "app" | "window" | "element"> = {
   element: { role: "AXTextArea", label: "Document", path: ["AXScrollArea:"] },
 };
 const RECIPE: Recipe = {
-  id: "r1", key: requestKey(REQUEST), request: REQUEST, createdAt: Date.now(), lastUsedAt: Date.now(),
-  steps: [{ tool: "click", args: {}, ...TARGET }, { tool: "set_value", args: { value: "hello world" }, ...TARGET }],
+  version: 2, id: "r1", name: REQUEST, key: requestKey(REQUEST), request: REQUEST, revision: 1, inputs: [], checks: [],
+  createdAt: Date.now(), updatedAt: Date.now(), lastUsedAt: Date.now(),
+  steps: [{ driver: "cua", tool: "click", args: {}, ...TARGET }, { driver: "cua", tool: "set_value", args: { value: "hello world" }, ...TARGET }],
 };
 
 const dirs: string[] = [];
@@ -71,7 +71,7 @@ describe("createSavedSteps", () => {
     expect(steps.recipes.find("b1", RECIPE.key)?.id).toBe(RECIPE.id);
   });
 
-  it("replays from the bot's own store on the turn's computer and keeps the request from saving", async () => {
+  it("replays from the bot's own store on the turn's computer and, when a step fails, keeps the recipe for the AI's run to repair", async () => {
     const dir = mkdtempSync(join(tmpdir(), "omb-saved-steps-facade-"));
     dirs.push(dir);
     const events: RuntimeEvent[] = [];
@@ -97,11 +97,11 @@ describe("createSavedSteps", () => {
     const { turnId } = await steps.dispatch.sendTurn(engine, { botId: "b1", message: { id: "m1", at: 1, role: "user", kind: "text", text: REQUEST }, turnText: REQUEST, placePicked: true },
       { threadId: "t1", botId: "b1", text: REQUEST, approvalMode: "full", integrations: { localComputer: computer } }, start);
 
-    expect(steps.journal.take("t1", new Set(["g1"]))).toEqual({ calls: [], complete: true, tainted: true });
     await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1), { timeout: 10_000 });
     expect(start.mock.calls[0]![0].text).toContain('failed at step 1 of 2 (click).');
     expect(start.mock.calls[0]![0].text).toContain('{"target":"\\"Document\\" in TextEdit","error":"TextEdit is not running"}');
-    expect(steps.recipes.find("b1", RECIPE.key)).toBeUndefined();
+    expect(steps.recipes.find("b1", RECIPE.key)?.id).toBe("r1");
+    expect(steps.dispatch.takeRepair("t1")).toMatchObject({ recipe: { id: "r1" }, gate: false });
     expect(events[0]).toMatchObject({ type: "turn.started", turnId });
     expect(slots.get("t1")).toBe(engine);
   });
@@ -173,7 +173,7 @@ describe("SavedSteps.requestSettled", () => {
     const recipe = steps.recipes.find("b1", "open textedit and type hello world")!;
     expect(recipe).toMatchObject({ request: REQUEST, createdAt: NOW, lastUsedAt: NOW });
     expect(recipe).not.toHaveProperty("reply");
-    expect(readFileSync(join(folder, "b1", "saved-steps.json"), "utf8")).not.toContain("Nothing else changed");
+    expect(readFileSync(join(folder, "b1", "saved-steps", `${recipe.id}.json`), "utf8")).not.toContain("Nothing else changed");
     expect(recipe.steps.map((step) => step.tool)).toEqual(["click", "set_value"]);
     expect(patches).toEqual([["t1", "reply-1", { savedSteps: { recipeId: recipe.id, learned: true } }]]);
   });
@@ -282,7 +282,7 @@ describe("SavedSteps.requestSettled", () => {
     expect(start).toHaveBeenCalledWith(input);
   });
 
-  it("saves nothing for a request whose turn began with a replay", () => {
+  it("saves nothing for a request whose replay was stopped or declined", () => {
     steps.journal.taint({ threadId: "t1", generation: "g1" });
     record(textEditJournal().calls);
     steps.requestSettled(settled());

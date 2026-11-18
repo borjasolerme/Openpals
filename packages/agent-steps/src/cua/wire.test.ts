@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_ELEMENTS, elementPath, slimResponse, type WireElement } from "./driver-wire.ts";
+import { MAX_ELEMENTS, elementPath, slimResponse, type WireElement } from "./wire.ts";
 
 describe("slimResponse", () => {
   it("keeps only what replay needs and drops every image and text", () => {

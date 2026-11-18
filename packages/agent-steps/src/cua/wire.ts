@@ -10,7 +10,7 @@ export interface WireElement {
 }
 export interface WireApp { pid: number; name: string; bundle_id?: string; running?: boolean }
 export interface WireWindow { window_id: number; pid?: number; title: string; app_name?: string }
-export interface SlimStructured {
+export type SlimStructured = {
   elements?: WireElement[];
   apps?: WireApp[];
   windows?: WireWindow[];
@@ -23,12 +23,14 @@ export interface SlimStructured {
   /** The driver read the whole tree and every element survived slimming. */
   elements_complete?: true;
   refusal?: { code?: string; message?: string };
-}
+};
 export interface SlimResult { isError: boolean; rpcError?: true; structured?: SlimStructured }
-export interface JournalEntry { tool: string; arguments: Record<string, unknown>; result: SlimResult }
+/** A cua call as a recorder keeps it. */
+export interface CuaCall { tool: string; arguments: Record<string, unknown>; result: SlimResult }
 
 export const MAX_ELEMENTS = 1500;
 
+/** Ancestors that every element shares, left out of an element's path. */
 const ROOT_ROLES = new Set(["AXWindow", "AXApplication"]);
 
 type Rec = Record<string, unknown>;

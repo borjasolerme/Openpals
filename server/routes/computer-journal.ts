@@ -1,5 +1,4 @@
-import { hostScope, parseJournalEntry, type JournalCapability, type JournalScope } from "../saved-steps/journal.ts";
-import type { JournalEntry } from "../saved-steps/driver-wire.ts";
+import { hostScope, parseJournalEntry, type JournalCapability, type JournalEntry, type JournalScope } from "../saved-steps/journal.ts";
 import { COMPUTER_JOURNAL_PATH } from "../saved-steps/journal-tap.ts";
 import { PASS, type RouteHandler } from "./table.ts";
 

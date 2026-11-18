@@ -1,13 +1,10 @@
-import { setTimeout as delay } from "node:timers/promises";
-import { elementPath, treeDegraded, wholeTree, type WireElement } from "./driver-wire.ts";
-import { KEY_TOOLS, holdsTypedText, type AppIdentity, type ElementIdentity, type RecipeStep } from "./rules.ts";
+// Finds a saved desktop step on the live screen: the app by bundle id or name, the window by title, the element by role,
+// label and path. Anything missing or found twice fails the step rather than guess.
+import type { AppIdentity, Caller, CuaStep, ElementIdentity, Resolved } from "../types.ts";
+import { KEY_TOOLS, holdsTypedText } from "./rules.ts";
+import { elementPath, treeDegraded, wholeTree, type WireElement } from "./wire.ts";
 
-/** `gate`: the computer's control gate refused the call (a person holds it, another turn has it): the step was not tried. */
-export type CallOutcome = { ok: true; structured: Record<string, unknown> } | { ok: false; error: string; gate?: true };
-export interface ComputerCaller { call(tool: string, args: Record<string, unknown>, signal: AbortSignal): Promise<CallOutcome> }
 export type Match<T> = { ok: true; value: T } | { ok: false; reason: "none" | "ambiguous" };
-type Resolved = { ok: true; args: Record<string, unknown> } | (Extract<CallOutcome, { ok: false }> & { missing?: true });
-export interface Patience { now(): number; sleep(ms: number, signal: AbortSignal): Promise<void> }
 
 type Kind = "string" | "number" | "boolean";
 interface Shape { required: Record<string, Kind>; optional: Record<string, Kind>; id?: string }
@@ -103,22 +100,9 @@ const appName = (app: AppIdentity) => app.name || app.bundleId || "the app";
 const fail = (error: string): Resolved => ({ ok: false, error });
 const missing = (error: string): Resolved => ({ ok: false, error, missing: true });
 
-export const RETRY_MS = 3_000;
-export const POLL_MS = 250;
-const REAL_TIME: Patience = { now: Date.now, sleep: (ms, signal) => delay(ms, undefined, { signal }).catch(() => {}) };
-
-export async function resolveStepSoon(step: RecipeStep, caller: ComputerCaller, signal: AbortSignal, patience: Patience = REAL_TIME): Promise<Resolved> {
-  const deadline = patience.now() + RETRY_MS;
-  for (;;) {
-    const target = await resolveStep(step, caller, signal);
-    if (target.ok || !target.missing || signal.aborted || patience.now() + POLL_MS > deadline) return target;
-    await patience.sleep(POLL_MS, signal);
-  }
-}
-
-export async function resolveStep(step: RecipeStep, caller: ComputerCaller, signal: AbortSignal): Promise<Resolved> {
-  const { app, window, element } = step;
-  if (step.tool === "launch_app") return { ok: true, args: step.args };
+export async function resolveStep(step: CuaStep, caller: Caller, signal: AbortSignal): Promise<Resolved> {
+  const { app, window, element, tool } = step;
+  if (tool === "launch_app") return { ok: true, tool, args: step.args };
   if (!app) return fail("the saved step does not name its app");
   if ((element || KEY_TOOLS.has(step.tool)) && !window) return fail("the saved step does not name its window");
   const name = appName(app);
@@ -128,14 +112,14 @@ export async function resolveStep(step: RecipeStep, caller: ComputerCaller, sign
   const pid = matchApp(apps.structured.apps, app);
   if (!pid.ok) return pid.reason === "none" ? missing(`${name} is not running`) : fail(`more than one ${name} app is running`);
   const args: Record<string, unknown> = { ...step.args, pid: pid.value };
-  if (!window) return { ok: true, args };
+  if (!window) return { ok: true, tool, args };
 
   const windows = await caller.call("list_windows", { pid: pid.value, on_screen_only: false }, signal);
   if (!windows.ok) return windows;
   const windowId = matchWindow(windows.structured.windows, pid.value, window);
   if (!windowId.ok) return windowId.reason === "none" ? missing(`no window titled "${window.title}"`) : fail(`more than one window titled "${window.title}"`);
   args.window_id = windowId.value;
-  if (!element) return { ok: true, args };
+  if (!element) return { ok: true, tool, args };
 
   const state = await caller.call("get_window_state", { pid: pid.value, window_id: windowId.value, include_screenshot: false }, signal);
   if (!state.ok) return state;
@@ -155,5 +139,5 @@ export async function resolveStep(step: RecipeStep, caller: ComputerCaller, sign
     if (held === undefined) return fail(`could not read what ${target} holds`);
     if (held !== "" && held !== step.args.value) return fail(`${target} already holds other text`);
   }
-  return { ok: true, args: { ...args, element_token: token } };
+  return { ok: true, tool, args: { ...args, element_token: token } };
 }

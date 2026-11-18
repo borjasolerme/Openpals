@@ -1,4 +1,5 @@
-import { slimResponse, type JournalEntry } from "./driver-wire.ts";
+import { slimResponse } from "../../packages/agent-steps/src/index.ts";
+import type { JournalEntry } from "./journal.ts";
 
 export const COMPUTER_JOURNAL_PATH = "/api/internal/computer/journal";
 

@@ -12,10 +12,8 @@ import type { Message } from "../store.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { completeWindowState, windowState } from "../testing/saved-steps-fixtures.ts";
 import { SavedStepsDispatch, type DispatchDeps, type ReplayRequest } from "./dispatch.ts";
-import { requestKey } from "./key.ts";
-import { declinedReply, fallbackNote } from "./replay.ts";
-import type { CallOutcome, ComputerCaller } from "./resolve.ts";
-import type { Recipe, RecipeStep } from "./rules.ts";
+import { requestKey, type Caller as ComputerCaller, type CallOutcome, type CuaStep as RecipeStep, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { declinedReply, fallbackNote } from "./run.ts";
 
 const REQUEST = "Open TextEdit and type hello world";
 const TARGET: Pick<RecipeStep, "app" | "window" | "element"> = {
@@ -24,8 +22,8 @@ const TARGET: Pick<RecipeStep, "app" | "window" | "element"> = {
   element: { role: "AXTextArea", label: "Document", path: ["AXScrollArea:"] },
 };
 const RECIPE: Recipe = {
-  id: "r1", key: requestKey(REQUEST), request: REQUEST, createdAt: 1_000, lastUsedAt: 1_000,
-  steps: [{ tool: "click", args: {}, ...TARGET }, { tool: "set_value", args: { value: "hello world" }, ...TARGET }],
+  version: 2, id: "r1", name: REQUEST, key: requestKey(REQUEST), request: REQUEST, revision: 1, inputs: [], checks: [], createdAt: 1_000, updatedAt: 1_000, lastUsedAt: 1_000,
+  steps: [{ driver: "cua", tool: "click", args: {}, ...TARGET }, { driver: "cua", tool: "set_value", args: { value: "hello world" }, ...TARGET }],
 };
 const LABEL = '"Document" in TextEdit';
 const FAILED = { kind: "failed", done: 1, total: 2, tool: "set_value", label: LABEL, error: "Fixture failure." } as const;
@@ -68,6 +66,7 @@ let close: Mock<() => Promise<void>>;
 let recipes: { find: Mock<(botId: string, key: string) => Recipe | undefined>; forget: Mock<(botId: string, recipeId: string) => boolean> };
 let openCaller: Mock<DispatchDeps["openCaller"]>;
 let taint: Mock<(threadId: string) => boolean>;
+let markable: Mock<(threadId: string) => boolean>;
 let handOn: Mock<(turnId: string) => void>;
 let withholdHandoff: Mock<(threadId: string) => (turnId: string) => void>;
 let contextChanged: Mock<(botId: string, threadId: string) => void>;
@@ -118,6 +117,7 @@ beforeEach(() => {
   recipes = { find: vi.fn((botId: string, key: string) => (botId === "b1" && key === RECIPE.key ? RECIPE : undefined)), forget: vi.fn(() => true) };
   openCaller = vi.fn(async () => ({ ...computer(), close }));
   taint = vi.fn(() => true);
+  markable = vi.fn(() => true);
   handOn = vi.fn();
   withholdHandoff = vi.fn(() => handOn);
   contextChanged = vi.fn();
@@ -134,6 +134,7 @@ beforeEach(() => {
     stopped: () => stopped,
     openCaller,
     taint,
+    markable,
     withholdHandoff,
     contextChanged,
   };
@@ -197,15 +198,15 @@ describe("SavedStepsDispatch.sendTurn", () => {
   it("holds back nothing when it marks the request or the turn is the person's one line", async () => {
     await dispatch.sendTurn(engine, { ...REQ, turnText: `close every window without saving\n\n${REQUEST}` }, INPUT, start);
     expect(dispatch.takeUnmarked("t1")).toBe(false);
-    taint.mockReturnValueOnce(false);
+    markable.mockReturnValueOnce(false);
     await dispatch.sendTurn(engine, REQ, INPUT, start);
     expect(dispatch.takeUnmarked("t1")).toBe(false);
   });
 
-  it("runs the AI when the request cannot be kept from saving", async () => {
-    taint.mockReturnValueOnce(false);
+  it("runs the AI when the request cannot be marked, so a replay stopped halfway could never save", async () => {
+    markable.mockReturnValueOnce(false);
     expect(await dispatch.sendTurn(engine, REQ, INPUT, start)).toEqual({ turnId: "e1" });
-    expect(taint).toHaveBeenCalledWith("t1");
+    expect(markable).toHaveBeenCalledWith("t1");
     expect(start).toHaveBeenCalledWith(INPUT);
     expect(openCaller).not.toHaveBeenCalled();
     expect(events).toEqual([]);
@@ -308,15 +309,16 @@ describe("SavedStepsDispatch.sendTurn", () => {
     await dispatch.sendTurn(engine, REQ, INPUT, start);
     await settled();
     expect(openCaller).toHaveBeenCalledTimes(1);
-    expect(openCaller.mock.calls[0]![0]).toBe(INPUT.integrations!.localComputer);
-    expect(openCaller.mock.calls[0]![1]).toBeInstanceOf(AbortSignal);
+    expect(openCaller.mock.calls[0]![0]).toBe("cua");
+    expect(openCaller.mock.calls[0]![1]).toEqual({ computer: INPUT.integrations!.localComputer });
+    expect(openCaller.mock.calls[0]![2]).toBeInstanceOf(AbortSignal);
     expect(close).toHaveBeenCalledTimes(1);
   });
 
-  it("marks the request so its steps are never saved again from this turn", async () => {
+  it("leaves a whole replay unmarked: it saves nothing, since the reply says it was replayed", async () => {
     await dispatch.sendTurn(engine, REQ, INPUT, start);
-    expect(taint).toHaveBeenCalledWith("t1");
     await settled();
+    expect(taint).not.toHaveBeenCalled();
   });
 
   it("binds the turn before any of its events", async () => {
@@ -358,7 +360,7 @@ describe("SavedStepsDispatch.sendTurn", () => {
     const { turnId } = await dispatch.sendTurn(engine, REQ, INPUT, start);
     await settled();
     expect(acted).toEqual(["click"]);
-    expect(events.at(-2)).toMatchObject({ type: "item.completed", itemType: "assistant_text", turnId, text: declinedReply({ kind: "declined", tool: "set_value", label: LABEL }) });
+    expect(events.at(-2)).toMatchObject({ type: "item.completed", itemType: "assistant_text", turnId, text: declinedReply({ kind: "declined", index: 1, tool: "set_value", label: LABEL }) });
     expect(events.at(-1)).toMatchObject({ type: "turn.completed", turnId, ok: true, stopReason: "end_turn", denials: ["mcp__computer__set_value"] });
     expect(events.filter((e) => e.type === "request.resolved").at(-1)).toMatchObject({ behavior: "deny", source: "user" });
     expect(start).not.toHaveBeenCalled();
@@ -366,11 +368,14 @@ describe("SavedStepsDispatch.sendTurn", () => {
     expect(dispatch.replayed("t1", turnId)).toBeUndefined();
   });
 
-  it("a failed step forgets the recipe and hands the request to the AI under the replay's turn id", async () => {
+  it("a failed step keeps the recipe for the AI's run to repair and hands the request to the AI under the replay's turn id", async () => {
     failAt = "set_value";
     const { turnId } = await dispatch.sendTurn(engine, REQ, INPUT, start);
     await settled();
-    expect(recipes.forget).toHaveBeenCalledWith("b1", RECIPE.id);
+    expect(recipes.forget).not.toHaveBeenCalled();
+    expect(taint).not.toHaveBeenCalled();
+    expect(dispatch.takeRepair("t1")).toEqual({ recipe: RECIPE, gate: false });
+    expect(dispatch.takeRepair("t1")).toBeUndefined();
     expect(start).toHaveBeenCalledTimes(1);
     expect(start.mock.calls[0]![0]).toEqual({ ...INPUT, text: `${INPUT.text}\n\n${fallbackNote(FAILED)}` });
     expect(start.mock.calls[0]![0]).not.toHaveProperty("recoveryText");
@@ -403,7 +408,7 @@ describe("SavedStepsDispatch.sendTurn", () => {
     await settled();
     expect(acted).toEqual(["click"]);
     expect(events.filter((e) => e.type === "request.opened").map((e) => "tool" in e && e.tool)).toEqual(["mcp__computer__click"]);
-    expect(recipes.forget).toHaveBeenCalledWith("b1", RECIPE.id);
+    expect(recipes.forget).not.toHaveBeenCalled();
     expect(start).toHaveBeenCalledTimes(1);
     const note = start.mock.calls[0]![0].text;
     expect(note).toContain(`did steps 1–1 of 2 and failed at step 2 (set_value)`);
@@ -436,7 +441,8 @@ describe("SavedStepsDispatch.sendTurn", () => {
     openCaller.mockRejectedValueOnce(new Error("MCP server could not start; check its command and installation"));
     await dispatch.sendTurn(engine, REQ, INPUT, start);
     await settled();
-    expect(recipes.forget).toHaveBeenCalledWith("b1", RECIPE.id);
+    expect(recipes.forget).not.toHaveBeenCalled();
+    expect(dispatch.takeRepair("t1")?.recipe).toBe(RECIPE);
     expect(start.mock.calls[0]![0].text).toBe(`${INPUT.text}\n\n${fallbackNote({
       kind: "failed", done: 0, total: 2, tool: "click", label: LABEL, error: "MCP server could not start; check its command and installation",
     })}`);
@@ -499,7 +505,9 @@ describe("SavedStepsDispatch.sendTurn", () => {
     await vi.waitFor(() => expect(turnCompleted()).toHaveLength(1));
     expect(start).not.toHaveBeenCalled();
     expect(events.at(-1)).toMatchObject({ type: "turn.completed", ok: false, stopReason: "interrupted" });
-    expect(recipes.forget).toHaveBeenCalledWith("b1", RECIPE.id);
+    expect(recipes.forget).not.toHaveBeenCalled();
+    expect(taint).toHaveBeenCalledWith("t1");
+    expect(dispatch.takeRepair("t1")).toBeUndefined();
   });
 
   it("Stop during a replay ends the turn interrupted", async () => {
@@ -518,7 +526,7 @@ describe("SavedStepsDispatch.sendTurn", () => {
   });
 
   it("Stop while the computer is still starting ends the turn interrupted", async () => {
-    openCaller.mockImplementationOnce((_computer: unknown, signal: AbortSignal) => new Promise((_resolve, reject) => {
+    openCaller.mockImplementationOnce((_kind, _places, signal: AbortSignal) => new Promise((_resolve, reject) => {
       signal.addEventListener("abort", () => reject(new Error("MCP operation cancelled")), { once: true });
     }));
     await dispatch.sendTurn(engine, REQ, INPUT, start);
@@ -823,5 +831,58 @@ describe("SavedStepsDispatch with the quick model fallback", () => {
     expect(sent.map(({ model, text }) => ({ model, text }))).toEqual([
       { model: "quick-model", text: `${INPUT.text}\n\n${note}` }, { model: "own-model", text: `${INPUT.text}\n\n${note}` },
     ]);
+  });
+});
+
+describe("SavedStepsDispatch on a lent computer and in the bot's browser", () => {
+  const LENT = { command: process.execPath, args: ["harness-mcp-proxy", "computer"], env: { OMB_HARNESS_URL: "http://127.0.0.1:1" }, scope: "lent-computer" as const };
+  const BROWSER = { command: process.execPath, args: ["harness-mcp-proxy", "browser"], env: { OMB_HARNESS_URL: "http://127.0.0.1:1" } };
+  const WEB: Recipe = { ...RECIPE, steps: [{ driver: "agent-browser", tool: "click", args: {}, target: { role: "link", name: "Billing" } }] };
+  const page = (): ComputerCaller => ({
+    async call(tool) {
+      if (tool === "agent_browser_snapshot") return { ok: true, structured: {}, text: '- link "Billing" [ref=e4]' };
+      acted.push(tool);
+      return { ok: true, structured: {} };
+    },
+  });
+  beforeEach(() => {
+    openCaller.mockImplementation(async (kind) => ({ ...(kind === "cua" ? computer() : page()), close }));
+  });
+
+  it("replays on the computer lent to the bot when the person picked it, with no host-only approval scope", async () => {
+    const input = { ...INPUT, integrations: { localComputer: LENT } };
+    await dispatch.sendTurn(engine, REQ, input, start);
+    await settled();
+    expect(start).not.toHaveBeenCalled();
+    expect(acted).toEqual(["click", "set_value"]);
+    expect(openCaller.mock.calls[0]!.slice(0, 2)).toEqual(["cua", { computer: LENT }]);
+    expect(events.filter((event) => event.type === "request.opened").every((event) => !("approvalScope" in event))).toBe(true);
+  });
+
+  it("leaves a lent computer the person did not pick to the AI", async () => {
+    await dispatch.sendTurn(engine, { ...REQ, placePicked: false }, { ...INPUT, integrations: { localComputer: LENT } }, start);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(openCaller).not.toHaveBeenCalled();
+  });
+
+  it("replays browser steps in the bot's own browser, wherever the bot works", async () => {
+    recipes.find.mockReturnValue(WEB);
+    await dispatch.sendTurn(engine, { ...REQ, placePicked: false }, { ...INPUT, integrations: { browser: BROWSER } }, start);
+    await settled();
+    expect(start).not.toHaveBeenCalled();
+    expect(acted).toEqual(["agent_browser_click"]);
+    expect(openCaller.mock.calls[0]!.slice(0, 2)).toEqual(["agent-browser", { browser: BROWSER }]);
+    expect(events.find((event) => event.type === "request.opened")).toMatchObject({ tool: "mcp__browser__agent_browser_click" });
+  });
+
+  it.each<[string, SendTurnInput]>([
+    ["the turn has no browser", { ...INPUT }],
+    ["the browser tool is not selected for the bot", { ...INPUT, integrations: { browser: BROWSER }, toolScope: { deny: ["mcp:browser:agent_browser_click"] } }],
+  ])("leaves browser steps to the AI when %s", async (_, input) => {
+    recipes.find.mockReturnValue(WEB);
+    await dispatch.sendTurn(engine, REQ, input, start);
+    expect(start).toHaveBeenCalledWith(input);
+    expect(openCaller).not.toHaveBeenCalled();
+    expect(dispatch.wouldReplay("t1", WEB)).toBe(false);
   });
 });

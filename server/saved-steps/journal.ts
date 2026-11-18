@@ -1,12 +1,17 @@
-import type { JournalEntry } from "./driver-wire.ts";
+import type { RecordedCall as PackageCall } from "../../packages/agent-steps/src/index.ts";
 
+/** One tool call as the journal keeps it: a cua call's slim structure, a browser call's text. */
+export type JournalEntry = PackageCall;
 export interface JournalScope { botId: string; threadId: string; generation: string }
-export type JournalCapability = JournalScope & { kind: string; boxId?: string | null; teamComputerId?: string };
+export type JournalCapability = JournalScope & { kind: string; boxId?: string | null; teamComputerId?: string; lentComputerId?: string };
 
+/** The host computer's own turn, which posts its calls to the journal route; every other computer journals here. */
 export function hostScope(capability: JournalCapability): JournalScope | null {
-  if (capability.kind !== "computer" || capability.boxId !== undefined || capability.teamComputerId) return null;
-  return { botId: capability.botId, threadId: capability.threadId, generation: capability.generation };
+  if (capability.kind !== "computer" || capability.boxId !== undefined || capability.teamComputerId || capability.lentComputerId) return null;
+  return turnScope(capability);
 }
+
+export const turnScope = (capability: JournalScope): JournalScope => ({ botId: capability.botId, threadId: capability.threadId, generation: capability.generation });
 
 const TOOL_NAME = /^[a-z_][a-z0-9_]{0,63}$/;
 

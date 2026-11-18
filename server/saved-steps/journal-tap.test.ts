@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { JournalEntry } from "./driver-wire.ts";
+import type { JournalEntry } from "./journal.ts";
 import { createJournalTap, journalUrl, postJournal } from "./journal-tap.ts";
 
 const call = (id: number) => JSON.stringify({ jsonrpc: "2.0", id, method: "tools/call", params: { name: "click", arguments: { element_token: "s1-e2" } } });

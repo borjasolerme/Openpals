@@ -166,14 +166,15 @@ export interface SendTurnInput {
   integrations?: {
     /** A harness-owned stdio bridge to Composio, so connection requests become trusted chat cards. */
     composio?: { command: string; args: string[]; env: Record<string, string> };
-    /** Stdio connection to a computer MCP server. `scope` is set only for the host desktop, so host-only approval rules never apply elsewhere. */
+    /** Stdio connection to a computer MCP server. `scope` "local-computer" is set only for the host desktop, so host-only approval rules
+     * never apply elsewhere; "lent-computer" marks a computer lent to this server, which saved steps can repeat on. */
     localComputer?: {
       command: string;
       args: string[];
       env: Record<string, string>;
       platform?: "darwin" | "linux" | "win32";
       generation?: string;
-      scope?: "local-computer";
+      scope?: "local-computer" | "lent-computer";
     };
     /** Loopback URL and turn-scoped bearer for the engine's hook helper; hooks observe and inject context, never decide state. */
     hooks?: { url: string; token: string };

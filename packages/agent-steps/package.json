@@ -1,0 +1,37 @@
+{
+  "name": "agent-steps",
+  "version": "0.1.0",
+  "description": "Record what an AI agent does in a browser (agent-browser) or on a desktop (Cua) and repeat it without a model, finding each target again by what it is.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "agent-steps": "./dist/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.11"
+  }
+}

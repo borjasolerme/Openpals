@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
-import type { Message } from "../store.ts";
-import { recordedWindowState, textEditJournal } from "../testing/saved-steps-fixtures.ts";
-import type { SlimResult, SlimStructured, WireElement } from "./driver-wire.ts";
-import type { RecordedCall, RequestJournal } from "./journal.ts";
-import { buildRecipe, personTextRequest, recipeFitsRequest, stepLabel, type Recipe } from "./rules.ts";
+import { learnRecipe, recipeFitsRequest, stepLabel } from "../recipe.ts";
+import { recordedWindowState, textEditJournal } from "../testing/cua-fixtures.ts";
+import type { CuaStep, Recipe, RecordedCall } from "../types.ts";
+import { cuaDriver } from "./driver.ts";
+import type { SlimResult, SlimStructured, WireElement } from "./wire.ts";
+
+type RequestJournal = { calls: RecordedCall[] };
 
 const REQUEST = "Open TextEdit and type hello world";
-const build = (journal = textEditJournal(), request = REQUEST) => buildRecipe({ request, journal, id: "r1", now: 1_000 });
+const build = (journal: RequestJournal = textEditJournal(), request = REQUEST) =>
+  learnRecipe({ request, calls: journal.calls, drivers: [cuaDriver()], policy: "strict", id: "r1", now: 1_000 });
+const lastStep = (out: ReturnType<typeof build>) => (out.ok ? (out.recipe.steps.at(-1) as CuaStep | undefined) : undefined);
 
 const ok: SlimResult = { isError: false };
-const action = (tool: string, args: Record<string, unknown>, result: SlimResult = ok): RecordedCall => ({ tool, arguments: args, result, generation: "g1" });
+const action = (tool: string, args: Record<string, unknown>, result: SlimResult = ok): RecordedCall => ({ tool, arguments: args, result });
 const observation = (tool: string, result: Partial<SlimResult> & { structured?: SlimResult["structured"] }): RecordedCall =>
-  ({ tool, arguments: {}, result: { isError: false, ...result }, generation: "g1" });
+  ({ tool, arguments: {}, result: { isError: false, ...result } });
 const CLICK_S1_E2 = action("click", { element_token: "s1-e2" });
 const withCall = (call: RecordedCall): RequestJournal => {
   const base = textEditJournal();
@@ -27,21 +31,19 @@ const snapshotThenClick = ({ refreshBeforeClick, token }: { refreshBeforeClick: 
 const observationsOnly = (): RequestJournal => ({ ...textEditJournal(), calls: textEditJournal().calls.slice(0, 3) });
 const clicks = (count: number): RequestJournal => ({ ...textEditJournal(), calls: [...textEditJournal().calls.slice(0, 3), ...Array.from({ length: count }, () => CLICK_S1_E2)] });
 
-describe("buildRecipe", () => {
+describe("learning desktop steps", () => {
   it("saves the TextEdit run with targets by identity", () => {
     const out = build(); if (!out.ok) throw new Error(out.reason);
     const target = { app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" },
       element: { role: "AXTextArea", label: "Document", path: ["AXScrollArea:"] } };
-    expect(out.recipe).toEqual({ id: "r1", key: "open textedit and type hello world", request: REQUEST,
-      createdAt: 1_000, lastUsedAt: 1_000, steps: [{ tool: "click", args: {}, ...target }, { tool: "set_value", args: { value: "hello world" }, ...target }] });
+    expect(out.recipe).toEqual({ version: 2, id: "r1", name: REQUEST, key: "open textedit and type hello world", request: REQUEST, revision: 1, inputs: [], checks: [],
+      createdAt: 1_000, updatedAt: 1_000, lastUsedAt: 1_000,
+      steps: [{ driver: "cua", tool: "click", args: {}, ...target }, { driver: "cua", tool: "set_value", args: { value: "hello world" }, ...target }] });
     expect(JSON.stringify(out.recipe)).not.toMatch(/s1-e2|4242|"window_id"/);
   });
 
   it.each<[string, () => unknown]>([
     ["moment-words", () => build(textEditJournal(), "type hello world here")],
-    ["incomplete-journal", () => build(textEditJournal({ complete: false }))],
-    ["denied", () => build(textEditJournal({ tainted: true }))],
-    ["several-turns", () => build(withCall({ ...CLICK_S1_E2, generation: "g2" }))],
     ["tool-error", () => build(withCall(observation("list_windows", { isError: true })))],
     ["tool-error", () => build(withCall(observation("list_windows", { isError: true, rpcError: true })))],
     ["tool-error", () => build(withCall(observation("get_window_state", { isError: false, structured: { refusal: { code: "x" } } })))],
@@ -68,14 +70,14 @@ describe("buildRecipe", () => {
   it("accepts a launch_app whose URLs are in the request", () => {
     const out = build(textEditJournal({ calls: [action("launch_app", { name: "Safari", urls: ["https://example.com"] })] }), "Open https://example.com in Safari");
     if (!out.ok) throw new Error(out.reason);
-    expect(out.recipe.steps).toEqual([{ tool: "launch_app", args: { name: "Safari", urls: ["https://example.com"] } }]);
+    expect(out.recipe.steps).toEqual([{ driver: "cua", tool: "launch_app", args: { name: "Safari", urls: ["https://example.com"] } }]);
   });
 
   it("addresses element_index through the latest snapshot of its window", () => {
     const out = build(withCall(action("click", { element_index: 3, window_id: 7 })));
     if (!out.ok) throw new Error(out.reason);
     expect(out.recipe.steps.at(-1)).toEqual({
-      tool: "click", args: {}, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" },
+      driver: "cua", tool: "click", args: {}, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" },
       element: { role: "AXButton", label: "Save", path: [] },
     });
   });
@@ -100,7 +102,7 @@ describe("buildRecipe", () => {
     const calls = [...textEditJournal().calls.slice(0, 3), action("get_window_state", { pid: 4242, window_id: 8 }, { isError: false, structured: other }),
       stateCall(recordedWindowState(2)), action("click", { element_index: 3, window_id: 7 })];
     const out = bare(calls);
-    expect(out.ok && out.recipe.steps[0]?.element?.label).toBe("Save");
+    expect((out.ok ? (out.recipe.steps[0] as CuaStep) : undefined)?.element?.label).toBe("Save");
   });
 
   it("refuses an index after the whole tree was read another way", () => {
@@ -136,10 +138,10 @@ describe("buildRecipe", () => {
   it("keeps app and window targets for bring_to_front and window hotkeys", () => {
     const out = build(withCall(action("bring_to_front", { pid: 4242, window_id: 7 })));
     if (!out.ok) throw new Error(out.reason);
-    expect(out.recipe.steps.at(-1)).toEqual({ tool: "bring_to_front", args: {}, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" } });
+    expect(out.recipe.steps.at(-1)).toEqual({ driver: "cua", tool: "bring_to_front", args: {}, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" } });
     const hotkey = build(withCall(action("hotkey", { keys: ["cmd", "s"], pid: 4242, window_id: 7 })));
     expect(hotkey.ok && hotkey.recipe.steps.at(-1)).toEqual({
-      tool: "hotkey", args: { keys: ["cmd", "s"] }, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" } });
+      driver: "cua", tool: "hotkey", args: { keys: ["cmd", "s"] }, app: { bundleId: "com.apple.TextEdit", name: "TextEdit" }, window: { title: "Untitled" } });
     expect(build(withCall(action("bring_to_front", { pid: 4242 }))).ok).toBe(true);
     expect(build(withCall(action("bring_to_front", { pid: 9999 })))).toEqual({ ok: false, reason: "unknown-target" });
   });
@@ -167,7 +169,7 @@ describe("buildRecipe", () => {
     const scoped = build(withCall(action(tool, { ...args, scope: "window" })));
     expect(scoped.ok && scoped.recipe.steps.at(-1)?.args.scope).toBe("window");
     const unscoped = build(withCall(action(tool, args)));
-    expect(unscoped.ok && unscoped.recipe.steps.at(-1)?.app).toEqual({ bundleId: "com.apple.TextEdit", name: "TextEdit" });
+    expect(lastStep(unscoped)?.app).toEqual({ bundleId: "com.apple.TextEdit", name: "TextEdit" });
   });
 
   it("refuses an element whose role, label and path another row of its snapshot shares", () => {
@@ -197,13 +199,13 @@ describe("buildRecipe", () => {
   it("never lets a later source overwrite a known app field", () => {
     const calls = [...textEditJournal().calls, observation("launch_app", { structured: { pid: 4242, name: "Other", bundle_id: "x.other" } }), action("bring_to_front", { pid: 4242 })];
     const out = build({ ...textEditJournal(), calls });
-    expect(out.ok && out.recipe.steps.at(-1)?.app).toEqual({ bundleId: "com.apple.TextEdit", name: "TextEdit" });
+    expect(lastStep(out)?.app).toEqual({ bundleId: "com.apple.TextEdit", name: "TextEdit" });
   });
 
   it("saves a launch without its new-copy flag, so a repeat finds the one copy it opened", () => {
     const out = build(textEditJournal({ calls: [action("launch_app", { name: "TextEdit", creates_new_application_instance: true })] }));
     if (!out.ok) throw new Error(out.reason);
-    expect(out.recipe.steps).toEqual([{ tool: "launch_app", args: { name: "TextEdit" } }]);
+    expect(out.recipe.steps).toEqual([{ driver: "cua", tool: "launch_app", args: { name: "TextEdit" } }]);
   });
 
   const row = (index: number, role: string, label: string, more: Partial<WireElement> = {}): WireElement =>
@@ -312,7 +314,7 @@ describe("recipeFitsRequest", () => {
     expect(recipeFitsRequest(recipe, REQUEST)).toBe(true);
     expect(recipeFitsRequest(recipe, "open textedit and type hello, world")).toBe(false);
     for (const text of ["hello world\n", "\r\n hello world \n\n"]) {
-      expect(recipeFitsRequest({ ...recipe, steps: [{ tool: "set_value", args: { value: text } }] }, REQUEST)).toBe(false);
+      expect(recipeFitsRequest({ ...recipe, steps: [{ driver: "cua", tool: "set_value", args: { value: text } }] }, REQUEST)).toBe(false);
     }
   });
 
@@ -365,25 +367,15 @@ describe("recipeFitsRequest", () => {
   });
 });
 
-describe("personTextRequest", () => {
-  it.each<[Record<string, unknown>, boolean]>([
-    [{}, true], [{ via: "call" }, false], [{ relayed: true }, false], [{ replyToId: "m0" }, false], [{ dataContext: { cardId: "c" } }, false],
-    [{ fromApp: {} }, false], [{ pointed: [] }, false], [{ peerAsk: {} }, false], [{ setupRequest: true }, false], [{ steered: true }, false],
-    [{ aside: true }, false], [{ reaction: "x" }, false], [{ text: "  " }, false],
-    [{ attachments: [{ kind: "file", path: "/a", mime: "text/plain", name: "a" }] }, false], [{ text: 'see <attached-image path="/a.png" />' }, false],
-  ])("person text request %#", (extra, expected) =>
-    expect(personTextRequest({ id: "u1", at: 1, role: "user", kind: "text", text: REQUEST, ...extra } as Message)).toBe(expected));
-});
-
 describe("stepLabel", () => {
   it("names the element, the window, the app or the screen", () => {
     const app = { bundleId: "com.apple.TextEdit", name: "TextEdit" };
-    expect(stepLabel({ tool: "click", args: {}, app, element: { role: "AXButton", label: "Save", path: [] } })).toBe('"Save" in TextEdit');
-    expect(stepLabel({ tool: "hotkey", args: {}, app: { bundleId: "b.id" }, element: { role: "AXButton", label: "Save", path: [] } })).toBe('"Save" in b.id');
-    expect(stepLabel({ tool: "hotkey", args: {}, app, window: { title: "Untitled" } })).toBe("Untitled");
-    expect(stepLabel({ tool: "bring_to_front", args: {}, app })).toBe("TextEdit");
-    expect(stepLabel({ tool: "launch_app", args: { bundle_id: "com.x" } })).toBe("com.x");
-    expect(stepLabel({ tool: "launch_app", args: { name: "Safari" } })).toBe("Safari");
-    expect(stepLabel({ tool: "hotkey", args: {} })).toBe("the screen");
+    expect(stepLabel({ driver: "cua", tool: "click", args: {}, app, element: { role: "AXButton", label: "Save", path: [] } })).toBe('"Save" in TextEdit');
+    expect(stepLabel({ driver: "cua", tool: "hotkey", args: {}, app: { bundleId: "b.id" }, element: { role: "AXButton", label: "Save", path: [] } })).toBe('"Save" in b.id');
+    expect(stepLabel({ driver: "cua", tool: "hotkey", args: {}, app, window: { title: "Untitled" } })).toBe("Untitled");
+    expect(stepLabel({ driver: "cua", tool: "bring_to_front", args: {}, app })).toBe("TextEdit");
+    expect(stepLabel({ driver: "cua", tool: "launch_app", args: { bundle_id: "com.x" } })).toBe("com.x");
+    expect(stepLabel({ driver: "cua", tool: "launch_app", args: { name: "Safari" } })).toBe("Safari");
+    expect(stepLabel({ driver: "cua", tool: "hotkey", args: {} })).toBe("the screen");
   });
 });

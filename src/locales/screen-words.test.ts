@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FINAL_ACTIONS, SECRET_FIELDS } from "../../server/saved-steps/screen-words";
+import { FINAL_ACTIONS, SECRET_FIELDS } from "../../packages/agent-steps/src/words";
 import { localeChoices } from "./index";
 
 describe("the words saved steps look for on another app's screen", () => {

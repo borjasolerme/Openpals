@@ -48,14 +48,14 @@ describe("openComputerCaller", () => {
     dirs.push(dir);
     const file = join(dir, "call.json");
     const caller = await open({ command: process.execPath, args: ["--experimental-strip-types", FAKE], env: { FAKE_MCP_CALL_FILE: file } });
-    expect(await caller.call("click", { element_token: "s2-e2" }, signal)).toEqual({ ok: true, structured: {} });
+    expect(await caller.call("click", { element_token: "s2-e2" }, signal)).toEqual({ ok: true, structured: {}, text: "Fixture notes read through MCP." });
     expect(JSON.parse(readFileSync(file, "utf8"))).toEqual({ name: "click", arguments: { element_token: "s2-e2" } });
     await caller.close();
   });
 
-  it("starts the computer with the journal switched off and keeps the rest of its environment", async () => {
+  it("starts the computer with the turn's own environment, journal included, so a repair learns from the whole run", async () => {
     const caller = await recordingComputer({ OMB_COMPUTER_JOURNAL: "1", FIXTURE_KEPT: "yes" });
-    expect(await caller.call("read_env", {}, signal)).toEqual({ ok: true, structured: { journal: "0", kept: "yes" } });
+    expect(await caller.call("read_env", {}, signal)).toEqual({ ok: true, structured: { journal: "1", kept: "yes" } });
   });
 
   it("reports a JSON-RPC error as a failed call", async () => {
@@ -138,7 +138,7 @@ describe("callOutcome", () => {
 
   it("hands over the raw structured answer, completeness fields included", () => {
     const answer = { pid: 4242, window_id: 7, elements: [], elements_complete: true, element_count: 0, degraded: false };
-    expect(callOutcome({ content: [{ type: "text", text: "tree" }], structuredContent: answer })).toEqual({ ok: true, structured: answer });
+    expect(callOutcome({ content: [{ type: "text", text: "tree" }], structuredContent: answer })).toEqual({ ok: true, structured: answer, text: "tree" });
   });
 
   it.each([

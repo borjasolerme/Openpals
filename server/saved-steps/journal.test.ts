@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { JournalEntry } from "./driver-wire.ts";
-import { ComputerJournal, ENTRY_BYTES, hostScope, parseJournalEntry, TOTAL_BYTES } from "./journal.ts";
+import { ComputerJournal, ENTRY_BYTES, hostScope, parseJournalEntry, TOTAL_BYTES, type JournalEntry } from "./journal.ts";
 import { createSavedSteps } from "./saved-steps.ts";
 
 const scope = { botId: "b1", threadId: "t1", generation: "g1" };

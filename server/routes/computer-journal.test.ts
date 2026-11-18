@@ -4,8 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { json, readBody } from "../harness/http.ts";
 import type { RequestAuth } from "../request-auth.ts";
-import type { JournalEntry } from "../saved-steps/driver-wire.ts";
-import type { JournalCapability, JournalScope } from "../saved-steps/journal.ts";
+import type { JournalCapability, JournalEntry, JournalScope } from "../saved-steps/journal.ts";
 import { COMPUTER_JOURNAL_PATH } from "../saved-steps/journal-tap.ts";
 import { createComputerJournalRoutes } from "./computer-journal.ts";
 import { dispatchRoutes } from "./table.ts";

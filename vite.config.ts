@@ -21,6 +21,7 @@ const include = [
   "src/**/*.test.ts",
   "shared/**/*.test.ts",
   "companion/**/*.test.ts",
+  "packages/**/src/**/*.test.ts",
   "scripts/**/*.test.mjs",
   "scripts/**/*.test.ts",
 ];

@@ -1,13 +1,17 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { completeWindowState, windowState } from "../testing/saved-steps-fixtures.ts";
-import type { WireElement } from "./driver-wire.ts";
-import type { RecipeStep } from "./rules.ts";
-import { matchApp, matchElement, matchWindow, POLL_MS, resolveStep, resolveStepSoon, RETRY_MS, type CallOutcome, type ComputerCaller, type Patience } from "./resolve.ts";
+import { POLL_MS, resolveSoon, RETRY_MS } from "../replay.ts";
+import { completeWindowState, windowState } from "../testing/cua-fixtures.ts";
+import type { Caller as ComputerCaller, CallOutcome, CuaStep as RecipeStep, Patience } from "../types.ts";
+import { cuaDriver } from "./driver.ts";
+import { matchApp, matchElement, matchWindow, resolveStep } from "./resolve.ts";
+import type { WireElement } from "./wire.ts";
+
+const resolveStepSoon = (step: RecipeStep, using: ComputerCaller, stop: AbortSignal, patience?: Patience) => resolveSoon(cuaDriver(using), step, stop, patience);
 
 const TEXTEDIT = { bundleId: "com.apple.TextEdit", name: "TextEdit" };
 const DOCUMENT = { role: "AXTextArea", label: "Document", path: ["AXScrollArea:"] };
 const SAVE = { role: "AXButton", label: "Save", path: [] };
-const CLICK_DOCUMENT: RecipeStep = { tool: "click", args: {}, app: TEXTEDIT, window: { title: "Untitled" }, element: DOCUMENT };
+const CLICK_DOCUMENT: RecipeStep = { driver: "cua", tool: "click", args: {}, app: TEXTEDIT, window: { title: "Untitled" }, element: DOCUMENT };
 const CLICK_SAVE: RecipeStep = { ...CLICK_DOCUMENT, element: SAVE };
 
 const TEXTEDIT_APP = { pid: 4242, name: "TextEdit", bundle_id: "com.apple.TextEdit", running: true };
@@ -52,7 +56,7 @@ const tools = () => calls.map(([tool]) => tool);
 
 describe("resolveStep", () => {
   it("resolves an element step afresh, without a screenshot", async () => {
-    expect(await resolveStep(CLICK_DOCUMENT, caller(), signal)).toEqual({ ok: true, args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
+    expect(await resolveStep(CLICK_DOCUMENT, caller(), signal)).toEqual({ ok: true, tool: expect.any(String), args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
     expect(calls.at(-1)).toStrictEqual(["get_window_state", { pid: 4242, window_id: 7, include_screenshot: false }]);
     expect(calls).toStrictEqual(LOOKUPS);
   });
@@ -66,7 +70,7 @@ describe("resolveStep", () => {
   it("keeps the saved arguments beside the fresh target", async () => {
     const step: RecipeStep = { ...CLICK_DOCUMENT, tool: "set_value", args: { value: "hello world" } };
     expect(await resolveStep(step, caller(completeWindowState(windowState(3))), signal))
-      .toEqual({ ok: true, args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s3-e2" } });
+      .toEqual({ ok: true, tool: expect.any(String), args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s3-e2" } });
   });
 
   describe("typing into a field", () => {
@@ -74,7 +78,7 @@ describe("resolveStep", () => {
     const holding = (document: string) => caller(completeWindowState(windowState(3), document));
 
     it.each(["", "hello world"])("types into a field that holds %j: empty, or already what it types", async (document) => {
-      expect(await resolveStep(TYPE, holding(document), signal)).toEqual({ ok: true, args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s3-e2" } });
+      expect(await resolveStep(TYPE, holding(document), signal)).toEqual({ ok: true, tool: expect.any(String), args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s3-e2" } });
     });
 
     it("never replaces someone's text, and does not name it", async () => {
@@ -91,9 +95,9 @@ describe("resolveStep", () => {
 
     it("chooses in a pop-up whatever it shows now", async () => {
       const POPUP: WireElement = { element_index: 4, element_token: "s2-e4", role: "AXPopUpButton", label: "Size", parent_index: 0, depth: 1 };
-      const choose: RecipeStep = { tool: "set_value", args: { value: "Large" }, app: TEXTEDIT, window: { title: "Untitled" }, element: { role: "AXPopUpButton", label: "Size", path: [] } };
+      const choose: RecipeStep = { driver: "cua", tool: "set_value", args: { value: "Large" }, app: TEXTEDIT, window: { title: "Untitled" }, element: { role: "AXPopUpButton", label: "Size", path: [] } };
       const tree = state([...ELEMENTS, { ...POPUP, value: "Small" } as WireElement]);
-      expect(await resolveStep(choose, caller(tree), signal)).toEqual({ ok: true, args: { value: "Large", pid: 4242, window_id: 7, element_token: "s2-e4" } });
+      expect(await resolveStep(choose, caller(tree), signal)).toEqual({ ok: true, tool: expect.any(String), args: { value: "Large", pid: 4242, window_id: 7, element_token: "s2-e4" } });
     });
   });
 
@@ -126,7 +130,7 @@ describe("resolveStep", () => {
 
   it("accepts a tree whose counts match what was returned", async () => {
     const whole = state(ELEMENTS, { filtered_element_count: 4, truncated: false, degraded: false, degraded_reason: null, truncation_reason: null });
-    expect(await resolveStep(CLICK_DOCUMENT, caller(whole), signal)).toEqual({ ok: true, args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
+    expect(await resolveStep(CLICK_DOCUMENT, caller(whole), signal)).toEqual({ ok: true, tool: expect.any(String), args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
   });
 
   it.each<[string, object]>([
@@ -183,37 +187,37 @@ describe("resolveStep", () => {
   });
 
   it("needs no lookups for launch_app", async () => {
-    const step: RecipeStep = { tool: "launch_app", args: { name: "TextEdit" } };
-    expect(await resolveStep(step, caller(), signal)).toEqual({ ok: true, args: { name: "TextEdit" } });
+    const step: RecipeStep = { driver: "cua", tool: "launch_app", args: { name: "TextEdit" } };
+    expect(await resolveStep(step, caller(), signal)).toEqual({ ok: true, tool: expect.any(String), args: { name: "TextEdit" } });
     expect(calls).toEqual([]);
   });
 
   it("targets bring_to_front and an app's hotkey at a fresh pid and window", async () => {
-    const front: RecipeStep = { tool: "bring_to_front", args: {}, app: TEXTEDIT, window: { title: "Untitled" } };
-    expect(await resolveStep(front, caller(), signal)).toEqual({ ok: true, args: { pid: 4242, window_id: 7 } });
+    const front: RecipeStep = { driver: "cua", tool: "bring_to_front", args: {}, app: TEXTEDIT, window: { title: "Untitled" } };
+    expect(await resolveStep(front, caller(), signal)).toEqual({ ok: true, tool: expect.any(String), args: { pid: 4242, window_id: 7 } });
     expect(calls).toStrictEqual(LOOKUPS.slice(0, 2));
     calls = [];
-    const save: RecipeStep = { tool: "hotkey", args: { keys: ["cmd", "s"] }, app: TEXTEDIT, window: { title: "Untitled" } };
-    expect(await resolveStep(save, caller(), signal)).toStrictEqual({ ok: true, args: { keys: ["cmd", "s"], pid: 4242, window_id: 7 } });
+    const save: RecipeStep = { driver: "cua", tool: "hotkey", args: { keys: ["cmd", "s"] }, app: TEXTEDIT, window: { title: "Untitled" } };
+    expect(await resolveStep(save, caller(), signal)).toStrictEqual({ ok: true, tool: expect.any(String), args: { keys: ["cmd", "s"], pid: 4242, window_id: 7 } });
     expect(calls).toStrictEqual(LOOKUPS.slice(0, 2));
   });
 
   it("refuses a key step whose window was renamed rather than send it to another window", async () => {
-    const close: RecipeStep = { tool: "hotkey", args: { keys: ["cmd", "w"] }, app: TEXTEDIT, window: { title: "Invoice.pdf" } };
+    const close: RecipeStep = { driver: "cua", tool: "hotkey", args: { keys: ["cmd", "w"] }, app: TEXTEDIT, window: { title: "Invoice.pdf" } };
     expect(await resolveStep(close, caller(), signal)).toEqual({ ok: false, error: 'no window titled "Invoice.pdf"', missing: true });
   });
 
   it("refuses a key step saved without its window", async () => {
     for (const tool of ["hotkey", "press_key"] as const) {
-      expect(await resolveStep({ tool, args: {}, app: TEXTEDIT }, caller(), signal)).toEqual({ ok: false, error: "the saved step does not name its window" });
+      expect(await resolveStep({ driver: "cua", tool, args: {}, app: TEXTEDIT }, caller(), signal)).toEqual({ ok: false, error: "the saved step does not name its window" });
     }
     expect(calls).toEqual([]);
   });
 
   it.each<[string, RecipeStep]>([
-    ["a key press", { tool: "press_key", args: { key: "return" } }],
-    ["a hotkey with a window", { tool: "hotkey", args: { keys: ["cmd", "s"] }, window: { title: "Untitled" } }],
-    ["an element step", { tool: "click", args: {}, window: { title: "Untitled" }, element: DOCUMENT }],
+    ["a key press", { driver: "cua", tool: "press_key", args: { key: "return" } }],
+    ["a hotkey with a window", { driver: "cua", tool: "hotkey", args: { keys: ["cmd", "s"] }, window: { title: "Untitled" } }],
+    ["an element step", { driver: "cua", tool: "click", args: {}, window: { title: "Untitled" }, element: DOCUMENT }],
   ])("refuses %s saved without its app", async (_case, step) => {
     expect(await resolveStep(step, caller(), signal)).toEqual({ ok: false, error: "the saved step does not name its app" });
     expect(calls).toEqual([]);
@@ -326,7 +330,7 @@ describe("resolveStepSoon", () => {
     ["a window that is still opening", "list_windows", windows()],
     ["an element that is still being drawn", "get_window_state", ok(renamed)],
   ])("waits for %s", async (_case, lookup, early) => {
-    expect(await resolveStepSoon(CLICK_DOCUMENT, appearing(2, lookup, early), signal, patience)).toEqual({ ok: true, args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
+    expect(await resolveStepSoon(CLICK_DOCUMENT, appearing(2, lookup, early), signal, patience)).toEqual({ ok: true, tool: expect.any(String), args: { pid: 4242, window_id: 7, element_token: "s2-e2" } });
     expect(slept).toEqual([POLL_MS, POLL_MS]);
   });
 

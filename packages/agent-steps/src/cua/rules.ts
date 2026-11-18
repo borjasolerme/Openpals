@@ -1,28 +1,17 @@
-import type { Message } from "../store.ts";
-import { elementPath, type SlimStructured, type WireElement } from "./driver-wire.ts";
-import type { RecordedCall, RequestJournal } from "./journal.ts";
-import { exactRequest, hasMomentWords, inRequest, requestKey } from "./key.ts";
+// How a recording on the desktop (the Cua driver's tools) becomes steps, and what a desktop step may never do.
+import type { CuaStep, CuaTool, LearnContext, Learned, Policy, RecordedCall, Refusal } from "../types.ts";
+import { namesFinalAction, namesSecret } from "../words.ts";
 import { matchElement } from "./resolve.ts";
-import { namesFinalAction, namesSecret } from "./screen-words.ts";
+import { elementPath, type SlimStructured, type WireElement } from "./wire.ts";
 
-export type ActionTool = "click" | "double_click" | "right_click" | "type_text" | "set_value" | "press_key" | "scroll" | "launch_app" | "bring_to_front" | "hotkey";
+type ActionTool = CuaTool;
 
 export const OBSERVATION_TOOLS: ReadonlySet<string> = new Set([
   "get_window_state", "list_apps", "list_windows", "get_accessibility_tree", "get_desktop_state", "get_screen_size",
   "get_cursor_position", "get_agent_cursor_state", "get_session_state", "check_permissions", "screenshot",
 ]);
 
-export interface AppIdentity { bundleId?: string; name?: string }
-export interface ElementIdentity { role: string; label: string; path: string[] }
-export interface RecipeStep { tool: ActionTool; args: Record<string, unknown>; app?: AppIdentity; window?: { title: string }; element?: ElementIdentity }
-export interface Recipe { id: string; key: string; request: string; steps: RecipeStep[]; createdAt: number; lastUsedAt: number }
-
-export type Refusal =
-  | "moment-words" | "several-turns" | "incomplete-journal" | "denied" | "tool-error" | "unknown-tool" | "pixel-or-drag" | "extra-arguments"
-  | "unknown-target" | "stale-element" | "unlabelled-element" | "ambiguous-element" | "typed-text-not-in-request" | "url-not-in-request" | "no-steps" | "too-many-steps"
-  | "typing-appends" | "toggle-element" | "key-without-window" | "partial-tree" | "final-action" | "secret-field" | "unreadable-field";
-
-const MAX_STEPS = 40;
+type AppIdentity = NonNullable<CuaStep["app"]>;
 const ADDRESSING = new Set(["element_token", "element_index", "pid", "window_id", "session"]);
 const PIXEL_TOOLS = new Set(["drag", "move_cursor", "zoom"]);
 export const ELEMENT_TOOLS: ReadonlySet<ActionTool> = new Set<ActionTool>(["click", "double_click", "right_click", "type_text", "set_value", "scroll"]);
@@ -43,6 +32,9 @@ export const KEPT_ARGS: Record<ActionTool, readonly string[]> = {
 const DROPPED_ARGS: Partial<Record<ActionTool, ReadonlySet<string>>> = { launch_app: new Set(["creates_new_application_instance"]) };
 
 const isActionTool = (tool: string): tool is ActionTool => Object.hasOwn(KEPT_ARGS, tool);
+
+/** The calls a desktop recording holds: actions, reads, and the pointer tools it refuses. */
+export const cuaOwns = (tool: string): boolean => isActionTool(tool) || OBSERVATION_TOOLS.has(tool) || PIXEL_TOOLS.has(tool) || tool.startsWith("browser_");
 
 export const windowScoped = (tool: ActionTool, args: Record<string, unknown>): boolean =>
   !(KEY_TOOLS.has(tool) || ELEMENT_TOOLS.has(tool)) || args.scope === undefined || args.scope === "window";
@@ -76,7 +68,7 @@ const pathLabel = (part: string) => part.slice(part.indexOf(":") + 1);
 
 /** Security invariant: no saved step presses a final, can't-undo action (send, delete, buy, pay, post, submit, order,
  * transfer, publish and their like, in any language this app ships) or touches a secret field. */
-export function unsafeStep({ tool, args, window, element }: Pick<RecipeStep, "tool" | "args" | "window" | "element">): "final-action" | "secret-field" | null {
+export function unsafeStep({ tool, args, window, element }: Pick<CuaStep, "tool" | "args" | "window" | "element">): "final-action" | "secret-field" | null {
   if (element) {
     if (SECURE_ROLE.test(element.role) || ((tool === "set_value" || TEXT_INPUT_ROLE.test(element.role)) && namesSecret(element.label))) return "secret-field";
     if (ACTIVATING.has(tool) && [element.label, window?.title, ...element.path.map(pathLabel)].some(namesFinalAction)) return "final-action";
@@ -89,55 +81,7 @@ export function unsafeStep({ tool, args, window, element }: Pick<RecipeStep, "to
   return null;
 }
 
-const CONTROL_CHARACTERS = /\p{Cc}/u;
-const CONTEXT_TOOLS = new Set(["get_accessibility_tree", "get_desktop_state"]);
-
-type TypedWordsRefusal = "typed-text-not-in-request" | "url-not-in-request";
-
-function wordsOutsideRequest(steps: readonly Pick<RecipeStep, "tool" | "args">[], request: string): TypedWordsRefusal | null {
-  const fromPerson = (value: unknown) => typeof value === "string" && inRequest(value, request);
-  const typedFromPerson = (value: unknown) => typeof value === "string" && value === value.trim() && !CONTROL_CHARACTERS.test(value) && inRequest(value, request);
-  for (const { tool, args } of steps) {
-    if (tool === "set_value" && !typedFromPerson(args.value)) return "typed-text-not-in-request";
-    if (tool === "launch_app" && args.urls !== undefined && !(Array.isArray(args.urls) && args.urls.every(fromPerson))) return "url-not-in-request";
-  }
-  return null;
-}
-
-/** Steps that type the person's words or open their links: only the request they came from, word for word, may repeat them. */
-export function holdsPersonWords(steps: readonly Pick<RecipeStep, "tool" | "args">[]): boolean {
-  return steps.some(({ tool, args }) => tool === "set_value" || (tool === "launch_app" && args.urls !== undefined));
-}
-
-export function recipeFitsRequest(recipe: Pick<Recipe, "steps" | "request">, request: string): boolean {
-  const exact = exactRequest(request);
-  if (holdsPersonWords(recipe.steps) && (recipe.request === "" || exact !== recipe.request)) return false;
-  return wordsOutsideRequest(recipe.steps, exact) === null;
-}
-
-export function personTextRequest(message: Message): boolean {
-  if (message.role !== "user" || message.kind !== "text") return false;
-  const text = message.text ?? "";
-  if (!text.trim() || text.includes("<attached-image") || text.includes("<attached-file")) return false;
-  if (message.attachments?.length) return false;
-  return !(message.replyToId || message.reaction || message.fromApp || message.pointed || message.dataContext || message.peerAsk
-    || message.via || message.relayed || message.setupRequest || message.steered || message.aside);
-}
-
-const HARMLESS_TOOLS: ReadonlySet<string> = new Set([
-  "Read", "Glob", "Grep", "LS", "ToolSearch", "TodoWrite", "WebSearch", "WebFetch", "mcp__agents__select_computer", "select_computer", "web_search",
-]);
-const COMPUTER_TOOL_PREFIX = "mcp__computer__";
-
-const driverTool = (name: string): boolean => isActionTool(name) || OBSERVATION_TOOLS.has(name);
-const computerTool = (name: string): boolean =>
-  name.startsWith(COMPUTER_TOOL_PREFIX) || driverTool(name) || (name.startsWith("computer_") && driverTool(name.slice("computer_".length)));
-
-export function otherToolsHarmless(lines: readonly Message[]): boolean {
-  return lines.every(({ tool }) => tool?.itemId === undefined || computerTool(tool.name) || HARMLESS_TOOLS.has(tool.name));
-}
-
-export function stepLabel(step: RecipeStep): string {
+export function cuaLabel(step: CuaStep): string {
   const appName = step.app?.name ?? step.app?.bundleId;
   if (step.element) return `"${step.element.label}" in ${appName ?? "the app"}`;
   if (step.tool === "launch_app") {
@@ -157,14 +101,12 @@ const fillMissing = (known: AppIdentity | undefined, next: AppIdentity): AppIden
 
 const numberArg = (args: Record<string, unknown>, key: string): number | undefined => (typeof args[key] === "number" ? args[key] : undefined);
 
-export function buildRecipe(input: { request: string; journal: RequestJournal; id: string; now: number }): { ok: true; recipe: Recipe } | { ok: false; reason: Refusal } {
-  const { request, journal } = input;
-  const refuse = (reason: Refusal) => ({ ok: false as const, reason });
-  if (hasMomentWords(request)) return refuse("moment-words");
-  if (!journal.complete) return refuse("incomplete-journal");
-  if (journal.tainted) return refuse("denied");
-  if (new Set(journal.calls.map((call) => call.generation)).size > 1) return refuse("several-turns");
+const CONTEXT_TOOLS = new Set(["get_accessibility_tree", "get_desktop_state"]);
 
+/** Steps from a desktop recording. Every element a step acts on must have been read whole just before, labelled and
+ * unique, so a repeat can find it again by what it is. */
+export function learnCua(calls: readonly RecordedCall[], _context: LearnContext): Learned<CuaStep> {
+  const refuse = (reason: Refusal) => ({ ok: false as const, reason });
   const appsByPid = new Map<number, AppIdentity>();
   const windowsById = new Map<number, string>();
   const latestByWindow = new Map<string, Snapshot>();
@@ -178,7 +120,7 @@ export function buildRecipe(input: { request: string; journal: RequestJournal; i
   };
 
   const observe = ({ tool, result }: RecordedCall) => {
-    const data: SlimStructured = result.structured ?? {};
+    const data = (result.structured ?? {}) as SlimStructured;
     if (tool === "list_apps") for (const app of data.apps ?? []) if (app.running !== false) learnApp(app.pid, { bundleId: app.bundle_id, name: app.name });
     if (tool === "list_windows") {
       for (const window of data.windows ?? []) {
@@ -200,7 +142,7 @@ export function buildRecipe(input: { request: string; journal: RequestJournal; i
   };
 
   const learnLaunch = ({ arguments: args, result }: RecordedCall) => {
-    const data: SlimStructured = result.structured ?? {};
+    const data = (result.structured ?? {}) as SlimStructured;
     const text = (value: unknown) => (typeof value === "string" ? value : undefined);
     learnApp(data.pid, { bundleId: data.bundle_id ?? text(args.bundle_id), name: data.name ?? text(args.name) });
   };
@@ -223,21 +165,21 @@ export function buildRecipe(input: { request: string; journal: RequestJournal; i
     return snapshot && element ? { element, snapshot } : "unknown-target";
   };
 
-  const indexUnsafe = journal.calls.some((call) => CONTEXT_TOOLS.has(call.tool));
+  const indexUnsafe = calls.some((call) => CONTEXT_TOOLS.has(call.tool));
   // Return presses a window's default button: it saves only into a window read whole that shows no final action.
   const readWhole = new Set<number>();
   const showsFinalAction = new Set<number>();
-  for (const { tool, result } of journal.calls) {
-    const data = result.structured;
+  for (const { tool, result } of calls) {
+    const data = result.structured as SlimStructured | undefined;
     if (tool !== "get_window_state" || data?.window_id === undefined) continue;
     if (data.elements_complete === true) readWhole.add(data.window_id);
     if (namesFinalAction(data.window_title) || (data.elements ?? []).some((element) => namesFinalAction(element.label))) showsFinalAction.add(data.window_id);
   }
   const returnSafeIn = (id: number | undefined) => id !== undefined && readWhole.has(id) && !showsFinalAction.has(id);
-  const steps: RecipeStep[] = [];
-  for (const call of journal.calls) {
+  const steps: Array<{ at: number; step: CuaStep }> = [];
+  for (const [at, call] of calls.entries()) {
     const { tool, arguments: args, result } = call;
-    if (result.isError || result.rpcError || result.structured?.refusal) return refuse("tool-error");
+    if (result.isError || result.rpcError || (result.structured as SlimStructured | undefined)?.refusal) return refuse("tool-error");
     if (OBSERVATION_TOOLS.has(tool)) {
       observe(call);
       continue;
@@ -254,7 +196,7 @@ export function buildRecipe(input: { request: string; journal: RequestJournal; i
       if (!KEPT_ARGS[tool].includes(key)) return refuse("extra-arguments");
       kept[key] = value;
     }
-    const step: RecipeStep = { tool, args: kept };
+    const step: CuaStep = { driver: "cua", tool, args: kept };
     const addressed = args.element_token !== undefined || args.element_index !== undefined;
     const pid = numberArg(args, "pid");
     const windowId = numberArg(args, "window_id");
@@ -305,16 +247,33 @@ export function buildRecipe(input: { request: string; journal: RequestJournal; i
       if (unsafe) return refuse(unsafe);
     }
     if (pressesReturn(tool, args) && !returnSafeIn(keyWindow)) return refuse("final-action");
-    steps.push(step);
+    steps.push({ at, step });
   }
-
-  if (steps.length === 0) return refuse("no-steps");
-  if (steps.length > MAX_STEPS) return refuse("too-many-steps");
-  const outside = wordsOutsideRequest(steps, exactRequest(request));
-  if (outside) return refuse(outside);
-  return { ok: true, recipe: { id: input.id, key: requestKey(request), request: exactRequest(request), steps, createdAt: input.now, lastUsedAt: input.now } };
+  return { ok: true, steps };
 }
 
 function stripEmpty(app: AppIdentity): AppIdentity {
   return { ...(app.bundleId ? { bundleId: app.bundleId } : {}), ...(app.name ? { name: app.name } : {}) };
+}
+
+const ADDRESSING_KEYS = new Set(["x", "y", ...ADDRESSING]);
+
+/** Why a saved desktop step must not run: arguments its tool does not keep, a missing target, a toggle, a final action
+ * or a secret field. Checked again on every load, so an edited file cannot slip one in. */
+export function cuaRefusal(step: CuaStep, _policy: Policy): Refusal | null {
+  if (!isActionTool(step.tool) || step.tool === "type_text") return "unknown-tool";
+  if (!Object.keys(step.args).every((name) => !ADDRESSING_KEYS.has(name) && KEPT_ARGS[step.tool].includes(name))) return "extra-arguments";
+  if (!windowScoped(step.tool, step.args)) return "unknown-target";
+  if (ELEMENT_TOOLS.has(step.tool) && (step.element === undefined || step.app === undefined)) return "unknown-target";
+  if (KEY_TOOLS.has(step.tool) && (step.app === undefined || step.window === undefined)) return "key-without-window";
+  if (step.element && flipsToggle(step.tool, step.element.role)) return "toggle-element";
+  return unsafeStep(step);
+}
+
+/** What the person typed (set_value) and the links a launch opens. */
+export function cuaWords(step: CuaStep): { typed: unknown[]; urls: unknown[] } {
+  return {
+    typed: step.tool === "set_value" ? [step.args.value] : [],
+    urls: step.tool === "launch_app" && step.args.urls !== undefined ? (Array.isArray(step.args.urls) ? step.args.urls : [undefined]) : [],
+  };
 }

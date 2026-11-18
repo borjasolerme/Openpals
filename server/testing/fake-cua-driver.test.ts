@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { callOutcome } from "../saved-steps/computer-client.ts";
-import { resolveStep, type ComputerCaller } from "../saved-steps/resolve.ts";
-import { buildRecipe } from "../saved-steps/rules.ts";
+import { cuaDriver, type Caller as ComputerCaller } from "../../packages/agent-steps/src/index.ts";
+import { learnFromJournal } from "../saved-steps/saved-steps.ts";
 import { removeTempDir, waitForExit } from "./cleanup.ts";
 import { textEditJournal } from "./saved-steps-fixtures.ts";
 
@@ -139,11 +139,12 @@ describe("the fake cua-driver", () => {
 
   it("is a window the saved-steps resolver accepts as it would the real driver", async () => {
     const { call } = start();
-    const built = buildRecipe({ request: "Open TextEdit and type hello world", journal: textEditJournal(), id: "r1", now: 1 });
+    const built = learnFromJournal("Open TextEdit and type hello world", textEditJournal(), "r1", 1);
     if (!built.ok) throw new Error(built.reason);
     const caller: ComputerCaller = { call: async (tool, args) => callOutcome(await call(tool, args)) };
     const signal = new AbortController().signal;
-    expect(await resolveStep(built.recipe.steps[0]!, caller, signal)).toEqual({ ok: true, args: { pid: 4242, window_id: 7, element_token: "s1-e2" } });
-    expect(await resolveStep(built.recipe.steps[1]!, caller, signal)).toEqual({ ok: true, args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s2-e2" } });
+    const driver = cuaDriver(caller);
+    expect(await driver.resolve(built.recipe.steps[0] as never, signal)).toEqual({ ok: true, tool: "click", args: { pid: 4242, window_id: 7, element_token: "s1-e2" } });
+    expect(await driver.resolve(built.recipe.steps[1] as never, signal)).toEqual({ ok: true, tool: "set_value", args: { value: "hello world", pid: 4242, window_id: 7, element_token: "s2-e2" } });
   });
 });
