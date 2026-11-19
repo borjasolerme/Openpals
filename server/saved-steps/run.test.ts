@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { agentBrowserDriver, cuaDriver, type Caller as ComputerCaller, type CallOutcome, type CuaStep as RecipeStep, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { agentBrowserDriver, cuaDriver, requestKey, type Caller as ComputerCaller, type CallOutcome, type CuaStep as RecipeStep, type Recipe } from "agent-steps";
 import type { RuntimeEvent } from "../contracts.ts";
 import { completeWindowState, windowState } from "../testing/saved-steps-fixtures.ts";
 import { declinedReply, fallbackNote, replayedReply, runSteps, type ReplayTurn, type StepApproval } from "./run.ts";
@@ -83,7 +83,9 @@ describe("runSteps", () => {
   });
 
   it("never names what a step types, in its approval, its item or the reply", async () => {
-    const secret: Recipe = { ...RECIPE, steps: [{ driver: "cua", tool: "set_value", args: { value: "hunter2-Gr33n" }, ...TARGET }] };
+    // A recipe only types words its own request holds, so the request names them; nothing else may.
+    const request = "Open TextEdit and type hunter2-Gr33n";
+    const secret: Recipe = { ...RECIPE, name: request, key: requestKey(request), request, steps: [{ driver: "cua", tool: "set_value", args: { value: "hunter2-Gr33n" }, ...TARGET }] };
     expect(await runSteps(secret, TURN, deps)).toEqual({ kind: "done" });
     expect(acted).toEqual([["set_value", { value: "hunter2-Gr33n", pid: 4242, window_id: 7, element_token: "s2-e2" }]]);
     expect(JSON.stringify([asked, events, replayedReply(secret)])).not.toContain("hunter2");

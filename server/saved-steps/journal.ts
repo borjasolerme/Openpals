@@ -1,4 +1,4 @@
-import type { RecordedCall as PackageCall } from "../../packages/agent-steps/src/index.ts";
+import type { RecordedCall as PackageCall } from "agent-steps";
 
 /** One tool call as the journal keeps it: a cua call's slim structure, a browser call's text. */
 export type JournalEntry = PackageCall;

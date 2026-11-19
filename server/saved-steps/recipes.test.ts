@@ -2,7 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { requestKey, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { requestKey, type Recipe } from "agent-steps";
 import { BotRecipes, RECIPES_FOLDER } from "./recipes.ts";
 
 const recipe = (id: string, name: string): Recipe => ({

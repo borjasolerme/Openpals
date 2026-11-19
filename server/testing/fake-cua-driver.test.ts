@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { callOutcome } from "../saved-steps/computer-client.ts";
-import { cuaDriver, type Caller as ComputerCaller } from "../../packages/agent-steps/src/index.ts";
+import { cuaDriver, type Caller as ComputerCaller } from "agent-steps";
 import { learnFromJournal } from "../saved-steps/saved-steps.ts";
 import { removeTempDir, waitForExit } from "./cleanup.ts";
 import { textEditJournal } from "./saved-steps-fixtures.ts";

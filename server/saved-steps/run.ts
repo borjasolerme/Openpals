@@ -1,6 +1,6 @@
 // A saved recipe run as a turn of a conversation: each step asks through the turn's approval, shows as a tool item, and
 // the reply says what the steps did. The finding and doing is the agent-steps package's replay.
-import { replay, stepLabel, type Driver, type Patience, type Recipe, type Step } from "../../packages/agent-steps/src/index.ts";
+import { replay, stepLabel, type Driver, type Patience, type Recipe, type Step } from "agent-steps";
 import { newId, type RuntimeEvent } from "../contracts.ts";
 
 export interface ReplayTurn { threadId: string; turnId: string; provider: string; providerInstanceId: string }

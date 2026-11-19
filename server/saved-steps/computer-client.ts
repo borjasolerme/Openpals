@@ -3,7 +3,7 @@ import { CONTROL_BUSY, CONTROL_HANDED_BACK, CONTROL_REFUSAL_PLAIN, CONTROL_TURN_
 import { ChatMcpClient } from "../drivers/chat-mcp-tools.ts";
 import { harnessMcpRequest } from "../harness-mcp-request.ts";
 import { harnessMcpTokenEnv } from "../harness-mcp-token.ts";
-import type { Caller, CallOutcome } from "../../packages/agent-steps/src/index.ts";
+import type { Caller, CallOutcome } from "agent-steps";
 
 export type ComputerCaller = Caller & { close(): Promise<void> };
 

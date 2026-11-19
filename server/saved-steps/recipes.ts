@@ -1,6 +1,6 @@
 // Each bot's saved steps: a folder of recipes in the bot's own folder, strict policy (the person's own words only).
 import { basename, join } from "node:path";
-import { FileStore, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { FileStore, type Recipe } from "agent-steps";
 
 export const RECIPES_FOLDER = "saved-steps";
 

@@ -1,5 +1,5 @@
 // Which requests and turns saved steps may learn from: the person's own words, and no tool the journal does not see.
-import { cuaOwns, webOwns } from "../../packages/agent-steps/src/index.ts";
+import { cuaOwns, webOwns } from "agent-steps";
 import type { Message } from "../store.ts";
 
 export function personTextRequest(message: Message): boolean {

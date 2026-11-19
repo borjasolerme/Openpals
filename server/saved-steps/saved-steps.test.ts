@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProviderInstance, RuntimeEvent, SendTurnInput, TurnStartResult } from "../contracts.ts";
 import type { Message } from "../store.ts";
 import { textEditJournal } from "../testing/saved-steps-fixtures.ts";
-import { requestKey, type CuaStep as RecipeStep, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { requestKey, type CuaStep as RecipeStep, type Recipe } from "agent-steps";
 import type { RecordedCall } from "./journal.ts";
 import type { ReplayRequest } from "./dispatch.ts";
 import { createSavedSteps, savedStepsEnabled, type SavedSteps, type SavedStepsDeps, type SettledRequest } from "./saved-steps.ts";

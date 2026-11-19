@@ -66,6 +66,9 @@ importers:
       ag-grid-react:
         specifier: 36.2.0
         version: 36.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      agent-steps:
+        specifier: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
+        version: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -2084,6 +2087,12 @@ packages:
   agent-base@7.1.4:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
+
+  agent-steps@https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
+    resolution: {integrity: sha512-OcOXt2MFkz78mlUQxh+odGcDoDAq4s7gFpmWRof1Kf+NquCWdpGVskrW5VOchhhr7xchk7d26X5l3LU1jt286w==, tarball: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz}
+    version: 0.2.0
+    engines: {node: '>=22.18'}
+    hasBin: true
 
   ajv-formats@3.0.1:
     resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
@@ -6256,6 +6265,10 @@ snapshots:
   ag-stack@36.2.0: {}
 
   agent-base@7.1.4: {}
+
+  agent-steps@https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
+    dependencies:
+      zod: 4.6.7
 
   ajv-formats@3.0.1(ajv@8.20.0):
     optionalDependencies:

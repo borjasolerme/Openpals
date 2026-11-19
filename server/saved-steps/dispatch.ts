@@ -3,7 +3,7 @@ import { newId, type ProviderAdapter, type ProviderInstance, type RuntimeEvent, 
 import { createChatToolApproval } from "../drivers/chat-tool-approval.ts";
 import { retriedTurnEvent, type RetriedTurn } from "../quick-model-fallback.ts";
 import type { Message } from "../store.ts";
-import { agentBrowserDriver, cuaDriver, recipeFitsRequest, requestKey, stepLabel, type Driver, type DriverKind, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { agentBrowserDriver, cuaDriver, recipeFitsRequest, requestKey, stepLabel, type Driver, type DriverKind, type Recipe } from "agent-steps";
 import type { ComputerCaller, LocalComputerSpec } from "./computer-client.ts";
 import type { BotRecipes } from "./recipes.ts";
 import { personTextRequest } from "./requests.ts";

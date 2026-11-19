@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { requestKey, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { requestKey, type Recipe } from "agent-steps";
 import type { ProviderInstance, RuntimeEvent, SendTurnInput, TurnStartResult } from "../contracts.ts";
 import { harnessMcpTokenEnv } from "../harness-mcp-token.ts";
 import type { Message } from "../store.ts";

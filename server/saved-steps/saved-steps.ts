@@ -6,7 +6,7 @@ import { createComputerJournalRoutes } from "../routes/computer-journal.ts";
 import { createSavedStepsRoutes } from "../routes/saved-steps.ts";
 import type { RouteHandler } from "../routes/table.ts";
 import type { Message } from "../store.ts";
-import { agentBrowserDriver, cuaDriver, learnRecipe, recordedResult, reviseRecipe, type DriverKind, type Recipe, type Refusal } from "../../packages/agent-steps/src/index.ts";
+import { agentBrowserDriver, cuaDriver, learnRecipe, recordedResult, reviseRecipe, type DriverKind, type Recipe, type Refusal } from "agent-steps";
 import { callOutcome, openComputerCaller, openHarnessCaller, type ComputerCaller } from "./computer-client.ts";
 import { SavedStepsDispatch, type DispatchDeps, type EngineSlots, type TurnPlaces } from "./dispatch.ts";
 import { ComputerJournal, hostScope, turnScope, type JournalCapability, type RequestJournal } from "./journal.ts";

@@ -1,4 +1,4 @@
-import { slimResponse } from "../../packages/agent-steps/src/index.ts";
+import { slimResponse } from "agent-steps";
 import type { JournalEntry } from "./journal.ts";
 
 export const COMPUTER_JOURNAL_PATH = "/api/internal/computer/journal";

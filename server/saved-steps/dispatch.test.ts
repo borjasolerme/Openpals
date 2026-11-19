@@ -12,7 +12,7 @@ import type { Message } from "../store.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { completeWindowState, windowState } from "../testing/saved-steps-fixtures.ts";
 import { SavedStepsDispatch, type DispatchDeps, type ReplayRequest } from "./dispatch.ts";
-import { requestKey, type Caller as ComputerCaller, type CallOutcome, type CuaStep as RecipeStep, type Recipe } from "../../packages/agent-steps/src/index.ts";
+import { requestKey, type Caller as ComputerCaller, type CallOutcome, type CuaStep as RecipeStep, type Recipe } from "agent-steps";
 import { declinedReply, fallbackNote } from "./run.ts";
 
 const REQUEST = "Open TextEdit and type hello world";

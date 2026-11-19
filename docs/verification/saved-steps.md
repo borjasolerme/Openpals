@@ -3,7 +3,7 @@
 A bot that did a task on this computer, on a computer lent to it, or in its
 browser once repeats it with no AI call when the person sends the same words
 again. Recording, finding each step again and replaying are the `agent-steps`
-package (`packages/agent-steps`); Openpals journals the calls, decides when a
+package ([agent-steps](https://github.com/borjasolerme/agent-steps), a dependency); Openpals journals the calls, decides when a
 request may save or replay, and runs the replay as a turn.
 
 ## What it proves
@@ -35,7 +35,7 @@ request may save or replay, and runs the replay as a turn.
 Unit and route checks:
 
 ```sh
-pnpm exec vitest run packages/agent-steps server/saved-steps server/routes/saved-steps.test.ts server/routes/computer-journal.test.ts server/local-computer-proxy.test.ts server/local-computer.test.ts server/delta-context.test.ts src/components/SavedStepsChip.test.ts src/components/SavedStepsRow.test.ts server/testing/fake-cua-driver.test.ts
+pnpm exec vitest run server/saved-steps server/routes/saved-steps.test.ts server/routes/computer-journal.test.ts server/local-computer-proxy.test.ts server/local-computer.test.ts server/delta-context.test.ts src/components/SavedStepsChip.test.ts src/components/SavedStepsRow.test.ts server/testing/fake-cua-driver.test.ts
 ```
 
 The fixture runs on macOS. A Linux server never mounts this computer from this
