@@ -242,3 +242,13 @@ describe("the Activity view", () => {
     expect(csv).toContain(",'=cmd|' /C calc'!A0,");
   });
 });
+
+it("records explicit tool selection changes", () => {
+  const before = botAuditSnapshot({ id: "b" });
+  const after = botAuditSnapshot({ id: "b", toolScope: { allow: ["native:read"] } });
+  const rows = botChangeRows({ id: "b" }, before, after);
+  expect(rows.flatMap(row => row.changed).sort()).toEqual(["toolScope"]);
+  const reset = botChangeRows({ id: "b" }, after, before);
+  expect(reset.flatMap(row => row.changed).sort()).toEqual(["toolScope"]);
+  expect(botChangeRows({ id: "b" }, after, after)).toEqual([]);
+});
