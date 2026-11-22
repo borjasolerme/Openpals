@@ -1,5 +1,5 @@
 // Redaction runs on the server's only thread for every engine event, protocol line and tool result, so its work must grow
-// with the text, never with its square: a quadratic pattern held a Cloud home's thread for minutes on one tool output of a
+// with the text, never with its square: a quadratic pattern held the server's thread for minutes on one tool output of a
 // few MB (a base64url blob), and the home stopped answering its health checks.
 import { randomBytes } from "node:crypto";
 import { describe, expect, it } from "vitest";

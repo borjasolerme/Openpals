@@ -57,3 +57,29 @@ export function isoOrNull(value: unknown): string | null {
   const date = new Date(ms);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
+
+export function planLabel(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 80 || /[\r\n]/.test(trimmed)) return null;
+  if (/bearer\s|access_token|refresh_token|sk-ant-|eyJ[a-zA-Z0-9_-]{8,}/i.test(trimmed)) return null;
+  return trimmed;
+}
+
+/** The ChatGPT usage endpoint's `credits` object: `has_credits`, `unlimited` and a `balance` string. Anything else
+ * reads as no credits, so a full window keeps holding. */
+export function codexHasCredits(value: unknown): boolean {
+  const credits = asRecord(value);
+  if (!credits) return false;
+  if (credits.unlimited === true) return true;
+  if (credits.has_credits !== true) return false;
+  const balance = typeof credits.balance === "string" ? Number(credits.balance) : credits.balance;
+  return typeof balance === "number" && Number.isFinite(balance) && balance > 0;
+}
+
+export function secretString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 16_000 || /[\r\n]/.test(trimmed)) return null;
+  return trimmed;
+}

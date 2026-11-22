@@ -97,7 +97,7 @@ export function QueuedComposerMessages({
       }
       aria-live="polite"
     >
-      {held && <p className="px-3 pt-2 text-[12px] text-ink-secondary">{t("composer.queued.roomHeld")}</p>}
+      {held && <p className="px-3 pt-2 text-sm text-ink-secondary">{t("composer.queued.roomHeld")}</p>}
       {items.some((item) => item.reason === "group-turn") && (
         <p className="px-3 pt-2 text-sm text-ink-secondary">{t("composer.queued.groupTurn")}</p>
       )}

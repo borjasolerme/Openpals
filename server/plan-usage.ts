@@ -8,7 +8,7 @@ import type { InstanceConfigMap } from "./contracts.ts";
 import { resolveClaudeConfigDir } from "./drivers/claude.ts";
 import { codexHome } from "./drivers/codex-identity.ts";
 import { harnessHome, sealedFixture } from "./env-path.ts";
-import { asRecord, closedWindow, extraLine, finiteNumber, isoOrNull, openWindow, timeMs } from "./plan-usage-windows.ts";
+import { asRecord, closedWindow, codexHasCredits, extraLine, finiteNumber, isoOrNull, openWindow, planLabel, secretString, timeMs } from "./plan-usage-windows.ts";
 
 export type PlanDriver = "claude" | "codex" | "grok" | "opencode";
 
@@ -213,17 +213,6 @@ export function parseCodexUsage(body: unknown): PlanWindows {
   return { ...assigned, extra, models, plan: planLabel(root?.plan_type ?? root?.plan), ...(codexHasCredits(root?.credits) ? { codexCredits: true as const } : {}) };
 }
 
-/** The ChatGPT usage endpoint's `credits` object: `has_credits`, `unlimited` and a `balance` string. Anything else
- * reads as no credits, so a full window keeps holding. */
-function codexHasCredits(value: unknown): boolean {
-  const credits = asRecord(value);
-  if (!credits) return false;
-  if (credits.unlimited === true) return true;
-  if (credits.has_credits !== true) return false;
-  const balance = typeof credits.balance === "string" ? Number(credits.balance) : credits.balance;
-  return typeof balance === "number" && Number.isFinite(balance) && balance > 0;
-}
-
 /** Whether Codex's ChatGPT credits are on and not used up: sends then go on past a full window and are paid from them. */
 export function codexHasCreditRoom(row: Pick<PlanProviderRow, "driver" | "codexCredits">): boolean {
   return row.driver === "codex" && row.codexCredits === true;
@@ -345,21 +334,6 @@ export async function loadPlanUsage(input: {
   });
   cachedReport = { at: now, key, report };
   return report;
-}
-
-function planLabel(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.length > 80 || /[\r\n]/.test(trimmed)) return null;
-  if (/bearer\s|access_token|refresh_token|sk-ant-|eyJ[a-zA-Z0-9_-]{8,}/i.test(trimmed)) return null;
-  return trimmed;
-}
-
-function secretString(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.length > 16_000 || /[\r\n]/.test(trimmed)) return null;
-  return trimmed;
 }
 
 function parseJson(text: string | null): unknown {

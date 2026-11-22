@@ -107,14 +107,11 @@ sender. A valid legacy `bot_id` remains supported, but an empty or non-string
 one is refused instead of defaulting to the sender.
 
 ```sh
-pnpm exec vitest run server/drivers/agents-proxy.test.ts server/start-thread-routing.e2e.test.ts
+pnpm exec vitest run server/drivers/agents-proxy.test.ts
 ```
 
-The isolated fixture sends the malformed call through the real agents proxy,
-checks that neither bot gained a task, then sends the corrected
-`coordinate_bots` call and reads the recipient's completed conversation. It
-retains the commands, waits, transcript and resulting task IDs beside the
-server log as `.log.json`. It uses a scripted provider and does not establish
+The proxy test sends the malformed call through the agents proxy's schema
+check and expects it refused before any work is opened. It does not establish
 why a real model or relay produced the malformed arguments.
 
 ## Rebuilt conversations

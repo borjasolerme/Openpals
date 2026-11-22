@@ -28,8 +28,7 @@ export function createWebhookRoutes({ webhooks, ingress, visible }: WebhookRoute
     }
     if (path === "/api/webhooks" && method === "POST") {
       const body = await readBody(req);
-      // Security: on a Team Cloud an admin may not see another person's own MausBot; a webhook into it is answered
-      // exactly as one into a bot that does not exist.
+      // Security: a webhook into a bot the caller may not see is answered exactly as one into a bot that does not exist.
       if (body && typeof body === "object" && !Array.isArray(body) && !webhookVisible(body, visible(auth))) body.botId = randomUUID();
       const created = webhooks.create(body);
       return json(res, 201, { webhook: created.webhook, ...withCredential(created.webhook, created.secret) });
