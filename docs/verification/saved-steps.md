@@ -3,7 +3,7 @@
 A bot that did a task on this computer, on a computer lent to it, or in its
 browser once repeats it with no AI call when the person sends the same words
 again. Recording, finding each step again and replaying are the `agent-steps`
-package ([agent-steps](https://github.com/borjasolerme/agent-steps), a dependency); Openpals journals the calls, decides when a
+package ([agent-steps](https://github.com/Legalcap/agent-steps), a dependency); Openpals journals the calls, decides when a
 request may save or replay, and runs the replay as a turn.
 
 ## What it proves

@@ -67,8 +67,8 @@ importers:
         specifier: 36.2.0
         version: 36.2.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       agent-steps:
-        specifier: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
-        version: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
+        specifier: https://github.com/Legalcap/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
+        version: https://github.com/Legalcap/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz
       ajv:
         specifier: 8.20.0
         version: 8.20.0
@@ -290,22 +290,6 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
-
-  packages/agent-steps:
-    dependencies:
-      zod:
-        specifier: 4.6.7
-        version: 4.6.7
-    devDependencies:
-      '@types/node':
-        specifier: ^26.2.0
-        version: 26.2.0
-      typescript:
-        specifier: ^5.8.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.2.0)(happy-dom@21.0.4)(vite@7.3.6(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.16.9)(yaml@2.9.0))
 
 packages:
 
@@ -2088,8 +2072,8 @@ packages:
     resolution: {integrity: sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==}
     engines: {node: '>= 14'}
 
-  agent-steps@https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
-    resolution: {integrity: sha512-OcOXt2MFkz78mlUQxh+odGcDoDAq4s7gFpmWRof1Kf+NquCWdpGVskrW5VOchhhr7xchk7d26X5l3LU1jt286w==, tarball: https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz}
+  agent-steps@https://github.com/Legalcap/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
+    resolution: {integrity: sha512-OcOXt2MFkz78mlUQxh+odGcDoDAq4s7gFpmWRof1Kf+NquCWdpGVskrW5VOchhhr7xchk7d26X5l3LU1jt286w==, tarball: https://github.com/Legalcap/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz}
     version: 0.2.0
     engines: {node: '>=22.18'}
     hasBin: true
@@ -6266,7 +6250,7 @@ snapshots:
 
   agent-base@7.1.4: {}
 
-  agent-steps@https://github.com/borjasolerme/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
+  agent-steps@https://github.com/Legalcap/agent-steps/releases/download/v0.2.0/agent-steps-0.2.0.tgz:
     dependencies:
       zod: 4.6.7
 
