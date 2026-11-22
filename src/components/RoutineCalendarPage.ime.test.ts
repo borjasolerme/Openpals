@@ -19,7 +19,7 @@ import { QuickComposer } from "./RoutineCalendarPage";
 
 const bot: Bot = {
   id: "ime-bot", threadId: "ime-thread", name: "Atlas", title: "", description: "",
-  color: "blue", notifications: false, unread: false, busy: false, messages: [], section: "",
+  color: "blue", notifications: false, unread: false, busy: false, messages: [],
   modelSelection: { instanceId: "claude", model: "fake" },
 };
 

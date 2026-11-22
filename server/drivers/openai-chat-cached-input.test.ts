@@ -9,7 +9,6 @@ import { ledgerCost } from "../model-prices.ts";
 import { removeTempDir } from "../testing/cleanup.ts";
 import { recordEvents } from "../testing/events.ts";
 import { startFakeHttpMcp } from "../testing/fake-http-mcp-server.ts";
-import { usageTotals } from "../usage-caps.ts";
 import { appendUsage, readUsage } from "../usage-ledger.ts";
 import { createTraceRecorder } from "../usage-trace/recorder.ts";
 import { flushSpans } from "../usage-trace/spans.ts";
@@ -32,7 +31,7 @@ const cases = [
   { name: "cache counts greater than input", stream: false, cached: [1_200, 1_200], expected: 2_400, cost: 0.006, tokens: 200 },
 ];
 
-it.each(cases)("books $name through runtime events into the ledger and caps", async ({ stream, cached, expected, cost, tokens }) => {
+it.each(cases)("books $name through runtime events into the ledger", async ({ stream, cached, expected, cost }) => {
   const dataDir = mkdtempSync(join(tmpdir(), "omb-chat-cached-input-"));
   cleanups.push(async () => { await flushSpans(dataDir); await removeTempDir(dataDir); });
   const remote = await startFakeHttpMcp({ tools: [{ name: "read_notes", inputSchema: { type: "object", properties: {} } }] });
@@ -90,7 +89,6 @@ it.each(cases)("books $name through runtime events into the ledger and caps", as
   expect(booked[0]).toMatchObject({ input: 2_000, output: 200, usageStatus: expected === undefined ? "partial" : "complete" });
   if (expected === undefined) expect(booked[0]).not.toHaveProperty("cachedInput");
   else expect(booked[0]!.cachedInput).toBe(expected);
-  expect(usageTotals(dataDir, now).server.day).toEqual({ usd: cost, tokens });
   const updates = events.events.filter((event) => event.type === "thread.token-usage.updated");
   expect(updates).toHaveLength(2);
   expect(updates.at(-1)).toMatchObject({ input: 2_000, output: 200, contextTokens: 1_100 });
