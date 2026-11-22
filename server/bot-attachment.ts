@@ -22,6 +22,8 @@ function statusError(status: number, message: string): Error & { status: number 
   return Object.assign(new Error(message), { status });
 }
 
+const sourceFileLink = (path: string): string => /^file:/i.test(path) ? path : path.replace(/[%?#]/g, encodeURIComponent);
+
 /** Directory parts are dropped, never trusted. */
 function displayNameFor(requested: string | undefined, fallback: string): string {
   const cleaned = requested?.trim().replace(/\\/g, "/");
@@ -41,11 +43,12 @@ export interface SaveBotAttachmentInput {
 /** Only the roots' outside_workspace refusal falls through, so a missing or oversized file in the folder says exactly that.
  * Opened at the store's limit, not the preview one: the copy streams, and a person may send the same size. */
 async function openSource(path: string, roots: readonly string[], savedThisTurn: SaveBotAttachmentInput["savedThisTurn"]): Promise<OpenedMessageFile> {
+  const href = sourceFileLink(path);
   try {
-    return await openMessageFile(path, roots, FILE_MAX_BYTES);
+    return await openMessageFile(href, roots, FILE_MAX_BYTES);
   } catch (error) {
     if (!savedThisTurn || (error as { code?: unknown } | null)?.code !== "outside_workspace") throw error;
-    return openFileSavedSince(path, savedThisTurn, FILE_MAX_BYTES);
+    return openFileSavedSince(href, savedThisTurn, FILE_MAX_BYTES);
   }
 }
 
@@ -108,7 +111,7 @@ export function deliveredCopy(
     const bySource = inScope.filter((attachment) => {
       if (!attachment.source) return false;
       try {
-        return referencedPathIdentity(attachment.source) === wanted;
+        return referencedPathIdentity(sourceFileLink(attachment.source)) === wanted;
       } catch {
         return false;
       }

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { augmentedPath } from "../env-path.ts";
 import { MESSAGE_FILE_MAX_BYTES } from "../message-file.ts";
 import { Ajv2020 } from "ajv/dist/2020.js";
-import { ChatMcpClient, ChatToolSessionError, SAVED_RESULTS_FOLDER, SAVED_RESULTS_KEPT, chatMcpEnvironment, chatToolNotices, directServers, mcpStartupMs, mountChatTools, trimmedToolsNotice, type ChatToolSession } from "./chat-mcp-tools.ts";
+import { ChatMcpClient, ChatToolSessionError, SAVED_RESULTS_FOLDER, SAVED_RESULTS_KEPT, chatMcpEnvironment, agentsStartupMs, chatToolNotices, directServers, mcpStartupMs, mountChatTools, trimmedToolsNotice, type ChatToolSession } from "./chat-mcp-tools.ts";
 import { EXECUTOR_LIKE_TOOLS } from "../testing/executor-like-tools.ts";
 import type { ToolScope } from "../../shared/tool-scope.ts";
 import type { SendTurnInput } from "../contracts.ts";
@@ -1456,4 +1456,9 @@ describe("Chat MCP tool limit, fairly shared", () => {
       expect(session.budget.servers.map((server) => server.name)).toEqual(["work", "home"]);
     } finally { await remote.close(); }
   });
+});
+
+it("gives the agents server, which a turn can't run without, at least 20 seconds to start", () => {
+  expect(agentsStartupMs()).toBeGreaterThanOrEqual(20_000);
+  expect(agentsStartupMs()).toBeGreaterThanOrEqual(mcpStartupMs());
 });

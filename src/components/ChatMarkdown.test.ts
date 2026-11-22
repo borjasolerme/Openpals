@@ -843,6 +843,57 @@ describe("ChatMarkdown attachments", () => {
       expect(render(true)).toContain(`>${filePath}</code>`);
     });
 
+    describe("a backticked folder path with a space", () => {
+      const folder = "D:\\Claude Works\\v3\\";
+      const text = `The videos are in \`${folder}\``;
+      const outsideSave = () => vi.spyOn(AttachmentPreview, "useLocalFileSave").mockReturnValue({
+        state: "failed", reason: "", savedTo: "", outsideWorkspace: true, retryable: false, folder: null,
+        save: vi.fn(async () => undefined),
+      });
+
+      it("shows the real path in a browser, not the link's %20 spelling", () => {
+        const save = outsideSave();
+        try {
+          const html = renderToStaticMarkup(createElement(ChatMarkdown, { text, message: { threadId: "thread-1", messageId: "message-1" } }));
+          expect(html).toContain(`>${folder}</code>`);
+          expect(html).not.toContain("%20");
+        } finally {
+          save.mockRestore();
+        }
+      });
+
+      it("keeps a # or an escape in a file:// link's already-decoded path", () => {
+        const save = outsideSave();
+        try {
+          const html = renderToStaticMarkup(createElement(ChatMarkdown, { text: "[report](file:///tmp/Reports%23Final/100%2520x/)", message: { threadId: "thread-1", messageId: "message-1" } }));
+          expect(html).toContain(">/tmp/Reports#Final/100%20x/</code>");
+        } finally {
+          save.mockRestore();
+        }
+      });
+
+      it("asks the desktop app to show the real folder", async () => {
+        const save = outsideSave();
+        const ogb = (window as { ogb?: unknown }).ogb;
+        const reveal = vi.fn(async () => "shown" as const);
+        (window as { ogb?: unknown }).ogb = { revealInFolder: reveal, remoteClient: { active: false } };
+        const host = document.createElement("div");
+        document.body.append(host);
+        const root = createRoot(host);
+        try {
+          await act(async () => root.render(createElement(ChatMarkdown, { text, message: { threadId: "thread-1", messageId: "message-1" } })));
+          const show = [...host.querySelectorAll("button")].find((button) => button.textContent === "Show in folder")!;
+          await act(async () => show.click());
+          expect(reveal).toHaveBeenCalledWith(folder);
+        } finally {
+          await act(async () => root.unmount());
+          host.remove();
+          (window as { ogb?: unknown }).ogb = ogb;
+          save.mockRestore();
+        }
+      });
+    });
+
     it("leaves other failures alone", () => {
       vi.stubGlobal("window", { ogb: { revealInFolder } });
       try {
@@ -1100,7 +1151,68 @@ describe("a fence's wrap directive", () => {
 describe("bidi: message content carries its own direction", () => {
   const ARABIC = "مرحبا بالعالم";
 
-  it("reads direction from the first strong letter, ignoring weak characters", () => {
+  it("goes with the script that has more words, so an Arabic answer opening on a Latin name stays right-to-left", () => {
+    expect(textDirection("Chrome 158 هو الإصدار الأحدث من المتصفح")).toBe("rtl");
+    expect(textDirection("Node.js بيئة تشغيل لجافاسكريبت على الخادم")).toBe("rtl");
+    expect(textDirection("OpenMausBot v0.1.169 صدر في 2026-11-18 مع إصلاحات كثيرة")).toBe("rtl");
+    expect(textDirection("The Arabic word مرحبا means hello")).toBe("ltr");
+    expect(textDirection("שלום is how you say hello in Hebrew, among other things")).toBe("ltr");
+  });
+
+  it("does not count a bare address, which is Latin in any language", () => {
+    expect(textDirection("راجع https://github.com/milind-soni/OpenMausBot/issues/6541 للتفاصيل")).toBe("rtl");
+    expect(textDirection("https://openmausbot.com/download هو رابط التحميل الرسمي")).toBe("rtl");
+    expect(textDirection("انظر www.example.com/a/very/long/path/to/the/release/notes هنا")).toBe("rtl");
+    expect(textDirection("https://example.com/page")).toBe("ltr");
+  });
+
+  it("keeps an Arabic sentence right-to-left when it holds long technical Latin tokens", () => {
+    expect(textDirection("شغّل pnpm install --frozen-lockfile بعدين")).toBe("rtl");
+    expect(textDirection("استخدم TypeScriptLanguageServer")).toBe("rtl");
+    expect(textDirection("راجع pnpm.io/installation/and/more/details/here للتفاصيل")).toBe("rtl");
+  });
+
+  it("keeps an English sentence left-to-right when it holds an Arabic name", () => {
+    expect(textDirection("Meeting with محمد عبد الرحمن at 5")).toBe("ltr");
+    expect(textDirection("Set process.env.NODE_ENV in config.ts for مرحبا")).toBe("ltr");
+  });
+
+  it("counts a word that ends a sentence, and still skips a dotted technical token", () => {
+    expect(textDirection("Hello. Welcome. مرحبا")).toBe("ltr");
+    expect(textDirection("Done! Thanks, really? مرحبا بك")).toBe("ltr");
+    expect(textDirection("افتح config.ts. ثم احفظ")).toBe("rtl");
+  });
+
+  it("does not count digits as words, Arabic-Indic ones included", () => {
+    expect(textDirection("١٢٣ hello")).toBe("ltr");
+    expect(textDirection("١٢٣ مرحبا")).toBe("rtl");
+    expect(textDirection("٤٥٦ ٧٨٩ hello world")).toBe("ltr");
+  });
+
+  it("does not let an address swallow the RTL text glued to it", () => {
+    expect(textDirection("API https://x.io/aوالتفاصيل هنا")).toBe("rtl");
+    expect(textDirection("التوثيق (https://pnpm.io/installation) فيه كل التفاصيل")).toBe("rtl");
+    expect(textDirection("مرحبا welcome https://example.com،والتفاصيل")).toBe("rtl");
+  });
+
+  it("keeps a link label and the Arabic prose right after it apart when judging the block", () => {
+    const html = renderToStaticMarkup(createElement(ChatMarkdown, {
+      text: "مرحبا welcome [https://example.com](https://example.com)،والتفاصيل",
+    }));
+    expect(html).toMatch(/<p dir="rtl"/);
+  });
+
+  it("gives a list whose items open on Latin names the direction of its text", () => {
+    const html = renderToStaticMarkup(createElement(ChatMarkdown, {
+      text: [
+        "- **Chrome**: متصفح من جوجل يعمل على كل الأنظمة",
+        "- **Firefox**: متصفح مفتوح المصدر من موزيلا",
+      ].join("\n"),
+    }));
+    expect(html).toMatch(/<ul dir="rtl"/);
+  });
+
+  it("breaks a tie with the first strong letter, ignoring weak characters", () => {
     expect(textDirection("مرحبا")).toBe("rtl");
     expect(textDirection("hello")).toBe("ltr");
     expect(textDirection("")).toBe("ltr");

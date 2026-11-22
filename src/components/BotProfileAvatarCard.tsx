@@ -140,29 +140,33 @@ export function BotProfileAvatarCard({
                 </button>
               ))}
             </div>
+          </>
+        )}
 
-            <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
-              {t("botIdentity.color")}
-            </div>
-            <div className="flex flex-wrap gap-2.5">
-              {MAUS_COLOR_NAMES.map((color) => (
-                <button
-                  key={color}
-                  type="button"
-                  disabled={busy}
-                  aria-pressed={bot.color === color}
-                  onClick={() => onPatch({ color })}
-                  className={cn(
-                    "size-10 rounded-full border-2 border-transparent transition-transform hover:scale-110 disabled:opacity-50",
-                    bot.color === color && "ring-2 ring-accent-border ring-offset-2 ring-offset-card",
-                  )}
-                  style={{ background: colorSwatch(color) }}
-                  title={t(MAUS_COLOR_LABEL[color])}
-                  aria-label={`Use ${color} mascot color`}
-                />
-              ))}
-            </div>
+        <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
+          {t("botIdentity.color")}
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          {MAUS_COLOR_NAMES.map((color) => (
+            <button
+              key={color}
+              type="button"
+              disabled={busy}
+              aria-pressed={bot.color === color}
+              onClick={() => onPatch({ color })}
+              className={cn(
+                "size-10 rounded-full border-2 border-transparent transition-transform hover:scale-110 disabled:opacity-50",
+                bot.color === color && "ring-2 ring-accent-border ring-offset-2 ring-offset-card",
+              )}
+              style={{ background: colorSwatch(color) }}
+              title={t(MAUS_COLOR_LABEL[color])}
+              aria-label={`Use ${color} mascot color`}
+            />
+          ))}
+        </div>
 
+        {crop === "mascot" && (
+          <>
             <div className="mb-2 mt-4 text-sm font-medium uppercase tracking-caps text-ink-secondary">
               {t("botIdentity.body")}
             </div>

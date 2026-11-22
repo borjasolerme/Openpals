@@ -63,6 +63,8 @@ function chatToolName(server: string, tool: string): string {
   return `${server}_${tool}`.toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 64) || "mcp_tool";
 }
 const STARTUP_MS = 8_000;
+/** A turn can't run without the agents server, so a slow computer (an older Intel Mac) gets this long for it everywhere. */
+const AGENTS_STARTUP_MS = 20_000;
 const STARTUP_TIMED_OUT = "MCP startup timed out";
 const REQUEST_TIMED_OUT = "MCP request timed out; execution outcome may be uncertain";
 /** How much of a server's stderr is kept, and how much of its last line is ever shown. */
@@ -74,6 +76,11 @@ const OPTIONAL_BUILT_INS: ReadonlySet<string> = new Set(["computer", "browser", 
 /** How long a server that runs a command gets to start here. */
 export function mcpStartupMs(): number {
   return STARTUP_MS;
+}
+
+/** How long the agents server gets to start: never less than the app's other servers. */
+export function agentsStartupMs(): number {
+  return Math.max(mcpStartupMs(), AGENTS_STARTUP_MS);
 }
 const DEFAULT_CALL_MS = 10 * 60_000;
 const FRAME_BYTES = 2 * 1024 * 1024;
@@ -653,7 +660,7 @@ export async function mountChatTools(integrations: SendTurnInput["integrations"]
       const keeps = (tool: unknown) => !computer || !object(tool) || typeof tool.name !== "string" || listsComputerTool(tool.name, besideBrowser);
       const include = (tool: unknown) => keeps(tool) && (scope === undefined || (object(tool) && typeof tool.name === "string"
         && ((searchable.has(name) && isDirectoryTool(tool.name)) || allowsTool(scope, { kind: "mcp", server: name, name: tool.name }))));
-      const tools = await client.tools(signal, include, searchable.has(name) ? REMOTE_MCP_STARTUP_MS : startupMs, observers.get(name));
+      const tools = await client.tools(signal, include, searchable.has(name) ? REMOTE_MCP_STARTUP_MS : descriptor === agentsServer ? agentsStartupMs() : startupMs, observers.get(name));
       if (!tools.length && scope === undefined && descriptor === integrations?.localComputer) throw new Error("The computer listed no tools");
       // Harness mounts are known by descriptor, never by a name a configured server could claim. A grant
       // hashes the descriptor (no credential kept); machine bridges mint a bearer per turn, so theirs last a turn.

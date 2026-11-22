@@ -45,6 +45,16 @@ describe("saveBotAttachment", () => {
     expect(saved.attachment).toMatchObject({ source: realpathSync.native(join(WORK, name)) });
   });
 
+  it.each(["report#1.csv", "growth 20%.csv", "report%20one.pdf"])("attaches the literal source path %s", async (name) => {
+    const source = join(WORK, name);
+    writeFileSync(source, `contents of ${name}`);
+    for (const path of [name, source, pathToFileURL(source).href]) {
+      const saved = await saveBotAttachment({ path, roots: [WORK] });
+      expect(saved.attachment).toMatchObject({ name, source: realpathSync.native(source) });
+      expect(readFileSync(saved.attachment.path, "utf8")).toBe(`contents of ${name}`);
+    }
+  });
+
   it("attaches a video over the preview size, up to the same limit a person's upload has", async () => {
     const reel = join(WORK, "reel.mp4");
     writeFileSync(reel, "x");
@@ -100,6 +110,15 @@ describe("saveBotAttachment for a file a turn saved outside its folders", () => 
     expect(saved.attachment.path.startsWith(ATTACHMENTS_DIR)).toBe(true);
     expect(readFileSync(saved.attachment.path, "utf8")).toBe("jpeg-bytes");
     expect(readFileSync(source, "utf8")).toBe("jpeg-bytes");
+  });
+
+  it("preserves literal filename characters in a file saved outside the workspace", async () => {
+    const since = Date.now();
+    const source = join(DESIGNS, "draft#1.pdf");
+    writeFileSync(source, "pdf-bytes");
+    const saved = await saveBotAttachment({ path: source, roots: [WORK], savedThisTurn: { since, refuse } });
+    expect(saved.attachment).toMatchObject({ name: "draft#1.pdf", source: realpathSync.native(source) });
+    expect(readFileSync(saved.attachment.path, "utf8")).toBe("pdf-bytes");
   });
 
   it("stays roots only without the grant, and for a relative path", async () => {
@@ -280,6 +299,14 @@ describe("deliveredCopy", () => {
     const attached = bot("attached", "ask", { attachments: [renamed] });
     const reply = bot("reply", "attached", { text: "[README](D:/AI/openmausbot-skills/README.md)" });
     expect(deliveredCopy([ask, attached, reply], reply, "README.md", "D:\\AI\\openmausbot-skills\\README.md")).toEqual(renamed);
+  });
+
+  it.each(["report#1.pdf", "report%20one.pdf"])("matches the literal stored source %s to its file URL", (name) => {
+    const attachment = { ...renamed, source: `/reports/${name}` };
+    const attached = bot("attached", "ask", { attachments: [attachment] });
+    const href = `file:///reports/${encodeURIComponent(name)}`;
+    const reply = bot("reply", "attached", { text: `[Report](${href})` });
+    expect(deliveredCopy([ask, attached, reply], reply, name, href)).toEqual(attachment);
   });
 
   it("finds the same source spelled as a file:// URL or with an encoded space", () => {
