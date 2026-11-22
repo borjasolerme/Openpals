@@ -82,6 +82,7 @@ import {
   composerCanSteerQueuedMessages,
   doubleEnterSteerWindowExpiresAt,
   doubleEnterSteersQueue,
+  roomSteersQueued,
 } from "./ComposerQueuedMessages";
 import { skillAuthoringEnabled } from "@/lib/feature-flags";
 import { mentionChoicesForQuery, mentionQueryAt } from "@/lib/mentions"; import { mentionPicksFor, restoreMentionPicks } from "@/lib/mention-picks";
@@ -413,6 +414,7 @@ export function Composer({
     pendingCount,
     blocking,
   );
+  const roomSteers = Boolean(group) && roomSteersQueued(canSteer, groupBusyBotId);
   const [steering, setSteering] = useState(false);
   const interruptTurn = () => {
     if (group) dispatch({ type: "interruptGroup", groupId: group.id, threadId });
@@ -423,10 +425,9 @@ export function Composer({
     if (!queueHeadId) return;
     setSteering(true);
     const settle = () => setSteering(false);
-    if (group && canSteer) {
-      dispatch({ type: "steerGroupQueued", groupId: group.id, threadId, queueId: queueHeadId, onError: settle, onSettled: settle });
-    } else if (group) {
-      dispatch({ type: "interruptGroup", groupId: group.id, threadId, onError: settle });
+    if (group) {
+      if (roomSteers) dispatch({ type: "steerGroupQueued", groupId: group.id, threadId, queueId: queueHeadId, onError: settle, onSettled: settle });
+      else settle();
     } else if (bot && canSteer) {
       dispatch({ type: "steerQueued", botId: bot.id, threadId, queueId: queueHeadId, onError: settle, onSettled: settle });
     } else if (bot) {
@@ -461,11 +462,11 @@ export function Composer({
       prevPendingCountRef.current,
       pendingCount,
       busy,
-      canSteer,
+      group ? roomSteers : canSteer,
     );
     if (expiresAt !== null) steerAgainUntilRef.current = expiresAt;
     prevPendingCountRef.current = pendingCount;
-  }, [pendingCount, busy, canSteer]);
+  }, [pendingCount, busy, canSteer, group, roomSteers]);
   useEffect(() => {
     if (!busy || pendingCount === 0) {
       setSteering(false);
@@ -528,7 +529,7 @@ export function Composer({
   const stoppable = busy || Boolean(!group && bot?.waitingForTeammates);
   // Simple mode's round button is the call, Send while there is text, and Stop while the bot works.
   const stopInSlot = simpleDock && stoppable && !locked && !hasContent && !calling;
-  const callShown = !simpleDock || (!hasContent && !stopInSlot);
+  const callShown = !simpleDock || !hasContent || stoppable || calling;
   const slot = slotColors(bot?.color, Boolean(group));
   // A one-to-one bot at work: Enter does the chosen follow-up and Ctrl/⌘ with it the other one. Rooms keep their own queue.
   const followUpFor = (alternate: boolean) => resolveFollowUp({ running: busy && !group && Boolean(bot), alternate, preferred: followUpDefault, canSteer }) ?? undefined;
@@ -748,8 +749,9 @@ export function Composer({
         />
         <QueuedComposerMessages
           items={queuedMessages}
-          onSteer={canSteerQueued ? steerQueued : undefined}
-          steerInterrupts={!canSteer}
+          onSteer={canSteerQueued && (!group || roomSteers) ? steerQueued : undefined}
+          steerInterrupts={!group && !canSteer}
+          held={Boolean(group) && busy && !roomSteers}
           steerMode={group ? "next" : "all"}
           steering={steering}
           onCancel={(queueId) => {
@@ -895,7 +897,7 @@ export function Composer({
             if (sendsMessage(e.nativeEvent, sendKey)) {
               e.preventDefault();
               if (
-                canSteer &&
+                (group ? roomSteers : canSteer) &&
                 doubleEnterSteersQueue(steerAgainUntilRef.current, Date.now(), pendingCount, hasContent)
               ) {
                 steerAgainUntilRef.current = 0;

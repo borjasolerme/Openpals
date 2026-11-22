@@ -6,6 +6,7 @@ import { parseBotProfilePatch } from "./bot-profile.ts";
 import { profileSnapshot } from "./profile-revision.ts";
 import { validateBotCwd } from "./bot-cwd.ts";
 import { UNDO_STALE, type DirectApply } from "./direct-apply.ts";
+import type { NewBotApproval } from "./new-bot-defaults.ts";
 import { harnessCapabilityLines, type DriverCapabilities } from "./harness-capabilities.ts";
 import { redactSecretsInText } from "./redact.ts"; import { chiefLevel } from "./chief-level.ts";
 import type { BotRecord, OptionCardData } from "./store.ts";
@@ -60,7 +61,7 @@ interface SetupStore {
   messagesFor(threadId: string): Array<{ id: string; role?: string; card?: OptionCardData }>;
   appendMessage(threadId: string, message: { role: "bot"; kind: "options"; card: OptionCardData; from?: { botId: string; name: string; color: string } }): { id: string };
   patchMessage(threadId: string, messageId: string, patch: { card: OptionCardData }): unknown;
-  applyTeamSetup(request: TeamSetupRequest): TeamSetupResult;
+  applyTeamSetup(request: TeamSetupRequest, approval?: NewBotApproval): TeamSetupResult;
 }
 
 interface Options {
@@ -68,6 +69,8 @@ interface Options {
   canPersist(botId: string, threadId: string): { ok: true } | { ok: false; status: number; error: string };
   validateModel(selection: ModelSelection, current?: BotRecord): string | null;
   targetBusy(botId: string, sourceThreadId?: string): boolean;
+  /** The approval level the saved New bot defaults give a new bot, if they set one this setup may use. */
+  newBotApproval?(): NewBotApproval | undefined;
   /** Null only where the owner confirms on a card (direct-apply.ts). */
   autoApply?(botId: string, threadId: string): DirectApply | null;
   driverCapabilities?(instanceId: string): DriverCapabilities | undefined;
@@ -284,7 +287,7 @@ export class TeamSetupRequestService {
         this.validate(request, true, immediate);
       };
       revalidate();
-      if (!request.deletion) return this.options.store.applyTeamSetup(request);
+      if (!request.deletion) return this.options.store.applyTeamSetup(request, this.options.newBotApproval?.());
       await this.options.deleteBot(request.deletion.botId, revalidate, request);
       return { state: "applied", bots: [{ id: request.deletion.botId, name: request.deletion.name, action: "deleted" }] };
     } catch (error) {

@@ -33,7 +33,7 @@ import { attachmentPathsOf, attachmentsMalformed, cloneAttachments } from "./rou
 import { loadInstalledPackage, loadRequestReceipts, loadRoutine, loadRun } from "./routine-load.ts";
 import { applyHolds, holdCauses, type AppliedHolds } from "./routine-holds.ts";
 import { sanitizeInput } from "./routine-input.ts";
-import { clipRunOutput } from "./run-output.ts";
+import { keptRunOutput } from "./run-output.ts";
 import { checkHold, CHECK_BOOT_HOLD_MS, type CheckHold } from "./routine-check-pacing.ts";
 import { resolveRoutineResultsThread, routineRunDefinition, type ResultsThreadAllocation } from "./routine-run-definition.ts";
 
@@ -1271,7 +1271,7 @@ export class RoutineManager {
       run.status = "running";
       run.attention = undefined;
     } else if (event.type === "item.completed" && event.itemType === "assistant_text") {
-      run.output = clipRunOutput(redactSecretsInText(event.text).trim(), 2_000);
+      run.output = keptRunOutput(run.output, redactSecretsInText(event.text).trim(), 2_000);
     } else if (event.type === "runtime.error") {
       run.error = redactSecretsInText(event.message).slice(0, 500);
       this.failureFacts.set(run.id, engineFacts(event));

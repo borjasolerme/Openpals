@@ -1333,6 +1333,8 @@
   "composer.queued.regionMany": "{count} mensagens na fila",
   "composer.queued.list": "Mensagens na fila",
   "composer.queued.capacity": "Na fila — começa quando este bot tiver espaço livre para mais uma conversa.",
+  "composer.queued.roomHeld": "Na fila. Será enviada quando a sessão atual do grupo terminar.",
+  "composer.queued.roomSteerHeld": "Sua mensagem continua na fila. Nada foi interrompido.",
   "composer.queued.groupTurn": "Na fila — os turnos deste bot no grupo rodam um de cada vez; começa quando o atual terminar.",
   "settings.threads.title": "Conversas em paralelo",
   "settings.threads.subtitle": "Escolha quanto cada bot pode fazer ao mesmo tempo.",

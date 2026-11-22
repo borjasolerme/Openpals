@@ -8,7 +8,7 @@ import type { BotRecord, OptionCardData } from "./store.ts";
 import type { TeamSetupRequest, TeamSetupResult } from "../shared/team-setup.ts";
 import type { DirectApply } from "./direct-apply.ts";
 
-function harness(caps?: Record<string, { driverKind: string; agentsMcp: boolean }>) {
+function harness(caps?: Record<string, { driverKind: string; agentsMcp: boolean }>, newBotApproval?: () => "ask" | "auto" | "full" | undefined) {
   const bots: BotRecord[] = [];
   const messages: Array<{ id: string; role?: string; card?: OptionCardData }> = [];
   const bot = (id: string, overrides: Partial<BotRecord> = {}) => {
@@ -19,7 +19,7 @@ function harness(caps?: Record<string, { driverKind: string; agentsMcp: boolean 
   };
   const chief = bot("Clive", { chiefOfStaff: true });
   const peer = bot("Ada");
-  const apply = vi.fn((request: TeamSetupRequest): TeamSetupResult => {
+  const apply = vi.fn((request: TeamSetupRequest, _approval?: string): TeamSetupResult => {
     const result: TeamSetupResult = { state: "applied", bots: request.operations.map((op) => {
       const target = bots.find((item) => item.id === op.botId) ?? bot(op.botId);
       Object.assign(target, op.fields);
@@ -49,7 +49,7 @@ function harness(caps?: Record<string, { driverKind: string; agentsMcp: boolean 
       if (!({ claude: ["sonnet", "opus"], codex: ["gpt-fixture"] }[selection.instanceId]?.includes(selection.model))) return "Model is not in the current catalog";
       return current?.approvalMode === "full" && selection.instanceId !== current.modelSelection.instanceId ? "Existing permissions are incompatible" : null;
     },
-    ...(caps ? { driverCapabilities: (instanceId: string) => caps[instanceId] } : {}),
+    ...(caps ? { driverCapabilities: (instanceId: string) => caps[instanceId] } : {}), ...(newBotApproval ? { newBotApproval } : {}),
   });
   const propose = (operations: unknown[]) => service.propose({ botId: chief.id, threadId: chief.threadId, plan: { reason: "Requested specialist setup", operations } });
   const submit = (operations: unknown[]) => service.submit({ botId: chief.id, threadId: chief.threadId, plan: { reason: "Requested specialist setup", operations } });
@@ -64,6 +64,13 @@ const handover = (h: ReturnType<typeof harness>) => [
 ];
 
 describe("reviewed Chief team setup", () => {
+  it("applies a reviewed setup with the saved New bot level for the bots it creates", async () => {
+    const h = harness(undefined, () => "auto");
+    const request = h.propose([specialist("Analyst")]);
+    expect((await h.resolve(request.requestId))?.result.state).toBe("applied");
+    expect(h.apply).toHaveBeenCalledWith(expect.objectContaining({ requestId: request.requestId }), "auto");
+  });
+
   it("reviews a Chief handover without changing anything on denial", async () => {
     const h = harness();
     const before = structuredClone(h.store.bots);

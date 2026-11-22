@@ -209,7 +209,7 @@ import { ENGINE_LIST_REUSE_MS, enginesByUse, ProviderRegistry } from "./harness/
 import { mainThread, wasOldestThread } from "./main-thread.ts";
 import { botBox, startBotBoxAtBoot } from "./bot-box/boot.ts"; import { brokerPath } from "./bot-box/broker-probe.ts";
 import { createBotNameClash } from "./host/bot-name-clash.ts"; import { createVisibilityHost } from "./host/visibility-host.ts"; 
-import { mcpReconnectLine, retryBrokeredMcp } from "./bot-box/broker-mcp.ts";
+import { mcpReconnectLine, retryBrokeredMcp } from "./bot-box/broker-mcp.ts"; import { createSetupRecovery } from "./host/setup-recovered.ts";
 import { createOutsideLineage } from "./host/outside-lineage.ts";
 
 import { researchCredential } from "./service-credentials.ts";
@@ -308,7 +308,7 @@ import { skillReferencesSha256 } from "./skill-storage.ts";
 import { createSkillsLibraryHost } from "./host/skills-library.ts";
 import { skillExport } from "./skill-export.ts";
 import { pickBotName } from "./names.ts";
-import { botSkillTemplateSchema, newBotDefaultsSchema } from "./new-bot-defaults.ts";
+import { botSkillTemplateSchema, newBotApproval, newBotDefaultsSchema } from "./new-bot-defaults.ts";
 import { expandLearnTurnText, learnSource } from "./skill-learn.ts";
 import { connectedAppsForSetup, expandSetupTurnText, setupModeActive, setupSystemPrompt, type SetupConnectedApps } from "./setup-mode.ts"; import { setupPresser, setupTurnText, takeSetupRequest } from "./setup-request.ts"; import { setupSuggestionsFor } from "./setup-suggestions.ts"; import { createSetupRequestRoutes } from "./routes/setup-request.ts";
 import type { SkillRequestCardData } from "../shared/skill-request.ts";
@@ -2341,7 +2341,7 @@ const store = new Store(
   () => appLanguage() ?? Intl.DateTimeFormat().resolvedOptions().locale,
   () => sharedMembership() ? undefined : cfg.profile?.name,
 );
-const { messagePage, messageWindow } = messagePages(store);
+const { messagePage, messageWindow } = messagePages(store); const setupRecovery = createSetupRecovery(store);
 /** Work from outside keeps its record: what it hands on never borrows a level (server/host/outside-lineage.ts). */
 const outsideLineage = createOutsideLineage({ store, activeRun: activeRoutineRunForThread, node: (id) => coordinator.node(id), active: () => coordinator.active() });
 const { outsideDrivenThread } = outsideLineage;
@@ -5879,7 +5879,7 @@ bus.subscribe((event: RuntimeEvent) => {
       }
       landParkedFiles(); // above the failure row, which stays the last, retryable line
       pushMessage({ role: "bot", kind: "activity", tool: failedTurnTool(event.message, event) });
-      if (event.setup && bot) store.setTaskActivity(bot.id, event.threadId, "dead");
+      if (event.setup && bot) { store.setTaskActivity(bot.id, event.threadId, "dead"); setupRecovery.failed(bot.id, event.threadId); }
       break;
     case "thread.token-usage.updated":
       turnUsage.set(event.threadId, { input: event.input, output: event.output, cachedInput: event.cachedInput });
@@ -5924,7 +5924,7 @@ bus.subscribe((event: RuntimeEvent) => {
       const held = facts.limit ?? (signedOutStop(facts.stopReason, failureDetail) ? "signed-out" as const : undefined); // a limit or a sign-out: one incident a stretch, the person told by its own notice
       const fileIncident = () => { if (broken && (!held || limitTakeover.firstIncident(broken.id, broken.modelSelection, held, facts.limitResetsAt))) reportIncident({ kind: "failed", bot: broken, threadId: event.threadId, detail: failureDetail, facts, notified: Boolean(held) }); };
       if (failed && bot) void quotaSwitch.turnFailed(bot, event, internal);
-      else if (bot && event.ok) quotaSwitch.turnSucceeded(bot, event.threadId);
+      else if (bot && event.ok) { quotaSwitch.turnSucceeded(bot, event.threadId); setupRecovery.succeeded(bot.id, event.threadId, { replayed, stopped }); }
       const question = bot && event.ok && !stopped && completedTurnId && !routineRun && chiefEscalationsEnabled(cfg) ? needsInputQuestion(store.activePath(event.threadId)
         .findLast((message) => message.role === "bot" && message.kind === "text" && message.turnId === completedTurnId)?.text ?? "") : undefined;
       if (bot && question !== undefined) reportEscalation({ kind: "needs-input", bot, threadId: event.threadId, gate: NEEDS_INPUT_GATE, reason: question, alreadyNotified: false });
@@ -8210,7 +8210,7 @@ const modelRequests = new ModelRequestService({
 });
 const teamSetupRequests = new TeamSetupRequestService({
   store, canPersist: proposalPersistence, maxBots: MAX_WORKSPACE_BOTS,
-  autoApply: appliesDirectly,
+  autoApply: appliesDirectly, newBotApproval: () => newBotApproval(cfg.newBotDefaults, HOSTED_WORKSPACE),
   ownsThread: (botId, threadId) => Boolean(connectorThread(botId, threadId)),
   targetBusy: (botId, sourceThreadId) => {
     if (!sourceThreadId) return Boolean(store.bot(botId)?.busy || hasDirectDispatch(botId) || activeGroupTurnForBot(botId) || routines?.activeRunForBot(botId));
@@ -9648,8 +9648,8 @@ function startGroupTurn(
     throw Object.assign(new Error("the selected goal coordinator is not an active room member"), { status: 409 });
   }
   // Read the room before this message is appended just below.
-  const autoCandidate = !group.dm && channelMode === "chat" && group.defaultResponder.kind === "auto" &&
-    deciderReady(cfg, "roomRouting");
+  const replyBot = !group.dm && channelMode === "chat" && group.defaultResponder.kind === "auto" && replyTo?.role === "bot" ? routableMembers.find((member) => member.id === replyTo.from?.botId) : undefined;
+  const autoCandidate = !replyBot && !group.dm && channelMode === "chat" && group.defaultResponder.kind === "auto" && deciderReady(cfg, "roomRouting");
   const historyBeforeSend = autoCandidate
     ? (() => {
         const before = store.messagesFor(threadId);
@@ -9716,7 +9716,7 @@ function startGroupTurn(
       },
     });
   }
-  let responders = roomResponders(text, members, group.defaultResponder, options.mentions);
+  let responders = roomResponders(text, members, replyBot ? { kind: "member", botId: replyBot.id } : group.defaultResponder, options.mentions);
   if (!group.dm) {
     const addressed = stopWordPlacement(text) === "adjacent" ? undefined : message.id;
     for (const held of responders.filter(isHeld)) noteHeldSkip(group.id, threadId, held, addressed);

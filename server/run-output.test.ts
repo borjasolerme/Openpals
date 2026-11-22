@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clipRunOutput } from "./run-output.ts";
+import { clipRunOutput, keptRunOutput } from "./run-output.ts";
 
 describe("clipRunOutput", () => {
   const long = "Checked everything. ".repeat(200);
@@ -45,5 +45,13 @@ describe("clipRunOutput", () => {
     expect(cut.length).toBe(2_000);
     expect(cut.startsWith("NEEDS INPUT:\ndefault: wait")).toBe(true);
     expect(clipRunOutput(`${long}\nNEEDS INPUT:\n${" ".repeat(2_000)}default: wait`, 2_000)).toBe("NEEDS INPUT:\ndefault: wait…");
+  });
+});
+
+describe("keptRunOutput", () => {
+  it("keeps the report already delivered when a later item says nothing", () => {
+    expect(keptRunOutput("The invoice is issued.", "", 2_000)).toBe("The invoice is issued.");
+    expect(keptRunOutput("The invoice is issued.", "Now it is filed.", 2_000)).toBe("Now it is filed.");
+    expect(keptRunOutput(undefined, "", 2_000)).toBeUndefined();
   });
 });
