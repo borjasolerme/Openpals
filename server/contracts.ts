@@ -356,6 +356,8 @@ export interface ProviderSnapshot {
     title: string;
     message: string;
     command: string;
+    /** False when the app installer cannot supply this version; offer the terminal command instead. */
+    serverInstall?: false;
   };
   /** On a subscription a reported cost is notional. */
   billing?: "metered" | "subscription";

@@ -450,7 +450,7 @@ export interface InstanceInfo {
     authenticationUnavailableReason?: string;
     account?: { email?: string; organization?: string; method?: "login" | "api-key" };
     version?: string | null;
-    update?: { title: string; message: string; command: string };
+    update?: { title: string; message: string; command: string; serverInstall?: false };
     billing?: "metered" | "subscription";
     warning?: { title: string; message: string };
   };
@@ -475,7 +475,7 @@ export interface InstanceInfo {
     backgroundText?: boolean;
   };
   access?: "subscription" | "custom" | "api";
-  authentication?: { method: "device-code" | "paste-code" | "browser" | "browser-pkce"; signOut?: boolean };
+  authentication?: { method: "device-code" | "paste-code" | "browser" | "browser-pkce" | "callback-url"; signOut?: boolean };
   install?: EngineInstall;
   cli?: string;
   cliDefault?: string;

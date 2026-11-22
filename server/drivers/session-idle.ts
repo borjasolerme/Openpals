@@ -71,7 +71,8 @@ export function keepWarm(key: string, engine: WarmEngine, box: Pick<BoxMemory, "
 
 /** Closes an idle engine after `ms`, or sooner on a small box once another engine goes idle after it. */
 export function armIdleClose(key: string, ms: number, engine: WarmEngine): ReturnType<typeof setTimeout> {
-  const timer = setTimeout(engine.close, ms);
+  // No longer idle (a turn took it again): its driver arms it again when it next goes idle.
+  const timer = setTimeout(() => { if (engine.idle()) engine.close(); }, ms);
   timer.unref?.();
   keepWarm(key, engine);
   return timer;

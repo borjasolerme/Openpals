@@ -105,4 +105,20 @@ describe("idle engines on a small box", () => {
       vi.useRealTimers();
     }
   });
+
+  it("never closes an engine a turn took again when its idle timer runs out", () => {
+    vi.useFakeTimers();
+    try {
+      const working = engine();
+      const quiet = engine();
+      const timers = [armIdleClose("working", 150_000, working.warm), armIdleClose("quiet", 150_000, quiet.warm)];
+      working.state.busy = true;
+      vi.advanceTimersByTime(150_000);
+      expect([working.state.closed, quiet.state.closed]).toEqual([0, 1]);
+      stopIdleClose("working", timers[0]!);
+      stopIdleClose("quiet", timers[1]!);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

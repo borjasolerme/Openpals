@@ -2,6 +2,7 @@
 import { existsSync } from "node:fs";
 import type { ProviderSnapshot } from "../contracts.ts";
 import { splitCliString } from "../env-path.ts";
+import { pinnedNpmVersion } from "../engine-versions.ts";
 import { codexVersionBehind, readLatestCodexRelease } from "./codex-release.ts";
 
 /** Ask the configured executable to update itself, so a non-PATH Codex is the one updated. */
@@ -21,9 +22,14 @@ export function codexUpdateCommand(cli: string, platform: NodeJS.Platform = proc
 export async function codexReleaseUpdate(version: string, cli: string): Promise<ProviderSnapshot["update"] | undefined> {
   const latest = await readLatestCodexRelease();
   if (!latest || !codexVersionBehind(version, latest)) return undefined;
+  const pinned = pinnedNpmVersion("codex");
+  const needsTerminal = pinned !== undefined && codexVersionBehind(pinned, latest);
   return {
     title: `Update Codex to ${latest}`,
-    message: `A newer stable Codex CLI is available (installed: ${version}). Update it, then refresh models. Model availability also depends on your signed-in account.`,
+    message: needsTerminal
+      ? `A newer stable Codex CLI is available (installed: ${version}). The app installer supplies tested version ${pinned}. To install ${latest}, use the terminal command below, then refresh models. Model availability also depends on your signed-in account.`
+      : `A newer stable Codex CLI is available (installed: ${version}). Update it, then refresh models. Model availability also depends on your signed-in account.`,
     command: codexUpdateCommand(cli),
+    ...(needsTerminal ? { serverInstall: false as const } : {}),
   };
 }

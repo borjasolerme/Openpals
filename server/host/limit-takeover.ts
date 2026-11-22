@@ -1,5 +1,5 @@
-// When the AI a bot runs on reaches its usage limit, or is signed out, the bot carries on with another AI the person has
-// set up until that limit resets or the AI is signed in again, without anyone being asked, and the person hears it once
+// When the AI a bot runs on reaches its usage limit, or is signed out, the bot carries on with a backup the person chose
+// until that limit resets or the AI is signed in again, without anyone being asked, and the person hears it once
 // for that stretch. What is held (an engine's limit on the reset clock, one model's own limit, a sign-in that expired)
 // is saved, so every new turn and thread of every bot starts on the AI that carries on, a restart included.
 import { readFileSync } from "node:fs";
@@ -8,10 +8,10 @@ import { approvalModeFor, modelSwitchNeedsAsk, type ApprovalMode } from "../../s
 import { writeFileAtomic } from "../atomic.ts";
 import { recoveryCapabilityError } from "../automatic-recovery.ts";
 import type { InstanceConfigMap, ProviderAdapter, RuntimeEvent } from "../contracts.ts";
-import { readyToRun, selectDefaultModelSelection, type DefaultSelectionContext, type SelectableInstance } from "../default-model-selection.ts";
+import { readyToRun, type DefaultSelectionContext, type SelectableInstance } from "../default-model-selection.ts";
 import { engineFailureKind } from "../drivers/engine-errors.ts";
 import { classifyError } from "../drivers/retry.ts";
-import { billsEachUse, failoverLine, limitBackupAllowed, signedOutLine, type LimitFailover } from "../limit-failover.ts";
+import { failoverLine, limitBackupAllowed, signedOutLine, type LimitFailover } from "../limit-failover.ts";
 import { LimitNotices, limitNoticeText, signedOutNoticeText } from "../limit-notices.ts";
 import { UNNAMED_LIMIT_MS } from "../limit-resets.ts";
 import type { ModelSelection } from "../../shared/wire.ts";
@@ -171,10 +171,9 @@ export function createLimitTakeover(deps: LimitTakeoverDeps) {
     return engine.models.default === selection.model || engine.models.options.some((model) => model.id === selection.model);
   };
 
-  /** The AIs that may carry on while `from` is limited or signed out, best first: for one model's limit the same AI's own
-   * default model, then the backups the person chose, then (for a limit) the AI MausBot would pick for a new bot among
-   * the rest that draw on a plan. One that bills each use spends the person's money, so it carries on only as a backup
-   * they chose; a signed-out AI's turns go only to a backup they chose. `approval`: the thread's level, when known. */
+  /** The AIs that may carry on while `from` is limited or signed out, best first: for one model's limit, when the person chose
+   * any backup, the same AI's own default model first, then the backups the person chose. A bot with no backup chosen gets
+   * none, and no other AI is picked for it: with none usable the bot waits for the reset or a sign-in. `approval`: the thread's level, when known. */
   function backups(botId: string, from: ModelSelection, scope: TakeoverScope = "engine", approval?: ApprovalMode): ModelSelection[] {
     const engines = deps.engines();
     const current = engines.find((engine) => engine.instanceId === from.instanceId);
@@ -185,13 +184,9 @@ export function createLimitTakeover(deps: LimitTakeoverDeps) {
       if (out.some((known) => known.instanceId === selection.instanceId && known.model === selection.model)) return;
       if (usable(engines, current, selection, scope, approval)) out.push({ instanceId: selection.instanceId, model: selection.model });
     };
-    if (scope === "model" || scope === "credits") add({ instanceId: current.instanceId, model: current.models.default });
-    for (const selection of scope === "signed-out" ? deps.signedOutChosen?.(botId) ?? deps.chosen(botId) : deps.chosen(botId)) add(selection);
-    if (scope === "signed-out") return out;
-    const others = engines.filter((engine) => engine.instanceId !== from.instanceId && engine.access !== "api" && !billsEachUse(deps.configs()[engine.instanceId])
-      && usable(engines, current, { instanceId: engine.instanceId, model: engine.models.default }, scope, approval));
-    const pick = selectDefaultModelSelection(others, undefined, deps.context);
-    if (pick.instanceId && pick.model) add(pick);
+    const chosen = deps.chosen(botId);
+    if ((scope === "model" || scope === "credits") && chosen.length) add({ instanceId: current.instanceId, model: current.models.default });
+    for (const selection of scope === "signed-out" ? deps.signedOutChosen?.(botId) ?? deps.chosen(botId) : chosen) add(selection);
     return out;
   }
 
