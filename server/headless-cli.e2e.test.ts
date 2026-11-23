@@ -101,7 +101,8 @@ rooms:
     expect(applied.stdout).toContain("Applied: 4 created, 0 changed, 0 deleted.");
     const again = await cli(["team", "apply", teamFile, "--json"]);
     expect(again.code, again.stderr).toBe(0);
-    expect(json(again)).toMatchObject({ created: 0, changed: 0, deleted: 0, writes: 0, plan: [] });
+    expect(json(again)).toMatchObject({ created: 0, changed: 0, deleted: 0, writes: 0,
+      plan: ['bot "Fixture Starter": not in file (kept; --prune deletes it)'] });
     expect((await cli(["team", "apply", teamFile, "--check"])).code).toBe(0);
 
     const bots = await botsNow();
@@ -187,13 +188,15 @@ rooms:
     expect(plan.code).toBe(0);
     expect(plan.stdout).toContain('bot "Marcus Lee": update renamed from "Marcus"');
     expect(plan.stdout).toContain('bot "Old visitor": not in file (kept; --prune deletes it)');
+    expect(plan.stdout).toContain('bot "Fixture Starter": not in file (kept; --prune deletes it)');
     expect((await cli(["team", "apply", next, "--check"])).code).toBe(6);
     const pruned = await cli(["team", "apply", next, "--prune"]);
     expect(pruned.code, pruned.stderr).toBe(0);
     expect(pruned.stdout).toContain('bot "Old visitor": delete (not in file)');
+    expect(pruned.stdout).toContain('bot "Fixture Starter": delete (not in file)');
     const bots = await botsNow();
     expect(bots.find((bot) => bot.name === "Old visitor")).toBeUndefined();
-    expect(bots.map((bot) => bot.name).sort()).toEqual(["Fixture Starter", "Marcus Lee", "Priya", "Room Lead"]);
+    expect(bots.map((bot) => bot.name).sort()).toEqual(["Marcus Lee", "Priya", "Room Lead"]);
     expect(bots.find((bot) => bot.name === "Marcus Lee")?.id).toBe(marcus.id);
     expect((await cli(["team", "apply", next, "--check"])).code).toBe(0);
 

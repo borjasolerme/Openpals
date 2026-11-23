@@ -177,7 +177,7 @@ describe("removing the Computer engine", () => {
     });
     server.editConfig(config => Object.assign(config, { box: { token: "box_verification_fixture" }, instances: { claude: claudeEntry(server.dumpFile) } }));
     await server.start();
-    const [starter] = await server.bots();
+    const { bot: starter } = await server.api("POST", "/api/bots", { name: "Juno" });
     const { task: opened } = await server.api("POST", `/api/bots/${starter.id}/tasks`, {});
     const main = opened.threadId;
     const other = starter.threadId;
@@ -290,7 +290,7 @@ describe("removing the Computer engine", () => {
     const later = { driver: "claudeAgent", displayName: ENGINE_NAME, config: { cli }, environment: { FAKE_CLAUDE_DUMP: server.dumpFile } };
     server.editConfig(config => Object.assign(config, { box: { token: "box_verification_fixture" }, instances: { later } }));
     await server.start();
-    const [starter] = await server.bots();
+    const { bot: starter } = await server.api("POST", "/api/bots", { name: "Juno" });
     await server.stop();
     server.editConfig(config => Object.assign(config, { instances: { later, computer: { driver: "boxAgent" } } }));
     server.editSavedBot(starter.id, saved => {
@@ -327,7 +327,7 @@ describe("removing the Computer engine", () => {
     };
     server.editConfig(config => Object.assign(config, { box: { token: "box_verification_fixture" }, instances: { chat } }));
     await server.start();
-    const [starter] = await server.bots();
+    const { bot: starter } = await server.api("POST", "/api/bots", { name: "Juno" });
     await server.stop();
     server.editConfig(config => Object.assign(config, { instances: { chat, computer: { driver: "boxAgent" } } }));
     server.editSavedBot(starter.id, saved => { savedOnEngine(saved); delete saved.computer; });

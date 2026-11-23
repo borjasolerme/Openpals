@@ -38,7 +38,7 @@ describe("a browser on a self-hosted server's own machine", () => {
           expect(JSON.parse(refused.body).error).toBe(BROWSER_SIGN_IN);
         }
       }
-      const socket = await raw(url, "/api/desktop-viewer/local/shared/websockify", {
+      const socket = await raw(url, "/api/desktop-viewer/vps/vps-fixture/websockify", {
         origin: url, upgrade: "websocket", connection: "Upgrade", "sec-websocket-version": "13", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==",
       });
       expect(socket.status).toBe(401);
