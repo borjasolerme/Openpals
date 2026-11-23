@@ -4,6 +4,7 @@ import { t } from "./i18n";
 import { filterCustomModels, partitionCustomModels, suggestedModels } from "./custom-models";
 import { isCustomOnly, SIGN_IN_FAMILY_LABEL, signInFamily, splitEngineRail } from "./engine-rail";
 import { displayModelLabel, shortModelLabel } from "./model-friendly";
+import { formatResetDistance } from "./reset-distance";
 import { choiceIsSelected, modelChoices, takesTypedModels, type ModelChoice } from "./model-choices";
 
 export type ModelOption = InstanceInfo["models"]["options"][number];
@@ -41,6 +42,8 @@ export interface MenuGroup {
   label: string;
   provider: string;
   account?: string;
+  /** This account's weekly plan use, short ("34% this week") with the full line as its title. */
+  usage?: { label: string; title: string };
   /** A short line under the heading, such as why this account is special here. */
   note?: string;
   body: MenuGroupBody;
@@ -121,6 +124,18 @@ function localFrom(rows: readonly MenuModelRow[], mixed: boolean): number | null
   return first >= 0 && rows.slice(first).every((row) => row.option.custom) ? first : null;
 }
 
+/** An account's weekly plan use as its turns last reported it, or nothing when no turn has said yet. */
+export function weeklyUse(instance: InstanceInfo | undefined, now = Date.now()): MenuGroup["usage"] {
+  const weekly = instance?.planUse?.weekly;
+  if (!weekly || weekly.resetsAt <= now) return undefined;
+  const used = Math.round(weekly.usedPercent);
+  const when = formatResetDistance(weekly.resetsAt, now);
+  return {
+    label: t("model.simple.weekUsed", { used }),
+    title: [t("planUsage.weekly"), t("planUsage.used", { used }), when && t("planUsage.resetsIn", { when })].filter(Boolean).join(" · "),
+  };
+}
+
 function heading(instance: InstanceInfo, listed: readonly InstanceInfo[]): Pick<MenuGroup, "label" | "provider" | "account"> {
   const provider = providerName(instance);
   const family = signInFamily(instance);
@@ -141,10 +156,12 @@ function currentRow(input: SimpleMenuInput): MenuCurrent {
   if (option?.orgBlocked) return { ...row, meta: t("model.orgBlocked"), warning: true, blocked: true };
   if (needsCli(active)) return { ...row, meta: t("model.setupRequired"), warning: true };
   if (needsSignIn(active) && !isCustomOnly(active) && !option?.custom) return { ...row, meta: t("model.signInRequired"), warning: true };
-  if (bot.follows === true) return { ...row, meta: t("model.simple.botsModel", { name: bot.name }) };
   const family = signInFamily(active);
   const accounts = family ? instances.filter((instance) => signInFamily(instance) === family).length : 0;
-  if (accounts > 1 || active.snapshot.chatgptPlan) return { ...row, meta: active.displayName };
+  // With several accounts of one kind, the row always says which one runs it, the bot's own model included.
+  const account = accounts > 1 || active.snapshot.chatgptPlan ? active.displayName : undefined;
+  if (bot.follows === true) return { ...row, meta: [t("model.simple.botsModel", { name: bot.name }), account].filter(Boolean).join(" · ") };
+  if (account) return { ...row, meta: account };
   return option?.provider ? { ...row, meta: option.provider } : row;
 }
 
@@ -200,7 +217,8 @@ export function simpleModelMenu(input: SimpleMenuInput): SimpleMenu {
   const groups = (current ? [current, ...ordered.filter((instance) => instance !== current)] : ordered).flatMap((instance): MenuGroup[] => {
     const named = heading(instance, listed);
     const body = groupBody(instance, named.provider);
-    return body ? [{ instance, ...named, body }] : [];
+    const usage = weeklyUse(instance);
+    return body ? [{ instance, ...named, ...(usage ? { usage } : {}), body }] : [];
   });
 
   return {

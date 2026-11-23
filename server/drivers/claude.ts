@@ -43,6 +43,7 @@ import { newEventId, newId } from "../contracts.ts";
 import { askInputSummary, commandSummary, toolDetailPreview } from "../tool-summary.ts";
 import { classifyError, computeBackoff, interruptibleDelay, mayResendTurn, USAGE_LIMIT } from "./retry.ts";
 import { claudeApiErrorMessage, claudeLimitFacts, claudeLimitRefusal, claudeUsageLimit, claudeLimitMessage, claudeVersionTooOld, type ClaudeLimit } from "./claude-limits.ts";
+import { planUse } from "./claude-plan-use.ts";
 import { createOrgModelBlocks, modelSwapNotice, withOrgBlocks } from "./claude-model-access.ts";
 import { TEAM_TOOLS_FAILED, failedCustomMcp, teamToolsFailed } from "./team-tools.ts";
 import { armIdleClose, sessionIdlePolicy, stopIdleClose } from "./session-idle.ts";
@@ -1607,6 +1608,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
           }
           case "rate_limit_event":
             if (session.turn) session.turn.limit = claudeLimitRefusal(o.rate_limit_info);
+            planUse().note(instanceId, o.rate_limit_info);
             break;
           case "tool_progress":
             // Claude Code 2.1.306 sends one every 30 s while a tool runs: proof the turn is alive.

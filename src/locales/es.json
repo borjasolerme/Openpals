@@ -1394,6 +1394,7 @@
   "model.simple.noModels": "Todavía no hay modelos que mostrar aquí.",
   "model.simple.signInForOwn": "Inicia sesión para usar los modelos propios de {name}",
   "model.simple.reasoning": "Razonamiento",
+  "model.simple.weekUsed": "{used}% esta semana",
   "model.setupRequired": "Requiere configuración",
   "model.signInRequired": "Requiere iniciar sesión",
   "model.ready": "Listo",

@@ -1672,6 +1672,7 @@
   "model.simple.signInForOwn": "Sign in for {name}'s own models",
   "model.simple.reasoning": "Reasoning",
   "model.simple.botsModel": "{name}'s model",
+  "model.simple.weekUsed": "{used}% this week",
   "model.simple.unavailable": "Unavailable",
   "model.orgBlocked": "Turned off by your organization",
   "model.simple.signIn": "Sign in",

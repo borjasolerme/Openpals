@@ -103,6 +103,20 @@ describe("the Simple model menu", () => {
     expect(built.current!.meta).toBe("Claude");
   });
 
+  it("says which account runs the bot's own model when there are several, and each account's use this week", () => {
+    const now = Date.now();
+    const work = engine("claude-work", "claudeAgent", "Work", "subscription", claudeModels.slice(0, 2),
+      { planUse: { weekly: { usedPercent: 34.4, resetsAt: now + 2 * 86_400_000 + 3_600_000 }, seenAt: now } });
+    const follows = menu([claude(), work], { selection: { instanceId: "claude-work", model: "sonnet-5" }, bot: { name: "Pepper", selection: sonnet, follows: true } });
+    expect(follows.current!.meta).toBe("Pepper's model · Work");
+    expect(follows.groups.find((group) => group.account === "Work")!.usage).toEqual({ label: "34% this week", title: "Weekly · 34% used · resets in 2d 1h" });
+    expect(follows.groups.find((group) => group.account === undefined)!.usage).toBeUndefined();
+    const reset = engine("claude-old", "claudeAgent", "Old", "subscription", claudeModels.slice(0, 2),
+      { planUse: { weekly: { usedPercent: 90, resetsAt: now - 1 }, seenAt: now - 1 } });
+    expect(menu([claude(), reset]).groups.find((group) => group.account === "Old")!.usage).toBeUndefined();
+    expect(menu([claude()], { bot: { name: "Pepper", selection: sonnet, follows: true } }).current!.meta).toBe("Pepper's model");
+  });
+
   it("says why a provider cannot run: set up, sign in, or nothing listed yet", () => {
     const missing = { ...cursor, snapshot: { state: "unavailable" as const, reason: "not found" } };
     const signedOut = { ...codex, snapshot: { state: "available" as const, authenticated: false } };

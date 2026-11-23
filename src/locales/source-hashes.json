@@ -6494,7 +6494,8 @@
       "chat.savedSteps.repaired": "9583e7356b03ecaff4fba3a0ea7c0dab3b1ea4c3dda0f0b65f6400a9d7843988",
       "chat.savedSteps.forget": "a6bd489d955044992dd33f0f18fee68c83842c20eb0f6f50cb96f07b7d6dd8dd",
       "chat.savedSteps.forgotten": "491ba694b78ccdf2b093716ba18e2803bc8b2ca3334f952139e468351e16faa7",
-      "chat.savedSteps.forgetFailed": "c604d430180b62d6ef5d007ab8dfe4c6de51e8726bda92919f416faac2f2d7a8"
+      "chat.savedSteps.forgetFailed": "c604d430180b62d6ef5d007ab8dfe4c6de51e8726bda92919f416faac2f2d7a8",
+      "model.simple.weekUsed": "4cc5e1dd99420350420a049a484c25aa8216d0e6bce81eb6d7dc4bb9fb8972ad"
     },
     "fr": {
       "highlevel.unavailable": "87b8ac7f7610e6dd69f520bc59058fd92f307b9f4bcf804075f25d08bcaa7533",

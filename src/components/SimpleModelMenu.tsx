@@ -264,6 +264,9 @@ export function SimpleModelMenu(props: SimpleModelMenuProps) {
                 <div id={labelId} className={cn(MENU_LABEL, expanded && "sticky top-0 z-[1] -mx-1.5 bg-menu px-3.5")}>
                   <Gutter><InstanceProviderMark instance={group.instance} size={14} subtle /></Gutter>
                   <span className="min-w-0 truncate">{group.label}</span>
+                  {group.usage && (
+                    <span data-simple-week-use title={group.usage.title} className="ml-auto shrink-0 pl-2 font-normal tabular-nums text-ink-tertiary">{group.usage.label}</span>
+                  )}
                 </div>
                 {group.note && <p className={cn(MENU_NOTE, "pl-8 pt-0")}>{group.note}</p>}
                 <GroupBody group={group} props={props} />

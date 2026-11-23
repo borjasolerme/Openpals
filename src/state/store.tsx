@@ -458,6 +458,8 @@ export interface InstanceInfo {
   aiTest?: import("../../shared/ai-ranking").AiTestState;
   /** Why it didn't answer, in plain words, when it said (signed out, a used-up limit…). */
   aiTestError?: string;
+  /** Claude accounts: how much of the plan is used, as its last turn reported it (epoch ms, percent 0 to 100). */
+  planUse?: { weekly?: { usedPercent: number; resetsAt: number }; fiveHour?: { usedPercent: number; resetsAt: number }; seenAt: number };
   models: { default: string; options: Array<{ id: string; label: string; custom?: boolean; loaded?: boolean; provider?: string; variants?: ModelVariantOption[]; orgBlocked?: true }> };
   capabilities?: {
     computerMcp?: boolean;

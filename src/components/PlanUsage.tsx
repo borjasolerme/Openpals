@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { SIMPLE_CARD } from "./SettingsPrimitives";
 import { Card } from "./ui/Card";
 import { formatPlanSpend, type PlanSpend } from "@/lib/plan-spend";
+import { formatResetDistance } from "@/lib/reset-distance";
 
 interface PlanWindow {
   available: boolean;
@@ -65,20 +66,6 @@ function UsageSummaryCard({ title, percent, label, note }: { title: string; perc
       <p className="mt-2 text-sm text-ink-secondary">{note}</p>
     </section>
   );
-}
-
-function formatResetDistance(resetsAt: string | null, now: number): string | null {
-  if (!resetsAt) return null;
-  const at = Date.parse(resetsAt);
-  if (!Number.isFinite(at) || at <= now) return null;
-  const minutes = Math.floor((at - now) / 60_000);
-  if (minutes < 1) return "less than a minute";
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const mins = minutes % 60;
-  if (days > 0) return hours > 0 ? `${days}d ${hours}h` : `${days}d`;
-  if (hours > 0) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  return `${mins}m`;
 }
 
 function dueResetDeadlines(report: PlanUsageReport, now: number, seen: Set<string>): string[] {
