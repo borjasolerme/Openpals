@@ -19,8 +19,8 @@ export const ATTACHMENTS_DIR = join(DATA_DIR, "attachments");
 
 export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 
-export const DEFAULT_ATTACHMENTS_MAX_BYTES = 512 * 1024 * 1024;
-/** A team server can raise the ceiling with OMB_ATTACHMENTS_MAX_BYTES; a missing or invalid value keeps 512 MB. */
+export const DEFAULT_ATTACHMENTS_MAX_BYTES = 2 * 1024 * 1024 * 1024;
+/** A team server can change the ceiling with OMB_ATTACHMENTS_MAX_BYTES; a missing or invalid value keeps 2 GB. */
 export function attachmentsMaxBytes(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.OMB_ATTACHMENTS_MAX_BYTES?.trim();
   const parsed = raw ? Number(raw) : NaN;
@@ -32,6 +32,8 @@ export function attachmentsMaxBytes(env: NodeJS.ProcessEnv = process.env): numbe
 export const ATTACHMENTS_MAX_BYTES = attachmentsMaxBytes();
 
 function formatStoreLimit(bytes: number): string {
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) return `${Number.isInteger(gb) ? gb : gb.toFixed(1)} GB`;
   const mb = Math.round(bytes / (1024 * 1024));
   return mb >= 1 ? `${mb} MB` : `${bytes} bytes`;
 }
@@ -198,6 +200,28 @@ export function keptAttachmentNames(urls: ReadonlyArray<string | null | undefine
 
 /** A file this new may still be on its way into a message or a turn, so a clear leaves it. */
 export const ATTACHMENT_CLEAR_MIN_AGE_MS = 10 * 60 * 1000;
+
+/** Removes stored files whose name starts with `prefix` and that are older than `maxAgeMs`: what expires on its own
+ * (a tool's screenshots), never a file the person sent. */
+export function expireAttachments(prefix: string, maxAgeMs: number, now = Date.now()): { removed: number; freedBytes: number } {
+  if (!prefix) return { removed: 0, freedBytes: 0 };
+  ensureAttachmentsDir();
+  let removed = 0;
+  let freedBytes = 0;
+  for (const entry of readdirSync(ATTACHMENTS_DIR, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.startsWith(prefix) || PARTIAL_NAME.test(entry.name)) continue;
+    const path = join(ATTACHMENTS_DIR, entry.name);
+    try {
+      const { mtimeMs, size } = statSync(path);
+      if (now - mtimeMs <= maxAgeMs) continue;
+      unlinkSync(path);
+      removed += 1;
+      freedBytes += size;
+    } catch { /* gone already, or busy: the next sweep tries again */ }
+  }
+  if (removed) invalidateAttachmentAccounting();
+  return { removed, freedBytes };
+}
 
 /** The person's Clear in Settings: every stored file older than a few minutes goes, except the ones `kept` holds
  * (pictures, routine files). A message that showed a removed file shows it missing. */
@@ -502,7 +526,8 @@ export async function saveFile(
 }
 
 /** The UUID filename is never attacker-controlled and never collides. */
-export function saveImage(bytes: Buffer, mime: string, requestedUploadId?: string): SavedAttachment {
+/** `namePrefix` marks what kind of file it is in its name (a tool's screenshot), so it can be found without the chat. */
+export function saveImage(bytes: Buffer, mime: string, requestedUploadId?: string, options: { namePrefix?: string } = {}): SavedAttachment {
   const ext = extensionForMime(mime);
   if (!ext) throw Object.assign(new Error("unsupported image type"), { status: 400 });
   if (bytes.byteLength === 0) throw Object.assign(new Error("empty image"), { status: 400 });
@@ -522,7 +547,7 @@ export function saveImage(bytes: Buffer, mime: string, requestedUploadId?: strin
 
   const reservation = new AttachmentReservation();
   reservation.reserve(bytes.byteLength);
-  const id = uploadId ?? randomUUID();
+  const id = uploadId ?? `${options.namePrefix ?? ""}${randomUUID()}`;
   const name = `${id}${ext}`;
   const path = join(ATTACHMENTS_DIR, name);
   const partialPath = join(ATTACHMENTS_DIR, `.openmaus-upload-${id}-${randomUUID()}.partial`);

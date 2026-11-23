@@ -25,7 +25,9 @@ export function ChatErrorBanner({ message, onDismiss }: { message: string | null
   const plain = plainErrorLine(message);
   return (
     <div className="w-full px-5">
-      <div role="alert" className="mb-2 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-base text-danger">
+      {/* The chat scrolls under this line, so the tint sits on a solid backing: messages never show through it. */}
+      <div className="relative z-[1] mb-2 rounded-lg bg-app">
+      <div role="alert" className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-base text-danger">
         <div className="min-w-0 flex-1 break-words">
           <p>{plain ?? message}</p>
           {plain && <details className="mt-1 text-sm text-ink-secondary"><summary className="cursor-pointer">{t("chat.error.details")}</summary><p dir="auto" className="mt-1 break-words">{message}</p></details>}
@@ -39,6 +41,7 @@ export function ChatErrorBanner({ message, onDismiss }: { message: string | null
         >
           <X size={13} />
         </button>
+      </div>
       </div>
     </div>
   );

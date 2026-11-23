@@ -53,6 +53,7 @@ const {
   attachmentStorageUsage,
   attachmentsMaxBytes,
   clearAttachments,
+  expireAttachments,
   keptAttachmentNames,
   cleanupStaleAttachmentPartials,
   deleteAttachment,
@@ -234,13 +235,34 @@ describe("saveAudio", () => {
 });
 
 describe("attachmentsMaxBytes", () => {
-  it("keeps 512 MB unless OMB_ATTACHMENTS_MAX_BYTES is a positive whole number of bytes", () => {
+  it("keeps 2 GB unless OMB_ATTACHMENTS_MAX_BYTES is a positive whole number of bytes", () => {
     expect(ATTACHMENTS_MAX_BYTES).toBe(DEFAULT_ATTACHMENTS_MAX_BYTES);
-    expect(attachmentsMaxBytes({})).toBe(512 * 1024 * 1024);
+    expect(attachmentsMaxBytes({})).toBe(2 * 1024 * 1024 * 1024);
     expect(attachmentsMaxBytes({ OMB_ATTACHMENTS_MAX_BYTES: " 4294967296 " })).toBe(4 * 1024 * 1024 * 1024);
     for (const bad of ["", "0", "-1", "2GB", "1.5", "NaN"]) {
       expect(attachmentsMaxBytes({ OMB_ATTACHMENTS_MAX_BYTES: bad })).toBe(DEFAULT_ATTACHMENTS_MAX_BYTES);
     }
+  });
+});
+
+describe("expireAttachments", () => {
+  beforeEach(() => resetDir());
+  afterEach(() => resetDir());
+
+  it("removes only files named with the prefix and older than the age, never the person's own", () => {
+    const now = Date.now();
+    const oldShot = saveImage(Buffer.from("old shot"), "image/png", undefined, { namePrefix: "tool-" });
+    const newShot = saveImage(Buffer.from("new shot"), "image/png", undefined, { namePrefix: "tool-" });
+    const theirs = saveImage(Buffer.from("their photo"), "image/png");
+    const twoWeeksAgo = (now - 15 * 86_400_000) / 1000;
+    utimesSync(oldShot.path, twoWeeksAgo, twoWeeksAgo);
+    utimesSync(theirs.path, twoWeeksAgo, twoWeeksAgo);
+    expect(oldShot.path.split(/[\\/]/).pop()).toMatch(/^tool-[0-9a-f-]+\.png$/u);
+    expect(expireAttachments("tool-", 14 * 86_400_000, now)).toEqual({ removed: 1, freedBytes: 8 });
+    expect(existsSync(oldShot.path)).toBe(false);
+    expect(existsSync(newShot.path)).toBe(true);
+    expect(existsSync(theirs.path)).toBe(true);
+    expect(expireAttachments("", 0, now)).toEqual({ removed: 0, freedBytes: 0 });
   });
 });
 
@@ -262,7 +284,7 @@ describe("aggregate attachment storage", () => {
       throw new Error("expected quota rejection");
     } catch (error) {
       expect(error).toMatchObject({ status: 507 });
-      expect(error).toHaveProperty("message", "attachments storage is full (512 MB limit). Clear old attachments in Settings → General.");
+      expect(error).toHaveProperty("message", "attachments storage is full (2 GB limit). Clear old attachments in Settings → General.");
     }
     expect(existsSync(referenced.path)).toBe(true);
     expect(statSync(referenced.path).size).toBe(ATTACHMENTS_MAX_BYTES);

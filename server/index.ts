@@ -59,7 +59,7 @@ import { commandReceipt } from "./commands.ts";
 import { buildTurnDigest, coverageForDriver, digestPromptLine, renderDigest, toolEvidence } from "./digest.ts";
 import { appendDecision, bindDecisionRetention, decisionRetentionDays, flushDecisionLog, pruneDecisions, withDecisionActor, type DecisionActor, type DecisionVia } from "./decision-log.ts";
 import { folderToFollow, inMyFolderCwd, validateBotCwd } from "./bot-cwd.ts";
-import { ATTACHMENTS_DIR, attachmentExists, deleteAttachment, keptAttachmentNames, saveAudio, saveImage } from "./attachments.ts";
+import { ATTACHMENTS_DIR, attachmentExists, deleteAttachment, expireAttachments, keptAttachmentNames, saveAudio, saveImage } from "./attachments.ts";
 import {
   messageAttachmentName,
   messageFileRoots,
@@ -370,7 +370,7 @@ import { screenFrameHash, screenSurfaceForTool, screenTouchingTool, settledFrame
 import { RoutineRequestService } from "./routine-requests.ts"; import { routineRunCard, routineRunFallbackText } from "./routine-run-card.ts";
 import { activeRoutinesContext } from "./active-routines-context.ts";
 import { createRefusedHandoffs } from "./host/refused-handoffs.ts"; import { automationContextText, createAutomationReports, newestAutomationLines, routineRunNeedsReview } from "./automation-reports.ts"; import { createAutomationDestinations } from "./automation-destinations.ts"; import { createProactive } from "./host/proactive.ts"; import { READ_AND_DRAFT_PARTS, READ_AND_DRAFT_REFUSAL, READ_AND_DRAFT_TOOLS, recordsAnswer } from "./read-and-draft.ts"; import { createPresenceRoutes } from "./routes/presence.ts"; import { needsYouNow } from "./today.ts";
-import { openPlanUse } from "./drivers/claude-plan-use.ts"; import { engineLabel, LimitResetClock, nearLimitNote } from "./limit-resets.ts"; import { loadPlanUsage, planAccountsFromInstances } from "./plan-usage.ts"; import { LimitFailovers, limitBackupAllowed } from "./limit-failover.ts"; import { createLimitResetRoutes } from "./routes/limit-resets.ts";
+import { openPlanUse } from "./drivers/claude-plan-use.ts"; import { shrinkScreenshot, TOOL_SCREENSHOT_MAX_AGE_MS, TOOL_SCREENSHOT_PREFIX } from "./tool-screenshots.ts"; import { engineLabel, LimitResetClock, nearLimitNote } from "./limit-resets.ts"; import { loadPlanUsage, planAccountsFromInstances } from "./plan-usage.ts"; import { LimitFailovers, limitBackupAllowed } from "./limit-failover.ts"; import { createLimitResetRoutes } from "./routes/limit-resets.ts";
 import { listTriggers, parseTriggerRequest, triggerTarget } from "./trigger-tools.ts"; import { WebhookRequestError, WebhookRequestService } from "./webhook-requests.ts";
 import { appliesNow, directApply, UNDO_STALE, type DirectApply } from "./direct-apply.ts";
 import { createTeamMemoryRequests } from "./team-memory-requests.ts";
@@ -558,6 +558,12 @@ const STATIC_DIR = process.env.OMB_STATIC_DIR || null;
 ensureDirs();
 // Acquire before any durable identity, sessions, config or Store state is loaded.
 const dataDirLease = acquireDataDirLeaseForProcess(DATA_DIR);
+// Tools' screenshots expire after two weeks: now, and every six hours.
+const expireToolScreenshots = () => {
+  try { expireAttachments(TOOL_SCREENSHOT_PREFIX, TOOL_SCREENSHOT_MAX_AGE_MS); } catch (error) { console.error("could not expire old tool screenshots:", error); }
+};
+expireToolScreenshots();
+setInterval(expireToolScreenshots, 6 * 60 * 60 * 1000).unref();
 // Each Claude account's plan use as its turns report it, for the model menu.
 const claudePlanUse = openPlanUse(join(DATA_DIR, "claude-plan-use.json"));
 let dataDirLeaseReleaseAttempted = false;
@@ -5624,7 +5630,11 @@ bus.subscribe((event: RuntimeEvent) => {
       } else if (event.itemType === "assistant_image") {
         try {
           const decoded = decodeGeneratedImage(event.data);
-          const saved = saveImage(decoded.bytes, decoded.mime);
+          // A tool's screenshot is kept smaller and expires on its own; an image the bot made is kept as it is.
+          const kept = event.fromTool ? shrinkScreenshot(decoded.bytes, decoded.mime) : null;
+          const saved = kept
+            ? saveImage(kept.bytes, kept.mime, undefined, { namePrefix: TOOL_SCREENSHOT_PREFIX })
+            : saveImage(decoded.bytes, decoded.mime);
           const key = turnAttachmentKey(event.threadId, event.turnId);
           const current = turnAttachmentsByTurn.get(key) ?? [];
           current.push({ kind: "image", path: saved.path, mime: saved.mime, ...(event.fromTool ? { fromTool: true as const } : {}) });
