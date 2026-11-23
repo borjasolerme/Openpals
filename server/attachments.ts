@@ -53,7 +53,7 @@ let committedAttachmentBytes: number | null = null;
 // An async link may finish after a scan already counted its file; the version keeps it from counting twice.
 let attachmentAccountingVersion = 0;
 
-function invalidateAttachmentAccounting(): void {
+export function invalidateAttachmentAccounting(): void {
   committedAttachmentBytes = null;
   attachmentAccountingVersion += 1;
 }

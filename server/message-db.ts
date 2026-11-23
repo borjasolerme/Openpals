@@ -463,6 +463,28 @@ export function updateMessage(threadId: string, message: Message): void {
   prepared("UPDATE messages SET at = ?, role = ?, kind = ?, text = ?, json = ?, search_text = ? WHERE thread_id = ? AND id = ?").run(message.at, message.role, message.kind, message.text ?? null, JSON.stringify(message), cjkSearchText(message.text), threadId, message.id);
 }
 
+/** Which stored files the chats show, by file name: `tool` holds the ones shown as a tool's screenshot, `other` every other
+ * use (a picture the person sent, one a bot made). A name in both is a file the person also used. */
+export function attachmentUses(): { tool: Set<string>; other: Set<string> } {
+  const tool = new Set<string>();
+  const other = new Set<string>();
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) { for (const item of value) visit(item); return; }
+    if (!value || typeof value !== "object") return;
+    const record = value as Record<string, unknown>;
+    if (typeof record.path === "string" && /[\\/]attachments[\\/]/u.test(record.path)) {
+      const name = record.path.replaceAll("\\", "/").split("/").pop();
+      if (name) (record.fromTool === true ? tool : other).add(name);
+    }
+    for (const child of Object.values(record)) if (child && typeof child === "object") visit(child);
+  };
+  const rows = db().prepare("SELECT json FROM messages WHERE instr(json, 'attachments') > 0").all() as Array<{ json: string }>;
+  for (const row of rows) {
+    try { visit(JSON.parse(row.json)); } catch { /* one unreadable row hides nothing: its files simply stay */ }
+  }
+  return { tool, other };
+}
+
 export function workingGoalRunMessages(): Array<{ threadId: string; message: Message }> {
   const rows = db()
     .prepare(

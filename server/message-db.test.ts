@@ -4,7 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DATA_DIR } from "./config.ts";
-import { closeMessageDb,
+import { attachmentUses, closeMessageDb,
   deleteThread,
   deleteThreads,
   indexMemoryFile,
@@ -49,6 +49,17 @@ describe("message-db", () => {
     closeMessageDb();
     rmSync(DATA_DIR, { recursive: true, force: true });
     mkdirSync(DATA_DIR, { recursive: true });
+  });
+
+  it("tells which stored files chats show as a tool's screenshot and which they use otherwise", () => {
+    const at = (name: string) => join(DATA_DIR, "attachments", name);
+    insertMessage("t1", msg("m1", "", { role: "bot", attachments: [{ kind: "image", path: at("shot.png"), mime: "image/png", fromTool: true }] } as Partial<Message>));
+    insertMessage("t1", msg("m2", "look", { attachments: [{ kind: "image", path: at("photo.png"), mime: "image/png" }] } as Partial<Message>));
+    insertMessage("t2", msg("m3", "", { role: "bot", attachments: [{ kind: "image", path: at("both.png"), mime: "image/png", fromTool: true }] } as Partial<Message>));
+    insertMessage("t2", msg("m4", "again", { attachments: [{ kind: "image", path: at("both.png"), mime: "image/png" }] } as Partial<Message>));
+    const uses = attachmentUses();
+    expect([...uses.tool].sort()).toEqual(["both.png", "shot.png"]);
+    expect([...uses.other].sort()).toEqual(["both.png", "photo.png"]);
   });
 
   it("persists inserts, updates, and the active leaf across a reopen", () => {
