@@ -4160,7 +4160,7 @@ const configuredSseHeartbeatMs = Number(process.env.OMB_SSE_HEARTBEAT_MS);
 const SSE_HEARTBEAT_MS =
   Number.isFinite(configuredSseHeartbeatMs) && configuredSseHeartbeatMs > 0
     ? configuredSseHeartbeatMs
-    : 15_000;
+    : 10_000;
 let lastSeq = 0;
 const replayBuffer = new ReplayBuffer();
 

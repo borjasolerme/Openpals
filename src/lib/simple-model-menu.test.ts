@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { InstanceInfo, ModelSelection } from "@/state/store";
-import { modelName, simpleModelMenu, SIMPLE_SEARCH_AFTER } from "./simple-model-menu";
+import { modelName, shortAccountName, shortModelName, simpleModelMenu, SIMPLE_SEARCH_AFTER } from "./simple-model-menu";
 
 vi.hoisted(() => {
   vi.stubGlobal("window", {});
@@ -106,7 +106,7 @@ describe("the Simple model menu", () => {
   it("says which account runs the bot's own model when there are several, and each account's use this week", () => {
     const now = Date.now();
     const work = engine("claude-work", "claudeAgent", "Work", "subscription", claudeModels.slice(0, 2),
-      { planUse: { weekly: { usedPercent: 34.4, resetsAt: now + 2 * 86_400_000 + 3_600_000 }, seenAt: now } });
+      { planUse: { weekly: { usedPercent: 34.4, resetsAt: now + 2 * 86_400_000 + 5_400_000 }, seenAt: now } });
     const follows = menu([claude(), work], { selection: { instanceId: "claude-work", model: "sonnet-5" }, bot: { name: "Pepper", selection: sonnet, follows: true } });
     expect(follows.current!.meta).toBe("Pepper's model · Work");
     expect(follows.groups.find((group) => group.account === "Work")!.usage).toEqual({ label: "34% this week", title: "Weekly · 34% used · resets in 2d 1h" });
@@ -271,5 +271,17 @@ describe("a model the organization turned off", () => {
   it("says so on the current row, with nothing to set up", () => {
     expect(menuOn("opus-5-5").current).toMatchObject({ warning: true, blocked: true, meta: "Turned off by your organization" });
     expect(menuOn("sonnet-5").current?.blocked).toBeUndefined();
+  });
+});
+
+describe("the short names the model pill uses", () => {
+  it("leaves out the provider's name and the word account", () => {
+    const work = engine("claude-work", "claudeAgent", "Borja account", "subscription", claudeModels);
+    expect(shortModelName(work, "opus-5-5")).toBe("Opus 5.5");
+    expect(shortModelName(undefined, "opus-5-5")).toBe("opus-5-5");
+    expect(shortAccountName("Borja account")).toBe("Borja");
+    expect(shortAccountName("Cuenta Legalcap")).toBe("Legalcap");
+    expect(shortAccountName("Legalcap general")).toBe("Legalcap general");
+    expect(shortAccountName("Account")).toBe("Account");
   });
 });

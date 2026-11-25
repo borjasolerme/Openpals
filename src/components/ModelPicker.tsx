@@ -5,7 +5,7 @@ import { useStore, currentTaskBot, type Bot, type InstanceInfo, type ModelSelect
 import type { EffortLevel } from "../../shared/wire";
 import { filterCustomModels, partitionCustomModels, suggestedModels } from "@/lib/custom-models";
 import { configuredModelInstances, isClaudeAccount, isCustomOnly, modelsAwaitEngine, SIGN_IN_FAMILY_LABEL, signInFamily } from "@/lib/engine-rail";
-import { modelName, simpleModelMenu, variantSuffix, weeklyUse } from "@/lib/simple-model-menu";
+import { modelName, shortAccountName, shortModelName, simpleModelMenu, variantSuffix, weeklyUse } from "@/lib/simple-model-menu";
 import { choiceIsSelected, modelChoices, modelSelectionForPick, takesTypedModels, withTypedModels, type ModelChoice } from "@/lib/model-choices";
 export { modelSelectionForPick } from "@/lib/model-choices";
 import { pickerPlacement, type PickerPlacement } from "@/lib/picker-placement";
@@ -660,9 +660,9 @@ export function ModelPicker({
           : <span className="size-3.5 rounded-full bg-fill" aria-hidden="true" />}
         {attention && <span data-model-attention className="absolute -bottom-0.5 -right-0.5 size-1.5 rounded-full bg-warning ring-[1.5px] ring-app" />}
       </span>
-      <span className="min-w-0 max-w-40 truncate">{modelName(active, selection.model)}</span>
+      <span className="min-w-0 max-w-40 truncate">{showActiveAccount ? shortModelName(active, selection.model) : modelName(active, selection.model)}</span>
       {active && showActiveAccount && (
-        <span data-model-account className="min-w-0 max-w-28 truncate text-ink-tertiary">&nbsp;·&nbsp;{active.displayName}</span>
+        <span data-model-account className="min-w-0 max-w-24 truncate text-ink-tertiary">&nbsp;·&nbsp;{shortAccountName(active.displayName)}</span>
       )}
       {selection.variant !== undefined && <span className="shrink-0 whitespace-pre">{variantSuffix(active, selection.model, selection.variant)}</span>}
       <ChevronDown size={12} strokeWidth={2} aria-hidden="true" className="ml-1 shrink-0 text-ink-tertiary group-hover:text-ink-secondary" />

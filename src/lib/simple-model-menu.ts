@@ -104,6 +104,18 @@ export function modelName(instance: InstanceInfo | undefined, model: string, var
   return displayModelLabel(option.label, providerName(instance), option.custom) + variantSuffix(instance, model, variant);
 }
 
+/** The model's name without its provider's ("Opus 5.5" for Claude Opus 5.5), where the provider's mark already says it. */
+export function shortModelName(instance: InstanceInfo | undefined, model: string): string {
+  const full = modelName(instance, model);
+  return instance ? shortModelLabel(full, providerName(instance)) : full;
+}
+
+/** An account's name without a word that only says it is an account ("Borja account" is Borja). */
+export function shortAccountName(name: string): string {
+  const short = name.replace(/\s+(?:account|cuenta)$/iu, "").replace(/^(?:account|cuenta)\s+/iu, "").trim();
+  return short || name;
+}
+
 export function repeatedModelLabels(options: readonly ModelOption[]): Set<string> {
   const seen = new Set<string>();
   const repeated = new Set<string>();

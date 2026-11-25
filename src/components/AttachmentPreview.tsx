@@ -1,6 +1,7 @@
 // Security: model text never turns an arbitrary local path into a browser request; transcript paths resolve through
 // attachmentImageUrl.
 import { thumbnailRatio } from "@/lib/thumbnail-ratio";
+import { IMAGE_AUTO_TRIES, useImageRetry } from "@/lib/use-image-retry";
 import {
   useCallback,
   useEffect,
@@ -660,17 +661,19 @@ export function AttachmentThumbnail({
   className,
   eager = false,
   explainRefusal = false,
+  autoTries = IMAGE_AUTO_TRIES,
 }: {
   image: PreviewImage;
   onPreview: () => void;
   className?: string;
   eager?: boolean;
   explainRefusal?: boolean;
+  autoTries?: number; // quiet tries before a stalled or failed picture says it is unavailable
 }) {
   // Callers key this by src: resetting in an effect races a cached image's onLoad, which can fire before the effect
   // runs.
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
-  const [attempt, setAttempt] = useState(0);
+  const { attempt, retryQuietly, retryNow } = useImageRetry(state === "loading", autoTries);
   const [outsideWorkspace, setOutsideWorkspace] = useState(false);
   const [ratio, setRatio] = useState<number | null>(null);
 
@@ -695,14 +698,14 @@ export function AttachmentThumbnail({
               event.preventDefault();
               event.stopPropagation();
               setState("loading");
-              setAttempt((value) => value + 1);
+              retryNow();
             }}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
               event.stopPropagation();
               setState("loading");
-              setAttempt((value) => value + 1);
+              retryNow();
             }}
             className="flex items-center gap-1 rounded-md border border-hairline/50 bg-panel px-2 py-1 text-xs text-ink hover:bg-raised"
             aria-label={t("attach.retryAria", { name: image.name })}
@@ -742,6 +745,7 @@ export function AttachmentThumbnail({
               setState("ready");
             }}
             onError={() => {
+              if (retryQuietly()) return;
               setState("failed");
               if (explainRefusal) void messageImageOutsideWorkspace(image.src).then(setOutsideWorkspace);
             }}

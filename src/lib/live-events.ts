@@ -5,7 +5,8 @@ import { noteTurnEvent } from "@/state/turn-status";
 import { forgetLiveReplies, noteLiveReplyEvent, noteLiveReplyMessage } from "@/state/live-reply";
 
 export const LIVE_EVENTS_PATH = "/api/events";
-export const LIVE_EVENTS_STALE_MS = 40_000;
+/** The server says it is alive every 10 s; two and a half missed beats mean the stream is stuck (a proxy holding it). */
+export const LIVE_EVENTS_STALE_MS = 25_000;
 export const LIVE_EVENTS_RETRY_MIN_MS = 500;
 export const LIVE_EVENTS_RETRY_MAX_MS = 10_000;
 const RETRY_LIVE_EVENTS = "omb:retry-live-events";

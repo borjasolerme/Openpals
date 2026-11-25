@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
-import { createElement } from "react";
+import { act, createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLocale } from "@/lib/i18n";
+import { IMAGE_STALL_MS } from "@/lib/use-image-retry";
 import { AttachmentThumbnail } from "./AttachmentPreview";
 
 const src = "/api/threads/t/messages/m/file?preview=1&ref=24";
@@ -29,6 +30,7 @@ function failWith(response: Response, explainRefusal = true) {
     image: { src, name: "Sideboard" },
     onPreview: () => undefined,
     explainRefusal,
+    autoTries: 0,
   })));
   host.querySelector("img")!.dispatchEvent(new Event("error"));
   return fetch;
@@ -74,5 +76,33 @@ describe("a message image that fails", () => {
     const fetch = failWith(refused(), false);
     await vi.waitFor(() => expect(host.textContent).toContain("Image unavailable"));
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("a message image that stalls or fails for a moment", () => {
+  it("asks for it again by itself, and loads it once an answer comes", async () => {
+    vi.useFakeTimers();
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    try {
+      flushSync(() => root.render(createElement(AttachmentThumbnail, { image: { src, name: "Sideboard" }, onPreview: () => undefined })));
+      const first = host.querySelector("img")!;
+      await act(async () => { await vi.advanceTimersByTimeAsync(IMAGE_STALL_MS); });
+      const second = host.querySelector("img")!;
+      expect(second).not.toBe(first);
+      await act(async () => {
+        second.dispatchEvent(new Event("error"));
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      const third = host.querySelector("img")!;
+      expect(third).not.toBe(second);
+      expect(host.textContent).not.toContain("Image unavailable");
+      Object.defineProperty(third, "naturalWidth", { value: 800 });
+      Object.defineProperty(third, "naturalHeight", { value: 600 });
+      await act(async () => { third.dispatchEvent(new Event("load")); });
+      expect(third.className).toContain("opacity-100");
+    } finally {
+      (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false;
+      vi.useRealTimers();
+    }
   });
 });
