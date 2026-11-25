@@ -9,7 +9,7 @@ import { applyFont, readFont } from "./lib/fonts";
 import { applySoftwareRendering } from "./lib/software-rendering";
 import { settleAdvancedModeDefault } from "./lib/interface-mode";
 import { LendLinkNotice, PairPage } from "./pair/PairPage";
-import { PageBoundary } from "./components/PageBoundary";
+import { PageBoundary, reloadOnceForChunk } from "./components/PageBoundary";
 import { endedBeforeReload, forgetEndedSession, SESSION_ENDED_REASON } from "./lib/session-ended";
 import "./styles.css";
 
@@ -47,5 +47,10 @@ async function chooseRoot(): Promise<React.ReactNode> {
 // The window is named before the brand file is asked for: the answer only ever renames it.
 document.title = productName();
 void Promise.all([bootstrapBrand(), chooseRoot(), loadPageLanguage()]).then(([, root]) => {
+  // A preloaded piece that failed to download (an update renamed it, a proxy dropped it): reload once by itself.
+  window.addEventListener("vite:preloadError", (event) => {
+    const error = (event as Event & { payload?: unknown }).payload;
+    if (error instanceof Error && reloadOnceForChunk(error)) event.preventDefault();
+  });
   createRoot(document.getElementById("root")!).render(<StrictMode><PageBoundary>{root}</PageBoundary></StrictMode>);
 });

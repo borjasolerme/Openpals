@@ -1,42 +1,25 @@
-// @vitest-environment happy-dom
-import { createElement, useEffect } from "react";
-import { flushSync } from "react-dom";
-import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { reloadOnceForChunk } from "./PageBoundary";
 
-import { PageBoundary } from "./PageBoundary";
+const store = () => {
+  const values = new Map<string, string>();
+  return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => void values.set(key, value) };
+};
+const missing = new Error("Failed to fetch dynamically imported module: https://example.test/assets/App-abc.js");
 
-function Broken() {
-  useEffect(() => {
-    throw new TypeError("desktop.shown is not a function");
-  }, []);
-  return createElement("p", null, "the page");
-}
-
-describe("PageBoundary", () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it("keeps the page up, with the error and a reload, when a part of it throws in an effect", async () => {
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    const host = document.createElement("div");
-    document.body.append(host);
-    const root = createRoot(host);
-    flushSync(() => root.render(createElement(PageBoundary, null, createElement(Broken))));
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(host.textContent).toContain("This page hit an error.");
-    expect(host.textContent).toContain("desktop.shown is not a function");
-    expect(host.querySelector("button")?.textContent).toBe("Reload");
-    root.unmount();
-    host.remove();
+describe("reloadOnceForChunk", () => {
+  it("reloads once by itself when a piece of the app could not be downloaded, and not again within a minute", () => {
+    const storage = store();
+    const reload = vi.fn();
+    expect(reloadOnceForChunk(missing, 1_000_000, storage, reload)).toBe(true);
+    expect(reloadOnceForChunk(missing, 1_030_000, storage, reload)).toBe(false);
+    expect(reloadOnceForChunk(missing, 1_070_000, storage, reload)).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(2);
   });
 
-  it("shows the page itself while nothing throws", () => {
-    const host = document.createElement("div");
-    document.body.append(host);
-    const root = createRoot(host);
-    flushSync(() => root.render(createElement(PageBoundary, null, createElement("p", null, "the page"))));
-    expect(host.textContent).toBe("the page");
-    root.unmount();
-    host.remove();
+  it("leaves any other error to the page and its Reload button", () => {
+    const reload = vi.fn();
+    expect(reloadOnceForChunk(new Error("Cannot read properties of undefined"), 1, store(), reload)).toBe(false);
+    expect(reload).not.toHaveBeenCalled();
   });
 });
