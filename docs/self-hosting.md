@@ -674,6 +674,33 @@ tunnel carries it too. A video or audio file over 25 MB does not play inside
 the chat, but it still downloads, and so does a file a bot links to, up to
 500 MB.
 
+## Disk upkeep
+
+Three sweeps keep what the engines and conversations leave behind from
+filling the disk. They run a few minutes after the server starts and then on a
+timer, change nothing while any turn runs or a backup or restore is under way,
+and never follow a link:
+
+- **Conversation logs** (`events/`, `native/`; the Inspector and Activity
+  panel read them, the chat itself is in `messages.db`): every 6 hours, a log
+  idle for 30 days, or the least recently written ones once the folders pass
+  the larger of 2 GB and 3% of the disk (`OMB_THREAD_LOG_CAP`), is trimmed to
+  the newest lines those panels show. A log written to in the last day, or a
+  conversation with a turn running or handed off, is left alone.
+  `OMB_THREAD_LOG_CUT=1` also empties week-idle logs while over the cap.
+- **Full tool results** (`tool-results/`): every 6 hours, files older than a
+  day go; past 1 GB, the engine hook's copies go oldest first, down to an hour
+  old.
+- **Ended engine sessions** (Claude Code and Codex folders this server's
+  engines use): once a day, a session Openpals started that no conversation can
+  resume any more goes once nothing in it changed for a week, along with
+  Claude Code's own logs under `~/.cache/claude-cli-nodejs` a week old. Your
+  own Claude Code or Codex sessions are never touched.
+
+Each is on by default. Set `OMB_THREAD_LOG_SWEEP`, `OMB_TOOL_RESULTS_SWEEP`
+or `OMB_ENGINE_SESSION_SWEEP` to `off` to turn it off, or to `report` to only
+log what it would free.
+
 ## Putting a proxy in front
 
 Any reverse proxy works, given three things:

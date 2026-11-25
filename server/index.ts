@@ -118,7 +118,7 @@ import { canManage, canReach, livePeerRoster, livePeerRosterBlock, peerName, pee
 import { attachedFileLine, attachForTurn, saveBotAttachment } from "./bot-attachment.ts";
 import { cacheUntilConfigChanges, ensureDirs, instanceConfigs, loadConfig, changedInstanceIds, engineLaunches, roomTurnTimeoutMinutes, mcpCallTimeoutMinutes, cacheKeepWarmSettings, threadEventLogMaxBytes, threadEventLogRetentionDays, saveConfig, showToolCallsEnabled, claudeUserMcpEnabled, skillAuthoringEnabled, skillReviewEnabled, skillReviewSteps, autoRecallEnabled, captureQuietMs, roomMemoryCaptureEnabled, tidyHour, builtInBrowserEnabled, persistableInstanceConfigs, type AppConfig, vpsSshAlias, DATA_DIR, onConfigSaved, CLAUDE_API_INSTANCE, openCodeProviderKeys } from "./config.ts";
 import { serveStatic } from "./static-files.ts";
-import { startUpkeep } from "./host/start-upkeep.ts";
+import { startUpkeep } from "./host/start-upkeep.ts"; import { startStorageSweeps } from "./host/storage-sweeps.ts";
 import { ComputerControl } from "./computer-control.ts";
 import { resetPathCache } from "./env-path.ts";
 import { registerEnginesBinDir } from "./engine-install.ts"; import { engineUpdatesFor } from "./engine-updates-host.ts";
@@ -13929,6 +13929,7 @@ server.listen(PORT, "127.0.0.1", async () => {
   drainQueuedChannelSends();
   void cloudComputerPower.armRunning();
   startUpkeep({ bots: () => store.bots, retentionDays: () => threadEventLogRetentionDays(cfg), busy: threadBusy, openDirectHandoff: (threadId) => coordinator.activeDirect(threadId) });
+  startStorageSweeps({ env: process.env, dataDir: DATA_DIR, bots: () => store.bots, groups: () => store.groups, instances: () => Object.values(providerConfigs()), threadBusy, handedOff: (threadId) => coordinator.activeDirect(threadId), paused: () => workspaceMaintenance.active, turnsRunning: () => store.bots.some((bot) => botHasActiveTurn(bot.id)) || store.groups.some(groupIsWorking) || Boolean(routines?.hasActiveRuns()), logQuiet: (threadId) => bus.logQuiet(threadId) });
   if (enginesRead) {
     await enginesRead;
     if (companyShutdown) return;
