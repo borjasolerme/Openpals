@@ -434,6 +434,9 @@ export function configStatusFromFrame(frame: ConfigStatusFrame): ConfigStatus {
 
 export type { EngineInstall } from "./engine-install";
 
+/** How long the app waits for its first look at the bots before asking again. */
+const SNAPSHOT_TIMEOUT_MS = 20_000;
+
 export interface InstanceInfo {
   instanceId: string;
   driverKind: string;
@@ -2888,8 +2891,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (alive && answer) flushSync(() => rawDispatch({ type: "liveCallLookup", call: answer.call, since, seq }));
         })
         .catch(() => {});
+      // A snapshot a proxy holds up would keep "Connecting" on screen until it answers: past this it fails, and the
+      // stream reconnects and asks again.
       const chat = () =>
-        api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`).then((answer) => snapshotArrays(answer, "bots")).then(({ bots, groups, computerControl, botQueuedMessages }) => {
+        api(`/api/bots?messages=${MESSAGE_PAGE_SIZE}`, { timeoutMs: SNAPSHOT_TIMEOUT_MS }).then((answer) => snapshotArrays(answer, "bots")).then(({ bots, groups, computerControl, botQueuedMessages }) => {
           if (!alive) return;
           rawDispatch({
             type: "hydrate",
